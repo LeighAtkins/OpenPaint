@@ -1,6 +1,6 @@
 /**
  * AI Integration Module for OpenPaint
- * Handles AI-powered furniture dimensioning with Cloudflare Images and Worker
+ * Handles AI-powered furniture dimensioning with Worker relays
  */
 
 import type { AIImageInfo, AIStrokeInput, AIUnits, AIVectorOutput } from './ai-schemas';
@@ -39,8 +39,7 @@ interface AIAnalysisResult {
 
 interface AIIntegrationState {
   isGenerating: boolean;
-  currentImageId: string | null;
-  currentImageUrl: string | null;
+  currentImageDataUrl: string | null;
   lastResult: AIAnalysisResult | null;
 }
 
@@ -65,67 +64,27 @@ declare global {
 // AI Integration state
 window.aiIntegration = {
   isGenerating: false,
-  currentImageId: null,
-  currentImageUrl: null,
+  currentImageDataUrl: null,
   lastResult: null,
 };
 
 /**
- * Upload image to Cloudflare Images and get signed URL
+ * Prepare current image as a data URL for AI analysis
  */
-async function uploadImageToCloudflare(
-  imageBlob: Blob
-): Promise<{ imageId: string; deliveryUrl: string }> {
-  try {
-    // Get presigned upload URL
-    const presignResponse = await fetch('/api/storage/presign', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!presignResponse.ok) {
-      const error = (await presignResponse.json()) as { message?: string };
-      throw new Error(error.message || 'Failed to get upload URL');
-    }
-
-    const { uploadUrl, imageId, deliveryUrl } = (await presignResponse.json()) as {
-      uploadUrl: string;
-      imageId: string;
-      deliveryUrl: string;
+async function getCurrentImageAsDataUrl(): Promise<string> {
+  const blob = await getCurrentImageAsBlob();
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Failed to encode image as data URL'));
+      }
     };
-
-    // Upload image to Cloudflare Images
-    const uploadResponse = await fetch(uploadUrl, {
-      method: 'PUT',
-      body: imageBlob,
-      headers: {
-        'Content-Type': imageBlob.type || 'image/jpeg',
-      },
-    });
-
-    if (!uploadResponse.ok) {
-      throw new Error('Failed to upload image to Cloudflare Images');
-    }
-
-    console.log('[AI Integration] Image uploaded successfully:', imageId);
-    return { imageId, deliveryUrl };
-  } catch (error) {
-    console.error('[AI Integration] Upload failed:', error);
-    throw error;
-  }
-}
-
-/**
- * Get signed image URL for existing image
- */
-function getSignedImageUrl(imageId: string): string {
-  const CF_ACCOUNT_HASH = window.paintApp?.config?.CF_ACCOUNT_HASH;
-  if (!CF_ACCOUNT_HASH) {
-    throw new Error('CF_ACCOUNT_HASH not configured');
-  }
-  return `https://imagedelivery.net/${CF_ACCOUNT_HASH}/${imageId}/public`;
+    reader.onerror = () => reject(new Error('Failed to read image blob'));
+    reader.readAsDataURL(blob);
+  });
 }
 
 /**
@@ -216,14 +175,10 @@ async function generateSofaBasics(): Promise<void> {
       throw new Error('Could not get image dimensions');
     }
 
-    // Upload image to Cloudflare Images
-    const imageBlob = await getCurrentImageAsBlob();
-    const { imageId, deliveryUrl } = await uploadImageToCloudflare(imageBlob);
+    const imageDataUrl = await getCurrentImageAsDataUrl();
+    window.aiIntegration.currentImageDataUrl = imageDataUrl;
 
-    window.aiIntegration.currentImageId = imageId;
-    window.aiIntegration.currentImageUrl = deliveryUrl;
-
-    showAIMessage('Image uploaded. Opening calibration dialog', 'info');
+    showAIMessage('Image prepared. Opening calibration dialog', 'info');
 
     // Show calibration dialog
     showCalibrationDialog(dimensions);
@@ -310,7 +265,7 @@ async function handleCalibrationSubmit(event: Event): Promise<void> {
         width: dimensions.width,
         height: dimensions.height,
       },
-      imageUrl: window.aiIntegration.currentImageUrl,
+      imageDataUrl: window.aiIntegration.currentImageDataUrl,
       calibration: {
         name: 'overall_width',
         pixels: dimensions.width, // Use full width as detected width
@@ -638,5 +593,3 @@ console.log('[AI Integration] Module loaded successfully');
 if (window.AppInit) {
   window.AppInit.markReady('ai');
 }
-
-void getSignedImageUrl;

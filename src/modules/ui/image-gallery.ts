@@ -66,7 +66,7 @@
       }
 
       // Only handle keyboard navigation if image panel is visible
-      if (!document.getElementById('imagePanel').classList.contains('hidden')) {
+      if (!document.getElementById('imagePanel')?.classList.contains('hidden')) {
         if (e.key === 'ArrowLeft') {
           e.preventDefault();
           navigateToImage(currentImageIndex - 1);
@@ -308,27 +308,32 @@
     } catch (e) {
       console.warn('[Gallery] Failed to update orderedImageLabels after add:', e);
     }
-    if (!window.__initialGallerySyncDone && imageGalleryData.length === 1) {
+    if (
+      !window.__initialGallerySyncDone &&
+      imageGalleryData.length === 1 &&
+      !window.__isLoadingProject &&
+      !window.__deferredImageHydrationInProgress
+    ) {
       window.__initialGallerySyncDone = true;
       navigateToImage(0);
       console.log('[Gallery] Auto-selected first image');
     }
 
     // Trigger mini-stepper update if function exists
-    if (typeof updatePills === 'function') {
+    if (typeof window.updatePills === 'function') {
       setTimeout(() => {
         try {
-          updatePills();
+          window.updatePills();
           console.log('[Gallery] Updated mini-stepper pills');
         } catch (e) {
           console.warn('[Gallery] Error updating pills:', e);
         }
       }, 100);
     }
-    if (typeof updateActivePill === 'function') {
+    if (typeof window.updateActivePill === 'function') {
       setTimeout(() => {
         try {
-          updateActivePill();
+          window.updateActivePill();
           console.log('[Gallery] Updated active pill');
         } catch (e) {
           console.warn('[Gallery] Error updating active pill:', e);
@@ -692,13 +697,14 @@
     );
     if (index < 0) return false;
 
-    // Suppress scroll-select while we realign the list to avoid auto-switch oscillation
-    window.__suppressScrollSelectUntil = Date.now() + 1200;
-    window.__imageListProgrammaticScrollUntil = Date.now() + 1200;
-
     updateActiveImage(index);
 
     if (options.scroll) {
+      // Suppress scroll-select while we realign the list to avoid auto-switch oscillation.
+      // Use short suppression for instant scrolls to allow rapid sequential switching.
+      const suppressMs = options.smooth === true ? 400 : 80;
+      window.__suppressScrollSelectUntil = Date.now() + suppressMs;
+      window.__imageListProgrammaticScrollUntil = Date.now() + suppressMs;
       const targetThumbnail = imageGallery.querySelector(`[data-image-index="${index}"]`);
       if (targetThumbnail) {
         targetThumbnail.scrollIntoView({
@@ -747,6 +753,7 @@
     if (imageDots) imageDots.innerHTML = '';
 
     imageGalleryData = [];
+    window.orderedImageLabels = [];
     currentImageIndex = 0;
     updateGalleryControls();
   }
@@ -774,7 +781,12 @@
   // Legacy compatibility
   window.addImageToGallery = addImageToGallery;
   window.addImageToGalleryCompat = function addImageToGalleryCompat(imageData) {
-    const index = imageGalleryData.length;
+    const label = imageData?.original?.label || imageData?.label || imageData?.name || '';
+    const existingIndex = imageGalleryData.findIndex(item => {
+      const existingLabel = item?.original?.label || item?.label || item?.name || '';
+      return Boolean(label) && existingLabel === label;
+    });
+    const index = existingIndex >= 0 ? existingIndex : imageGalleryData.length;
     addImageToGallery(imageData, index);
   };
 

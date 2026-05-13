@@ -242,7 +242,7 @@
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
         border-bottom: var(--ob-border-width) solid var(--ob-border-color);
-        height: 48px;
+        min-height: 48px;
       }
 
       .toolbar-wrap {
@@ -251,9 +251,10 @@
         margin: 0;
         padding: 0;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: flex-start;
-        height: 48px;
+        min-height: 48px;
+        flex-wrap: wrap;
       }
 
       #tbLeft,
@@ -262,24 +263,25 @@
         position: relative;
         display: flex;
         align-items: center;
-        flex-shrink: 0;
-        /* Prevent shrinking that causes layout shifts */
         min-width: 0;
-        /* Allow flex items to shrink below content size if needed */
       }
 
       #tbLeft {
-        flex: 0 0 auto;
-        justify-content: flex-start;
+        flex: 1 1 auto;
+        justify-content: center;
+        flex-wrap: wrap;
+        row-gap: 4px;
       }
 
       #tbCenter {
         flex: 0 0 auto;
+        flex-shrink: 0;
         justify-content: center;
       }
 
       #tbRight {
         flex: 0 0 auto;
+        flex-shrink: 0;
         justify-content: flex-end;
         overflow: visible;
         margin-left: auto;
@@ -465,6 +467,45 @@
 
       .group-gap > *:last-child {
         margin-right: 0;
+      }
+
+      /* Desktop compact: tighten spacing when toolbar overflows */
+      [data-toolbar-mode='compact'] .toolbar-wrap {
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+      }
+
+      [data-toolbar-mode='compact'] .toolbar-wrap::-webkit-scrollbar {
+        height: 3px;
+      }
+
+      [data-toolbar-mode='compact'] .toolbar-wrap::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.4);
+        border-radius: 2px;
+      }
+
+      [data-toolbar-mode='compact'] .group-gap > * {
+        margin-right: 4px;
+      }
+
+      [data-toolbar-mode='compact'] .toolbar-wrap .tbtn {
+        padding: 0 8px;
+      }
+
+      [data-toolbar-mode='compact'] .toolbar-wrap .color-swatches {
+        gap: 5px;
+      }
+
+      [data-toolbar-mode='compact'] .toolbar-wrap .color-swatches button {
+        width: 18px;
+        height: 18px;
+      }
+
+      [data-toolbar-mode='compact'] .toolbar-wrap .tinput {
+        padding: 0 6px;
+        max-width: 120px;
       }
 
       /* Ensure all toolbar buttons have consistent sizing */
@@ -721,10 +762,10 @@
       #drawingModeToggle {
         padding: 8px 16px;
         background: var(--ob-bg-surface);
-        color: var(--ob-signal);
+        color: var(--ob-text-primary);
         font-weight: var(--ob-weight-semibold);
         border-radius: var(--ob-radius-button);
-        border: var(--ob-border-width) solid var(--ob-signal);
+        border: var(--ob-border-width) solid var(--ob-border-color);
       }
 
       .shape-toggle {
@@ -819,6 +860,12 @@
       }
 
       #shapeModeWrapper.shape-active > #shapeModeToggle {
+        border-color: var(--ob-signal);
+        color: var(--ob-signal);
+        background: var(--ob-signal-soft);
+      }
+
+      #drawingModeWrapper.shape-active > #drawingModeToggle {
         border-color: var(--ob-signal);
         color: var(--ob-signal);
         background: var(--ob-signal-soft);
@@ -1571,18 +1618,18 @@
       /* Vertical overflow remains visible for dropdown menus */
 
       /* STEP 2: CSS variants - Use data-toolbar-mode to control label display */
-      /* 
+      /*
          * Toolbar Label Sizing System:
-         * 
+         *
          * This system uses a global data-toolbar-mode attribute on <html> to control
          * toolbar label display, preventing flicker and pop-in during page load.
-         * 
+         *
          * How it works:
          * 1. Early script (in <head>) sets data-toolbar-mode='full' or 'compact' based on viewport width
          * 2. CSS reads this attribute to show/hide .label-long and .label-short spans
          * 3. JS fallback recalculates after fonts load and on window resize
          * 4. ResizeObserver is disabled for toolbar containers to prevent flicker loops
-         * 
+         *
          * Benefits:
          * - No DOM rewrites (only attribute changes)
          * - CSS handles display immediately (no JS delay)
@@ -1735,6 +1782,7 @@
 
       #elementsBody {
         flex: 1 1 auto;
+        min-height: 0 !important;
         overflow: hidden;
         display: flex;
         flex-direction: column;
@@ -1749,10 +1797,12 @@
       }
 
       #strokeVisibilityControls {
-        flex: 1 1 auto;
+        flex: 1 1 0 !important;
         min-height: 0;
+        display: block !important;
         /* allows flex child to shrink for scrolling in Firefox */
         overflow-y: auto !important;
+        overflow-x: hidden !important;
         /* Remove transition that causes flickering */
         transition: none !important;
       }
@@ -1777,11 +1827,14 @@
         transform: translateZ(0);
       }
 
+      .stroke-visibility-item > input,
+      .stroke-visibility-item > .delete-image-btn {
+        flex: 0 0 auto !important;
+      }
+
       /* Ensure the strokes list flows vertically and doesn't overlap */
       #strokesList {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+        display: block !important;
       }
 
       .stroke-actions-panel {
@@ -1820,6 +1873,7 @@
         align-items: center !important;
         gap: 6px !important;
         flex: 1 !important;
+        min-width: 0 !important;
       }
 
       .stroke-name {
@@ -1860,6 +1914,8 @@
         text-align: center !important;
         min-height: 20px !important;
         vertical-align: middle !important;
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
       }
 
       .stroke-measurement.empty-measurement {
@@ -2234,7 +2290,7 @@
         border: 1px solid rgba(15, 23, 42, 0.12);
         border-radius: 999px;
         box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
-        z-index: 12000;
+        z-index: 1540;
         pointer-events: auto;
       }
 
@@ -2253,7 +2309,7 @@
         color: #0f172a;
         font-size: 12px;
         font-weight: 700;
-        z-index: 12001;
+        z-index: 1541;
         pointer-events: none;
       }
 
@@ -2515,7 +2571,7 @@
 
   <body
     class="h-screen overflow-hidden"
-    style="padding-top: 48px; background-color: var(--ob-paper); font-family: var(--ob-font-sans);"
+    style="padding-top: var(--toolbar-height, 48px); background-color: var(--ob-paper); font-family: var(--ob-font-sans);"
     data-heic-worker-url="https://openpaint-heic-converter.sofapaint-api.workers.dev"
   >
     <!-- Top Toolbar -->
@@ -2523,7 +2579,7 @@
       <div class="toolbar-wrap smart-label-scope" id="toolbarWrap">
         <div id="tbLeft" class="group-gap smart-label-scope">
           <!-- Pre-populated toolbar content to prevent flash -->
-          <button id="paste" class="tbtn" title="Upload Images" aria-label="Upload Images">
+          <button id="paste" class="tbtn" title="Upload Images — or paste with Ctrl+V / Cmd+V" aria-label="Upload Images">
             <span class="label-long">Upload Images</span><span class="label-short">Upload</span>
           </button>
           <button id="clear" class="tbtn">Clear</button>
@@ -2531,7 +2587,7 @@
             <button
               id="drawingModeToggle"
               class="tbtn straight-mode"
-              title="Drawing Mode"
+              title="Drawing Mode (D) — Lines, curves, eraser"
               aria-label="Drawing Mode"
               aria-pressed="true"
             >
@@ -2546,7 +2602,7 @@
             </div>
           </div>
           <div id="textModeWrapper" class="shape-toggle text-mode-toggle">
-            <button id="textModeToggle" class="tbtn" title="Text Tool" aria-label="Text Tool">
+            <button id="textModeToggle" class="tbtn" title="Text Tool (T) — Add text annotations" aria-label="Text Tool">
               <span class="label-long">Text</span><span class="label-short">Text</span>
               <span class="shape-icon handdrawn" aria-hidden="true">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -2576,7 +2632,7 @@
             <button
               id="shapeModeToggle"
               class="tbtn"
-              title="Shapes"
+              title="Shapes (S) — Rectangles, circles, stars"
               aria-label="Shapes"
               aria-pressed="false"
             >
@@ -2746,8 +2802,9 @@
               ></line>
             </svg>
           </button>
-          <button id="undoBtn" class="tbtn icon-btn" title="Undo (Ctrl+Z)" aria-label="Undo">↺</button>
-          <button id="redoBtn" class="tbtn icon-btn" title="Redo (Ctrl+Y)" aria-label="Redo">↻</button>
+          <button id="undoBtn" class="tbtn icon-btn" title="Undo (Ctrl+Z / Cmd+Z)" aria-label="Undo">↺</button>
+          <button id="redoBtn" class="tbtn icon-btn" title="Redo (Ctrl+Y / Cmd+Y)" aria-label="Redo">↻</button>
+          <button id="shortcutHelpBtn" class="tbtn icon-btn" title="Keyboard shortcuts (?)" aria-label="Keyboard shortcuts" style="font-size:14px;opacity:0.7;">?</button>
         </div>
         <div id="tbCenter" class="group-gap"></div>
         <div id="tbRight" class="group-gap smart-label-scope">
@@ -2762,7 +2819,7 @@
           <button id="loadProject" title="Open project" class="tbtn" aria-label="Open project">
             <span class="label-long">Open</span><span class="label-short">Open</span>
           </button>
-          <button id="saveProjectTop" class="tbtn" title="Save project" aria-label="Save project">
+          <button id="saveProjectTop" class="tbtn" title="Save project (Ctrl+S / Cmd+S)" aria-label="Save project">
             <span class="label-long">Save</span><span class="label-short">Save</span>
           </button>
         </div>
@@ -2816,7 +2873,10 @@
       <div id="frame-content" class="min-h-screen flex items-center justify-center">
         <div class="text-center p-8">
           <h1 class="text-4xl font-bold text-slate-800 mb-4">OpenPaint Frame Capture</h1>
-          <p class="text-slate-600">Images will appear here as you add them to your project</p>
+          <p class="text-slate-600" style="max-width:420px;margin:0 auto;line-height:1.6;">
+            Drag &amp; drop images, paste from clipboard (Ctrl+V), or click <strong>Upload</strong> to get started.<br>
+            <span style="font-size:0.85em;opacity:0.7;">Quick start: Upload → Draw → Measure → Save</span>
+          </p>
         </div>
       </div>
     </div>
@@ -2888,26 +2948,52 @@
                 <option value="cm">cm</option>
               </select>
             </div>
+            <div id="inchDisplayToggleWrap" class="hidden flex items-center gap-3">
+              <label
+                for="inchDisplayToggleBtn"
+                class="text-sm font-semibold text-slate-700 w-14"
+                >Inches:</label
+              >
+              <button
+                id="inchDisplayToggleBtn"
+                type="button"
+                class="px-3 py-2.5 border border-gray-300 rounded-xl text-sm bg-white flex-1 text-left focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 shadow-sm"
+              >
+                decimals
+              </button>
+            </div>
 
             <!-- Hidden inputs for functionality -->
             <div id="measurementInput" class="hidden">
               <div id="inchInputs" class="flex items-center gap-2">
                 <input
-                  type="number"
-                  id="inchWhole"
-                  min="0"
+                  type="text"
+                  id="inchValue"
                   value="0"
-                  class="w-16 px-2 py-1 border border-gray-300 rounded text-sm"
+                  placeholder="70 5/16"
+                  class="w-28 px-2 py-1 border border-gray-300 rounded text-sm"
                 />
-                <select id="inchFraction" class="px-2 py-1 border border-gray-300 rounded text-sm">
+                <input type="hidden" id="inchWhole" value="0" />
+                <select
+                  id="inchFraction"
+                  class="hidden px-2 py-1 border border-gray-300 rounded text-sm"
+                >
                   <option value="0">0</option>
+                  <option value="0.0625">1/16</option>
                   <option value="0.125">1/8</option>
+                  <option value="0.1875">3/16</option>
                   <option value="0.25">1/4</option>
+                  <option value="0.3125">5/16</option>
                   <option value="0.375">3/8</option>
+                  <option value="0.4375">7/16</option>
                   <option value="0.5">1/2</option>
+                  <option value="0.5625">9/16</option>
                   <option value="0.625">5/8</option>
+                  <option value="0.6875">11/16</option>
                   <option value="0.75">3/4</option>
+                  <option value="0.8125">13/16</option>
                   <option value="0.875">7/8</option>
+                  <option value="0.9375">15/16</option>
                 </select>
               </div>
               <div id="cmInputs" class="hidden">
@@ -3262,7 +3348,7 @@
         max-height: 100%;
         height: calc(100% - 128px) !important;
         position: fixed !important;
-        top: 48px !important;
+        top: var(--toolbar-height, 48px) !important;
         left: 0 !important;
       "
     >
@@ -3390,6 +3476,13 @@
               >
                 +
               </button>
+              <button
+                id="tagColorEditorBtn"
+                title="Edit tag colors"
+                class="ml-1 px-2 h-5 bg-white border border-slate-300 rounded hover:bg-slate-50 flex items-center justify-center text-[10px] text-slate-600 hover:text-slate-800 transition-colors"
+              >
+                Colors
+              </button>
             </div>
 
             <button
@@ -3398,6 +3491,14 @@
               title="Toggle units"
             >
               inches
+            </button>
+            <button
+              id="inchDisplayToggleBtnSecondary"
+              class="hidden px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              title="Display inches as decimals"
+              aria-pressed="false"
+            >
+              dec
             </button>
             <button
               id="labelShapeToggleBtn"
@@ -3427,12 +3528,12 @@
         </div>
         <div
           id="strokeVisibilityControls"
-          class="flex-1 overflow-y-auto overflow-x-hidden flex flex-col min-h-0"
+          class="flex-1 overflow-y-auto overflow-x-hidden min-h-0"
           style="box-sizing: border-box; position: relative; z-index: 100"
         >
           <div
             id="strokesList"
-            class="px-3 pt-2 pb-2 flex-grow flex flex-col justify-center"
+            class="px-3 pt-2 pb-2"
             style="padding-bottom: 70px !important"
           ></div>
         </div>
@@ -3447,7 +3548,7 @@
         max-height: 100%;
         height: calc(100% - 128px) !important;
         position: fixed !important;
-        top: 48px !important;
+        top: var(--toolbar-height, 48px) !important;
         right: 0 !important;
       "
     >
@@ -3799,10 +3900,16 @@
               Save as PDF
             </button>
             <button
-              class="block w-full text-left px-3 py-2 text-xs hover:bg-slate-50 rounded-b-xl transition-colors"
+              class="block w-full text-left px-3 py-2 text-xs hover:bg-slate-50 transition-colors"
               data-action="multiple"
             >
               Save Multiple
+            </button>
+            <button
+              data-action="multiple-no-tags"
+              class="block w-full text-left px-3 py-2 text-xs hover:bg-slate-50 rounded-b-xl transition-colors"
+            >
+              Save Multiple No Tags (JPG)
             </button>
           </div>
         </div>
@@ -4014,6 +4121,89 @@
         </div>
       </div>
     </dialog>
+
+    <!-- Keyboard Shortcuts Dialog -->
+    <dialog id="shortcutHelpDialog" style="
+      border:none;border-radius:12px;padding:0;max-width:420px;width:90vw;
+      box-shadow:0 25px 60px rgba(0,0,0,.25);background:var(--ob-paper,#fff);
+    ">
+      <div style="padding:24px 28px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h2 style="margin:0;font-size:18px;font-weight:600;color:var(--ob-text-primary,#1e293b);">Keyboard Shortcuts</h2>
+          <button id="shortcutHelpClose" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ob-text-secondary,#64748b);padding:4px 8px;">✕</button>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          <tbody>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Draw mode (line)</td><td style="padding:6px 0;text-align:right;font-weight:600;">D</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Text tool</td><td style="padding:6px 0;text-align:right;font-weight:600;">T</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Shapes</td><td style="padding:6px 0;text-align:right;font-weight:600;">S</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Select mode</td><td style="padding:6px 0;text-align:right;font-weight:600;">M</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Cycle tools</td><td style="padding:6px 0;text-align:right;font-weight:600;">Tab</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Lock/unlock frame</td><td style="padding:6px 0;text-align:right;font-weight:600;">L</td></tr>
+            <tr style="border-top:1px solid var(--ob-border-color,#e2e8f0);"><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Toggle split workspace</td><td style="padding:6px 0;text-align:right;font-weight:600;">\</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Cycle guide in split</td><td style="padding:6px 0;text-align:right;font-weight:600;">Shift + \</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Guide gallery</td><td style="padding:6px 0;text-align:right;font-weight:600;">Alt + \</td></tr>
+            <tr style="border-top:1px solid var(--ob-border-color,#e2e8f0);"><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Resize frame</td><td style="padding:6px 0;text-align:right;font-weight:600;">+ / −</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Previous / Next image</td><td style="padding:6px 0;text-align:right;font-weight:600;">← →</td></tr>
+            <tr style="border-top:1px solid var(--ob-border-color,#e2e8f0);"><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Undo</td><td style="padding:6px 0;text-align:right;font-weight:600;">Ctrl/Cmd + Z</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Redo</td><td style="padding:6px 0;text-align:right;font-weight:600;">Ctrl/Cmd + Y</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Paste image</td><td style="padding:6px 0;text-align:right;font-weight:600;">Ctrl/Cmd + V</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Delete selected</td><td style="padding:6px 0;text-align:right;font-weight:600;">Delete / Backspace</td></tr>
+            <tr style="border-top:1px solid var(--ob-border-color,#e2e8f0);"><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">Pixel Pets <span style="font-size:11px;color:#94a3b8;">(needs sign in)</span></td><td style="padding:6px 0;text-align:right;font-weight:600;">Ctrl/Cmd + Shift + P</td></tr>
+            <tr><td style="padding:6px 0;color:var(--ob-text-secondary,#64748b);">This help</td><td style="padding:6px 0;text-align:right;font-weight:600;">? / H</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </dialog>
+
+    <!-- Welcome Overlay for First-Time Users -->
+    <div id="welcomeOverlay" style="
+      display:none;position:fixed;inset:0;z-index:10000;
+      background:rgba(15,23,42,.55);backdrop-filter:blur(4px);
+      cursor:pointer;
+    ">
+      <div style="
+        position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+        background:var(--ob-paper,#fff);border-radius:16px;padding:36px 40px;
+        max-width:480px;width:90vw;box-shadow:0 30px 80px rgba(0,0,0,.3);
+        cursor:default;
+      ">
+        <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:var(--ob-text-primary,#1e293b);">Welcome to OpenPaint</h1>
+        <p style="margin:0 0 20px;color:var(--ob-text-secondary,#64748b);font-size:14px;line-height:1.5;">
+          Create measurement documents and annotated images in a few clicks.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:12px;font-size:14px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--ob-signal-soft,#e0e7ff);display:flex;align-items:center;justify-content:center;font-size:16px;">📷</span>
+            <span><strong>Upload</strong> — Drag &amp; drop images, paste (Ctrl+V), or click Upload</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--ob-signal-soft,#e0e7ff);display:flex;align-items:center;justify-content:center;font-size:16px;">✏️</span>
+            <span><strong>Draw</strong> — Use the toolbar to draw lines, shapes, and text</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--ob-signal-soft,#e0e7ff);display:flex;align-items:center;justify-content:center;font-size:16px;">📏</span>
+            <span><strong>Measure</strong> — Add measurements with automatic labels</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--ob-signal-soft,#e0e7ff);display:flex;align-items:center;justify-content:center;font-size:16px;">📦</span>
+            <span><strong>Search products</strong> — Import measurement guides from CW</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:var(--ob-signal-soft,#e0e7ff);display:flex;align-items:center;justify-content:center;font-size:16px;">💾</span>
+            <span><strong>Save</strong> — Save your project as a ZIP file</span>
+          </div>
+        </div>
+        <div style="margin-top:24px;text-align:center;">
+          <button id="welcomeDismiss" style="
+            background:var(--ob-signal,#2d6bff);color:#fff;border:none;
+            border-radius:8px;padding:10px 32px;font-size:15px;font-weight:600;
+            cursor:pointer;
+          ">Get Started</button>
+          <p style="margin:10px 0 0;font-size:12px;color:var(--ob-text-secondary,#94a3b8);">Press <strong>?</strong> anytime for keyboard shortcuts</p>
+        </div>
+      </div>
+    </div>
 
     <!-- Load AI Integration Module -->
 

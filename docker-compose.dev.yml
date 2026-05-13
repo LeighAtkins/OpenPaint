@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  mos-sam:
+    build:
+      context: ./services/mos-sam
+    container_name: openpaint-mos-sam
+    ports:
+      - '8090:8090'
+    restart: unless-stopped
+    environment:
+      - MOS_MODEL_PATH=${MOS_MODEL_PATH:-}
+    volumes:
+      - ${MOS_WEIGHTS_DIR:-./services/mos-sam/weights}:/app/weights:ro
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8090/health']
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    # Uncomment for GPU passthrough (requires nvidia-container-toolkit)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]

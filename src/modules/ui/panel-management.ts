@@ -651,7 +651,7 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
           if (strokeContent) {
             strokeContent.classList.remove('hidden');
             strokeContent.style.maxHeight = 'none';
-            strokeContent.style.setProperty('display', 'block', 'important');
+            strokeContent.style.setProperty('display', 'flex', 'important');
           }
         } else {
           // If collapsed, ensure content is hidden

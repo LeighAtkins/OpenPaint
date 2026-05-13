@@ -1,0 +1,1572 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Component Builder Prototype</title>
+    <style>
+      :root {
+        --bg: #ece5d8;
+        --paper: rgba(255, 252, 246, 0.92);
+        --ink: #201b16;
+        --muted: #6d6359;
+        --line: rgba(50, 40, 28, 0.12);
+        --accent: #0d5f58;
+        --accent-strong: #08443f;
+        --gold: #b78437;
+        --shadow: 0 22px 56px rgba(36, 25, 10, 0.12);
+        --radius-xl: 28px;
+        --radius-lg: 20px;
+        --radius-md: 14px;
+      }
+
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      html, body { margin: 0; min-height: 100%; }
+
+      body {
+        font-family: "Segoe UI Variable", "Trebuchet MS", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 12% 0%, rgba(183, 132, 55, 0.16), transparent 28%),
+          radial-gradient(circle at 92% 8%, rgba(13, 95, 88, 0.16), transparent 24%),
+          linear-gradient(180deg, #efe8db 0%, #f8f2e8 55%, #ebe0ce 100%);
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+          linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+        background-size: 22px 22px;
+        mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.38), transparent 82%);
+      }
+
+      button, input, select, textarea { font: inherit; }
+
+      .app {
+        width: min(1760px, calc(100vw - 20px));
+        margin: 10px auto;
+        height: calc(100vh - 20px);
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr) auto;
+        gap: 10px;
+      }
+
+      .hero, .toolbar, .panel, .footer {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-xl);
+        background: var(--paper);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(16px);
+      }
+
+      .hero {
+        padding: 18px 20px;
+        display: grid;
+        grid-template-columns: minmax(0, 1.8fr) minmax(420px, 1fr);
+        gap: 16px;
+        align-items: center;
+        background:
+          linear-gradient(120deg, rgba(255, 252, 246, 0.96), rgba(245, 236, 221, 0.9)),
+          var(--paper);
+      }
+
+      .hero-copy { display: grid; gap: 8px; }
+      .eyebrow {
+        font-size: 11px;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-weight: 700;
+      }
+      .hero h1 {
+        margin: 0;
+        font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+        font-size: clamp(1.8rem, 3vw, 3rem);
+        line-height: 0.92;
+        letter-spacing: -0.04em;
+      }
+      .hero p {
+        margin: 0;
+        max-width: 72ch;
+        color: var(--muted);
+        font-size: 0.95rem;
+        line-height: 1.38;
+      }
+
+      .hero-stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .stat {
+        padding: 10px 12px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.68);
+        border: 1px solid rgba(50, 40, 28, 0.08);
+      }
+      .stat label {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-weight: 700;
+      }
+      .stat strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 1.35rem;
+        line-height: 1;
+      }
+
+      .toolbar {
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .toolbar-left, .toolbar-right {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        min-width: 0;
+      }
+      .toolbar-left { flex: 1 1 auto; }
+      .toolbar-right { flex: 0 0 auto; }
+
+      .field { display: grid; gap: 4px; }
+      .field label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--muted);
+        font-weight: 700;
+      }
+      .field input, .field select, .field textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.84);
+        color: var(--ink);
+      }
+      .field-search { width: 220px; }
+      .field-view { width: 130px; }
+      .field-kind { width: 160px; }
+
+      .btn {
+        border: 0;
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 120ms ease, background 120ms ease;
+      }
+      .btn:hover { transform: translateY(-1px); }
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+        color: white;
+      }
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.82);
+        color: var(--ink);
+        border: 1px solid var(--line);
+      }
+      .btn-warn {
+        background: linear-gradient(135deg, #c07c2d, #91561c);
+        color: white;
+      }
+
+      .workspace {
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 320px minmax(560px, 1fr) 430px;
+        gap: 10px;
+      }
+
+      .panel {
+        min-height: 0;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        overflow: hidden;
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.46);
+      }
+
+      .panel-title { display: grid; gap: 3px; }
+      .panel-title strong { font-size: 1rem; }
+      .panel-title span { color: var(--muted); font-size: 0.86rem; }
+      .scroll { min-height: 0; overflow: auto; }
+
+      .catalog-body, .preview-body {
+        padding: 14px;
+        display: grid;
+        gap: 12px;
+        align-content: start;
+      }
+
+      .catalog-list, .svg-grid, .control-stack { display: grid; gap: 10px; }
+
+      .catalog-item, .svg-card, .card {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.76);
+      }
+
+      .catalog-item {
+        padding: 10px 12px;
+        cursor: pointer;
+        transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+      }
+      .catalog-item:hover { transform: translateY(-1px); border-color: rgba(13, 95, 88, 0.32); }
+      .catalog-item.active { border-color: rgba(13, 95, 88, 0.52); background: rgba(237, 250, 247, 0.82); }
+
+      .item-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: start;
+      }
+      .item-code, .code-name, .mono {
+        font-family: "Consolas", "SFMono-Regular", monospace;
+      }
+      .item-code, .code-name { font-weight: 700; }
+      .item-note { color: var(--muted); font-size: 0.84rem; }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        background: rgba(46, 36, 24, 0.07);
+      }
+      .chip-strong { background: rgba(13, 95, 88, 0.13); color: var(--accent-strong); }
+      .chip-gold { background: rgba(183, 132, 55, 0.16); color: #7e5419; }
+
+      .builder-shell {
+        min-height: 0;
+        display: grid;
+        grid-template-rows: minmax(280px, 0.95fr) minmax(0, 1.05fr);
+      }
+      .stage-wrap {
+        padding: 14px;
+        border-bottom: 1px solid var(--line);
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        gap: 12px;
+      }
+      .stage-meta, .summary-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+      }
+      .stage-card {
+        min-height: 0;
+        border-radius: 22px;
+        border: 1px solid var(--line);
+        background:
+          radial-gradient(circle at 50% 0%, rgba(183, 132, 55, 0.08), transparent 48%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(248, 240, 229, 0.72));
+        padding: 16px;
+        position: relative;
+        overflow: hidden;
+      }
+      .stage-card::before {
+        content: "";
+        position: absolute;
+        inset: 12px;
+        border-radius: 18px;
+        border: 1px dashed rgba(50, 40, 28, 0.08);
+        pointer-events: none;
+      }
+      .builder-svg { width: 100%; height: 100%; }
+      .summary-text { color: var(--muted); font-size: 0.88rem; }
+
+      .controls {
+        min-height: 0;
+        padding: 14px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 0.9fr);
+        gap: 12px;
+      }
+
+      .card {
+        padding: 12px;
+        display: grid;
+        gap: 10px;
+      }
+      .card h3 {
+        margin: 0;
+        font-size: 0.88rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--muted);
+      }
+
+      .grid-buttons { display: grid; gap: 8px; }
+      .grid-buttons.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-buttons.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .choice {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.84);
+        color: var(--ink);
+        padding: 10px 11px;
+        text-align: left;
+        cursor: pointer;
+        transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+      }
+      .choice:hover { transform: translateY(-1px); }
+      .choice.active {
+        border-color: rgba(13, 95, 88, 0.45);
+        background: rgba(236, 250, 247, 0.9);
+      }
+      .choice strong, .choice span { display: block; }
+      .choice span { margin-top: 2px; color: var(--muted); font-size: 0.78rem; }
+
+      .slider-row {
+        display: grid;
+        gap: 6px;
+      }
+      .slider-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        font-size: 0.88rem;
+      }
+      .slider-head label { color: var(--muted); }
+
+      .meta-list { display: grid; gap: 6px; }
+      .meta-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 0.86rem;
+      }
+      .meta-row label { color: var(--muted); }
+
+      .svg-card { padding: 10px; display: grid; gap: 8px; }
+      .svg-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        align-items: center;
+      }
+      .svg-head strong {
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-size: 0.76rem;
+      }
+      .svg-frame {
+        height: 150px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.9);
+        overflow: hidden;
+      }
+      .svg-frame img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .footer {
+        padding: 10px 14px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+
+      .empty {
+        padding: 16px;
+        border-radius: 16px;
+        border: 1px dashed rgba(50, 40, 28, 0.14);
+        background: rgba(255, 255, 255, 0.5);
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 1100px) {
+        .app {
+          width: min(100vw - 12px, 100%);
+          margin: 6px auto;
+          height: auto;
+          min-height: calc(100vh - 12px);
+        }
+        .hero { grid-template-columns: 1fr; }
+        .hero-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .workspace { grid-template-columns: 1fr; }
+        .controls { grid-template-columns: 1fr; }
+        .toolbar { display: grid; }
+        .toolbar-left, .toolbar-right { flex-wrap: wrap; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="eyebrow">Component Builder Prototype</div>
+          <h1>Design one top-down component per SVG code.</h1>
+          <p>
+            This is a per-part designer, not a sectional composer. Pick a single guide code, tune
+            how that one component should read from above, compare it against the real front/side/back
+            SVGs, and save a local recipe for that specific code.
+          </p>
+        </div>
+        <div class="hero-stats">
+          <div class="stat">
+            <label>Catalog Codes</label>
+            <strong id="stat-codes">0</strong>
+          </div>
+          <div class="stat">
+            <label>Filtered</label>
+            <strong id="stat-filtered">0</strong>
+          </div>
+          <div class="stat">
+            <label>Saved Recipes</label>
+            <strong id="stat-recipes">0</strong>
+          </div>
+          <div class="stat">
+            <label>Current Kind</label>
+            <strong id="stat-kind">-</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="toolbar">
+        <div class="toolbar-left">
+          <div class="field field-search">
+            <label for="catalog-search">Catalog Search</label>
+            <input id="catalog-search" type="text" placeholder="CS5L-SA-HB-L" />
+          </div>
+          <div class="field field-kind">
+            <label for="kind-filter">Kind</label>
+            <select id="kind-filter">
+              <option value="all">All kinds</option>
+              <option value="seat">Seat</option>
+              <option value="chaise">Chaise</option>
+              <option value="corner">Corner</option>
+              <option value="ottoman">Ottoman</option>
+              <option value="back_cushion">Back Cushion</option>
+              <option value="seat_cushion">Seat Cushion</option>
+              <option value="chair">Chair</option>
+              <option value="special">Special</option>
+            </select>
+          </div>
+          <div class="field field-view">
+            <label for="view-filter">View</label>
+            <select id="view-filter">
+              <option value="all">Any view</option>
+              <option value="front">Front</option>
+              <option value="side">Side</option>
+              <option value="back">Back</option>
+            </select>
+          </div>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn btn-secondary" id="btn-load-default">Load Code Defaults</button>
+          <button class="btn btn-primary" id="btn-save-recipe">Save Recipe</button>
+          <button class="btn btn-secondary" id="btn-export-recipes">Export Recipes</button>
+          <button class="btn btn-warn" id="btn-reset">Reset Shape</button>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <aside class="panel">
+          <div class="panel-head">
+            <div class="panel-title">
+              <strong>Catalog</strong>
+              <span>Choose one component code to design.</span>
+            </div>
+            <div class="chip chip-strong" id="catalog-count">0 shown</div>
+          </div>
+          <div class="catalog-body scroll">
+            <div class="catalog-list" id="catalog-list"></div>
+          </div>
+        </aside>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title">
+              <strong>Top-Down Component</strong>
+              <span id="builder-subtitle">Single component recipe for the selected code.</span>
+            </div>
+            <div class="chips" id="summary-chips"></div>
+          </div>
+          <div class="builder-shell">
+            <div class="stage-wrap">
+              <div class="stage-meta">
+                <div class="chips" id="signature-chips"></div>
+                <div class="summary-text mono" id="signature-text">No code selected</div>
+              </div>
+              <div class="stage-card">
+                <svg class="builder-svg" id="builder-svg" viewBox="0 0 760 320" aria-label="Top-down component preview"></svg>
+              </div>
+              <div class="summary-row">
+                <div class="summary-text" id="match-summary">Tune the geometry until it reads correctly from above.</div>
+                <div class="chips">
+                  <div class="chip">Single component only</div>
+                  <div class="chip chip-gold">Saved per SVG code</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="controls scroll">
+              <div class="control-stack" id="controls-left"></div>
+              <div class="control-stack">
+                <div class="card">
+                  <h3>Recipe Notes</h3>
+                  <div class="field">
+                    <label for="recipe-notes">What the top-down shape should communicate</label>
+                    <textarea id="recipe-notes" rows="6" placeholder="Example: chaise should read as a long rectangle, arm starts at the top edge, no detached corner block."></textarea>
+                  </div>
+                </div>
+                <div class="card">
+                  <h3>Recipe Actions</h3>
+                  <div class="grid-buttons two">
+                    <button class="choice" id="btn-load-saved">
+                      <strong>Load Saved</strong>
+                      <span>Use local recipe for this code</span>
+                    </button>
+                    <button class="choice" id="btn-save-selected">
+                      <strong>Save To Code</strong>
+                      <span>Overwrite this code recipe</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="panel">
+          <div class="panel-head">
+            <div class="panel-title">
+              <strong>SVG Compare</strong>
+              <span>Reference the real guide art while shaping the component.</span>
+            </div>
+            <div class="chip chip-strong mono" id="selected-code-chip">No code</div>
+          </div>
+          <div class="preview-body scroll">
+            <div class="code-name" id="selected-code-name">No code selected</div>
+            <div class="chips" id="selected-code-tags"></div>
+
+            <div class="card">
+              <h3>Parsed Metadata</h3>
+              <div class="meta-list" id="meta-list"></div>
+            </div>
+
+            <div class="svg-grid" id="svg-grid"></div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="footer">
+        <div id="status-text">Loading manifest…</div>
+        <div class="mono">guide_svgs/manifest.json</div>
+      </section>
+    </div>
+
+    <script>
+      const MANIFEST_PATH = "./guide_svgs/manifest.json";
+      const STORAGE_KEY = "component-builder-prototype-state-v1";
+      const RECIPES_KEY = "component-builder-prototype-recipes-v1";
+      const ARM_CODES = new Set(["NA", "SA", "SA2", "RA", "RA2", "ERA", "WA", "WA2", "SLA", "SSA", "SSA2", "SSLA", "SSLA2", "SWA", "SWA2", "SRA"]);
+      const BACK_CODES = new Set(["HB", "HB2", "SB", "SB2", "RB", "WB"]);
+
+      const els = {
+        catalogSearch: document.getElementById("catalog-search"),
+        kindFilter: document.getElementById("kind-filter"),
+        viewFilter: document.getElementById("view-filter"),
+        catalogCount: document.getElementById("catalog-count"),
+        catalogList: document.getElementById("catalog-list"),
+        builderSvg: document.getElementById("builder-svg"),
+        controlsLeft: document.getElementById("controls-left"),
+        recipeNotes: document.getElementById("recipe-notes"),
+        selectedCodeChip: document.getElementById("selected-code-chip"),
+        selectedCodeName: document.getElementById("selected-code-name"),
+        selectedCodeTags: document.getElementById("selected-code-tags"),
+        metaList: document.getElementById("meta-list"),
+        svgGrid: document.getElementById("svg-grid"),
+        statusText: document.getElementById("status-text"),
+        summaryChips: document.getElementById("summary-chips"),
+        signatureChips: document.getElementById("signature-chips"),
+        signatureText: document.getElementById("signature-text"),
+        builderSubtitle: document.getElementById("builder-subtitle"),
+        statCodes: document.getElementById("stat-codes"),
+        statFiltered: document.getElementById("stat-filtered"),
+        statRecipes: document.getElementById("stat-recipes"),
+        statKind: document.getElementById("stat-kind"),
+        btnLoadDefault: document.getElementById("btn-load-default"),
+        btnSaveRecipe: document.getElementById("btn-save-recipe"),
+        btnExportRecipes: document.getElementById("btn-export-recipes"),
+        btnReset: document.getElementById("btn-reset"),
+        btnLoadSaved: document.getElementById("btn-load-saved"),
+        btnSaveSelected: document.getElementById("btn-save-selected"),
+      };
+
+      const state = {
+        manifest: {},
+        catalog: [],
+        selectedCode: null,
+        recipes: loadRecipes(),
+        builder: defaultBuilder(),
+      };
+
+      function defaultBuilder() {
+        return {
+          kind: "seat",
+          size: "cs3",
+          armMode: "both",
+          hasBackCushion: false,
+          hasSeatCushion: false,
+          frontPanel: "flat",
+          armFamily: "SA",
+          backStyle: "SB",
+          facing: "",
+          width: 68,
+          depth: 44,
+          backThickness: 10,
+          armThickness: 8,
+          armHeightPct: 100,
+          innerInset: 4,
+          cornerCutPct: 45,
+          chaiseWidthPct: 50,
+          chaiseDepthPct: 100,
+          notes: "",
+        };
+      }
+
+      function defaultWidthForSize(size) {
+        if (size === "cs1") return 52;
+        if (size === "cs3") return 104;
+        if (size === "cs5") return 58;
+        if (size === "corner") return 78;
+        if (size === "cs0") return 44;
+        return 68;
+      }
+
+      function loadRecipes() {
+        try {
+          const raw = localStorage.getItem(RECIPES_KEY);
+          if (!raw) return {};
+          const parsed = JSON.parse(raw);
+          return parsed && typeof parsed === "object" ? parsed : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function saveRecipes() {
+        localStorage.setItem(RECIPES_KEY, JSON.stringify(state.recipes));
+      }
+
+      function persistWorkspace() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          selectedCode: state.selectedCode,
+          builder: state.builder,
+          search: els.catalogSearch.value,
+          kind: els.kindFilter.value,
+          view: els.viewFilter.value,
+        }));
+      }
+
+      function restoreWorkspace() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return false;
+          const parsed = JSON.parse(raw);
+          if (typeof parsed.selectedCode === "string") state.selectedCode = parsed.selectedCode;
+          if (parsed.builder) state.builder = normalizeBuilder(parsed.builder);
+          if (typeof parsed.search === "string") els.catalogSearch.value = parsed.search;
+          if (typeof parsed.kind === "string") els.kindFilter.value = parsed.kind;
+          if (typeof parsed.view === "string") els.viewFilter.value = parsed.view;
+          return true;
+        } catch {
+          // ignore bad local state
+          return false;
+        }
+      }
+
+      function normalizeBuilder(builder) {
+        const base = defaultBuilder();
+        return {
+          ...base,
+          ...builder,
+          hasBackCushion: Boolean(builder?.hasBackCushion),
+          hasSeatCushion: Boolean(builder?.hasSeatCushion),
+          notes: typeof builder?.notes === "string" ? builder.notes : "",
+        };
+      }
+
+      function parseCode(code, entry) {
+        const tokens = code.split("-");
+        const base = tokens[0];
+        const suffix = tokens.slice(1);
+        const meta = {
+          code,
+          base,
+          views: entry.views || [],
+          files: entry.files || {},
+          kind: "special",
+          size: "unknown",
+          frontPanel: "none",
+          armCode: "",
+          armGroup: "",
+          backCode: "",
+          backGroup: "",
+          facing: "",
+          extras: [],
+        };
+
+        if (/^CC-ST/.test(code)) { meta.kind = "seat_cushion"; meta.size = "cs1"; }
+        else if (/^CC/.test(code)) { meta.kind = "back_cushion"; meta.size = "cs1"; }
+        else if (/^CS0/.test(base)) { meta.kind = "ottoman"; meta.size = "cs0"; }
+        else if (/^CS1/.test(base)) { meta.kind = "seat"; meta.size = "cs1"; }
+        else if (/^CS3/.test(base)) { meta.kind = "seat"; meta.size = "cs3"; }
+        else if (/^CS4/.test(base)) { meta.kind = "corner"; meta.size = "corner"; }
+        else if (/^CS5/.test(base)) { meta.kind = "chaise"; meta.size = "cs5"; }
+        else if (/^CCL/.test(base)) { meta.kind = "chaise"; meta.size = "cs5"; }
+        else if (/^CSS/.test(base)) { meta.kind = "seat"; meta.size = "cs1"; }
+
+        if (/B$/.test(base)) meta.frontPanel = "flat";
+        else if (/L$/.test(base)) meta.frontPanel = "extruded";
+        else if (/X$/.test(base)) meta.frontPanel = "none";
+
+        for (const token of suffix) {
+          if (ARM_CODES.has(token)) meta.armCode = token;
+          else if (BACK_CODES.has(token)) meta.backCode = token;
+          else if (token === "L" || token === "R") meta.facing = token;
+          else meta.extras.push(token);
+        }
+
+        if (meta.extras.includes("CNR") || meta.extras.includes("CNRP")) {
+          meta.kind = "corner";
+          meta.size = "corner";
+        }
+        if (meta.extras.includes("SNUG") || meta.extras.includes("MSKT")) {
+          meta.kind = "ottoman";
+          meta.size = "cs0";
+        }
+
+        meta.armGroup = armGroup(meta.armCode);
+        meta.backGroup = backGroup(meta.backCode);
+        meta.armMode = inferArmMode(meta);
+        return meta;
+      }
+
+      function armGroup(code) {
+        if (!code) return "";
+        if (code === "NA") return "NA";
+        if (["SA", "SA2"].includes(code)) return "SA";
+        if (["RA", "RA2", "ERA"].includes(code)) return "RA";
+        if (["WA", "WA2"].includes(code)) return "WA";
+        if (code === "SLA") return "SLA";
+        if (["SSA", "SSA2", "SSLA", "SSLA2"].includes(code)) return "SSA";
+        if (["SRA", "SWA", "SWA2"].includes(code)) return "SRA";
+        return code;
+      }
+
+      function backGroup(code) {
+        if (!code) return "";
+        if (code.startsWith("HB")) return "HB";
+        if (code.startsWith("SB")) return "SB";
+        return code;
+      }
+
+      function inferArmMode(meta) {
+        if (meta.kind === "corner" || meta.kind === "ottoman") return "none";
+        if (meta.armCode === "NA" || /X$/.test(meta.base)) return "none";
+        if (meta.facing === "L") return "left";
+        if (meta.facing === "R") return "right";
+        return meta.armCode ? "both" : "none";
+      }
+
+      function builderFromMeta(meta) {
+        const out = defaultBuilder();
+        out.kind = meta.kind === "chair" ? "seat" : meta.kind;
+        out.size = meta.size === "unknown" ? "cs3" : meta.size;
+        out.armMode = meta.armMode || (["ottoman", "corner", "back_cushion", "seat_cushion"].includes(out.kind) ? "none" : "both");
+        out.frontPanel = meta.frontPanel || "none";
+        out.armFamily = meta.armGroup || "";
+        out.backStyle = meta.backGroup || "";
+        out.facing = meta.facing || "";
+
+        out.width = defaultWidthForSize(out.size);
+        if (out.size === "cs5") {
+          out.depth = 72;
+          out.chaiseWidthPct = 50;
+          out.chaiseDepthPct = 100;
+        }
+        if (out.kind === "corner") {
+          out.width = 78;
+          out.depth = 78;
+          out.cornerCutPct = 44;
+          out.armMode = "none";
+        }
+        if (out.kind === "ottoman") {
+          out.width = 44;
+          out.depth = 44;
+          out.armMode = "none";
+          out.backThickness = 0;
+        }
+        if (out.kind === "back_cushion") {
+          out.depth = 14;
+          out.backThickness = 8;
+          out.armThickness = 0;
+          out.innerInset = 3;
+          out.frontPanel = "none";
+          out.hasBackCushion = false;
+          out.hasSeatCushion = false;
+        }
+        if (out.kind === "seat_cushion") {
+          out.depth = 44;
+          out.backThickness = 8;
+          out.armThickness = 0;
+          out.innerInset = 3;
+          out.frontPanel = "none";
+          out.hasBackCushion = false;
+          out.hasSeatCushion = false;
+        }
+        return out;
+      }
+
+      function makeChip(label, className = "") {
+        const node = document.createElement("div");
+        node.className = `chip${className ? " " + className : ""}`;
+        node.textContent = label;
+        return node;
+      }
+
+      function filteredCatalog() {
+        const search = els.catalogSearch.value.trim().toLowerCase();
+        const kind = els.kindFilter.value;
+        const view = els.viewFilter.value;
+        return state.catalog.filter((entry) => {
+          if (search) {
+            const hay = [entry.code, entry.meta.kind, entry.meta.armCode, entry.meta.backCode, entry.meta.frontPanel].join(" ").toLowerCase();
+            if (!hay.includes(search)) return false;
+          }
+          if (kind !== "all" && entry.meta.kind !== kind) return false;
+          if (view !== "all" && !entry.views.includes(view)) return false;
+          return true;
+        });
+      }
+
+      function renderCatalog() {
+        const items = filteredCatalog();
+        els.catalogCount.textContent = `${items.length} shown`;
+        els.statFiltered.textContent = String(items.length);
+        els.catalogList.innerHTML = "";
+        if (!items.length) {
+          els.catalogList.innerHTML = `<div class="empty">No codes match the current filter.</div>`;
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        items.forEach((entry) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `catalog-item${entry.code === state.selectedCode ? " active" : ""}`;
+          button.innerHTML = `
+            <div class="item-row">
+              <div>
+                <div class="item-code">${entry.code}</div>
+                <div class="item-note">${entry.meta.kind} · ${entry.meta.size} · ${entry.meta.frontPanel}</div>
+              </div>
+              <div class="chips">
+                ${state.recipes[entry.code] ? `<span class="chip chip-gold">saved</span>` : ""}
+                ${entry.views.includes("front") ? `<span class="chip chip-strong">front</span>` : ""}
+                ${entry.views.includes("side") ? `<span class="chip">side</span>` : ""}
+                ${entry.views.includes("back") ? `<span class="chip">back</span>` : ""}
+              </div>
+            </div>
+            <div class="chips">
+              ${entry.meta.armCode ? `<span class="chip">${entry.meta.armCode}</span>` : ""}
+              ${entry.meta.backCode ? `<span class="chip">${entry.meta.backCode}</span>` : ""}
+              ${entry.meta.facing ? `<span class="chip">${entry.meta.facing}</span>` : ""}
+            </div>
+          `;
+          button.addEventListener("click", () => {
+            applyBuilderForCode(entry.code, true);
+          });
+          frag.appendChild(button);
+        });
+        els.catalogList.appendChild(frag);
+      }
+
+      function controlButtonSet(label, field, options) {
+        const current = state.builder[field];
+        return `
+          <div class="card">
+            <h3>${label}</h3>
+            <div class="grid-buttons ${options.length <= 2 ? "two" : "three"}">
+              ${options.map((option) => `
+                <button type="button" class="choice${current === option.value ? " active" : ""}" data-field="${field}" data-value="${option.value}">
+                  <strong>${option.label}</strong>
+                  <span>${option.hint}</span>
+                </button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      function sliderControl(field, label, min, max, step, suffix = "") {
+        return `
+          <div class="slider-row">
+            <div class="slider-head">
+              <label for="${field}">${label}</label>
+              <strong class="mono">${state.builder[field]}${suffix}</strong>
+            </div>
+            <input id="${field}" data-slider="${field}" type="range" min="${min}" max="${max}" step="${step}" value="${state.builder[field]}" />
+          </div>
+        `;
+      }
+
+      function renderControls() {
+        const kind = state.builder.kind;
+        const isCushionKind = kind === "back_cushion" || kind === "seat_cushion";
+        const supportsSize = kind === "seat" || kind === "chaise";
+        const supportsArms = kind === "seat" || kind === "chaise";
+        const supportsOverlays = kind === "seat" || kind === "chaise" || kind === "corner";
+        const supportsFacing = kind === "corner" || supportsArms;
+        const geometryFields = [
+          sliderControl("width", "Width", 36, 100, 1),
+          sliderControl("depth", "Depth", 30, 110, 1),
+          sliderControl("backThickness", "Back Thickness", 0, 18, 1),
+          sliderControl("innerInset", "Inner Cushion Inset", 0, 10, 1),
+        ];
+
+        if (supportsArms || kind === "corner") geometryFields.push(sliderControl("armThickness", "Arm Thickness", 0, 18, 1));
+        if (supportsArms) geometryFields.push(sliderControl("armHeightPct", "Arm Height", 20, 100, 1, "%"));
+        if (kind === "chaise") {
+          geometryFields.push(sliderControl("chaiseWidthPct", "Chaise Width", 35, 100, 1, "%"));
+          geometryFields.push(sliderControl("chaiseDepthPct", "Chaise Depth", 35, 100, 1, "%"));
+        }
+
+        els.controlsLeft.innerHTML = `
+          <div class="card">
+            <h3>Locked Component</h3>
+            <div class="chips">
+              <div class="chip chip-strong">${state.builder.kind}</div>
+              <div class="chip">${isCushionKind ? "cushion" : state.builder.size}</div>
+              <div class="chip">${state.selectedCode || "no code"}</div>
+            </div>
+          </div>
+          ${
+            supportsSize
+              ? controlButtonSet("Size Class", "size", [
+                  { value: "cs1", label: "CS1", hint: "single seat" },
+                  { value: "cs3", label: "CS3", hint: "two seat" },
+                  { value: "cs5", label: "CS5", hint: "chaise scale" },
+                ])
+              : ""
+          }
+          ${
+            supportsOverlays
+              ? `
+                <div class="card">
+                  <h3>Cushion Overlays</h3>
+                  <div class="grid-buttons two">
+                    <button type="button" class="choice${state.builder.hasBackCushion ? " active" : ""}" data-field="overlay" data-value="back">
+                      <strong>${state.builder.hasBackCushion ? "Back Cushion On" : "Back Cushion Off"}</strong>
+                      <span>overlay in front of back rail</span>
+                    </button>
+                    <button type="button" class="choice${state.builder.hasSeatCushion ? " active" : ""}" data-field="overlay" data-value="seat">
+                      <strong>${state.builder.hasSeatCushion ? "Seat Cushion On" : "Seat Cushion Off"}</strong>
+                      <span>overlay in front of back cushion</span>
+                    </button>
+                  </div>
+                </div>
+              `
+              : ""
+          }
+          ${
+            supportsArms
+              ? controlButtonSet("Arm Coverage", "armMode", [
+                  { value: "both", label: "Both Arms", hint: "symmetrical end" },
+                  { value: "left", label: "Left Arm", hint: "left end" },
+                  { value: "none", label: "No Arm", hint: "middle module" },
+                  { value: "right", label: "Right Arm", hint: "right end" },
+                ])
+              : ""
+          }
+          ${
+            !isCushionKind
+              ? controlButtonSet("Front Panel", "frontPanel", [
+                  { value: "flat", label: "Flat", hint: "B family" },
+                  { value: "extruded", label: "Extruded", hint: "L family" },
+                  { value: "none", label: "None", hint: "X or special" },
+                ])
+              : ""
+          }
+          ${
+            supportsArms
+              ? controlButtonSet("Arm Family", "armFamily", [
+                  { value: "", label: "Any", hint: "no family lock" },
+                  { value: "NA", label: "NA", hint: "no arm" },
+                  { value: "SA", label: "SA", hint: "track / straight" },
+                  { value: "RA", label: "RA", hint: "rolled" },
+                  { value: "WA", label: "WA", hint: "wedge" },
+                  { value: "SLA", label: "SLA", hint: "slope" },
+                  { value: "SSA", label: "SSA", hint: "shelter" },
+                  { value: "SRA", label: "SRA", hint: "swept" },
+                ])
+              : ""
+          }
+          ${
+            !isCushionKind
+              ? controlButtonSet("Back Style", "backStyle", [
+                  { value: "", label: "Any", hint: "no back lock" },
+                  { value: "HB", label: "HB", hint: "high back" },
+                  { value: "SB", label: "SB", hint: "short back" },
+                  { value: "RB", label: "RB", hint: "rounded back" },
+                  { value: "WB", label: "WB", hint: "wing back" },
+                ])
+              : ""
+          }
+          ${
+            supportsFacing
+              ? controlButtonSet("Facing", "facing", [
+                  { value: "", label: "Auto", hint: "no side tag" },
+                  { value: "L", label: "Left", hint: "L suffix" },
+                  { value: "R", label: "Right", hint: "R suffix" },
+                ])
+              : ""
+          }
+          <div class="card">
+            <h3>Geometry</h3>
+            ${geometryFields.join("")}
+          </div>
+        `;
+
+        els.controlsLeft.querySelectorAll("[data-field]").forEach((button) => {
+          button.addEventListener("click", () => {
+            setField(button.getAttribute("data-field"), button.getAttribute("data-value"));
+          });
+        });
+        els.controlsLeft.querySelectorAll("[data-slider]").forEach((input) => {
+          input.addEventListener("input", () => {
+            state.builder[input.dataset.slider] = Number(input.value);
+            normalizeForKind();
+            persistWorkspace();
+            renderAll();
+          });
+        });
+      }
+
+      function setField(field, value) {
+        if (field === "overlay") {
+          if (value === "back") state.builder.hasBackCushion = !state.builder.hasBackCushion;
+          if (value === "seat") state.builder.hasSeatCushion = !state.builder.hasSeatCushion;
+          persistWorkspace();
+          renderAll();
+          return;
+        }
+        state.builder[field] = value;
+        if (field === "size") {
+          state.builder.width = defaultWidthForSize(value);
+        }
+        normalizeForKind();
+        persistWorkspace();
+        renderAll();
+      }
+
+      function normalizeForKind() {
+        if (state.builder.kind === "ottoman") {
+          state.builder.armMode = "none";
+          state.builder.backThickness = 0;
+          state.builder.armThickness = 0;
+          state.builder.frontPanel = "none";
+          state.builder.hasBackCushion = false;
+          state.builder.hasSeatCushion = false;
+        }
+        if (state.builder.kind === "corner") {
+          state.builder.armMode = "none";
+          state.builder.depth = state.builder.width;
+          if (state.builder.backThickness < 6) state.builder.backThickness = 6;
+        }
+        if (state.builder.kind === "back_cushion") {
+          state.builder.armMode = "none";
+          state.builder.armThickness = 0;
+          state.builder.frontPanel = "none";
+          state.builder.depth = 14;
+          state.builder.hasBackCushion = false;
+          state.builder.hasSeatCushion = false;
+        }
+        if (state.builder.kind === "seat_cushion") {
+          state.builder.armMode = "none";
+          state.builder.armThickness = 0;
+          state.builder.frontPanel = "none";
+          state.builder.depth = 44;
+          state.builder.hasBackCushion = false;
+          state.builder.hasSeatCushion = false;
+        }
+        if (state.builder.kind !== "chaise" && state.builder.size === "cs5") {
+          state.builder.size = "cs3";
+        }
+        if (state.builder.kind === "chaise") {
+          state.builder.size = "cs5";
+          if (state.builder.depth < 50) state.builder.depth = 50;
+        }
+      }
+
+      function drawBackCushion(piece, x, y, scale, selected) {
+        const stroke = selected ? "#0d5f58" : "#66523f";
+        const cushionFill = selected ? "#f5ead5" : "#e9ddc7";
+        const innerFill = selected ? "#fff8ea" : "#f8f0e0";
+        const outlineWidth = selected ? 3 : 2;
+        const w = piece.width * scale;
+        const cushionH = Math.max(10, piece.depth * scale);
+        return [
+          `<rect x="${x}" y="${y}" width="${w}" height="${cushionH}" rx="14" fill="${cushionFill}" stroke="${stroke}" stroke-width="${outlineWidth}"/>`,
+          `<rect x="${x + 8}" y="${y + 4}" width="${w - 16}" height="${Math.max(4, cushionH - 8)}" rx="10" fill="${innerFill}" stroke="rgba(80,63,45,0.18)" stroke-width="1.4"/>`,
+        ].join("");
+      }
+
+      function drawSeatCushion(piece, x, y, scale, selected) {
+        const stroke = selected ? "#0d5f58" : "#66523f";
+        const seatFill = selected ? "#f5ead5" : "#e9ddc7";
+        const innerFill = selected ? "#fff8ea" : "#f8f0e0";
+        const outlineWidth = selected ? 3 : 2;
+        const w = piece.width * scale;
+        const seatH = Math.max(34, piece.depth * scale);
+        return [
+          `<rect x="${x}" y="${y}" width="${w}" height="${seatH}" rx="16" fill="${seatFill}" stroke="${stroke}" stroke-width="${outlineWidth}"/>`,
+          `<rect x="${x + 8}" y="${y + 8}" width="${w - 16}" height="${Math.max(12, seatH - 16)}" rx="12" fill="${innerFill}" stroke="rgba(80,63,45,0.18)" stroke-width="1.4"/>`,
+        ].join("");
+      }
+
+      function seatOverlayBounds(piece, x, scale) {
+        const outerW = piece.kind === "chaise"
+          ? piece.width * scale * (piece.chaiseWidthPct / 100)
+          : piece.width * scale;
+        const outerX = piece.kind === "chaise"
+          ? x + (piece.width * scale - outerW) / 2
+          : x;
+        const armSelected = piece.armMode === "left" || piece.armMode === "right" || piece.armMode === "both";
+        const arm = armSelected ? Math.max(8, Math.min(piece.armThickness, piece.width / 3) * scale) : 0;
+        const leftInset = piece.armMode === "left" || piece.armMode === "both" ? arm : 0;
+        const rightInset = piece.armMode === "right" || piece.armMode === "both" ? arm : 0;
+        return {
+          x: outerX + leftInset,
+          width: Math.max(24, outerW - leftInset - rightInset),
+        };
+      }
+
+      function drawBackCushionOverlay(piece, x, y, scale, selected) {
+        const stroke = selected ? "#0d5f58" : "#66523f";
+        const cushionFill = selected ? "#ead8be" : "#dfcfb6";
+        const innerFill = selected ? "#fff6e8" : "#f6ecdc";
+        const outlineWidth = selected ? 3 : 2;
+        const bounds = seatOverlayBounds(piece, x, scale);
+        const railH = Math.max(8, piece.backThickness * scale);
+        const cushionH = Math.max(12, piece.depth * scale * 0.18);
+        const topY = y + railH * 0.9;
+        return [
+          `<rect x="${bounds.x}" y="${topY}" width="${bounds.width}" height="${cushionH}" rx="14" fill="${cushionFill}" stroke="${stroke}" stroke-width="${outlineWidth}"/>`,
+          `<rect x="${bounds.x + 8}" y="${topY + 4}" width="${Math.max(8, bounds.width - 16)}" height="${Math.max(4, cushionH - 8)}" rx="10" fill="${innerFill}" stroke="rgba(80,63,45,0.18)" stroke-width="1.4"/>`,
+        ].join("");
+      }
+
+      function drawSeatCushionOverlay(piece, x, y, scale, selected) {
+        const stroke = selected ? "#0d5f58" : "#66523f";
+        const fill = selected ? "#f5ead5" : "#e9ddc7";
+        const innerFill = selected ? "#fff8ea" : "#f8f0e0";
+        const outlineWidth = selected ? 3 : 2;
+        const bounds = seatOverlayBounds(piece, x, scale);
+        const totalW = piece.kind === "chaise"
+          ? piece.width * scale * (piece.chaiseWidthPct / 100)
+          : piece.width * scale;
+        const outerX = piece.kind === "chaise"
+          ? x + (piece.width * scale - totalW) / 2
+          : x;
+        const railH = Math.max(8, piece.backThickness * scale);
+        const backCushionH = piece.hasBackCushion ? Math.max(12, piece.depth * scale * 0.18) : 0;
+        const seatY = y + railH + backCushionH * 0.45;
+        const seatH = Math.max(34, piece.depth * scale - railH - backCushionH * 0.45);
+        const isExtruded = piece.frontPanel === "extruded" && (piece.armMode === "left" || piece.armMode === "right" || piece.armMode === "both");
+
+        if (!isExtruded) {
+          return [
+            `<rect x="${bounds.x}" y="${seatY}" width="${bounds.width}" height="${seatH}" rx="16" fill="${fill}" stroke="${stroke}" stroke-width="${outlineWidth}"/>`,
+            `<rect x="${bounds.x + 8}" y="${seatY + 8}" width="${Math.max(8, bounds.width - 16)}" height="${Math.max(12, seatH - 16)}" rx="12" fill="${innerFill}" stroke="rgba(80,63,45,0.18)" stroke-width="1.4"/>`,
+          ].join("");
+        }
+
+        const frontBandH = Math.max(12, seatH * 0.24);
+        const topH = Math.max(14, seatH - frontBandH);
+        const leftInset = Math.max(0, bounds.x - outerX);
+        const rightInset = Math.max(0, outerX + totalW - (bounds.x + bounds.width));
+        const topLeft = bounds.x;
+        const topRight = bounds.x + bounds.width;
+        const bottomY = seatY + seatH;
+        const splitY = seatY + topH;
+        const fullRight = outerX + totalW;
+        const fullLeft = outerX;
+
+        const outerPath = [
+          `M ${topLeft} ${seatY}`,
+          `L ${topRight} ${seatY}`,
+          `L ${topRight} ${splitY}`,
+          `L ${fullRight} ${splitY}`,
+          `L ${fullRight} ${bottomY}`,
+          `L ${fullLeft} ${bottomY}`,
+          `L ${fullLeft} ${splitY}`,
+          `L ${topLeft} ${splitY}`,
+          "Z",
+        ].join(" ");
+
+        const innerInsetX = 8;
+        const innerInsetY = 6;
+        const innerTopLeft = topLeft + innerInsetX;
+        const innerTopRight = topRight - innerInsetX;
+        const innerSplitLeft = fullLeft + Math.max(4, leftInset * 0.45);
+        const innerSplitRight = fullRight - Math.max(4, rightInset * 0.45);
+        const innerBottomY = bottomY - innerInsetY;
+        const innerSplitY = splitY + 3;
+        const innerTopY = seatY + innerInsetY;
+
+        const innerPath = [
+          `M ${innerTopLeft} ${innerTopY}`,
+          `L ${innerTopRight} ${innerTopY}`,
+          `L ${innerTopRight} ${innerSplitY}`,
+          `L ${innerSplitRight} ${innerSplitY}`,
+          `L ${innerSplitRight} ${innerBottomY}`,
+          `L ${innerSplitLeft} ${innerBottomY}`,
+          `L ${innerSplitLeft} ${innerSplitY}`,
+          `L ${innerTopLeft} ${innerSplitY}`,
+          "Z",
+        ].join(" ");
+
+        return [
+          `<path d="${outerPath}" fill="${fill}" stroke="${stroke}" stroke-width="${outlineWidth}" stroke-linejoin="round"/>`,
+          `<path d="${innerPath}" fill="${innerFill}" stroke="rgba(80,63,45,0.18)" stroke-width="1.4" stroke-linejoin="round"/>`,
+        ].join("");
+      }
+
+      function drawSeat(piece, x, y, scale, selected) {
+        const stroke = selected ? "#0d5f58" : "#66523f";
+        const fill = selected ? "#f5ead5" : "#e9ddc7";
+        const seatFill = selected ? "#fff8ea" : "#f8f0e0";
+        const backFill = selected ? "#c7924f" : "#c69a64";
+        const armFill = selected ? "#b06a31" : "#b27d47";
+        const outlineWidth = selected ? 3 : 2;
+        const w = piece.width * scale;
+        const d = piece.depth * scale;
+        const outerW = piece.kind === "chaise" ? w * (piece.chaiseWidthPct / 100) : w;
+        const outerH = piece.kind === "chaise" ? d * (piece.chaiseDepthPct / 100) : d;
+        const outerX = piece.kind === "chaise" ? x + (w - outerW) / 2 : x;
+        const outerY = y;
+        const back = Math.min(piece.backThickness, piece.depth) * scale;
+        const armSelected = piece.armMode === "left" || piece.armMode === "right" || piece.armMode === "both";
+        const arm = armSelected ? Math.max(8, Math.min(piece.armThickness, piece.width / 3) * scale) : 0;
+        const panelFactor = piece.frontPanel === "extruded" ? 0.86 : 1;
+        const armHeight = outerH * panelFactor * (piece.armHeightPct / 100);
+        const seatX = outerX;
+        const seatW = outerW;
+        const seatY = outerY + back;
+        const seatH = outerH - back;
+        const inner = piece.innerInset * scale;
+        const parts = [];
+
+        parts.push(`<rect x="${seatX}" y="${seatY}" width="${seatW}" height="${seatH}" rx="${piece.kind === "chaise" ? 10 : 16}" fill="${fill}" stroke="${stroke}" stroke-width="${outlineWidth}"/>`);
+        if (seatW - inner * 2 > 0 && seatH - inner * 2 > 0) {
+          parts.push(`<rect x="${seatX + inner}" y="${seatY + inner}" width="${seatW - inner * 2}" height="${seatH - inner * 2}" rx="${piece.kind === "chaise" ? 8 : 12}" fill="${seatFill}" stroke="rgba(80,63,45,0.18)" stroke-width="1.4"/>`);
+        }
+        if (back > 0) parts.push(`<rect x="${outerX}" y="${outerY}" width="${outerW}" height="${back}" rx="${Math.max(6, back / 1.6)}" fill="${backFill}" stroke="${stroke}" stroke-width="${outlineWidth}"/>`);
+        if (piece.armMode === "left" || piece.armMode === "both") {
+          parts.push(`<rect x="${outerX}" y="${outerY}" width="${arm}" height="${armHeight}" rx="${Math.max(6, arm / 1.5)}" fill="${armFill}" stroke="${stroke}" stroke-width="${outlineWidth}"/>`);
+        }
+        if (piece.armMode === "right" || piece.armMode === "both") {
+          parts.push(`<rect x="${outerX + outerW - arm}" y="${outerY}" width="${arm}" height="${armHeight}" rx="${Math.max(6, arm / 1.5)}" fill="${armFill}" stroke="${stroke}" stroke-width="${outlineWidth}"/>`);
+        }
+        return parts.join("");
+      }
+
+      function drawCorner(piece, x, y, scale, selected) {
+        const stroke = selected ? "#0d5f58" : "#66523f";
+        const fill = selected ? "#f5ead5" : "#e9ddc7";
+        const backFill = selected ? "#c7924f" : "#c69a64";
+        const sideFill = selected ? "#b06a31" : "#b27d47";
+        const outlineWidth = selected ? 3 : 2;
+        const w = piece.width * scale;
+        const d = piece.depth * scale;
+        const back = Math.max(6, piece.backThickness) * scale;
+        const side = Math.max(back, piece.armThickness * scale || back);
+        const inner = piece.innerInset * scale;
+        const sideOnRight = piece.facing === "R";
+
+        return [
+          `<rect x="${x}" y="${y}" width="${w}" height="${d}" rx="14" fill="${fill}" stroke="${stroke}" stroke-width="${outlineWidth}"/>`,
+          `<rect x="${x}" y="${y}" width="${w}" height="${back}" rx="${Math.max(6, back / 1.6)}" fill="${backFill}" stroke="${stroke}" stroke-width="${outlineWidth}"/>`,
+          `<rect x="${sideOnRight ? x + w - side : x}" y="${y}" width="${side}" height="${d}" rx="${Math.max(6, side / 1.6)}" fill="${sideFill}" stroke="${stroke}" stroke-width="${outlineWidth}"/>`,
+        ].join("");
+      }
+
+      function drawOttoman(piece, x, y, scale, selected) {
+        const stroke = selected ? "#0d5f58" : "#66523f";
+        const fill = selected ? "#ddd0bc" : "#d8ccb9";
+        const innerFill = selected ? "#f7efe1" : "#f4ecde";
+        const outlineWidth = selected ? 3 : 2;
+        const w = piece.width * scale;
+        const d = piece.depth * scale;
+        const inset = Math.min(10, piece.innerInset + 4) * scale;
+        return [
+          `<rect x="${x}" y="${y}" width="${w}" height="${d}" rx="18" fill="${fill}" stroke="${stroke}" stroke-width="${outlineWidth}"/>`,
+          `<rect x="${x + inset}" y="${y + inset}" width="${w - inset * 2}" height="${d - inset * 2}" rx="14" fill="${innerFill}" stroke="rgba(80,63,45,0.18)" stroke-width="1.4"/>`,
+        ].join("");
+      }
+
+      function renderBuilderSvg() {
+        const piece = state.builder;
+        const scale = 3.2;
+        const w = piece.width * scale;
+        const d = piece.depth * scale;
+        const x = (760 - w) / 2;
+        const y = (320 - d) / 2;
+        let markup = "";
+        if (piece.kind === "corner") markup = drawCorner(piece, x, y, scale, true);
+        else if (piece.kind === "ottoman") markup = drawOttoman(piece, x, y, scale, true);
+        else if (piece.kind === "back_cushion") markup = drawBackCushion(piece, x, y + 42, scale, true);
+        else if (piece.kind === "seat_cushion") markup = drawSeatCushion(piece, x, y + 18, scale, true);
+        else {
+          markup = drawSeat(piece, x, y, scale, true);
+          if (piece.hasSeatCushion) markup += drawSeatCushionOverlay(piece, x, y, scale, true);
+          if (piece.hasBackCushion) markup += drawBackCushionOverlay(piece, x, y, scale, true);
+        }
+        markup += `<text x="380" y="${y + d / 2 + 5}" text-anchor="middle" font-size="18" font-weight="700" fill="#43382d">${state.selectedCode || piece.kind.toUpperCase()}</text>`;
+        els.builderSvg.innerHTML = markup;
+      }
+
+      function renderSummary() {
+        const piece = state.builder;
+        const isCushionKind = piece.kind === "back_cushion" || piece.kind === "seat_cushion";
+        els.summaryChips.innerHTML = "";
+        els.summaryChips.appendChild(makeChip(piece.kind, "chip-strong"));
+        els.summaryChips.appendChild(makeChip(isCushionKind ? "cushion" : piece.size));
+        if (!isCushionKind) els.summaryChips.appendChild(makeChip(piece.armMode));
+        if (!isCushionKind) els.summaryChips.appendChild(makeChip(piece.frontPanel));
+        if (!isCushionKind && piece.armFamily) els.summaryChips.appendChild(makeChip(piece.armFamily));
+        if (!isCushionKind && piece.backStyle) els.summaryChips.appendChild(makeChip(piece.backStyle));
+        if (!isCushionKind && piece.facing) els.summaryChips.appendChild(makeChip(piece.facing));
+        if (piece.hasBackCushion) els.summaryChips.appendChild(makeChip("back cushion"));
+        if (piece.hasSeatCushion) els.summaryChips.appendChild(makeChip("seat cushion"));
+
+        els.signatureChips.innerHTML = "";
+        els.signatureChips.appendChild(makeChip(`w ${piece.width}`, "chip-strong"));
+        els.signatureChips.appendChild(makeChip(`d ${piece.depth}`));
+        els.signatureChips.appendChild(makeChip(`back ${piece.backThickness}`));
+        els.signatureChips.appendChild(makeChip(`arm ${piece.armThickness}`));
+        els.signatureText.textContent = `${piece.kind} · ${piece.size} · ${piece.armMode} · ${piece.frontPanel}`;
+        els.builderSubtitle.textContent = state.selectedCode
+          ? `Editing top-down recipe for ${state.selectedCode}.`
+          : `Single component recipe for the selected code.`;
+        els.recipeNotes.value = piece.notes || "";
+
+        els.statCodes.textContent = String(state.catalog.length);
+        els.statRecipes.textContent = String(Object.keys(state.recipes).length);
+        els.statKind.textContent = piece.kind;
+      }
+
+      function renderCodePreview() {
+        const entry = state.catalog.find((item) => item.code === state.selectedCode) || null;
+        if (!entry) {
+          els.selectedCodeChip.textContent = "No code";
+          els.selectedCodeName.textContent = "No code selected";
+          els.selectedCodeTags.innerHTML = "";
+          els.metaList.innerHTML = `<div class="empty">Choose a code to design its top-down part.</div>`;
+          els.svgGrid.innerHTML = "";
+          return;
+        }
+
+        els.selectedCodeChip.textContent = entry.code;
+        els.selectedCodeName.textContent = entry.code;
+        els.selectedCodeTags.innerHTML = "";
+        els.selectedCodeTags.appendChild(makeChip(entry.meta.kind, "chip-strong"));
+        if (entry.meta.armCode) els.selectedCodeTags.appendChild(makeChip(entry.meta.armCode));
+        if (entry.meta.backCode) els.selectedCodeTags.appendChild(makeChip(entry.meta.backCode));
+        if (entry.meta.facing) els.selectedCodeTags.appendChild(makeChip(entry.meta.facing));
+        if (state.recipes[entry.code]) els.selectedCodeTags.appendChild(makeChip("saved recipe", "chip-gold"));
+
+        const metaRows = [
+          ["Kind", entry.meta.kind],
+          ["Size", entry.meta.size],
+          ["Front panel", entry.meta.frontPanel],
+          ["Arm code", entry.meta.armCode || "-"],
+          ["Arm group", entry.meta.armGroup || "-"],
+          ["Back code", entry.meta.backCode || "-"],
+          ["Back group", entry.meta.backGroup || "-"],
+          ["Facing", entry.meta.facing || "-"],
+          ["Views", entry.views.join(", ") || "-"],
+        ];
+        els.metaList.innerHTML = metaRows
+          .map(([label, value]) => `<div class="meta-row"><label>${label}</label><strong>${value}</strong></div>`)
+          .join("");
+
+        els.svgGrid.innerHTML = "";
+        ["front", "side", "back"].forEach((view) => {
+          const file = entry.files[view];
+          if (!file) return;
+          const card = document.createElement("div");
+          card.className = "svg-card";
+          card.innerHTML = `
+            <div class="svg-head">
+              <strong>${view}</strong>
+              <span class="mono">${file}</span>
+            </div>
+            <div class="svg-frame">
+              <img src="./guide_svgs/${file}" alt="${entry.code} ${view}" />
+            </div>
+          `;
+          els.svgGrid.appendChild(card);
+        });
+      }
+
+      function loadSavedRecipe() {
+        if (!state.selectedCode) return;
+        const saved = state.recipes[state.selectedCode];
+        if (!saved?.builder) return;
+        state.builder = normalizeBuilder(saved.builder);
+        persistWorkspace();
+        renderAll();
+      }
+
+      function applyBuilderForCode(code, preferSaved = true) {
+        const entry = state.catalog.find((item) => item.code === code);
+        if (!entry) return;
+        state.selectedCode = code;
+        const saved = preferSaved ? state.recipes[code] : null;
+        state.builder = saved?.builder ? normalizeBuilder(saved.builder) : builderFromMeta(entry.meta);
+        persistWorkspace();
+        renderAll();
+      }
+
+      function loadCodeDefaults() {
+        if (!state.selectedCode) return;
+        applyBuilderForCode(state.selectedCode, false);
+      }
+
+      function saveRecipe() {
+        if (!state.selectedCode) return;
+        state.recipes[state.selectedCode] = {
+          builder: structuredClone(state.builder),
+          updatedAt: new Date().toISOString(),
+        };
+        saveRecipes();
+        renderAll();
+      }
+
+      function exportRecipes() {
+        const blob = new Blob([JSON.stringify(state.recipes, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "component_builder_recipes.json";
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function renderAll() {
+        renderCatalog();
+        renderControls();
+        renderBuilderSvg();
+        renderSummary();
+        renderCodePreview();
+      }
+
+      async function loadManifest() {
+        const response = await fetch(MANIFEST_PATH, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        state.manifest = await response.json();
+        state.catalog = Object.entries(state.manifest)
+          .map(([code, entry]) => ({
+            code,
+            views: entry.views || [],
+            files: entry.files || {},
+            meta: parseCode(code, entry),
+          }))
+          .sort((a, b) => a.code.localeCompare(b.code));
+        if (!state.selectedCode && state.catalog.length) state.selectedCode = state.catalog[0].code;
+        if (state.selectedCode && !state.catalog.find((item) => item.code === state.selectedCode)) {
+          state.selectedCode = state.catalog[0]?.code || null;
+        }
+      }
+
+      function bindEvents() {
+        els.catalogSearch.addEventListener("input", () => {
+          persistWorkspace();
+          renderCatalog();
+        });
+        els.kindFilter.addEventListener("change", () => {
+          persistWorkspace();
+          renderCatalog();
+        });
+        els.viewFilter.addEventListener("change", () => {
+          persistWorkspace();
+          renderCatalog();
+        });
+        els.recipeNotes.addEventListener("input", (event) => {
+          state.builder.notes = event.target.value;
+          persistWorkspace();
+        });
+        els.btnLoadDefault.addEventListener("click", loadCodeDefaults);
+        els.btnSaveRecipe.addEventListener("click", saveRecipe);
+        els.btnSaveSelected.addEventListener("click", saveRecipe);
+        els.btnLoadSaved.addEventListener("click", loadSavedRecipe);
+        els.btnExportRecipes.addEventListener("click", exportRecipes);
+        els.btnReset.addEventListener("click", () => {
+          state.builder = defaultBuilder();
+          persistWorkspace();
+          renderAll();
+        });
+      }
+
+      async function main() {
+        const hadWorkspace = restoreWorkspace();
+        bindEvents();
+        try {
+          await loadManifest();
+          if (!hadWorkspace && state.selectedCode) applyBuilderForCode(state.selectedCode, true);
+          renderAll();
+          els.statusText.textContent = "Manifest loaded. Component builder is live.";
+        } catch (error) {
+          els.statusText.textContent = `Could not load ${MANIFEST_PATH}. Serve the folder over http.`;
+          els.catalogList.innerHTML = `<div class="empty">Manifest load failed. Start a local server from D:\\dataset_pipeline and open this page through http://localhost.</div>`;
+          console.error(error);
+        }
+      }
+
+      main();
+    </script>
+  </body>
+</html>

@@ -116,42 +116,46 @@ export class UploadManager {
 
     this.isHandlingUpload = true;
 
-    this.showStatus(`Uploading ${files.length} image${files.length > 1 ? 's' : ''}...`, 'info');
+    try {
+      this.showStatus(`Uploading ${files.length} image${files.length > 1 ? 's' : ''}...`, 'info');
 
-    // Remember the current view before uploads to preserve it
-    const currentViewBeforeUpload = this.projectManager.currentViewId;
-    const hasExistingImage = !!this.projectManager.views?.[currentViewBeforeUpload]?.image;
+      // Remember the current view before uploads to preserve it
+      const currentViewBeforeUpload = this.projectManager.currentViewId;
+      const hasExistingImage = !!this.projectManager.views?.[currentViewBeforeUpload]?.image;
 
-    const results = [];
+      const results = [];
 
-    for (const file of files) {
-      try {
-        const viewId = await this.processFile(file, {
-          preserveCurrentView: hasExistingImage, // Only preserve if we already have an image
-          currentViewBeforeUpload,
-        });
-        results.push({ file, viewId, success: true });
-      } catch (error) {
-        console.error('[UploadManager] Failed to process file:', file.name, error);
-        this.showStatus(`Failed to process ${file.name}: ${error.message}`, 'error');
-        results.push({ file, error, success: false });
+      for (const file of files) {
+        try {
+          const viewId = await this.processFile(file, {
+            preserveCurrentView: hasExistingImage, // Only preserve if we already have an image
+            currentViewBeforeUpload,
+          });
+          results.push({ file, viewId, success: true });
+        } catch (error) {
+          console.error('[UploadManager] Failed to process file:', file.name, error);
+          this.showStatus(`Failed to process ${file.name}: ${error.message}`, 'error');
+          results.push({ file, error, success: false });
+        }
       }
-    }
 
-    this.isHandlingUpload = false;
+      const successCount = results.filter(r => r.success).length;
+      if (successCount) {
+        this.showStatus(
+          `Uploaded ${successCount} image${successCount > 1 ? 's' : ''} successfully.`,
+          'success'
+        );
+      }
 
-    const successCount = results.filter(r => r.success).length;
-    if (successCount) {
-      this.showStatus(
-        `Uploaded ${successCount} image${successCount > 1 ? 's' : ''} successfully.`,
-        'success'
-      );
-    }
-
-    // Ensure we're still on the view we started with (unless no image was loaded before)
-    if (hasExistingImage && this.projectManager.currentViewId !== currentViewBeforeUpload) {
-      console.log(`[UploadManager] Restoring original view: ${currentViewBeforeUpload}`);
-      await this.projectManager.switchView(currentViewBeforeUpload);
+      // Ensure we're still on the view we started with (unless no image was loaded before)
+      if (hasExistingImage && this.projectManager.currentViewId !== currentViewBeforeUpload) {
+        console.log(`[UploadManager] Restoring original view: ${currentViewBeforeUpload}`);
+        await this.projectManager.switchView(currentViewBeforeUpload);
+      }
+    } catch (err) {
+      console.error('[UploadManager] handleFiles error:', err);
+    } finally {
+      this.isHandlingUpload = false;
     }
   }
 

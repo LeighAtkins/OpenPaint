@@ -31,6 +31,7 @@ export class StrokeMetadataManager {
 
   isInViewScope(imageLabel, viewId) {
     if (!imageLabel || !viewId) return false;
+    if (typeof imageLabel === 'string' && imageLabel.startsWith('__guide__:')) return false;
     return imageLabel === viewId || imageLabel.startsWith(`${viewId}::tab:`);
   }
 
@@ -127,6 +128,17 @@ export class StrokeMetadataManager {
 
     // Set flag to auto-focus measurement input for this new stroke
     this._shouldAutoFocus = true;
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('openpaint:stroke-created', {
+          detail: {
+            imageLabel: scopedLabel,
+            strokeLabel,
+          },
+        })
+      );
+    }
     // Set flag to auto-focus measurement input for this new stroke
     this._shouldAutoFocus = true;
   }
@@ -134,6 +146,9 @@ export class StrokeMetadataManager {
   // Attach metadata to a Text object
   attachTextMetadata(obj, imageLabel) {
     if (!obj) return;
+    if (obj.isTagText || obj.isTagBackground || obj.isTagGroup || obj.parentTagObject) {
+      return;
+    }
     const scopedLabel = this.normalizeImageLabel(imageLabel);
 
     // Initialize storage for this image
@@ -290,6 +305,14 @@ export class StrokeMetadataManager {
         inchWhole: typeof measurement.inchWhole === 'number' ? measurement.inchWhole : 0,
         inchFraction: typeof measurement.inchFraction === 'number' ? measurement.inchFraction : 0,
         cm: typeof measurement.cm === 'number' ? measurement.cm : 0,
+        inch:
+          typeof measurement.inch === 'number'
+            ? measurement.inch
+            : typeof measurement.cm === 'number'
+              ? measurement.cm / 2.54
+              : (typeof measurement.inchWhole === 'number' ? measurement.inchWhole : 0) +
+                (typeof measurement.inchFraction === 'number' ? measurement.inchFraction : 0),
+        inputUnit: measurement.inputUnit === 'cm' ? 'cm' : measurement.inputUnit === 'inches' ? 'inches' : undefined,
       };
       this.strokeMeasurements[imageLabel][strokeLabel] = validatedMeasurement;
     } else {
@@ -365,12 +388,54 @@ export class StrokeMetadataManager {
   // Generate next label (A1, A2, B1, etc.) - integrates with tag prediction system
   getNextLabel(imageLabel, mode) {
     imageLabel = this.normalizeImageLabel(imageLabel);
+    const baseImageLabel =
+      typeof imageLabel === 'string' ? imageLabel.split('::tab:')[0] || imageLabel : imageLabel;
+    const inferTagMode = tag => {
+      if (/^[A-Z]$/.test(tag || '')) return 'letters';
+      if (/^[A-Z]\d+$/.test(tag || '')) return 'letters+numbers';
+      return '';
+    };
+
+    const oneTimeGuideTags = window.guideOneTimeTagByImage || {};
+    const currentScope =
+      typeof window.currentImageLabel === 'string' ? window.currentImageLabel : baseImageLabel;
+    const currentBaseScope =
+      typeof currentScope === 'string'
+        ? currentScope.split('::tab:')[0] || currentScope
+        : baseImageLabel;
+    const seededGuideTag =
+      oneTimeGuideTags[imageLabel] ||
+      oneTimeGuideTags[baseImageLabel] ||
+      oneTimeGuideTags[currentScope] ||
+      oneTimeGuideTags[currentBaseScope];
+    const seededMode = inferTagMode(seededGuideTag);
     const resolvedMode =
-      mode === 'letters' || mode === 'letters+numbers'
+      seededMode ||
+      (mode === 'letters' || mode === 'letters+numbers'
         ? mode
         : window.tagMode === 'letters' || window.tagMode === 'letters+numbers'
           ? window.tagMode
-          : 'letters+numbers';
+          : 'letters+numbers');
+    const seededLetterOnly = /^[A-Z]$/.test(seededGuideTag || '');
+    if (seededGuideTag && (this.isValidTag(seededGuideTag, resolvedMode) || seededLetterOnly)) {
+      delete oneTimeGuideTags[imageLabel];
+      delete oneTimeGuideTags[baseImageLabel];
+      delete oneTimeGuideTags[currentScope];
+      delete oneTimeGuideTags[currentBaseScope];
+      window.guideOneTimeTagByImage = oneTimeGuideTags;
+
+      // Clear any stale manual override so the guide regains control after this draw
+      window.labelsByImage = window.labelsByImage || {};
+      window.manualTagByImage = window.manualTagByImage || {};
+      for (const key of [imageLabel, baseImageLabel, currentScope, currentBaseScope]) {
+        delete window.labelsByImage[key];
+        delete window.manualTagByImage[key];
+      }
+
+      this.updateTagPredictionAfterUse(imageLabel, seededGuideTag);
+      return seededGuideTag;
+    }
+
     // First, try to use the tag prediction system from index.html
     if (window.calculateNextTag) {
       try {
@@ -457,8 +522,20 @@ export class StrokeMetadataManager {
     }
   }
 
+  _updatingTagPrediction = false;
+
   // Update tag prediction after a tag is used
   updateTagPredictionAfterUse(imageLabel, usedTag) {
+    if (this._updatingTagPrediction) return;
+    this._updatingTagPrediction = true;
+    try {
+      this._doUpdateTagPrediction(imageLabel, usedTag);
+    } finally {
+      this._updatingTagPrediction = false;
+    }
+  }
+
+  _doUpdateTagPrediction(imageLabel, usedTag) {
     imageLabel = this.normalizeImageLabel(imageLabel);
     // Ensure lineStrokesByImage is updated for tag prediction
     window.lineStrokesByImage = window.lineStrokesByImage || {};
@@ -496,8 +573,15 @@ export class StrokeMetadataManager {
       window.manualTagByImage[imageLabel] = nextTag;
       console.log(`[Tag] Manual tag sequence: ${usedTag} → ${nextTag}`);
     } else {
+      if (/^[A-Z]$/.test(usedTag)) {
+        const nextTag = this.incrementTag(usedTag);
+        window.labelsByImage[imageLabel] = nextTag;
+        window.manualTagByImage[imageLabel] = nextTag;
+      }
       // Clear labelsByImage so the system calculates the next tag automatically
-      delete window.labelsByImage[imageLabel];
+      if (!/^[A-Z]$/.test(usedTag)) {
+        delete window.labelsByImage[imageLabel];
+      }
       console.log(`[Tag] Auto tag used: ${usedTag}, clearing override`);
     }
 
@@ -525,6 +609,11 @@ export class StrokeMetadataManager {
       return String.fromCharCode(letter.charCodeAt(0) + 1);
     } else {
       // Letters+numbers mode: A1 -> A2 ... A9 -> B1
+      if (/^[A-Z]$/.test(tag)) {
+        const letter = tag[0];
+        if (letter === 'Z') return 'A';
+        return String.fromCharCode(letter.charCodeAt(0) + 1);
+      }
       const match = tag.match(/^([A-Z])(\d+)$/);
       if (!match) return 'A1';
 
@@ -543,7 +632,38 @@ export class StrokeMetadataManager {
 
   // Focus the measurement input for a specific stroke (called when clicking tags)
   // Focus the measurement input for a specific stroke (called when clicking tags)
-  focusMeasurementInput(strokeLabel) {
+  safeSelectNodeContents(node) {
+    if (!node || !node.isConnected) return;
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      const sel = window.getSelection();
+      if (!sel) return;
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch {
+      // Ignore selection failures when DOM changed mid-frame.
+    }
+  }
+
+  focusMeasurementInput(strokeLabel, options = {}) {
+    const requireCanvasSingleSelection = options?.requireCanvasSingleSelection === true;
+    const getActiveStrokeLabel = target =>
+      target?.strokeMetadata?.strokeLabel ||
+      target?.strokeLabel ||
+      target?.connectedStroke?.strokeMetadata?.strokeLabel ||
+      target?.connectedStroke?.strokeLabel ||
+      null;
+
+    const isExpectedCanvasSelection = () => {
+      if (!requireCanvasSingleSelection) return true;
+
+      const activeObjects = window.app?.canvasManager?.fabricCanvas?.getActiveObjects?.() || [];
+      if (activeObjects.length !== 1) return false;
+
+      return getActiveStrokeLabel(activeObjects[0]) === strokeLabel;
+    };
+
     // Find the measurement span for this stroke
     const strokesList = document.getElementById('strokesList');
     if (!strokesList) return;
@@ -567,21 +687,28 @@ export class StrokeMetadataManager {
             elementsBody.style.maxHeight = 'none';
           }
 
-          // Scroll to the stroke item
-          item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          const scrollContainer = document.getElementById('strokeVisibilityControls');
+          if (scrollContainer) {
+            const itemTop = item.offsetTop;
+            const itemBottom = itemTop + item.offsetHeight;
+            const visibleTop = scrollContainer.scrollTop;
+            const visibleBottom = visibleTop + scrollContainer.clientHeight;
+            const scrollPadding = 8;
+
+            if (itemTop < visibleTop + scrollPadding) {
+              scrollContainer.scrollTop = Math.max(0, itemTop - scrollPadding);
+            } else if (itemBottom > visibleBottom - scrollPadding) {
+              scrollContainer.scrollTop = itemBottom - scrollContainer.clientHeight + scrollPadding;
+            }
+          }
 
           // Enable editing
           setTimeout(() => {
-            const originalValue = measurementSpan.textContent;
+            if (!measurementSpan.isConnected) return;
+            if (!isExpectedCanvasSelection()) return;
             measurementSpan.contentEditable = 'true';
             measurementSpan.focus();
-
-            // Select all text
-            const range = document.createRange();
-            range.selectNodeContents(measurementSpan);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
+            this.safeSelectNodeContents(measurementSpan);
           }, 100);
         }
         break;
@@ -589,14 +716,102 @@ export class StrokeMetadataManager {
     }
   }
 
+  isStrokePanelOpen() {
+    const strokePanel = document.getElementById('strokePanel');
+    const elementsBody = document.getElementById('elementsBody');
+    if (window.isMeasurementSplitWorkspaceActive?.() === true) {
+      return Boolean(strokePanel && elementsBody);
+    }
+
+    const panelMinimized =
+      strokePanel &&
+      (strokePanel.classList.contains('minimized') ||
+        strokePanel.getAttribute('aria-expanded') === 'false');
+    const bodyHidden =
+      elementsBody &&
+      (elementsBody.classList.contains('hidden') ||
+        window.getComputedStyle(elementsBody).display === 'none');
+
+    return !panelMinimized && !bodyHidden;
+  }
+
+  ensureStrokePanelRefreshObserver() {
+    if (this._strokePanelRefreshObserver) {
+      return;
+    }
+
+    const strokePanel = document.getElementById('strokePanel');
+    const elementsBody = document.getElementById('elementsBody');
+    if (!strokePanel && !elementsBody) {
+      return;
+    }
+
+    const onPanelStateMaybeChanged = () => {
+      if (!this._pendingStrokeControlsRefresh) return;
+      if (!this.isStrokePanelOpen()) return;
+      this._pendingStrokeControlsRefresh = false;
+      this.updateStrokeVisibilityControls();
+    };
+
+    this._strokePanelRefreshObserver = new MutationObserver(onPanelStateMaybeChanged);
+    if (strokePanel) {
+      this._strokePanelRefreshObserver.observe(strokePanel, {
+        attributes: true,
+        attributeFilter: ['class', 'aria-expanded', 'style'],
+      });
+    }
+    if (elementsBody) {
+      this._strokePanelRefreshObserver.observe(elementsBody, {
+        attributes: true,
+        attributeFilter: ['class', 'style'],
+      });
+    }
+  }
+
   // Update the stroke visibility controls panel
   updateStrokeVisibilityControls() {
-    console.log('[StrokeMetadata] updateStrokeVisibilityControls called');
+    const now = performance.now();
+    const lastRunAt = Number(this._lastStrokeControlsUpdateAt || 0);
+    if (lastRunAt > 0 && now - lastRunAt < 40) {
+      if (this._pendingStrokeControlsRefreshTimer) {
+        clearTimeout(this._pendingStrokeControlsRefreshTimer);
+      }
+      this._pendingStrokeControlsRefreshTimer = setTimeout(() => {
+        this._pendingStrokeControlsRefreshTimer = null;
+        this.updateStrokeVisibilityControls();
+      }, 40);
+      return;
+    }
+    this._lastStrokeControlsUpdateAt = now;
+
     const controlsContainer = document.getElementById('strokeVisibilityControls');
     if (!controlsContainer) {
       console.warn('[StrokeMetadata] strokeVisibilityControls container not found!');
       return;
     }
+
+    const measurementSplitActive = window.isMeasurementSplitWorkspaceActive?.() === true;
+    controlsContainer.dataset.measurementSplit = measurementSplitActive ? 'true' : 'false';
+    if (measurementSplitActive) {
+      const strokePanel = document.getElementById('strokePanel');
+      const elementsBody = document.getElementById('elementsBody');
+      if (strokePanel) {
+        strokePanel.classList.remove('minimized', 'collapsed');
+        strokePanel.setAttribute('aria-expanded', 'true');
+      }
+      if (elementsBody) {
+        elementsBody.classList.remove('hidden');
+        elementsBody.style.display = 'flex';
+        elementsBody.style.maxHeight = 'none';
+      }
+    }
+
+    if (!this.isStrokePanelOpen()) {
+      this._pendingStrokeControlsRefresh = true;
+      this.ensureStrokePanelRefreshObserver();
+      return;
+    }
+    this._pendingStrokeControlsRefresh = false;
 
     // Set flag to prevent infinite loop with MutationObserver
     this.isUpdatingControls = true;
@@ -632,33 +847,23 @@ export class StrokeMetadataManager {
       window.app?.projectManager?.currentViewId || 'front'
     );
     const strokes = this.vectorStrokesByImage[currentViewId] || {};
-    console.log(
-      `[StrokeMetadata] vectorStrokesByImage[${currentViewId}]:`,
-      Object.keys(strokes),
-      strokes
-    );
 
     // Create strokesList container if it doesn't exist
     let strokesList = controlsContainer.querySelector('#strokesList');
     if (!strokesList) {
       controlsContainer.innerHTML =
-        '<div id="strokesList" class="px-3 pt-2 pb-2 flex-grow flex flex-col justify-center" style="padding-bottom: 70px !important;"></div>';
+        '<div id="strokesList" class="px-3 pt-2 pb-2" style="padding-bottom: 70px !important;"></div>';
       strokesList = controlsContainer.querySelector('#strokesList');
     } else {
       // Ensure classes are present even if element exists
-      strokesList.classList.add(
-        'px-3',
-        'pt-2',
-        'pb-2',
-        'flex-grow',
-        'flex',
-        'flex-col',
-        'justify-center'
-      );
+      strokesList.classList.remove('justify-center', 'flex-grow');
+      strokesList.classList.remove('justify-start', 'flex', 'flex-col');
+      strokesList.classList.add('px-3', 'pt-2', 'pb-2');
       strokesList.style.minHeight = ''; // Remove inline style if present
       strokesList.style.setProperty('padding-bottom', '70px', 'important');
       strokesList.innerHTML = '';
     }
+    strokesList.classList.toggle('measurement-split-strokes-list', measurementSplitActive);
 
     // Add text elements header
     const textHeader = document.createElement('h4');
@@ -681,6 +886,9 @@ export class StrokeMetadataManager {
       textElements.forEach((textObj, index) => {
         const textItem = document.createElement('div');
         textItem.className = 'stroke-visibility-item group';
+        if (measurementSplitActive) {
+          textItem.classList.add('measurement-split-row');
+        }
         textItem.style.position = 'relative';
         textItem.style.marginBottom = '4px';
 
@@ -815,6 +1023,9 @@ export class StrokeMetadataManager {
       shapeElements.forEach((shapeObj, index) => {
         const shapeItem = document.createElement('div');
         shapeItem.className = 'stroke-visibility-item group';
+        if (measurementSplitActive) {
+          shapeItem.classList.add('measurement-split-row');
+        }
         shapeItem.style.position = 'relative';
         shapeItem.style.marginBottom = '4px';
 
@@ -934,6 +1145,9 @@ export class StrokeMetadataManager {
     Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
       const strokeItem = document.createElement('div');
       strokeItem.className = 'stroke-visibility-item group';
+      if (measurementSplitActive) {
+        strokeItem.classList.add('measurement-split-row');
+      }
       strokeItem.dataset.stroke = strokeLabel;
       strokeItem.dataset.selected = 'false';
       strokeItem.dataset.editMode = 'false';
@@ -964,6 +1178,19 @@ export class StrokeMetadataManager {
       const labelContainer = document.createElement('div');
       labelContainer.className = 'stroke-label-container';
 
+      const syncCustomColorTargetState = (forcedSelected?: boolean) => {
+        const isSelected =
+          typeof forcedSelected === 'boolean'
+            ? forcedSelected
+            : Boolean(window.app?.tagManager?.isSelectedStyleTarget?.(strokeLabel, currentViewId));
+        strokeItem.dataset.selected = isSelected ? 'true' : 'false';
+        labelContainer.style.background = isSelected ? 'rgba(219, 234, 254, 0.9)' : '';
+        labelContainer.style.boxShadow = isSelected
+          ? 'inset 0 0 0 1px rgba(59, 130, 246, 0.35)'
+          : '';
+        labelContainer.style.borderRadius = '6px';
+      };
+
       // Stroke name
       const strokeName = document.createElement('span');
       strokeName.className = 'stroke-name';
@@ -980,11 +1207,7 @@ export class StrokeMetadataManager {
         originalStrokeName = strokeName.textContent?.trim() || strokeLabel;
         strokeName.contentEditable = 'true';
         strokeName.focus();
-        const range = document.createRange();
-        range.selectNodeContents(strokeName);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
+        this.safeSelectNodeContents(strokeName);
       });
 
       strokeName.addEventListener('keydown', e => {
@@ -1051,6 +1274,29 @@ export class StrokeMetadataManager {
       measurementSpan.contentEditable = 'false';
       measurementSpan.style.cursor = 'pointer';
 
+      const isMeasurementLocked = () => {
+        try {
+          if (typeof window.isCwMeasurementLocked === 'function') {
+            return window.isCwMeasurementLocked(currentViewId, strokeLabel);
+          }
+          return window.cwMeasurementLocksByImage?.[currentViewId]?.[strokeLabel] === true;
+        } catch {
+          return false;
+        }
+      };
+
+      const syncMeasurementLockState = () => {
+        const locked = isMeasurementLocked();
+        measurementSpan.dataset.locked = locked ? 'true' : 'false';
+        measurementSpan.style.opacity = locked ? '0.72' : '1';
+        measurementSpan.style.cursor = locked ? 'not-allowed' : 'pointer';
+        if (locked) {
+          measurementSpan.title = 'Locked by CW import. Unlock before editing.';
+        } else {
+          measurementSpan.title = 'Click to edit measurement';
+        }
+      };
+
       const measurementString = this.getMeasurementString(currentViewId, strokeLabel);
 
       if (measurementString) {
@@ -1064,22 +1310,32 @@ export class StrokeMetadataManager {
       let originalMeasurement = '';
       measurementSpan.addEventListener('click', () => {
         if (measurementSpan.contentEditable === 'true') return; // Already editing
+        if (isMeasurementLocked()) {
+          if (window.app?.projectManager?.showStatusMessage) {
+            window.app.projectManager.showStatusMessage(
+              `Measurement ${strokeLabel} is locked (CW import).`,
+              'info'
+            );
+          }
+          syncMeasurementLockState();
+          return;
+        }
 
         originalMeasurement = measurementSpan.textContent;
         measurementSpan.classList.remove('empty-measurement');
 
         measurementSpan.contentEditable = 'true';
         measurementSpan.focus();
-
-        // Select all text
-        const range = document.createRange();
-        range.selectNodeContents(measurementSpan);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
+        this.safeSelectNodeContents(measurementSpan);
       });
 
       measurementSpan.addEventListener('blur', () => {
+        if (isMeasurementLocked()) {
+          measurementSpan.contentEditable = 'false';
+          measurementSpan.textContent = originalMeasurement;
+          syncMeasurementLockState();
+          return;
+        }
         measurementSpan.contentEditable = 'false';
         const newValue = measurementSpan.textContent.trim();
 
@@ -1113,33 +1369,31 @@ export class StrokeMetadataManager {
         }
       });
 
+      syncMeasurementLockState();
+
       // Auto-focus this measurement field if it's the newest stroke (just added)
       // We'll check if this is the last stroke in the list
       const allStrokes = Object.keys(strokes);
       const isNewestStroke = allStrokes[allStrokes.length - 1] === strokeLabel;
 
-      console.log(
-        `[Auto-Focus DEBUG] Stroke: ${strokeLabel}, isNewest: ${isNewestStroke}, shouldAutoFocus: ${this._shouldAutoFocus}`
-      );
-
-      // Auto-focus logic removed to allow immediate deletion via keyboard
       if (isNewestStroke && this._shouldAutoFocus) {
         this._shouldAutoFocus = false;
-      }
 
-      // Review toggle button (★)
-      const reviewBtn = document.createElement('button');
-      reviewBtn.type = 'button';
-      reviewBtn.className = 'stroke-review-toggle-btn';
-      reviewBtn.title = 'Mark for review';
-      reviewBtn.setAttribute('aria-label', `Mark stroke ${strokeLabel} for review`);
-      reviewBtn.style.fontSize = '14px';
-      reviewBtn.style.padding = '2px 6px';
-      reviewBtn.style.borderRadius = '3px';
-      reviewBtn.style.border = 'none';
-      reviewBtn.style.cursor = 'pointer';
-      reviewBtn.style.transition = '0.2s';
-      reviewBtn.textContent = '★';
+        const activeEl = document.activeElement as HTMLElement | null;
+        const isEditingAnotherField =
+          !!activeEl &&
+          activeEl !== document.body &&
+          activeEl !== measurementSpan &&
+          (activeEl.tagName === 'INPUT' ||
+            activeEl.tagName === 'TEXTAREA' ||
+            activeEl.isContentEditable);
+
+        if (!isEditingAnotherField) {
+          setTimeout(() => {
+            this.focusMeasurementInput(strokeLabel);
+          }, 0);
+        }
+      }
 
       // Delete button (×)
       const deleteBtn = document.createElement('button');
@@ -1171,11 +1425,9 @@ export class StrokeMetadataManager {
       labelContainer.appendChild(strokeName);
       labelContainer.appendChild(labelToggleBtn);
       labelContainer.appendChild(measurementSpan);
-      labelContainer.appendChild(reviewBtn);
-      labelContainer.appendChild(deleteBtn); // Append delete button here
 
       strokeItem.appendChild(labelContainer);
-      // Removed appending deleteBtn to strokeItem
+      strokeItem.appendChild(deleteBtn);
 
       deleteBtn.addEventListener('click', () => {
         // Delete stroke from canvas
@@ -1216,7 +1468,30 @@ export class StrokeMetadataManager {
         }
       });
 
-      strokeItem.appendChild(deleteBtn);
+      strokeItem.addEventListener('click', event => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (
+          target.closest('input') ||
+          target.closest('button') ||
+          target.closest('.stroke-measurement') ||
+          target.closest('.stroke-name')
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const nextSelected = window.app?.tagManager?.toggleSelectedStyleTarget?.(
+          strokeLabel,
+          currentViewId,
+          { syncCanvas: true }
+        );
+        syncCustomColorTargetState(typeof nextSelected === 'boolean' ? nextSelected : undefined);
+      });
+
+      syncCustomColorTargetState();
       strokesList.appendChild(strokeItem);
     });
 
@@ -1243,8 +1518,8 @@ export class StrokeMetadataManager {
   }
   // Helper to find closest 1/8th fraction
   findClosestFraction(fraction) {
-    const eighths = Math.round(fraction * 8);
-    return eighths / 8;
+    const sixteenths = Math.round(Number(fraction || 0) * 16);
+    return sixteenths / 16;
   }
 
   // Parse and save measurement string
@@ -1252,6 +1527,12 @@ export class StrokeMetadataManager {
   parseAndSaveMeasurement(imageLabel, strokeLabel, newString) {
     imageLabel = this.normalizeImageLabel(imageLabel);
     let successfullyParsedAndSaved = false;
+    const activeUnitValue =
+      (document.getElementById('unitSelector') as HTMLSelectElement | null)?.value ||
+      window.app?.currentUnit ||
+      window.app?.measurementSystem?.getUnit?.() ||
+      'inch';
+    const currentUnit = String(activeUnitValue).toLowerCase().startsWith('cm') ? 'cm' : 'inch';
 
     if (!newString && newString !== '0') {
       // Allow "0" to clear/reset measurement
@@ -1331,16 +1612,27 @@ export class StrokeMetadataManager {
         }
       }
 
-      // Fallback: if no explicit unit marker, try to parse as plain number based on current unit
+      // Fallback: use measurement system parser so mixed fractions like "70 5/16" work
       if (totalInches === null && !explicitUnitMatched) {
-        const plainNumber = parseFloat(newString);
-        if (!isNaN(plainNumber)) {
-          const currentUnit = window.app?.currentUnit || 'inch';
-          if (currentUnit === 'inch') {
-            totalInches = plainNumber;
-          } else {
-            totalCm = plainNumber;
-            totalInches = totalCm / 2.54;
+        const parsedViaSystem = window.app?.measurementSystem?.parseMeasurementInput?.(
+          newString,
+          currentUnit === 'inch' ? 'inches' : 'cm'
+        );
+        if (parsedViaSystem && Number.isFinite(parsedViaSystem.totalInches)) {
+          totalInches =
+            parsedViaSystem.cm !== undefined && currentUnit === 'cm'
+              ? parsedViaSystem.cm / 2.54
+              : parsedViaSystem.totalInches;
+          totalCm = parsedViaSystem.cm;
+        } else {
+          const plainNumber = parseFloat(newString);
+          if (!isNaN(plainNumber)) {
+            if (currentUnit === 'inch') {
+              totalInches = plainNumber;
+            } else {
+              totalCm = plainNumber;
+              totalInches = totalCm / 2.54;
+            }
           }
         }
       }
@@ -1351,8 +1643,11 @@ export class StrokeMetadataManager {
       }
 
       const inchWhole = Math.floor(totalInches);
-      const inchFraction = parseFloat((totalInches - inchWhole).toFixed(2));
-      const finalCm = totalInches * 2.54;
+      const inchFraction = this.findClosestFraction(totalInches - inchWhole);
+      // When the user entered a CM value directly, preserve it instead of
+      // recalculating from the fraction-rounded inches (which introduces
+      // rounding error, e.g. 129 cm → 50 13/16" → 129.06 cm).
+      const finalCm = totalCm !== null && Number.isFinite(totalCm) ? totalCm : totalInches * 2.54;
 
       if (!this.strokeMeasurements[imageLabel]) {
         this.strokeMeasurements[imageLabel] = {};
@@ -1361,6 +1656,8 @@ export class StrokeMetadataManager {
         inchWhole: inchWhole,
         inchFraction: inchFraction,
         cm: parseFloat(finalCm.toFixed(4)),
+        inch: parseFloat(totalInches.toFixed(4)),
+        inputUnit: currentUnit === 'cm' ? 'cm' : 'inches',
       };
       successfullyParsedAndSaved = true;
     }
@@ -1502,12 +1799,20 @@ export class StrokeMetadataManager {
   }
 
   // Get formatted measurement string
-  getMeasurementString(imageLabel, strokeLabel) {
+  getMeasurementString(imageLabel, strokeLabel, options = {}) {
     imageLabel = this.normalizeImageLabel(imageLabel);
     const measurement = this.getMeasurement(imageLabel, strokeLabel);
     if (!measurement) return '';
 
-    const unit = window.app?.currentUnit || 'inch';
+    const activeUnitValue =
+      (document.getElementById('unitSelector') as HTMLSelectElement | null)?.value ||
+      window.app?.currentUnit ||
+      window.app?.measurementSystem?.getUnit?.() ||
+      'inch';
+    const unit = String(activeUnitValue).toLowerCase().startsWith('cm') ? 'cm' : 'inch';
+    const measurementSystem = window.app?.measurementSystem;
+    const context = options.context === 'tag' ? 'tag' : 'elements';
+    const cmDecimals = context === 'elements' ? 2 : 1;
 
     if (unit === 'inch') {
       const whole = measurement.inchWhole || 0;
@@ -1518,24 +1823,20 @@ export class StrokeMetadataManager {
         return '';
       }
 
-      let fractionStr = '';
-      if (fraction > 0) {
-        const rounded = this.findClosestFraction(fraction);
-        const fractionMap = {
-          0.125: '1/8',
-          0.25: '1/4',
-          0.375: '3/8',
-          0.5: '1/2',
-          0.625: '5/8',
-          0.75: '3/4',
-          0.875: '7/8',
-        };
-        if (fractionMap[rounded]) {
-          fractionStr = ' ' + fractionMap[rounded];
-        }
+      if (measurementSystem?.formatInchValue) {
+        return measurementSystem.formatInchValue(whole, fraction, {
+          decimalPlaces:
+            measurement.inputUnit === 'cm' ? 1 : measurement.inputUnit === 'inches' ? 3 : 2,
+          inchValue: measurement.inch,
+        });
       }
 
-      return `${whole}${fractionStr}"`;
+      const exactInch =
+        typeof measurement.inch === 'number' && Number.isFinite(measurement.inch)
+          ? measurement.inch
+          : whole + fraction;
+      const total = Number(exactInch.toFixed(2));
+      return `${total.toFixed(2).replace(/\.?0+$/, '')}"`;
     } else {
       const cm = measurement.cm || 0;
 
@@ -1544,7 +1845,10 @@ export class StrokeMetadataManager {
         return '';
       }
 
-      return `${cm.toFixed(1)} cm`;
+      const formattedCm = window.app?.measurementSystem?.formatCentimeterValue?.(cm, {
+        decimalPlaces: cmDecimals,
+      });
+      return formattedCm || `${cm.toFixed(cmDecimals).replace(/\.?0+$/, '')} cm`;
     }
   }
 }

@@ -8,6 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Start the Express server (port 3000)
 npm start
 
+# Start local MOS SAM service (port 8090)
+docker compose -f docker-compose.dev.yml up --build mos-sam
+
 # Start Vite dev server (with HMR)
 npm run dev
 
@@ -51,16 +54,16 @@ OpenPaint is a web-based drawing and annotation tool for creating measurement do
 
 ### Core Manager Classes
 
-| Class | Responsibility |
-|---|---|
-| `CanvasManager` | Fabric.js canvas lifecycle, zoom/pan, background images, viewport transforms |
-| `ToolManager` | Tool selection and switching |
-| `StrokeMetadataManager` | Stroke data storage, visibility, labels |
-| `HistoryManager` | Undo/redo |
-| `ProjectManager` | Save/load projects as ZIP (JSZip + FileSaver.js) |
-| `TagManager` | Image tagging and folder organization |
-| `UploadManager` | File upload handling, HEIC conversion |
-| `MeasurementSystem` | Measurement tracking and label positioning |
+| Class                   | Responsibility                                                               |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| `CanvasManager`         | Fabric.js canvas lifecycle, zoom/pan, background images, viewport transforms |
+| `ToolManager`           | Tool selection and switching                                                 |
+| `StrokeMetadataManager` | Stroke data storage, visibility, labels                                      |
+| `HistoryManager`        | Undo/redo                                                                    |
+| `ProjectManager`        | Save/load projects as ZIP (JSZip + FileSaver.js)                             |
+| `TagManager`            | Image tagging and folder organization                                        |
+| `UploadManager`         | File upload handling, HEIC conversion                                        |
+| `MeasurementSystem`     | Measurement tracking and label positioning                                   |
 
 ### Drawing Tools
 
@@ -69,6 +72,7 @@ OpenPaint is a web-based drawing and annotation tool for creating measurement do
 ### State Architecture
 
 Three-layer model:
+
 1. **Manager classes** — `window.app.canvasManager`, `window.app.toolManager`, etc.
 2. **Window globals** (legacy) — `window.vectorStrokesByImage`, `window.strokeVisibilityByImage`, etc.
 3. **Fabric.js objects** — canvas objects with metadata in `obj.customData`
@@ -76,6 +80,7 @@ Three-layer model:
 ### Critical Data Structures
 
 Five stroke data structures that MUST be preserved during image operations (replacement, background removal, etc.):
+
 - `vectorStrokesByImage` — per-image vector stroke arrays
 - `lineStrokesByImage` — per-image line stroke arrays
 - `strokeVisibilityByImage` — per-image visibility flags
@@ -85,9 +90,11 @@ Five stroke data structures that MUST be preserved during image operations (repl
 ### Measurement Label Positioning
 
 Labels use a **normalized offset format** for resolution-independent positioning:
+
 ```javascript
 { kind: 'norm', dx_norm: float, dy_norm: float, normRef: 'width' | 'height' | 'diag' }
 ```
+
 Legacy format `{ x: pixels, y: pixels }` is auto-converted via `migrateProject()`.
 
 Related storage maps: `customLabelPositions`, `calculatedLabelOffsets`, `customLabelRotationStamps`, `textElementsByImage`.
@@ -118,6 +125,7 @@ Related storage maps: `customLabelPositions`, `calculatedLabelOffsets`, `customL
 ```
 Browser → Express relay (adds X-API-Key) → Cloudflare Worker → Returns SVG/measurements
 ```
+
 - Mock mode runs automatically on localhost (no API keys needed for dev)
 - Rate limited: 10 requests/minute per IP
 - SVG output is sanitized (strips scripts, event handlers, javascript: URIs)
@@ -153,6 +161,7 @@ Browser → Express relay (adds X-API-Key) → Cloudflare Worker → Returns SVG
 When implementing zoom with Fabric.js, **do NOT call `applyViewportTransform()` after `zoomToPoint()`**. The `zoomToPoint()` method already sets the correct viewport transform. Calling `applyViewportTransform()` afterward will corrupt the transform and cause the canvas to drift.
 
 **Correct pattern:**
+
 ```javascript
 this.fabricCanvas.zoomToPoint({ x: mouseX, y: mouseY }, zoom);
 this.zoomLevel = zoom;
@@ -181,6 +190,7 @@ if (this.fabricCanvas.viewportTransform) {
 ### Background Removal Pipeline
 
 When replacing images (e.g., background removal), always:
+
 1. Use the unified coordinate transformation system (`imageToCanvasCoords`, `canvasToImageCoords`, `getTransformationParams`)
 2. Preserve all five stroke data structures listed above
 3. Fetch background removal URLs as blobs before processing (avoids CORS/HTTP2 errors)

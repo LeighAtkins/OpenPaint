@@ -134,7 +134,7 @@ function renderRelatedMeasurementCards(cards, groupIndex) {
         ${cards
           .map((card, cardIndex) => {
             const rows = (card.rows || [])
-              .slice(0, 4)
+              .slice(0, 8)
               .map((row, rowIndex) => {
                 const rowStatus = detectRowStatus(row.value);
                 return `

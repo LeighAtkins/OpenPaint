@@ -11,12 +11,22 @@ export class TagManager {
     this.canvasManager = canvasManager;
     this.metadataManager = metadataManager;
     this.tagObjects = new Map(); // Map<viewId::strokeLabel, fabricObject>
-    this.tagSize = 20; // Default tag font size
+    this.tagSize = 34; // Default tag font size
     this.tagShape = 'square'; // 'square' or 'circle'
     this.tagMode = 'letters+numbers'; // 'letters' or 'letters+numbers'
     this.tagBackgroundStyle = 'solid'; // 'solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'
     this.strokeColor = '#3b82f6'; // Default stroke color for clear-color style
     this.connectorColor = '#ffffff';
+    this.connectorMatchesLine = true;
+    this.customTagColors = null;
+    this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    this.selectedStyleTagKeys = new Set();
+    this.isSyncingSelectedStyleTargetsToCanvas = false;
+    this.tagSizeMin = 8;
+    this.tagSizeMax = 72;
+
+    this.syncTagStyleConfigFromMetadata();
+    this.syncTagSizeFromMetadata();
 
     // Initialize showMeasurements to visible by default; sync checkbox state if present
     const showMeasurementsCheckbox = document.getElementById('toggleShowMeasurements');
@@ -100,25 +110,38 @@ export class TagManager {
     const decreaseBtn = document.getElementById('decreaseAllTagSize');
     if (increaseBtn) {
       increaseBtn.addEventListener('click', () => {
-        this.tagSize = Math.min(this.tagSize + 2, 40);
+        this.tagSize = this.normalizeTagSize(this.tagSize + 2);
         this.updateTagSize();
       });
     }
     if (decreaseBtn) {
       decreaseBtn.addEventListener('click', () => {
-        this.tagSize = Math.max(this.tagSize - 2, 10);
+        this.tagSize = this.normalizeTagSize(this.tagSize - 2);
         this.updateTagSize();
       });
     }
 
-    // Listen for tag shape changes
-    const shapeToggle = document.getElementById('labelShapeToggleBtn');
-    if (shapeToggle) {
-      shapeToggle.addEventListener('click', () => {
-        this.tagShape = this.tagShape === 'square' ? 'circle' : 'square';
-        this.updateAllTags();
-      });
-    }
+    // Tag shape toggle is wired from toolbar UI modules.
+    // Keep TagManager free of direct DOM listeners to avoid duplicate toggles.
+  }
+
+  getViewScopes(viewId) {
+    const base = this.normalizeImageLabel(
+      viewId || window.app?.projectManager?.currentViewId || 'front'
+    );
+    const keys = Object.keys(this.metadataManager?.vectorStrokesByImage || {});
+    const scopes = keys.filter(key => {
+      if (key.startsWith('__guide__:')) return false;
+      return key === base || key.startsWith(`${base}::tab:`);
+    });
+    return scopes.length ? scopes : [base];
+  }
+
+  setTagShape(shape, imageLabel) {
+    const next = shape === 'circle' ? 'circle' : 'square';
+    if (this.tagShape === next) return;
+    this.tagShape = next;
+    this.updateAllTags(imageLabel);
   }
 
   // Get next tag from prediction system
@@ -152,9 +175,406 @@ export class TagManager {
     }
   }
 
+  createDefaultTagStyleConfig() {
+    return {
+      presets: {
+        lettersOnly: null,
+        lettersNumbers: null,
+        highlight: null,
+      },
+      perTagThemes: {},
+      highlightedTagKeys: new Set(),
+    };
+  }
+
+  cloneTagTheme(theme) {
+    if (!theme) return null;
+    return {
+      background: theme.background,
+      border: theme.border,
+      text: theme.text,
+    };
+  }
+
+  getDefaultTagTheme() {
+    return {
+      background: '#ffffff',
+      border: '#000000',
+      text: '#000000',
+    };
+  }
+
+  getDefaultHighlightTheme() {
+    return {
+      background: '#fef3c7',
+      border: '#f59e0b',
+      text: '#92400e',
+    };
+  }
+
+  normalizeTagTheme(theme) {
+    if (!theme || typeof theme !== 'object') return null;
+    const background = this.normalizeThemeColor(theme.background);
+    const border = this.normalizeThemeColor(theme.border);
+    const text = this.normalizeThemeColor(theme.text);
+    if (!background || !border || !text) return null;
+    return { background, border, text };
+  }
+
+  normalizeTagStyleTarget(target) {
+    return ['lettersOnly', 'lettersNumbers', 'highlight'].includes(target)
+      ? target
+      : 'lettersNumbers';
+  }
+
+  normalizeTagStyleConfig(config) {
+    const source = config && typeof config === 'object' ? config : {};
+    const presets = source.presets && typeof source.presets === 'object' ? source.presets : {};
+    const highlightedTagKeys = Array.isArray(source.highlightedTagKeys)
+      ? source.highlightedTagKeys.map(value => String(value || '').trim()).filter(Boolean)
+      : source.highlightedTagKeys instanceof Set
+        ? Array.from(source.highlightedTagKeys as Set<string>)
+            .map(value => (value || '').trim())
+            .filter(Boolean)
+        : [];
+
+    return {
+      presets: {
+        lettersOnly: this.normalizeTagTheme(presets.lettersOnly),
+        lettersNumbers: this.normalizeTagTheme(presets.lettersNumbers),
+        highlight: this.normalizeTagTheme(presets.highlight),
+      },
+      perTagThemes: Object.entries(
+        source.perTagThemes && typeof source.perTagThemes === 'object' ? source.perTagThemes : {}
+      ).reduce((acc, [key, value]) => {
+        const normalizedKey = (key || '').trim();
+        const normalizedTheme = this.normalizeTagTheme(value);
+        if (normalizedKey && normalizedTheme) {
+          acc[normalizedKey] = normalizedTheme;
+        }
+        return acc;
+      }, {}),
+      highlightedTagKeys: new Set(highlightedTagKeys),
+    };
+  }
+
+  serializeTagStyleConfig() {
+    const config = this.tagStyleConfig || this.createDefaultTagStyleConfig();
+    return {
+      presets: {
+        lettersOnly: this.cloneTagTheme(config.presets?.lettersOnly),
+        lettersNumbers: this.cloneTagTheme(config.presets?.lettersNumbers),
+        highlight: this.cloneTagTheme(config.presets?.highlight),
+      },
+      perTagThemes: Object.keys(config.perTagThemes || {})
+        .sort()
+        .reduce((acc, key) => {
+          const theme = this.cloneTagTheme(config.perTagThemes?.[key]);
+          if (theme) {
+            acc[key] = theme;
+          }
+          return acc;
+        }, {}),
+      highlightedTagKeys: Array.from(config.highlightedTagKeys || []).sort(),
+    };
+  }
+
+  syncTagStyleConfigFromMetadata() {
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const nextConfig =
+      metadata?.tagStyleConfig && typeof metadata.tagStyleConfig === 'object'
+        ? this.normalizeTagStyleConfig(metadata.tagStyleConfig)
+        : null;
+    const legacyTheme = this.normalizeTagTheme(metadata?.tagColorTheme);
+
+    if (nextConfig) {
+      this.tagStyleConfig = nextConfig;
+    } else if (legacyTheme) {
+      this.tagStyleConfig = {
+        presets: {
+          lettersOnly: this.cloneTagTheme(legacyTheme),
+          lettersNumbers: this.cloneTagTheme(legacyTheme),
+          highlight: null,
+        },
+        perTagThemes: {},
+        highlightedTagKeys: new Set(),
+      };
+    } else {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    }
+
+    this.customTagColors =
+      this.cloneTagTheme(this.tagStyleConfig.presets.lettersNumbers) ||
+      this.cloneTagTheme(this.tagStyleConfig.presets.lettersOnly);
+  }
+
+  persistTagStyleConfigToMetadata() {
+    const payload = this.serializeTagStyleConfig();
+    if (window.app?.projectManager?.setProjectMetadata) {
+      window.app.projectManager.setProjectMetadata({ tagStyleConfig: payload });
+      return;
+    }
+    window.projectMetadata = {
+      ...(window.projectMetadata || {}),
+      tagStyleConfig: payload,
+    };
+  }
+
+  hasCustomTagStyles() {
+    const config = this.tagStyleConfig || this.createDefaultTagStyleConfig();
+    return Boolean(
+      config.presets?.lettersOnly ||
+      config.presets?.lettersNumbers ||
+      config.presets?.highlight ||
+      Object.keys(config.perTagThemes || {}).length ||
+      config.highlightedTagKeys?.size
+    );
+  }
+
+  getTagStyleConfigSnapshot() {
+    return this.serializeTagStyleConfig();
+  }
+
+  isLettersOnlyTag(strokeLabel) {
+    return /^[A-Z]$/.test(
+      String(strokeLabel || '')
+        .trim()
+        .toUpperCase()
+    );
+  }
+
+  isLettersNumbersTag(strokeLabel) {
+    return /^[A-Z]\d+$/.test(
+      String(strokeLabel || '')
+        .trim()
+        .toUpperCase()
+    );
+  }
+
+  isTagHighlighted(strokeLabel, imageLabel) {
+    const tagKey = this.getTagKey(strokeLabel, imageLabel);
+    return Boolean(this.tagStyleConfig?.highlightedTagKeys?.has(tagKey));
+  }
+
+  getTagThemeOverride(strokeLabel, imageLabel) {
+    const tagKey = this.getTagKey(strokeLabel, imageLabel);
+    const override = this.tagStyleConfig?.perTagThemes?.[tagKey];
+    return override ? this.cloneTagTheme(override) : null;
+  }
+
+  hasTagThemeOverride(strokeLabel, imageLabel) {
+    return Boolean(this.getTagThemeOverride(strokeLabel, imageLabel));
+  }
+
+  emitTagStyleStateChanged(imageLabel) {
+    const viewId = this.normalizeImageLabel(imageLabel);
+    if (typeof this.metadataManager?.updateStrokeVisibilityControls === 'function') {
+      this.metadataManager.updateStrokeVisibilityControls();
+    }
+    if (typeof window?.dispatchEvent === 'function' && typeof window.CustomEvent === 'function') {
+      window.dispatchEvent(
+        new window.CustomEvent('openpaint:tag-style-state-changed', {
+          detail: { imageLabel: viewId },
+        })
+      );
+    }
+  }
+
+  getSelectedStyleTargetLabels(imageLabel) {
+    const viewId = this.normalizeImageLabel(imageLabel);
+    return Array.from(this.selectedStyleTagKeys || [])
+      .filter(key => key.startsWith(`${viewId}::`))
+      .map(key => key.slice(`${viewId}::`.length))
+      .sort((left, right) =>
+        String(left).localeCompare(String(right), undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        })
+      );
+  }
+
+  getSelectedStyleTargetKeys(imageLabel) {
+    const viewId = this.normalizeImageLabel(imageLabel);
+    return Array.from(this.selectedStyleTagKeys || [])
+      .filter(key => key.startsWith(`${viewId}::`))
+      .sort((left, right) =>
+        String(left).localeCompare(String(right), undefined, {
+          numeric: true,
+          sensitivity: 'base',
+        })
+      );
+  }
+
+  isSelectedStyleTarget(strokeLabel, imageLabel) {
+    const tagKey = this.getTagKey(strokeLabel, imageLabel);
+    return this.selectedStyleTagKeys.has(tagKey);
+  }
+
+  setSelectedStyleTarget(strokeLabel, imageLabel, selected = true, options = {}) {
+    const normalizedLabel = String(strokeLabel || '').trim();
+    if (!normalizedLabel) return false;
+    const viewId = this.normalizeImageLabel(imageLabel);
+    const tagKey = this.getTagKey(normalizedLabel, viewId);
+    if (selected) {
+      this.selectedStyleTagKeys.add(tagKey);
+    } else {
+      this.selectedStyleTagKeys.delete(tagKey);
+    }
+    if (options.syncCanvas === true) {
+      this.syncSelectedStyleTargetsToCanvas(viewId);
+    }
+    if (options.emitChange !== false) {
+      this.emitTagStyleStateChanged(viewId);
+    }
+    return selected;
+  }
+
+  toggleSelectedStyleTarget(strokeLabel, imageLabel, options = {}) {
+    const nextSelected = !this.isSelectedStyleTarget(strokeLabel, imageLabel);
+    this.setSelectedStyleTarget(strokeLabel, imageLabel, nextSelected, options);
+    return nextSelected;
+  }
+
+  replaceSelectedStyleTargets(strokeLabels, imageLabel, options = {}) {
+    const viewId = this.normalizeImageLabel(imageLabel);
+    Array.from(this.selectedStyleTagKeys || []).forEach(key => {
+      if (key.startsWith(`${viewId}::`)) {
+        this.selectedStyleTagKeys.delete(key);
+      }
+    });
+
+    (Array.isArray(strokeLabels) ? strokeLabels : []).forEach(strokeLabel => {
+      this.setSelectedStyleTarget(strokeLabel, viewId, true, {
+        syncCanvas: false,
+        emitChange: false,
+      });
+    });
+
+    const labels = this.getSelectedStyleTargetLabels(viewId);
+    if (options.syncCanvas === true) {
+      this.syncSelectedStyleTargetsToCanvas(viewId);
+    }
+    if (options.emitChange !== false) {
+      this.emitTagStyleStateChanged(viewId);
+    }
+    return labels;
+  }
+
+  syncSelectedStyleTargetsToCanvas(imageLabel) {
+    const canvas = this.canvas;
+    const viewId = this.normalizeImageLabel(imageLabel);
+    if (!canvas || !viewId || this.isSyncingSelectedStyleTargetsToCanvas) return [];
+
+    const labels = this.getSelectedStyleTargetLabels(viewId);
+    const strokesByImage = this.metadataManager?.vectorStrokesByImage?.[viewId] || {};
+    const targetObjects = labels
+      .map(label => strokesByImage?.[label])
+      .filter(obj => obj && obj.canvas === canvas && obj.visible !== false);
+
+    this.isSyncingSelectedStyleTargetsToCanvas = true;
+    window.__openpaintSuppressMeasurementFocus = true;
+    try {
+      canvas.discardActiveObject();
+
+      if (targetObjects.length === 1) {
+        canvas.setActiveObject(targetObjects[0]);
+      } else if (targetObjects.length > 1 && typeof fabric?.ActiveSelection === 'function') {
+        const selection = new fabric.ActiveSelection(targetObjects, { canvas });
+        canvas.setActiveObject(selection);
+      }
+
+      canvas.requestRenderAll();
+    } finally {
+      this.isSyncingSelectedStyleTargetsToCanvas = false;
+      window.setTimeout(() => {
+        window.__openpaintSuppressMeasurementFocus = false;
+      }, 0);
+    }
+    return labels;
+  }
+
+  getTagStyleTheme(target) {
+    const normalizedTarget = this.normalizeTagStyleTarget(target);
+    const preset = this.tagStyleConfig?.presets?.[normalizedTarget];
+    if (preset) {
+      return this.cloneTagTheme(preset);
+    }
+    return normalizedTarget === 'highlight'
+      ? this.getDefaultHighlightTheme()
+      : this.getDefaultTagTheme();
+  }
+
+  getTagPalette(strokeLabel, orientation = 'horizontal', imageLabel) {
+    if (!this.tagStyleConfig) {
+      this.syncTagStyleConfigFromMetadata();
+    }
+
+    const overrideTheme = this.getTagThemeOverride(strokeLabel, imageLabel);
+    if (overrideTheme) {
+      return {
+        bg: overrideTheme.background,
+        stroke: overrideTheme.border,
+        text: overrideTheme.text,
+      };
+    }
+
+    if (this.isTagHighlighted(strokeLabel, imageLabel)) {
+      const highlightTheme = this.getTagStyleTheme('highlight');
+      return {
+        bg: highlightTheme.background,
+        stroke: highlightTheme.border,
+        text: highlightTheme.text,
+      };
+    }
+
+    let target = null;
+    if (this.isLettersOnlyTag(strokeLabel)) {
+      target = 'lettersOnly';
+    } else if (this.isLettersNumbersTag(strokeLabel)) {
+      target = 'lettersNumbers';
+    }
+
+    const theme = target ? this.getTagStyleTheme(target) : this.getDefaultTagTheme();
+    return {
+      bg: theme.background,
+      stroke: theme.border,
+      text: theme.text,
+    };
+  }
+
+  getStrokeOrientation(strokeObject) {
+    if (!strokeObject) return 'horizontal';
+
+    if (
+      typeof strokeObject.x1 === 'number' &&
+      typeof strokeObject.x2 === 'number' &&
+      typeof strokeObject.y1 === 'number' &&
+      typeof strokeObject.y2 === 'number'
+    ) {
+      const dx = Math.abs(strokeObject.x2 - strokeObject.x1);
+      const dy = Math.abs(strokeObject.y2 - strokeObject.y1);
+      return dy > dx ? 'vertical' : 'horizontal';
+    }
+
+    if (typeof strokeObject.getBoundingRect === 'function') {
+      const bounds = strokeObject.getBoundingRect();
+      if (bounds && typeof bounds.width === 'number' && typeof bounds.height === 'number') {
+        return bounds.height > bounds.width ? 'vertical' : 'horizontal';
+      }
+    }
+
+    return 'horizontal';
+  }
+
+  isRenderableStrokeObject(strokeObject) {
+    return Boolean(strokeObject && typeof strokeObject.getBoundingRect === 'function');
+  }
+
   // Create a draggable, resizable tag object
   createTag(strokeLabel, imageLabel, strokeObject) {
     imageLabel = this.normalizeImageLabel(imageLabel);
+    this.syncTagSizeFromMetadata(imageLabel);
     // Ensure canvas is available
     const canvas = this.canvas;
     if (!canvas) {
@@ -162,8 +582,16 @@ export class TagManager {
       return null;
     }
 
-    // Remove existing tag if any
-    this.removeTag(strokeLabel, imageLabel);
+    if (!this.isRenderableStrokeObject(strokeObject)) {
+      console.warn('[TagManager] Skipping tag creation for non-renderable stroke object', {
+        strokeLabel,
+        imageLabel,
+      });
+      return null;
+    }
+
+    // Remove existing tag if any, but keep style state when rebuilding the tag.
+    this.removeTag(strokeLabel, imageLabel, { preserveStyleState: true });
 
     // Get tag position (near stroke center)
     const bounds = strokeObject.getBoundingRect();
@@ -183,8 +611,8 @@ export class TagManager {
         textAlign: 'center',
         originX: 'center',
         originY: 'center',
-        // Use standard baseline to avoid CanvasTextBaseline warnings
-        textBaseline: 'alphabetic',
+        // Centered tags render cleanly with a middle baseline and avoid canvas warnings.
+        textBaseline: 'middle',
         selectable: false, // Will be controlled by group
         evented: true, // Allow editing
         hasControls: false, // Controlled by group
@@ -194,10 +622,10 @@ export class TagManager {
       });
     } catch (e) {
       console.error('TagManager: Error creating text object', e);
-      // Fallback - use alphabetic instead of middle to be consistent
+      // Fallback to the same centered baseline used by the primary tag text.
       tagText = new fabric.Text(strokeLabel, {
         fontSize: this.tagSize,
-        textBaseline: 'alphabetic',
+        textBaseline: 'middle',
       });
     }
     tagText.styles = {};
@@ -228,17 +656,29 @@ export class TagManager {
     const textHeight = tagText.height || this.tagSize;
 
     let background;
-    // Both square and circle modes use a rounded rectangle (capsule shape)
-    // Circle mode just has more rounding
-    const width = textWidth + padding * 2;
+    let width = textWidth + padding * 2;
     const height = textHeight + padding * 2;
-    const radius = this.tagShape === 'circle' ? height / 2 : 2; // Full rounding for circle, minimal for square
+
+    // Square mode keeps a rounded-rectangle profile.
+    // Circle mode uses full rounding.
+    if (this.tagShape === 'square') {
+      width = Math.max(width, height);
+    }
+
+    let radius;
+    if (this.tagShape === 'circle') {
+      radius = height / 2;
+    } else {
+      radius = 4;
+    }
 
     // Determine background style properties
-    let bgFill = '#ffffff';
-    let bgStroke = '#000000';
-    let bgStrokeWidth = 1;
-    let textFill = '#000000';
+    const orientation = this.getStrokeOrientation(strokeObject);
+    const palette = this.getTagPalette(strokeLabel, orientation, imageLabel);
+    let bgFill = palette.bg;
+    let bgStroke = palette.stroke;
+    let bgStrokeWidth = 2;
+    let textFill = palette.text;
 
     if (this.tagBackgroundStyle === 'no-fill') {
       bgFill = 'transparent';
@@ -248,17 +688,17 @@ export class TagManager {
     } else if (this.tagBackgroundStyle === 'clear-black') {
       bgFill = 'transparent';
       bgStroke = '#000000';
-      bgStrokeWidth = 1;
+      bgStrokeWidth = 2;
       textFill = '#000000';
     } else if (this.tagBackgroundStyle === 'clear-color') {
       bgFill = 'transparent';
       bgStroke = this.strokeColor || '#3b82f6';
-      bgStrokeWidth = 1;
+      bgStrokeWidth = 2;
       textFill = this.strokeColor || '#3b82f6';
     } else if (this.tagBackgroundStyle === 'clear-white') {
       bgFill = 'transparent';
       bgStroke = '#ffffff';
-      bgStrokeWidth = 1;
+      bgStrokeWidth = 2;
       textFill = '#ffffff';
     }
     // 'solid' style uses defaults
@@ -278,6 +718,7 @@ export class TagManager {
       selectable: false,
       evented: true,
       excludeFromExport: true, // Don't save tag backgrounds to canvas JSON
+      isTagBackground: true,
     });
 
     // Update text color based on background style
@@ -286,6 +727,13 @@ export class TagManager {
     // Group tag text and background
     // Position group at stroke center + offset
     const initialOffset = strokeObject?.tagOffset || { x: 20, y: -10 };
+
+    // For multi-frame support: set both imageLabel (base) and scopedLabel (with ::tab:)
+    const baseImageLabel = imageLabel.includes('::tab:')
+      ? imageLabel.split('::tab:')[0]
+      : imageLabel;
+    const scopedLabel = imageLabel; // Full scope (includes ::tab: if present)
+
     const tagGroup = new fabric.Group([background, tagText], {
       left: centerX + initialOffset.x,
       top: centerY + initialOffset.y,
@@ -301,8 +749,10 @@ export class TagManager {
       excludeFromExport: true, // Don't serialize tags - they're recreated from stroke metadata
       // Custom properties
       isTag: true,
+      isTagGroup: true, // Mark as a tag group for filtering
       strokeLabel: strokeLabel,
-      imageLabel: imageLabel,
+      imageLabel: baseImageLabel, // Base view label (e.g., "cushion")
+      scopedLabel: scopedLabel, // Full scope including tab (e.g., "cushion::tab:abc123")
       connectedStroke: strokeObject,
       tagOffset: { x: initialOffset.x, y: initialOffset.y }, // Default offset
     });
@@ -310,6 +760,19 @@ export class TagManager {
     if (strokeObject) {
       strokeObject.tagOffset = { x: initialOffset.x, y: initialOffset.y };
     }
+
+    const scopedImageLabel = this.normalizeImageLabel(imageLabel);
+    const scopedStrokeVisibility =
+      this.metadataManager?.strokeVisibilityByImage?.[scopedImageLabel] || {};
+    const scopedLabelVisibility =
+      this.metadataManager?.strokeLabelVisibility?.[scopedImageLabel] || {};
+    const tagVisible =
+      scopedStrokeVisibility[strokeLabel] !== false && scopedLabelVisibility[strokeLabel] !== false;
+    tagGroup.set({
+      visible: tagVisible,
+      evented: tagVisible,
+      selectable: tagVisible,
+    });
 
     // Update connector line when tag moves
     tagGroup.on('moving', () => {
@@ -332,7 +795,7 @@ export class TagManager {
         };
       }
 
-      this.updateConnector(strokeLabel);
+      this.updateConnector(strokeLabel, scopedImageLabel);
     });
 
     tagGroup.on('modified', () => {
@@ -345,16 +808,16 @@ export class TagManager {
     // Update connector when connected stroke moves
     if (strokeObject) {
       strokeObject.on('moving', () => {
-        this.updateConnector(strokeLabel);
+        this.updateConnector(strokeLabel, scopedImageLabel);
       });
       strokeObject.on('modified', () => {
-        this.updateConnector(strokeLabel);
+        this.updateConnector(strokeLabel, scopedImageLabel);
       });
       strokeObject.on('scaling', () => {
-        this.updateConnector(strokeLabel);
+        this.updateConnector(strokeLabel, scopedImageLabel);
       });
       strokeObject.on('rotating', () => {
-        this.updateConnector(strokeLabel);
+        this.updateConnector(strokeLabel, scopedImageLabel);
       });
     }
 
@@ -417,7 +880,108 @@ export class TagManager {
 
   // Get the closest point on the actual stroke geometry to a given point
   getClosestStrokeEndpoint(strokeObj, targetPoint) {
-    return PathUtils.getClosestStrokeEndpoint(strokeObj, targetPoint);
+    const isFinitePoint = point => point && Number.isFinite(point.x) && Number.isFinite(point.y);
+    const projectPointToSegment = (p, a, b) => {
+      if (!isFinitePoint(p) || !isFinitePoint(a) || !isFinitePoint(b)) return null;
+      const abx = b.x - a.x;
+      const aby = b.y - a.y;
+      const ab2 = abx * abx + aby * aby;
+      if (ab2 <= 0) return { x: a.x, y: a.y };
+      const apx = p.x - a.x;
+      const apy = p.y - a.y;
+      let t = (apx * abx + apy * aby) / ab2;
+      t = Math.max(0, Math.min(1, t));
+      return {
+        x: a.x + abx * t,
+        y: a.y + aby * t,
+      };
+    };
+
+    // Arrow groups from MOS import can yield double-transformed points in generic helpers.
+    // Resolve from child-line geometry first, with a dual-matrix sanity check.
+    if (
+      strokeObj?.type === 'group' &&
+      strokeObj?.isArrow &&
+      typeof strokeObj.getObjects === 'function'
+    ) {
+      const lineObj = strokeObj.getObjects().find(obj => obj?.type === 'line');
+      if (lineObj && typeof lineObj.calcLinePoints === 'function' && fabric?.util?.transformPoint) {
+        try {
+          const pts = lineObj.calcLinePoints();
+          const lineMatrix = lineObj.calcTransformMatrix();
+          const groupMatrix = strokeObj.calcTransformMatrix?.();
+
+          // Candidate A: line local -> line matrix
+          const a1 = fabric.util.transformPoint({ x: pts.x1, y: pts.y1 }, lineMatrix);
+          const a2 = fabric.util.transformPoint({ x: pts.x2, y: pts.y2 }, lineMatrix);
+
+          // Candidate B: line local -> line matrix -> group matrix
+          const b1 = groupMatrix ? fabric.util.transformPoint(a1, groupMatrix) : null;
+          const b2 = groupMatrix ? fabric.util.transformPoint(a2, groupMatrix) : null;
+
+          const pickClosestProjection = (p1, p2) => {
+            if (!isFinitePoint(p1) || !isFinitePoint(p2)) return null;
+            return projectPointToSegment(targetPoint, p1, p2);
+          };
+
+          const nearA = pickClosestProjection(a1, a2);
+          const nearB = pickClosestProjection(b1, b2);
+
+          if (nearA && nearB) {
+            const dA = this.calculateDistance(targetPoint, nearA);
+            const dB = this.calculateDistance(targetPoint, nearB);
+            return dA <= dB ? nearA : nearB;
+          }
+          if (nearA) return nearA;
+          if (nearB) return nearB;
+        } catch {
+          // continue to generic path below
+        }
+      }
+    }
+
+    try {
+      const point = PathUtils.getClosestStrokeEndpoint(strokeObj, targetPoint);
+      if (isFinitePoint(point)) {
+        return point;
+      }
+    } catch {
+      // Fall through to robust local fallbacks below.
+    }
+
+    // Fallback for arrow groups: derive endpoint from child line geometry.
+    if (strokeObj?.type === 'group' && typeof strokeObj.getObjects === 'function') {
+      const lineObj = strokeObj.getObjects().find(obj => obj?.type === 'line');
+      if (lineObj && typeof lineObj.calcLinePoints === 'function' && fabric?.util?.transformPoint) {
+        try {
+          const pts = lineObj.calcLinePoints();
+          const lineMatrix = lineObj.calcTransformMatrix();
+          const groupMatrix = strokeObj.calcTransformMatrix();
+          const p1Local = fabric.util.transformPoint({ x: pts.x1, y: pts.y1 }, lineMatrix);
+          const p2Local = fabric.util.transformPoint({ x: pts.x2, y: pts.y2 }, lineMatrix);
+          const p1 = fabric.util.transformPoint(p1Local, groupMatrix);
+          const p2 = fabric.util.transformPoint(p2Local, groupMatrix);
+          if (isFinitePoint(p1) && isFinitePoint(p2)) {
+            const d1 = this.calculateDistance(targetPoint, p1);
+            const d2 = this.calculateDistance(targetPoint, p2);
+            return d1 <= d2 ? p1 : p2;
+          }
+        } catch {
+          // continue to center fallback
+        }
+      }
+    }
+
+    const center =
+      typeof strokeObj?.getCenterPoint === 'function' ? strokeObj.getCenterPoint() : null;
+    if (isFinitePoint(center)) {
+      return center;
+    }
+
+    return {
+      x: Number.isFinite(targetPoint?.x) ? targetPoint.x : 0,
+      y: Number.isFinite(targetPoint?.y) ? targetPoint.y : 0,
+    };
   }
 
   // Find closest point on a line to target point
@@ -480,13 +1044,59 @@ export class TagManager {
     return PathUtils.calculateDistance(p1, p2);
   }
 
+  getConnectorStrokeColor(strokeObj) {
+    if (this.connectorMatchesLine) {
+      const derivedLineColor = this.getStrokeColorFromObject(strokeObj);
+      if (derivedLineColor) return derivedLineColor;
+      return (
+        String(
+          strokeObj?.stroke || strokeObj?.fill || this.strokeColor || this.connectorColor
+        ).trim() || '#3b82f6'
+      );
+    }
+    return String(this.connectorColor || '#ffffff').trim() || '#ffffff';
+  }
+
+  getStrokeColorFromObject(strokeObj) {
+    if (!strokeObj) return null;
+
+    if (strokeObj.type === 'group' && typeof strokeObj.getObjects === 'function') {
+      const children = strokeObj.getObjects() || [];
+      const lineChild = children.find(child => child?.type === 'line' && child?.stroke);
+      if (lineChild?.stroke) {
+        const value = String(lineChild.stroke).trim();
+        if (value) return value;
+      }
+
+      const anyStrokeChild = children.find(child => child?.stroke);
+      if (anyStrokeChild?.stroke) {
+        const value = String(anyStrokeChild.stroke).trim();
+        if (value) return value;
+      }
+    }
+
+    const fromSelf = String(strokeObj.stroke || strokeObj.fill || '').trim();
+    if (fromSelf) return fromSelf;
+
+    return null;
+  }
+
   // Create a manipulatable connector line
   createConnectorObject(x1, y1, x2, y2, tagObj, strokeObj, strokeLabel) {
+    const strokeWidth = 2;
+    const snap = (value: number) => Math.round(value || 0);
     return new fabric.Line([x1, y1, x2, y2], {
-      stroke: this.connectorColor,
-      strokeWidth: 1,
+      x1: snap(x1),
+      y1: snap(y1),
+      x2: snap(x2),
+      y2: snap(y2),
+      stroke: this.getConnectorStrokeColor(strokeObj),
+      strokeWidth,
       strokeDashArray: [6, 4],
-      opacity: 0.8,
+      opacity: 1,
+      objectCaching: false,
+      strokeLineCap: 'butt',
+      strokeUniform: true,
       selectable: false,
       evented: false,
       hasControls: false,
@@ -538,7 +1148,23 @@ export class TagManager {
     if (!found) return;
     const tagObj = found.tagObj;
     const displayLabel = tagObj.strokeLabel || strokeLabel;
-    const connectedStrokeObj = tagObj.connectedStroke;
+    let connectedStrokeObj = tagObj.connectedStroke;
+
+    // Rebind to the live stroke object if the current reference is stale/off-canvas.
+    const isLiveStroke =
+      connectedStrokeObj &&
+      (typeof canvas.contains !== 'function' || canvas.contains(connectedStrokeObj));
+    if (!isLiveStroke && this.metadataManager) {
+      const scopedImageLabel =
+        tagObj.imageLabel || this.normalizeImageLabel(imageLabel || tagObj.imageLabel);
+      const candidate =
+        this.metadataManager.vectorStrokesByImage?.[scopedImageLabel]?.[displayLabel];
+      if (candidate) {
+        connectedStrokeObj = candidate;
+        tagObj.connectedStroke = candidate;
+      }
+    }
+
     if (!connectedStrokeObj) return;
 
     // Reposition tag to maintain its offset from the stroke
@@ -638,12 +1264,25 @@ export class TagManager {
       }
     }
 
+    const connectorVisible =
+      tagObj.visible !== false &&
+      connectedStrokeObj.visible !== false &&
+      connectedStrokeObj?.strokeMetadata?.visible !== false &&
+      connectedStrokeObj?.strokeMetadata?.labelVisible !== false;
+    if (connector) {
+      connector.set({
+        visible: connectorVisible,
+        evented: connectorVisible,
+        selectable: connectorVisible,
+      });
+    }
+
     // Request render (debounced by Fabric)
     canvas.requestRenderAll();
   }
 
   // Remove a tag
-  removeTag(strokeLabel, imageLabel) {
+  removeTag(strokeLabel, imageLabel, options = {}) {
     const canvas = this.canvas;
     if (!canvas) return;
 
@@ -659,12 +1298,87 @@ export class TagManager {
     // Remove tag
     canvas.remove(tagObj);
     this.tagObjects.delete(key);
+    if (!options.preserveStyleState) {
+      if (this.tagStyleConfig?.perTagThemes?.[key]) {
+        delete this.tagStyleConfig.perTagThemes[key];
+        this.persistTagStyleConfigToMetadata();
+      }
+      if (this.tagStyleConfig?.highlightedTagKeys?.has(key)) {
+        this.tagStyleConfig.highlightedTagKeys.delete(key);
+        this.persistTagStyleConfigToMetadata();
+      }
+    }
   }
 
   // Clear all tags (useful when switching views with shared labels like A1)
   clearAllTags() {
-    const keys = Array.from(this.tagObjects.keys());
-    keys.forEach(key => this.removeTag(key));
+    const canvas = this.canvas;
+    if (!canvas) return;
+
+    // Remove tracked tags
+    for (const tagObj of this.tagObjects.values()) {
+      if (!tagObj) continue;
+      if (tagObj.connectorLine) {
+        canvas.remove(tagObj.connectorLine);
+      }
+      canvas.remove(tagObj);
+    }
+    this.tagObjects.clear();
+
+    // Sweep for orphan tags/connectors that aren't tracked in the Map
+    // (e.g. from stale loadFromJSON, race conditions, or async listeners)
+    const orphans = canvas.getObjects().filter(obj => obj.isTag || obj.isConnectorLine);
+    if (orphans.length > 0) {
+      for (const obj of orphans) {
+        canvas.remove(obj);
+      }
+    }
+
+    canvas.requestRenderAll();
+  }
+
+  /**
+   * Remove any tags whose imageLabel doesn't match the current scope.
+   * Catches tags that leaked from a previous view during async view switching.
+   */
+  removeStaleTagsForScope(currentScope: string) {
+    const canvas = this.canvas;
+    if (!canvas || !currentScope) return;
+
+    let removed = 0;
+
+    // Remove tracked tags from wrong scope
+    for (const [key, tagObj] of this.tagObjects.entries()) {
+      if (!tagObj) continue;
+      const il = tagObj.imageLabel || '';
+      if (il.startsWith('__guide__')) continue;
+      if (il && il !== currentScope && !il.startsWith(`${currentScope}::tab:`)) {
+        if (tagObj.connectorLine) canvas.remove(tagObj.connectorLine);
+        canvas.remove(tagObj);
+        this.tagObjects.delete(key);
+        removed++;
+      }
+    }
+
+    // Also sweep for untracked orphans from wrong scope
+    const orphans = canvas.getObjects().filter(obj => {
+      if (!obj.isTag && !obj.isConnectorLine) return false;
+      const il = obj.imageLabel || '';
+      if (il.startsWith('__guide__')) return false;
+      if (il && il !== currentScope && !il.startsWith(`${currentScope}::tab:`)) return true;
+      return false;
+    });
+    for (const obj of orphans) {
+      canvas.remove(obj);
+      removed++;
+    }
+
+    if (removed > 0) {
+      console.log(
+        `[TagManager] Removed ${removed} stale tags not matching scope "${currentScope}"`
+      );
+      canvas.requestRenderAll();
+    }
   }
 
   renameTagLabel(oldLabel, newLabel, imageLabel) {
@@ -678,6 +1392,16 @@ export class TagManager {
 
     this.tagObjects.delete(key);
     this.tagObjects.set(newKey, tagObj);
+
+    if (this.tagStyleConfig?.highlightedTagKeys?.has(key)) {
+      this.tagStyleConfig.highlightedTagKeys.delete(key);
+      this.tagStyleConfig.highlightedTagKeys.add(newKey);
+    }
+    if (this.tagStyleConfig?.perTagThemes?.[key]) {
+      this.tagStyleConfig.perTagThemes[newKey] = this.tagStyleConfig.perTagThemes[key];
+      delete this.tagStyleConfig.perTagThemes[key];
+    }
+    this.persistTagStyleConfigToMetadata();
 
     this.updateTagText(newLabel, resolvedImageLabel);
     return true;
@@ -700,7 +1424,9 @@ export class TagManager {
     }
 
     // Get the updated measurement
-    const measurementString = this.metadataManager.getMeasurementString(imageLabel, strokeLabel);
+    const measurementString = this.metadataManager.getMeasurementString(imageLabel, strokeLabel, {
+      context: 'tag',
+    });
 
     // Only show measurement if showMeasurements is true and measurement exists
     let fullText;
@@ -712,7 +1438,7 @@ export class TagManager {
 
     // Update the text
     textObj.set('text', fullText);
-    textObj.set('textBaseline', 'alphabetic');
+    textObj.set('textBaseline', 'middle');
     textObj.styles = {};
 
     // Force text to recalculate dimensions
@@ -725,9 +1451,16 @@ export class TagManager {
       const padding = 4;
       const textWidth = textObj.width || 30;
       const textHeight = textObj.height || this.tagSize;
-      const width = textWidth + padding * 2;
+      let width = textWidth + padding * 2;
       const height = textHeight + padding * 2;
-      const radius = this.tagShape === 'circle' ? height / 2 : 2; // Full rounding for circle, minimal for square
+      if (this.tagShape === 'square') width = Math.max(width, height);
+
+      let radius;
+      if (this.tagShape === 'circle') {
+        radius = height / 2;
+      } else {
+        radius = 4;
+      }
 
       bgObj.set({
         width: width,
@@ -763,18 +1496,20 @@ export class TagManager {
   }
 
   // Update all tags (e.g., when tag mode or shape changes)
-  updateAllTags() {
+  updateAllTags(imageLabel) {
     const currentViewId = this.normalizeImageLabel(
-      window.app?.projectManager?.currentViewId || 'front'
+      imageLabel || window.app?.projectManager?.currentViewId || 'front'
     );
-    const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
 
-    Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
-      const found = this.getTagObject(strokeLabel, currentViewId);
-      if (found) {
-        // Recreate tag with new settings
-        this.createTag(strokeLabel, currentViewId, strokeObj);
-      }
+    this.getViewScopes(currentViewId).forEach(scope => {
+      const strokes = this.metadataManager.vectorStrokesByImage[scope] || {};
+      Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
+        const found = this.getTagObject(strokeLabel, scope);
+        if (found && this.isRenderableStrokeObject(strokeObj)) {
+          // Recreate tag with new settings
+          this.createTag(strokeLabel, scope, strokeObj);
+        }
+      });
     });
   }
 
@@ -797,7 +1532,7 @@ export class TagManager {
 
     Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
       const found = this.getTagObject(strokeLabel, currentViewId);
-      if (found) {
+      if (found && this.isRenderableStrokeObject(strokeObj)) {
         const tagObj = found.tagObj;
         // Update both text and background size
         const textObj = tagObj
@@ -817,9 +1552,16 @@ export class TagManager {
               textObj.text.length * (this.tagSize * 0.6)
             );
             const textHeight = textObj.height || this.tagSize;
-            const width = textWidth + padding * 2;
+            let width = textWidth + padding * 2;
             const height = textHeight + padding * 2;
-            const radius = this.tagShape === 'circle' ? height / 2 : 2; // Full rounding for circle, minimal for square
+            if (this.tagShape === 'square') width = Math.max(width, height);
+
+            let radius;
+            if (this.tagShape === 'circle') {
+              radius = height / 2;
+            } else {
+              radius = 4;
+            }
 
             // Update background dimensions
             bgObj.set({
@@ -844,7 +1586,74 @@ export class TagManager {
       currentTagSizeEl.textContent = this.tagSize;
     }
 
+    this.persistTagSizeToMetadata(this.tagSize, currentViewId);
+
     canvas.renderAll();
+  }
+
+  normalizeTagSize(value) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return 20;
+    return Math.max(this.tagSizeMin, Math.min(this.tagSizeMax, Math.round(num)));
+  }
+
+  getTagSizeScopeKey(imageLabel) {
+    const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+    const normalized = this.normalizeImageLabel(imageLabel || currentViewId || 'front');
+    if (typeof normalized === 'string' && normalized.includes('::')) {
+      return normalized.split('::')[0] || normalized;
+    }
+    return normalized || 'front';
+  }
+
+  getTagSizeFromMetadata(imageLabel) {
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const scopedKey = this.getTagSizeScopeKey(imageLabel);
+    const scopedMap =
+      metadata?.tagSizeByView && typeof metadata.tagSizeByView === 'object'
+        ? metadata.tagSizeByView
+        : {};
+    const scopedSize = scopedMap?.[scopedKey];
+    if (Number.isFinite(Number(scopedSize))) {
+      return this.normalizeTagSize(scopedSize);
+    }
+    return this.normalizeTagSize(metadata?.tagSize ?? this.tagSize);
+  }
+
+  syncTagSizeFromMetadata(imageLabel) {
+    this.tagSize = this.getTagSizeFromMetadata(imageLabel);
+    const currentTagSizeEl = document.getElementById('currentTagSize');
+    if (currentTagSizeEl) {
+      currentTagSizeEl.textContent = this.tagSize;
+    }
+  }
+
+  persistTagSizeToMetadata(size, imageLabel) {
+    const normalized = this.normalizeTagSize(size);
+    const scopedKey = this.getTagSizeScopeKey(imageLabel);
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const scopedMap =
+      metadata?.tagSizeByView && typeof metadata.tagSizeByView === 'object'
+        ? { ...metadata.tagSizeByView }
+        : {};
+    if (scopedKey) {
+      scopedMap[scopedKey] = normalized;
+    }
+
+    if (window.app?.projectManager?.setProjectMetadata) {
+      window.app.projectManager.setProjectMetadata({
+        tagSize: normalized,
+        tagSizeByView: scopedMap,
+      });
+      return;
+    }
+    window.projectMetadata = {
+      ...(window.projectMetadata || {}),
+      tagSize: normalized,
+      tagSizeByView: scopedMap,
+    };
   }
 
   // Set the background style for all tags
@@ -858,7 +1667,7 @@ export class TagManager {
 
     Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
       const found = this.getTagObject(strokeLabel, currentViewId);
-      if (found) {
+      if (found && this.isRenderableStrokeObject(strokeObj)) {
         // Recreate tag with new background style
         this.createTag(strokeLabel, currentViewId, strokeObj);
       }
@@ -869,6 +1678,11 @@ export class TagManager {
   setStrokeColor(color) {
     this.strokeColor = color;
 
+    if (this.connectorMatchesLine) {
+      this.connectorColor = String(color || this.connectorColor || '#3b82f6').trim() || '#3b82f6';
+      this.refreshAllConnectors();
+    }
+
     // If using clear-color style, update all tags
     if (this.tagBackgroundStyle === 'clear-color') {
       const currentViewId = this.normalizeImageLabel(
@@ -878,7 +1692,7 @@ export class TagManager {
 
       Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
         const found = this.getTagObject(strokeLabel, currentViewId);
-        if (found) {
+        if (found && this.isRenderableStrokeObject(strokeObj)) {
           this.createTag(strokeLabel, currentViewId, strokeObj);
         }
       });
@@ -935,7 +1749,7 @@ export class TagManager {
     // Recreate tag for each stroke
     strokeLabels.forEach(strokeLabel => {
       const strokeObject = strokes[strokeLabel];
-      if (strokeObject) {
+      if (this.isRenderableStrokeObject(strokeObject)) {
         // Check if label should be visible
         const isLabelVisible =
           this.metadataManager.strokeLabelVisibility[imageLabel]?.[strokeLabel] !== false;
@@ -968,14 +1782,37 @@ export class TagManager {
 
   // Update tags when stroke visibility changes
   updateTagVisibility(strokeLabel, imageLabel, visible) {
-    const found = this.getTagObject(strokeLabel, imageLabel);
-    if (!found) return;
-    const tagObj = found.tagObj;
-    tagObj.set('visible', visible);
-    if (tagObj.connectorLine) {
-      tagObj.connectorLine.set('visible', visible);
+    imageLabel = this.normalizeImageLabel(imageLabel);
+    const strokeVisible =
+      this.metadataManager?.strokeVisibilityByImage?.[imageLabel]?.[strokeLabel] !== false;
+    const labelVisible =
+      this.metadataManager?.strokeLabelVisibility?.[imageLabel]?.[strokeLabel] !== false;
+    const effectiveVisible = visible !== false && strokeVisible && labelVisible;
+
+    let found = this.getTagObject(strokeLabel, imageLabel);
+    if (!found && effectiveVisible) {
+      const strokeObj = this.metadataManager?.vectorStrokesByImage?.[imageLabel]?.[strokeLabel];
+      if (this.isRenderableStrokeObject(strokeObj)) {
+        this.createTag(strokeLabel, imageLabel, strokeObj);
+        found = this.getTagObject(strokeLabel, imageLabel);
+      }
     }
-    this.canvas.renderAll();
+    if (!found) return;
+
+    const tagObj = found.tagObj;
+    tagObj.set({
+      visible: effectiveVisible,
+      evented: effectiveVisible,
+      selectable: effectiveVisible,
+    });
+    if (tagObj.connectorLine) {
+      tagObj.connectorLine.set({
+        visible: effectiveVisible,
+        evented: effectiveVisible,
+        selectable: effectiveVisible,
+      });
+    }
+    this.canvas?.requestRenderAll();
   }
 
   refreshAllConnectors(imageLabel) {
@@ -989,10 +1826,261 @@ export class TagManager {
 
   setConnectorColor(color) {
     if (!color) return;
-    const allowed = ['#ffffff', '#9ca3af', '#000000'];
-    const normalized = String(color).toLowerCase();
-    if (!allowed.includes(normalized)) return;
-    this.connectorColor = normalized;
+    this.connectorColor = String(color).trim().toLowerCase();
     this.refreshAllConnectors();
+  }
+
+  normalizeThemeColor(value) {
+    const raw = String(value || '')
+      .trim()
+      .toLowerCase();
+    return /^#[0-9a-f]{6}$/.test(raw) ? raw : null;
+  }
+
+  syncCustomTagColorsFromMetadata() {
+    this.syncTagStyleConfigFromMetadata();
+  }
+
+  persistCustomTagColorsToMetadata(theme) {
+    const payload = theme || null;
+    if (window.app?.projectManager?.setProjectMetadata) {
+      window.app.projectManager.setProjectMetadata({ tagColorTheme: payload });
+      return;
+    }
+    window.projectMetadata = {
+      ...(window.projectMetadata || {}),
+      tagColorTheme: payload,
+    };
+  }
+
+  refreshAllTagStyles() {
+    const tags = Array.from(this.tagObjects.values());
+    tags.forEach(tagObj => {
+      if (!tagObj?.strokeLabel || !tagObj?.connectedStroke) return;
+      this.createTag(tagObj.strokeLabel, tagObj.imageLabel, tagObj.connectedStroke);
+    });
+    this.canvas?.requestRenderAll();
+  }
+
+  refreshTagStylesForKeys(keys) {
+    const uniqueKeys = Array.from(new Set(Array.isArray(keys) ? keys : []));
+    uniqueKeys.forEach(key => {
+      const tagObj = this.tagObjects.get(key);
+      if (!tagObj?.strokeLabel || !tagObj?.connectedStroke) return;
+      this.createTag(tagObj.strokeLabel, tagObj.imageLabel, tagObj.connectedStroke);
+    });
+    this.canvas?.requestRenderAll();
+  }
+
+  setTagStyleTheme(target, colors) {
+    const normalizedTarget = this.normalizeTagStyleTarget(target);
+    const normalizedTheme = this.normalizeTagTheme(colors);
+    if (!normalizedTheme) return;
+
+    if (!this.tagStyleConfig) {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    }
+
+    this.tagStyleConfig.presets[normalizedTarget] = normalizedTheme;
+    this.customTagColors =
+      this.cloneTagTheme(this.tagStyleConfig.presets.lettersNumbers) ||
+      this.cloneTagTheme(this.tagStyleConfig.presets.lettersOnly);
+    this.persistTagStyleConfigToMetadata();
+    this.tagBackgroundStyle = 'solid';
+    this.refreshAllTagStyles();
+  }
+
+  clearTagStyleTheme(target) {
+    const normalizedTarget = this.normalizeTagStyleTarget(target);
+    if (!this.tagStyleConfig) {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    }
+
+    this.tagStyleConfig.presets[normalizedTarget] = null;
+    this.customTagColors =
+      this.cloneTagTheme(this.tagStyleConfig.presets.lettersNumbers) ||
+      this.cloneTagTheme(this.tagStyleConfig.presets.lettersOnly);
+    this.persistTagStyleConfigToMetadata();
+    this.refreshAllTagStyles();
+  }
+
+  getSelectedTagKeys() {
+    const canvas = this.canvas;
+    if (!canvas) return [];
+
+    const activeObject = canvas.getActiveObject();
+    if (!activeObject) return [];
+
+    const selected =
+      activeObject.type === 'activeSelection' ? activeObject.getObjects?.() || [] : [activeObject];
+    const keys = new Set();
+
+    selected.forEach(obj => {
+      if (!obj) return;
+
+      const strokeLabel =
+        obj.strokeLabel ||
+        obj.strokeMetadata?.strokeLabel ||
+        obj.strokeMetadata?.label ||
+        obj.customData?.strokeLabel ||
+        obj.customData?.label ||
+        obj.connectedStroke?.strokeMetadata?.strokeLabel ||
+        obj.connectedStroke?.strokeMetadata?.label ||
+        obj.connectedStroke?.strokeLabel ||
+        obj.connectedStroke?.customData?.strokeLabel ||
+        obj.connectedStroke?.customData?.label;
+      const imageLabel =
+        obj.imageLabel ||
+        obj.strokeMetadata?.imageLabel ||
+        obj.customData?.imageLabel ||
+        obj.connectedStroke?.strokeMetadata?.imageLabel ||
+        obj.connectedStroke?.imageLabel ||
+        obj.connectedStroke?.customData?.imageLabel;
+
+      if (!strokeLabel) return;
+      keys.add(this.getTagKey(strokeLabel, imageLabel));
+    });
+
+    return Array.from(keys);
+  }
+
+  setHighlightForSelectedTags(highlighted = true) {
+    const selectedKeys = this.getSelectedTagKeys();
+    if (!selectedKeys.length) return 0;
+
+    if (!this.tagStyleConfig) {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    }
+
+    if (highlighted && !this.tagStyleConfig.presets.highlight) {
+      this.tagStyleConfig.presets.highlight = this.getDefaultHighlightTheme();
+    }
+
+    selectedKeys.forEach(key => {
+      if (highlighted) {
+        this.tagStyleConfig.highlightedTagKeys.add(key);
+      } else {
+        this.tagStyleConfig.highlightedTagKeys.delete(key);
+      }
+    });
+
+    this.persistTagStyleConfigToMetadata();
+    this.refreshTagStylesForKeys(selectedKeys);
+    return selectedKeys.length;
+  }
+
+  setTagTheme(strokeLabel, imageLabel, colors) {
+    const normalizedLabel = String(strokeLabel || '').trim();
+    if (!normalizedLabel) return false;
+
+    if (!this.tagStyleConfig) {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    }
+
+    const tagKey = this.getTagKey(normalizedLabel, imageLabel);
+    const normalizedTheme = this.normalizeTagTheme(colors);
+
+    if (normalizedTheme) {
+      this.tagStyleConfig.perTagThemes[tagKey] = normalizedTheme;
+    } else if (this.tagStyleConfig.perTagThemes?.[tagKey]) {
+      delete this.tagStyleConfig.perTagThemes[tagKey];
+    }
+
+    this.persistTagStyleConfigToMetadata();
+    this.refreshTagStylesForKeys([tagKey]);
+    this.emitTagStyleStateChanged(imageLabel);
+    return true;
+  }
+
+  setTagThemeForStyleTargets(imageLabel, colors) {
+    const viewId = this.normalizeImageLabel(imageLabel);
+    const selectedKeys = this.getSelectedStyleTargetKeys(viewId);
+    if (!selectedKeys.length) return 0;
+
+    if (!this.tagStyleConfig) {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    }
+
+    const normalizedTheme = this.normalizeTagTheme(colors);
+    selectedKeys.forEach(key => {
+      if (normalizedTheme) {
+        this.tagStyleConfig.perTagThemes[key] = normalizedTheme;
+      } else {
+        delete this.tagStyleConfig.perTagThemes[key];
+      }
+    });
+
+    this.persistTagStyleConfigToMetadata();
+    this.refreshTagStylesForKeys(selectedKeys);
+    this.emitTagStyleStateChanged(viewId);
+    return selectedKeys.length;
+  }
+
+  setTagThemeForSelectedTags(colors) {
+    const selectedKeys = this.getSelectedTagKeys();
+    if (!selectedKeys.length) return 0;
+
+    if (!this.tagStyleConfig) {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    }
+
+    const normalizedTheme = this.normalizeTagTheme(colors);
+    selectedKeys.forEach(key => {
+      if (normalizedTheme) {
+        this.tagStyleConfig.perTagThemes[key] = normalizedTheme;
+      } else {
+        delete this.tagStyleConfig.perTagThemes[key];
+      }
+    });
+
+    this.persistTagStyleConfigToMetadata();
+    this.refreshTagStylesForKeys(selectedKeys);
+    return selectedKeys.length;
+  }
+
+  setTagHighlighted(strokeLabel, imageLabel, highlighted = true) {
+    const normalizedLabel = String(strokeLabel || '').trim();
+    if (!normalizedLabel) return false;
+
+    if (!this.tagStyleConfig) {
+      this.tagStyleConfig = this.createDefaultTagStyleConfig();
+    }
+
+    if (highlighted && !this.tagStyleConfig.presets.highlight) {
+      this.tagStyleConfig.presets.highlight = this.getDefaultHighlightTheme();
+    }
+
+    const tagKey = this.getTagKey(normalizedLabel, imageLabel);
+    if (highlighted) {
+      this.tagStyleConfig.highlightedTagKeys.add(tagKey);
+    } else {
+      this.tagStyleConfig.highlightedTagKeys.delete(tagKey);
+    }
+
+    this.persistTagStyleConfigToMetadata();
+    this.refreshTagStylesForKeys([tagKey]);
+    return highlighted;
+  }
+
+  toggleTagHighlight(strokeLabel, imageLabel) {
+    const nextHighlighted = !this.isTagHighlighted(strokeLabel, imageLabel);
+    this.setTagHighlighted(strokeLabel, imageLabel, nextHighlighted);
+    return nextHighlighted;
+  }
+
+  setTagCustomColors(colors) {
+    const normalizedTheme = this.normalizeTagTheme(colors);
+    if (!normalizedTheme) return;
+
+    this.setTagStyleTheme('lettersOnly', normalizedTheme);
+    this.setTagStyleTheme('lettersNumbers', normalizedTheme);
+    this.persistCustomTagColorsToMetadata(normalizedTheme);
+  }
+
+  clearTagCustomColors() {
+    this.customTagColors = null;
+    this.persistCustomTagColorsToMetadata(null);
+    this.clearTagStyleTheme('lettersOnly');
+    this.clearTagStyleTheme('lettersNumbers');
   }
 }

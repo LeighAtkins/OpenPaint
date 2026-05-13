@@ -4,7 +4,43 @@
 // @ts-nocheck
 // Extracted from index.html inline scripts
 
+import {
+  buildViewportTransform as buildSharedViewportTransform,
+  computeWorldRectFromViewportRect as computeSharedWorldRectFromViewportRect,
+  fitViewportToWorldRect as fitSharedViewportToWorldRect,
+  getFabricObjectWorldRect,
+  mapWorldRectToViewport as mapSharedWorldRectToViewport,
+  normalizeViewportRecord as normalizeSharedViewportRecord,
+  normalizeWorldRect as normalizeSharedWorldRect,
+} from '../utils/viewportRestore.ts';
+
 export function initToolbarController() {
+  const dispatchGuideNextTagChanged = (viewId, tag) => {
+    const normalizedViewId = String(viewId || '').trim();
+    const normalizedTag = String(tag || '')
+      .trim()
+      .toUpperCase();
+    if (!normalizedViewId || !normalizedTag) return false;
+
+    const cacheKey = '__openpaintGuideNextTagByView';
+    const cache = window[cacheKey] && typeof window[cacheKey] === 'object' ? window[cacheKey] : {};
+    if (cache[normalizedViewId] === normalizedTag) {
+      return false;
+    }
+    cache[normalizedViewId] = normalizedTag;
+    window[cacheKey] = cache;
+
+    window.dispatchEvent(
+      new CustomEvent('openpaint:guide-next-tag-changed', {
+        detail: {
+          viewId: normalizedViewId,
+          tag: normalizedTag,
+        },
+      })
+    );
+    return true;
+  };
+
   const runWhenDomReady = callback => {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', callback, { once: true });
@@ -127,70 +163,73 @@ export function initToolbarController() {
     };
     syncFromState();
 
-    arrowStartBtn.addEventListener('click', () => {
-      try {
-        const as = window.paintApp.uiState.arrowSettings;
-        as.startArrow = !as.startArrow;
-        // Apply to stroke in edit mode if any
-        const edited = window.selectedStrokeInEditMode;
-        const img = window.currentImageLabel;
-        if (edited && img && window.vectorStrokesByImage?.[img]?.[edited]) {
-          const v = window.vectorStrokesByImage[img][edited];
-          v.arrowSettings = v.arrowSettings || {
-            arrowSize: as.arrowSize,
-            arrowStyle: as.arrowStyle,
-            startArrow: false,
-            endArrow: false,
-          };
-          v.arrowSettings.startArrow = as.startArrow;
-          // Ensure curved lines switch type appropriately
-          if (typeof window.updateStrokeTypeBasedOnArrows === 'function') {
-            window.updateStrokeTypeBasedOnArrows(v);
-          } else {
-            const hasArrows = !!(v.arrowSettings.startArrow || v.arrowSettings.endArrow);
-            if (v.type === 'curved' && hasArrows) v.type = 'curved-arrow';
-            if (v.type === 'curved-arrow' && !hasArrows) v.type = 'curved';
-          }
-          window.saveState?.(true, false, false);
-          window.redrawCanvasWithVisibility?.();
+    const bindArrowStateToggle = (button, side) => {
+      if (!button) return;
+
+      let clickTimer = null;
+      const cancelPendingToggle = () => {
+        if (clickTimer !== null) {
+          clearTimeout(clickTimer);
+          clickTimer = null;
         }
-        syncFromState();
-      } catch {
-        /* optional UI sync */
-      }
-    });
-    arrowEndBtn.addEventListener('click', () => {
-      try {
-        const as = window.paintApp.uiState.arrowSettings;
-        as.endArrow = !as.endArrow;
-        // Apply to stroke in edit mode if any
-        const edited = window.selectedStrokeInEditMode;
-        const img = window.currentImageLabel;
-        if (edited && img && window.vectorStrokesByImage?.[img]?.[edited]) {
-          const v = window.vectorStrokesByImage[img][edited];
-          v.arrowSettings = v.arrowSettings || {
-            arrowSize: as.arrowSize,
-            arrowStyle: as.arrowStyle,
-            startArrow: false,
-            endArrow: false,
-          };
-          v.arrowSettings.endArrow = as.endArrow;
-          // Ensure curved lines switch type appropriately
-          if (typeof window.updateStrokeTypeBasedOnArrows === 'function') {
-            window.updateStrokeTypeBasedOnArrows(v);
+      };
+
+      const applyToggle = () => {
+        try {
+          const as = window.paintApp.uiState.arrowSettings;
+          const nextValue = !(side === 'start' ? as.startArrow : as.endArrow);
+          if (side === 'start') {
+            as.startArrow = nextValue;
           } else {
-            const hasArrows = !!(v.arrowSettings.startArrow || v.arrowSettings.endArrow);
-            if (v.type === 'curved' && hasArrows) v.type = 'curved-arrow';
-            if (v.type === 'curved-arrow' && !hasArrows) v.type = 'curved';
+            as.endArrow = nextValue;
           }
-          window.saveState?.(true, false, false);
-          window.redrawCanvasWithVisibility?.();
+
+          const edited = window.selectedStrokeInEditMode;
+          const img = window.currentImageLabel;
+          if (edited && img && window.vectorStrokesByImage?.[img]?.[edited]) {
+            const v = window.vectorStrokesByImage[img][edited];
+            v.arrowSettings = v.arrowSettings || {
+              arrowSize: as.arrowSize,
+              arrowStyle: as.arrowStyle,
+              startArrow: false,
+              endArrow: false,
+            };
+            if (side === 'start') {
+              v.arrowSettings.startArrow = as.startArrow;
+            } else {
+              v.arrowSettings.endArrow = as.endArrow;
+            }
+            if (typeof window.updateStrokeTypeBasedOnArrows === 'function') {
+              window.updateStrokeTypeBasedOnArrows(v);
+            } else {
+              const hasArrows = !!(v.arrowSettings.startArrow || v.arrowSettings.endArrow);
+              if (v.type === 'curved' && hasArrows) v.type = 'curved-arrow';
+              if (v.type === 'curved-arrow' && !hasArrows) v.type = 'curved';
+            }
+            window.saveState?.(true, false, false);
+            window.redrawCanvasWithVisibility?.();
+          }
+          syncFromState();
+        } catch {
+          /* optional UI sync */
         }
-        syncFromState();
-      } catch {
-        /* optional UI sync */
-      }
-    });
+      };
+
+      button.addEventListener('click', () => {
+        cancelPendingToggle();
+        clickTimer = setTimeout(() => {
+          clickTimer = null;
+          applyToggle();
+        }, 220);
+      });
+
+      button.addEventListener('dblclick', () => {
+        cancelPendingToggle();
+      });
+    };
+
+    bindArrowStateToggle(arrowStartBtn, 'start');
+    bindArrowStateToggle(arrowEndBtn, 'end');
     dottedBtn.addEventListener('click', () => {
       try {
         const ds = window.paintApp.uiState.dashSettings;
@@ -292,22 +331,30 @@ export function initToolbarController() {
 
     // Elements panel single-button shape toggle wiring
     const labelShapeToggleBtn = document.getElementById('labelShapeToggleBtn');
-    const applyShape = val => {
-      if (window.paintApp?.state) window.paintApp.state.labelShape = val;
-      if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
-    };
     if (labelShapeToggleBtn) {
       const syncShapeBtn = () => {
-        const shape = window.paintApp?.state?.labelShape || 'square';
+        const shape = window.app?.tagManager?.tagShape || 'square';
         const isSquare = shape !== 'circle';
         labelShapeToggleBtn.textContent = isSquare ? '■' : '●';
         labelShapeToggleBtn.setAttribute('aria-pressed', String(isSquare));
       };
-      labelShapeToggleBtn.addEventListener('click', () => {
-        const shape = window.paintApp?.state?.labelShape || 'square';
-        applyShape(shape === 'circle' ? 'square' : 'circle');
-        syncShapeBtn();
-      });
+      if (labelShapeToggleBtn.dataset.shapeToggleBound !== 'true') {
+        labelShapeToggleBtn.dataset.shapeToggleBound = 'true';
+        labelShapeToggleBtn.style.transition = 'transform 0.12s ease';
+        labelShapeToggleBtn.addEventListener('click', () => {
+          const currentViewId = window.app?.projectManager?.currentViewId;
+          const shape = window.app?.tagManager?.tagShape || 'square';
+          window.app?.tagManager?.setTagShape(
+            shape === 'circle' ? 'square' : 'circle',
+            currentViewId
+          );
+          labelShapeToggleBtn.style.transform = 'scale(0.94)';
+          setTimeout(() => {
+            labelShapeToggleBtn.style.transform = 'scale(1)';
+          }, 120);
+          syncShapeBtn();
+        });
+      }
       syncShapeBtn();
     }
 
@@ -348,16 +395,841 @@ export function initToolbarController() {
       console.warn('[TagBackground] Button element not found');
     }
 
+    const tagColorEditorBtn = document.getElementById(
+      'tagColorEditorBtn'
+    ) as HTMLButtonElement | null;
+    if (tagColorEditorBtn && !document.getElementById('tagColorPopoverStyles')) {
+      const popStyle = document.createElement('style');
+      popStyle.id = 'tagColorPopoverStyles';
+      popStyle.textContent = `
+        #tagColorPopover {
+          position: absolute;
+          z-index: 10120;
+          width: min(344px, calc(100vw - 24px));
+          max-height: min(520px, calc(100vh - 24px));
+          overflow-y: auto;
+          overscroll-behavior: contain;
+          background:
+            radial-gradient(circle at top left, rgba(219, 234, 254, 0.85), transparent 34%),
+            linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+          border: 1px solid rgba(148, 163, 184, 0.45);
+          border-radius: 18px;
+          box-shadow: 0 20px 44px rgba(15, 23, 42, 0.18);
+          padding: 14px;
+          display: none;
+        }
+        #tagColorPopover.open { display: block; }
+        .tag-popover-head {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+        .tag-popover-head-main {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          min-width: 0;
+        }
+        .tag-popover-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: #0f172a;
+          letter-spacing: 0.01em;
+        }
+        .tag-popover-close {
+          width: 28px;
+          height: 28px;
+          border-radius: 999px;
+          border: 1px solid rgba(203, 213, 225, 0.95);
+          background: rgba(255, 255, 255, 0.82);
+          color: #64748b;
+          cursor: pointer;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+          line-height: 1;
+          flex-shrink: 0;
+          transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+        }
+        .tag-popover-close:hover {
+          background: #ffffff;
+          border-color: #94a3b8;
+          color: #0f172a;
+        }
+        .tag-popover-copy {
+          display: none;
+        }
+        .tag-style-preview {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          min-width: 108px;
+          justify-content: center;
+          padding: 6px 10px;
+          border-radius: 12px;
+          border: 1px solid rgba(148, 163, 184, 0.35);
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+        }
+        .tag-style-preview-chip {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 30px;
+          padding: 4px 9px;
+          border-radius: 999px;
+          border: 2px solid #cccccc;
+          background: #ffffff;
+          color: #000000;
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.02em;
+        }
+        .tag-style-preview-meta {
+          font-size: 10px;
+          font-weight: 700;
+          color: #475569;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          line-height: 1.2;
+        }
+        .tag-style-preview-hint {
+          margin-top: 2px;
+          font-size: 10px;
+          line-height: 1.25;
+          color: #b45309;
+          max-width: 150px;
+        }
+        .tag-panel {
+          border: 1px solid rgba(226, 232, 240, 0.95);
+          border-radius: 16px;
+          padding: 10px;
+          background: rgba(255, 255, 255, 0.84);
+          backdrop-filter: blur(6px);
+        }
+        .tag-panel + .tag-panel {
+          margin-top: 10px;
+        }
+        .tag-preset-label {
+          font-size: 10px;
+          color: #64748b;
+          font-weight: 700;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+        .tag-style-targets {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 6px;
+        }
+        .tag-style-target {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          border: 1px solid rgba(203, 213, 225, 0.95);
+          background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+          border-radius: 12px;
+          min-height: 42px;
+          padding: 7px 8px;
+          cursor: pointer;
+          transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+          text-align: center;
+        }
+        .tag-style-target:hover {
+          transform: translateY(-1px);
+          border-color: #93c5fd;
+          box-shadow: 0 8px 16px rgba(59, 130, 246, 0.12);
+        }
+        .tag-style-target.active {
+          border-color: #2563eb;
+          box-shadow: 0 0 0 2px rgba(191, 219, 254, 0.9);
+        }
+        .tag-style-target-sample {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 28px;
+          padding: 4px 7px;
+          border-radius: 999px;
+          border: 1px solid rgba(148, 163, 184, 0.35);
+          background: #eff6ff;
+          color: #1d4ed8;
+          font-size: 10px;
+          font-weight: 800;
+          line-height: 1;
+          flex-shrink: 0;
+        }
+        .tag-style-target-name {
+          display: none;
+        }
+        .tag-style-target-help {
+          display: none;
+        }
+        .tag-preset-grid {
+          display: grid;
+          grid-template-columns: repeat(6, minmax(0, 1fr));
+          gap: 6px;
+        }
+        .tag-preset-swatch {
+          width: 100%;
+          aspect-ratio: 1;
+          min-height: 30px;
+          border-radius: 10px;
+          border: 1.5px solid #e2e8f0;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+          font-weight: 800;
+          transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+          box-shadow: inset 0 -8px 18px rgba(255, 255, 255, 0.18);
+        }
+        .tag-preset-swatch:hover {
+          transform: translateY(-1px) scale(1.03);
+          border-color: #94a3b8;
+          box-shadow: 0 8px 14px rgba(148, 163, 184, 0.16);
+        }
+        .tag-preset-swatch.active {
+          border-color: #2563eb;
+          border-width: 2px;
+          box-shadow: 0 0 0 1px rgba(191, 219, 254, 0.9);
+        }
+        .tag-line-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          max-height: 108px;
+          overflow-y: auto;
+          padding-right: 2px;
+          overscroll-behavior: contain;
+          align-content: flex-start;
+        }
+        .tag-line-list::-webkit-scrollbar {
+          width: 8px;
+        }
+        .tag-line-list::-webkit-scrollbar-thumb {
+          background: rgba(148, 163, 184, 0.42);
+          border-radius: 999px;
+        }
+        .tag-line-item {
+          width: auto;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          border: 1px solid rgba(203, 213, 225, 1);
+          background: #ffffff;
+          border-radius: 999px;
+          min-height: 24px;
+          padding: 3px 8px;
+          cursor: pointer;
+          font-size: 10px;
+          font-weight: 700;
+          color: #0f172a;
+          transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+        }
+        .tag-line-item:hover {
+          transform: translateY(-1px);
+          border-color: #94a3b8;
+          box-shadow: 0 8px 14px rgba(148, 163, 184, 0.12);
+        }
+        .tag-line-item.active {
+          border-color: #f59e0b;
+          background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+          box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.24);
+        }
+        .tag-line-item-label {
+          min-width: 0;
+          line-height: 1.1;
+        }
+        .tag-line-item-state {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 14px;
+          height: 14px;
+          padding: 0;
+          border-radius: 999px;
+          font-size: 10px;
+          line-height: 1;
+          background: transparent;
+          color: #94a3b8;
+          border: none;
+          flex-shrink: 0;
+        }
+        .tag-line-item.active .tag-line-item-state {
+          color: #b45309;
+        }
+        .tag-line-empty {
+          font-size: 10px;
+          line-height: 1.4;
+          color: #64748b;
+          padding: 2px 0;
+        }
+      `;
+      document.head.appendChild(popStyle);
+    }
+
+    const tagColorPresets = [
+      { name: 'Default', bg: '#ffffff', border: '#000000', text: '#000000' },
+      { name: 'Blue', bg: '#dbeafe', border: '#3b82f6', text: '#1e40af' },
+      { name: 'Green', bg: '#dcfce7', border: '#22c55e', text: '#166534' },
+      { name: 'Amber', bg: '#fef3c7', border: '#f59e0b', text: '#92400e' },
+      { name: 'Red', bg: '#fee2e2', border: '#ef4444', text: '#991b1b' },
+      { name: 'Purple', bg: '#f3e8ff', border: '#a855f7', text: '#6b21a8' },
+      { name: 'Cyan', bg: '#cffafe', border: '#06b6d4', text: '#155e75' },
+      { name: 'Pink', bg: '#fce7f3', border: '#ec4899', text: '#9d174d' },
+      { name: 'Slate', bg: '#f1f5f9', border: '#64748b', text: '#1e293b' },
+      { name: 'Emerald', bg: '#d1fae5', border: '#10b981', text: '#065f46' },
+      { name: 'Orange', bg: '#ffedd5', border: '#f97316', text: '#9a3412' },
+      { name: 'Indigo', bg: '#e0e7ff', border: '#6366f1', text: '#3730a3' },
+    ];
+    const tagStyleTargets = [
+      {
+        key: 'lettersOnly',
+        label: 'Letters',
+        sample: 'A',
+        help: 'Use for A, B, C tags.',
+      },
+      {
+        key: 'lettersNumbers',
+        label: 'Letter + Number',
+        sample: 'A1',
+        help: 'Use for A1, B2, C3 tags.',
+      },
+      {
+        key: 'selected',
+        label: 'Selected',
+        sample: 'Sel',
+        help: 'Apply a preset to the selected tags.',
+      },
+    ];
+
+    if (tagColorEditorBtn) {
+      const escapePopoverText = value =>
+        String(value ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      const extractStrokeLabelFromObject = obj =>
+        obj?.strokeLabel ||
+        obj?.strokeMetadata?.strokeLabel ||
+        obj?.strokeMetadata?.label ||
+        obj?.customData?.strokeLabel ||
+        obj?.customData?.label ||
+        obj?.connectedStroke?.strokeMetadata?.strokeLabel ||
+        obj?.connectedStroke?.strokeMetadata?.label ||
+        obj?.connectedStroke?.strokeLabel ||
+        obj?.connectedStroke?.customData?.strokeLabel ||
+        obj?.connectedStroke?.customData?.label ||
+        null;
+      let currentTagStyleTarget = 'lettersOnly';
+      let popover = document.getElementById('tagColorPopover') as HTMLDivElement | null;
+      if (!popover) {
+        popover = document.createElement('div');
+        popover.id = 'tagColorPopover';
+
+        const targetButtonsHtml = tagStyleTargets
+          .map(
+            target => `
+              <button type="button" class="tag-style-target" data-style-target="${target.key}" title="${target.help}">
+                <span class="tag-style-target-sample">${target.sample}</span>
+                <div class="tag-style-target-name">${target.label}</div>
+                <div class="tag-style-target-help">${target.help}</div>
+              </button>
+            `
+          )
+          .join('');
+        const swatchesHtml = tagColorPresets
+          .map(
+            (p, i) =>
+              `<div class="tag-preset-swatch" data-preset-idx="${i}" style="background:${p.bg};color:${p.text};border-color:${p.border}" title="${p.name}">A</div>`
+          )
+          .join('');
+        popover.innerHTML = `
+          <div class="tag-popover-head">
+            <div class="tag-popover-head-main">
+              <div class="tag-popover-title">Tag Styles</div>
+              <button type="button" class="tag-popover-close" aria-label="Close tag styles" data-tag-popover-close>&times;</button>
+            </div>
+            <div class="tag-style-preview">
+              <div id="tagStylePreviewChip" class="tag-style-preview-chip">A</div>
+              <div>
+                <div id="tagStylePreviewMeta" class="tag-style-preview-meta">Letters</div>
+                <div id="tagStylePreviewHint" class="tag-style-preview-hint"></div>
+              </div>
+            </div>
+          </div>
+          <div class="tag-panel">
+            <div class="tag-preset-label">Style Group</div>
+            <div class="tag-style-targets">${targetButtonsHtml}</div>
+          </div>
+          <div class="tag-panel">
+            <div class="tag-preset-label">Preset</div>
+            <div class="tag-preset-grid">${swatchesHtml}</div>
+          </div>
+          <div class="tag-panel">
+            <div class="tag-preset-label">Lines</div>
+            <div id="tagLineList" class="tag-line-list"></div>
+            <div id="tagLineEmpty" class="tag-line-empty">No lines yet for this image.</div>
+          </div>
+        `;
+        document.body.appendChild(popover);
+      }
+
+      const previewChip = popover.querySelector('#tagStylePreviewChip') as HTMLDivElement | null;
+      const previewMeta = popover.querySelector('#tagStylePreviewMeta') as HTMLDivElement | null;
+      const previewHint = popover.querySelector('#tagStylePreviewHint') as HTMLDivElement | null;
+      const previewToggle = popover.querySelector('.tag-style-preview') as HTMLDivElement | null;
+      const lineList = popover.querySelector('#tagLineList') as HTMLDivElement | null;
+      const lineEmpty = popover.querySelector('#tagLineEmpty') as HTMLDivElement | null;
+
+      const getTargetMeta = () =>
+        (() => {
+          const baseTarget =
+            tagStyleTargets.find(target => target.key === currentTagStyleTarget) ||
+            tagStyleTargets[0];
+
+          if (baseTarget.key !== 'selected') {
+            return baseTarget;
+          }
+
+          const selectedLabels = getSelectedLineLabels();
+          if (selectedLabels.length === 1) {
+            return {
+              ...baseTarget,
+              label: 'Selected',
+              sample: selectedLabels[0],
+              help: `Apply a preset to ${selectedLabels[0]}.`,
+            };
+          }
+
+          if (selectedLabels.length > 1) {
+            return {
+              ...baseTarget,
+              label: 'Selected',
+              sample: `${selectedLabels.length}`,
+              help: `Apply a preset to ${selectedLabels.length} selected tags.`,
+            };
+          }
+
+          return baseTarget;
+        })();
+
+      const getPresetTheme = preset => ({
+        background: preset.bg,
+        border: preset.border,
+        text: preset.text,
+      });
+
+      const findPresetIndex = theme =>
+        tagColorPresets.findIndex(
+          preset =>
+            preset.bg === theme?.background &&
+            preset.border === theme?.border &&
+            preset.text === theme?.text
+        );
+
+      const getSelectedResolvedTheme = () => {
+        const manager = window.app?.tagManager;
+        const scopedViewId = getCurrentScopedViewId();
+        const selectedLabels = getSelectedLineLabels();
+        if (!selectedLabels.length || !manager) {
+          return null;
+        }
+
+        const themes = selectedLabels
+          .map(label => {
+            const overrideTheme = manager.getTagThemeOverride?.(label, scopedViewId);
+            return overrideTheme || null;
+          })
+          .filter(Boolean);
+
+        if (!themes.length) {
+          return null;
+        }
+
+        const firstTheme = themes[0];
+        const allMatch = themes.every(
+          theme =>
+            theme?.background === firstTheme?.background &&
+            theme?.border === firstTheme?.border &&
+            theme?.text === firstTheme?.text
+        );
+
+        return allMatch ? firstTheme : null;
+      };
+
+      const getCurrentTheme = () => {
+        const manager = window.app?.tagManager;
+        if (currentTagStyleTarget === 'selected') {
+          return getSelectedResolvedTheme();
+        }
+        if (manager?.getTagStyleTheme) {
+          return manager.getTagStyleTheme(currentTagStyleTarget);
+        }
+        return getPresetTheme(tagColorPresets[0]);
+      };
+
+      const getCurrentScopedViewId = () => {
+        const activeViewId = window.app?.projectManager?.currentViewId || 'front';
+        const metadataManager = window.app?.metadataManager;
+        return metadataManager?.normalizeImageLabel
+          ? metadataManager.normalizeImageLabel(activeViewId)
+          : activeViewId;
+      };
+
+      const getSelectedLineLabels = () => {
+        const scopedViewId = getCurrentScopedViewId();
+        return window.app?.tagManager?.getSelectedStyleTargetLabels?.(scopedViewId) || [];
+      };
+
+      const getAvailableLineLabels = () => {
+        const scopedViewId = getCurrentScopedViewId();
+        const strokes = window.app?.metadataManager?.vectorStrokesByImage?.[scopedViewId] || {};
+        return Object.keys(strokes).sort((left, right) =>
+          left.localeCompare(right, undefined, {
+            numeric: true,
+            sensitivity: 'base',
+          })
+        );
+      };
+
+      const getCanvasSelectedLabels = () => {
+        const canvas = window.app?.canvasManager?.fabricCanvas;
+        const activeObject = canvas?.getActiveObject?.();
+        if (!activeObject) return [];
+
+        const objects =
+          activeObject.type === 'activeSelection'
+            ? activeObject.getObjects?.() || []
+            : [activeObject];
+        const labels = new Set<string>();
+
+        objects.forEach(obj => {
+          const strokeLabel = extractStrokeLabelFromObject(obj);
+          if (strokeLabel) {
+            labels.add(String(strokeLabel));
+          }
+        });
+
+        return Array.from(labels).sort((left, right) =>
+          left.localeCompare(right, undefined, {
+            numeric: true,
+            sensitivity: 'base',
+          })
+        );
+      };
+
+      const syncLineList = () => {
+        const manager = window.app?.tagManager;
+        const scopedViewId = getCurrentScopedViewId();
+        const labels = getAvailableLineLabels();
+
+        if (!lineList || !lineEmpty) return;
+
+        if (!labels.length) {
+          lineList.innerHTML = '';
+          lineEmpty.style.display = 'block';
+          return;
+        }
+
+        lineEmpty.style.display = 'none';
+        lineList.innerHTML = labels
+          .map(label => {
+            const isSelectedTarget = Boolean(manager?.isSelectedStyleTarget?.(label, scopedViewId));
+            const hasSelectedOverride = Boolean(
+              manager?.hasTagThemeOverride?.(label, scopedViewId)
+            );
+            const stateGlyph = hasSelectedOverride ? '*' : isSelectedTarget ? 'x' : '+';
+            const title = `${isSelectedTarget ? 'Deselect' : 'Select'} ${escapePopoverText(label)} for custom color`;
+            return `
+              <button
+                type="button"
+                class="tag-line-item${isSelectedTarget ? ' active' : ''}"
+                data-line-label="${escapePopoverText(label)}"
+                title="${title}"
+              >
+                <span class="tag-line-item-label">${escapePopoverText(label)}</span>
+                <span class="tag-line-item-state">${stateGlyph}</span>
+              </button>
+            `;
+          })
+          .join('');
+      };
+
+      const syncActivePreset = () => {
+        const manager = window.app?.tagManager;
+        const targetMeta = getTargetMeta();
+        const currentTheme = getCurrentTheme();
+        const previewTheme =
+          currentTheme || manager?.getDefaultTagTheme?.() || getPresetTheme(tagColorPresets[0]);
+        const activePresetIndex = currentTheme ? findPresetIndex(currentTheme) : -1;
+        const selectedCount = getSelectedLineLabels().length;
+
+        popover?.querySelectorAll<HTMLElement>('[data-style-target]').forEach(button => {
+          button.classList.toggle('active', button.dataset.styleTarget === currentTagStyleTarget);
+        });
+
+        popover?.querySelectorAll<HTMLElement>('.tag-preset-swatch').forEach((el, i) => {
+          const preset = tagColorPresets[i];
+          if (!preset) return;
+          el.textContent = 'A1';
+          el.classList.toggle('active', i === activePresetIndex);
+        });
+
+        if (previewChip) {
+          previewChip.textContent = targetMeta.sample;
+          previewChip.style.background = previewTheme.background;
+          previewChip.style.borderColor = previewTheme.border;
+          previewChip.style.color = previewTheme.text;
+        }
+        if (previewMeta) {
+          previewMeta.textContent = targetMeta.label;
+        }
+        if (previewHint) {
+          if (selectedCount > 0 && currentTagStyleTarget === 'selected') {
+            previewHint.textContent = 'Selected tags override A / A1 presets.';
+          } else if (selectedCount > 0) {
+            previewHint.textContent = `${selectedCount} selected tag${selectedCount === 1 ? '' : 's'} override this preset.`;
+          } else {
+            previewHint.textContent = '';
+          }
+        }
+        if (previewToggle) {
+          const isBulkToggle = currentTagStyleTarget === 'selected';
+          previewToggle.style.cursor = isBulkToggle ? 'pointer' : 'default';
+          previewToggle.title = isBulkToggle
+            ? selectedCount
+              ? 'Clear selected tags'
+              : 'Select all tags'
+            : targetMeta.help;
+        }
+
+        tagColorEditorBtn.textContent = manager?.hasCustomTagStyles?.() ? 'Styles*' : 'Styles';
+        syncLineList();
+      };
+
+      const closePopover = () => {
+        popover?.classList.remove('open');
+      };
+
+      const positionPopover = () => {
+        if (!popover) return;
+        const rect = tagColorEditorBtn.getBoundingClientRect();
+        const viewportPadding = 12;
+        const preferredGap = 6;
+
+        const wasOpen = popover.classList.contains('open');
+        if (!wasOpen) {
+          popover.classList.add('open');
+          popover.style.visibility = 'hidden';
+        }
+
+        const popoverRect = popover.getBoundingClientRect();
+        const popoverWidth = Math.min(
+          popoverRect.width || 344,
+          window.innerWidth - viewportPadding * 2
+        );
+        const popoverHeight = Math.min(
+          popoverRect.height || 0,
+          window.innerHeight - viewportPadding * 2
+        );
+
+        let left = rect.left;
+        let top;
+
+        const strokePanel = document.getElementById('strokePanel');
+        const panelRect =
+          strokePanel && !strokePanel.classList.contains('minimized')
+            ? strokePanel.getBoundingClientRect()
+            : null;
+        const panelFitsRight =
+          panelRect &&
+          panelRect.right + preferredGap + popoverWidth <= window.innerWidth - viewportPadding;
+
+        if (panelFitsRight) {
+          left = panelRect.right + preferredGap;
+          top = panelRect.top;
+        } else {
+          if (left + popoverWidth > window.innerWidth - viewportPadding) {
+            left = window.innerWidth - viewportPadding - popoverWidth;
+          }
+          const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
+          const spaceAbove = rect.top - viewportPadding;
+          const shouldOpenAbove =
+            spaceBelow < Math.min(popoverHeight, 280) && spaceAbove > spaceBelow;
+
+          top = shouldOpenAbove
+            ? rect.top - popoverHeight - preferredGap
+            : rect.bottom + preferredGap;
+        }
+        left = Math.max(viewportPadding, left);
+
+        top = Math.max(
+          viewportPadding,
+          Math.min(top, window.innerHeight - viewportPadding - popoverHeight)
+        );
+
+        popover.style.left = `${Math.round(left)}px`;
+        popover.style.top = `${Math.round(top)}px`;
+
+        if (!wasOpen) {
+          popover.classList.remove('open');
+          popover.style.visibility = '';
+        }
+      };
+
+      tagColorEditorBtn.addEventListener('click', e => {
+        e.preventDefault();
+        syncActivePreset();
+        positionPopover();
+        popover?.classList.toggle('open');
+      });
+
+      previewToggle?.addEventListener('click', event => {
+        if (currentTagStyleTarget !== 'selected' || !window.app?.tagManager) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+
+        const scopedViewId = getCurrentScopedViewId();
+        const nextLabels = getSelectedLineLabels().length ? [] : getAvailableLineLabels();
+        window.app.tagManager.replaceSelectedStyleTargets?.(nextLabels, scopedViewId, {
+          syncCanvas: true,
+        });
+        syncActivePreset();
+      });
+
+      popover?.addEventListener('click', e => {
+        const closeButton = (e.target as HTMLElement)?.closest?.(
+          '[data-tag-popover-close]'
+        ) as HTMLElement | null;
+        if (closeButton) {
+          closePopover();
+          return;
+        }
+
+        const targetButton = (e.target as HTMLElement)?.closest?.(
+          '[data-style-target]'
+        ) as HTMLElement | null;
+        if (targetButton) {
+          currentTagStyleTarget = targetButton.dataset.styleTarget || 'lettersOnly';
+          syncActivePreset();
+          return;
+        }
+
+        const lineButton = (e.target as HTMLElement)?.closest?.(
+          '[data-line-label]'
+        ) as HTMLElement | null;
+        if (lineButton && window.app?.tagManager) {
+          const lineLabel = lineButton.dataset.lineLabel || '';
+          const scopedViewId = getCurrentScopedViewId();
+          window.app.tagManager.toggleSelectedStyleTarget?.(lineLabel, scopedViewId, {
+            syncCanvas: true,
+          });
+          syncActivePreset();
+          return;
+        }
+
+        const swatch = (e.target as HTMLElement)?.closest?.(
+          '[data-preset-idx]'
+        ) as HTMLElement | null;
+        if (!swatch || !window.app?.tagManager) return;
+        const idx = parseInt(swatch.dataset.presetIdx || '0', 10);
+        const preset = tagColorPresets[idx];
+        if (!preset) return;
+
+        if (currentTagStyleTarget === 'selected') {
+          const scopedViewId = getCurrentScopedViewId();
+          if (!getSelectedLineLabels().length) {
+            return;
+          }
+
+          const theme =
+            idx === 0
+              ? null
+              : {
+                  background: preset.bg,
+                  border: preset.border,
+                  text: preset.text,
+                };
+          window.app.tagManager.setTagThemeForStyleTargets?.(scopedViewId, theme);
+        } else if (idx === 0) {
+          window.app.tagManager.clearTagStyleTheme?.(currentTagStyleTarget);
+        } else {
+          window.app.tagManager.setTagStyleTheme?.(currentTagStyleTarget, {
+            background: preset.bg,
+            border: preset.border,
+            text: preset.text,
+          });
+        }
+        syncActivePreset();
+      });
+
+      window.addEventListener('resize', () => {
+        if (popover?.classList.contains('open')) positionPopover();
+      });
+
+      const bindSelectionListeners = () => {
+        const canvas = window.app?.canvasManager?.fabricCanvas;
+        if (!canvas || popover?.dataset.selectionListenersBound) return;
+
+        const syncFromCanvasSelection = () => {
+          if (window.app?.tagManager?.isSyncingSelectedStyleTargetsToCanvas) return;
+          const scopedViewId = getCurrentScopedViewId();
+          const selectedLabels = getCanvasSelectedLabels();
+          window.app?.tagManager?.replaceSelectedStyleTargets?.(selectedLabels, scopedViewId, {
+            syncCanvas: false,
+          });
+          syncActivePreset();
+        };
+
+        canvas.on('selection:created', syncFromCanvasSelection);
+        canvas.on('selection:updated', syncFromCanvasSelection);
+        canvas.on('selection:cleared', syncFromCanvasSelection);
+        if (popover) {
+          popover.dataset.selectionListenersBound = 'true';
+        }
+      };
+
+      bindSelectionListeners();
+
+      window.addEventListener('openpaint:tag-style-state-changed', event => {
+        const nextViewId = event?.detail?.imageLabel;
+        if (!nextViewId || nextViewId === getCurrentScopedViewId()) {
+          syncActivePreset();
+        }
+      });
+
+      setTimeout(syncActivePreset, 500);
+    }
+
     const connectorToneBtn = document.getElementById('connectorToneBtn');
+    const CONNECTOR_SAME_AS_LINE = '__same_as_line__';
     const connectorPalette = [
       { label: 'White', value: '#ffffff' },
       { label: 'Gray', value: '#9ca3af' },
       { label: 'Black', value: '#000000' },
+      { label: 'Same as Line', value: CONNECTOR_SAME_AS_LINE },
     ];
 
     const syncConnectorToneBtn = () => {
       if (!connectorToneBtn) return;
-      const current = String(window.app?.tagManager?.connectorColor || '#ffffff').toLowerCase();
+      const tagManager = window.app?.tagManager;
+      if (tagManager?.connectorMatchesLine) {
+        connectorToneBtn.textContent = 'Connector: Same as Line';
+        return;
+      }
+      const current = String(tagManager?.connectorColor || '#ffffff').toLowerCase();
       const idx = connectorPalette.findIndex(item => item.value === current);
       const active = idx >= 0 ? connectorPalette[idx] : connectorPalette[0];
       connectorToneBtn.textContent = `Connector: ${active.label}`;
@@ -367,11 +1239,28 @@ export function initToolbarController() {
       connectorToneBtn.addEventListener('click', () => {
         const tagManager = window.app?.tagManager;
         if (!tagManager) return;
-        const current = String(tagManager.connectorColor || '#ffffff').toLowerCase();
-        const idx = connectorPalette.findIndex(item => item.value === current);
+
+        // Find current position in palette
+        let idx;
+        if (tagManager.connectorMatchesLine) {
+          idx = connectorPalette.findIndex(item => item.value === CONNECTOR_SAME_AS_LINE);
+        } else {
+          const current = String(tagManager.connectorColor || '#ffffff').toLowerCase();
+          idx = connectorPalette.findIndex(item => item.value === current);
+        }
+
         const next =
           connectorPalette[(idx + 1 + connectorPalette.length) % connectorPalette.length];
-        tagManager.setConnectorColor(next.value);
+
+        if (next.value === CONNECTOR_SAME_AS_LINE) {
+          // Set connector to match the stroke color
+          tagManager.connectorMatchesLine = true;
+          const strokeColor = tagManager.strokeColor || '#3b82f6';
+          tagManager.setConnectorColor(strokeColor);
+        } else {
+          tagManager.connectorMatchesLine = false;
+          tagManager.setConnectorColor(next.value);
+        }
         syncConnectorToneBtn();
       });
       setTimeout(syncConnectorToneBtn, 600);
@@ -534,6 +1423,18 @@ export function initToolbarController() {
         toolbarWrap.classList.add('toolbar-stable');
       }
     }, 100);
+
+    // Track toolbar height so body padding and side panels stay in sync when wrapping
+    if (topToolbar && typeof ResizeObserver !== 'undefined') {
+      const updateToolbarHeight = () => {
+        const h = topToolbar.offsetHeight;
+        if (h > 0) {
+          document.documentElement.style.setProperty('--toolbar-height', `${h}px`);
+        }
+      };
+      updateToolbarHeight();
+      new ResizeObserver(updateToolbarHeight).observe(topToolbar);
+    }
   }
 
   // Smart label system for responsive button text
@@ -771,6 +1672,7 @@ export function initToolbarController() {
     const tabBar = document.getElementById('captureTabBar');
     const tabList = document.getElementById('captureTabList');
     const tabAddButton = document.getElementById('captureTabAdd');
+    let tabGuideButton = document.getElementById('captureTabGuideStatus');
     const masterOverlay = document.getElementById('captureTabMasterOverlay');
     const masterTargetBadge = document.getElementById('captureMasterTargetBadge');
 
@@ -822,6 +1724,65 @@ export function initToolbarController() {
         null
       );
     }
+
+    function ensureTabGuideButton() {
+      if (!tabBar) return null;
+      if (tabGuideButton && tabGuideButton.parentElement) return tabGuideButton;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.id = 'captureTabGuideStatus';
+      button.className = 'capture-tab-guide-status';
+      button.textContent = 'Unbound';
+      button.addEventListener('click', () => {
+        const activeLabel = getActiveLabel();
+        const state =
+          typeof window.getGuideSplitStateForView === 'function'
+            ? window.getGuideSplitStateForView(activeLabel)
+            : null;
+        if (!state?.bound) {
+          if (typeof window.openMeasurementGuideGallery === 'function') {
+            window.openMeasurementGuideGallery({ source: 'capture-tab', mode: 'bind' });
+          } else if (typeof window.openGuideBindingPanel === 'function') {
+            window.openGuideBindingPanel({ viewId: activeLabel, source: 'capture-tab' });
+          }
+          return;
+        }
+        if (typeof window.toggleGuideSplitEnabled === 'function') {
+          window.toggleGuideSplitEnabled();
+        }
+      });
+      if (tabAddButton?.parentElement === tabBar) {
+        tabBar.insertBefore(button, tabAddButton);
+      } else {
+        tabBar.appendChild(button);
+      }
+      tabGuideButton = button;
+      return button;
+    }
+
+    function renderGuideSplitControl(label) {
+      const button = ensureTabGuideButton();
+      if (!button) return;
+      const resolved = toBaseLabel(label || getActiveLabel());
+      const splitState =
+        typeof window.getGuideSplitStateForView === 'function'
+          ? window.getGuideSplitStateForView(resolved)
+          : null;
+      button.classList.remove('unbound', 'bound', 'active');
+      if (!splitState?.bound) {
+        button.textContent = 'Unbound';
+        button.title = 'No guide bound. Click to open binding menu.';
+        button.classList.add('unbound');
+        return;
+      }
+      const isActive = splitState.enabled === true;
+      button.textContent = isActive ? 'Split On' : 'Split Screen';
+      button.title = isActive
+        ? 'Split screen enabled. Click to hide split.'
+        : 'Bound guide ready. Click to show split screen.';
+      button.classList.add('bound');
+      if (isActive) button.classList.add('active');
+    }
     function syncCanvasVisibilityForActiveTab(label) {
       const resolved = label || getActiveLabel();
       const state = ensureCaptureTabsForLabel(resolved);
@@ -829,12 +1790,47 @@ export function initToolbarController() {
       const canvas = window.app?.canvasManager?.fabricCanvas;
       if (!canvas || !state || !activeTab) return;
 
+      const getObjectScopeLabel = obj => {
+        // For tag objects (groups), prefer scopedLabel if it exists (includes ::tab: for multi-frame support)
+        if ((obj?.isTag || obj?.isTagGroup) && obj?.scopedLabel) {
+          return obj.scopedLabel;
+        }
+        return obj?.strokeMetadata?.imageLabel || obj?.imageLabel || obj?.scopedLabel || null;
+      };
+      const getObjectStrokeLabel = obj =>
+        obj?.strokeLabel ||
+        obj?.strokeMetadata?.strokeLabel ||
+        obj?.strokeMetadata?.label ||
+        obj?.connectedStroke?.strokeMetadata?.strokeLabel ||
+        obj?.connectedStroke?.strokeMetadata?.label ||
+        null;
+      const isStrokeVisibleInScope = (scopeLabel, strokeLabel) => {
+        if (!scopeLabel || !strokeLabel) return true;
+        const scoped = window.app?.metadataManager?.strokeVisibilityByImage?.[scopeLabel] || {};
+        return scoped?.[strokeLabel] !== false;
+      };
+      const isLabelVisibleInScope = (scopeLabel, strokeLabel) => {
+        if (!scopeLabel || !strokeLabel) return true;
+        const scoped = window.app?.metadataManager?.strokeLabelVisibility?.[scopeLabel] || {};
+        return scoped?.[strokeLabel] !== false;
+      };
+
       // Discard selection before toggling visibility so control anchors don't persist
       canvas.discardActiveObject();
 
       const tagManager = window.app?.tagManager;
       const metadataManager = window.app?.metadataManager;
-      if (tagManager && metadataManager) {
+      // Only create missing tags if the resolved label matches the current view.
+      // During async layout sync (e.g. guide split double-RAF), this function can
+      // run after a view switch has started but before the sweep has caught up,
+      // which would recreate stale tags from a previous view's metadata.
+      const currentViewBase = toBaseLabel(
+        window.app?.projectManager?.currentViewId || getActiveLabel()
+      );
+      const resolvedBase = toBaseLabel(resolved);
+      const canCreateTags =
+        tagManager && metadataManager && resolvedBase && resolvedBase === currentViewBase;
+      if (canCreateTags) {
         Object.entries(metadataManager.vectorStrokesByImage || {}).forEach(
           ([scopeKey, strokes]) => {
             if (!isLabelInViewScope(scopeKey, resolved)) return;
@@ -864,27 +1860,36 @@ export function initToolbarController() {
       const masterAllowsLegacy = primaryTab && masterDrawTargetId === primaryTab.id;
 
       canvas.getObjects().forEach(obj => {
-        const objectLabel = obj?.strokeMetadata?.imageLabel || obj?.imageLabel;
+        const objectLabel = getObjectScopeLabel(obj);
         if (!objectLabel || !isLabelInViewScope(objectLabel, resolved)) return;
+        const strokeLabel = getObjectStrokeLabel(obj);
+        const strokeVisible = isStrokeVisibleInScope(objectLabel, strokeLabel);
+        const labelVisible = isLabelVisibleInScope(objectLabel, strokeLabel);
+        const gatedVisible =
+          strokeVisible && (obj?.isTag || obj?.isConnectorLine ? labelVisible : true);
+
         if (activeTab.type === 'master') {
-          obj.visible = true;
+          obj.visible = gatedVisible;
           const inTargetScope = objectLabel.includes('::tab:')
             ? objectLabel === masterTargetScope
             : masterAllowsLegacy;
-          obj.evented = inTargetScope;
-          obj.selectable = inTargetScope;
+          obj.evented = inTargetScope && gatedVisible;
+          obj.selectable = inTargetScope && gatedVisible;
           return;
         }
         if (objectLabel.includes('::tab:')) {
-          obj.visible = objectLabel === activeScope;
+          obj.visible = objectLabel === activeScope && gatedVisible;
           obj.evented = obj.visible;
           obj.selectable = obj.visible;
           return;
         }
-        obj.visible = showLegacyBase;
+        obj.visible = showLegacyBase && gatedVisible;
         obj.evented = obj.visible;
         obj.selectable = obj.visible;
       });
+      if (window.app?.tagManager?.refreshAllConnectors) {
+        window.app.tagManager.refreshAllConnectors(getActiveScopedLabel(resolved));
+      }
       canvas.requestRenderAll();
     }
 
@@ -908,26 +1913,127 @@ export function initToolbarController() {
       const rect = captureFrame.getBoundingClientRect();
       return buildCaptureFrameRecord(rect);
     }
+    function getLiveCaptureFrameRectForViewport() {
+      const rect = captureFrame.getBoundingClientRect();
+      return {
+        left: rect.left || 0,
+        top: rect.top || 0,
+        width: rect.width || 0,
+        height: rect.height || 0,
+      };
+    }
+    function normalizeWorldRect(worldRect) {
+      return normalizeSharedWorldRect(worldRect);
+    }
+    function computeRectIntersectionArea(a, b) {
+      const rectA = normalizeWorldRect(a);
+      const rectB = normalizeWorldRect(b);
+      if (!rectA || !rectB) return 0;
+      const left = Math.max(rectA.left, rectB.left);
+      const top = Math.max(rectA.top, rectB.top);
+      const right = Math.min(rectA.left + rectA.width, rectB.left + rectB.width);
+      const bottom = Math.min(rectA.top + rectA.height, rectB.top + rectB.height);
+      const width = Math.max(0, right - left);
+      const height = Math.max(0, bottom - top);
+      return width * height;
+    }
+    function selectUsableWorldRect(candidate, fallback) {
+      const normalizedCandidate = normalizeWorldRect(candidate);
+      const normalizedFallback = normalizeWorldRect(fallback);
+      if (!normalizedCandidate) {
+        return normalizedFallback;
+      }
+      if (!normalizedFallback) {
+        return normalizedCandidate;
+      }
+      const candidateArea = Math.max(1, normalizedCandidate.width * normalizedCandidate.height);
+      const overlapRatio =
+        computeRectIntersectionArea(normalizedCandidate, normalizedFallback) / candidateArea;
+      return overlapRatio >= 0.72 ? normalizedCandidate : normalizedFallback;
+    }
+    function fitViewportToWorldRect(worldRect, viewport, targetRect) {
+      return fitSharedViewportToWorldRect(worldRect, viewport, targetRect, getViewportGeometry());
+    }
+    function updateTabWorldRectFromLiveFrame(tab, viewportOverride = null) {
+      if (!tab) return;
+      const viewport = viewportOverride || tab.viewport;
+      if (!viewport) return;
+      const liveRect = getLiveCaptureFrameRectForViewport();
+      if (!(liveRect.width > 0 && liveRect.height > 0)) return;
+      const worldRect = normalizeWorldRect(computeWorldRectFromViewportRect(liveRect, viewport));
+      if (!worldRect) return;
+      const existing =
+        tab.captureFrame && typeof tab.captureFrame === 'object' ? tab.captureFrame : {};
+      tab.captureFrame = {
+        ...existing,
+        worldRect,
+      };
+    }
     function buildViewportRecord() {
       const canvasManager = window.app?.canvasManager;
       const viewport = canvasManager?.getViewportState
         ? canvasManager.getViewportState()
         : { zoom: 1, panX: 0, panY: 0 };
-      const rotation = canvasManager?.getRotationDegrees ? canvasManager.getRotationDegrees() : 0;
+      const liveRotation = canvasManager?.getRotationDegrees
+        ? canvasManager.getRotationDegrees()
+        : 0;
       return {
         zoom: typeof viewport.zoom === 'number' ? viewport.zoom : 1,
         panX: typeof viewport.panX === 'number' ? viewport.panX : 0,
         panY: typeof viewport.panY === 'number' ? viewport.panY : 0,
-        rotation: typeof rotation === 'number' ? rotation : 0,
+        rotation: typeof liveRotation === 'number' ? liveRotation : 0,
       };
+    }
+    function resolveViewportRotation(viewport, label = null) {
+      const resolvedLabel =
+        (typeof toBaseLabel === 'function' ? toBaseLabel(label || getActiveLabel()) : label) || '';
+      const projectManager = window.projectManager || window.app?.projectManager;
+      const viewRotation = Number(projectManager?.views?.[resolvedLabel]?.rotation);
+      const recordRotation = Number(viewport?.rotation);
+      if (Number.isFinite(viewRotation)) {
+        return viewRotation;
+      }
+      if (Number.isFinite(recordRotation)) {
+        return recordRotation;
+      }
+      return 0;
+    }
+    function normalizeViewportRecord(viewport) {
+      return normalizeSharedViewportRecord(viewport);
+    }
+    function suspendCaptureTabViewportTracking(durationMs = 320) {
+      window.__captureTabsSuspendViewportTrackingUntil =
+        Date.now() + (Number.isFinite(durationMs) ? Math.max(0, durationMs) : 320);
     }
     function applyViewportRecord(record) {
       if (!record) return;
       const canvasManager = window.app?.canvasManager;
-      if (canvasManager?.setRotationDegrees && typeof record.rotation === 'number') {
-        canvasManager.setRotationDegrees(record.rotation);
+      const projectManager = window.projectManager || window.app?.projectManager;
+      const activeViewId = projectManager?.currentViewId || null;
+      const targetRotation = resolveViewportRotation(record, activeViewId);
+      const splitActive = isGuideSplitWorkspaceActive();
+
+      // In split mode, skip canvas viewport writes — the split layout sync
+      // (fitGuideSplitPrimaryBackgroundToFrame) is the sole viewport authority.
+      // But still update metadata (rotation storage, thumbnail, record mutation).
+      if (!splitActive && canvasManager?.setRotationDegrees) {
+        canvasManager.setRotationDegrees(targetRotation);
+      } else if (splitActive && canvasManager) {
+        // Store rotation without triggering applyViewportTransform
+        canvasManager.rotationDegrees = ((targetRotation % 360) + 360) % 360;
       }
-      if (canvasManager?.setViewportState) {
+
+      if (activeViewId && projectManager?.views?.[activeViewId]) {
+        projectManager.views[activeViewId].rotation = targetRotation;
+        if (typeof projectManager.updateThumbnailRotation === 'function') {
+          projectManager.updateThumbnailRotation(activeViewId, targetRotation);
+        }
+      }
+
+      if (typeof record === 'object') {
+        record.rotation = targetRotation;
+      }
+      if (!splitActive && canvasManager?.setViewportState) {
         canvasManager.setViewportState({
           zoom: record.zoom,
           panX: record.panX,
@@ -935,13 +2041,89 @@ export function initToolbarController() {
         });
       }
     }
+    function writeCaptureFrameFromViewportRect(rect, borderColor = null) {
+      if (!rect) return null;
+      const overlayRect = getCaptureOverlayRect();
+      captureFrame.style.left = `${Math.round(rect.left - overlayRect.left)}px`;
+      captureFrame.style.top = `${Math.round(rect.top - overlayRect.top)}px`;
+      captureFrame.style.width = `${Math.round(rect.width)}px`;
+      captureFrame.style.height = `${Math.round(rect.height)}px`;
+      if (typeof borderColor === 'string' && borderColor) {
+        captureFrame.style.borderColor = borderColor;
+      }
+      return {
+        left: Math.round(rect.left - overlayRect.left),
+        top: Math.round(rect.top - overlayRect.top),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+      };
+    }
+    function replayCaptureFrameForLabelFromWorldRect(label, options = {}) {
+      const resolved = label || getActiveLabel();
+      const activeTab = getActiveTab(resolved);
+      const sourceTab = options?.sourceTab || activeTab;
+      const sourceCaptureFrame = sourceTab?.captureFrame || activeTab?.captureFrame || null;
+      const worldRect = selectUsableWorldRect(
+        options?.worldRect || sourceCaptureFrame?.worldRect,
+        getCurrentBackgroundWorldRect()
+      );
+      if (!activeTab || !worldRect) return false;
+
+      const borderColor = activeTab.type === 'master' ? '#0f172a' : activeTab.color || '#22c55e';
+      const viewportSource =
+        options?.viewport || sourceTab?.viewport || activeTab.viewport || buildViewportRecord();
+      let nextViewport = normalizeViewportRecord(viewportSource);
+      const targetRect =
+        options?.targetRect ||
+        (!options?.skipFit && sourceCaptureFrame
+          ? resolveCaptureFrameRect(sourceCaptureFrame)
+          : null);
+
+      if (targetRect && !options?.skipFit) {
+        nextViewport = fitViewportToWorldRect(worldRect, nextViewport, targetRect);
+      }
+
+      console.log('[Restore Debug] replayCaptureFrameForLabelFromWorldRect', {
+        label: resolved,
+        activeTabId: activeTab?.id || null,
+        sourceTabId: sourceTab?.id || null,
+        worldRect,
+        targetRect,
+        viewportBefore: viewportSource,
+        viewportAfter: nextViewport,
+      });
+
+      if (options?.applyViewport !== false) {
+        suspendCaptureTabViewportTracking(
+          Number.isFinite(options?.suspendMs) ? options.suspendMs : 700
+        );
+        applyViewportRecord(nextViewport);
+      }
+
+      const mappedRect = mapWorldRectToViewport(worldRect, nextViewport);
+      if (!mappedRect) return false;
+
+      console.log('[Restore Debug] replayCaptureFrameForLabelFromWorldRect:mapped', {
+        label: resolved,
+        activeTabId: activeTab?.id || null,
+        mappedRect,
+      });
+
+      writeCaptureFrameFromViewportRect(mappedRect, borderColor);
+      setMasterViewActive(activeTab.type === 'master');
+      syncCanvasVisibilityForActiveTab(resolved);
+      if (options?.renderOverlay !== false) {
+        renderMasterOverlay(resolved);
+      }
+      return true;
+    }
     function createTabId() {
       captureTabIdCounter += 1;
       return `tab-${Date.now()}-${captureTabIdCounter}`;
     }
     function createDefaultTabState(label) {
-      const frameRect = getCaptureFrameRectPixels();
-      const viewport = buildViewportRecord();
+      const frameRect = buildCaptureFrameRecord(resolveCaptureFrameRect(null));
+      const viewport = normalizeViewportRecord(null);
       const defaultTabId = createTabId();
       const masterTabId = 'master';
       return {
@@ -997,7 +2179,7 @@ export function initToolbarController() {
           type,
           color,
           captureFrame: tab.captureFrame || null,
-          viewport: tab.viewport || null,
+          viewport: normalizeViewportRecord(tab.viewport),
           linkedTarget: tab.linkedTarget || null,
         });
       });
@@ -1011,7 +2193,7 @@ export function initToolbarController() {
           name: 'Master',
           type: 'master',
           captureFrame: getCaptureFrameRectPixels(),
-          viewport: buildViewportRecord(),
+          viewport: normalizeViewportRecord(buildViewportRecord()),
         });
         hasMaster = true;
       }
@@ -1079,13 +2261,40 @@ export function initToolbarController() {
         document.body.classList.remove('master-view-active');
       }
     }
-    function saveActiveTabState(label) {
+    function saveActiveTabState(label, options = {}) {
       if (!label) return;
+      if (isGuideSplitWorkspaceActive()) return;
       const state = ensureCaptureTabsForLabel(label);
       const activeTab = state.tabs.find(tab => tab.id === state.activeTabId);
       if (!activeTab || activeTab.type === 'master') return;
-      activeTab.captureFrame = getCaptureFrameRectPixels();
-      activeTab.viewport = buildViewportRecord();
+      const frameRecord = getCaptureFrameRectPixels();
+      const viewport = buildViewportRecord();
+      const previousRotation = Number(activeTab.viewport?.rotation);
+      const shouldSyncRotation =
+        options?.syncRotation === true || !Number.isFinite(previousRotation);
+      const nextViewport = {
+        ...(activeTab.viewport || {}),
+        ...viewport,
+        rotation: shouldSyncRotation ? viewport.rotation : previousRotation,
+      };
+      activeTab.viewport = nextViewport;
+      const worldRect = computeWorldRectFromViewportRect(
+        {
+          left: frameRecord.left,
+          top: frameRecord.top,
+          width: frameRecord.width,
+          height: frameRecord.height,
+        },
+        nextViewport
+      );
+      const preservedWorldRect =
+        options?.preserveWorldRect === true
+          ? normalizeWorldRect(activeTab.captureFrame?.worldRect)
+          : null;
+      activeTab.captureFrame = {
+        ...frameRecord,
+        worldRect: preservedWorldRect || normalizeWorldRect(worldRect),
+      };
       state.lastNonMasterId = activeTab.id;
     }
     function saveCurrentCaptureFrameForLabel(label) {
@@ -1249,54 +2458,232 @@ export function initToolbarController() {
         height: Math.min(height, winH),
       };
     }
+    function isGuideSplitWorkspaceActive() {
+      return (
+        document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
+        true
+      );
+    }
+    function getCaptureOverlayRect() {
+      const overlayRect = captureOverlay?.getBoundingClientRect?.();
+      if (overlayRect?.width && overlayRect?.height) {
+        return overlayRect;
+      }
+      return {
+        left: 0,
+        top: 0,
+        right: window.innerWidth,
+        bottom: window.innerHeight,
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
+    }
+    function buildSplitCaptureFrameRect(stored) {
+      const overlayRect = getCaptureOverlayRect();
+      const targetAspect = 4 / 3;
+      const inset = 16;
+      const availableWidth = Math.max(1, Math.round(overlayRect.width - inset * 2));
+      const availableHeight = Math.max(1, Math.round(overlayRect.height - inset * 2));
+      const fallbackWidth = Math.max(200, Math.min(800, availableWidth));
+      const fallbackHeight = Math.max(150, Math.round(fallbackWidth / targetAspect));
+
+      let width = Math.max(1, Number(stored?.width) || fallbackWidth);
+      let height = Math.max(1, Number(stored?.height) || fallbackHeight);
+      const fitScale = Math.min(1, availableWidth / width, availableHeight / height);
+      width = Math.max(1, Math.round(width * fitScale));
+      height = Math.max(1, Math.round(height * fitScale));
+
+      return {
+        left: Math.max(0, Math.round((overlayRect.width - width) / 2)),
+        top: Math.max(0, Math.round((overlayRect.height - height) / 2)),
+        width,
+        height,
+      };
+    }
     function applyCaptureFrameForLabel(label) {
       const resolved = label || getActiveLabel();
       const state = ensureCaptureTabsForLabel(resolved);
       const activeTab = getActiveTab(resolved);
       if (!activeTab) return;
 
+      console.log('[Restore Debug] applyCaptureFrameForLabel:start', {
+        label: resolved,
+        activeTabId: activeTab.id || null,
+        activeTabType: activeTab.type || null,
+        hasStoredWorldRect: Boolean(activeTab?.captureFrame?.worldRect),
+        hasStoredViewport: Boolean(activeTab?.viewport),
+        viewRestoreWorldRect: resolveViewRestoreWorldRect(resolved),
+      });
+
+      if (isGuideSplitWorkspaceActive()) {
+        const splitSnapshot =
+          window.__guideSplitRestoreSnapshot &&
+          toBaseLabel(window.__guideSplitRestoreSnapshot.viewId) === toBaseLabel(resolved)
+            ? window.__guideSplitRestoreSnapshot
+            : null;
+        const snapshotTabs = Array.isArray(splitSnapshot?.tabs?.tabs)
+          ? splitSnapshot.tabs.tabs
+          : Array.isArray(splitSnapshot?.tabs)
+            ? splitSnapshot.tabs
+            : [];
+        const snapshotActiveTabId =
+          splitSnapshot?.tabs?.activeTabId || splitSnapshot?.tabs?.lastNonMasterId || activeTab.id;
+        const snapshotTab =
+          snapshotTabs.find(tab => tab?.id === activeTab.id) ||
+          snapshotTabs.find(tab => tab?.id === snapshotActiveTabId) ||
+          null;
+        const splitSourceTab = snapshotTab || activeTab;
+        const stored = splitSourceTab?.captureFrame || activeTab.captureFrame;
+        const splitRect = buildSplitCaptureFrameRect(stored);
+        const overlayRect = getCaptureOverlayRect();
+        const splitTargetRect = {
+          left: overlayRect.left + splitRect.left,
+          top: overlayRect.top + splitRect.top,
+          width: splitRect.width,
+          height: splitRect.height,
+        };
+        const splitViewportSeed = normalizeViewportRecord(
+          splitSourceTab?.viewport || splitSnapshot?.viewport || buildViewportRecord()
+        );
+        let tempViewport = {
+          ...splitViewportSeed,
+          // Split compare replays into a different workspace geometry, so carry over zoom/rotation
+          // but discard the prior workspace pan before fitting to the split target frame.
+          panX: 0,
+          panY: 0,
+        };
+        const splitImageWorldRect = normalizeWorldRect(splitSnapshot?.imageWorldRect);
+        const storedWorldRect = selectUsableWorldRect(stored?.worldRect, splitImageWorldRect);
+        const targetWorldRect = storedWorldRect || splitImageWorldRect;
+
+        if (splitTargetRect.width > 0 && splitTargetRect.height > 0) {
+          if (targetWorldRect) {
+            tempViewport = fitViewportToWorldRect(targetWorldRect, tempViewport, splitTargetRect);
+          } else if (stored) {
+            const rect = resolveCaptureFrameRect(stored);
+            const centerDeltaX =
+              splitTargetRect.left + splitTargetRect.width / 2 - (rect.left + rect.width / 2);
+            const centerDeltaY =
+              splitTargetRect.top + splitTargetRect.height / 2 - (rect.top + rect.height / 2);
+            tempViewport = {
+              ...tempViewport,
+              panX: (tempViewport.panX || 0) + centerDeltaX,
+              panY: (tempViewport.panY || 0) + centerDeltaY,
+            };
+          }
+          suspendCaptureTabViewportTracking();
+          // Never apply viewport in the split path — the split layout sync's
+          // fitGuideSplitPrimaryBackgroundToFrame (double-RAF) is the authoritative
+          // viewport setter.  Applying here uses stale geometry (full-width vs
+          // half-width) producing a ~2× wrong zoom that's visible for 1-2 frames
+          // before the double-RAF corrects it.
+        }
+
+        // Persist the resolved worldRect so syncCaptureFrameToActiveTabWorldRect
+        // (which runs later in the split layout sync) finds it instead of falling
+        // back to the full background rect.
+        if (targetWorldRect && !activeTab.captureFrame?.worldRect) {
+          activeTab.captureFrame = {
+            ...(activeTab.captureFrame || {}),
+            worldRect: targetWorldRect,
+          };
+        }
+
+        if (targetWorldRect) {
+          writeCaptureFrameFromViewportRect(
+            splitTargetRect,
+            activeTab.type === 'master' ? '#0f172a' : activeTab.color || '#22c55e'
+          );
+        } else {
+          captureFrame.style.left = `${Math.round(splitRect.left)}px`;
+          captureFrame.style.top = `${Math.round(splitRect.top)}px`;
+          captureFrame.style.width = `${Math.round(splitRect.width)}px`;
+          captureFrame.style.height = `${Math.round(splitRect.height)}px`;
+          captureFrame.style.borderColor =
+            activeTab.type === 'master' ? '#0f172a' : activeTab.color || '#22c55e';
+        }
+        setMasterViewActive(activeTab.type === 'master');
+        syncCanvasVisibilityForActiveTab(resolved);
+        renderMasterOverlay(resolved);
+        return;
+      }
+
       const applyCenteredFrameAndViewport = (stored, borderColor) => {
         const rect = resolveCaptureFrameRect(stored);
-        const centeredRect = buildCenteredRectFromSize(rect.width, rect.height);
-        let centerDeltaX =
-          centeredRect.left + centeredRect.width / 2 - (rect.left + rect.width / 2);
-        let centerDeltaY =
-          centeredRect.top + centeredRect.height / 2 - (rect.top + rect.height / 2);
+        const fallbackWorldRect = resolveViewRestoreWorldRect(resolved);
+        const storedWorldRect = selectUsableWorldRect(stored?.worldRect, fallbackWorldRect);
+        const targetWorldRect = storedWorldRect || fallbackWorldRect;
+        const baseViewport = normalizeViewportRecord(activeTab.viewport || buildViewportRecord());
+        let nextViewport = baseViewport;
+        let centerDeltaX = rect.left + rect.width / 2 - (rect.left + rect.width / 2);
+        let centerDeltaY = rect.top + rect.height / 2 - (rect.top + rect.height / 2);
 
         if (Math.abs(centerDeltaX) < 1) centerDeltaX = 0;
         if (Math.abs(centerDeltaY) < 1) centerDeltaY = 0;
 
-        captureFrame.style.left = `${centeredRect.left}px`;
-        captureFrame.style.top = `${centeredRect.top}px`;
-        captureFrame.style.width = `${centeredRect.width}px`;
-        captureFrame.style.height = `${centeredRect.height}px`;
+        console.log('[Restore Debug] applyCaptureFrameForLabel:target', {
+          label: resolved,
+          activeTabId: activeTab.id || null,
+          rect,
+          storedWorldRect,
+          fallbackWorldRect,
+          baseViewport,
+        });
 
-        if (!activeTab.viewport) {
-          activeTab.viewport = buildViewportRecord();
-        }
+        if (targetWorldRect) {
+          const targetRect = storedWorldRect
+            ? rect
+            : buildCenteredRectFromSize(rect.width, rect.height);
+          const viewportSeed = storedWorldRect
+            ? baseViewport
+            : {
+                ...normalizeViewportRecord(null),
+                rotation: resolveViewportRotation(activeTab.viewport, resolved),
+              };
+          const nextViewport = fitViewportToWorldRect(targetWorldRect, viewportSeed, targetRect);
+          activeTab.viewport = normalizeViewportRecord(nextViewport);
+          activeTab.captureFrame = {
+            ...(stored || {}),
+            ...buildCaptureFrameRecord(targetRect),
+            worldRect: targetWorldRect,
+          };
 
-        if (activeTab.viewport && (centerDeltaX !== 0 || centerDeltaY !== 0)) {
-          activeTab.viewport = {
-            ...activeTab.viewport,
-            panX: (activeTab.viewport.panX || 0) + centerDeltaX,
-            panY: (activeTab.viewport.panY || 0) + centerDeltaY,
+          writeCaptureFrameFromViewportRect(targetRect, borderColor);
+
+          suspendCaptureTabViewportTracking();
+          applyViewportRecord(activeTab.viewport);
+          return;
+        } else if (centerDeltaX !== 0 || centerDeltaY !== 0) {
+          nextViewport = {
+            ...baseViewport,
+            panX: (baseViewport.panX || 0) + centerDeltaX,
+            panY: (baseViewport.panY || 0) + centerDeltaY,
           };
         }
 
-        activeTab.captureFrame = {
-          ...(stored || {}),
-          ...centeredRect,
-          windowWidth: Math.max(window.innerWidth, 1),
-          windowHeight: Math.max(window.innerHeight, 1),
-          relativeLeft: centeredRect.left / Math.max(window.innerWidth, 1),
-          relativeTop: centeredRect.top / Math.max(window.innerHeight, 1),
-          relativeWidth: centeredRect.width / Math.max(window.innerWidth, 1),
-          relativeHeight: centeredRect.height / Math.max(window.innerHeight, 1),
-        };
+        const derivedWorldRect = normalizeWorldRect(
+          computeWorldRectFromViewportRect(rect, nextViewport)
+        );
+
+        captureFrame.style.left = `${rect.left}px`;
+        captureFrame.style.top = `${rect.top}px`;
+        captureFrame.style.width = `${rect.width}px`;
+        captureFrame.style.height = `${rect.height}px`;
+
+        if (!activeTab.viewport) {
+          activeTab.viewport = nextViewport;
+        }
+        if (!stored?.worldRect && derivedWorldRect) {
+          activeTab.captureFrame = {
+            ...(stored || {}),
+            worldRect: derivedWorldRect,
+          };
+        }
 
         captureFrame.style.borderColor = borderColor;
-        if (activeTab.viewport) {
-          applyViewportRecord(activeTab.viewport);
+        if (nextViewport) {
+          suspendCaptureTabViewportTracking();
+          applyViewportRecord(nextViewport);
         }
       };
 
@@ -1311,6 +2698,91 @@ export function initToolbarController() {
       const stored = activeTab.captureFrame;
       applyCenteredFrameAndViewport(stored, activeTab.color || '#22c55e');
     }
+    function restoreCaptureFrameForLabelExact(label) {
+      const resolved = label || getActiveLabel();
+      const activeTab = getActiveTab(resolved);
+      if (!activeTab) return false;
+
+      const stored = activeTab.captureFrame || null;
+      const hasExactRect =
+        Number.isFinite(Number(stored?.left)) &&
+        Number.isFinite(Number(stored?.top)) &&
+        Number.isFinite(Number(stored?.width)) &&
+        Number.isFinite(Number(stored?.height));
+
+      if (!hasExactRect) {
+        applyCaptureFrameForLabel(resolved);
+        return true;
+      }
+
+      const exactRect = {
+        left: Math.round(Number(stored.left)),
+        top: Math.round(Number(stored.top)),
+        width: Math.round(Number(stored.width)),
+        height: Math.round(Number(stored.height)),
+      };
+      const exactViewport = normalizeViewportRecord(activeTab.viewport || buildViewportRecord());
+
+      captureFrame.style.left = `${exactRect.left}px`;
+      captureFrame.style.top = `${exactRect.top}px`;
+      captureFrame.style.width = `${exactRect.width}px`;
+      captureFrame.style.height = `${exactRect.height}px`;
+      captureFrame.style.borderColor =
+        activeTab.type === 'master' ? '#0f172a' : activeTab.color || '#22c55e';
+
+      suspendCaptureTabViewportTracking(900);
+      applyViewportRecord(exactViewport);
+      setMasterViewActive(activeTab.type === 'master');
+      syncCanvasVisibilityForActiveTab(resolved);
+      renderMasterOverlay(resolved);
+      return true;
+    }
+    function syncCaptureFrameToActiveTabWorldRect(label) {
+      const resolved = label || getActiveLabel();
+      if (isGuideSplitWorkspaceActive()) {
+        applyCaptureFrameForLabel(resolved);
+        return;
+      }
+      const activeTab = getActiveTab(resolved);
+      const bgWorldRect = getCurrentBackgroundWorldRect();
+      const syncedWorldRect = selectUsableWorldRect(
+        activeTab?.captureFrame?.worldRect,
+        bgWorldRect
+      );
+      if (activeTab && syncedWorldRect) {
+        activeTab.captureFrame = {
+          ...(activeTab.captureFrame || {}),
+          worldRect: syncedWorldRect,
+        };
+      }
+      const result = replayCaptureFrameForLabelFromWorldRect(resolved, {
+        worldRect: syncedWorldRect,
+        viewport: buildViewportRecord(),
+        skipFit: true,
+        applyViewport: false,
+      });
+      // If the active tab has no stored worldRect (e.g. freshly switched view),
+      // fall back to the current background worldRect so the capture frame
+      // doesn't persist from the previous image.
+      if (!result) {
+        if (bgWorldRect) {
+          // Persist the fallback worldRect to the tab so future sync calls
+          // use it consistently instead of re-deriving from the BG each time.
+          if (activeTab && !activeTab.captureFrame?.worldRect) {
+            activeTab.captureFrame = {
+              ...(activeTab.captureFrame || {}),
+              worldRect: bgWorldRect,
+            };
+          }
+          replayCaptureFrameForLabelFromWorldRect(resolved, {
+            worldRect: bgWorldRect,
+            viewport: buildViewportRecord(),
+            skipFit: true,
+            applyViewport: false,
+          });
+        }
+      }
+    }
     function getCanvasClientRect() {
       const canvasEl =
         window.app?.canvasManager?.fabricCanvas?.upperCanvasEl ||
@@ -1318,27 +2790,47 @@ export function initToolbarController() {
         null;
       return canvasEl?.getBoundingClientRect?.() || { left: 0, top: 0 };
     }
-    function buildViewportTransform(viewport) {
+    function getCurrentBackgroundWorldRect() {
+      const backgroundImage = window.app?.canvasManager?.fabricCanvas?.backgroundImage || null;
+      return normalizeWorldRect(getFabricObjectWorldRect(backgroundImage));
+    }
+    function resolveViewRestoreWorldRect(label) {
+      const resolved = label || getActiveLabel();
+      const projectManager = window.projectManager || window.app?.projectManager;
+      if (projectManager?.resolveRestoreWorldRectForView) {
+        const resolvedWorldRect = normalizeWorldRect(
+          projectManager.resolveRestoreWorldRectForView(resolved)
+        );
+        if (resolvedWorldRect) {
+          return resolvedWorldRect;
+        }
+      }
+      const storedWorldRect = normalizeWorldRect(
+        projectManager?.views?.[resolved]?.restoreWorldRect
+      );
+      if (storedWorldRect) {
+        return storedWorldRect;
+      }
+      return getCurrentBackgroundWorldRect();
+    }
+    function getViewportGeometry(viewport = null) {
       const canvasManager = window.app?.canvasManager;
-      const zoom = typeof viewport?.zoom === 'number' && viewport.zoom > 0 ? viewport.zoom : 1;
-      const panX = typeof viewport?.panX === 'number' ? viewport.panX : 0;
-      const panY = typeof viewport?.panY === 'number' ? viewport.panY : 0;
-      const rotation = typeof viewport?.rotation === 'number' ? viewport.rotation : 0;
-      const angleRadians = (rotation * Math.PI) / 180;
-      const cos = Math.cos(angleRadians);
-      const sin = Math.sin(angleRadians);
-      const center = canvasManager?.getRotationCenter?.() || {
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
+      return {
+        canvasRect: getCanvasClientRect(),
+        center: canvasManager?.getRotationCenter?.() || {
+          x: window.innerWidth / 2,
+          y: window.innerHeight / 2,
+        },
       };
-      const base = [zoom * cos, zoom * sin, -zoom * sin, zoom * cos, 0, 0];
-      const translateToOrigin = [1, 0, 0, 1, -center.x, -center.y];
-      const translateBack = [1, 0, 0, 1, center.x, center.y];
-      let transform = fabric.util.multiplyTransformMatrices(base, translateToOrigin);
-      transform = fabric.util.multiplyTransformMatrices(translateBack, transform);
-      transform[4] += panX;
-      transform[5] += panY;
-      return transform;
+    }
+    function buildViewportTransform(viewport) {
+      return buildSharedViewportTransform(
+        {
+          ...(viewport || {}),
+          rotation: resolveViewportRotation(viewport),
+        },
+        getViewportGeometry(viewport).center
+      );
     }
     function computeWorldRectForTab(tab) {
       if (!tab?.captureFrame || !tab?.viewport) return null;
@@ -1370,53 +2862,25 @@ export function initToolbarController() {
     }
     function mapWorldRectToViewport(worldRect, viewport) {
       if (!worldRect || !viewport) return null;
-      const canvasRect = getCanvasClientRect();
-      const matrix = buildViewportTransform(viewport);
-      const corners = [
-        new fabric.Point(worldRect.left, worldRect.top),
-        new fabric.Point(worldRect.left + worldRect.width, worldRect.top),
-        new fabric.Point(worldRect.left, worldRect.top + worldRect.height),
-        new fabric.Point(worldRect.left + worldRect.width, worldRect.top + worldRect.height),
-      ].map(point => fabric.util.transformPoint(point, matrix));
-      const xs = corners.map(point => point.x + canvasRect.left);
-      const ys = corners.map(point => point.y + canvasRect.top);
-      const minX = Math.min(...xs);
-      const minY = Math.min(...ys);
-      const maxX = Math.max(...xs);
-      const maxY = Math.max(...ys);
-      return {
-        left: minX,
-        top: minY,
-        width: maxX - minX,
-        height: maxY - minY,
-      };
+      return mapSharedWorldRectToViewport(
+        worldRect,
+        {
+          ...(viewport || {}),
+          rotation: resolveViewportRotation(viewport),
+        },
+        getViewportGeometry(viewport)
+      );
     }
     function computeWorldRectFromViewportRect(rect, viewport) {
       if (!rect || !viewport) return null;
-      const canvasRect = getCanvasClientRect();
-      const matrix = buildViewportTransform(viewport);
-      const inverse = fabric.util.invertTransform(matrix);
-      const corners = [
-        new fabric.Point(rect.left - canvasRect.left, rect.top - canvasRect.top),
-        new fabric.Point(rect.left + rect.width - canvasRect.left, rect.top - canvasRect.top),
-        new fabric.Point(rect.left - canvasRect.left, rect.top + rect.height - canvasRect.top),
-        new fabric.Point(
-          rect.left + rect.width - canvasRect.left,
-          rect.top + rect.height - canvasRect.top
-        ),
-      ].map(point => fabric.util.transformPoint(point, inverse));
-      const xs = corners.map(point => point.x);
-      const ys = corners.map(point => point.y);
-      const minX = Math.min(...xs);
-      const minY = Math.min(...ys);
-      const maxX = Math.max(...xs);
-      const maxY = Math.max(...ys);
-      return {
-        left: minX,
-        top: minY,
-        width: maxX - minX,
-        height: maxY - minY,
-      };
+      return computeSharedWorldRectFromViewportRect(
+        rect,
+        {
+          ...(viewport || {}),
+          rotation: resolveViewportRotation(viewport),
+        },
+        getViewportGeometry(viewport)
+      );
     }
     function isCaptureFrameUnlocked() {
       return document.body.classList.contains('capture-unlocked');
@@ -1492,7 +2956,10 @@ export function initToolbarController() {
       nextViewport.panX = (nextViewport.panX || 0) + (targetCx - mappedCx);
       nextViewport.panY = (nextViewport.panY || 0) + (targetCy - mappedCy);
       tab.viewport = nextViewport;
-      tab.captureFrame = buildCaptureFrameRecord(centeredRect);
+      tab.captureFrame = {
+        ...buildCaptureFrameRecord(centeredRect),
+        worldRect: normalizeWorldRect(worldRect),
+      };
       if (state.activeTabId === tab.id) {
         applyCaptureFrameForLabel(label);
       } else {
@@ -1543,12 +3010,18 @@ export function initToolbarController() {
         });
         tabList.appendChild(button);
       });
+      renderGuideSplitControl(label);
     }
     function renderMasterOverlay(label) {
       if (!masterOverlay) return;
+      if (isGuideSplitWorkspaceActive()) {
+        masterOverlay.innerHTML = '';
+        return;
+      }
       const state = ensureCaptureTabsForLabel(label);
       const currentViewport = buildViewportRecord();
       const highlightedTab = getHighlightedFrameTab(state, label);
+      const overlayRect = getCaptureOverlayRect();
       masterOverlay.innerHTML = '';
       state.tabs
         .filter(tab => tab.type !== 'master')
@@ -1556,6 +3029,12 @@ export function initToolbarController() {
           const worldRect = computeWorldRectForTab(tab);
           const rect = mapWorldRectToViewport(worldRect, currentViewport);
           if (!rect) return;
+          const localRect = {
+            left: rect.left - overlayRect.left,
+            top: rect.top - overlayRect.top,
+            width: rect.width,
+            height: rect.height,
+          };
           const frame = document.createElement('button');
           frame.type = 'button';
           frame.className = 'capture-tab-frame';
@@ -1572,10 +3051,10 @@ export function initToolbarController() {
           }
           const accent = tab.color || '#22c55e';
           frame.dataset.tabId = tab.id;
-          frame.style.left = `${rect.left}px`;
-          frame.style.top = `${rect.top}px`;
-          frame.style.width = `${rect.width}px`;
-          frame.style.height = `${rect.height}px`;
+          frame.style.left = `${localRect.left}px`;
+          frame.style.top = `${localRect.top}px`;
+          frame.style.width = `${localRect.width}px`;
+          frame.style.height = `${localRect.height}px`;
           frame.style.borderColor = `${accent}f2`;
           frame.style.background = tab.id === highlightedTab?.id ? `${accent}12` : `${accent}08`;
           if (isLockedMaster) {
@@ -1624,13 +3103,15 @@ export function initToolbarController() {
                 nextRect.top = centerY - nextRect.height / 2;
               }
 
-              const maxLeft = Math.max(0, window.innerWidth - nextRect.width);
-              const maxTop = Math.max(0, window.innerHeight - nextRect.height);
-              nextRect.left = Math.min(maxLeft, Math.max(0, nextRect.left));
-              nextRect.top = Math.min(maxTop, Math.max(0, nextRect.top));
+              const minLeft = overlayRect.left;
+              const minTop = overlayRect.top;
+              const maxLeft = Math.max(minLeft, overlayRect.right - nextRect.width);
+              const maxTop = Math.max(minTop, overlayRect.bottom - nextRect.height);
+              nextRect.left = Math.min(maxLeft, Math.max(minLeft, nextRect.left));
+              nextRect.top = Math.min(maxTop, Math.max(minTop, nextRect.top));
 
-              frame.style.left = `${nextRect.left}px`;
-              frame.style.top = `${nextRect.top}px`;
+              frame.style.left = `${nextRect.left - overlayRect.left}px`;
+              frame.style.top = `${nextRect.top - overlayRect.top}px`;
               frame.style.width = `${nextRect.width}px`;
               frame.style.height = `${nextRect.height}px`;
               moved = true;
@@ -1678,8 +3159,8 @@ export function initToolbarController() {
           selector.textContent = tab.name || 'Frame';
           selector.setAttribute('aria-label', `Select frame ${tab.name || 'Frame'}`);
           selector.style.position = 'absolute';
-          selector.style.left = `${rect.left + 8}px`;
-          selector.style.top = `${rect.top + 8}px`;
+          selector.style.left = `${localRect.left + 8}px`;
+          selector.style.top = `${localRect.top + 8}px`;
           selector.style.zIndex = '4';
           selector.addEventListener('click', clickEvent => {
             clickEvent.preventDefault();
@@ -1690,6 +3171,16 @@ export function initToolbarController() {
             syncCanvasVisibilityForActiveTab(label);
             window.app?.metadataManager?.updateStrokeVisibilityControls?.();
             renderMasterOverlay(label);
+          });
+          selector.addEventListener('dblclick', dblClickEvent => {
+            dblClickEvent.preventDefault();
+            dblClickEvent.stopPropagation();
+            const nextName = window.prompt('Rename frame', tab.name || 'Frame');
+            if (typeof nextName === 'string' && nextName.trim()) {
+              tab.name = nextName.trim();
+              renderTabBar(label);
+              renderMasterOverlay(label);
+            }
           });
           masterOverlay.appendChild(selector);
         });
@@ -1725,6 +3216,15 @@ export function initToolbarController() {
       window.app?.metadataManager?.updateStrokeVisibilityControls?.();
       renderTabBar(baseLabel);
       renderMasterOverlay(baseLabel);
+      window.dispatchEvent(
+        new CustomEvent('openpaint:frame-tab-changed', {
+          detail: {
+            viewId: baseLabel,
+            tabId: targetTab.id,
+            scopedViewId: getActiveScopedLabel(baseLabel),
+          },
+        })
+      );
     }
     function createNewTab(label) {
       const baseLabel = toBaseLabel(label) || 'front';
@@ -1832,8 +3332,23 @@ export function initToolbarController() {
       canvas.__captureTabViewportTracking = true;
       let raf = null;
       let lastSyncAt = 0;
-      const minSyncGapMs = 120;
-      const sync = () => {
+      const minSyncGapMs = 180;
+      const shouldRenderMasterOverlay = () =>
+        !!masterOverlay && document.body.classList.contains('master-view-active');
+      const sync = (renderOverlay = false) => {
+        if (
+          window.__isLoadingProject ||
+          window.__deferredImageHydrationInProgress ||
+          window.__suspendSaveCurrentView
+        ) {
+          return;
+        }
+        if (Number(window.__captureTabsSuspendViewportTrackingUntil || 0) > Date.now()) {
+          return;
+        }
+        if (isGuideSplitWorkspaceActive()) {
+          return;
+        }
         const label = getActiveLabel();
         const state = ensureCaptureTabsForLabel(label);
         const activeTab = getActiveTab(label);
@@ -1846,33 +3361,62 @@ export function initToolbarController() {
         if (activeTab.type === 'master') {
           const masterTab = state.tabs.find(tab => tab.type === 'master') || activeTab;
           const previousMaster = masterTab.viewport || {};
+          const previousMasterRotation = Number(previousMaster.rotation);
+          const shouldSyncMasterRotation =
+            window.__captureTabsAllowRotationWrite === true ||
+            !Number.isFinite(previousMasterRotation);
+          const nextMasterViewport = {
+            ...previousMaster,
+            ...viewport,
+            rotation: shouldSyncMasterRotation ? viewport.rotation : previousMasterRotation,
+          };
           if (
-            previousMaster.zoom === viewport.zoom &&
-            previousMaster.panX === viewport.panX &&
-            previousMaster.panY === viewport.panY &&
-            previousMaster.rotation === viewport.rotation
+            previousMaster.zoom === nextMasterViewport.zoom &&
+            previousMaster.panX === nextMasterViewport.panX &&
+            previousMaster.panY === nextMasterViewport.panY &&
+            previousMaster.rotation === nextMasterViewport.rotation
           ) {
             return;
           }
-          masterTab.viewport = viewport;
-          renderMasterOverlay(label);
+          masterTab.viewport = nextMasterViewport;
+          updateTabWorldRectFromLiveFrame(masterTab, nextMasterViewport);
+          if (window.__captureTabsAllowRotationWrite === true) {
+            window.__captureTabsAllowRotationWrite = false;
+          }
+          if (renderOverlay || shouldRenderMasterOverlay()) {
+            renderMasterOverlay(label);
+          }
           return;
         }
 
         const previous = activeTab.viewport || {};
+        const previousRotation = Number(previous.rotation);
+        const shouldSyncRotation =
+          window.__captureTabsAllowRotationWrite === true || !Number.isFinite(previousRotation);
+        const nextViewport = {
+          ...previous,
+          ...viewport,
+          rotation: shouldSyncRotation ? viewport.rotation : previousRotation,
+        };
         if (
-          previous.zoom === viewport.zoom &&
-          previous.panX === viewport.panX &&
-          previous.panY === viewport.panY &&
-          previous.rotation === viewport.rotation
+          previous.zoom === nextViewport.zoom &&
+          previous.panX === nextViewport.panX &&
+          previous.panY === nextViewport.panY &&
+          previous.rotation === nextViewport.rotation
         ) {
           return;
         }
-        activeTab.viewport = viewport;
+        activeTab.viewport = nextViewport;
+        updateTabWorldRectFromLiveFrame(activeTab, nextViewport);
+        if (window.__captureTabsAllowRotationWrite === true) {
+          window.__captureTabsAllowRotationWrite = false;
+        }
         state.lastNonMasterId = activeTab.id;
-        renderMasterOverlay(label);
+        if (renderOverlay || shouldRenderMasterOverlay()) {
+          renderMasterOverlay(label);
+        }
       };
-      const scheduleSync = (force = false) => {
+      const scheduleSync = ({ force = false, renderOverlay = false } = {}) => {
         const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
         if (!force && now - lastSyncAt < minSyncGapMs) {
           return;
@@ -1881,12 +3425,27 @@ export function initToolbarController() {
         raf = requestAnimationFrame(() => {
           raf = null;
           lastSyncAt = typeof performance !== 'undefined' ? performance.now() : Date.now();
-          sync();
+          sync(renderOverlay);
         });
       };
-      canvas.on('mouse:wheel', () => scheduleSync(true));
-      canvas.on('mouse:move', () => scheduleSync(false));
-      canvas.on('mouse:up', () => scheduleSync(true));
+      canvas.on('mouse:wheel', () =>
+        scheduleSync({
+          force: true,
+          renderOverlay: shouldRenderMasterOverlay(),
+        })
+      );
+      canvas.on('mouse:move', () =>
+        scheduleSync({
+          force: false,
+          renderOverlay: false,
+        })
+      );
+      canvas.on('mouse:up', () =>
+        scheduleSync({
+          force: true,
+          renderOverlay: shouldRenderMasterOverlay(),
+        })
+      );
       return true;
     }
     const tryInstallViewportTracking = (attempt = 0) => {
@@ -1911,9 +3470,9 @@ export function initToolbarController() {
       renderTabBar(resolved);
       renderMasterOverlay(resolved);
     };
-    window.captureTabsSyncActive = label => {
+    window.captureTabsSyncActive = (label, options = {}) => {
       const resolved = toBaseLabel(label || getActiveLabel());
-      saveActiveTabState(resolved);
+      saveActiveTabState(resolved, options);
     };
     window.setCaptureTabsForLabel = (label, data) => {
       const resolved = toBaseLabel(label);
@@ -1931,17 +3490,43 @@ export function initToolbarController() {
     window.currentImageLabel = getActiveScopedLabel(initialLabel);
     applyCaptureFrameForLabel(initialLabel);
     syncCanvasVisibilityForActiveTab(initialLabel);
+    window.syncCaptureFrameToActiveTabWorldRect = label =>
+      syncCaptureFrameToActiveTabWorldRect(label);
+    window.restoreCaptureFrameForLabelExact = label => restoreCaptureFrameForLabelExact(label);
+    window.replayCaptureFrameForLabelFromWorldRect = (label, options = {}) =>
+      replayCaptureFrameForLabelFromWorldRect(label, options);
 
     let captureFrameResizeRaf = null;
     window.addEventListener('resize', () => {
       if (captureFrameResizeRaf !== null) return;
       captureFrameResizeRaf = requestAnimationFrame(() => {
         captureFrameResizeRaf = null;
+        if (window.__isLoadingProject || window.__deferredImageHydrationInProgress) {
+          return;
+        }
         const activeLabel = getActiveLabel();
+        if (isGuideSplitWorkspaceActive()) {
+          return;
+        }
+        if (
+          typeof window.replayCaptureFrameForLabelFromWorldRect === 'function' &&
+          window.replayCaptureFrameForLabelFromWorldRect(activeLabel, {
+            renderOverlay: true,
+          })
+        ) {
+          return;
+        }
         if (typeof window.applyCaptureFrameForLabel === 'function') {
           window.applyCaptureFrameForLabel(activeLabel);
         }
       });
+    });
+
+    window.addEventListener('openpaint:guide-binding-changed', () => {
+      renderGuideSplitControl(getActiveLabel());
+    });
+    window.addEventListener('openpaint:guide-split-changed', () => {
+      renderGuideSplitControl(getActiveLabel());
     });
 
     // Mobile toolbar expand/collapse functionality
@@ -2098,8 +3683,9 @@ export function initToolbarController() {
           toolbarWrap.classList.remove('tapped');
           // Remove inline style to allow animation
           toolbarWrap.style.removeProperty('box-shadow');
-          void toolbarWrap.offsetWidth; // Force reflow
-          toolbarWrap.classList.add('tapped');
+          requestAnimationFrame(() => {
+            toolbarWrap.classList.add('tapped');
+          });
 
           // Remove tapped class after animation and clear inline style
           setTimeout(() => {
@@ -2167,8 +3753,6 @@ export function initToolbarController() {
               if (!toolbarWrap.classList.contains('no-glow')) {
                 toolbarWrap.removeAttribute('data-scrollable');
               }
-              // Force reflow to ensure CSS applies
-              void toolbarWrap.offsetWidth;
             }
             checkIfExpandable();
           }, 150);
@@ -2217,23 +3801,67 @@ export function initToolbarController() {
 
     // Select/Deselect All Strokes functionality
     if (selectAllStrokesBtn) {
-      let allSelected = false; // Start with deselect all (false)
-      selectAllStrokesBtn.addEventListener('click', () => {
-        const checkboxes = document.querySelectorAll(
-          '#strokeVisibilityControls input[type="checkbox"]'
-        );
-        allSelected = !allSelected;
-
-        checkboxes.forEach(checkbox => {
-          if (checkbox.checked !== allSelected) {
-            checkbox.click(); // Use click to trigger the existing event handlers
-          }
-        });
-
-        // Update button text
+      const getStrokeVisibilityCheckboxes = () =>
+        Array.from(document.querySelectorAll('#strokeVisibilityControls input[type="checkbox"]'));
+      const refreshSelectAllButtonState = () => {
+        const checkboxes = getStrokeVisibilityCheckboxes();
+        const allSelected = checkboxes.length > 0 && checkboxes.every(checkbox => checkbox.checked);
         selectAllStrokesBtn.textContent = allSelected ? 'Deselect All' : 'Select All';
         selectAllStrokesBtn.title = allSelected ? 'Deselect all elements' : 'Select all elements';
+      };
+
+      selectAllStrokesBtn.addEventListener('click', () => {
+        const metadataManager = window.app?.metadataManager;
+        const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+        const scopedLabel = metadataManager?.normalizeImageLabel
+          ? metadataManager.normalizeImageLabel(currentViewId)
+          : currentViewId;
+        const strokes = metadataManager?.vectorStrokesByImage?.[scopedLabel] || {};
+        const strokeLabels = Object.keys(strokes || {});
+
+        if (metadataManager && strokeLabels.length > 0) {
+          const allSelected = strokeLabels.every(
+            strokeLabel =>
+              metadataManager.strokeVisibilityByImage?.[scopedLabel]?.[strokeLabel] !== false
+          );
+          const nextState = !allSelected;
+
+          strokeLabels.forEach(strokeLabel => {
+            metadataManager.setStrokeVisibility(scopedLabel, strokeLabel, nextState);
+            if (window.app?.tagManager?.updateTagVisibility) {
+              window.app.tagManager.updateTagVisibility(strokeLabel, scopedLabel, nextState);
+            }
+          });
+
+          metadataManager.updateStrokeVisibilityControls?.();
+          window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
+        } else {
+          const checkboxes = getStrokeVisibilityCheckboxes();
+          const allSelected =
+            checkboxes.length > 0 && checkboxes.every(checkbox => checkbox.checked);
+          const nextState = !allSelected;
+          checkboxes.forEach(checkbox => {
+            if (checkbox.checked !== nextState) {
+              checkbox.click();
+            }
+          });
+        }
+
+        refreshSelectAllButtonState();
       });
+
+      const strokeVisibilityControls = document.getElementById('strokeVisibilityControls');
+      if (strokeVisibilityControls && !strokeVisibilityControls.__selectAllStateObserver) {
+        const observer = new MutationObserver(() => refreshSelectAllButtonState());
+        observer.observe(strokeVisibilityControls, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+        });
+        strokeVisibilityControls.__selectAllStateObserver = observer;
+      }
+
+      refreshSelectAllButtonState();
     }
 
     // Show All Measurements functionality
@@ -2386,6 +4014,44 @@ export function initToolbarController() {
       return fallback;
     };
 
+    const normalizePredictedTag = value =>
+      String(value || '')
+        .trim()
+        .toUpperCase();
+
+    const getTagScopeCandidates = scopeLabel => {
+      const normalized = String(scopeLabel || '').trim();
+      const base = normalized.split('::tab:')[0] || normalized;
+      return Array.from(new Set([normalized, base].filter(Boolean)));
+    };
+
+    const readScopedPredictedTag = (store, scopeLabel) => {
+      if (!store || typeof store !== 'object') return '';
+      for (const key of getTagScopeCandidates(scopeLabel)) {
+        const value = normalizePredictedTag(store[key]);
+        if (value) return value;
+      }
+      return '';
+    };
+
+    const getGuideSeedTag = scopeLabel =>
+      readScopedPredictedTag(window.guideOneTimeTagByImage, scopeLabel);
+
+    const getExplicitNextTagOverride = scopeLabel => {
+      const manualTag = readScopedPredictedTag(window.manualTagByImage, scopeLabel);
+      if (manualTag) {
+        return { tag: manualTag, source: 'manualTagByImage' };
+      }
+
+      const guideSeedTag = getGuideSeedTag(scopeLabel);
+      const labelTag = readScopedPredictedTag(window.labelsByImage, scopeLabel);
+      if (labelTag && (!guideSeedTag || labelTag !== guideSeedTag)) {
+        return { tag: labelTag, source: 'labelsByImage' };
+      }
+
+      return null;
+    };
+
     // Helper function to find next available letter (A, B, C...)
     function findNextAvailableLetter() {
       const currentImageLabel = resolveTagScopeLabel();
@@ -2458,12 +4124,23 @@ export function initToolbarController() {
       }
     };
 
+    const applyTagMode = nextMode => {
+      if (nextMode !== 'letters' && nextMode !== 'letters+numbers') {
+        return tagMode;
+      }
+      tagMode = nextMode;
+      window.tagMode = tagMode;
+      if (window.app?.tagManager) {
+        window.app.tagManager.tagMode = tagMode;
+      }
+      syncTagModeToggleLabel();
+      return tagMode;
+    };
+
     if (tagModeToggle) {
       tagModeToggle.addEventListener('click', () => {
         const oldMode = tagMode;
-        tagMode = tagMode === 'letters' ? 'letters+numbers' : 'letters';
-        window.tagMode = tagMode;
-        syncTagModeToggleLabel();
+        applyTagMode(tagMode === 'letters' ? 'letters+numbers' : 'letters');
 
         // Automatically set the next appropriate tag when switching modes
         const currentImageLabel = resolveTagScopeLabel();
@@ -2473,11 +4150,15 @@ export function initToolbarController() {
           // Switching to letters only - find next available letter
           const nextLetter = findNextAvailableLetter();
           window.labelsByImage[currentImageLabel] = nextLetter;
+          window.manualTagByImage = window.manualTagByImage || {};
+          window.manualTagByImage[currentImageLabel] = nextLetter;
           console.log(`[tagModeToggle] Switched to letters mode, next tag: ${nextLetter}`);
         } else {
           // Switching to letters+numbers - find next available letter+number
           const nextLetterNumber = findNextAvailableLetterNumber();
           window.labelsByImage[currentImageLabel] = nextLetterNumber;
+          window.manualTagByImage = window.manualTagByImage || {};
+          window.manualTagByImage[currentImageLabel] = nextLetterNumber;
           console.log(
             `[tagModeToggle] Switched to letters+numbers mode, next tag: ${nextLetterNumber}`
           );
@@ -2493,11 +4174,33 @@ export function initToolbarController() {
     function calculateNextTag() {
       console.log('[calculateNextTag] Called with tagMode:', tagMode);
       const currentImageLabel = resolveTagScopeLabel();
+      const explicitOverride = getExplicitNextTagOverride(currentImageLabel);
+      if (explicitOverride) {
+        console.log(
+          `[calculateNextTag] Using ${explicitOverride.source} (manual override):`,
+          explicitOverride.tag
+        );
+        return explicitOverride.tag;
+      }
+
+      const guideSeedTag = getGuideSeedTag(currentImageLabel);
+      if (guideSeedTag) {
+        console.log('[calculateNextTag] Using guideOneTimeTagByImage seed:', guideSeedTag);
+        return guideSeedTag;
+      }
 
       // First, check if there are any existing tags
-      const strokesObj =
+      const vectorStrokes =
         window.app?.metadataManager?.vectorStrokesByImage?.[currentImageLabel] || {};
-      const existingTags = Object.keys(strokesObj);
+      const lineTags = Array.isArray(window.lineStrokesByImage?.[currentImageLabel])
+        ? window.lineStrokesByImage[currentImageLabel]
+        : [];
+      const existingTags = Array.from(
+        new Set([
+          ...Object.keys(vectorStrokes),
+          ...lineTags.map(normalizePredictedTag).filter(Boolean),
+        ])
+      );
 
       console.log(
         '[calculateNextTag] Current image:',
@@ -2505,20 +4208,6 @@ export function initToolbarController() {
         'existing tags:',
         existingTags
       );
-
-      // Priority 1: Check if user manually set the next tag via labelsByImage
-      if (window.labelsByImage && window.labelsByImage[currentImageLabel]) {
-        const manualTag = window.labelsByImage[currentImageLabel];
-        console.log('[calculateNextTag] Using labelsByImage (manual override):', manualTag);
-        return manualTag;
-      }
-
-      // Priority 2: Check if we're in a manual tag sequence (manualTagByImage)
-      if (window.manualTagByImage && window.manualTagByImage[currentImageLabel]) {
-        const manualTag = window.manualTagByImage[currentImageLabel];
-        console.log('[calculateNextTag] Using manualTagByImage (manual sequence):', manualTag);
-        return manualTag;
-      }
 
       // If no tags exist, default to the beginning.
       // Keep manual overrides intact so first-stroke custom seeds (for example C1) still work.
@@ -2714,22 +4403,29 @@ export function initToolbarController() {
       if (nextTagDisplay) {
         const currentImageLabel = resolveTagScopeLabel();
 
-        // Priority: 1) labelsByImage (immediate next), 2) manualTagByImage (manual sequence), 3) calculateNextTag (gap-filling)
+        // Priority: 1) explicit manual overrides, 2) guide seed, 3) calculateNextTag (gap-filling)
         let nextTag;
-        if (window.labelsByImage && window.labelsByImage[currentImageLabel]) {
-          nextTag = window.labelsByImage[currentImageLabel];
-          console.log('[updateNextTagDisplay] Using labelsByImage:', nextTag);
-        } else if (window.manualTagByImage && window.manualTagByImage[currentImageLabel]) {
-          // We're in a manual sequence - use the manual flag value
-          nextTag = window.manualTagByImage[currentImageLabel];
-          console.log('[updateNextTagDisplay] Using manualTagByImage:', nextTag);
+        const explicitOverride = getExplicitNextTagOverride(currentImageLabel);
+        if (explicitOverride) {
+          nextTag = explicitOverride.tag;
+          console.log(`[updateNextTagDisplay] Using ${explicitOverride.source}:`, nextTag);
         } else {
-          // Normal gap-filling mode
+          const guideSeedTag = getGuideSeedTag(currentImageLabel);
+          if (guideSeedTag) {
+            nextTag = guideSeedTag;
+            console.log('[updateNextTagDisplay] Using guideOneTimeTagByImage:', nextTag);
+          }
+        }
+
+        if (!nextTag) {
           nextTag = calculateNextTag();
           console.log('[updateNextTagDisplay] Using calculateNextTag (gap-filling):', nextTag);
+        } else {
+          nextTag = normalizePredictedTag(nextTag);
         }
 
         nextTagDisplay.textContent = nextTag;
+        dispatchGuideNextTagChanged(currentImageLabel, nextTag);
       }
     }
 
@@ -2740,6 +4436,14 @@ export function initToolbarController() {
     window.updateNextTagDisplay = updateNextTagDisplay;
     window.calculateNextTag = calculateNextTag;
     window.calculateNextTagFrom = calculateNextTagFrom;
+    window.setTagMode = (nextMode, options = {}) => {
+      const previousMode = tagMode;
+      const appliedMode = applyTagMode(nextMode);
+      if (options?.updateDisplay !== false && appliedMode !== previousMode) {
+        updateNextTagDisplay();
+      }
+      return appliedMode;
+    };
     console.log(
       '[index.html] Made calculateNextTag available globally:',
       typeof window.calculateNextTag
@@ -2752,13 +4456,20 @@ export function initToolbarController() {
     let originalTagValue = '';
 
     nextTagEl?.addEventListener('focus', e => {
-      originalTagValue = e.target.textContent.trim();
+      const target = e.target as HTMLElement | null;
+      originalTagValue = target?.textContent?.trim?.() || '';
+      if (!target?.isConnected) return;
       // Select all text for easy replacement
-      const range = document.createRange();
-      range.selectNodeContents(e.target);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
+      try {
+        const range = document.createRange();
+        range.selectNodeContents(target);
+        const sel = window.getSelection();
+        if (!sel) return;
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } catch {
+        // Ignore selection errors when DOM updates mid-focus.
+      }
     });
 
     // Handle Enter key to commit changes
@@ -2801,13 +4512,9 @@ export function initToolbarController() {
       }
 
       if (isLetterOnly && tagMode !== 'letters') {
-        tagMode = 'letters';
-        window.tagMode = tagMode;
-        syncTagModeToggleLabel();
+        applyTagMode('letters');
       } else if (isLetterNumber && tagMode !== 'letters+numbers') {
-        tagMode = 'letters+numbers';
-        window.tagMode = tagMode;
-        syncTagModeToggleLabel();
+        applyTagMode('letters+numbers');
       }
 
       // Ensure labelsByImage exists, then set the next tag seed
@@ -2820,6 +4527,7 @@ export function initToolbarController() {
       window.manualTagByImage[currentImageLabel] = input;
 
       e.target.textContent = input;
+      dispatchGuideNextTagChanged(currentImageLabel, input);
       console.log('[nextTagDisplay] Updated next tag to:', input, '(manual override)');
     });
 
@@ -3387,7 +5095,7 @@ export function initToolbarController() {
         }
 
         // Only handle keyboard navigation if image panel is visible
-        if (!document.getElementById('imagePanel').classList.contains('hidden')) {
+        if (!document.getElementById('imagePanel')?.classList.contains('hidden')) {
           if (e.key === 'ArrowLeft') {
             e.preventDefault();
             navigateToImage(currentImageIndex - 1);
@@ -3618,8 +5326,14 @@ export function initToolbarController() {
 
       // Update gallery data
       imageGalleryData[index] = normalizedData;
+      syncImageGalleryDataRef();
       updateGalleryControls();
-      if (!window.__initialGallerySyncDone && imageGalleryData.length === 1) {
+      if (
+        !window.__initialGallerySyncDone &&
+        imageGalleryData.length === 1 &&
+        !window.__isLoadingProject &&
+        !window.__deferredImageHydrationInProgress
+      ) {
         window.__initialGallerySyncDone = true;
         navigateToImage(0);
         console.log('[Gallery] Auto-selected first image');
@@ -3627,20 +5341,20 @@ export function initToolbarController() {
 
       // Trigger mini-stepper update if function exists
       // This ensures the bottom navigation shows all images
-      if (typeof updatePills === 'function') {
+      if (typeof window.updatePills === 'function') {
         setTimeout(() => {
           try {
-            updatePills();
+            window.updatePills();
             console.log('[Gallery] Updated mini-stepper pills');
           } catch (e) {
             console.warn('[Gallery] Error updating pills:', e);
           }
         }, 100);
       }
-      if (typeof updateActivePill === 'function') {
+      if (typeof window.updateActivePill === 'function') {
         setTimeout(() => {
           try {
-            updateActivePill();
+            window.updateActivePill();
             console.log('[Gallery] Updated active pill');
           } catch (e) {
             console.warn('[Gallery] Error updating active pill:', e);
@@ -3715,9 +5429,63 @@ export function initToolbarController() {
       }
     }
 
+    function syncImageGalleryDataRef() {
+      window.imageGalleryData = imageGalleryData;
+    }
+
+    function syncToLabel(label, options = {}) {
+      if (!label) return false;
+      const imageGallery = document.getElementById('imageGallery');
+      if (!imageGallery) return false;
+
+      const index = imageGalleryData.findIndex(
+        item => item?.original?.label === label || item?.label === label
+      );
+      if (index < 0) return false;
+
+      if (!window.__scrollSelectDrivenSwitch) {
+        window.__suppressScrollSelectUntil = Date.now() + 400;
+        window.__imageListProgrammaticScrollUntil = Date.now() + 400;
+      }
+
+      updateActiveImage(index);
+
+      if (options.scroll) {
+        const targetThumbnail = imageGallery.querySelector(`[data-image-index="${index}"]`);
+        if (targetThumbnail) {
+          targetThumbnail.scrollIntoView({
+            behavior: options.smooth === true ? 'smooth' : 'auto',
+            block: 'nearest',
+            inline: 'center',
+          });
+        }
+      }
+
+      return true;
+    }
+
+    function installImageGalleryGlobals() {
+      syncImageGalleryDataRef();
+      window.imageGallery = {
+        initialize: initializeImageGallery,
+        addImage: addImageToGallery,
+        navigateToImage: navigateToImage,
+        clearGallery: clearImageGallery,
+        syncToLabel: syncToLabel,
+        getData: () => imageGalleryData,
+        getCurrentIndex: () => currentImageIndex,
+      };
+      window.addImageToGallery = addImageToGallery;
+    }
+
     // Expose a lightweight compat hook for module-based uploads
     window.addImageToGalleryCompat = function addImageToGalleryCompat(imageData) {
-      const index = imageGalleryData.length;
+      const label = imageData?.original?.label || imageData?.label || imageData?.name || '';
+      const existingIndex = imageGalleryData.findIndex(item => {
+        const existingLabel = item?.original?.label || item?.label || item?.name || '';
+        return Boolean(label) && existingLabel === label;
+      });
+      const index = existingIndex >= 0 ? existingIndex : imageGalleryData.length;
       addImageToGallery(imageData, index);
     };
 
@@ -5046,11 +6814,13 @@ export function initToolbarController() {
 
       imageGalleryData = [];
       currentImageIndex = 0;
+      syncImageGalleryDataRef();
       updateGalleryControls();
     }
 
     // Initialize gallery on page load
     initializeImageGallery();
+    installImageGalleryGlobals();
 
     // Reveal UI once initialization is complete
     document.documentElement.classList.remove('app-loading');
@@ -5104,8 +6874,8 @@ export function initToolbarController() {
           if (window.projectManager && typeof window.projectManager.deleteImage === 'function') {
             window.projectManager.deleteImage(label);
           }
-          if (typeof updatePills === 'function') updatePills();
-          if (typeof updateActivePill === 'function') updateActivePill();
+          if (typeof window.updatePills === 'function') window.updatePills();
+          if (typeof window.updateActivePill === 'function') window.updateActivePill();
           if (typeof updateImageListPadding === 'function') updateImageListPadding();
         }
       });
@@ -5116,16 +6886,28 @@ export function initToolbarController() {
         if (window.projectManager && typeof window.projectManager.switchView === 'function') {
           window.projectManager.switchView(label);
         }
+        // Immediately highlight before scroll animation
+        container.setAttribute('aria-selected', 'true');
         container.scrollIntoView({
           behavior: 'smooth',
           block: 'center',
           inline: 'center',
         });
-        window.__imageListProgrammaticScrollUntil = Date.now() + 500;
+        if (!window.__scrollSelectDrivenSwitch) {
+          window.__imageListProgrammaticScrollUntil = Date.now() + 400;
+        }
       };
 
       imageList.appendChild(container);
       console.log(`[COMPAT] Manually added legacy container for "${label}"`);
+
+      const knownRotation = Number(window.projectManager?.views?.[label]?.rotation);
+      if (window.projectManager?.updateThumbnailRotation) {
+        window.projectManager.updateThumbnailRotation(
+          label,
+          Number.isFinite(knownRotation) ? knownRotation : 0
+        );
+      }
 
       if (typeof window.ensureImageListObserver === 'function') {
         window.ensureImageListObserver();
@@ -5143,17 +6925,23 @@ export function initToolbarController() {
       setTimeout(() => {
         const allContainers = Array.from(imageList.querySelectorAll('.image-container'));
         const isFirst = allContainers.length === 1 && allContainers[0] === container;
-        if (isFirst) {
+        if (isFirst && !window.__isLoadingProject && !window.__deferredImageHydrationInProgress) {
           console.log(`[COMPAT] First image "${label}" added, centering and switching to it`);
-          window.__suppressScrollSelectUntil = Date.now() + 1200;
-          window.__imageListProgrammaticScrollUntil = Date.now() + 1000;
+          window.__suppressScrollSelectUntil = Date.now() + 400;
+          window.__imageListProgrammaticScrollUntil = Date.now() + 400;
           container.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-          if (window.projectManager && typeof window.projectManager.switchView === 'function') {
+          // Only switch if still on this view (don't override a switch that happened
+          // between addImageToSidebar and this deferred timeout).
+          if (
+            window.projectManager &&
+            typeof window.projectManager.switchView === 'function' &&
+            window.projectManager.currentViewId === label
+          ) {
             window.projectManager.switchView(label);
           }
         }
-        if (typeof updatePills === 'function') updatePills();
-        if (typeof updateActivePill === 'function') updateActivePill();
+        if (typeof window.updatePills === 'function') window.updatePills();
+        if (typeof window.updateActivePill === 'function') window.updateActivePill();
       }, 100);
 
       return true;
@@ -5190,9 +6978,10 @@ export function initToolbarController() {
         console.warn('[COMPAT] No original addImageToSidebar function available');
       }
 
-      if (!didCallOriginal) {
-        ensureLegacyImageContainer(imageUrl, label);
-      }
+      // Always ensure #imageList has a container for this label, even if the
+      // original function ran — it may add to a different UI element (gallery)
+      // while the sidebar stays empty.
+      ensureLegacyImageContainer(imageUrl, label);
 
       // Ensure legacy originalImages mapping stays in sync
       if (label && imageUrl) {
@@ -5223,6 +7012,14 @@ export function initToolbarController() {
         ) {
           window.projectManager.views[label].image = imageUrl;
         }
+
+        if (window.projectManager?.updateThumbnailRotation) {
+          const knownRotation = Number(window.projectManager?.views?.[label]?.rotation);
+          window.projectManager.updateThumbnailRotation(
+            label,
+            Number.isFinite(knownRotation) ? knownRotation : 0
+          );
+        }
       }
 
       // Add to new gallery (avoid duplicates if UploadManager already did)
@@ -5230,11 +7027,12 @@ export function initToolbarController() {
         const alreadyExists = imageGalleryData.some(
           img =>
             img &&
-            img.src === imageUrl &&
             (img.original?.label === label ||
-              img.name === filename ||
-              img.name === label ||
-              img.original?.filename === filename)
+              img.label === label ||
+              (img.src === imageUrl &&
+                (img.name === filename ||
+                  img.name === label ||
+                  img.original?.filename === filename)))
         );
 
         if (!alreadyExists) {
@@ -5258,7 +7056,9 @@ export function initToolbarController() {
             label &&
             window.projectManager &&
             window.projectManager.currentViewId === label &&
-            typeof window.projectManager.setBackgroundImage === 'function'
+            typeof window.projectManager.setBackgroundImage === 'function' &&
+            !window.__isLoadingProject &&
+            !window.__deferredImageHydrationInProgress
           ) {
             requestAnimationFrame(() => {
               window.projectManager.setBackgroundImage(imageUrl);
@@ -5274,9 +7074,13 @@ export function initToolbarController() {
             !window.__deferredImageHydrationInProgress
           ) {
             setTimeout(() => {
-              window.__suppressScrollSelectUntil = Date.now() + 1200;
-              window.projectManager.switchView(label, true);
-              console.log('[COMPAT] Forced switch to first image:', label);
+              // Only force-switch if still on the same view (don't override a view
+              // switch that happened between addImageToSidebar and this timeout).
+              if (window.projectManager.currentViewId === label) {
+                window.__suppressScrollSelectUntil = Date.now() + 1200;
+                window.projectManager.switchView(label, true);
+                console.log('[COMPAT] Forced switch to first image:', label);
+              }
             }, 0);
           }
           return index;
@@ -5621,8 +7425,8 @@ export function initToolbarController() {
                     }
 
                     // Update pills
-                    if (typeof updatePills === 'function') updatePills();
-                    if (typeof updateActivePill === 'function') updateActivePill();
+                    if (typeof window.updatePills === 'function') window.updatePills();
+                    if (typeof window.updateActivePill === 'function') window.updateActivePill();
                     if (typeof updateImageListPadding === 'function') updateImageListPadding();
                   }
                 });
@@ -5644,11 +7448,21 @@ export function initToolbarController() {
                   });
 
                   // Temporarily disable scroll-driven switching to prevent fighting
-                  window.__imageListProgrammaticScrollUntil = Date.now() + 500;
+                  if (!window.__scrollSelectDrivenSwitch) {
+                    window.__imageListProgrammaticScrollUntil = Date.now() + 300;
+                  }
                 };
 
                 imageListAfter.appendChild(container);
                 console.log(`[HOOK] Manually added container to imageList for label "${label}"`);
+
+                const knownRotation = Number(window.projectManager?.views?.[label]?.rotation);
+                if (window.projectManager?.updateThumbnailRotation) {
+                  window.projectManager.updateThumbnailRotation(
+                    label,
+                    Number.isFinite(knownRotation) ? knownRotation : 0
+                  );
+                }
 
                 if (typeof window.ensureImageListObserver === 'function') {
                   window.ensureImageListObserver();
@@ -5680,13 +7494,17 @@ export function initToolbarController() {
                   );
                   const isFirst = allContainers.length === 1 && allContainers[0] === container;
 
-                  if (isFirst) {
+                  if (
+                    isFirst &&
+                    !window.__isLoadingProject &&
+                    !window.__deferredImageHydrationInProgress
+                  ) {
                     console.log(
                       `[HOOK] First image "${label}" added, centering and switching to it`
                     );
 
                     // Center the container
-                    window.__imageListProgrammaticScrollUntil = Date.now() + 1000;
+                    window.__imageListProgrammaticScrollUntil = Date.now() + 400;
                     container.scrollIntoView({
                       behavior: 'smooth',
                       block: 'center',
@@ -5703,11 +7521,11 @@ export function initToolbarController() {
                   }
 
                   // Trigger mini-stepper update after adding to sidebar
-                  if (typeof updatePills === 'function') {
-                    updatePills();
+                  if (typeof window.updatePills === 'function') {
+                    window.updatePills();
                   }
-                  if (typeof updateActivePill === 'function') {
-                    updateActivePill();
+                  if (typeof window.updateActivePill === 'function') {
+                    window.updateActivePill();
                   }
                 }, 100);
               } else if (containerForLabel) {
@@ -5715,11 +7533,11 @@ export function initToolbarController() {
 
                 // Update pills only, don't switch views for existing containers
                 setTimeout(() => {
-                  if (typeof updatePills === 'function') {
-                    updatePills();
+                  if (typeof window.updatePills === 'function') {
+                    window.updatePills();
                   }
-                  if (typeof updateActivePill === 'function') {
-                    updateActivePill();
+                  if (typeof window.updateActivePill === 'function') {
+                    window.updateActivePill();
                   }
                 }, 100);
 
@@ -5737,7 +7555,11 @@ export function initToolbarController() {
 
           // Add to our new gallery
           if (imageUrl) {
-            const index = imageGalleryData.length;
+            const existingIndex = imageGalleryData.findIndex(item => {
+              const existingLabel = item?.original?.label || item?.label || item?.name;
+              return (label && existingLabel === label) || item?.src === imageUrl;
+            });
+            const index = existingIndex >= 0 ? existingIndex : imageGalleryData.length;
             const imageData = {
               src: imageUrl,
               url: imageUrl,
@@ -5747,7 +7569,12 @@ export function initToolbarController() {
             };
 
             addImageToGallery(imageData, index);
-            console.log('[HOOK] Added to new gallery at index', index);
+            console.log(
+              existingIndex >= 0
+                ? '[HOOK] Updated existing gallery image at index'
+                : '[HOOK] Added to new gallery at index',
+              index
+            );
 
             // Register with Fabric.js ProjectManager to set background image
             if (window.app && window.app.projectManager) {
@@ -5794,6 +7621,11 @@ export function initToolbarController() {
 
     // Function to sync existing legacy images to new gallery
     function syncLegacyImagesToGallery() {
+      if (window.__isLoadingProject || window.__deferredImageHydrationInProgress) {
+        console.log('[SYNC] Skipping legacy gallery sync during project load');
+        return;
+      }
+
       const imageList = document.getElementById('imageList');
       if (!imageList) {
         console.log('[SYNC] ERROR: No imageList element found');
@@ -5820,7 +7652,10 @@ export function initToolbarController() {
           };
 
           // Check if this image is already in the gallery
-          const existingIndex = imageGalleryData.findIndex(item => item.src === img.src);
+          const existingIndex = imageGalleryData.findIndex(item => {
+            const existingLabel = item?.original?.label || item?.label || item?.name;
+            return (label && existingLabel === label) || item?.src === img.src;
+          });
 
           if (existingIndex === -1) {
             addImageToGallery(imageData, imageGalleryData.length);
@@ -5845,6 +7680,7 @@ export function initToolbarController() {
       imageGalleryData = imageGalleryData.filter(
         item => !item.name?.includes('Demo Image') && !item.name?.includes('Blank Canvas')
       );
+      syncImageGalleryDataRef();
 
       // Manually update the gallery UI instead of calling undefined function
       const gallery = document.getElementById('imageGallery');
@@ -5931,7 +7767,7 @@ export function initToolbarController() {
       }
 
       // Ensure we always start with the first image
-      if (imageList) {
+      if (imageList && !window.__isLoadingProject && !window.__deferredImageHydrationInProgress) {
         const firstContainer = imageList.querySelector('.image-container');
         if (firstContainer) {
           const firstLabel = firstContainer.dataset.label;
@@ -5939,25 +7775,29 @@ export function initToolbarController() {
             console.log('[INIT] Centering and selecting first image:', firstLabel);
 
             // Center the first container
-            window.__imageListProgrammaticScrollUntil = Date.now() + 1000;
+            window.__imageListProgrammaticScrollUntil = Date.now() + 400;
             firstContainer.scrollIntoView({
               behavior: 'smooth',
               block: 'center',
               inline: 'center',
             });
 
-            // Switch to the first image view
+            // Switch to the first image view (only if no explicit switch has happened)
             setTimeout(() => {
-              if (window.projectManager && typeof window.projectManager.switchView === 'function') {
+              if (
+                window.projectManager &&
+                typeof window.projectManager.switchView === 'function' &&
+                window.projectManager.currentViewId === firstLabel
+              ) {
                 window.projectManager.switchView(firstLabel);
               }
 
               // Update pills
-              if (typeof updatePills === 'function') {
-                updatePills();
+              if (typeof window.updatePills === 'function') {
+                window.updatePills();
               }
-              if (typeof updateActivePill === 'function') {
-                updateActivePill();
+              if (typeof window.updateActivePill === 'function') {
+                window.updateActivePill();
               }
             }, 300);
           }
@@ -5973,6 +7813,7 @@ export function initToolbarController() {
     let lastLegacyCount = 0;
     const syncLegacyListIfChanged = () => {
       if (document.hidden) return;
+      if (window.__isLoadingProject || window.__deferredImageHydrationInProgress) return;
 
       const imageListEl = document.getElementById('imageList');
       const currentLegacyCount = imageListEl ? imageListEl.children.length : 0;
@@ -5985,11 +7826,11 @@ export function initToolbarController() {
       }
 
       syncLegacyImagesToGallery();
-      if (typeof updatePills === 'function') {
+      if (typeof window.updatePills === 'function') {
         setTimeout(() => {
-          updatePills();
-          if (typeof updateActivePill === 'function') {
-            updateActivePill();
+          window.updatePills();
+          if (typeof window.updateActivePill === 'function') {
+            window.updateActivePill();
           }
         }, 100);
 
@@ -6020,7 +7861,14 @@ export function initToolbarController() {
 
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden) {
+          window.__suppressScrollSelectUntil = Date.now() + 400;
+          window.__imageListProgrammaticScrollUntil = Date.now() + 400;
+          window.__miniStepperProgrammaticScrollUntil = Date.now() + 400;
           syncLegacyListIfChanged();
+          if (typeof window.updateActivePill === 'function') {
+            window.__miniStepperLastAutoScrollLabel = '';
+            window.updateActivePill({ animate: false, forceCenter: true });
+          }
         }
       });
 

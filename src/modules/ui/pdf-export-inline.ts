@@ -5,6 +5,62 @@
 // Extracted from index.html inline scripts
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { buildImageExportFilename, sanitizeFilenamePart } from '../utils/naming-utils.js';
+import { cloudSaveService } from '@/services/cloud/cloudSaveService';
+import { walletService } from '@/services/wallet/walletService';
+import { getNoRewardMessage, showRewardAchievement } from './reward-achievement';
+
+async function rewardPdfExport(projectName) {
+  try {
+    const cloudProjectId = cloudSaveService.getCurrentProjectId();
+    const fallbackId = `pdf:${sanitizeFilenamePart(projectName, 'OpenPaint Project')}`;
+    const reward = await walletService.earnCoins(
+      cloudProjectId || fallbackId,
+      new Date().toISOString(),
+      undefined,
+      'pdf_export'
+    );
+    if (!reward.success) return;
+    if (reward.data.earned > 0) {
+      showRewardAchievement(`PDF exported. ${reward.data.earned} gems awarded.`);
+    } else {
+      showRewardAchievement(getNoRewardMessage(reward.data.reason));
+    }
+  } catch {
+    // non-critical
+  }
+}
+
+async function rewardImageExport(projectName) {
+  try {
+    const projectManager = window.app?.projectManager;
+    if (!projectManager?.getProjectData) return;
+
+    const projectData = await Promise.race([
+      projectManager.getProjectData({ embedImages: false }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Image reward project snapshot timed out')), 15000)
+      ),
+    ]);
+
+    const cloudProjectId = cloudSaveService.getCurrentProjectId();
+    const fallbackId = `image:${sanitizeFilenamePart(projectName, 'OpenPaint Project')}`;
+    const reward = await walletService.earnCoins(
+      cloudProjectId || fallbackId,
+      new Date().toISOString(),
+      projectData,
+      'cloud_save'
+    );
+
+    if (!reward.success) return;
+    if (reward.data.earned > 0) {
+      showRewardAchievement(`Images saved. ${reward.data.earned} gems awarded.`);
+    } else {
+      showRewardAchievement(getNoRewardMessage(reward.data.reason));
+    }
+  } catch {
+    // non-critical
+  }
+}
 
 function toBaseViewId(scopeOrViewId) {
   const raw = String(scopeOrViewId || '');
@@ -55,6 +111,307 @@ function enforceScopedTabContext(viewId, scopedLabel) {
   window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
 
   return { enforced: true, scopedTabId };
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, Math.max(0, Number(ms) || 0)));
+}
+
+function formatExportMeasurement(measurement, unit) {
+  if (!measurement) return '';
+
+  if (unit === 'inch') {
+    const whole = Number(measurement.inchWhole || 0);
+    const fraction = Number(measurement.inchFraction || 0);
+    if (whole === 0 && fraction === 0) return '';
+
+    const inchFormatter =
+      window.app?.measurementSystem?.formatInchValue ||
+      window.app?.measurementSystem?.formatMeasurement;
+    if (typeof inchFormatter === 'function') {
+      return inchFormatter.call(window.app.measurementSystem, whole, fraction, {
+        inchValue: measurement.inch,
+        decimalPlaces:
+          measurement.inputUnit === 'cm' ? 1 : measurement.inputUnit === 'inches' ? 3 : undefined,
+      });
+    }
+
+    const exactInch = Number.isFinite(Number(measurement.inch))
+      ? Number(measurement.inch)
+      : whole + fraction;
+    const total = Number(exactInch.toFixed(4));
+    return `${total.toFixed(4).replace(/\.?0+$/, '')}"`;
+  }
+
+  const cm = Number(measurement.cm || 0);
+  if (cm <= 0) return '';
+  const cmFormatter = window.app?.measurementSystem?.formatCentimeterValue;
+  return typeof cmFormatter === 'function'
+    ? cmFormatter.call(window.app.measurementSystem, cm, { decimalPlaces: 1 })
+    : `${cm.toFixed(1).replace(/\.?0+$/, '')} cm`;
+}
+
+async function waitForCanvasRenderStability(canvas, options = {}) {
+  if (!canvas) return;
+  const visiblePasses = Math.max(1, Number(options.visiblePasses) || 2);
+  const hiddenPasses = Math.max(visiblePasses, Number(options.hiddenPasses) || 5);
+  const timeoutVisibleMs = Math.max(40, Number(options.timeoutVisibleMs) || 120);
+  const timeoutHiddenMs = Math.max(timeoutVisibleMs, Number(options.timeoutHiddenMs) || 800);
+
+  const runPass = async hiddenMode => {
+    canvas.requestRenderAll?.();
+    await new Promise(resolve => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        resolve();
+      };
+
+      const timeoutMs = hiddenMode ? timeoutHiddenMs : timeoutVisibleMs;
+      setTimeout(finish, timeoutMs);
+
+      if (!hiddenMode && typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(finish);
+        });
+      }
+    });
+  };
+
+  const hiddenMode = document.visibilityState !== 'visible';
+  const passes = hiddenMode ? hiddenPasses : visiblePasses;
+  for (let i = 0; i < passes; i++) {
+    await runPass(hiddenMode);
+  }
+
+  if (document.visibilityState !== 'visible') {
+    await sleep(160);
+  }
+}
+
+function isRenderableTagStrokeObject(strokeObject) {
+  return Boolean(strokeObject && typeof strokeObject.getBoundingRect === 'function');
+}
+
+function getCanvasObjectScopeLabel(obj) {
+  return (
+    obj?.imageLabel ||
+    obj?.strokeMetadata?.imageLabel ||
+    obj?.customData?.imageLabel ||
+    obj?.imageLabelNormalized ||
+    ''
+  );
+}
+
+function getCaptureTargetScopes(viewId, tabId) {
+  const scopedLabel =
+    tabId && typeof window.getCaptureTabScopeForTab === 'function'
+      ? window.getCaptureTabScopeForTab(viewId, tabId)
+      : viewId;
+  const scopes = new Set([scopedLabel]);
+
+  if (viewId && tabId) {
+    const state = window.captureTabsByLabel?.[viewId];
+    const primaryTab = (state?.tabs || []).find(tab => tab?.type !== 'master');
+    if (primaryTab?.id === tabId) {
+      scopes.add(viewId);
+    }
+  }
+
+  return Array.from(scopes).filter(Boolean);
+}
+
+function getExpectedVisibleTagCountForScopes(scopes) {
+  const metadataManager = window.app?.metadataManager;
+  if (!metadataManager) return 0;
+
+  let count = 0;
+  scopes.forEach(scope => {
+    const strokes = metadataManager.vectorStrokesByImage?.[scope] || {};
+    const labelVisibility = metadataManager.strokeLabelVisibility?.[scope] || {};
+    Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
+      if (labelVisibility?.[strokeLabel] === false) return;
+      if (!isRenderableTagStrokeObject(strokeObj)) return;
+      count += 1;
+    });
+  });
+
+  return count;
+}
+
+function countVisibleCanvasTagsForScopes(canvas, scopes) {
+  if (!canvas?.getObjects) return 0;
+  const allowedScopes = new Set(scopes);
+  return canvas
+    .getObjects()
+    .filter(
+      obj =>
+        obj?.isTag === true &&
+        obj?.visible !== false &&
+        allowedScopes.has(getCanvasObjectScopeLabel(obj))
+    ).length;
+}
+
+function recreateMissingScopedTags(scopes) {
+  const tagManager = window.app?.tagManager;
+  const metadataManager = window.app?.metadataManager;
+  if (!tagManager || !metadataManager || typeof tagManager.createTag !== 'function') {
+    return 0;
+  }
+
+  let created = 0;
+  scopes.forEach(scope => {
+    const strokes = metadataManager.vectorStrokesByImage?.[scope] || {};
+    const labelVisibility = metadataManager.strokeLabelVisibility?.[scope] || {};
+    Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
+      if (labelVisibility?.[strokeLabel] === false) return;
+      if (!isRenderableTagStrokeObject(strokeObj)) return;
+      const existing =
+        typeof tagManager.getTagObject === 'function'
+          ? tagManager.getTagObject(strokeLabel, scope)
+          : null;
+      if (!existing) {
+        const createdTag = tagManager.createTag(strokeLabel, scope, strokeObj);
+        if (createdTag) {
+          created += 1;
+        }
+      }
+    });
+  });
+
+  return created;
+}
+
+async function ensureCaptureTargetTagsVisible(viewId, tabId, canvas) {
+  if (!canvas) return;
+
+  const scopes = getCaptureTargetScopes(viewId, tabId);
+  const expectedVisibleTagCount = getExpectedVisibleTagCountForScopes(scopes);
+  if (expectedVisibleTagCount <= 0) {
+    return;
+  }
+
+  const maxAttempts = 6;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    recreateMissingScopedTags(scopes);
+
+    if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+      try {
+        window.syncCaptureTabCanvasVisibility(viewId);
+      } catch (error) {
+        logVectorDebugSnapshot('ensureCaptureTargetTagsVisible:sync-visibility-error', {
+          viewId,
+          tabId: tabId || null,
+          attempt,
+          error: String(error?.message || error),
+        });
+      }
+    }
+
+    window.currentImageLabel = scopes[0] || viewId;
+    canvas.requestRenderAll?.();
+    await waitForCanvasRenderStability(canvas, {
+      visiblePasses: 2 + Math.min(attempt, 2),
+      hiddenPasses: 5 + attempt,
+      timeoutVisibleMs: 120 + attempt * 30,
+      timeoutHiddenMs: 800 + attempt * 80,
+    });
+
+    const visibleTagCount = countVisibleCanvasTagsForScopes(canvas, scopes);
+    if (visibleTagCount >= expectedVisibleTagCount) {
+      logVectorDebugSnapshot('ensureCaptureTargetTagsVisible:ready', {
+        viewId,
+        tabId: tabId || null,
+        scopes,
+        attempt,
+        expectedVisibleTagCount,
+        visibleTagCount,
+      });
+      return;
+    }
+
+    logVectorDebugSnapshot('ensureCaptureTargetTagsVisible:retry', {
+      viewId,
+      tabId: tabId || null,
+      scopes,
+      attempt,
+      expectedVisibleTagCount,
+      visibleTagCount,
+    });
+
+    await sleep(60 + attempt * 40);
+  }
+
+  logVectorDebugSnapshot('ensureCaptureTargetTagsVisible:timeout', {
+    viewId,
+    tabId: tabId || null,
+    scopes,
+    expectedVisibleTagCount,
+    visibleTagCount: countVisibleCanvasTagsForScopes(canvas, scopes),
+  });
+}
+
+async function settleCaptureContext(viewId, tabId) {
+  const canvas = window.app?.canvasManager?.fabricCanvas;
+  if (!canvas) return;
+
+  const scopedLabel =
+    tabId && typeof window.getCaptureTabScopeForTab === 'function'
+      ? window.getCaptureTabScopeForTab(viewId, tabId)
+      : viewId;
+
+  console.log(
+    `[PDF settleCaptureContext] Syncing visibility for viewId=${viewId}, tabId=${tabId}, scopedLabel=${scopedLabel}`
+  );
+
+  if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+    try {
+      window.syncCaptureTabCanvasVisibility(viewId);
+
+      // Log tag visibility after sync
+      const tagManager = window.app?.tagManager;
+      if (tagManager) {
+        const canvas = window.app?.canvasManager?.fabricCanvas;
+        const tags = canvas
+          ?.getObjects()
+          ?.filter(obj => obj.isTagText || obj.isTagBackground || obj.isTagGroup);
+        console.log(
+          `[PDF] After syncVisibility: ${tags?.length || 0} tag objects on canvas`,
+          tags?.map(t => ({
+            visible: t.visible,
+            scopedLabel: t.scopedLabel,
+            imageLabel: t.imageLabel,
+          }))
+        );
+      }
+    } catch (error) {
+      logVectorDebugSnapshot('settleCaptureContext:sync-visibility-error', {
+        viewId,
+        tabId: tabId || null,
+        error: String(error?.message || error),
+      });
+    }
+  }
+
+  if (typeof window.app?.metadataManager?.updateStrokeVisibilityControls === 'function') {
+    try {
+      window.app.metadataManager.updateStrokeVisibilityControls();
+    } catch (error) {
+      logVectorDebugSnapshot('settleCaptureContext:update-controls-error', {
+        viewId,
+        tabId: tabId || null,
+        error: String(error?.message || error),
+      });
+    }
+  }
+
+  if (scopedLabel) {
+    window.currentImageLabel = scopedLabel;
+  }
+
+  await waitForCanvasRenderStability(canvas);
+  await ensureCaptureTargetTagsVisible(viewId, tabId, canvas);
 }
 
 function getScopedMeasurements(scopeKey, options = {}) {
@@ -145,7 +502,15 @@ function getPdfPageTargets(viewIds) {
     const state = ensureTabs ? ensureTabs(viewId) : states[viewId];
     const normalTabs = (state?.tabs || []).filter(tab => tab.type !== 'master');
 
+    console.log(`[PDF Export] View ${viewId}:`, {
+      hasState: !!state,
+      totalTabs: state?.tabs?.length || 0,
+      normalTabs: normalTabs.length,
+      tabNames: normalTabs.map(t => t.name || t.id),
+    });
+
     if (!normalTabs.length) {
+      console.log(`[PDF Export] No tabs found for ${viewId}, using default Frame 1`);
       targets.push({
         viewId,
         viewIndex,
@@ -173,6 +538,15 @@ function getPdfPageTargets(viewIds) {
       });
     });
   });
+
+  console.log(
+    `[PDF Export] Total targets created: ${targets.length}`,
+    targets.map(t => ({
+      viewId: t.viewId,
+      tabName: t.tabName,
+      scopeKey: t.scopeKey,
+    }))
+  );
 
   return targets;
 }
@@ -260,6 +634,102 @@ function createUniquePdfFieldName(baseName, usedNames) {
 
 function safePdfText(value) {
   return String(value || '').replace(/[^\x20-\x7E]/g, ' ');
+}
+
+function getGuideModelLinkStateForExport(metadata) {
+  const source = metadata && typeof metadata === 'object' ? metadata : {};
+  const selections = Array.isArray(source.measurementGuideModelSelections)
+    ? source.measurementGuideModelSelections
+        .map(item => {
+          const code = String(item?.code || '')
+            .trim()
+            .toUpperCase();
+          const variant = String(item?.variant || 'front')
+            .trim()
+            .toLowerCase();
+          if (!code) return null;
+          return {
+            id:
+              typeof item?.id === 'string' && item.id.trim()
+                ? item.id.trim()
+                : `${code}::${variant}`,
+            code,
+            variant: variant === 'back' || variant === 'side' ? variant : 'front',
+          };
+        })
+        .filter(Boolean)
+    : [];
+  const selectionMap = new Map(selections.map(item => [item.id, item]));
+  const linksByScope =
+    source.measurementGuideModelLinksByScope &&
+    typeof source.measurementGuideModelLinksByScope === 'object'
+      ? source.measurementGuideModelLinksByScope
+      : {};
+  const linksByImage =
+    source.measurementGuideModelLinksByImage &&
+    typeof source.measurementGuideModelLinksByImage === 'object'
+      ? source.measurementGuideModelLinksByImage
+      : {};
+
+  return { selectionMap, linksByScope, linksByImage };
+}
+
+function resolveGuideSelectionForTarget(target, guideState) {
+  if (!target || !guideState) return null;
+  const scopeCandidates = [
+    String(target.scopeKey || '').trim(),
+    String(target.viewId || '').trim(),
+  ].filter(Boolean);
+
+  const selectionId = scopeCandidates
+    .map(scope => guideState.linksByScope?.[scope] || guideState.linksByImage?.[scope] || '')
+    .find(Boolean);
+  if (!selectionId) return null;
+  return guideState.selectionMap.get(String(selectionId).trim()) || null;
+}
+
+function formatGuideHint(value) {
+  const text = String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!text) return '';
+  return text.length > 140 ? `${text.slice(0, 137).trimEnd()}...` : text;
+}
+
+async function fetchGuideModelCards(selections) {
+  if (!Array.isArray(selections) || selections.length === 0) return new Map();
+  const response = await fetch('/api/integrations/cw/guide-models', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ selections }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload?.success) {
+    throw new Error(payload?.message || `Guide model lookup failed (${response.status})`);
+  }
+
+  const models = Array.isArray(payload.models) ? payload.models : [];
+  return new Map(
+    models.map(model => {
+      const key = `${String(model?.code || '').toUpperCase()}::${String(model?.variant || 'front').toLowerCase()}`;
+      const rows = Array.isArray(model?.measurements)
+        ? model.measurements
+            .map(item => ({
+              label: item?.unit ? `${item.key} (${item.unit})` : String(item?.key || ''),
+              value: formatGuideHint(item?.hint || ''),
+            }))
+            .filter(row => row.label && row.value)
+        : [];
+      return [
+        key,
+        {
+          title: `${model?.name || model?.code || 'Guide'} - ${model?.viewLabel || 'Guide Checks'}`,
+          rows,
+          description: String(model?.description || '').trim(),
+        },
+      ];
+    })
+  );
 }
 
 function ensurePdfDebugSurface() {
@@ -679,8 +1149,7 @@ async function withTemporaryCaptureTarget(viewId, tabId, callback) {
         });
       }
     }
-    window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
-    await new Promise(resolve => setTimeout(resolve, 250));
+    await settleCaptureContext(viewId, tabId);
     logVectorDebugSnapshot('withTemporaryCaptureTarget:after-switch', {
       targetViewId: viewId,
       targetTabId: tabId || null,
@@ -730,7 +1199,7 @@ async function withTemporaryCaptureTarget(viewId, tabId, callback) {
         canvas.setViewportTransform(previousViewportTransform);
       }
       safelyDiscardActiveObject(canvas);
-      window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
+      await waitForCanvasRenderStability(window.app?.canvasManager?.fabricCanvas);
       logVectorDebugSnapshot('withTemporaryCaptureTarget:after-restore', {
         restoredViewId: restoreTargetViewId,
         restoredTabId: restoreTabId,
@@ -806,6 +1275,7 @@ export function initPdfExport() {
       return;
     }
     console.log(`[Export] Saving ${viewIds.length} images`);
+    let savedCount = 0;
     for (let i = 0; i < viewIds.length; i++) {
       const viewId = viewIds[i];
       await window.app.projectManager.switchView(viewId);
@@ -832,6 +1302,10 @@ export function initPdfExport() {
       ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
       await new Promise(resolve => {
         tempCanvas.toBlob(blob => {
+          if (!blob) {
+            resolve();
+            return;
+          }
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
@@ -839,12 +1313,124 @@ export function initPdfExport() {
           a.download = `${buildImageExportFilename(projectName, imageLabel, i)}.png`;
           a.click();
           URL.revokeObjectURL(url);
+          savedCount += 1;
           resolve();
         });
       });
       await new Promise(resolve => setTimeout(resolve, 200));
     }
+    if (savedCount > 0) {
+      await rewardImageExport(projectName);
+    }
     alert(`Saved ${viewIds.length} images!`);
+  };
+
+  const withHiddenCanvasObjects = async (canvas, callback) => {
+    const overlayObjects = canvas?.getObjects?.() || [];
+    if (!overlayObjects.length) {
+      return callback();
+    }
+
+    const previousVisibility = new Map();
+    overlayObjects.forEach(obj => {
+      previousVisibility.set(obj, obj.visible !== false);
+      obj.set('visible', false);
+    });
+    canvas.requestRenderAll();
+    await waitForCanvasRenderStability(canvas);
+
+    try {
+      return await callback();
+    } finally {
+      overlayObjects.forEach(obj => {
+        const previous = previousVisibility.get(obj);
+        obj.set('visible', previous !== false);
+      });
+      canvas.requestRenderAll();
+      await waitForCanvasRenderStability(canvas);
+    }
+  };
+
+  window.saveAllImagesNoTags = async function (format = 'jpg') {
+    const normalizedFormat = 'jpg';
+    const mimeType = 'image/jpeg';
+    const extension = 'jpg';
+    const projectName = document.getElementById('projectName')?.value || 'OpenPaint';
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const partLabels = metadata.imagePartLabels || {};
+    const views = window.app?.projectManager?.views || {};
+    const viewIds = Object.keys(views).filter(id => views[id].image);
+
+    if (viewIds.length === 0) {
+      alert('No images to save. Please upload images first.');
+      return;
+    }
+
+    console.log(
+      `[Export] Saving ${viewIds.length} images without tags as ${extension.toUpperCase()}`
+    );
+    let savedCount = 0;
+
+    for (let i = 0; i < viewIds.length; i++) {
+      const viewId = viewIds[i];
+      await window.app.projectManager.switchView(viewId);
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const canvas = window.app.canvasManager.fabricCanvas;
+      const captureFrame = document.getElementById('captureFrame');
+      if (!canvas || !captureFrame) {
+        console.warn(`[Export] Skipping ${viewId}`);
+        continue;
+      }
+
+      await withHiddenCanvasObjects(canvas, async () => {
+        const frameRect = captureFrame.getBoundingClientRect();
+        const canvasEl = canvas.lowerCanvasEl;
+        const scaleX = canvasEl.width / canvasEl.offsetWidth;
+        const scaleY = canvasEl.height / canvasEl.offsetHeight;
+        const canvasRect = canvasEl.getBoundingClientRect();
+        const left = (frameRect.left - canvasRect.left) * scaleX;
+        const top = (frameRect.top - canvasRect.top) * scaleY;
+        const width = frameRect.width * scaleX;
+        const height = frameRect.height * scaleY;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = width;
+        tempCanvas.height = height;
+        const ctx = tempCanvas.getContext('2d');
+        ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
+
+        await new Promise(resolve => {
+          tempCanvas.toBlob(
+            blob => {
+              if (!blob) {
+                resolve();
+                return;
+              }
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              const imageLabel = partLabels[viewId] || '';
+              a.download = `${buildImageExportFilename(projectName, imageLabel, i)}-no-tags.${extension}`;
+              a.click();
+              URL.revokeObjectURL(url);
+              savedCount += 1;
+              resolve();
+            },
+            mimeType,
+            0.92
+          );
+        });
+      });
+
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    if (savedCount > 0) {
+      await rewardImageExport(projectName);
+    }
+
+    alert(`Saved ${viewIds.length} no-tags images (${extension.toUpperCase()})!`);
   };
 
   window.showPDFExportDialog = async function (projectName) {
@@ -982,19 +1568,27 @@ export function initPdfExport() {
           ...measuredStrokes,
         ])
       ).sort((a, b) => a.localeCompare(b));
+
+      // Fallback: if scoped query found nothing and this is a tab target,
+      // try the base viewId to pick up measurements stored at view level
+      if (!strokes.length && target.tabId) {
+        const baseKey = toBaseViewId(target.scopeKey);
+        const baseMeasurements = getScopedMeasurements(baseKey, { includeBase: true });
+        const baseStrokes = Array.from(
+          new Set([
+            ...getScopedStrokeLabels(baseKey, { includeBase: true }),
+            ...Object.keys(baseMeasurements),
+          ])
+        ).sort((a, b) => a.localeCompare(b));
+        return baseStrokes.map(strokeLabel => {
+          const m = baseMeasurements[strokeLabel] || {};
+          return { label: strokeLabel, value: formatExportMeasurement(m, currentUnit) };
+        });
+      }
+
       return strokes.map(strokeLabel => {
         const m = measurements[strokeLabel] || {};
-        let value = '';
-        if (currentUnit === 'inch') {
-          const whole = m.inchWhole || 0;
-          const frac = m.inchFraction || 0;
-          value =
-            whole > 0 || frac > 0
-              ? `${whole > 0 ? whole + '"' : ''}${frac > 0 ? ' ' + frac.toFixed(2) + '"' : ''}`.trim()
-              : '';
-        } else {
-          value = m.cm ? `${m.cm.toFixed(1)} cm` : '';
-        }
+        const value = formatExportMeasurement(m, currentUnit);
         return {
           label: strokeLabel,
           value,
@@ -1030,6 +1624,32 @@ export function initPdfExport() {
       });
     };
 
+    const guideState = getGuideModelLinkStateForExport(metadata);
+    const guideSelections = groupedTargets
+      .flatMap(entry => {
+        const targets =
+          entry.type === 'grouped'
+            ? [entry.mainTarget, ...(entry.relatedTargets || [])]
+            : [entry.target];
+        return targets
+          .map(target => resolveGuideSelectionForTarget(target, guideState))
+          .filter(Boolean);
+      })
+      .filter(Boolean);
+    const uniqueGuideSelections = Array.from(
+      new Map(
+        guideSelections.map(selection => [`${selection.code}::${selection.variant}`, selection])
+      ).values()
+    );
+    let guideCardMap = new Map();
+    if (includeMeasurements && uniqueGuideSelections.length > 0) {
+      try {
+        guideCardMap = await fetchGuideModelCards(uniqueGuideSelections);
+      } catch (error) {
+        console.warn('[PDF] Failed to fetch CW guide model cards:', error);
+      }
+    }
+
     const groups = [];
     for (let i = 0; i < groupedTargets.length; i++) {
       const entry = groupedTargets[i];
@@ -1045,6 +1665,17 @@ export function initPdfExport() {
 
       const relatedFrames = [];
       const relatedMeasurementCards = [];
+      const mainGuideSelection = resolveGuideSelectionForTarget(mainTarget, guideState);
+      const mainGuideKey = mainGuideSelection
+        ? `${mainGuideSelection.code}::${mainGuideSelection.variant}`
+        : '';
+      const mainGuideCard = mainGuideKey ? guideCardMap.get(mainGuideKey) : null;
+      if (mainGuideCard?.rows?.length) {
+        relatedMeasurementCards.push({
+          title: `${formatTargetDisplayName(mainTarget)} Guide Checks`,
+          rows: mainGuideCard.rows,
+        });
+      }
       for (const target of relatedTargets) {
         const src = await captureViewImageDataUrl(target);
         if (!src) continue;
@@ -1054,6 +1685,15 @@ export function initPdfExport() {
           title,
           rows: getTargetMeasurementRows(target),
         });
+        const guideSelection = resolveGuideSelectionForTarget(target, guideState);
+        const guideKey = guideSelection ? `${guideSelection.code}::${guideSelection.variant}` : '';
+        const guideCard = guideKey ? guideCardMap.get(guideKey) : null;
+        if (guideCard?.rows?.length) {
+          relatedMeasurementCards.push({
+            title: `${title} Guide Checks`,
+            rows: guideCard.rows,
+          });
+        }
       }
 
       groups.push({
@@ -1069,57 +1709,8 @@ export function initPdfExport() {
       });
     }
 
-    if (includeMeasurements && typeof window.evaluateMeasurementRelations === 'function') {
-      try {
-        const relations = window.evaluateMeasurementRelations() || {};
-        const relationChecks = Array.isArray(relations.checks) ? relations.checks : [];
-        const relationConnections = Array.isArray(relations.connections)
-          ? relations.connections
-          : [];
-        if (relationChecks.length || relationConnections.length) {
-          const relationRows = relationChecks.map(check => {
-            const status = String(check?.status || 'pending').toUpperCase();
-            const formula = check?.formula || check?.id || 'Formula Check';
-            const reason = check?.reason ? ` - ${check.reason}` : '';
-            return {
-              label: formula,
-              value: `${status}${reason}`,
-            };
-          });
-          const connectionRows = relationConnections.map(connection => {
-            const from = connection?.fromDisplay || connection?.fromKey || '-';
-            const to = connection?.toDisplay || connection?.toKey || '-';
-            const status = String(connection?.status || 'pending').toUpperCase();
-            const reason = connection?.reason ? ` - ${connection.reason}` : '';
-            return {
-              label: `${from} <-> ${to}`,
-              value: `${status}${reason}`,
-            };
-          });
-
-          groups.push({
-            title: 'Measurement Validation Summary',
-            subtitle: 'Formula checks and cross-image connections',
-            mainImage: {
-              title: 'Validation Overview',
-              src:
-                groups[0]?.mainImage?.src ||
-                'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5NjAiIGhlaWdodD0iNTQwIj48cmVjdCB3aWR0aD0iOTYwIiBoZWlnaHQ9IjU0MCIgZmlsbD0iI0YxRjVGOSIgcng9IjE2Ii8+PHRleHQgeD0iNDgwIiB5PSIyODAiIGZvbnQtc2l6ZT0iMzYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM0NzU1NjkiIGZvbnQtZmFtaWx5PSJBcmlhbCI+TWVhc3VyZW1lbnQgVmFsaWRhdGlvbiBTdW1tYXJ5PC90ZXh0Pjwvc3ZnPg==',
-            },
-            mainMeasurements: relationRows,
-            relatedFrames: [],
-            relatedMeasurementCards: [
-              {
-                title: 'Cross-image Connections',
-                rows: connectionRows,
-              },
-            ],
-          });
-        }
-      } catch (error) {
-        console.warn('[PDF] Failed to append relation summary page in modern renderer:', error);
-      }
-    }
+    // Cross-image connections / measurement validation summary page removed —
+    // the fail/pass statuses were not actionable in the PDF output.
 
     progressText.textContent = 'Rendering modern PDF\u2026';
     progressBar.style.width = '92%';
@@ -1146,6 +1737,7 @@ export function initPdfExport() {
     a.download = `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
+    await rewardPdfExport(projectName);
     progressBar.style.width = '100%';
     progressText.textContent = 'Done';
   }
@@ -1559,17 +2151,7 @@ export function initPdfExport() {
           if (y < layout.contentBottom + rowH) return; // don't overflow into footer
 
           const m = measurements[strokeLabel] || {};
-          let measurement = '';
-          if (currentUnit === 'inch') {
-            const whole = m.inchWhole || 0;
-            const frac = m.inchFraction || 0;
-            measurement =
-              whole > 0 || frac > 0
-                ? `${whole > 0 ? whole + '"' : ''}${frac > 0 ? ' ' + frac.toFixed(2) + '"' : ''}`.trim()
-                : '';
-          } else {
-            measurement = m.cm ? `${m.cm.toFixed(1)} cm` : '';
-          }
+          const measurement = formatExportMeasurement(m, currentUnit);
 
           // Alternating row background
           if (idx % 2 === 0) {
@@ -1769,17 +2351,7 @@ export function initPdfExport() {
           const rows = [];
           strokes.forEach((strokeLabel, idx) => {
             const m = measurements[strokeLabel] || {};
-            let measurementValue = '';
-            if (currentUnit === 'inch') {
-              const whole = m.inchWhole || 0;
-              const frac = m.inchFraction || 0;
-              measurementValue =
-                whole > 0 || frac > 0
-                  ? `${whole > 0 ? whole + '"' : ''}${frac > 0 ? ' ' + frac.toFixed(2) + '"' : ''}`.trim()
-                  : '';
-            } else {
-              measurementValue = m.cm ? `${m.cm.toFixed(1)} cm` : '';
-            }
+            const measurementValue = formatExportMeasurement(m, currentUnit);
             rows.push({
               strokeLabel,
               measurementValue,
@@ -2220,6 +2792,7 @@ export function initPdfExport() {
     a.download = `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`;
     a.click();
     URL.revokeObjectURL(url);
+    await rewardPdfExport(projectName);
     console.log('[PDF] Generated with editable form fields using pdf-lib');
   }
 }

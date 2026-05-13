@@ -1,3 +1,5 @@
+import type { MeasurementSplitWorkspaceState } from '../modules/ui/measurement-split-workspace';
+
 interface ScrollSelectSystemApi {
   loadState: () => boolean;
   persistState: (enabled: boolean) => void;
@@ -45,6 +47,15 @@ declare global {
     __pillCenteringObserver?: IntersectionObserver | null;
     createPanelToggle?: (panelId: string, contentId: string, buttonId: string) => void;
     createSidebarToggle?: (panelId: string, contentId: string, buttonId: string) => void;
+    getMeasurementSplitWorkspaceState?: () => MeasurementSplitWorkspaceState;
+    openMeasurementSplitWorkspace?: (viewId: string) => boolean;
+    closeMeasurementSplitWorkspace?: () => boolean;
+    resetMeasurementSplitWorkspace?: () => void;
+    mountMeasurementSplitStrokePanel?: () => boolean;
+    restoreMeasurementSplitStrokePanel?: () => boolean;
+    isMeasurementSplitWorkspaceActive?: () => boolean;
+    shouldAllowMeasurementSplitEdit?: (scopeLabel: string, strokeLabel?: string) => boolean;
+    renderCwMeasurementWorkspacePane?: () => void;
   }
 }
 

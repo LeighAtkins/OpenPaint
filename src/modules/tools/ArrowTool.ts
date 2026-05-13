@@ -178,7 +178,10 @@ export class ArrowTool extends BaseTool {
       originY: 'center',
       selectable: true, // Make selectable for moving/deleting
       evented: true,
-      perPixelTargetFind: false,
+      perPixelTargetFind: true,
+      padding: 8,
+      hasBorders: false,
+      objectCaching: false,
     });
 
     this.canvas.remove(this.line, this.head);

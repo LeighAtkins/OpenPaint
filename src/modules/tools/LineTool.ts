@@ -5,6 +5,7 @@
 import { BaseTool } from './BaseTool.js';
 import { FabricControls } from '../utils/FabricControls.js';
 import { PathUtils } from '../utils/PathUtils.js';
+import { addAutoMeasurementConnections } from '../utils/measurement-connections.js';
 
 export class LineTool extends BaseTool {
   constructor(canvasManager) {
@@ -19,8 +20,11 @@ export class LineTool extends BaseTool {
 
     // Snap-to-line properties
     this.snapPoint = null; // {x, y} or null
+    this.snapTarget = null; // { imageLabel, strokeLabel } or null
     this.snapIndicator = null; // fabric.Circle or null
     this.snapThreshold = 10; // pixels
+    this.startSnapTarget = null;
+    this.endSnapTarget = null;
 
     // Bind event handlers
     this.onMouseDown = this.onMouseDown.bind(this);
@@ -60,6 +64,9 @@ export class LineTool extends BaseTool {
       this.snapIndicator = null;
     }
     this.snapPoint = null;
+    this.snapTarget = null;
+    this.startSnapTarget = null;
+    this.endSnapTarget = null;
 
     // Cleanup events - don't restore object states
     // (next tool will set what it needs)
@@ -94,6 +101,8 @@ export class LineTool extends BaseTool {
 
     this.canvas.selection = false;
     this.isDrawing = true;
+    this.startSnapTarget = null;
+    this.endSnapTarget = null;
 
     if (window.app?.historyManager) {
       window.app.historyManager.saveState({ force: true, reason: 'line:start' });
@@ -103,6 +112,7 @@ export class LineTool extends BaseTool {
     if (this.snapPoint) {
       this.startX = this.snapPoint.x;
       this.startY = this.snapPoint.y;
+      this.startSnapTarget = this.snapTarget;
       console.log(
         `[LineTool] Starting line from snap point: (${this.startX.toFixed(1)}, ${this.startY.toFixed(1)})`
       );
@@ -173,16 +183,19 @@ export class LineTool extends BaseTool {
     // Drawing - update line endpoint with optional snap
     if (evt.ctrlKey) {
       // Snap the endpoint while drawing
-      const snapPoint = this.findSnapPointForDrawing(pointer);
-      if (snapPoint) {
-        this.line.set({ x2: snapPoint.x, y2: snapPoint.y });
-        this.showSnapIndicator(snapPoint);
+      const snapResult = this.findSnapPointForDrawing(pointer);
+      if (snapResult) {
+        this.line.set({ x2: snapResult.point.x, y2: snapResult.point.y });
+        this.endSnapTarget = snapResult.target;
+        this.showSnapIndicator(snapResult.point);
       } else {
         this.line.set({ x2: pointer.x, y2: pointer.y });
+        this.endSnapTarget = null;
         this.clearSnap();
       }
     } else {
       this.line.set({ x2: pointer.x, y2: pointer.y });
+      this.endSnapTarget = null;
       this.clearSnap();
     }
     this.canvas.requestRenderAll();
@@ -191,6 +204,7 @@ export class LineTool extends BaseTool {
   findSnapPointForDrawing(mousePos) {
     // Find closest point on all lines within threshold (excluding the line being drawn)
     let closestPoint = null;
+    let closestTarget = null;
     let minDistance = this.snapThreshold;
 
     const objects = this.canvas.getObjects();
@@ -212,18 +226,29 @@ export class LineTool extends BaseTool {
         if (distance < minDistance) {
           minDistance = distance;
           closestPoint = point;
+          const snapMeta = obj.strokeMetadata;
+          if (snapMeta?.strokeLabel) {
+            closestTarget = {
+              imageLabel: snapMeta.imageLabel,
+              strokeLabel: snapMeta.strokeLabel,
+            };
+          } else {
+            closestTarget = null;
+          }
         }
       } catch (e) {
         console.warn('[LineTool] Error finding closest point:', e);
       }
     }
 
-    return closestPoint;
+    if (!closestPoint) return null;
+    return { point: closestPoint, target: closestTarget };
   }
 
   updateSnapPoint(mousePos) {
     // Find closest point on all lines within threshold
     let closestPoint = null;
+    let closestTarget = null;
     let minDistance = this.snapThreshold;
 
     const objects = this.canvas.getObjects();
@@ -242,6 +267,15 @@ export class LineTool extends BaseTool {
         if (distance < minDistance) {
           minDistance = distance;
           closestPoint = point;
+          const snapMeta = obj.strokeMetadata;
+          if (snapMeta?.strokeLabel) {
+            closestTarget = {
+              imageLabel: snapMeta.imageLabel,
+              strokeLabel: snapMeta.strokeLabel,
+            };
+          } else {
+            closestTarget = null;
+          }
         }
       } catch (e) {
         console.warn('[LineTool] Error finding closest point:', e);
@@ -250,6 +284,7 @@ export class LineTool extends BaseTool {
 
     if (closestPoint) {
       this.snapPoint = closestPoint;
+      this.snapTarget = closestTarget;
       this.showSnapIndicator(closestPoint);
     } else {
       this.clearSnap();
@@ -292,6 +327,7 @@ export class LineTool extends BaseTool {
       this.canvas.requestRenderAll();
     }
     this.snapPoint = null;
+    this.snapTarget = null;
   }
 
   onMouseUp(o) {
@@ -368,7 +404,9 @@ export class LineTool extends BaseTool {
     this.line.set({
       selectable: true,
       evented: true,
-      perPixelTargetFind: false,
+      perPixelTargetFind: true,
+      padding: 8,
+      objectCaching: false,
     });
 
     // Add custom controls
@@ -393,6 +431,11 @@ export class LineTool extends BaseTool {
       const strokeLabel = window.app.metadataManager.getNextLabel(imageLabel);
       window.app.metadataManager.attachMetadata(this.line, imageLabel, strokeLabel);
       console.log(`Line created with label: ${strokeLabel}`);
+
+      addAutoMeasurementConnections(
+        { imageLabel, strokeLabel },
+        [this.startSnapTarget, this.endSnapTarget].filter(Boolean)
+      );
 
       const createdLine = this.line;
       const commitHistory = () => {

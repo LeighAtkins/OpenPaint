@@ -113,6 +113,32 @@ export class FabricControls {
     }
   }
 
+  static bindControlVisibility(object) {
+    if (!object?.on) return;
+
+    if (object.__fabricControlsOnSelected) {
+      object.off('selected', object.__fabricControlsOnSelected);
+    }
+    if (object.__fabricControlsOnDeselected) {
+      object.off('deselected', object.__fabricControlsOnDeselected);
+    }
+
+    object.__fabricControlsOnSelected = () => {
+      object.set('hasControls', true);
+      object.setCoords();
+      object.canvas?.requestRenderAll?.();
+    };
+
+    object.__fabricControlsOnDeselected = () => {
+      object.set('hasControls', false);
+      object.setCoords();
+      object.canvas?.requestRenderAll?.();
+    };
+
+    object.on('selected', object.__fabricControlsOnSelected);
+    object.on('deselected', object.__fabricControlsOnDeselected);
+  }
+
   /**
    * Canonicalizes a curve path from its world-space customPoints.
    * This rebuilds the path geometry, sets proper pathOffset, and positions the object correctly.
@@ -278,7 +304,7 @@ export class FabricControls {
     // Hide standard controls
     line.set({
       hasBorders: false,
-      hasControls: true,
+      hasControls: false,
       cornerSize: 10,
       transparentCorners: false,
       cornerColor: '#ffffff',
@@ -286,6 +312,9 @@ export class FabricControls {
       lockScalingX: true,
       lockScalingY: true,
       lockRotation: true,
+      perPixelTargetFind: true,
+      padding: 8,
+      objectCaching: false,
     });
 
     // Define the position handler for the starting point (x1, y1)
@@ -437,6 +466,8 @@ export class FabricControls {
         render: renderCircleControl,
       }),
     };
+
+    FabricControls.bindControlVisibility(line);
   }
 
   /**
@@ -469,7 +500,7 @@ export class FabricControls {
     // Hide standard controls but enable custom ones
     path.set({
       hasBorders: false,
-      hasControls: true,
+      hasControls: false,
       cornerSize: 12, // Increased from 8 to make controls easier to grab
       transparentCorners: false,
       cornerColor: '#ffffff',
@@ -477,9 +508,13 @@ export class FabricControls {
       lockScalingX: true,
       lockScalingY: true,
       lockRotation: true,
+      perPixelTargetFind: true,
+      padding: 8,
+      objectCaching: false,
     });
 
     path.controls = {};
+    FabricControls.bindControlVisibility(path);
 
     const getCurveAnchorWorldPoint = (fabricObject, pointIndex) => {
       const currentPoint = fabricObject.customPoints?.[pointIndex];
@@ -761,7 +796,16 @@ export class FabricControls {
         }
 
         canonicalizeCurveFromWorldPoints(pathObj, baseCenterWorld);
+        if (typeof pathObj.__mosUpdateCurveDecorators === 'function') {
+          pathObj.__mosUpdateCurveDecorators();
+        }
         canvas.requestRenderAll();
+
+        const strokeLabel = pathObj?.strokeMetadata?.strokeLabel;
+        const imageLabel = pathObj?.strokeMetadata?.imageLabel || pathObj?.imageLabel;
+        if (strokeLabel && imageLabel && window.app?.tagManager?.updateConnector) {
+          window.app.tagManager.updateConnector(strokeLabel, imageLabel);
+        }
 
         if (!pathObj.__curveTransformActive) {
           delete pathObj.__curveOrigMatrix;
@@ -851,6 +895,7 @@ export class FabricControls {
       const group = transform.target;
       const line = group.getObjects()[0];
       const head = group.getObjects()[1];
+      const tailHead = group.getObjects()[2];
       const canvas = group.canvas;
 
       // Resolve event object
@@ -881,10 +926,19 @@ export class FabricControls {
       const angle2 = (Math.atan2(dy2, dx2) * 180) / Math.PI + 90;
 
       head.set({ left: endAbs.x, top: endAbs.y, angle: angle2 });
+      if (tailHead && tailHead.type === 'triangle') {
+        tailHead.set({ left: pointer.x, top: pointer.y, angle: angle2 - 180 });
+      }
 
       group._calcBounds();
       group._updateObjectsCoords();
       group.setCoords();
+
+      const strokeLabel = group?.strokeMetadata?.strokeLabel;
+      const imageLabel = group?.strokeMetadata?.imageLabel || group?.imageLabel;
+      if (strokeLabel && imageLabel && window.app?.tagManager?.updateConnector) {
+        window.app.tagManager.updateConnector(strokeLabel, imageLabel);
+      }
 
       return true;
     };
@@ -914,6 +968,7 @@ export class FabricControls {
       const group = transform.target;
       const line = group.getObjects()[0];
       const head = group.getObjects()[1];
+      const tailHead = group.getObjects()[2];
       const canvas = group.canvas;
 
       // Resolve event object
@@ -941,10 +996,19 @@ export class FabricControls {
       const angle = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
 
       head.set({ left: pointer.x, top: pointer.y, angle: angle });
+      if (tailHead && tailHead.type === 'triangle') {
+        tailHead.set({ left: startAbs.x, top: startAbs.y, angle: angle - 180 });
+      }
 
       group._calcBounds();
       group._updateObjectsCoords();
       group.setCoords();
+
+      const strokeLabel = group?.strokeMetadata?.strokeLabel;
+      const imageLabel = group?.strokeMetadata?.imageLabel || group?.imageLabel;
+      if (strokeLabel && imageLabel && window.app?.tagManager?.updateConnector) {
+        window.app.tagManager.updateConnector(strokeLabel, imageLabel);
+      }
 
       return true;
     };

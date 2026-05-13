@@ -1,0 +1,555 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Arm Annotation Tool</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 15px;
+        margin: 0;
+      }
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        background: #333;
+        color: white;
+        padding: 10px;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+      }
+      .toolbar button {
+        padding: 8px 14px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      .toolbar button.square {
+        background: #666;
+        color: white;
+      }
+      .toolbar button.square.active {
+        background: #e74c3c;
+      }
+      .toolbar button.roll {
+        background: #666;
+        color: white;
+      }
+      .toolbar button.roll.active {
+        background: #3498db;
+      }
+      .toolbar button.measure {
+        background: #444;
+        color: white;
+      }
+      .toolbar button.measure.active {
+        background: #f39c12;
+        color: black;
+      }
+      .toolbar button.measure.done {
+        background: #27ae60;
+        color: white;
+      }
+      .toolbar button.save {
+        background: #27ae60;
+        color: white;
+        margin-left: auto;
+      }
+      .toolbar button.clear {
+        background: #c0392b;
+        color: white;
+      }
+      .container {
+        display: flex;
+        gap: 15px;
+      }
+      .image-list {
+        width: 150px;
+        height: calc(100vh - 80px);
+        overflow-y: auto;
+        border: 1px solid #ccc;
+      }
+      .image-list button {
+        display: block;
+        width: 100%;
+        padding: 6px 8px;
+        margin: 0;
+        border: none;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        text-align: left;
+        font-size: 12px;
+      }
+      .image-list button.active {
+        background: #007bff;
+        color: white;
+      }
+      .image-list button.annotated {
+        border-left: 4px solid #27ae60;
+      }
+      .viewer {
+        flex: 1;
+        text-align: center;
+        overflow-y: auto;
+      }
+      #canvas {
+        max-width: 100%;
+        max-height: calc(100vh - 100px);
+        border: 2px solid #333;
+        cursor: crosshair;
+      }
+      .status {
+        margin-top: 10px;
+        font-size: 14px;
+      }
+      .help {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+      }
+      .key {
+        background: #eee;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar">
+      <span>Arm:</span>
+      <button class="square" id="btnSquare">Square (Q)</button>
+      <button class="roll" id="btnRoll">Roll (R)</button>
+      <span>|</span>
+      <button class="measure" id="btnC1">C1 (1)</button>
+      <button class="measure" id="btnC2">C2 (2)</button>
+      <button class="measure" id="btnE1">E1 (3)</button>
+      <button class="measure" id="btnE2">E2 (4)</button>
+      <button class="clear" id="clear">Clear (Del)</button>
+      <button class="save" id="save">Save & Next (Enter)</button>
+    </div>
+    <div class="container">
+      <div class="image-list" id="imageList"></div>
+      <div class="viewer">
+        <canvas id="canvas"></canvas>
+        <div class="status" id="status">Select arm type, then draw measurements</div>
+        <div class="help">
+          <span class="key">Q</span> Square &nbsp; <span class="key">R</span> Roll &nbsp;
+          <span class="key">1-4</span> Pick measure &nbsp; <span class="key">Click</span> Add point
+          &nbsp; <span class="key">Space</span> Finish line &nbsp;
+          <span class="key">Enter</span> Save & next
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const images = [
+        'photo_004858.png',
+        'photo_004868.png',
+        'photo_004982.jpg',
+        'photo_005095.jpg',
+        'photo_005165.jpg',
+        'photo_005318.png',
+        'photo_005421.jpg',
+        'photo_005469.jpg',
+        'photo_005628.jpg',
+        'photo_005814.jpg',
+        'photo_005874.jpg',
+        'photo_005908.jpg',
+        'photo_006053.jpg',
+        'photo_006166.jpg',
+        'photo_006211.jpg',
+        'photo_006319.jpg',
+        'photo_006326.jpg',
+        'photo_006430.jpg',
+        'photo_006497.png',
+        'photo_006555.jpg',
+        'photo_006652.jpg',
+        'photo_006677.jpg',
+        'photo_006703.png',
+        'photo_006847.jpg',
+        'photo_006882.jpg',
+        'photo_006945.jpg',
+        'photo_007060.png',
+        'photo_007157.jpg',
+        'photo_007329.jpg',
+        'photo_007421.webp',
+        'photo_007630.jpg',
+        'photo_007804.jpg',
+        'photo_007851.jpg',
+        'photo_007878.jpg',
+        'photo_008106.jpg',
+        'photo_008291.jpg',
+        'photo_008536.webp',
+        'photo_008709.png',
+        'photo_008786.png',
+        'photo_008805.jpg',
+        'photo_008878.jpg',
+        'photo_008912.jpg',
+        'photo_009173.jpg',
+        'photo_009255.png',
+        'photo_009268.jpg',
+        'photo_009366.jpg',
+        'photo_009434.jpg',
+        'photo_009547.jpg',
+        'photo_009686.png',
+        'photo_009752.jpg',
+        'photo_009837.jpg',
+        'photo_010013.jpg',
+        'photo_010138.jpg',
+        'photo_010174.jpg',
+        'photo_010242.png',
+        'photo_010341.webp',
+        'photo_010420.jpg',
+        'photo_010424.jpg',
+        'photo_010442.jpg',
+        'photo_010560.png',
+        'photo_010667.png',
+        'photo_010677.jpg',
+        'photo_010786.jpg',
+        'photo_010853.jpg',
+        'photo_010857.jpg',
+        'photo_010956.png',
+        'photo_011101.jpg',
+        'photo_011112.png',
+        'photo_011212.jpg',
+        'photo_011255.jpg',
+        'photo_011317.jpg',
+        'photo_011459.jpg',
+        'photo_011499.jpg',
+        'photo_011651.jpg',
+        'photo_011750.jpg',
+        'photo_011756.jpg',
+        'photo_011906.jpg',
+        'photo_011995.jpg',
+        'photo_012191.jpg',
+        'photo_012202.jpg',
+        'photo_012403.jpg',
+        'photo_012600.png',
+        'photo_012606.png',
+        'photo_012957.jpg',
+        'photo_013006.jpg',
+        'photo_013144.png',
+        'photo_013183.jpg',
+        'photo_013218.jpg',
+        'photo_013364.png',
+        'photo_013409.jpg',
+        'photo_013502.jpg',
+        'photo_013506.jpg',
+        'photo_013813.jpg',
+        'photo_014155.jpg',
+        'photo_014372.jpg',
+        'photo_014455.jpg',
+        'photo_014615.webp',
+        'photo_014773.png',
+        'photo_014822.jpg',
+        'photo_014971.jpg',
+        'photo_015280.jpg',
+        'photo_015301.jpg',
+        'photo_015555.jpg',
+        'photo_015560.jpg',
+        'photo_015718.jpg',
+        'photo_015820.jpg',
+        'photo_015857.jpg',
+        'photo_016134.png',
+        'photo_016172.png',
+        'photo_016425.jpg',
+        'photo_016456.jpg',
+        'photo_016587.jpg',
+        'photo_016688.jpg',
+        'photo_016857.jpg',
+        'photo_016878.png',
+        'photo_017077.jpg',
+        'photo_017099.webp',
+        'photo_017174.webp',
+        'photo_017316.png',
+        'photo_017373.jpg',
+        'photo_017473.webp',
+        'photo_017475.jpg',
+        'photo_017754.jpg',
+        'photo_017785.jpg',
+        'photo_017890.png',
+        'photo_018016.png',
+        'photo_018079.png',
+        'photo_018192.png',
+        'photo_018283.jpg',
+        'photo_018497.jpg',
+        'photo_018609.jpg',
+        'photo_018650.jpg',
+        'photo_018971.jpg',
+        'photo_019216.jpg',
+        'photo_019221.jpg',
+        'photo_019307.png',
+        'photo_019419.jpg',
+        'photo_019558.jpg',
+        'photo_019700.png',
+        'photo_019766.jpg',
+        'photo_019807.jpg',
+        'photo_020138.png',
+        'photo_020244.jpg',
+        'photo_020493.jpg',
+        'photo_020575.jpg',
+        'photo_020693.jpg',
+        'photo_020713.jpg',
+        'photo_020799.jpg',
+        'photo_020999.jpg',
+        'photo_021115.jpg',
+        'photo_021132.png',
+        'photo_021386.png',
+        'photo_021494.jpg',
+        'photo_021561.jpg',
+        'photo_021659.jpg',
+        'photo_021723.jpg',
+        'photo_021735.jpg',
+        'photo_021795.jpg',
+        'photo_021853.png',
+        'photo_022160.jpg',
+        'photo_022248.jpg',
+        'photo_022426.png',
+        'photo_022460.jpg',
+        'photo_022569.jpg',
+        'photo_022680.jpg',
+        'photo_022745.jpg',
+        'photo_023019.webp',
+        'photo_023095.jpg',
+        'photo_023198.jpg',
+        'photo_023230.jpg',
+        'photo_023241.jpg',
+        'photo_023322.jpg',
+        'photo_023501.jpg',
+        'photo_023511.jpg',
+        'photo_023906.png',
+        'photo_023960.png',
+        'photo_024061.jpg',
+        'photo_024396.jpg',
+        'photo_024537.png',
+        'photo_024538.jpg',
+        'photo_024542.jpg',
+        'photo_024625.png',
+        'photo_024626.jpg',
+        'photo_024702.jpg',
+        'photo_024769.png',
+        'photo_024850.jpg',
+        'photo_024854.jpg',
+        'photo_025105.jpg',
+        'photo_025164.png',
+        'photo_025224.jpg',
+        'photo_025350.jpg',
+        'photo_025389.png',
+        'photo_025414.png',
+        'photo_025490.jpg',
+        'photo_025572.png',
+        'photo_025690.jpg',
+        'photo_025821.webp',
+        'photo_025946.jpg',
+        'photo_025983.jpg',
+        'photo_025996.jpg',
+      ];
+
+      let idx = 0,
+        annotations = {},
+        currentPoints = {},
+        currentLine = [],
+        selectedRole = null;
+      const canvas = document.getElementById('canvas'),
+        ctx = canvas.getContext('2d'),
+        img = new Image();
+
+      function getScale() {
+        const r = canvas.getBoundingClientRect();
+        return { sx: canvas.width / r.width, sy: canvas.height / r.height };
+      }
+
+      function updateUI() {
+        const profile = currentPoints.profile;
+        document.getElementById('btnSquare').classList.toggle('active', profile === 'square');
+        document.getElementById('btnRoll').classList.toggle('active', profile === 'roll');
+        document.getElementById('btnE2').style.display =
+          profile === 'square' ? 'none' : 'inline-block';
+
+        ['C1', 'C2', 'E1', 'E2'].forEach(r => {
+          const btn = document.getElementById('btn' + r);
+          btn.classList.toggle('selected', r === selectedRole);
+          btn.classList.toggle('done', !!currentPoints[r]);
+        });
+
+        document.querySelectorAll('.image-list button').forEach((b, i) => {
+          const ann = annotations[images[i]];
+          b.classList.toggle('annotated', ann && ann.profile);
+        });
+
+        const done = Object.values(currentPoints).filter(v => v && v.length >= 2).length;
+        const need = currentPoints.profile === 'square' ? 2 : 4;
+        document.getElementById('status').textContent =
+          `${done}/${need} done for ${currentPoints.profile || '?'} arm`;
+      }
+
+      function selectProfile(p) {
+        currentPoints.profile = p;
+        if (p === 'square') delete currentPoints.E2;
+        updateUI();
+        draw();
+      }
+
+      function setRole(r) {
+        selectedRole = r;
+        ['C1', 'C2', 'E1', 'E2'].forEach(x => {
+          document.getElementById('btn' + x).classList.toggle('selected', x === r);
+        });
+      }
+
+      function loadImage(i) {
+        idx = i;
+        document
+          .querySelectorAll('.image-list button')
+          .forEach((b, j) => b.classList.toggle('active', j === i));
+        img.src = '/arm_annotation_dataset/' + images[i];
+        img.onload = () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          draw();
+        };
+        currentPoints = annotations[images[i]] || { profile: '' };
+        selectedRole = null;
+        currentLine = [];
+        updateUI();
+      }
+
+      function drawBezier(pts) {
+        if (pts.length < 2) return;
+        ctx.beginPath();
+        ctx.moveTo(pts[0][0], pts[0][1]);
+
+        if (pts.length === 2) {
+          ctx.lineTo(pts[1][0], pts[1][1]);
+        } else {
+          for (let i = 1; i < pts.length - 1; i++) {
+            const xc = (pts[i][0] + pts[i + 1][0]) / 2;
+            const yc = (pts[i][1] + pts[i + 1][1]) / 2;
+            ctx.quadraticCurveTo(pts[i][0], pts[i][1], xc, yc);
+          }
+          ctx.lineTo(pts[pts.length - 1][0], pts[pts.length - 1][1]);
+        }
+        ctx.stroke();
+      }
+
+      function draw() {
+        ctx.drawImage(img, 0, 0);
+        ctx.strokeStyle = '#e74c3c';
+        ctx.lineWidth = 3;
+        ctx.font = 'bold 24px sans-serif';
+        ctx.fillStyle = '#e74c3c';
+
+        ['C1', 'C2', 'E1', 'E2'].forEach(r => {
+          if (!currentPoints[r]) return;
+          drawBezier(currentPoints[r]);
+          if (currentPoints[r].length) {
+            ctx.fillText(r, currentPoints[r][0][0], currentPoints[r][0][1] - 8);
+          }
+        });
+
+        if (currentLine.length) {
+          drawBezier(currentLine);
+          ctx.fillStyle = '#fff';
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 2;
+          currentLine.forEach((p, i) => {
+            ctx.beginPath();
+            ctx.arc(p[0], p[1], 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          });
+        }
+      }
+
+      canvas.onclick = e => {
+        if (!selectedRole || !currentPoints.profile) {
+          alert('Select arm type (Q/R) and measurement (1-4) first');
+          return;
+        }
+        const { sx, sy } = getScale();
+        const r = canvas.getBoundingClientRect();
+        currentLine.push([(e.clientX - r.left) * sx, (e.clientY - r.top) * sy]);
+        draw();
+      };
+
+      function finishLine() {
+        if (!selectedRole || currentLine.length < 2) return;
+        currentPoints[selectedRole] = [...currentLine];
+        currentLine = [];
+        selectedRole = null;
+        draw();
+        updateUI();
+      }
+
+      document.addEventListener('keydown', e => {
+        if (e.key === 'q' || e.key === 'Q') selectProfile('square');
+        else if (e.key === 'r' || e.key === 'R') selectProfile('roll');
+        else if (e.key === '1') setRole('C1');
+        else if (e.key === '2') setRole('C2');
+        else if (e.key === '3') setRole('E1');
+        else if (e.key === '4') setRole('E2');
+        else if (e.key === ' ') {
+          e.preventDefault();
+          finishLine();
+        } else if (e.key === 'Enter') document.getElementById('save').click();
+        else if (e.key === 'Delete') {
+          ['C1', 'C2', 'E1', 'E2'].forEach(r => delete currentPoints[r]);
+          currentLine = [];
+          draw();
+          updateUI();
+        } else if (e.key === 'ArrowRight' || e.key === 'n') {
+          idx = (idx + 1) % images.length;
+          loadImage(idx);
+        } else if (e.key === 'ArrowLeft' || e.key === 'p') {
+          idx = (idx - 1 + images.length) % images.length;
+          loadImage(idx);
+        }
+      });
+
+      document.getElementById('btnSquare').onclick = () => selectProfile('square');
+      document.getElementById('btnRoll').onclick = () => selectProfile('roll');
+      document.getElementById('btnC1').onclick = () => setRole('C1');
+      document.getElementById('btnC2').onclick = () => setRole('C2');
+      document.getElementById('btnE1').onclick = () => setRole('E1');
+      document.getElementById('btnE2').onclick = () => setRole('E2');
+      document.getElementById('clear').onclick = () => {
+        ['C1', 'C2', 'E1', 'E2'].forEach(r => delete currentPoints[r]);
+        currentLine = [];
+        draw();
+        updateUI();
+      };
+      document.getElementById('save').onclick = () => {
+        if (!currentPoints.profile) {
+          alert('Select arm type first');
+          return;
+        }
+        annotations[images[idx]] = currentPoints;
+        fetch('/arm_annotation_dataset/annotations.json', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(annotations),
+        }).then(() => {
+          document.getElementById('status').textContent = 'Saved!';
+          idx = (idx + 1) % images.length;
+          loadImage(idx);
+        });
+      };
+
+      images.forEach((k, i) => {
+        const b = document.createElement('button');
+        b.textContent = k.replace(/\.[^.]+$/, '');
+        b.onclick = () => loadImage(i);
+        document.getElementById('imageList').appendChild(b);
+      });
+      fetch('/arm_annotation_dataset/annotations.json')
+        .then(r => r.json())
+        .then(a => {
+          annotations = a;
+          loadImage(0);
+        });
+    </script>
+  </body>
+</html>

@@ -109,7 +109,9 @@ export class MeasurementExporter {
       const measurements = this.measurementSystem.getFormattedMeasurementsList(label);
       measurements.forEach(m => {
         totalMeasurements++;
-        const totalInches = m.inchWhole + m.inchFraction;
+        const totalInches = Number.isFinite(Number(m.inch))
+          ? Number(m.inch)
+          : m.inchWhole + m.inchFraction;
         minValue = Math.min(minValue, totalInches);
         maxValue = Math.max(maxValue, totalInches);
         sumValue += totalInches;
@@ -136,7 +138,9 @@ export class MeasurementExporter {
     labels.forEach(label => {
       const measurements = this.measurementSystem.getFormattedMeasurementsList(label);
       measurements.forEach(m => {
-        const totalInches = m.inchWhole + m.inchFraction;
+        const totalInches = Number.isFinite(Number(m.inch))
+          ? Number(m.inch)
+          : m.inchWhole + m.inchFraction;
         rows.push([
           label,
           m.label,

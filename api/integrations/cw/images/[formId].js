@@ -3,7 +3,7 @@ import {
   fetchOrderImagesByFormId,
   mapOrderImagesToMeasurementItems,
   readJsonBody,
-} from '../_shared.js';
+} from '../../../../server/vercel-routes/cw/shared.js';
 
 export default async function handler(req, res) {
   const startedAt = Date.now();

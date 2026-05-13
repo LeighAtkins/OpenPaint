@@ -24,24 +24,13 @@ export function initToolbarLayout(): void {
       return;
     }
 
-    const windowWidth = window.innerWidth;
-    const isMobile = windowWidth <= 768;
-
-    // Desktop: always use full mode
-    if (!isMobile) {
-      document.documentElement.setAttribute('data-toolbar-mode', 'full');
-      isCalculating = false;
-      return;
-    }
-
-    // Mobile: Measure if compact is needed
-    // Temporarily set to full mode for measurement
+    // Temporarily set to full mode for accurate measurement
     document.documentElement.setAttribute('data-toolbar-mode', 'full');
 
     // Force layout calculation
     void toolbarWrap.offsetWidth;
 
-    // Measure if content overflows
+    // Measure if content overflows — applies to both desktop and mobile
     const toolbarWidth = toolbarWrap.clientWidth;
     const toolbarScrollWidth = toolbarWrap.scrollWidth;
     const needsCompact = toolbarScrollWidth > toolbarWidth;
