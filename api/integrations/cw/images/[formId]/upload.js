@@ -4,7 +4,7 @@ import {
   mapOrderImagesToMeasurementItems,
   readJsonBody,
   uploadOrderImage,
-} from '../../_shared.js';
+} from '../../../../../server/vercel-routes/cw/shared.js';
 
 function nextAvailableIndex(images = []) {
   const used = new Set(

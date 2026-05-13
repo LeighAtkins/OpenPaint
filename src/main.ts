@@ -54,6 +54,7 @@ declare global {
     showStatusMessage?: any;
     hideStatusMessage?: any;
     updateImageListPadding?: any;
+    updatePills?: any;
     syncSelectionToCenteredThumbnail?: any;
     updateActivePill?: any;
     scrollToSelectEnabled?: any;
@@ -91,6 +92,8 @@ import { initToolbarController } from './modules/ui/toolbar-controller.js';
 import { initScrollSelectSystem } from './modules/ui/scroll-select-init.js';
 import { initSofaTypePicker } from './modules/ui/sofa-type-picker.js';
 import { initMeasurementGuideFlash } from './modules/ui/measurement-guide-flash.js';
+import { initMeasurementGuideIndicator } from './modules/ui/measurement-guide-indicator';
+import { initMeasurementSplitWorkspace } from './modules/ui/measurement-split-workspace';
 import { initProjectNaming } from './modules/ui/project-naming.js';
 import { initMeasurementRelations } from './modules/ui/measurement-relations.js';
 import { initStatusMessageHandler } from './modules/ui/status-message-handler';
@@ -100,12 +103,12 @@ import { isAuthEnabled, isSupabaseConfigured } from '@/utils/env';
 import { authService } from '@/services/auth/authService';
 import { initAuthUI } from './modules/ui/auth-ui';
 import { initCloudUI } from './modules/ui/cloud-ui';
+import { initCwImportUI } from './modules/ui/cw-import-ui';
 
 // ── 5. Standalone UI modules ─────────────────────────────────────────────────
 import './modules/ui/toolbar-init.js';
 import './modules/ui/smart-labels.js';
 import './modules/ui/panel-management.js';
-import './modules/ui/capture-frame.js';
 import './modules/ui/image-gallery.js';
 import './modules/utils/transform';
 import './modules/utils/geometry';
@@ -169,7 +172,9 @@ async function bootstrap(): Promise<void> {
   initSofaTypePicker();
 
   // Quick boss-key style SVG guide flash (hold backtick)
+  initMeasurementSplitWorkspace();
   initMeasurementGuideFlash();
+  initMeasurementGuideIndicator();
 
   // Initialize naming controls and image part labeling
   initProjectNaming();
@@ -184,6 +189,15 @@ async function bootstrap(): Promise<void> {
 
   // Initialize cloud UI (cloud save button + My Projects modal)
   initCloudUI();
+
+  // Initialize CW/PID product measurement import modal
+  initCwImportUI();
+
+  // Initialize coins HUD + pixel pets system
+  const { initCoinsHud } = await import('./modules/ui/coins-hud');
+  const { initPetsSystem } = await import('./modules/ui/pets-system');
+  initCoinsHud();
+  initPetsSystem();
 
   // Initialize AI export (async, non-blocking)
   initAIExport().catch((error: unknown) => {

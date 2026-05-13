@@ -12,6 +12,13 @@ function normalizeView(value) {
   return '';
 }
 
+function normalizeHideBoxes(value) {
+  const v = String(value || '')
+    .trim()
+    .toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes';
+}
+
 function getWorkerBaseUrl() {
   return (
     process.env.MEASUREMENT_GUIDE_WORKER_URL ||
@@ -45,6 +52,7 @@ export default async function handler(req, res) {
 
   const code = normalizeCode(req.query?.code);
   const view = normalizeView(req.query?.view);
+  const hideBoxes = normalizeHideBoxes(req.query?.hideBoxes);
   if (!code || !view) {
     return res.status(400).json({ success: false, message: 'Invalid code or view' });
   }
@@ -59,32 +67,47 @@ export default async function handler(req, res) {
     accept: 'image/svg+xml,application/json',
   };
 
-  try {
-    const svgResponse = await fetch(
-      `${workerBase}/measurement-guides/svg?code=${encodeURIComponent(code)}&view=${encodeURIComponent(view)}`,
-      {
-        method: 'GET',
-        headers,
-      }
-    );
+  const candidateViews = Array.from(new Set([view, 'front', 'back', 'side']));
+  let lastStatus = 500;
+  let lastDetail = '';
 
-    if (!svgResponse.ok) {
-      const detail = await svgResponse.text();
-      return res.status(svgResponse.status).json({
-        success: false,
-        message: 'Failed to fetch guide SVG',
-        detail,
-      });
+  try {
+    for (const candidateView of candidateViews) {
+      const hideBoxesParam = hideBoxes ? '&hideBoxes=1' : '';
+      const svgResponse = await fetch(
+        `${workerBase}/measurement-guides/svg?code=${encodeURIComponent(code)}&view=${encodeURIComponent(candidateView)}${hideBoxesParam}`,
+        {
+          method: 'GET',
+          headers,
+        }
+      );
+
+      if (!svgResponse.ok) {
+        lastStatus = svgResponse.status;
+        lastDetail = await svgResponse.text();
+        continue;
+      }
+
+      const contentType = svgResponse.headers.get('content-type') || 'image/svg+xml; charset=utf-8';
+      const body = Buffer.from(await svgResponse.arrayBuffer());
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Cache-Control', 'private, max-age=120');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('x-guide-view-requested', view);
+      res.setHeader('x-guide-view-resolved', candidateView);
+      res.setHeader('x-guide-hide-boxes', hideBoxes ? '1' : '0');
+      return res.status(200).send(body);
     }
 
-    const contentType = svgResponse.headers.get('content-type') || 'image/svg+xml; charset=utf-8';
-    const body = Buffer.from(await svgResponse.arrayBuffer());
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Cache-Control', 'private, max-age=120');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    return res.status(200).send(body);
+    return res.status(lastStatus || 404).json({
+      success: false,
+      message: 'Failed to fetch guide SVG',
+      detail: lastDetail || `Guide not found for views: ${candidateViews.join(', ')}`,
+      requestedView: view,
+      attemptedViews: candidateViews,
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,

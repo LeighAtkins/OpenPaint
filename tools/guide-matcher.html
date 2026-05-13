@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MOS Guide ↔ Photo Matcher</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: monospace;
+        background: #1a1a2e;
+        color: #eee;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      #top-bar {
+        padding: 8px 12px;
+        background: #0f3460;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        border-bottom: 2px solid #533483;
+        flex-wrap: wrap;
+      }
+      #top-bar h2 {
+        font-size: 14px;
+        color: #e94560;
+      }
+      #top-bar label {
+        font-size: 11px;
+      }
+      #top-bar input[type='file'] {
+        font-size: 11px;
+        max-width: 200px;
+      }
+      #top-bar button {
+        padding: 4px 10px;
+        font-size: 11px;
+        cursor: pointer;
+        border: none;
+        border-radius: 3px;
+        background: #533483;
+        color: #eee;
+      }
+      #top-bar button:hover {
+        background: #e94560;
+      }
+      .sep {
+        width: 1px;
+        height: 24px;
+        background: #533483;
+      }
+      kbd {
+        padding: 1px 4px;
+        font-size: 10px;
+        background: #16213e;
+        border: 1px solid #533483;
+        border-radius: 2px;
+      }
+
+      #main {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      #left-panel {
+        width: 50%;
+        display: flex;
+        flex-direction: column;
+        border-right: 2px solid #533483;
+      }
+      #photo-header {
+        padding: 6px 10px;
+        background: #16213e;
+        font-size: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      #photo-preview {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #111;
+        overflow: hidden;
+      }
+      #photo-preview img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+      #photo-nav {
+        padding: 4px 10px;
+        background: #16213e;
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        font-size: 11px;
+        border-top: 1px solid #533483;
+      }
+      #photo-nav button {
+        padding: 2px 8px;
+        font-size: 11px;
+        cursor: pointer;
+        border: none;
+        border-radius: 3px;
+        background: #533483;
+        color: #eee;
+      }
+
+      #right-panel {
+        width: 50%;
+        display: flex;
+        flex-direction: column;
+      }
+      #guide-header {
+        padding: 6px 10px;
+        background: #16213e;
+        font-size: 12px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      #guide-search {
+        padding: 3px 6px;
+        font-size: 12px;
+        background: #0f3460;
+        color: #eee;
+        border: 1px solid #533483;
+        border-radius: 3px;
+        width: 150px;
+      }
+      .filter-group {
+        display: inline-flex;
+        gap: 4px;
+        align-items: center;
+        padding: 2px 4px;
+        border: 1px solid #533483;
+        border-radius: 4px;
+        background: #0f3460;
+      }
+      .filter-label {
+        font-size: 10px;
+        color: #9ec5ff;
+      }
+      .filter-btn {
+        padding: 3px;
+        font-size: 11px;
+        background: #16213e;
+        color: #eee;
+        border: 1px solid #533483;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+      .filter-btn.active {
+        background: #4ecdc4;
+        color: #0b1b2b;
+        border-color: #4ecdc4;
+      }
+      #guide-grid {
+        flex: 1;
+        height: auto;
+        overflow-y: auto;
+        border-top: 1px solid #533483;
+        padding: 4px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        align-content: flex-start;
+      }
+      .gc {
+        width: 90px;
+        height: 60px;
+        cursor: pointer;
+        border: 2px solid #333;
+        border-radius: 3px;
+        background: #fff;
+        overflow: hidden;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .gc:hover {
+        border-color: #e94560;
+      }
+      .gc.sel {
+        border-color: #4ecdc4;
+        border-width: 3px;
+      }
+      .gc img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+      .gc .cl {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        font-size: 7px;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        text-align: center;
+        padding: 1px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      #status-bar {
+        padding: 4px 12px;
+        background: #0f3460;
+        font-size: 11px;
+        display: flex;
+        justify-content: space-between;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="top-bar">
+      <h2>Guide ↔ Photo Matcher</h2>
+      <div class="sep"></div>
+      <label>Photos:</label>
+      <input type="file" id="photo-input" multiple accept="image/*" />
+      <label>SVGs:</label>
+      <input type="file" id="svg-input" multiple accept=".svg" />
+      <div class="sep"></div>
+      <button id="btn-assign">Assign <kbd>Enter</kbd></button>
+      <button id="btn-skip">Skip <kbd>S</kbd></button>
+      <button id="btn-nomatch">No Match <kbd>N</kbd></button>
+      <button id="btn-undo">Undo <kbd>Ctrl+Z</kbd></button>
+      <div class="sep"></div>
+      <label style="display: flex; align-items: center; gap: 4px">
+        <input type="checkbox" id="filter-matched-only" />
+        Matched only
+      </label>
+      <button id="btn-load">Load Progress</button>
+      <button id="btn-save">Save</button>
+      <button id="btn-export">Export</button>
+    </div>
+
+    <div id="main">
+      <div id="left-panel">
+        <div id="photo-header">
+          <span>Photo: <strong id="pname">-</strong></span>
+          <span id="pcounter">0/0</span>
+        </div>
+        <div id="photo-preview"><img id="pimg" src="" alt="" /></div>
+        <div id="photo-nav">
+          <button id="btn-pprev">&lt; Prev</button>
+          <button id="btn-pnext">Next &gt;</button>
+          <span id="pmatch-status" style="margin-left: 8px">-</span>
+        </div>
+      </div>
+
+      <div id="right-panel">
+        <div id="guide-header">
+          <span>Guide:</span>
+          <input type="text" id="guide-search" placeholder="Filter codes..." />
+          <div class="filter-group" data-group="view">
+            <span class="filter-label">View</span>
+            <button class="filter-btn" data-group="view" data-value="all">All</button>
+            <button class="filter-btn" data-group="view" data-value="front">Front</button>
+            <button class="filter-btn" data-group="view" data-value="back">Back</button>
+            <button class="filter-btn" data-group="view" data-value="side">Side</button>
+          </div>
+          <div class="filter-group" data-group="family">
+            <span class="filter-label">Family</span>
+            <button class="filter-btn" data-group="family" data-value="all">All</button>
+            <button class="filter-btn" data-group="family" data-value="sofa">Sofa</button>
+            <button class="filter-btn" data-group="family" data-value="armchair">Armchair</button>
+            <button class="filter-btn" data-group="family" data-value="ottoman">Ottoman</button>
+            <button class="filter-btn" data-group="family" data-value="return">Return</button>
+            <button class="filter-btn" data-group="family" data-value="dining_chair">CSDC</button>
+            <button class="filter-btn" data-group="family" data-value="arm_only">CSAP</button>
+            <button class="filter-btn" data-group="family" data-value="cushion">Cushion</button>
+            <button class="filter-btn" data-group="family" data-value="sofa_bed">CA-X</button>
+            <button class="filter-btn" data-group="family" data-value="ignore">CSS</button>
+          </div>
+          <div class="filter-group" data-group="part">
+            <span class="filter-label">Part</span>
+            <button class="filter-btn" data-group="part" data-value="all">All</button>
+            <button class="filter-btn" data-group="part" data-value="base">Base</button>
+            <button class="filter-btn" data-group="part" data-value="arm">Arm</button>
+            <button class="filter-btn" data-group="part" data-value="cushion">Cushion</button>
+            <button class="filter-btn" data-group="part" data-value="no_arm">No Arm</button>
+          </div>
+          <div class="filter-group" data-group="laterality">
+            <span class="filter-label">Side</span>
+            <button class="filter-btn" data-group="laterality" data-value="all">All</button>
+            <button class="filter-btn" data-group="laterality" data-value="left">Left</button>
+            <button class="filter-btn" data-group="laterality" data-value="right">Right</button>
+            <button class="filter-btn" data-group="laterality" data-value="bilateral_or_none">
+              Bi/None
+            </button>
+          </div>
+          <div class="filter-group" data-group="panel">
+            <span class="filter-label">Panel</span>
+            <button class="filter-btn" data-group="panel" data-value="all">All</button>
+            <button class="filter-btn" data-group="panel" data-value="long">Long</button>
+            <button class="filter-btn" data-group="panel" data-value="short">Short</button>
+            <button class="filter-btn" data-group="panel" data-value="none">None</button>
+          </div>
+          <button class="filter-btn active" id="btn-hide-css">Hide CSS</button>
+          <strong id="gcode" style="color: #4ecdc4">-</strong>
+        </div>
+        <div id="guide-grid"></div>
+      </div>
+    </div>
+
+    <div id="status-bar">
+      <span id="stats">Load photos and SVGs to begin</span>
+      <span id="hint"
+        ><kbd>↑↓</kbd> guides <kbd>←→</kbd> photos <kbd>Enter</kbd> assign <kbd>S</kbd> skip</span
+      >
+    </div>
+
+    <script>
+      // State — only store File references, create URLs on demand
+      let photoFiles = []; // File[]
+      let photoNames = []; // string[]
+      let guideFiles = []; // {code, view, filename, file}[]
+      let matches = {}; // photoName -> {code, view}
+      let skipped = new Set();
+      let photoIdx = -1;
+      let guideIdx = -1;
+      let filtered = []; // indices into guideFiles
+      let undoStack = [];
+      let filterMatchedOnly = false;
+      let selectedGuideCode = null;
+      let selectedGuideView = null;
+      const guideFilters = {
+        view: 'all',
+        family: 'all',
+        part: 'all',
+        laterality: 'all',
+        panel: 'all',
+        hideCss: true,
+      };
+
+      function parseGuideMeta(code, view) {
+        const codeRaw = (code || '').toString().trim().toUpperCase();
+        const base = codeRaw.split('-')[0] || '';
+        const parts = codeRaw ? codeRaw.split('-') : [];
+        const suffix =
+          parts.length && (parts[parts.length - 1] === 'L' || parts[parts.length - 1] === 'R')
+            ? parts[parts.length - 1]
+            : '';
+
+        let family = 'sofa';
+        if (codeRaw.startsWith('CSS')) family = 'ignore';
+        else if (codeRaw.startsWith('CCL') || codeRaw.startsWith('CC-') || codeRaw.startsWith('CC'))
+          family = 'cushion';
+        else if (codeRaw.startsWith('CSAP')) family = 'arm_only';
+        else if (codeRaw.startsWith('CS1')) family = 'armchair';
+        else if (codeRaw.startsWith('CS3')) family = 'sofa';
+        else if (codeRaw.startsWith('CSDC')) family = 'dining_chair';
+        else if (codeRaw.startsWith('CA-X')) family = 'sofa_bed';
+        else if (codeRaw.startsWith('CS4')) family = 'return';
+        else if (codeRaw.startsWith('CS0') || codeRaw.startsWith('CS5')) family = 'ottoman';
+
+        let panelLength = 'none';
+        if (base.endsWith('L')) panelLength = 'long';
+        else if (base.endsWith('B')) panelLength = 'short';
+
+        const armTokens = [
+          'WA',
+          'WA2',
+          'SA',
+          'SA2',
+          'RA',
+          'RA2',
+          'LA',
+          'SRA',
+          'SLA',
+          'SSA',
+          'SSA2',
+          'SSLA',
+          'SSLA2',
+          'SWA',
+          'SWA2',
+          'ERA',
+        ];
+        const hasArmToken = armTokens.some(t => codeRaw.includes(t));
+
+        let part = 'base';
+        if (family === 'cushion') part = 'cushion';
+        else if (family === 'arm_only') part = 'arm_only';
+        else if (base.includes('NX')) part = 'no_arm';
+        else if (hasArmToken) part = 'arm';
+
+        let laterality = 'bilateral_or_none';
+        if (suffix === 'L') laterality = 'left';
+        else if (suffix === 'R') laterality = 'right';
+
+        return {
+          code: codeRaw,
+          view,
+          family,
+          part,
+          laterality,
+          panelLength,
+          excluded: family === 'ignore',
+        };
+      }
+
+      // URL cache — only keep a few active at a time
+      const urlCache = new Map();
+      const MAX_URLS = 30;
+
+      function getURL(file) {
+        if (urlCache.has(file)) return urlCache.get(file);
+        if (urlCache.size >= MAX_URLS) {
+          const first = urlCache.keys().next().value;
+          URL.revokeObjectURL(urlCache.get(first));
+          urlCache.delete(first);
+        }
+        const url = URL.createObjectURL(file);
+        urlCache.set(file, url);
+        return url;
+      }
+
+      // Persistent SVG thumbnail URL cache — never evicted (SVGs are tiny)
+      const svgThumbURLs = new Map(); // guideFiles index -> blob URL
+
+      function getSvgURL(gIdx) {
+        if (svgThumbURLs.has(gIdx)) return svgThumbURLs.get(gIdx);
+        const url = URL.createObjectURL(guideFiles[gIdx].file);
+        svgThumbURLs.set(gIdx, url);
+        return url;
+      }
+
+      // Lazy-load thumbnails as they scroll into view
+      const thumbObserver = new IntersectionObserver(
+        entries => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            const card = entry.target;
+            const gIdx = parseInt(card.dataset.gidx, 10);
+            if (isNaN(gIdx)) continue;
+            let img = card.querySelector('img');
+            if (!img) {
+              img = document.createElement('img');
+              img.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;';
+              // Insert before the label
+              card.insertBefore(img, card.firstChild);
+            }
+            if (!img.src || img.src === location.href) {
+              img.src = getSvgURL(gIdx);
+            }
+            thumbObserver.unobserve(card);
+          }
+        },
+        { root: document.getElementById('guide-grid'), rootMargin: '100px' }
+      );
+
+      // ---- Photo Loading ----
+      document.getElementById('photo-input').addEventListener('change', e => {
+        const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+        files.sort((a, b) => a.name.localeCompare(b.name));
+        photoFiles = files;
+        photoNames = files.map(f => f.name.replace(/\.[^.]+$/, ''));
+        if (photoFiles.length > 0) selectPhoto(0);
+        updateStats();
+      });
+
+      document.getElementById('filter-matched-only').addEventListener('change', e => {
+        filterMatchedOnly = !!e.target.checked;
+        if (photoFiles.length > 0) selectPhoto(photoIdx >= 0 ? photoIdx : 0);
+        updateStats();
+      });
+
+      function isMatchedPhoto(name) {
+        const m = matches[name];
+        return !!(m && m.code && m.code !== '__NONE__');
+      }
+
+      function getVisiblePhotoIndices() {
+        const out = [];
+        for (let i = 0; i < photoNames.length; i++) {
+          if (!filterMatchedOnly || isMatchedPhoto(photoNames[i])) out.push(i);
+        }
+        return out;
+      }
+
+      function findNearestVisibleIndex(fromIdx) {
+        if (photoFiles.length === 0) return -1;
+        const vis = getVisiblePhotoIndices();
+        if (!vis.length) return -1;
+        if (vis.includes(fromIdx)) return fromIdx;
+
+        let best = vis[0];
+        let bestDist = Math.abs(best - fromIdx);
+        for (const idx of vis) {
+          const d = Math.abs(idx - fromIdx);
+          if (d < bestDist) {
+            best = idx;
+            bestDist = d;
+          }
+        }
+        return best;
+      }
+
+      function navigatePhoto(step) {
+        const vis = getVisiblePhotoIndices();
+        if (!vis.length) return;
+        let pos = vis.indexOf(photoIdx);
+        if (pos < 0) {
+          const nearest = findNearestVisibleIndex(photoIdx >= 0 ? photoIdx : 0);
+          if (nearest < 0) return;
+          selectPhoto(nearest);
+          return;
+        }
+        pos = Math.max(0, Math.min(vis.length - 1, pos + step));
+        selectPhoto(vis[pos]);
+      }
+
+      // ---- SVG Loading ----
+      document.getElementById('svg-input').addEventListener('change', e => {
+        const files = Array.from(e.target.files).filter(f => f.name.endsWith('.svg'));
+        guideFiles = files.map(f => {
+          const m = f.name.match(/^(front|back|side)_(.+)\.svg$/i);
+          const view = m ? m[1].toLowerCase() : 'front';
+          const code = m ? m[2] : f.name.replace(/\.svg$/, '');
+          return {
+            code,
+            view,
+            filename: f.name,
+            file: f,
+            meta: parseGuideMeta(code, view),
+          };
+        });
+        guideFiles.sort((a, b) => a.code.localeCompare(b.code) || a.view.localeCompare(b.view));
+        filterGuides();
+        updateStats();
+      });
+
+      // ---- Photo Nav ----
+      function selectPhoto(idx) {
+        if (idx < 0 || idx >= photoFiles.length) return;
+        if (filterMatchedOnly && !isMatchedPhoto(photoNames[idx])) {
+          const nearest = findNearestVisibleIndex(idx);
+          if (nearest < 0) {
+            document.getElementById('pimg').src = '';
+            document.getElementById('pname').textContent = '(no matched photos)';
+            document.getElementById('pcounter').textContent = `0/0`;
+            document.getElementById('pmatch-status').textContent = 'Matched-only filter: none';
+            document.getElementById('pmatch-status').style.color = '#e94560';
+            return;
+          }
+          idx = nearest;
+        }
+        photoIdx = idx;
+        document.getElementById('pimg').src = getURL(photoFiles[idx]);
+        document.getElementById('pname').textContent = photoNames[idx];
+        if (filterMatchedOnly) {
+          const vis = getVisiblePhotoIndices();
+          const pos = Math.max(0, vis.indexOf(idx));
+          document.getElementById('pcounter').textContent = `${pos + 1}/${vis.length}`;
+        } else {
+          document.getElementById('pcounter').textContent = `${idx + 1}/${photoFiles.length}`;
+        }
+
+        const m = matches[photoNames[idx]];
+        if (m) {
+          document.getElementById('pmatch-status').textContent = `Matched: ${m.code} (${m.view})`;
+          document.getElementById('pmatch-status').style.color = '#2d6a4f';
+          // Auto-select matching guide
+          const gi = filtered.findIndex(
+            i => guideFiles[i].code === m.code && guideFiles[i].view === m.view
+          );
+          if (gi >= 0) selectGuide(gi);
+        } else if (skipped.has(photoNames[idx])) {
+          document.getElementById('pmatch-status').textContent = 'Skipped';
+          document.getElementById('pmatch-status').style.color = '#666';
+        } else {
+          document.getElementById('pmatch-status').textContent = 'Unmatched';
+          document.getElementById('pmatch-status').style.color = '#e94560';
+        }
+      }
+
+      function nextUnmatched() {
+        if (filterMatchedOnly) {
+          navigatePhoto(1);
+          return;
+        }
+        for (let i = photoIdx + 1; i < photoFiles.length; i++) {
+          if (!matches[photoNames[i]] && !skipped.has(photoNames[i])) {
+            selectPhoto(i);
+            return;
+          }
+        }
+        for (let i = 0; i < photoIdx; i++) {
+          if (!matches[photoNames[i]] && !skipped.has(photoNames[i])) {
+            selectPhoto(i);
+            return;
+          }
+        }
+        if (photoIdx < photoFiles.length - 1) selectPhoto(photoIdx + 1);
+      }
+
+      // ---- Guide Nav ----
+      function selectGuide(idx) {
+        if (idx < 0 || idx >= filtered.length) return;
+        guideIdx = idx;
+        const g = guideFiles[filtered[idx]];
+        selectedGuideCode = g.code;
+        selectedGuideView = g.view;
+        document.getElementById('gcode').textContent =
+          `${g.code} (${g.view}) | ${g.meta.family} | ${g.meta.part} | ${g.meta.laterality} | ${g.meta.panelLength}`;
+        // Update selection highlight
+        const cards = document.getElementById('guide-grid').children;
+        for (let i = 0; i < cards.length; i++) {
+          cards[i].classList.toggle('sel', i === idx);
+        }
+        // Scroll into view
+        if (cards[idx]) cards[idx].scrollIntoView({ block: 'nearest' });
+      }
+
+      function filterGuides() {
+        const search = document.getElementById('guide-search').value.trim().toUpperCase();
+        filtered = [];
+        for (let i = 0; i < guideFiles.length; i++) {
+          const g = guideFiles[i];
+          const meta = g.meta || parseGuideMeta(g.code, g.view);
+          if (guideFilters.view !== 'all' && g.view !== guideFilters.view) continue;
+          if (search && !g.code.toUpperCase().includes(search)) continue;
+          if (guideFilters.hideCss && meta.excluded) continue;
+          if (guideFilters.family !== 'all' && meta.family !== guideFilters.family) continue;
+          if (guideFilters.part !== 'all' && meta.part !== guideFilters.part) continue;
+          if (guideFilters.laterality !== 'all' && meta.laterality !== guideFilters.laterality)
+            continue;
+          if (guideFilters.panel !== 'all' && meta.panelLength !== guideFilters.panel) continue;
+          filtered.push(i);
+        }
+
+        guideIdx = -1;
+        if (selectedGuideCode) {
+          let keepIdx = filtered.findIndex(i => {
+            const g = guideFiles[i];
+            return g.code === selectedGuideCode && g.view === selectedGuideView;
+          });
+          if (keepIdx < 0) {
+            keepIdx = filtered.findIndex(i => guideFiles[i].code === selectedGuideCode);
+          }
+          if (keepIdx >= 0) {
+            guideIdx = keepIdx;
+            selectedGuideView = guideFiles[filtered[keepIdx]].view;
+          }
+        }
+        renderGuideGrid();
+        if (guideIdx >= 0) {
+          selectGuide(guideIdx);
+        } else {
+          document.getElementById('gcode').textContent = '-';
+        }
+      }
+
+      function updateFilterButtons() {
+        document.querySelectorAll('.filter-btn[data-group]').forEach(btn => {
+          const group = btn.dataset.group;
+          const value = btn.dataset.value;
+          btn.classList.toggle('active', guideFilters[group] === value);
+        });
+        const hideBtn = document.getElementById('btn-hide-css');
+        hideBtn.classList.toggle('active', guideFilters.hideCss);
+      }
+
+      document.getElementById('guide-search').addEventListener('input', filterGuides);
+      document.querySelectorAll('.filter-btn[data-group]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const group = btn.dataset.group;
+          const value = btn.dataset.value;
+          guideFilters[group] = value;
+          updateFilterButtons();
+          filterGuides();
+        });
+      });
+      document.getElementById('btn-hide-css').addEventListener('click', () => {
+        guideFilters.hideCss = !guideFilters.hideCss;
+        updateFilterButtons();
+        filterGuides();
+      });
+      updateFilterButtons();
+
+      // ---- Render guide grid with lazy-loaded SVG thumbnails ----
+      function renderGuideGrid() {
+        const container = document.getElementById('guide-grid');
+        container.innerHTML = '';
+        const frag = document.createDocumentFragment();
+        for (let i = 0; i < filtered.length; i++) {
+          const g = guideFiles[filtered[i]];
+          const card = document.createElement('div');
+          card.className = 'gc' + (i === guideIdx ? ' sel' : '');
+          card.dataset.gidx = String(filtered[i]);
+          card.title = `${g.code} (${g.view})\nFamily: ${g.meta.family}\nPart: ${g.meta.part}\nSide: ${g.meta.laterality}\nPanel: ${g.meta.panelLength}`;
+          card.innerHTML = `<div class="cl">${g.code} (${g.view})</div>`;
+          card.addEventListener('click', () => selectGuide(i));
+          card.addEventListener('dblclick', () => {
+            selectGuide(i);
+            assignMatch();
+          });
+          frag.appendChild(card);
+        }
+        container.appendChild(frag);
+        // Observe all cards for lazy thumbnail loading
+        for (const card of container.children) {
+          thumbObserver.observe(card);
+        }
+      }
+
+      // ---- Actions ----
+      function assignMatch() {
+        if (photoIdx < 0 || guideIdx < 0 || guideIdx >= filtered.length) return;
+        const name = photoNames[photoIdx];
+        const g = guideFiles[filtered[guideIdx]];
+        undoStack.push({ photo: name, prev: matches[name] || null, wasSkipped: skipped.has(name) });
+        matches[name] = { code: g.code, view: g.view };
+        skipped.delete(name);
+        updateStats();
+        nextUnmatched();
+      }
+
+      function skipPhoto() {
+        if (photoIdx < 0) return;
+        const name = photoNames[photoIdx];
+        undoStack.push({ photo: name, prev: matches[name] || null, wasSkipped: skipped.has(name) });
+        skipped.add(name);
+        delete matches[name];
+        updateStats();
+        nextUnmatched();
+      }
+
+      function noMatch() {
+        if (photoIdx < 0) return;
+        const name = photoNames[photoIdx];
+        undoStack.push({ photo: name, prev: matches[name] || null, wasSkipped: skipped.has(name) });
+        matches[name] = { code: '__NONE__', view: 'none' };
+        skipped.delete(name);
+        updateStats();
+        nextUnmatched();
+      }
+
+      function undoLast() {
+        if (!undoStack.length) return;
+        const e = undoStack.pop();
+        if (e.prev) matches[e.photo] = e.prev;
+        else delete matches[e.photo];
+        if (e.wasSkipped) skipped.add(e.photo);
+        else skipped.delete(e.photo);
+        const idx = photoNames.indexOf(e.photo);
+        if (idx >= 0) selectPhoto(idx);
+        updateStats();
+      }
+
+      function updateStats() {
+        const matched = Object.keys(matches).filter(k => matches[k].code !== '__NONE__').length;
+        const noMatchCount = Object.keys(matches).filter(
+          k => matches[k].code === '__NONE__'
+        ).length;
+        const remaining = photoFiles.length - matched - noMatchCount - skipped.size;
+        const visible = getVisiblePhotoIndices().length;
+        document.getElementById('stats').textContent =
+          `Photos: ${photoFiles.length} | Visible: ${visible} | Matched: ${matched} | No-match: ${noMatchCount} | Skipped: ${skipped.size} | Remaining: ${remaining} | Guides: ${guideFiles.length}`;
+      }
+
+      // ---- Save / Load / Export ----
+      document.getElementById('btn-save').addEventListener('click', () => {
+        const blob = new Blob(
+          [JSON.stringify({ matches, skipped: [...skipped], photoIdx }, null, 2)],
+          { type: 'application/json' }
+        );
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'guide_match_progress.json';
+        a.click();
+      });
+
+      document.getElementById('btn-load').addEventListener('click', () => {
+        const inp = document.createElement('input');
+        inp.type = 'file';
+        inp.accept = '.json';
+        inp.addEventListener('change', async e => {
+          try {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            const raw = JSON.parse(await file.text());
+
+            let loadedMatches = {};
+            if (raw && typeof raw === 'object' && raw.matches && typeof raw.matches === 'object') {
+              loadedMatches = raw.matches;
+            } else if (raw && typeof raw === 'object') {
+              loadedMatches = raw;
+            }
+
+            const photoNameSet = new Set(photoNames);
+            const normalized = {};
+            let validCount = 0;
+            let appliesToLoadedPhotos = 0;
+
+            for (const [name, entry] of Object.entries(loadedMatches)) {
+              if (!entry || typeof entry !== 'object') continue;
+              const code = (entry.code || '').toString().trim();
+              const view = (entry.view || 'none').toString().trim().toLowerCase();
+              if (!code || !view) continue;
+              normalized[name] = { code, view };
+              validCount++;
+              if (photoNameSet.has(name)) appliesToLoadedPhotos++;
+            }
+
+            matches = normalized;
+            skipped = new Set(Array.isArray(raw?.skipped) ? raw.skipped : []);
+            updateStats();
+
+            if (photoFiles.length) {
+              const rawIdx = Number.isInteger(raw?.photoIdx) ? raw.photoIdx : 0;
+              const idx = Math.max(0, Math.min(photoFiles.length - 1, rawIdx));
+              selectPhoto(idx);
+            }
+
+            alert(
+              `Loaded ${validCount} matches from ${file.name}. ` +
+                `${appliesToLoadedPhotos} apply to currently loaded photos.`
+            );
+          } catch (err) {
+            console.error('Failed to load progress JSON', err);
+            alert(`Failed to load JSON: ${err.message || err}`);
+          }
+        });
+        inp.click();
+      });
+
+      document.getElementById('btn-export').addEventListener('click', () => {
+        const out = {};
+        for (const [n, m] of Object.entries(matches)) {
+          if (m.code !== '__NONE__') out[n] = m;
+        }
+        const blob = new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'photo_guide_matches.json';
+        a.click();
+        alert(`Exported ${Object.keys(out).length} matches.`);
+      });
+
+      // ---- Buttons ----
+      document.getElementById('btn-assign').addEventListener('click', assignMatch);
+      document.getElementById('btn-skip').addEventListener('click', skipPhoto);
+      document.getElementById('btn-nomatch').addEventListener('click', noMatch);
+      document.getElementById('btn-undo').addEventListener('click', undoLast);
+      document.getElementById('btn-pprev').addEventListener('click', () => navigatePhoto(-1));
+      document.getElementById('btn-pnext').addEventListener('click', () => navigatePhoto(1));
+
+      // ---- Keyboard ----
+      document.addEventListener('keydown', e => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+        switch (e.key) {
+          case 'Enter':
+            e.preventDefault();
+            assignMatch();
+            break;
+          case 'a':
+          case 'A':
+            assignMatch();
+            break;
+          case 's':
+          case 'S':
+            skipPhoto();
+            break;
+          case 'n':
+          case 'N':
+            noMatch();
+            break;
+          case 'ArrowRight':
+            e.preventDefault();
+            navigatePhoto(1);
+            break;
+          case 'ArrowLeft':
+            e.preventDefault();
+            navigatePhoto(-1);
+            break;
+          case 'ArrowDown':
+            e.preventDefault();
+            if (guideIdx < filtered.length - 1) selectGuide(guideIdx + 1);
+            break;
+          case 'ArrowUp':
+            e.preventDefault();
+            if (guideIdx > 0) selectGuide(guideIdx - 1);
+            break;
+          case 'z':
+            if (e.ctrlKey) {
+              e.preventDefault();
+              undoLast();
+            }
+            break;
+        }
+      });
+    </script>
+  </body>
+</html>

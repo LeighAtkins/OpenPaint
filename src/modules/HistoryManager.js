@@ -70,6 +70,10 @@ export class HistoryManager {
     });
   }
 
+  setCanvasManager(canvasManager) {
+    this.canvasManager = canvasManager;
+  }
+
   saveState(options = {}) {
     if (this.locked) return;
     const force = options?.force === true;

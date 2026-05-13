@@ -15,6 +15,8 @@ type DeferredManager = any;
 
 export class App {
   canvasManager: CanvasManager;
+  primaryCanvasManager: CanvasManager;
+  compareCanvasManager: CanvasManager | null;
   historyManager: HistoryManager;
   toolManager: ToolManager;
   metadataManager: StrokeMetadataManager;
@@ -25,6 +27,7 @@ export class App {
   measurementSystem: DeferredManager | null;
   measurementDialog: DeferredManager | null;
   measurementExporter: DeferredManager | null;
+  measurementOverlayManager: DeferredManager | null;
   deferredInitStarted: boolean;
   deferredToolPreloadStarted: boolean;
   hasDrawnFirstStroke: boolean;
@@ -33,6 +36,7 @@ export class App {
   firstStrokeCommitMarked: boolean;
   firstStrokeCommitInProgress: boolean;
   currentUnit: 'inch' | 'cm';
+  currentInchDisplayMode: 'decimal' | 'fraction';
   captureFrameScale: number;
   currentDashSettings: {
     style: string;
@@ -51,9 +55,12 @@ export class App {
     hovering: boolean;
     savedCursor: string | null;
   };
+  activeCanvasPane: 'left' | 'right';
 
   constructor() {
     this.canvasManager = new CanvasManager('canvas');
+    this.primaryCanvasManager = this.canvasManager;
+    this.compareCanvasManager = null;
     this.historyManager = new HistoryManager(this.canvasManager);
     this.toolManager = new ToolManager(this.canvasManager);
     this.metadataManager = new StrokeMetadataManager();
@@ -71,6 +78,7 @@ export class App {
     this.firstStrokeCommitMarked = false;
     this.firstStrokeCommitInProgress = false;
     this.currentUnit = 'inch';
+    this.currentInchDisplayMode = 'decimal';
     this.captureFrameScale = 1.0;
     this.currentDashSettings = {
       style: 'solid',
@@ -85,6 +93,7 @@ export class App {
       hovering: false,
       savedCursor: null,
     };
+    this.activeCanvasPane = 'left';
 
     if (typeof performance !== 'undefined' && performance.mark) {
       performance.mark('app-init-start');
@@ -94,8 +103,42 @@ export class App {
     this.measurementSystem = null;
     this.measurementDialog = null;
     this.measurementExporter = null;
+    this.measurementOverlayManager = null;
 
     this.init();
+  }
+
+  registerCompareCanvasManager(canvasManager: CanvasManager | null): void {
+    this.compareCanvasManager = canvasManager || null;
+  }
+
+  async rebindActiveCanvasManager(
+    canvasManager: CanvasManager,
+    pane: 'left' | 'right' = 'left'
+  ): Promise<void> {
+    if (!canvasManager) return;
+    const activeToolName = this.toolManager?.activeToolName;
+
+    if (this.canvasManager !== canvasManager) {
+      this.canvasManager = canvasManager;
+      this.toolManager?.setCanvasManager?.(canvasManager);
+      this.historyManager?.setCanvasManager?.(canvasManager);
+      this.projectManager?.setCanvasManager?.(canvasManager, this.historyManager);
+      if (this.arrowManager) {
+        this.arrowManager.canvasManager = canvasManager;
+        this.arrowManager.canvas = canvasManager.fabricCanvas;
+      }
+      if (this.measurementOverlayManager) {
+        this.measurementOverlayManager.canvasManager = canvasManager;
+        this.measurementOverlayManager.historyManager = this.historyManager;
+      }
+    }
+
+    this.activeCanvasPane = pane;
+
+    if (activeToolName) {
+      await this.toolManager.selectTool(activeToolName);
+    }
   }
 
   init(): void {
@@ -176,10 +219,23 @@ export class App {
       // Setup UI bindings
       this.setupUI();
 
-      // Touch event support for mobile devices
+      // Touch event support for mobile devices — only intercept canvas touches.
+      // Let buttons, overlays, dialogs, and other UI handle their own events.
+      const isCanvasTouch = (target: EventTarget | null): boolean => {
+        if (!(target instanceof HTMLElement)) return false;
+        // Allow normal behaviour for interactive UI elements and overlays
+        if (target.closest('button, a, input, select, textarea, dialog, [role="button"], label'))
+          return false;
+        if (target.closest('#welcomeOverlay, #shortcutHelpDialog, #helpOverlay')) return false;
+        // Only intercept touches on the canvas area
+        const canvas = document.querySelector('.canvas-container');
+        return canvas ? canvas.contains(target) : false;
+      };
+
       document.addEventListener(
         'touchstart',
         e => {
+          if (!isCanvasTouch(e.target)) return;
           e.preventDefault();
           if (e.touches.length === 1) {
             const touch = e.touches[0];
@@ -192,6 +248,7 @@ export class App {
       document.addEventListener(
         'touchmove',
         e => {
+          if (!isCanvasTouch(e.target)) return;
           e.preventDefault();
           if (e.touches.length === 1) {
             const touch = e.touches[0];
@@ -204,6 +261,7 @@ export class App {
       document.addEventListener(
         'touchend',
         e => {
+          if (!isCanvasTouch(e.target)) return;
           if (e.touches.length === 1) {
             const touch = e.touches[0];
             this.canvasManager.handleTouchEnd(touch);
@@ -333,6 +391,7 @@ export class App {
         { MeasurementExporter },
         { ArrowManager },
         { setupDebugHelpers },
+        { MeasurementOverlayManager },
       ] = await Promise.all([
         import('./TagManager.js'),
         import('./MeasurementSystem.js'),
@@ -340,6 +399,7 @@ export class App {
         import('./MeasurementExporter.js'),
         import('./utils/ArrowManager.js'),
         import('./DebugHelpers.js'),
+        import('./measurement-mos/index'),
       ]);
 
       if (!this.tagManager) {
@@ -355,6 +415,9 @@ export class App {
         this.measurementSystem = new MeasurementSystem(this.metadataManager);
       }
       this.measurementSystem.setUnit(this.currentUnit === 'inch' ? 'inches' : 'cm');
+      if (this.measurementSystem.setInchDisplayMode) {
+        this.measurementSystem.setInchDisplayMode(this.currentInchDisplayMode || 'decimal');
+      }
 
       if (!this.measurementDialog) {
         this.measurementDialog = new MeasurementDialog(this.measurementSystem);
@@ -365,6 +428,14 @@ export class App {
           this.measurementSystem,
           this.projectManager
         );
+      }
+
+      if (!this.measurementOverlayManager) {
+        this.measurementOverlayManager = new MeasurementOverlayManager(
+          this.canvasManager,
+          this.historyManager
+        );
+        this.measurementOverlayManager.initUI(this.projectManager);
       }
 
       if (this.metadataManager?.updateStrokeVisibilityControls) {
@@ -1239,8 +1310,27 @@ export class App {
       toggle.addEventListener('click', (e: MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+
         const wrapper = toggle.closest('.shape-toggle');
-        if (wrapper) wrapper.classList.toggle('shape-open');
+        const shapeIcon = toggle.querySelector('.shape-icon');
+        const clickedOnIcon = shapeIcon && e.target === shapeIcon;
+
+        // If clicking the dropdown icon, toggle the menu
+        if (clickedOnIcon) {
+          if (wrapper) wrapper.classList.toggle('shape-open');
+        } else {
+          // Clicking the button itself: select line tool and close menu
+          leaveEraserBrushSize();
+          this.toolManager.selectTool('line');
+          updateDrawingToggleLabels('Straight Line');
+          if (wrapper) wrapper.classList.remove('shape-open');
+
+          // Mark the straight line option as active in the dropdown
+          drawingModeOptions.forEach(item => {
+            const mode = item.getAttribute('data-drawing-mode');
+            item.classList.toggle('active', mode === 'straight' || !mode);
+          });
+        }
       });
     });
 
@@ -1253,6 +1343,7 @@ export class App {
           preferredTextWrapper = wrapper;
         }
         void (async () => {
+          leaveEraserBrushSize();
           const fontSize = getCurrentTextSize();
           const tool = await this.toolManager.ensureTool('text');
           if (tool?.setFontSize) {
@@ -1304,6 +1395,7 @@ export class App {
     // Shape button click - activate shape tool and store previous tool
     shapeModeToggles.forEach(toggle => {
       toggle.addEventListener('click', () => {
+        leaveEraserBrushSize();
         // Store previous tool name for returning after drawing
         const currentToolName = this.toolManager.activeToolName || 'line';
         this.toolManager.previousToolName = currentToolName;
@@ -1368,6 +1460,20 @@ export class App {
 
       wrapper.addEventListener('mouseenter', showMenu);
       wrapper.addEventListener('mouseleave', scheduleHide);
+
+      // Touch support: tap the toggle button to open/close menu on mobile
+      const toggleBtn = wrapper.querySelector<HTMLElement>('.tbtn');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('touchend', (e: TouchEvent) => {
+          // Only handle single-tap on the toggle button itself
+          if (e.target !== toggleBtn && !toggleBtn.contains(e.target as Node)) return;
+          if (wrapper.classList.contains('shape-open')) {
+            wrapper.classList.remove('shape-open');
+          } else {
+            showMenu();
+          }
+        });
+      }
     };
 
     shapeModeWrappers.forEach(wrapper => bindShapeMenu(wrapper, () => true));
@@ -1387,6 +1493,7 @@ export class App {
     const selectShapeOption = async (btn: HTMLElement) => {
       const shape = btn.getAttribute('data-shape-option');
       if (!shape) return;
+      leaveEraserBrushSize();
       const shapeTool = await this.toolManager.ensureTool('shape');
       if (!shapeTool?.setShapeType) return;
       this.toolManager.previousToolName = this.toolManager.activeToolName || 'line';
@@ -1404,20 +1511,46 @@ export class App {
       });
     });
 
+    // Eraser brush size: save/restore normal size when entering/leaving eraser
+    const ERASER_DEFAULT_SIZE = 30;
+    let preEraserBrushSize = 0; // 0 = not in eraser mode
+
+    const enterEraserBrushSize = () => {
+      const bs = document.getElementById('brushSize') as HTMLInputElement | null;
+      if (!bs) return;
+      preEraserBrushSize = parseInt(bs.value, 10) || 2;
+      bs.value = String(ERASER_DEFAULT_SIZE);
+      bs.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
+    const leaveEraserBrushSize = () => {
+      if (!preEraserBrushSize) return;
+      const bs = document.getElementById('brushSize') as HTMLInputElement | null;
+      if (!bs) return;
+      bs.value = String(preEraserBrushSize);
+      bs.dispatchEvent(new Event('input', { bubbles: true }));
+      preEraserBrushSize = 0;
+    };
+
     drawingModeOptions.forEach(btn => {
       btn.addEventListener('click', () => {
         const mode = btn.getAttribute('data-drawing-mode');
         if (!mode) return;
+        const wasEraser = preEraserBrushSize > 0;
         if (mode === 'curve') {
+          if (wasEraser) leaveEraserBrushSize();
           this.toolManager.selectTool('curve');
           updateDrawingToggleLabels('Curved Line');
         } else if (mode === 'privacy') {
+          if (!wasEraser) enterEraserBrushSize();
           this.toolManager.selectTool('privacy');
           updateDrawingToggleLabels('Eraser Tool');
         } else if (mode === 'select') {
+          if (wasEraser) leaveEraserBrushSize();
           this.toolManager.selectTool('select');
           updateDrawingToggleLabels('Select');
         } else {
+          if (wasEraser) leaveEraserBrushSize();
           this.toolManager.selectTool('line');
           updateDrawingToggleLabels('Straight Line');
         }
@@ -1539,6 +1672,7 @@ export class App {
         if (!target) return;
         // Update tool settings for new strokes
         this.toolManager.updateSettings({ color: target.value });
+        this.tagManager?.setStrokeColor?.(target.value);
 
         if (this.toolManager?.tools?.shape) {
           this.toolManager.tools.shape.setFillStyle('no-fill');
@@ -1563,6 +1697,7 @@ export class App {
 
         // Update tool settings for new strokes
         this.toolManager.updateSettings({ color: color });
+        this.tagManager?.setStrokeColor?.(color);
         if (colorPicker) {
           colorPicker.value = color;
           colorPicker.dispatchEvent(new Event('change'));
@@ -1859,6 +1994,8 @@ export class App {
       }
       setLineStyleIcon(normalizedStyle);
       this.updateDashSplitHandleForSelection();
+      // Notify line style preview to re-render
+      window.dispatchEvent(new CustomEvent('dash-style-changed'));
     };
 
     if (dashStyleSelect) {
@@ -1920,15 +2057,16 @@ export class App {
         style.id = 'lineStylePopoverStyles';
         style.textContent = `
           #lineStylePopoverWrap { position: relative; display: inline-flex; }
-          #lineStylePopoverPanel { position: absolute; top: calc(100% + 8px); left: 0; width: 392px; max-width: calc(100vw - 24px); background: #fff; border: 1px solid #d1d5db; border-radius: 12px; box-shadow: 0 18px 40px rgba(2,6,23,0.2); padding: 12px; z-index: 10050; transform-origin: top left; transform: translateY(-6px) scale(0.98); opacity: 0; pointer-events: none; transition: opacity 160ms ease, transform 180ms ease; }
+          #lineStylePopoverPanel { position: fixed; width: 392px; max-width: calc(100vw - 24px); background: rgba(255,255,255,0.97); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; box-shadow: 0 24px 48px rgba(2,6,23,0.18), 0 2px 8px rgba(2,6,23,0.08); padding: 14px; z-index: 10150; transform-origin: top left; transform: translateY(-4px) scale(0.98); opacity: 0; pointer-events: none; transition: opacity 120ms ease-out, transform 150ms cubic-bezier(0.2,0,0,1); }
           #lineStylePopoverPanel.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
           .line-style-panel-grid { display: grid; gap: 10px; }
-          .line-style-row { display: grid; grid-template-columns: 80px 1fr; align-items: center; gap: 8px; }
-          .line-style-title { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: #475569; text-transform: uppercase; }
+          .line-style-row { display: grid; grid-template-columns: 72px 1fr; align-items: center; gap: 8px; }
+          .line-style-title { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: #64748b; text-transform: uppercase; }
           .line-style-control { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-          .line-style-size-chip { font-size: 11px; color: #334155; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 999px; padding: 2px 8px; min-width: 42px; text-align: center; }
-          .line-style-scope button { border: 1px solid #cbd5e1; background: #f8fafc; color: #334155; border-radius: 999px; padding: 4px 10px; font-size: 11px; }
-          .line-style-scope button.active { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+          .line-style-size-chip { font-size: 11px; font-weight: 600; color: #334155; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 999px; padding: 2px 8px; min-width: 42px; text-align: center; font-variant-numeric: tabular-nums; }
+          .line-style-scope button { border: 1px solid #e2e8f0; background: #f8fafc; color: #475569; border-radius: 999px; padding: 4px 12px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 100ms ease; }
+          .line-style-scope button:hover { background: #f1f5f9; border-color: #cbd5e1; }
+          .line-style-scope button.active { background: #1e40af; color: #fff; border-color: #1e40af; box-shadow: 0 1px 3px rgba(30,64,175,0.3); }
           #lineStylePreviewWrap { width: 100%; height: 58px; background: linear-gradient(180deg,#ffffff,#f8fafc); border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
           #lineStylePreviewCanvas { width: 100%; height: 58px; display: block; }
         `;
@@ -1954,7 +2092,6 @@ export class App {
         panel.setAttribute('aria-label', 'Line style controls');
         panel.innerHTML = `
           <div class="line-style-panel-grid">
-            <div class="line-style-row"><span class="line-style-title">Stroke</span><div id="lineStyleStrokeRow" class="line-style-control"></div></div>
             <div class="line-style-row"><span class="line-style-title">Arrow</span><div id="lineStyleArrowStyleRow" class="line-style-control"></div></div>
             <div class="line-style-row"><span class="line-style-title">Pattern</span><div id="lineStylePatternRow" class="line-style-control"></div></div>
             <div class="line-style-row line-style-scope"><span class="line-style-title">Scope</span><div class="line-style-control"><button type="button" data-scope="selection" class="active">Selection</button><button type="button" data-scope="image">Image</button><button type="button" data-scope="project">Project</button></div></div>
@@ -1963,18 +2100,24 @@ export class App {
         `;
 
         wrap.appendChild(toggle);
-        wrap.appendChild(panel);
+        document.body.appendChild(panel);
         tbLeft.appendChild(wrap);
 
         toggle.addEventListener('click', e => {
           e.preventDefault();
           const open = !panel.classList.contains('open');
+          if (open) {
+            // Position fixed panel below the toggle button
+            const rect = toggle.getBoundingClientRect();
+            panel.style.top = `${rect.bottom + 8}px`;
+            panel.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - 400))}px`;
+          }
           panel.classList.toggle('open', open);
           toggle.setAttribute('aria-expanded', String(open));
         });
 
         document.addEventListener('click', e => {
-          if (!wrap || wrap.contains(e.target as Node)) return;
+          if (!wrap || wrap.contains(e.target as Node) || panel.contains(e.target as Node)) return;
           panel.classList.remove('open');
           toggle.setAttribute('aria-expanded', 'false');
         });
@@ -1982,10 +2125,9 @@ export class App {
 
       const panel = document.getElementById('lineStylePopoverPanel');
       if (!panel) return;
-      const strokeRow = document.getElementById('lineStyleStrokeRow');
       const arrowStyleRow = document.getElementById('lineStyleArrowStyleRow');
       const patternRow = document.getElementById('lineStylePatternRow');
-      if (!strokeRow || !arrowStyleRow || !patternRow) return;
+      if (!arrowStyleRow || !patternRow) return;
 
       if (arrowStartBtn.parentElement !== tbLeft) {
         tbLeft.insertBefore(arrowStartBtn, wrap);
@@ -2008,7 +2150,13 @@ export class App {
         arrowOptionsMenu.setAttribute('aria-hidden', 'true');
       }
 
-      strokeRow.appendChild(brushSizeSelect);
+      // Keep brushSize in #tbLeft (before the Line Style wrapper) instead of
+      // moving it into the popover panel — users need it always visible.
+      if (brushSizeSelect && wrap && tbLeft) {
+        if (brushSizeSelect.parentElement !== tbLeft) {
+          tbLeft.insertBefore(brushSizeSelect, wrap);
+        }
+      }
       patternRow.appendChild(dottedBtn);
 
       const arrowStyleTop = document.getElementById('arrowStyleTop') as HTMLSelectElement | null;
@@ -2072,8 +2220,8 @@ export class App {
       let previewCanvas: any = null;
       let previewLine: any = null;
       let previewArrowState = {
-        startArrow: false,
-        endArrow: false,
+        startArrow: true,
+        endArrow: true,
       };
       const ensurePreviewCanvas = () => {
         if (!previewCanvasElement || previewCanvas) return;
@@ -2109,7 +2257,7 @@ export class App {
             ? uiArrowSettings.endArrow
             : previewArrowState.endArrow;
         const width = Math.max(1, parseBrushWidth(brushSizeSelect.value));
-        const arrowStyle = lineStyleArrowStyle?.value || arrowStyleTop?.value || 'hand-2';
+        const arrowStyle = lineStyleArrowStyle?.value || arrowStyleTop?.value || 'triangular';
         const arrowSize = Number(lineStyleArrowSize?.value || arrowSizeTop?.value || '15') || 15;
         const style = this.currentDashSettings.style || 'solid';
         const pattern = this.getDashPatternForStyle(style);
@@ -2183,6 +2331,7 @@ export class App {
         'arrow-settings-updated',
         handleArrowSettingsUpdated as EventListener
       );
+      window.addEventListener('dash-style-changed', syncPreview);
       (document.getElementById('colorPicker') as HTMLInputElement | null)?.addEventListener(
         'change',
         syncPreview
@@ -2247,6 +2396,7 @@ export class App {
         () =>
           void (async () => {
             console.log('[Copy] Button clicked');
+            let copyOutputCanvas: HTMLCanvasElement | null = null;
             try {
               const canvas = this.canvasManager?.fabricCanvas;
               if (!canvas) {
@@ -2299,6 +2449,7 @@ export class App {
 
               // Create a temporary canvas for the output
               const tempCanvas = document.createElement('canvas');
+              copyOutputCanvas = tempCanvas;
               const tempCtx = tempCanvas.getContext('2d');
               if (!tempCtx) {
                 throw new Error('Failed to acquire 2D context');
@@ -2332,23 +2483,26 @@ export class App {
                 );
               }
 
-              // Convert to blob and copy to clipboard
-              const blob = await new Promise<Blob>((resolve, reject) => {
+              // Convert to blob and copy to clipboard. Safari is strict about user activation:
+              // pass the blob promise directly into ClipboardItem before awaiting it.
+              const blobPromise = new Promise<Blob>((resolve, reject) => {
                 tempCanvas.toBlob((b: Blob | null) => {
                   if (b) resolve(b);
                   else reject(new Error('Failed to create blob'));
                 }, 'image/png');
               });
 
-              console.log('[Copy] Blob created, size:', blob.size);
-
               const ClipboardItemConstructor = (
                 window as Window & { ClipboardItem?: typeof ClipboardItem }
               ).ClipboardItem;
               if (navigator.clipboard && ClipboardItemConstructor) {
                 await navigator.clipboard.write([
-                  new ClipboardItemConstructor({ 'image/png': blob }),
+                  new ClipboardItemConstructor({
+                    'image/png': blobPromise as unknown as Blob,
+                  }),
                 ]);
+                const blob = await blobPromise;
+                console.log('[Copy] Blob created, size:', blob.size);
                 console.log('[Copy] Successfully copied to clipboard');
 
                 // Show success feedback
@@ -2373,18 +2527,24 @@ export class App {
                 }
               } else {
                 console.warn('[Copy] Clipboard API not supported');
-                if (this.projectManager?.showStatusMessage) {
-                  this.projectManager.showStatusMessage(
-                    'Clipboard not supported in this browser',
-                    'error'
-                  );
-                }
+                throw new Error('Clipboard image writes are not supported in this browser');
               }
             } catch (error) {
               const message = error instanceof Error ? error.message : String(error);
               console.error('[Copy] Failed to copy to clipboard:', error);
+              if (copyOutputCanvas) {
+                const fallbackBlob = await new Promise<Blob | null>(resolve => {
+                  copyOutputCanvas?.toBlob((b: Blob | null) => resolve(b), 'image/png');
+                });
+                if (fallbackBlob) {
+                  this.showCopyImageFallback(fallbackBlob);
+                }
+              }
               if (this.projectManager?.showStatusMessage) {
-                this.projectManager.showStatusMessage('Failed to copy image: ' + message, 'error');
+                this.projectManager.showStatusMessage(
+                  'Clipboard blocked. Opened image preview instead.',
+                  'info'
+                );
               }
 
               // Visual error feedback - subtle shake animation
@@ -2401,6 +2561,84 @@ export class App {
     }
   }
 
+  private showCopyImageFallback(blob: Blob): void {
+    document.getElementById('copyImageFallbackModal')?.remove();
+
+    const url = URL.createObjectURL(blob);
+    const overlay = document.createElement('div');
+    overlay.id = 'copyImageFallbackModal';
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      z-index: 20000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(15, 23, 42, 0.62);
+    `;
+
+    const panel = document.createElement('div');
+    panel.style.cssText = `
+      width: min(760px, 92vw);
+      max-height: 88vh;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      padding: 16px;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #0f172a;
+      box-shadow: 0 24px 80px rgba(15, 23, 42, 0.34);
+    `;
+
+    const title = document.createElement('div');
+    title.textContent = 'Clipboard was blocked';
+    title.style.cssText = 'font-size:16px;font-weight:700;';
+
+    const preview = document.createElement('img');
+    preview.src = url;
+    preview.alt = 'Copied canvas preview';
+    preview.style.cssText =
+      'max-width:100%;max-height:62vh;object-fit:contain;border:1px solid #e2e8f0;background:#f8fafc;';
+
+    const actions = document.createElement('div');
+    actions.style.cssText = 'display:flex;justify-content:flex-end;gap:8px;align-items:center;';
+
+    const download = document.createElement('a');
+    download.href = url;
+    download.download = `openpaint-copy-${Date.now()}.png`;
+    download.textContent = 'Download PNG';
+    download.style.cssText =
+      'padding:8px 12px;border-radius:6px;background:#2563eb;color:#fff;text-decoration:none;font-size:13px;font-weight:700;';
+
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.textContent = 'Close';
+    close.style.cssText =
+      'padding:8px 12px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font-size:13px;font-weight:700;cursor:pointer;';
+
+    const cleanup = () => {
+      overlay.remove();
+      URL.revokeObjectURL(url);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') cleanup();
+    };
+
+    close.addEventListener('click', cleanup);
+    overlay.addEventListener('click', event => {
+      if (event.target === overlay) cleanup();
+    });
+    document.addEventListener('keydown', onKeyDown);
+
+    actions.append(download, close);
+    panel.append(title, preview, actions);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+  }
+
   setupUnitToggle(): void {
     const unitToggle = document.getElementById('unitToggleBtn');
     const unitToggleSecondary = document.getElementById('unitToggleBtnSecondary');
@@ -2408,9 +2646,88 @@ export class App {
       (el): el is HTMLElement => el instanceof HTMLElement
     );
     const unitSelector = document.getElementById('unitSelector') as HTMLSelectElement | null;
+    const inchDisplayToggleWrap = document.getElementById('inchDisplayToggleWrap');
+    const inchDisplayToggle = document.getElementById(
+      'inchDisplayToggleBtn'
+    ) as HTMLButtonElement | null;
+    const inchDisplayToggleSecondary = document.getElementById(
+      'inchDisplayToggleBtnSecondary'
+    ) as HTMLButtonElement | null;
+    const inchDisplayToggles = [inchDisplayToggle, inchDisplayToggleSecondary].filter(
+      (el): el is HTMLButtonElement => el instanceof HTMLButtonElement
+    );
+    const syncInchInputs = (): void => {
+      const syncInput = (inchInputId: string, cmInputId?: string): void => {
+        const inchInput = document.getElementById(inchInputId) as HTMLInputElement | null;
+        const cmInput = cmInputId
+          ? ((document.getElementById(cmInputId) as HTMLInputElement | null) ?? null)
+          : null;
 
-    // Initialize currentUnit state
-    this.currentUnit = 'inch';
+        if (!inchInput) return;
+
+        const parsedFromInches = this.measurementSystem?.parseMeasurementInput?.(
+          inchInput.value,
+          'inches'
+        );
+        if (parsedFromInches) {
+          inchInput.value = this.measurementSystem.formatInchInputValue(
+            parsedFromInches.inchWhole,
+            parsedFromInches.inchFraction
+          );
+          return;
+        }
+
+        const cm = parseFloat(cmInput?.value || '');
+        if (!Number.isFinite(cm) || cm < 0 || !this.measurementSystem?.convertFromCm) return;
+
+        const result = this.measurementSystem.convertFromCm(cm);
+        inchInput.value = this.measurementSystem.formatInchInputValue(
+          result.inchWhole,
+          result.inchFraction,
+          { inchValue: cm / 2.54, decimalPlaces: 1 }
+        );
+      };
+
+      syncInput('inchValue', 'cmValue');
+      syncInput('dialogInchValue', 'dialogCmValue');
+    };
+
+    const applyInchDisplayMode = (mode: 'decimal' | 'fraction'): void => {
+      this.currentInchDisplayMode = mode;
+
+      inchDisplayToggles.forEach(toggle => {
+        const isSecondary = toggle === inchDisplayToggleSecondary;
+        toggle.textContent =
+          mode === 'decimal'
+            ? isSecondary
+              ? 'dec'
+              : 'decimals'
+            : isSecondary
+              ? 'frac'
+              : 'fractions';
+        toggle.setAttribute(
+          'aria-label',
+          `Switch inches display to ${mode === 'decimal' ? 'fractions' : 'decimals'}`
+        );
+        toggle.setAttribute('title', `Display inches as ${mode}`);
+        toggle.setAttribute('aria-pressed', String(mode === 'fraction'));
+      });
+
+      if (this.measurementSystem?.setInchDisplayMode) {
+        this.measurementSystem.setInchDisplayMode(mode);
+      }
+
+      syncInchInputs();
+      window.dispatchEvent(
+        new CustomEvent('openpaint:inch-display-mode-change', {
+          detail: { mode },
+        })
+      );
+
+      if (this.metadataManager) {
+        this.metadataManager.refreshAllMeasurements();
+      }
+    };
 
     const applyUnit = (unit: 'inch' | 'cm'): void => {
       this.currentUnit = unit;
@@ -2426,6 +2743,16 @@ export class App {
 
       if (this.measurementSystem) {
         this.measurementSystem.setUnit(unitLabel);
+        if (this.measurementSystem.setInchDisplayMode) {
+          this.measurementSystem.setInchDisplayMode(this.currentInchDisplayMode);
+        }
+      }
+
+      if (inchDisplayToggleWrap) {
+        inchDisplayToggleWrap.classList.toggle('hidden', unit !== 'inch');
+      }
+      if (inchDisplayToggleSecondary) {
+        inchDisplayToggleSecondary.classList.toggle('hidden', unit !== 'inch');
       }
 
       if (this.metadataManager) {
@@ -2439,6 +2766,7 @@ export class App {
       unitSelector.value = 'inch';
     }
     applyUnit('inch');
+    applyInchDisplayMode('decimal');
 
     unitToggles.forEach(toggle => {
       toggle.addEventListener('click', () => {
@@ -2452,6 +2780,12 @@ export class App {
         applyUnit(unitSelector.value as 'inch' | 'cm');
       });
     }
+
+    inchDisplayToggles.forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        applyInchDisplayMode(this.currentInchDisplayMode === 'decimal' ? 'fraction' : 'decimal');
+      });
+    });
 
     // Setup Show Measurements toggle
     const showMeasurementsCheckbox = document.getElementById(
@@ -2529,12 +2863,14 @@ export class App {
           }
         } else if (currentToolName === 'curve') {
           // Curved Line -> Eraser Tool
+          enterEraserBrushSize();
           this.toolManager.selectTool('privacy');
           if (drawingModeToggle) {
             this.updateToggleLabel(drawingModeToggle, 'Eraser Tool');
           }
         } else if (currentToolName === 'privacy') {
           // Eraser Tool -> Select
+          leaveEraserBrushSize();
           this.toolManager.selectTool('select');
           if (drawingModeToggle) {
             this.updateToggleLabel(drawingModeToggle, 'Select');
@@ -2621,10 +2957,41 @@ export class App {
         return;
       }
 
-      // Handle help menu toggle
-      if (e.key === 'h' || e.key === 'H') {
-        e.preventDefault();
-        this.toggleHelpMenu();
+      // Tool shortcuts: D=draw (line), T=text, S=shapes, M=select
+      // Skip tool shortcuts when modifier keys are held (e.g. Ctrl+V for paste)
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      switch (e.key) {
+        case 'd':
+        case 'D':
+          e.preventDefault();
+          this.toolManager.selectTool('line');
+          return;
+        case 't':
+        case 'T':
+          e.preventDefault();
+          this.toolManager.selectTool('text');
+          return;
+        case 's':
+        case 'S':
+          e.preventDefault();
+          this.toolManager.selectTool('shape');
+          return;
+        case 'm':
+        case 'M':
+          e.preventDefault();
+          this.toolManager.selectTool('select');
+          return;
+        case 'h':
+        case 'H': {
+          // Open the unified shortcut help dialog (same as ?)
+          e.preventDefault();
+          const dialog = document.getElementById('shortcutHelpDialog') as HTMLDialogElement | null;
+          if (dialog) {
+            if (dialog.open) dialog.close();
+            else dialog.showModal();
+          }
+          return;
+        }
       }
     });
   }
@@ -2715,126 +3082,6 @@ export class App {
 
     document.body.appendChild(helpHint);
   }
-
-  createHelpMenu(): void {
-    const helpOverlay = document.createElement('div');
-    helpOverlay.id = 'helpOverlay';
-    helpOverlay.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 10000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        `;
-
-    const helpMenu = document.createElement('div');
-    helpMenu.style.cssText = `
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            max-width: 500px;
-            max-height: 80vh;
-            overflow-y: auto;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-        `;
-
-    helpMenu.innerHTML = `
-            <h2 style="margin-top: 0; margin-bottom: 20px; color: #333; font-size: 24px; font-weight: 600;">Keyboard Shortcuts</h2>
-            
-            <div style="margin-bottom: 20px;">
-                <h3 style="color: #555; font-size: 16px; margin-bottom: 10px; font-weight: 600;">Drawing Tools</h3>
-                <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px;">
-                    <kbd>Tab</kbd><span>Cycle through drawing modes (Line → Curve → Eraser → Select)</span>
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 20px;">
-                <h3 style="color: #555; font-size: 16px; margin-bottom: 10px; font-weight: 600;">Capture Frame</h3>
-                <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px;">
-                    <kbd>+</kbd><span>Increase capture frame size</span>
-                    <kbd>-</kbd><span>Decrease capture frame size</span>
-                </div>
-            </div>
-            
-            <div style="margin-bottom: 20px;">
-                <h3 style="color: #555; font-size: 16px; margin-bottom: 10px; font-weight: 600;">General</h3>
-                <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-size: 14px;">
-                    <kbd>H</kbd><span>Show/hide this help menu</span>
-                </div>
-            </div>
-            
-            <div style="text-align: center; margin-top: 25px;">
-                <button id="closeHelp" style="
-                    background: #3b82f6;
-                    color: white;
-                    border: none;
-                    padding: 10px 20px;
-                    border-radius: 6px;
-                    font-size: 14px;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: background 0.2s;
-                ">Close</button>
-            </div>
-        `;
-
-    // Style all kbd elements
-    const kbdElements = helpMenu.querySelectorAll<HTMLElement>('kbd');
-    kbdElements.forEach(kbd => {
-      kbd.style.cssText = `
-                background: #f3f4f6;
-                border: 1px solid #d1d5db;
-                border-radius: 4px;
-                padding: 2px 6px;
-                font-size: 12px;
-                font-weight: bold;
-                color: #374151;
-                font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            `;
-    });
-
-    helpOverlay.appendChild(helpMenu);
-    document.body.appendChild(helpOverlay);
-
-    // Close help menu handlers
-    const closeBtn = helpMenu.querySelector<HTMLButtonElement>('#closeHelp');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', () => {
-        document.body.removeChild(helpOverlay);
-      });
-    }
-
-    // Close on overlay click
-    helpOverlay.addEventListener('click', (e: MouseEvent) => {
-      if (e.target === helpOverlay) {
-        document.body.removeChild(helpOverlay);
-      }
-    });
-
-    // Close on Escape key
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        document.body.removeChild(helpOverlay);
-        document.removeEventListener('keydown', handleEscape);
-      }
-    };
-    document.addEventListener('keydown', handleEscape);
-  }
-
-  toggleHelpMenu(): void {
-    const existingOverlay = document.getElementById('helpOverlay');
-    if (existingOverlay) {
-      document.body.removeChild(existingOverlay);
-    } else {
-      this.createHelpMenu();
-    }
-  }
 }
 
 function startApp(): void {
@@ -2856,9 +3103,77 @@ function startApp(): void {
   });
 }
 
+function initWelcomeOverlay(): void {
+  const overlay = document.getElementById('welcomeOverlay');
+  if (!overlay) return;
+
+  if (!localStorage.getItem('openpaint:welcomed')) {
+    overlay.style.display = 'block';
+  }
+
+  const dismiss = () => {
+    overlay.style.display = 'none';
+    localStorage.setItem('openpaint:welcomed', '1');
+  };
+
+  document.getElementById('welcomeDismiss')?.addEventListener('click', dismiss);
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) dismiss();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && overlay.style.display === 'block') dismiss();
+  });
+}
+
+function initShortcutHelp(): void {
+  const dialog = document.getElementById('shortcutHelpDialog') as HTMLDialogElement | null;
+  if (!dialog) return;
+
+  const toggle = () => {
+    if (dialog.open) {
+      dialog.close();
+    } else {
+      dialog.showModal();
+    }
+  };
+
+  document.getElementById('shortcutHelpBtn')?.addEventListener('click', toggle);
+  document.getElementById('shortcutHelpClose')?.addEventListener('click', () => dialog.close());
+
+  document.addEventListener('keydown', e => {
+    const target = e.target as HTMLElement;
+    const isTyping =
+      target?.tagName === 'INPUT' ||
+      target?.tagName === 'TEXTAREA' ||
+      target?.tagName === 'SELECT' ||
+      target?.isContentEditable;
+    if (isTyping) return;
+
+    if (e.key === '?') {
+      e.preventDefault();
+      toggle();
+    }
+  });
+
+  // Close on backdrop click
+  dialog.addEventListener('click', e => {
+    if (e.target === dialog) dialog.close();
+  });
+}
+
 // Start the app when DOM is ready, or immediately if it already fired.
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', startApp, { once: true });
+  document.addEventListener(
+    'DOMContentLoaded',
+    () => {
+      startApp();
+      initWelcomeOverlay();
+      initShortcutHelp();
+    },
+    { once: true }
+  );
 } else {
   startApp();
+  initWelcomeOverlay();
+  initShortcutHelp();
 }

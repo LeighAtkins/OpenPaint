@@ -2,7 +2,6 @@ import { normalizeCloudError } from './cloud/error-normalizer.js';
 import { CLOUD_COPY } from './cloud/messages.js';
 import { makeCloudFailure, makeCloudSuccess } from './cloud/result-factory.js';
 import { cloudAssetCache } from './cloud/asset-cache.js';
-import JSZip from 'jszip';
 
 export class CloudProjectManager {
   constructor(app) {
@@ -10,12 +9,54 @@ export class CloudProjectManager {
     this.supabase = app.authManager.supabase;
     this.cloudStatusEl = null;
     this.syncOverlayEl = null;
+    this.syncAbortController = null;
+    this.syncCancelRequested = false;
+    this.activeSyncToken = 0;
+    this.syncHideTimer = null;
     this.currentProjectId = null;
     this.manifestVersion = 0;
     this.viewVersions = {};
     this.assetBlobCache = new Map();
     this.assetObjectUrlCache = new Map();
+    this.viewFingerprintCacheByProject = this.loadViewFingerprintCache();
     this.setupUI();
+  }
+
+  loadViewFingerprintCache() {
+    try {
+      const raw = localStorage.getItem('openpaint:cloudViewFingerprints');
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  persistViewFingerprintCache() {
+    try {
+      localStorage.setItem(
+        'openpaint:cloudViewFingerprints',
+        JSON.stringify(this.viewFingerprintCacheByProject || {})
+      );
+    } catch {
+      // no-op
+    }
+  }
+
+  getProjectViewFingerprintCache(projectId) {
+    const key = String(projectId || '').trim();
+    if (!key) return {};
+    const cache = this.viewFingerprintCacheByProject?.[key];
+    return cache && typeof cache === 'object' ? cache : {};
+  }
+
+  setProjectViewFingerprintCache(projectId, cache) {
+    const key = String(projectId || '').trim();
+    if (!key) return;
+    this.viewFingerprintCacheByProject = this.viewFingerprintCacheByProject || {};
+    this.viewFingerprintCacheByProject[key] = cache && typeof cache === 'object' ? cache : {};
+    this.persistViewFingerprintCache();
   }
 
   getStoredProjectId() {
@@ -51,15 +92,130 @@ export class CloudProjectManager {
     return `sha256:${hex}`;
   }
 
-  blobToBase64(blob) {
+  buildImageSourceFingerprint(url) {
+    const value = String(url || '').trim();
+    if (!value) return '';
+    if (value.startsWith('blob:')) return `blob:${value}`;
+    if (value.startsWith('cloud-asset://')) return value;
+    if (value.startsWith('r2://')) return value;
+    if (value.startsWith('data:')) {
+      const comma = value.indexOf(',');
+      const head = comma > -1 ? value.slice(0, comma) : value;
+      return `${head}:${value.length}`;
+    }
+    return value;
+  }
+
+  stableSerialize(value) {
+    const visit = input => {
+      if (input === null || typeof input !== 'object') return input;
+      if (Array.isArray(input)) return input.map(item => visit(item));
+      const out = {};
+      Object.keys(input)
+        .sort()
+        .forEach(key => {
+          out[key] = visit(input[key]);
+        });
+      return out;
+    };
+    try {
+      return JSON.stringify(visit(value));
+    } catch {
+      return '';
+    }
+  }
+
+  normalizeViewStateForFingerprint(viewState) {
+    const state = viewState && typeof viewState === 'object' ? { ...viewState } : {};
+    delete state.imageDataURL;
+    return state;
+  }
+
+  fingerprintViewState(viewState) {
+    return this.stableSerialize(this.normalizeViewStateForFingerprint(viewState));
+  }
+
+  async resolveCloudAssetBlob(assetHash, projectId = this.getActiveProjectId()) {
+    const hash = String(assetHash || '').trim();
+    if (!hash || !projectId) return null;
+
+    let blob = await this.getCachedAsset(hash);
+    if (blob) return blob;
+
+    const assetResult = await this.apiRequest(
+      'asset_upload',
+      `/api/cloud-assets/${encodeURIComponent(hash)}?projectId=${encodeURIComponent(projectId)}`,
+      { signal: this.getActiveSyncSignal() }
+    );
+    if (assetResult.status === 'error') {
+      throw new Error(
+        assetResult?.error?.userMessage || assetResult?.error?.message || 'Asset fetch failed'
+      );
+    }
+
+    const assetData = assetResult.data || {};
+    const contentType = assetData.contentType || 'application/octet-stream';
+    blob = this.base64ToBlob(assetData.dataBase64 || '', contentType);
+    await this.cacheAsset(hash, blob, contentType);
+    return blob;
+  }
+
+  async resolveCloudAssetToObjectUrl(assetHash, projectId = this.getActiveProjectId()) {
+    const hash = String(assetHash || '').trim();
+    if (!hash) return null;
+    const existing = this.assetObjectUrlCache.get(hash);
+    if (existing) return existing;
+
+    const blob = await this.resolveCloudAssetBlob(hash, projectId);
+    if (!blob) return null;
+    const objectUrl = URL.createObjectURL(blob);
+    this.assetObjectUrlCache.set(hash, objectUrl);
+    return objectUrl;
+  }
+
+  async runWithConcurrency(items, limit, worker, options = {}) {
+    const queue = Array.isArray(items) ? items.slice() : [];
+    if (!queue.length) return;
+    const concurrency = Math.max(1, Number(limit) || 1);
+    const token = options?.syncToken || this.activeSyncToken;
+    const workers = new Array(Math.min(concurrency, queue.length)).fill(null).map(async () => {
+      while (queue.length > 0) {
+        this.throwIfSyncCanceled(token);
+        const next = queue.shift();
+        await worker(next);
+      }
+    });
+    await Promise.all(workers);
+  }
+
+  blobToBase64(blob, signal) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
+      const handleAbort = () => {
+        try {
+          reader.abort();
+        } catch {
+          // no-op
+        }
+        reject(new DOMException('Cloud sync canceled.', 'AbortError'));
+      };
       reader.onloadend = () => {
+        if (signal) signal.removeEventListener('abort', handleAbort);
         const str = String(reader.result || '');
         const comma = str.indexOf(',');
         resolve(comma >= 0 ? str.slice(comma + 1) : str);
       };
-      reader.onerror = reject;
+      reader.onerror = error => {
+        if (signal) signal.removeEventListener('abort', handleAbort);
+        reject(error);
+      };
+      if (signal) {
+        if (signal.aborted) {
+          handleAbort();
+          return;
+        }
+        signal.addEventListener('abort', handleAbort, { once: true });
+      }
       reader.readAsDataURL(blob);
     });
   }
@@ -116,11 +272,75 @@ export class CloudProjectManager {
       overlay.style.cssText =
         'position: fixed; inset: 0; z-index: 12000; background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(2px); display: none; align-items: center; justify-content: center;';
       overlay.innerHTML =
-        '<div style="background:#ffffff; border-radius:12px; padding:18px 20px; min-width:320px; max-width:420px; box-shadow:0 10px 30px rgba(0,0,0,0.25); font-family: system-ui, -apple-system, sans-serif;"><div id="cloudSyncOverlayTitle" style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">Cloud Sync</div><div id="cloudSyncOverlayPhase" style="font-size:13px; color:#334155; margin-bottom:8px;">Starting...</div><div style="height:8px; background:#e2e8f0; border-radius:999px; overflow:hidden;"><div id="cloudSyncOverlayBar" style="height:100%; width:0%; background:#2563eb; transition:width 120ms ease;"></div></div><div id="cloudSyncOverlayDetail" style="font-size:12px; color:#64748b; margin-top:8px;">Preparing...</div></div>';
+        '<div style="background:#ffffff; border-radius:12px; padding:18px 20px; min-width:320px; max-width:420px; box-shadow:0 10px 30px rgba(0,0,0,0.25); font-family: system-ui, -apple-system, sans-serif;"><div id="cloudSyncOverlayTitle" style="font-size:14px; font-weight:700; color:#0f172a; margin-bottom:8px;">Cloud Sync</div><div id="cloudSyncOverlayPhase" style="font-size:13px; color:#334155; margin-bottom:8px;">Starting...</div><div style="height:8px; background:#e2e8f0; border-radius:999px; overflow:hidden;"><div id="cloudSyncOverlayBar" style="height:100%; width:0%; background:#2563eb; transition:width 120ms ease;"></div></div><div id="cloudSyncOverlayDetail" style="font-size:12px; color:#64748b; margin-top:8px;">Preparing...</div><div style="display:flex; justify-content:flex-end; margin-top:14px;"><button id="cloudSyncOverlayCancel" type="button" style="border:1px solid #cbd5e1; background:#fff; color:#0f172a; border-radius:10px; padding:8px 12px; font-size:12px; font-weight:600; cursor:pointer;">Cancel</button></div></div>';
       document.body.appendChild(overlay);
+    }
+    const cancelBtn = overlay.querySelector('#cloudSyncOverlayCancel');
+    if (cancelBtn && !cancelBtn.dataset.bound) {
+      cancelBtn.dataset.bound = 'true';
+      cancelBtn.addEventListener('click', () => this.cancelActiveSync());
     }
     this.syncOverlayEl = overlay;
     return overlay;
+  }
+
+  beginSyncSession(title, phase) {
+    this.activeSyncToken += 1;
+    this.syncCancelRequested = false;
+    this.syncAbortController = new AbortController();
+    if (this.syncHideTimer) {
+      clearTimeout(this.syncHideTimer);
+      this.syncHideTimer = null;
+    }
+    this.showSyncOverlay(title, phase);
+    return this.activeSyncToken;
+  }
+
+  getActiveSyncSignal(token = this.activeSyncToken) {
+    if (!token || token !== this.activeSyncToken) return undefined;
+    return this.syncAbortController?.signal;
+  }
+
+  isSyncCanceled(token = this.activeSyncToken) {
+    return !token || token !== this.activeSyncToken || this.syncCancelRequested;
+  }
+
+  throwIfSyncCanceled(token = this.activeSyncToken) {
+    if (!this.isSyncCanceled(token)) return;
+    throw new DOMException('Cloud sync canceled.', 'AbortError');
+  }
+
+  cancelActiveSync() {
+    if (!this.syncAbortController || this.syncCancelRequested) return;
+    this.syncCancelRequested = true;
+    try {
+      this.syncAbortController.abort();
+    } catch {
+      // no-op
+    }
+    const overlay = this.ensureSyncOverlay();
+    const phaseEl = overlay.querySelector('#cloudSyncOverlayPhase');
+    const detailEl = overlay.querySelector('#cloudSyncOverlayDetail');
+    const cancelBtn = overlay.querySelector('#cloudSyncOverlayCancel');
+    if (phaseEl) phaseEl.textContent = 'Canceling cloud sync...';
+    if (detailEl) detailEl.textContent = 'Stopping network activity';
+    if (cancelBtn) {
+      cancelBtn.textContent = 'Canceling...';
+      cancelBtn.disabled = true;
+      cancelBtn.style.cursor = 'default';
+      cancelBtn.style.opacity = '0.65';
+    }
+  }
+
+  finishSyncSession(token) {
+    if (!token || token !== this.activeSyncToken) return;
+    this.syncAbortController = null;
+    this.syncCancelRequested = false;
+    this.syncHideTimer = setTimeout(() => {
+      if (token !== this.activeSyncToken) return;
+      this.hideSyncOverlay();
+      this.syncHideTimer = null;
+    }, 250);
   }
 
   showSyncOverlay(title, phase) {
@@ -129,10 +349,17 @@ export class CloudProjectManager {
     const phaseEl = overlay.querySelector('#cloudSyncOverlayPhase');
     const detailEl = overlay.querySelector('#cloudSyncOverlayDetail');
     const barEl = overlay.querySelector('#cloudSyncOverlayBar');
+    const cancelBtn = overlay.querySelector('#cloudSyncOverlayCancel');
     if (titleEl) titleEl.textContent = title || 'Cloud Sync';
     if (phaseEl) phaseEl.textContent = phase || 'Working...';
     if (detailEl) detailEl.textContent = 'Starting...';
     if (barEl) barEl.style.width = '0%';
+    if (cancelBtn) {
+      cancelBtn.textContent = 'Cancel';
+      cancelBtn.disabled = false;
+      cancelBtn.style.cursor = 'pointer';
+      cancelBtn.style.opacity = '1';
+    }
     overlay.style.display = 'flex';
   }
 
@@ -212,6 +439,7 @@ export class CloudProjectManager {
         method: options.method || 'GET',
         headers,
         body: options.body ? JSON.stringify(options.body) : undefined,
+        signal: options.signal || this.getActiveSyncSignal(),
       });
 
       let payload = null;
@@ -253,6 +481,16 @@ export class CloudProjectManager {
 
       return makeCloudSuccess(operation, payload || {}, { statusCode: response.status });
     } catch (error) {
+      if (error?.name === 'AbortError') {
+        return makeCloudFailure(
+          operation,
+          normalizeCloudError({
+            code: 'aborted',
+            message: 'Cloud sync canceled.',
+            name: error?.name,
+          })
+        );
+      }
       return makeCloudFailure(
         operation,
         normalizeCloudError({
@@ -477,18 +715,20 @@ export class CloudProjectManager {
   }
 
   async saveProject(projectData) {
-    this.showSyncOverlay('Cloud Save', 'Preparing project sync...');
+    const syncToken = this.beginSyncSession('Cloud Save', 'Preparing project sync...');
+    const syncSignal = this.getActiveSyncSignal(syncToken);
     const telemetry = this.createTelemetry('save');
     let telemetryEmitted = false;
     const sessionResult = await this.ensureActiveSession('save');
     if (sessionResult.status === 'error') {
       this.emitTelemetry(telemetry, { status: 'error', reason: 'session' });
       telemetryEmitted = true;
-      this.hideSyncOverlay();
+      this.finishSyncSession(syncToken);
       return sessionResult;
     }
 
     try {
+      this.throwIfSyncCanceled(syncToken);
       const user = sessionResult.data.user;
       let projectId = this.getActiveProjectId();
 
@@ -496,6 +736,7 @@ export class CloudProjectManager {
         this.updateSyncOverlay('Creating cloud project...', 'Creating record');
         const createResult = await this.apiRequest('save', '/api/cloud-projects', {
           method: 'POST',
+          signal: syncSignal,
           body: {
             userId: user.id,
             title: projectData?.projectName || projectData?.name || 'Untitled Project',
@@ -531,7 +772,8 @@ export class CloudProjectManager {
       this.updateSyncOverlay('Loading cloud manifest...', 'Reading current versions');
       const bootstrapResult = await this.apiRequest(
         'bootstrap',
-        `/api/cloud-projects/${projectId}/bootstrap`
+        `/api/cloud-projects/${projectId}/bootstrap`,
+        { signal: syncSignal }
       );
       if (bootstrapResult.status === 'error')
         return makeCloudFailure('save', bootstrapResult.error);
@@ -541,28 +783,97 @@ export class CloudProjectManager {
 
       const liveViews = this.app?.projectManager?.views || {};
       const viewIds = Object.keys(projectData?.views || {});
+      const remoteViewStates = bootstrapData?.viewStates || {};
+      const remoteManifestViews = bootstrapData?.manifest?.views || {};
+      const cachedFingerprints = this.getProjectViewFingerprintCache(projectId);
       const viewAssetInfo = {};
       const assetBlobByHash = new Map();
+      const hashToPrimaryViewId = new Map();
+      const nextFingerprints = { ...cachedFingerprints };
 
       for (const viewId of viewIds) {
+        const originalViewState = projectData?.views?.[viewId] || {};
+        const liveView = liveViews?.[viewId] || {};
         const liveUrl = liveViews?.[viewId]?.image || projectData.views?.[viewId]?.imageUrl || null;
-        if (!liveUrl) continue;
+        if (!liveUrl) {
+          viewAssetInfo[viewId] = {
+            hash: null,
+            contentType: null,
+            sourceFingerprint: '',
+          };
+          continue;
+        }
+
+        const sourceFingerprint = this.buildImageSourceFingerprint(liveUrl);
+        const cachedHash = String(
+          liveView?.imageAssetHash || originalViewState?.imageAssetHash || ''
+        ).trim();
+        const cachedContentType =
+          liveView?.imageContentType ||
+          originalViewState?.imageContentType ||
+          remoteManifestViews?.[viewId]?.contentType ||
+          null;
+        const cachedFingerprint = String(
+          liveView?.imageSourceFingerprint || originalViewState?.imageSourceFingerprint || ''
+        ).trim();
+
+        const canReuseHash = Boolean(
+          cachedHash && cachedFingerprint && cachedFingerprint === sourceFingerprint
+        );
+
+        if (canReuseHash) {
+          viewAssetInfo[viewId] = {
+            hash: cachedHash,
+            contentType: cachedContentType || 'application/octet-stream',
+            sourceFingerprint,
+          };
+          if (liveView && typeof liveView === 'object') {
+            liveView.imageAssetHash = cachedHash;
+            liveView.imageContentType = cachedContentType || 'application/octet-stream';
+            liveView.imageSourceFingerprint = sourceFingerprint;
+          }
+          if (!hashToPrimaryViewId.has(cachedHash)) {
+            hashToPrimaryViewId.set(cachedHash, viewId);
+          }
+          continue;
+        }
+
+        this.throwIfSyncCanceled(syncToken);
         try {
-          const response = await fetch(liveUrl);
+          const response = await fetch(liveUrl, { signal: syncSignal });
           const blob = await response.blob();
           const hash = await this.hashBlob(blob);
+          const contentType = blob.type || cachedContentType || 'application/octet-stream';
           viewAssetInfo[viewId] = {
             hash,
-            contentType: blob.type || 'application/octet-stream',
+            contentType,
+            sourceFingerprint,
           };
           assetBlobByHash.set(hash, blob);
-          await this.cacheAsset(hash, blob, blob.type || 'application/octet-stream');
+          await this.cacheAsset(hash, blob, contentType);
+          if (!hashToPrimaryViewId.has(hash)) {
+            hashToPrimaryViewId.set(hash, viewId);
+          }
+          if (liveView && typeof liveView === 'object') {
+            liveView.imageAssetHash = hash;
+            liveView.imageContentType = contentType;
+            liveView.imageSourceFingerprint = sourceFingerprint;
+          }
         } catch (error) {
+          if (error?.name === 'AbortError') {
+            throw error;
+          }
           console.warn('[Cloud Save] Failed to hash image for view', viewId, error);
         }
       }
 
-      const allHashes = Array.from(assetBlobByHash.keys());
+      const allHashes = Array.from(
+        new Set(
+          Object.values(viewAssetInfo)
+            .map(info => info?.hash)
+            .filter(Boolean)
+        )
+      );
       let missingHashes = allHashes;
       if (allHashes.length > 0) {
         this.updateSyncOverlay(
@@ -573,6 +884,7 @@ export class CloudProjectManager {
         );
         const existsResult = await this.apiRequest('assets_exists', '/api/cloud-assets/exists', {
           method: 'POST',
+          signal: syncSignal,
           body: {
             projectId,
             hashes: allHashes,
@@ -586,49 +898,95 @@ export class CloudProjectManager {
       if (missingHashes.length > 0) {
         this.updateSyncOverlay('Uploading new image assets...', 'Assets', 0, missingHashes.length);
       }
-      for (let uploadIndex = 0; uploadIndex < missingHashes.length; uploadIndex += 1) {
-        const hash = missingHashes[uploadIndex];
-        const blob = assetBlobByHash.get(hash);
-        if (!blob) continue;
-        this.updateSyncOverlay(
-          'Uploading new image assets...',
-          `${this.formatBytes(telemetry.uploadedBytes)} uploaded`,
-          uploadIndex,
-          missingHashes.length
-        );
-        const dataBase64 = await this.blobToBase64(blob);
-        const uploadResult = await this.apiRequest(
-          'asset_upload',
-          `/api/cloud-assets/${encodeURIComponent(hash)}`,
-          {
-            method: 'PUT',
-            body: {
-              projectId,
-              dataBase64,
-              contentType: blob.type || 'application/octet-stream',
-              sizeBytes: blob.size,
-            },
+
+      for (const hash of missingHashes) {
+        if (assetBlobByHash.has(hash)) continue;
+        const fallbackViewId = hashToPrimaryViewId.get(hash);
+        const fallbackUrl = fallbackViewId
+          ? liveViews?.[fallbackViewId]?.image ||
+            projectData?.views?.[fallbackViewId]?.imageUrl ||
+            null
+          : null;
+        if (!fallbackUrl) continue;
+        try {
+          const response = await fetch(fallbackUrl, { signal: syncSignal });
+          const blob = await response.blob();
+          assetBlobByHash.set(hash, blob);
+        } catch (error) {
+          if (error?.name === 'AbortError') {
+            throw error;
           }
-        );
-        if (uploadResult.status === 'error') return makeCloudFailure('save', uploadResult.error);
-        uploadedAssetHashes.push(hash);
-        await this.cacheAsset(hash, blob, blob.type || 'application/octet-stream');
-        telemetry.uploadedAssets += 1;
-        telemetry.uploadedBytes += Number(blob.size || 0);
-        this.updateSyncOverlay(
-          'Uploading new image assets...',
-          `${this.formatBytes(telemetry.uploadedBytes)} uploaded`,
-          uploadIndex + 1,
-          missingHashes.length
+          console.warn('[Cloud Save] Missing asset hash could not be materialized', hash, error);
+        }
+      }
+
+      let completedUploads = 0;
+      try {
+        await this.runWithConcurrency(missingHashes, 3, async hash => {
+          this.throwIfSyncCanceled(syncToken);
+          const blob = assetBlobByHash.get(hash);
+          if (!blob) {
+            completedUploads += 1;
+            this.updateSyncOverlay(
+              'Uploading new image assets...',
+              `${this.formatBytes(telemetry.uploadedBytes)} uploaded`,
+              completedUploads,
+              missingHashes.length
+            );
+            return;
+          }
+          const dataBase64 = await this.blobToBase64(blob, syncSignal);
+          const uploadResult = await this.apiRequest(
+            'asset_upload',
+            `/api/cloud-assets/${encodeURIComponent(hash)}`,
+            {
+              method: 'PUT',
+              signal: syncSignal,
+              body: {
+                projectId,
+                dataBase64,
+                contentType: blob.type || 'application/octet-stream',
+                sizeBytes: blob.size,
+              },
+            }
+          );
+          if (uploadResult.status === 'error') {
+            throw new Error(
+              uploadResult?.error?.userMessage ||
+                uploadResult?.error?.message ||
+                'Asset upload failed'
+            );
+          }
+          uploadedAssetHashes.push(hash);
+          await this.cacheAsset(hash, blob, blob.type || 'application/octet-stream');
+          telemetry.uploadedAssets += 1;
+          telemetry.uploadedBytes += Number(blob.size || 0);
+          completedUploads += 1;
+          this.updateSyncOverlay(
+            'Uploading new image assets...',
+            `${this.formatBytes(telemetry.uploadedBytes)} uploaded`,
+            completedUploads,
+            missingHashes.length
+          );
+        }, { syncToken });
+      } catch (uploadError) {
+        return makeCloudFailure(
+          'save',
+          normalizeCloudError({
+            message: uploadError?.message || 'Failed uploading image assets',
+          })
         );
       }
 
       const syncedViewIds = [];
+      const skippedViewIds = [];
       this.updateSyncOverlay('Syncing view states...', 'Views', 0, viewIds.length || 1);
       for (let viewIndex = 0; viewIndex < viewIds.length; viewIndex += 1) {
+        this.throwIfSyncCanceled(syncToken);
         const viewId = viewIds[viewIndex];
         const originalViewState = projectData.views?.[viewId] || {};
-        const assetHash = viewAssetInfo?.[viewId]?.hash || null;
+        const info = viewAssetInfo?.[viewId] || {};
+        const assetHash = info?.hash || null;
         const fallbackImageUrl =
           originalViewState.imageUrl || this.app?.projectManager?.views?.[viewId]?.image || null;
         const patchedViewState = {
@@ -636,10 +994,40 @@ export class CloudProjectManager {
           imageDataURL: null,
           imageUrl: assetHash ? null : fallbackImageUrl,
           imageAssetHash: assetHash,
+          imageContentType: info?.contentType || originalViewState.imageContentType || null,
+          imageSourceFingerprint:
+            info?.sourceFingerprint || originalViewState.imageSourceFingerprint || '',
         };
+
+        const remoteSignature = this.fingerprintViewState(
+          remoteViewStates?.[viewId]?.state || null
+        );
+        const localSignature = this.fingerprintViewState(patchedViewState);
+        const cachedSignature = String(cachedFingerprints?.[viewId] || '').trim();
+        const canSkipPatch = Boolean(
+          remoteSignature &&
+          localSignature &&
+          remoteSignature === localSignature &&
+          cachedSignature &&
+          cachedSignature === localSignature
+        );
+
+        if (canSkipPatch) {
+          skippedViewIds.push(viewId);
+          nextFingerprints[viewId] = localSignature;
+          this.updateSyncOverlay(
+            'Syncing view states...',
+            'Views',
+            viewIndex + 1,
+            viewIds.length || 1
+          );
+          continue;
+        }
+
         const viewResult = await this.patchViewWithRetry(projectId, viewId, patchedViewState, 2);
         if (viewResult.status === 'error') return makeCloudFailure('save', viewResult.error);
         syncedViewIds.push(viewId);
+        nextFingerprints[viewId] = localSignature;
         this.updateSyncOverlay(
           'Syncing view states...',
           'Views',
@@ -648,13 +1036,19 @@ export class CloudProjectManager {
         );
       }
 
+      this.setProjectViewFingerprintCache(projectId, nextFingerprints);
+
       const manifestViews = {};
       viewIds.forEach(viewId => {
         const info = viewAssetInfo?.[viewId] || null;
+        const originalViewState = projectData?.views?.[viewId] || {};
         manifestViews[viewId] = {
-          assetHash: info?.hash || null,
-          contentType: info?.contentType || null,
-          externalImageUrl: info?.hash ? null : projectData?.views?.[viewId]?.imageUrl || null,
+          assetHash: info?.hash || originalViewState.imageAssetHash || null,
+          contentType: info?.contentType || originalViewState.imageContentType || null,
+          externalImageUrl:
+            info?.hash || originalViewState.imageAssetHash
+              ? null
+              : projectData?.views?.[viewId]?.imageUrl || null,
           latestViewVersion: Number(this.viewVersions?.[viewId] || 0),
           updatedAt: new Date().toISOString(),
         };
@@ -684,6 +1078,9 @@ export class CloudProjectManager {
         status: 'ok',
         projectId,
         syncedViews: syncedViewIds.length,
+        skippedViews: skippedViewIds.length,
+        reusedAssets: allHashes.length - missingHashes.length,
+        uploadedAssets: uploadedAssetHashes.length,
       });
       telemetryEmitted = true;
 
@@ -691,6 +1088,7 @@ export class CloudProjectManager {
         projectId,
         manifestVersion: this.manifestVersion,
         syncedViewIds,
+        skippedViewIds,
         uploadedAssetHashes,
         telemetry: {
           uploadedAssets: telemetry.uploadedAssets,
@@ -700,9 +1098,12 @@ export class CloudProjectManager {
       });
     } finally {
       if (!telemetryEmitted) {
-        this.emitTelemetry(telemetry, { status: 'error', reason: 'save_failed' });
+        this.emitTelemetry(telemetry, {
+          status: this.isSyncCanceled(syncToken) ? 'canceled' : 'error',
+          reason: this.isSyncCanceled(syncToken) ? 'save_canceled' : 'save_failed',
+        });
       }
-      setTimeout(() => this.hideSyncOverlay(), 250);
+      this.finishSyncSession(syncToken);
     }
   }
 
@@ -733,14 +1134,15 @@ export class CloudProjectManager {
   }
 
   async loadProject(projectId) {
-    this.showSyncOverlay('Cloud Load', 'Loading cloud project...');
+    const syncToken = this.beginSyncSession('Cloud Load', 'Loading cloud project...');
+    const syncSignal = this.getActiveSyncSignal(syncToken);
     const telemetry = this.createTelemetry('load');
     let telemetryEmitted = false;
     const targetProjectId = projectId || this.getActiveProjectId();
     if (!targetProjectId) {
       this.emitTelemetry(telemetry, { status: 'error', reason: 'missing_project' });
       telemetryEmitted = true;
-      this.hideSyncOverlay();
+      this.finishSyncSession(syncToken);
       return makeCloudFailure(
         'load',
         normalizeCloudError({
@@ -753,18 +1155,25 @@ export class CloudProjectManager {
     }
 
     try {
+      this.throwIfSyncCanceled(syncToken);
       this.setStoredProjectId(targetProjectId);
       const bootstrapResult = await this.apiRequest(
         'bootstrap',
-        `/api/cloud-projects/${targetProjectId}/bootstrap`
+        `/api/cloud-projects/${targetProjectId}/bootstrap`,
+        { signal: syncSignal }
       );
       if (bootstrapResult.status === 'error')
         return makeCloudFailure('load', bootstrapResult.error);
-      this.updateSyncOverlay('Preparing project package...', 'Reading manifest');
+      this.updateSyncOverlay('Preparing cloud project...', 'Reading manifest');
 
       const bootstrapData = bootstrapResult.data || {};
       const manifest = bootstrapData.manifest || {};
       const viewStates = bootstrapData.viewStates || {};
+      const loadedFingerprints = {};
+      Object.entries(viewStates).forEach(([viewId, wrapper]) => {
+        loadedFingerprints[viewId] = this.fingerprintViewState(wrapper?.state || null);
+      });
+      this.setProjectViewFingerprintCache(targetProjectId, loadedFingerprints);
       const viewOrder = Array.isArray(manifest.viewOrder)
         ? manifest.viewOrder
         : Object.keys(viewStates || {});
@@ -781,9 +1190,10 @@ export class CloudProjectManager {
         views: {},
       };
 
-      const zip = new JSZip();
+      const targetViewId = manifest.currentViewId || viewOrder[0] || 'front';
 
       for (let viewIndex = 0; viewIndex < viewOrder.length; viewIndex += 1) {
+        this.throwIfSyncCanceled(syncToken);
         const viewId = viewOrder[viewIndex];
         const stateWrapper = viewStates?.[viewId];
         const state = stateWrapper?.state || {};
@@ -795,65 +1205,62 @@ export class CloudProjectManager {
           imageDataURL: null,
           imageUrl: null,
           imageAssetPath: null,
+          imageAssetHash: assetHash || null,
+          imageContentType: viewManifest.contentType || state.imageContentType || null,
+          imageSourceFingerprint: state.imageSourceFingerprint || null,
           metadata: state.metadata || {},
           tabs: state.tabs || null,
+          viewport: state.viewport || null,
         };
 
         if (assetHash) {
-          let blob = await this.getCachedAsset(assetHash);
-          let contentType = viewManifest.contentType || 'application/octet-stream';
-
-          if (!blob) {
-            telemetry.cacheMisses += 1;
-            this.updateSyncOverlay(
-              'Downloading cloud images...',
-              `${this.formatBytes(telemetry.downloadedBytes)} downloaded`,
-              viewIndex,
-              viewOrder.length || 1
-            );
-            const assetResult = await this.apiRequest(
-              'asset_upload',
-              `/api/cloud-assets/${encodeURIComponent(assetHash)}?projectId=${encodeURIComponent(targetProjectId)}`
-            );
-            if (assetResult.status === 'error') return makeCloudFailure('load', assetResult.error);
-
-            const assetData = assetResult.data || {};
-            contentType = assetData.contentType || contentType;
-            blob = this.base64ToBlob(assetData.dataBase64 || '', contentType);
-            await this.cacheAsset(assetHash, blob, contentType);
-            telemetry.downloadedAssets += 1;
-            telemetry.downloadedBytes += Number(assetData.sizeBytes || blob.size || 0);
+          if (viewId === targetViewId) {
+            try {
+              const cachedBlob = await this.getCachedAsset(assetHash);
+              if (cachedBlob) {
+                telemetry.cacheHits += 1;
+              } else {
+                telemetry.cacheMisses += 1;
+              }
+              const blob =
+                cachedBlob || (await this.resolveCloudAssetBlob(assetHash, targetProjectId));
+              if (blob) {
+                const objectUrl = await this.resolveCloudAssetToObjectUrl(
+                  assetHash,
+                  targetProjectId
+                );
+                entry.imageUrl = objectUrl;
+                telemetry.downloadedAssets += 1;
+                telemetry.downloadedBytes += Number(blob.size || 0);
+              }
+            } catch (error) {
+              if (error?.name === 'AbortError') {
+                throw error;
+              }
+              console.warn('[Cloud Load] Failed eager load for target view asset', viewId, error);
+              entry.imageUrl = `cloud-asset://${assetHash}`;
+            }
           } else {
-            telemetry.cacheHits += 1;
+            entry.imageUrl = `cloud-asset://${assetHash}`;
           }
-
-          const extension = this.inferExtension(contentType, 'png');
-          const imagePath = `images/${this.sanitizeFilenamePart(viewId, 'view')}.${extension}`;
-          zip.file(imagePath, blob);
-          entry.imageAssetPath = imagePath;
-          entry.imageUrl = imagePath;
         } else {
           entry.imageUrl = state.imageUrl || viewManifest.externalImageUrl || null;
         }
 
         projectData.views[viewId] = entry;
         this.updateSyncOverlay(
-          'Preparing project package...',
+          'Preparing cloud project...',
           `Views ${viewIndex + 1}/${viewOrder.length || 1} | cache hits ${telemetry.cacheHits}`,
           viewIndex + 1,
           viewOrder.length || 1
         );
       }
 
-      zip.file('project.json', JSON.stringify(projectData, null, 2));
       this.updateSyncOverlay(
         'Opening project in editor...',
         `Downloaded ${telemetry.downloadedAssets} assets (${this.formatBytes(telemetry.downloadedBytes)})`
       );
-      const archiveBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-      const fileName = `${this.sanitizeFilenamePart(projectData.projectName, 'OpenPaint Project')}.opaint`;
-      const file = new File([archiveBlob], fileName, { type: 'application/octet-stream' });
-      await this.app.projectManager.loadProject(file);
+      await this.app.projectManager.loadProjectFromData(projectData);
 
       const projectsModal = document.getElementById('projectsModal');
       if (projectsModal) projectsModal.classList.add('hidden');
@@ -883,9 +1290,12 @@ export class CloudProjectManager {
       });
     } finally {
       if (!telemetryEmitted) {
-        this.emitTelemetry(telemetry, { status: 'error', reason: 'load_failed' });
+        this.emitTelemetry(telemetry, {
+          status: this.isSyncCanceled(syncToken) ? 'canceled' : 'error',
+          reason: this.isSyncCanceled(syncToken) ? 'load_canceled' : 'load_failed',
+        });
       }
-      setTimeout(() => this.hideSyncOverlay(), 250);
+      this.finishSyncSession(syncToken);
     }
   }
 
@@ -938,8 +1348,13 @@ export class CloudProjectManager {
         this.setCloudStatus('syncing');
         const result = await this.saveProject(projectData);
         if (result.status === 'error') {
-          this.setCloudStatus('error', result.error.userMessage);
-          alert(result.error.userMessage);
+          const isCanceled =
+            result?.error?.code === 'aborted' ||
+            /cloud sync canceled/i.test(String(result?.error?.userMessage || ''));
+          this.setCloudStatus(isCanceled ? 'ready' : 'error', result.error.userMessage);
+          if (!isCanceled) {
+            alert(result.error.userMessage);
+          }
         } else {
           this.setCloudStatus('ready');
           alert(CLOUD_COPY.save.cloudSuccess);

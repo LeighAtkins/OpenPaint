@@ -42,17 +42,22 @@ export default defineConfig(({ mode }) => {
       __PROD__: mode === 'production',
     },
 
+    css:
+      process.env.OP_SKIP_POSTCSS === '1'
+        ? {
+            postcss: {
+              plugins: [],
+            },
+          }
+        : undefined,
+
     build: {
       target: 'ES2022',
+      cssMinify: 'esbuild',
       sourcemap: mode !== 'production',
-      minify: 'terser',
+      minify: 'esbuild',
+      reportCompressedSize: false,
       chunkSizeWarningLimit: 900,
-      terserOptions: {
-        compress: {
-          drop_console: mode === 'production',
-          drop_debugger: mode === 'production',
-        },
-      },
       rollupOptions: {
         output: {
           manualChunks(id) {
@@ -66,6 +71,13 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+
+    esbuild:
+      mode === 'production'
+        ? {
+            drop: ['console', 'debugger'],
+          }
+        : undefined,
 
     optimizeDeps: {
       exclude: ['debug'],

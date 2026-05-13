@@ -100,10 +100,8 @@ class ImageRegistry {
     }
 
     const galleryHasView = this._galleryHasView(viewId);
-    const allowDirectGalleryAdd =
-      !hasAddImageToSidebar || (this.readyReason === 'timeout' && !galleryHasView);
 
-    if (allowDirectGalleryAdd) {
+    if (!hasAddImageToSidebar && !galleryHasView) {
       this._ensureGalleryEntry(viewId, imageUrl, filename, normalizedOptions);
     } else if (isUpdate && galleryHasView) {
       this._updateGalleryEntry(viewId, imageUrl, filename, normalizedOptions);
@@ -125,6 +123,13 @@ class ImageRegistry {
 
       if (window.addImageToSidebar && window.addImageToSidebar.__galleryHooked) {
         this._markReady('hook');
+        return;
+      }
+
+      // TS compat shim can safely handle registration even when the legacy
+      // paint.js hook is not present.
+      if (window.addImageToSidebar && window.addImageToSidebar.__isCompat) {
+        this._markReady('compat');
         return;
       }
 
@@ -233,6 +238,14 @@ class ImageRegistry {
 
     if (filename) {
       container.setAttribute('title', filename);
+    }
+
+    const knownRotation = Number(this.projectManager?.views?.[viewId]?.rotation);
+    if (this.projectManager?.updateThumbnailRotation) {
+      this.projectManager.updateThumbnailRotation(
+        viewId,
+        Number.isFinite(knownRotation) ? knownRotation : 0
+      );
     }
   }
 

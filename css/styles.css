@@ -34,8 +34,8 @@
   cursor: pointer;
   font-size: var(--ob-text-meta);
   font-weight: var(--ob-weight-semibold);
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -156,18 +156,34 @@
 /* ── Image container ─────────────────────────────────────────── */
 .image-container {
   position: relative;
-  border-left: 2px solid transparent;
-  transition: all var(--ob-duration-base) var(--ob-ease-standard);
+  border-left: 3px solid transparent;
+  transition: border-color 80ms ease, background-color 80ms ease, box-shadow 120ms ease, transform 80ms ease;
+  will-change: transform;
+  cursor: pointer;
 }
 
 .image-container:hover {
   border-left-color: var(--ob-signal);
-  background-color: var(--ob-paper);
+  background-color: rgba(248, 250, 252, 0.8);
+}
+
+.image-container:active {
+  transform: scale(0.98);
+  transition-duration: 40ms;
 }
 
 .image-container[aria-selected='true'] {
   border-left-color: var(--ob-signal);
   background-color: var(--ob-signal-soft);
+  box-shadow: inset 0 0 0 1px rgba(45, 107, 255, 0.12);
+}
+
+.image-container .pasted-image {
+  transition: opacity 60ms ease;
+}
+
+.image-container:hover .pasted-image {
+  opacity: 0.92;
 }
 
 /* ── Responsive labels ───────────────────────────────────────── */
@@ -195,16 +211,16 @@
   display: inline-block;
   background-color: var(--ob-signal-soft);
   color: var(--ob-signal);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: var(--ob-weight-medium);
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: var(--ob-radius-chip);
   line-height: 1;
   border: var(--ob-border-width) solid var(--ob-border-color);
 }
 
 .no-tags {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--ob-text-secondary);
   font-style: italic;
 }
@@ -338,7 +354,7 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border-bottom: var(--ob-border-width) solid var(--ob-border-color);
-  height: 48px;
+  min-height: 48px;
 }
 
 .toolbar-wrap {
@@ -347,9 +363,18 @@
   margin: 0;
   padding: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-start;
-  height: 48px;
+  min-height: 48px;
+  flex-wrap: wrap;
+}
+
+.toolbar-wrap::-webkit-scrollbar {
+  height: 3px;
+}
+.toolbar-wrap::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 2px;
 }
 
 #tbLeft,
@@ -358,22 +383,25 @@
   position: relative;
   display: flex;
   align-items: center;
-  flex-shrink: 0;
   min-width: 0;
 }
 
 #tbLeft {
-  flex: 0 0 auto;
-  justify-content: flex-start;
+  flex: 1 1 auto;
+  justify-content: center;
+  flex-wrap: wrap;
+  row-gap: 4px;
 }
 
 #tbCenter {
   flex: 0 0 auto;
+  flex-shrink: 0;
   justify-content: center;
 }
 
 #tbRight {
   flex: 0 0 auto;
+  flex-shrink: 0;
   justify-content: flex-end;
   overflow: visible;
   margin-left: auto;
@@ -383,8 +411,10 @@
   display: none;
 }
 
+#tbLeft > *,
 #tbLeft .tbtn,
 #tbRight .tbtn {
+  flex-shrink: 0;
   min-width: fit-content;
   white-space: nowrap;
 }
@@ -1597,6 +1627,30 @@ body:has(#imagePanel:has(#imagePanelContent.hidden)) #mini-stepper {
   background-color: var(--ob-danger-soft) !important;
 }
 
+/* ── Image list scroll performance ────────────────────────────── */
+#imageList {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+#imageList::-webkit-scrollbar {
+  width: 4px;
+}
+
+#imageList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#imageList::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+}
+
+#imageList::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
 /* ── Scrollbars ──────────────────────────────────────────────── */
 #strokeVisibilityControls {
   scroll-behavior: smooth;
@@ -1864,4 +1918,19 @@ textarea:focus-visible,
 .step,
 .stroke-measurement {
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Search pulse animation ──────────────────────────────────── */
+@keyframes searchingPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.searching-pulse {
+  animation: searchingPulse 1.2s ease-in-out infinite;
+}
+
+/* ── Shortcut dialog backdrop ────────────────────────────────── */
+#shortcutHelpDialog::backdrop {
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(2px);
 }

@@ -18,11 +18,11 @@
 
 **Build commands** (defined in `package.json`):
 
-| Script | Purpose |
-|---|---|
-| `npm run build` | Full build: TypeScript compile + Vite build |
-| `npm run vercel-build` | Vercel-specific: builds Tailwind CSS only |
-| `npm run build:css` | Tailwind CSS compilation |
+| Script                 | Purpose                                     |
+| ---------------------- | ------------------------------------------- |
+| `npm run build`        | Full build: TypeScript compile + Vite build |
+| `npm run vercel-build` | Vercel-specific: builds Tailwind CSS only   |
+| `npm run build:css`    | Tailwind CSS compilation                    |
 
 ### Deploy
 
@@ -39,14 +39,14 @@ npm run deploy:preview  # or: vercel
 
 ### Key Differences from Local
 
-| Concern | Local | Vercel |
-|---|---|---|
-| Runtime | Continuous Express server on port 3000 | Serverless functions per route |
-| Static files | `express.static()` | Vercel CDN |
-| File uploads | `./uploads/` (persistent) | `/tmp/uploads/` (ephemeral, cleared between invocations) |
-| Python features | Available via `pip install` | Not available; background removal requires an external service |
-| Environment vars | `.env` file or shell | Vercel Dashboard > Settings > Environment Variables |
-| Long-running processes | Supported | Not supported (serverless timeout limits) |
+| Concern                | Local                                  | Vercel                                                         |
+| ---------------------- | -------------------------------------- | -------------------------------------------------------------- |
+| Runtime                | Continuous Express server on port 3000 | Serverless functions per route                                 |
+| Static files           | `express.static()`                     | Vercel CDN                                                     |
+| File uploads           | `./uploads/` (persistent)              | `/tmp/uploads/` (ephemeral, cleared between invocations)       |
+| Python features        | Available via `pip install`            | Not available; background removal requires an external service |
+| Environment vars       | `.env` file or shell                   | Vercel Dashboard > Settings > Environment Variables            |
+| Long-running processes | Supported                              | Not supported (serverless timeout limits)                      |
 
 ### Security Headers
 
@@ -93,25 +93,17 @@ npm run validate      # type-check + lint + test
 
 ### Core (Vercel)
 
-| Variable | Required | Description |
-|---|---|---|
-| `AI_WORKER_URL` | If using AI features | URL of the deployed Cloudflare AI Worker |
+| Variable        | Required             | Description                                         |
+| --------------- | -------------------- | --------------------------------------------------- |
+| `AI_WORKER_URL` | If using AI features | URL of the deployed Cloudflare AI Worker            |
 | `AI_WORKER_KEY` | If using AI features | Shared secret for authenticating with the AI Worker |
-
-### Cloudflare Images (optional)
-
-| Variable | Required | Description |
-|---|---|---|
-| `CF_ACCOUNT_ID` | No | Cloudflare account ID |
-| `CF_IMAGES_API_TOKEN` | No | Cloudflare Images API token |
-| `CF_ACCOUNT_HASH` | No | Cloudflare account hash |
 
 ### Cloudflare Worker
 
-| Variable | Required | Description |
-|---|---|---|
-| `AI_WORKER_KEY` | Yes | Must match the `AI_WORKER_KEY` set on the Vercel side |
-| `ENVIRONMENT` | No | Set to `production` in `wrangler.toml` `[vars]` |
+| Variable        | Required | Description                                           |
+| --------------- | -------- | ----------------------------------------------------- |
+| `AI_WORKER_KEY` | Yes      | Must match the `AI_WORKER_KEY` set on the Vercel side |
+| `ENVIRONMENT`   | No       | Set to `production` in `wrangler.toml` `[vars]`       |
 
 Set Vercel environment variables via CLI or dashboard:
 
@@ -152,11 +144,11 @@ The Express relay in `app.js` adds the `X-API-Key` header server-side so the sec
 
 ### Endpoints
 
-| Express Route | Worker Route | Purpose |
-|---|---|---|
-| `POST /ai/generate-svg` | `/generate-svg` | Generate SVG from canvas strokes |
+| Express Route                 | Worker Route          | Purpose                             |
+| ----------------------------- | --------------------- | ----------------------------------- |
+| `POST /ai/generate-svg`       | `/generate-svg`       | Generate SVG from canvas strokes    |
 | `POST /ai/assist-measurement` | `/assist-measurement` | Calculate measurements for a stroke |
-| `POST /ai/enhance-placement` | `/enhance-placement` | Optimize label/annotation placement |
+| `POST /ai/enhance-placement`  | `/enhance-placement`  | Optimize label/annotation placement |
 
 The Worker also exposes `GET /health` (no auth required).
 
@@ -232,12 +224,12 @@ Viable approaches if you want to implement it:
 
 1. **WASM-based converter** bundled into a Cloudflare Worker (requires careful esbuild/webpack configuration).
 2. **Third-party service** (Cloudinary, ImageKit) proxied through a Worker.
-3. **Cloudflare Images** -- does not natively support HEIC input.
+3. **Dedicated media services** (for example Cloudinary/ImageKit) proxied through a Worker.
 
 To integrate a HEIC Worker with OpenPaint, set the Worker URL via:
 
 ```html
-<body data-heic-worker-url="https://<worker-url>/convert">
+<body data-heic-worker-url="https://<worker-url>/convert"></body>
 ```
 
 or:
@@ -258,12 +250,12 @@ window.HEIC_WORKER_URL = 'https://<worker-url>/convert';
 
 ### API Endpoints
 
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/api/share-project` | Create a shareable link. Body: `{ projectData, shareOptions }`. Returns `{ shareUrl, shareId, expiresAt }`. |
-| `GET` | `/api/shared/:shareId` | Retrieve shared project data. Returns `{ projectData, shareInfo }`. |
-| `POST` | `/api/shared/:shareId/measurements` | Submit customer measurements. Body: `{ measurements, customerInfo }`. Returns `{ submissionId, success }`. |
-| `GET` | `/shared/:shareId` | HTML page for customer interaction (serves `shared.html`). |
+| Method | Path                                | Description                                                                                                 |
+| ------ | ----------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `POST` | `/api/share-project`                | Create a shareable link. Body: `{ projectData, shareOptions }`. Returns `{ shareUrl, shareId, expiresAt }`. |
+| `GET`  | `/api/shared/:shareId`              | Retrieve shared project data. Returns `{ projectData, shareInfo }`.                                         |
+| `POST` | `/api/shared/:shareId/measurements` | Submit customer measurements. Body: `{ measurements, customerInfo }`. Returns `{ submissionId, success }`.  |
+| `GET`  | `/shared/:shareId`                  | HTML page for customer interaction (serves `shared.html`).                                                  |
 
 ### Current Limitations
 
@@ -278,41 +270,49 @@ window.HEIC_WORKER_URL = 'https://<worker-url>/convert';
 ### Vercel Deployment
 
 **405 Method Not Allowed on `/ai/*` routes**
+
 - Ensure `vercel.json` is in the repository root and contains the `/ai/*` -> `/app.js` route.
 - Redeploy: `vercel --prod`.
 
 **Environment variables not taking effect**
+
 - Redeploy after setting variables. Vercel caches the previous build.
 - Verify with `vercel env ls`.
 
 ### AI Worker
 
 **401 Unauthorized from Worker**
+
 - `AI_WORKER_KEY` must match between Vercel env and Worker secret.
 - Verify Worker secrets: `cd worker && wrangler secret list`.
 - Re-set if needed: `wrangler secret put AI_WORKER_KEY`.
 
 **Timeout / AbortError**
+
 - Default relay timeout is 2 seconds. Increase in `app.js` if needed.
 - Check Worker logs: `wrangler tail --name openpaint-ai-worker`.
 - Simplify stroke data (fewer points) for faster processing.
 
 **CORS errors in browser console**
+
 - Verify Worker returns `Access-Control-Allow-Origin` on all responses including errors.
 - If restricting origins, make sure your Vercel domain is in the allowlist.
 - The Worker must handle `OPTIONS` preflight requests without requiring auth.
 
 **Mock mode running in production**
+
 - Check `js/ai-export.js` -- the `USE_MOCK` flag is based on `window.location.hostname`. Ensure it includes your production domain.
 
 ### URL Sharing
 
 **Share link not working**
+
 - Link may have expired (30-day default).
 - Server may have restarted, clearing in-memory data.
 - Check browser console for JavaScript errors.
 
 **Customer cannot submit measurements**
+
 - Verify the shared link is still valid.
 - At least one measurement field must be filled.
 - JavaScript must be enabled in the customer's browser.
@@ -320,7 +320,9 @@ window.HEIC_WORKER_URL = 'https://<worker-url>/convert';
 ### General
 
 **File uploads disappear on Vercel**
+
 - Vercel uses ephemeral `/tmp` storage. Uploaded files do not persist across invocations. Use external storage (S3, Cloudflare R2, Vercel Blob) for production.
 
 **Python-dependent features unavailable on Vercel**
+
 - Background removal and other Python features require a local server or an external API. They cannot run in Vercel's serverless environment.

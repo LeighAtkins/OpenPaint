@@ -27,10 +27,11 @@ const AUTH_STYLES = /* css */ `
   .auth-toolbar-group {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
     margin-left: 6px;
     min-width: 0;
-    flex-shrink: 1;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
   }
 
   .auth-sign-in-btn {
@@ -47,21 +48,29 @@ const AUTH_STYLES = /* css */ `
     align-items: center;
     gap: 6px;
     min-width: 0;
+    flex: 0 0 auto;
+    padding: 3px 8px 3px 3px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
   }
 
   .auth-avatar {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--ob-border-color, #d1d5db);
     flex-shrink: 0;
+    background: #e2e8f0;
   }
 
   .auth-display-name {
     font-size: 12px;
-    color: var(--ob-text-primary, #374151);
-    max-width: 90px;
+    color: var(--ob-text-primary, #0f172a);
+    font-weight: 700;
+    max-width: 96px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -72,9 +81,9 @@ const AUTH_STYLES = /* css */ `
   .auth-sign-out-btn {
     font-size: 11px;
     padding: 2px 6px;
-    background: none;
+    background: rgba(255, 255, 255, 0.72);
     border: 1px solid var(--ob-border-color, #d1d5db);
-    border-radius: 4px;
+    border-radius: 999px;
     color: var(--ob-text-secondary, #6b7280);
     cursor: pointer;
     flex-shrink: 0;
@@ -92,7 +101,8 @@ const AUTH_STYLES = /* css */ `
 
   @media (max-width: 768px) {
     .auth-sign-out-btn { display: none; }
-    .auth-avatar { width: 22px; height: 22px; }
+    .auth-avatar { width: 24px; height: 24px; }
+    .auth-user-area { padding-right: 6px; }
   }
 
   /* ── Modal overlay ── */
@@ -214,6 +224,21 @@ let toolbarGroup: HTMLElement | null = null;
 let modalOverlay: HTMLElement | null = null;
 let unsubscribe: (() => void) | null = null;
 
+function refreshToolbarLayout(): void {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      (window as Window & { calculateToolbarMode?: () => void }).calculateToolbarMode?.();
+      window.dispatchEvent(new Event('resize'));
+    });
+  });
+}
+
+function buildInitialAvatarDataUrl(label: string): string {
+  const safeLabel = (label || '?').slice(0, 2).toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0f172a"/><stop offset="1" stop-color="#334155"/></linearGradient></defs><rect width="64" height="64" rx="32" fill="url(#g)"/><text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#f8fafc">${safeLabel}</text></svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
 // ── Toolbar button creation ──────────────────────────────────────────────
 
 function createToolbarGroup(): HTMLElement {
@@ -241,15 +266,31 @@ function createToolbarGroup(): HTMLElement {
   avatar.id = 'authAvatar';
   avatar.alt = 'User avatar';
   avatar.src = '';
+  avatar.referrerPolicy = 'no-referrer';
+  avatar.crossOrigin = 'anonymous';
+  avatar.loading = 'eager';
+  avatar.decoding = 'async';
+  avatar.addEventListener('error', () => {
+    const displayNameEl = document.getElementById('authDisplayName');
+    const fallbackLabel =
+      displayNameEl?.textContent?.trim()?.slice(0, 1) ||
+      authService.getCurrentUser()?.email?.slice(0, 1) ||
+      '?';
+    avatar.src = buildInitialAvatarDataUrl(fallbackLabel);
+    avatar.style.display = 'block';
+  });
 
   const displayName = document.createElement('span');
   displayName.className = 'auth-display-name';
   displayName.id = 'authDisplayName';
 
   const signOutBtn = document.createElement('button');
+  signOutBtn.type = 'button';
   signOutBtn.className = 'auth-sign-out-btn';
   signOutBtn.textContent = 'Sign out';
-  signOutBtn.addEventListener('click', () => {
+  signOutBtn.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
     void handleSignOut();
   });
 
@@ -401,19 +442,29 @@ function updateAuthUI(user: AuthUser | null): void {
     }
 
     if (avatar) {
-      if (user.profile?.avatar_url) {
-        avatar.src = user.profile.avatar_url;
+      const fallbackDataUrl = buildInitialAvatarDataUrl(firstName || fullName || user.email || '?');
+      const avatarUrl = (user.profile?.avatar_url || '').trim();
+      avatar.referrerPolicy = 'no-referrer';
+      avatar.onerror = () => {
+        avatar.onerror = null;
+        avatar.src = fallbackDataUrl;
         avatar.style.display = 'block';
-      } else {
-        avatar.style.display = 'none';
-      }
+      };
+      avatar.src = avatarUrl || fallbackDataUrl;
+      avatar.style.display = 'block';
     }
 
     closeModal();
   } else {
     if (signInBtn) signInBtn.style.display = 'inline-flex';
     if (userArea) userArea.style.display = 'none';
+    if (avatar) {
+      avatar.src = '';
+      avatar.style.display = 'none';
+    }
   }
+
+  refreshToolbarLayout();
 }
 
 // ── Initialization ───────────────────────────────────────────────────────

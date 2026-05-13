@@ -98,6 +98,10 @@ function ensureModalStyles() {
     .project-naming-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
     .project-naming-grid label { font-size: 12px; color: #334155; font-weight: 600; }
     .project-naming-grid input { margin-top: 4px; width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 8px; font-size: 12px; }
+    .project-naming-grid .span-2 { grid-column: 1 / -1; }
+    .project-naming-guide-row { display: flex; gap: 8px; align-items: flex-end; }
+    .project-naming-guide-row input { flex: 1; }
+    .project-naming-link-btn { border-radius: 8px; padding: 8px 10px; font-size: 11px; font-weight: 600; border: 1px solid #cbd5e1; background: #fff; color: #334155; cursor: pointer; }
     .project-naming-footer { margin-top: 12px; display: flex; justify-content: space-between; gap: 8px; }
     .project-naming-btn { border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #cbd5e1; background: #fff; color: #334155; }
     .project-naming-btn.primary { border-color: transparent; background: #1d4ed8; color: #fff; }
@@ -110,9 +114,71 @@ function getNamingPayloadFromInputs(overlay) {
   return {
     customerName: overlay.querySelector('#projectNamingCustomer')?.value?.trim() || '',
     sofaTypeLabel: overlay.querySelector('#projectNamingSofaType')?.value?.trim() || '',
-    jobDate: overlay.querySelector('#projectNamingDate')?.value || '',
-    extraLabel: overlay.querySelector('#projectNamingExtra')?.value?.trim() || '',
+    jobDate: '',
+    extraLabel: '',
   };
+}
+
+function parseGuideCodes(raw) {
+  return Array.from(
+    new Set(
+      String(raw || '')
+        .split(',')
+        .map(code =>
+          String(code || '')
+            .trim()
+            .toUpperCase()
+        )
+        .filter(Boolean)
+    )
+  );
+}
+
+function upsertGuideLibraryFromInput(rawCodes, viewId = getCurrentViewId()) {
+  const metadata = getMetadata();
+  const codes = parseGuideCodes(rawCodes);
+  if (!codes.length) return;
+  const existingLibrary = Array.isArray(metadata.measurementGuideLibraryCodes)
+    ? metadata.measurementGuideLibraryCodes
+    : [];
+  const nextLibrary = Array.from(new Set([...existingLibrary, ...codes]));
+  const nextBindings = {
+    ...(metadata.measurementGuideBindingsByScope || {}),
+    [viewId]: {
+      codes,
+      activeCode: codes[0],
+      locked: true,
+      tagModeHint: 'auto',
+    },
+  };
+  setMetadata({
+    measurementGuideLibraryCodes: nextLibrary,
+    measurementGuideCodes: codes,
+    measurementGuideCode: codes[0] || '',
+    measurementGuideProjectDefaults: { codes, activeCode: codes[0] || '' },
+    measurementGuideBindingsByScope: nextBindings,
+    measurementGuideCodesByView: {
+      ...(metadata.measurementGuideCodesByView || {}),
+      [viewId]: codes,
+    },
+    measurementGuideLockByView: {
+      ...(metadata.measurementGuideLockByView || {}),
+      [viewId]: true,
+    },
+  });
+}
+
+function getInitialGuideCodeValue(metadata, viewId) {
+  const binding = metadata?.measurementGuideBindingsByScope?.[viewId];
+  if (binding && Array.isArray(binding.codes) && binding.codes.length) {
+    return binding.codes.join(', ');
+  }
+  const byView = metadata?.measurementGuideCodesByView?.[viewId];
+  if (Array.isArray(byView) && byView.length) return byView.join(', ');
+  if (Array.isArray(metadata?.measurementGuideCodes) && metadata.measurementGuideCodes.length) {
+    return metadata.measurementGuideCodes.join(', ');
+  }
+  return String(metadata?.measurementGuideCode || '').trim();
 }
 
 function upsertNaming(namingPatch, { forceTitle = false } = {}) {
@@ -137,8 +203,7 @@ function openProjectNamingModal({
   const initial = {
     customerName: naming.customerName || '',
     sofaTypeLabel: initialSofa || '',
-    jobDate: naming.jobDate || '',
-    extraLabel: naming.extraLabel || '',
+    guideCodes: getInitialGuideCodeValue(metadata, getCurrentViewId()),
   };
 
   const overlay = document.createElement('div');
@@ -151,8 +216,13 @@ function openProjectNamingModal({
       <div class="project-naming-grid">
         <label>Customer<input id="projectNamingCustomer" type="text" value="${initial.customerName}" /></label>
         <label>Sofa Type<input id="projectNamingSofaType" type="text" value="${initial.sofaTypeLabel}" /></label>
-        <label>Date<input id="projectNamingDate" type="date" value="${initial.jobDate}" /></label>
-        <label>Extra Label<input id="projectNamingExtra" type="text" value="${initial.extraLabel}" /></label>
+        <div class="span-2">
+          <label>Guide Template Codes (project + this image/frame)</label>
+          <div class="project-naming-guide-row">
+            <input id="projectNamingGuideCodes" type="text" value="${initial.guideCodes}" placeholder="e.g. CC-BK-BE, CS3B-SSA-SB-R" />
+            <button id="projectNamingGuideGallery" type="button" class="project-naming-link-btn">Browse Gallery</button>
+          </div>
+        </div>
       </div>
 
       <p id="projectNamingPreview" style="margin:10px 0 0;font-size:12px;color:#334155;"></p>
@@ -175,6 +245,8 @@ function openProjectNamingModal({
   const warning = overlay.querySelector('#projectNamingWarning');
   const continueBtn = overlay.querySelector('#projectNamingContinue');
   const secondaryBtn = overlay.querySelector('#projectNamingSecondary');
+  const guideInput = overlay.querySelector('#projectNamingGuideCodes');
+  const guideGalleryBtn = overlay.querySelector('#projectNamingGuideGallery');
 
   const focusables = () =>
     Array.from(
@@ -197,9 +269,37 @@ function openProjectNamingModal({
     .forEach(input => input.addEventListener('input', updatePreview));
   updatePreview();
 
+  guideGalleryBtn?.addEventListener('click', () => {
+    if (typeof window.openMeasurementGuideGallery === 'function') {
+      window.openMeasurementGuideGallery({
+        onSelect: ({ code }) => {
+          if (!code || !guideInput) return;
+          const next = parseGuideCodes(`${guideInput.value}, ${code}`);
+          guideInput.value = next.join(', ');
+          updatePreview();
+        },
+      });
+      return;
+    }
+    const manual = window.prompt(
+      'Enter guide code(s), separated by commas',
+      guideInput?.value || ''
+    );
+    if (typeof manual === 'string' && guideInput) {
+      guideInput.value = parseGuideCodes(manual).join(', ');
+      updatePreview();
+    }
+  });
+
   continueBtn?.addEventListener('click', () => {
     const payload = getNamingPayloadFromInputs(overlay);
     upsertNaming(payload, { forceTitle: false });
+    upsertGuideLibraryFromInput(guideInput?.value || '', getCurrentViewId());
+    const metadata = getMetadata();
+    const firstSavedAt = metadata?.naming?.firstSavedAt;
+    if (!firstSavedAt) {
+      upsertNaming({ firstSavedAt: new Date().toISOString().slice(0, 10) }, { forceTitle: false });
+    }
     close();
     onComplete?.();
   });
@@ -244,11 +344,11 @@ function openProjectNamingModal({
   document.body.appendChild(overlay);
   const customerInput = overlay.querySelector('#projectNamingCustomer');
   const sofaTypeInput = overlay.querySelector('#projectNamingSofaType');
-  const dateInput = overlay.querySelector('#projectNamingDate');
+  const guideCodesInput = overlay.querySelector('#projectNamingGuideCodes');
   const firstTarget =
     (!customerInput?.value && customerInput) ||
     (!sofaTypeInput?.value && sofaTypeInput) ||
-    (!dateInput?.value && dateInput) ||
+    (!guideCodesInput?.value && guideCodesInput) ||
     customerInput ||
     continueBtn;
   firstTarget?.focus();
@@ -308,9 +408,7 @@ export function getImagePartLabelForView(viewId, index = 0) {
 function hasCoreNamingFields() {
   const naming = getMetadata().naming || {};
   return Boolean(
-    String(naming.customerName || '').trim() &&
-    String(naming.sofaTypeLabel || '').trim() &&
-    String(naming.jobDate || '').trim()
+    String(naming.customerName || '').trim() && String(naming.sofaTypeLabel || '').trim()
   );
 }
 
@@ -323,13 +421,21 @@ function installSaveNamingPrompt() {
 
   manager.saveProject = async (...args) => {
     if (hasCoreNamingFields()) {
+      const metadata = getMetadata();
+      if (!String(metadata?.naming?.firstSavedAt || '').trim()) {
+        upsertNaming(
+          { firstSavedAt: new Date().toISOString().slice(0, 10) },
+          { forceTitle: false }
+        );
+      }
       return originalSaveProject(...args);
     }
 
     return new Promise(resolve => {
       openProjectNamingModal({
         title: 'Project details before save',
-        subtitle: 'Add customer, sofa type, and date for clearer filenames and PDF context.',
+        subtitle:
+          'Add customer, sofa type, and guide template codes for cleaner project naming and guide linking.',
         continueLabel: 'Save details + Save project',
         secondaryLabel: 'Save anyway',
         onComplete: async () => {
@@ -337,6 +443,13 @@ function installSaveNamingPrompt() {
           resolve();
         },
         onSkip: async () => {
+          const metadata = getMetadata();
+          if (!String(metadata?.naming?.firstSavedAt || '').trim()) {
+            upsertNaming(
+              { firstSavedAt: new Date().toISOString().slice(0, 10) },
+              { forceTitle: false }
+            );
+          }
           await originalSaveProject(...args);
           resolve();
         },
@@ -352,13 +465,43 @@ function promptInitialNamingIfNeeded() {
   setTimeout(() => {
     openProjectNamingModal({
       title: 'Set project details',
-      subtitle: 'Optional now, but recommended for clear save/PDF naming.',
+      subtitle: 'Optional now, but recommended for clear save naming and cloud-ready metadata.',
       continueLabel: 'Save details',
       secondaryLabel: 'Skip for now',
       onComplete: () => {},
       onSkip: () => {},
     });
   }, 250);
+}
+
+export function ensureCloudSaveDetails() {
+  const metadata = getMetadata();
+  const naming = metadata.naming || {};
+  const hasNaming =
+    String(naming.customerName || '').trim() && String(naming.sofaTypeLabel || '').trim();
+  const hasGuide =
+    (Array.isArray(metadata.measurementGuideLibraryCodes) &&
+      metadata.measurementGuideLibraryCodes.length > 0) ||
+    (Array.isArray(metadata.measurementGuideCodes) && metadata.measurementGuideCodes.length > 0) ||
+    String(metadata.measurementGuideCode || '').trim();
+
+  if (hasNaming && hasGuide) {
+    if (!String(naming.firstSavedAt || '').trim()) {
+      upsertNaming({ firstSavedAt: new Date().toISOString().slice(0, 10) }, { forceTitle: false });
+    }
+    return Promise.resolve(true);
+  }
+
+  return new Promise(resolve => {
+    openProjectNamingModal({
+      title: 'Cloud save needs project details',
+      subtitle: 'Customer, sofa type, and at least one guide template are required for cloud save.',
+      continueLabel: 'Save details',
+      secondaryLabel: 'Cancel',
+      onComplete: () => resolve(true),
+      onSkip: () => resolve(false),
+    });
+  });
 }
 
 export function initProjectNaming() {

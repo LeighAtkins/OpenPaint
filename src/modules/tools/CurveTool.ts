@@ -5,6 +5,7 @@
 import { BaseTool } from './BaseTool.js';
 import { PathUtils } from '../utils/PathUtils.js';
 import { FabricControls } from '../utils/FabricControls.js';
+import { addAutoMeasurementConnections } from '../utils/measurement-connections.js';
 
 export class CurveTool extends BaseTool {
   constructor(canvasManager) {
@@ -21,6 +22,7 @@ export class CurveTool extends BaseTool {
     this.snapPoint = null;
     this.snapThreshold = 10;
     this.snapIndicator = null;
+    this.pointSnapTargets = [];
 
     // Bind event handlers
     this.onMouseDown = this.onMouseDown.bind(this);
@@ -73,16 +75,26 @@ export class CurveTool extends BaseTool {
   onMouseDown(o) {
     if (!this.isActive) return;
 
-    // If clicking on existing object, let Fabric handle dragging
-    if (o.target) {
+    const evt = o.e;
+
+    // If clicking on existing object AND Ctrl is NOT held, let Fabric handle dragging
+    // If Ctrl IS held, ignore the object and proceed to draw (with snap)
+    if (o.target && !evt.ctrlKey) {
       return;
     }
 
+    if (o.target && evt.ctrlKey) {
+      this.canvas.discardActiveObject();
+    }
+
     // Don't start drawing if this is a pan gesture (Alt, Shift, or touch gesture)
-    const evt = o.e;
     if (evt.altKey || evt.shiftKey || this.canvas.isGestureActive) {
       console.log('[CurveTool] Ignoring mousedown - modifier key or gesture detected');
       return;
+    }
+
+    if (this.points.length === 0) {
+      this.pointSnapTargets = [];
     }
 
     if (this.points.length === 0 && window.app?.historyManager) {
@@ -93,15 +105,18 @@ export class CurveTool extends BaseTool {
 
     // Check for snap if Ctrl is held
     let pointer = rawPointer;
+    let snapTarget = null;
     if (evt.ctrlKey) {
-      const snapPoint = this.findSnapPointForDrawing(rawPointer);
-      if (snapPoint) {
-        pointer = snapPoint;
+      const snapResult = this.findSnapPointForDrawing(rawPointer);
+      if (snapResult) {
+        pointer = snapResult.point;
+        snapTarget = snapResult.target || null;
         console.log('[CurveTool] Snapped point added:', pointer);
       }
     }
 
     this.points.push({ x: pointer.x, y: pointer.y });
+    this.pointSnapTargets.push(snapTarget);
 
     // Add visual marker for the point
     const marker = new fabric.Circle({
@@ -142,10 +157,10 @@ export class CurveTool extends BaseTool {
 
     // Check for snap if Ctrl is held
     if (o.e.ctrlKey) {
-      const snapPoint = this.findSnapPointForDrawing(rawPointer);
-      if (snapPoint) {
-        pointer = snapPoint;
-        this.showSnapIndicator(snapPoint);
+      const snapResult = this.findSnapPointForDrawing(rawPointer);
+      if (snapResult) {
+        pointer = snapResult.point;
+        this.showSnapIndicator(snapResult.point);
       } else {
         this.hideSnapIndicator();
       }
@@ -165,6 +180,7 @@ export class CurveTool extends BaseTool {
   findSnapPointForDrawing(mousePos) {
     // Find closest point on all lines within threshold
     let closestPoint = null;
+    let closestTarget = null;
     let minDistance = this.snapThreshold;
 
     const objects = this.canvas.getObjects();
@@ -186,13 +202,23 @@ export class CurveTool extends BaseTool {
         if (distance < minDistance) {
           minDistance = distance;
           closestPoint = point;
+          const snapMeta = obj.strokeMetadata;
+          if (snapMeta?.strokeLabel) {
+            closestTarget = {
+              imageLabel: snapMeta.imageLabel,
+              strokeLabel: snapMeta.strokeLabel,
+            };
+          } else {
+            closestTarget = null;
+          }
         }
       } catch (e) {
         console.warn('[CurveTool] Error finding closest point:', e);
       }
     }
 
-    return closestPoint;
+    if (!closestPoint) return null;
+    return { point: closestPoint, target: closestTarget };
   }
 
   showSnapIndicator(point) {
@@ -255,6 +281,7 @@ export class CurveTool extends BaseTool {
     }
 
     this.points.pop();
+    this.pointSnapTargets.pop();
 
     if (this.points.length === 0) {
       if (this.previewPath) {
@@ -380,7 +407,9 @@ export class CurveTool extends BaseTool {
       strokeDashArray: this.dashPattern.length > 0 ? this.dashPattern : null,
       selectable: true,
       evented: true,
-      perPixelTargetFind: false,
+      perPixelTargetFind: true,
+      padding: 8,
+      objectCaching: false,
     });
 
     // Store points on the object for editing
@@ -476,6 +505,11 @@ export class CurveTool extends BaseTool {
       console.log(`[CurveTool] Attaching metadata: label=${strokeLabel}, image=${imageLabel}`);
       window.app.metadataManager.attachMetadata(curve, imageLabel, strokeLabel);
 
+      addAutoMeasurementConnections(
+        { imageLabel, strokeLabel },
+        (this.pointSnapTargets || []).filter(Boolean)
+      );
+
       // Create tag
       if (window.app.tagManager) {
         try {
@@ -500,8 +534,14 @@ export class CurveTool extends BaseTool {
 
     // Reset
     this.points = [];
+    this.pointSnapTargets = [];
     this.isDrawing = false;
     this.canvas.selection = true; // Re-enable selection
+
+    // Keep newly-created curve anchors hidden until user explicitly re-selects the curve.
+    this.canvas.discardActiveObject();
+    curve.setCoords();
+    this.canvas.requestRenderAll();
 
     // Fire object:added event
     console.log('[CurveTool] Firing object:added event');
@@ -519,6 +559,7 @@ export class CurveTool extends BaseTool {
 
     // Reset state
     this.points = [];
+    this.pointSnapTargets = [];
     this.isDrawing = false;
     this.canvas.selection = true;
     this.canvas.renderAll();

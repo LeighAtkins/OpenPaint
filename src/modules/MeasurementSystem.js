@@ -4,22 +4,34 @@
 export class MeasurementSystem {
   // Constants
   static INCHES_TO_CM = 2.54;
-  static FRACTION_VALUES = [0, 0.125, 0.25, 0.375, 0.5, 0.625, 0.75, 0.875];
+  static FRACTION_VALUES = [
+    0, 0.0625, 0.125, 0.1875, 0.25, 0.3125, 0.375, 0.4375, 0.5, 0.5625, 0.625, 0.6875, 0.75, 0.8125,
+    0.875, 0.9375,
+  ];
   static FRACTION_DISPLAY = {
     0: '0',
+    0.0625: '1/16',
     0.125: '1/8',
+    0.1875: '3/16',
     0.25: '1/4',
+    0.3125: '5/16',
     0.375: '3/8',
+    0.4375: '7/16',
     0.5: '1/2',
+    0.5625: '9/16',
     0.625: '5/8',
+    0.6875: '11/16',
     0.75: '3/4',
+    0.8125: '13/16',
     0.875: '7/8',
+    0.9375: '15/16',
   };
 
   // Constructor
   constructor(metadataManager) {
     this.metadataManager = metadataManager;
     this.currentUnit = 'inches'; // 'inches' or 'cm'
+    this.currentInchDisplayMode = 'decimal'; // 'decimal' or 'fraction'
   }
 
   // Set display unit
@@ -38,22 +50,107 @@ export class MeasurementSystem {
     return this.currentUnit;
   }
 
+  setInchDisplayMode(mode) {
+    this.currentInchDisplayMode = mode === 'fraction' ? 'fraction' : 'decimal';
+  }
+
+  getInchDisplayMode() {
+    return this.currentInchDisplayMode;
+  }
+
+  roundFraction(inchFraction) {
+    const numericFraction = Number(inchFraction || 0);
+    return this.findClosestFraction(Number.isFinite(numericFraction) ? numericFraction : 0);
+  }
+
+  toMeasurementParts(inchWhole, inchFraction) {
+    const whole = Math.max(0, parseInt(String(inchWhole || 0), 10) || 0);
+    const fraction = this.roundFraction(inchFraction);
+    return {
+      inchWhole: whole,
+      inchFraction: fraction,
+      totalInches: whole + fraction,
+    };
+  }
+
+  formatFractionString(inchWhole, inchFraction, includeUnit = true) {
+    const { inchWhole: whole, inchFraction: fraction } = this.toMeasurementParts(
+      inchWhole,
+      inchFraction
+    );
+    const suffix = includeUnit ? '"' : '';
+    const fractionLabel = MeasurementSystem.FRACTION_DISPLAY[fraction] || '0';
+
+    if (whole === 0 && fraction === 0) return `0${suffix}`;
+    if (whole === 0) return `${fractionLabel}${suffix}`;
+    if (fraction === 0) return `${whole}${suffix}`;
+    return `${whole} ${fractionLabel}${suffix}`;
+  }
+
+  formatDecimalInches(totalInches, includeUnit = true, decimalPlaces = 2) {
+    const numericValue = Number(totalInches || 0);
+    const safeDecimalPlaces = Math.max(0, Number(decimalPlaces) || 0);
+    const normalized = Number.isFinite(numericValue)
+      ? numericValue.toFixed(safeDecimalPlaces).replace(/\.?0+$/, '')
+      : '0';
+    return includeUnit ? `${normalized}"` : normalized;
+  }
+
+  formatInchValue(inchWhole, inchFraction, options = {}) {
+    const includeUnit = options.includeUnit !== false;
+    const mode =
+      options.mode === 'fraction' || options.mode === 'decimal'
+        ? options.mode
+        : this.currentInchDisplayMode;
+    const parts = this.toMeasurementParts(inchWhole, inchFraction);
+
+    if (mode === 'fraction') {
+      return this.formatFractionString(parts.inchWhole, parts.inchFraction, includeUnit);
+    }
+
+    const decimalInches =
+      typeof options.inchValue === 'number' && Number.isFinite(options.inchValue)
+        ? options.inchValue
+        : parts.totalInches;
+    return this.formatDecimalInches(decimalInches, includeUnit, options.decimalPlaces);
+  }
+
+  formatCentimeterValue(cmValue, options = {}) {
+    const includeUnit = options.includeUnit !== false;
+    const decimalPlaces = Math.max(0, Number(options.decimalPlaces) || 0);
+    const trimTrailingZeros = options.trimTrailingZeros !== false;
+    const numericValue = Number(cmValue || 0);
+    const formatted = Number.isFinite(numericValue) ? numericValue.toFixed(decimalPlaces) : '0';
+    const normalized = trimTrailingZeros ? formatted.replace(/\.?0+$/, '') : formatted;
+    return includeUnit ? `${normalized} cm` : normalized;
+  }
+
   // Format measurement for display
-  formatMeasurement(inchWhole, inchFraction) {
+  formatMeasurement(inchWhole, inchFraction, options = {}) {
+    const includeUnit = options.includeUnit !== false;
     if (this.currentUnit === 'inches') {
-      const fraction = MeasurementSystem.FRACTION_DISPLAY[inchFraction] || '0';
-      if (inchWhole === 0 && inchFraction === 0) {
-        return '0"';
-      } else if (inchWhole === 0) {
-        return `${fraction}"`;
-      } else if (inchFraction === 0) {
-        return `${inchWhole}"`;
-      } else {
-        return `${inchWhole} ${fraction}"`;
-      }
+      const decimalPlaces =
+        typeof options.decimalPlaces === 'number'
+          ? options.decimalPlaces
+          : options.inputUnit === 'cm'
+            ? 1
+            : options.inputUnit === 'inches'
+              ? 3
+              : undefined;
+      return this.formatInchValue(inchWhole, inchFraction, {
+        includeUnit,
+        inchValue: options.inchValue,
+        decimalPlaces,
+      });
     } else {
-      const cm = this.convertToCm(inchWhole, inchFraction);
-      return `${cm.toFixed(1)} cm`;
+      const cm =
+        typeof options.cmValue === 'number' && Number.isFinite(options.cmValue)
+          ? options.cmValue
+          : this.convertToCm(inchWhole, inchFraction);
+      return this.formatCentimeterValue(cm, {
+        includeUnit,
+        decimalPlaces: options.decimalPlaces ?? 1,
+      });
     }
   }
 
@@ -75,7 +172,7 @@ export class MeasurementSystem {
 
   // Convert inches to cm
   convertToCm(inchWhole, inchFraction) {
-    const totalInches = inchWhole + inchFraction;
+    const { totalInches } = this.toMeasurementParts(inchWhole, inchFraction);
     return totalInches * MeasurementSystem.INCHES_TO_CM;
   }
 
@@ -89,6 +186,102 @@ export class MeasurementSystem {
     return { inchWhole, inchFraction };
   }
 
+  parseMeasurementInput(value, unit = this.currentUnit) {
+    const raw = String(value || '').trim();
+    if (!raw) return null;
+
+    let totalInches = null;
+    let exactCmInput = null;
+    const normalizedUnit = unit === 'inch' ? 'inches' : unit;
+    const hasExplicitInchMarker = /(?:"|in|inch|inches)\s*$/i.test(raw);
+    const hasFractionToken = /\d+\s*\/\s*\d+/.test(raw);
+
+    const cmMatch = raw.match(/^\s*([\d.]+)\s*(cm|centimeter|centimeters)\s*$/i);
+    if (cmMatch?.[1]) {
+      const cm = parseFloat(cmMatch[1]);
+      if (Number.isFinite(cm) && cm >= 0) {
+        totalInches = cm / MeasurementSystem.INCHES_TO_CM;
+        exactCmInput = cm;
+      }
+    }
+
+    if (totalInches === null) {
+      const inchMatch = raw.match(
+        /^\s*(?:(\d+)\s+)?(\d+\s*\/\s*\d+|\d+(?:\.\d+)?)\s*(?:"|in|inch|inches)?\s*$/i
+      );
+      const shouldTreatAsInches =
+        Boolean(inchMatch) &&
+        (normalizedUnit !== 'cm' || hasExplicitInchMarker || hasFractionToken);
+      if (shouldTreatAsInches && inchMatch) {
+        const whole = parseInt(inchMatch[1] || '0', 10) || 0;
+        const fractionToken = String(inchMatch[2] || '').replace(/\s+/g, '');
+        let fraction = 0;
+        if (fractionToken.includes('/')) {
+          const [numeratorRaw, denominatorRaw] = fractionToken.split('/');
+          const numerator = parseInt(numeratorRaw, 10);
+          const denominator = parseInt(denominatorRaw, 10);
+          if (Number.isFinite(numerator) && Number.isFinite(denominator) && denominator > 0) {
+            fraction = numerator / denominator;
+          } else {
+            return null;
+          }
+        } else {
+          const numeric = parseFloat(fractionToken);
+          if (!Number.isFinite(numeric)) return null;
+          if (inchMatch[1]) {
+            fraction = numeric;
+          } else {
+            totalInches = numeric;
+          }
+        }
+        if (totalInches === null) {
+          totalInches = whole + fraction;
+        }
+      }
+    }
+
+    if (totalInches === null) {
+      const plainNumber = parseFloat(raw);
+      if (Number.isFinite(plainNumber) && plainNumber >= 0) {
+        if (normalizedUnit === 'cm') {
+          totalInches = plainNumber / MeasurementSystem.INCHES_TO_CM;
+          exactCmInput = plainNumber;
+        } else {
+          totalInches = plainNumber;
+        }
+      }
+    }
+
+    if (!Number.isFinite(totalInches) || totalInches === null || totalInches < 0) {
+      return null;
+    }
+
+    const exactTotalInches = totalInches;
+    const inchWhole = Math.floor(exactTotalInches);
+    const inchFraction = this.findClosestFraction(exactTotalInches - inchWhole);
+    // When the input was a CM value, preserve the exact value instead of
+    // recalculating from the fraction-rounded inches (avoids rounding error
+    // e.g. 129 cm → 50 13/16" → 129.06 cm).
+    const cm =
+      exactCmInput !== null ? exactCmInput : exactTotalInches * MeasurementSystem.INCHES_TO_CM;
+    return {
+      inchWhole,
+      inchFraction,
+      cm: parseFloat(cm.toFixed(4)),
+      totalInches: parseFloat(exactTotalInches.toFixed(4)),
+      roundedTotalInches: parseFloat((inchWhole + inchFraction).toFixed(4)),
+      inputUnit: exactCmInput !== null || normalizedUnit === 'cm' ? 'cm' : 'inches',
+    };
+  }
+
+  formatInchInputValue(inchWhole, inchFraction, options = {}) {
+    return this.formatInchValue(inchWhole, inchFraction, {
+      includeUnit: false,
+      inchValue: options.inchValue,
+      decimalPlaces: options.decimalPlaces,
+    });
+  }
+
   // Get formatted measurement string for a stroke
   getMeasurementString(imageLabel, strokeLabel) {
     const measurement = this.getMeasurement(imageLabel, strokeLabel);
@@ -96,16 +289,35 @@ export class MeasurementSystem {
       return '';
     }
 
-    return this.formatMeasurement(measurement.inchWhole, measurement.inchFraction);
+    return this.formatMeasurement(measurement.inchWhole, measurement.inchFraction, {
+      cmValue: measurement.cm,
+      inchValue: measurement.inch,
+      inputUnit: measurement.inputUnit,
+    });
   }
 
   // Set measurement for a stroke
-  setMeasurement(imageLabel, strokeLabel, inchWhole, inchFraction) {
-    const cm = this.convertToCm(inchWhole, inchFraction);
+  setMeasurement(imageLabel, strokeLabel, inchWhole, inchFraction, options = {}) {
+    const { inchWhole: whole, inchFraction: fraction } = this.toMeasurementParts(
+      inchWhole,
+      inchFraction
+    );
+    const cm =
+      typeof options.cmValue === 'number' && Number.isFinite(options.cmValue)
+        ? options.cmValue
+        : this.convertToCm(whole, fraction);
+    const inch =
+      typeof options.inchValue === 'number' && Number.isFinite(options.inchValue)
+        ? options.inchValue
+        : typeof options.cmValue === 'number' && Number.isFinite(options.cmValue)
+          ? options.cmValue / MeasurementSystem.INCHES_TO_CM
+          : whole + fraction;
     const measurement = {
-      inchWhole: inchWhole,
-      inchFraction: inchFraction,
-      cm: cm,
+      inchWhole: whole,
+      inchFraction: fraction,
+      cm: parseFloat(cm.toFixed(4)),
+      inch: parseFloat(inch.toFixed(4)),
+      inputUnit: options.inputUnit === 'cm' ? 'cm' : 'inches',
     };
 
     this.metadataManager.setMeasurement(imageLabel, strokeLabel, measurement);
@@ -125,7 +337,7 @@ export class MeasurementSystem {
       typeof measurement.inchFraction === 'number' &&
       typeof measurement.cm === 'number' &&
       measurement.inchWhole >= 0 &&
-      MeasurementSystem.FRACTION_VALUES.includes(measurement.inchFraction)
+      MeasurementSystem.FRACTION_VALUES.includes(this.roundFraction(measurement.inchFraction))
     );
   }
 
@@ -136,13 +348,20 @@ export class MeasurementSystem {
 
     for (const [strokeLabel, measurement] of Object.entries(measurements)) {
       if (this.validateMeasurement(measurement)) {
-        const formatted = this.formatMeasurement(measurement.inchWhole, measurement.inchFraction);
+        const formatted = this.formatMeasurement(measurement.inchWhole, measurement.inchFraction, {
+          cmValue: measurement.cm,
+        });
         result.push({
           label: strokeLabel,
           measurement: formatted,
           inchWhole: measurement.inchWhole,
           inchFraction: measurement.inchFraction,
           cm: measurement.cm,
+          inch:
+            typeof measurement.inch === 'number' && Number.isFinite(measurement.inch)
+              ? measurement.inch
+              : measurement.inchWhole + measurement.inchFraction,
+          inputUnit: measurement.inputUnit,
         });
       }
     }

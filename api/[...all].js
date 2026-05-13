@@ -1,9 +1,12 @@
-import app from '../server/app.js';
+import app from '../app.js';
 
 export default function handler(req, res) {
-  // Vercel calls this at /api/*; Express should see the path WITHOUT /api
-  if (req.url.startsWith('/api')) {
-    req.url = req.url.slice(4) || '/';
+  console.log('[...all] received:', req.method, req.url);
+  // Keep /api-prefixed URLs for the main app server.
+  // Wallet/pets vanity paths are rewritten here, so normalize them to /api/*.
+  if (req.url.startsWith('/wallet') || req.url.startsWith('/pets')) {
+    req.url = `/api${req.url}`;
   }
+  console.log('[...all] forwarding to Express:', req.method, req.url);
   return app(req, res);
 }

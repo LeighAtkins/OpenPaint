@@ -131,6 +131,24 @@ export class ToolManager {
     });
   }
 
+  setCanvasManager(canvasManager: CanvasManagerLike) {
+    if (!canvasManager || this.canvasManager === canvasManager) {
+      return;
+    }
+
+    if (this.activeTool && typeof this.activeTool.deactivate === 'function') {
+      this.activeTool.deactivate();
+    }
+
+    this.canvasManager = canvasManager;
+    Object.values(this.tools).forEach(tool => {
+      if (!tool) return;
+      tool.canvasManager = canvasManager;
+      tool.canvas = canvasManager.fabricCanvas || null;
+    });
+    this.activeTool = null;
+  }
+
   async selectTool(toolName: ToolName) {
     this.pendingToolName = toolName;
 

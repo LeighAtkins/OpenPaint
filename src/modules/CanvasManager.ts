@@ -5,6 +5,7 @@
 
 import { FabricControls } from './utils/FabricControls.js';
 import { PathUtils } from './utils/PathUtils.js';
+import { fitViewportToWorldRect, normalizeViewportRecord } from './utils/viewportRestore.ts';
 
 declare const fabric: typeof import('fabric');
 
@@ -33,6 +34,12 @@ interface ClipboardState {
   objects: unknown[];
   timestamp: number;
 }
+interface CanvasManagerOptions {
+  containerId?: string;
+  enableFloatingLayout?: boolean;
+  interactionGuard?: (() => boolean) | null;
+  paneId?: string;
+}
 
 declare global {
   interface Window {
@@ -41,11 +48,16 @@ declare global {
     currentImageLabel?: string;
     getCaptureTabScopedLabel?: (label: string) => string;
     updateNextTagDisplay?: () => void;
+    __openpaintSuppressMeasurementFocus?: boolean;
   }
 }
 
 export class CanvasManager {
   canvasId: string;
+  containerId: string;
+  enableFloatingLayoutMode: boolean;
+  interactionGuard: (() => boolean) | null;
+  paneId: string;
   fabricCanvas: FabricCanvas | null;
   pendingResizeFrame: number | null;
   pendingResizeWidth: number | null;
@@ -76,13 +88,19 @@ export class CanvasManager {
   resizeObserver: ResizeObserver | null;
   baseFrameState?: FrameState;
   manualZoomLevel: number | null;
+  lastGuideSplitActive: boolean | null;
   lastWindowWidth?: number;
   _updateTimeout?: ReturnType<typeof setTimeout>;
   __tagScaleActive?: boolean;
   __tagScaleTarget?: FabricObject | null;
 
-  constructor(canvasId: string) {
+  constructor(canvasId: string, options: CanvasManagerOptions = {}) {
     this.canvasId = canvasId;
+    this.containerId = options.containerId || 'main-canvas-wrapper';
+    this.enableFloatingLayoutMode = options.enableFloatingLayout !== false;
+    this.interactionGuard =
+      typeof options.interactionGuard === 'function' ? options.interactionGuard : null;
+    this.paneId = options.paneId || canvasId || 'main';
     this.fabricCanvas = null;
 
     // Resize state
@@ -122,6 +140,41 @@ export class CanvasManager {
 
     this.resizeObserver = null;
     this.manualZoomLevel = null;
+    this.lastGuideSplitActive = null;
+  }
+
+  setInteractionGuard(guard: (() => boolean) | null): void {
+    this.interactionGuard = typeof guard === 'function' ? guard : null;
+  }
+
+  isInteractionActive(): boolean {
+    if (typeof this.interactionGuard !== 'function') return true;
+    try {
+      return this.interactionGuard();
+    } catch {
+      return true;
+    }
+  }
+
+  markGuideSplitViewportInteraction(): void {
+    if (!this.isGuideSplitActive()) return;
+    window.__guideSplitUserViewportDirty = true;
+    window.__guideSplitUserViewportChangedAt =
+      typeof performance !== 'undefined' ? performance.now() : Date.now();
+  }
+
+  getContainerElement(): HTMLElement | null {
+    if (this.containerId === 'main-canvas-wrapper') {
+      const splitLiveHost = document.getElementById('guideSplitLiveCanvasHost');
+      if (splitLiveHost && splitLiveHost.offsetParent !== null) {
+        return splitLiveHost;
+      }
+      const splitLivePane = document.getElementById('guideSplitLivePane');
+      if (splitLivePane && splitLivePane.offsetParent !== null) {
+        return splitLivePane;
+      }
+    }
+    return document.getElementById(this.containerId);
   }
 
   init(): void {
@@ -165,6 +218,99 @@ export class CanvasManager {
       }
     });
 
+    let focusMeasurementForSelectionTimer: ReturnType<typeof setTimeout> | null = null;
+    let focusMeasurementForSelectionToken = 0;
+
+    const clearMeasurementSelectionFocus = () => {
+      focusMeasurementForSelectionToken += 1;
+      if (focusMeasurementForSelectionTimer) {
+        clearTimeout(focusMeasurementForSelectionTimer);
+        focusMeasurementForSelectionTimer = null;
+      }
+    };
+
+    const focusMeasurementForSelection = (evt: FabricIEvent) => {
+      if (window.__openpaintSuppressMeasurementFocus) {
+        clearMeasurementSelectionFocus();
+        return;
+      }
+
+      const sourceEvent = evt?.e as MouseEvent | PointerEvent | KeyboardEvent | undefined;
+      if (sourceEvent?.shiftKey || sourceEvent?.ctrlKey || sourceEvent?.metaKey) {
+        clearMeasurementSelectionFocus();
+        return;
+      }
+
+      const selected = Array.isArray(evt?.selected)
+        ? evt.selected
+        : evt?.target && evt.target.type !== 'activeSelection'
+          ? [evt.target]
+          : [];
+      if (!selected || selected.length !== 1) {
+        clearMeasurementSelectionFocus();
+        return;
+      }
+
+      const target = selected[0];
+      if (!target || target.type === 'activeSelection') {
+        clearMeasurementSelectionFocus();
+        return;
+      }
+
+      const strokeLabel =
+        target?.strokeMetadata?.strokeLabel ||
+        target?.strokeLabel ||
+        target?.connectedStroke?.strokeMetadata?.strokeLabel ||
+        target?.connectedStroke?.strokeLabel;
+      if (!strokeLabel) {
+        clearMeasurementSelectionFocus();
+        return;
+      }
+
+      const activeEl = document.activeElement as HTMLElement | null;
+      const isEditing =
+        !!activeEl &&
+        activeEl !== document.body &&
+        (activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          activeEl.isContentEditable);
+      if (isEditing) {
+        clearMeasurementSelectionFocus();
+        return;
+      }
+
+      const metadataManager = window.app?.metadataManager;
+      clearMeasurementSelectionFocus();
+      const focusToken = focusMeasurementForSelectionToken;
+
+      focusMeasurementForSelectionTimer = setTimeout(() => {
+        focusMeasurementForSelectionTimer = null;
+        if (focusToken !== focusMeasurementForSelectionToken) return;
+        if (window.__openpaintSuppressMeasurementFocus) return;
+
+        const activeObjects = this.fabricCanvas?.getActiveObjects?.() || [];
+        if (activeObjects.length !== 1) return;
+
+        const [activeTarget] = activeObjects;
+        const activeStrokeLabel =
+          activeTarget?.strokeMetadata?.strokeLabel ||
+          activeTarget?.strokeLabel ||
+          activeTarget?.connectedStroke?.strokeMetadata?.strokeLabel ||
+          activeTarget?.connectedStroke?.strokeLabel;
+        if (!activeStrokeLabel || activeStrokeLabel !== strokeLabel) return;
+
+        if (metadataManager?.focusMeasurementInput) {
+          metadataManager.focusMeasurementInput(strokeLabel, {
+            requireCanvasSingleSelection: true,
+          });
+        }
+      }, 0);
+    };
+
+    this.fabricCanvas.on('selection:created', focusMeasurementForSelection);
+    this.fabricCanvas.on('selection:updated', focusMeasurementForSelection);
+    this.fabricCanvas.on('selection:cleared', clearMeasurementSelectionFocus);
+
     const objectPrototype = fabric?.Object?.prototype;
     if (objectPrototype && !objectPrototype.__openpaintSafeDrawControlsPatched) {
       const originalDrawControls = objectPrototype.drawControls;
@@ -192,6 +338,7 @@ export class CanvasManager {
     // Don't set a default here - let tools control it
 
     this.fabricCanvas.on('mouse:down', (opt: FabricIEvent) => {
+      if (!this.isInteractionActive()) return;
       const evt = opt.e;
       // Check if Ctrl key is pressed (or Meta key for Mac)
       if (evt.ctrlKey || evt.metaKey) {
@@ -221,6 +368,7 @@ export class CanvasManager {
     });
 
     this.fabricCanvas.on('mouse:up', (_opt: FabricIEvent) => {
+      if (!this.isInteractionActive()) return;
       // Restore state if we changed it
       if (this.fabricCanvas._tempDrawingMode) {
         this.fabricCanvas.isDrawingMode = true;
@@ -248,7 +396,9 @@ export class CanvasManager {
     this.initZoomPan();
 
     // Enforce floating layout for full-screen canvas
-    this.enforceFloatingLayout();
+    if (this.enableFloatingLayoutMode) {
+      this.enforceFloatingLayout();
+    }
 
     // Initialize keyboard shortcuts
     this.initKeyboardShortcuts();
@@ -525,7 +675,7 @@ export class CanvasManager {
         const objects = obj.getObjects();
         objects.forEach(o => {
           if (o?.type === 'path' && Array.isArray(o.customPoints) && o.__curveTransformActive) {
-            scheduleBakeAfterFinalize(o);
+            bakeCurveTransform({ target: o, forceUngroup: true });
           }
         });
         return;
@@ -622,6 +772,9 @@ export class CanvasManager {
         obj.setCoords();
         if (Array.isArray(obj.customPoints)) {
           FabricControls.createCurveControls(obj);
+        }
+        if (typeof obj.__mosUpdateCurveDecorators === 'function') {
+          obj.__mosUpdateCurveDecorators();
         }
         delete obj.__curveTransformActive;
         delete obj.__curveTransformAction;
@@ -769,6 +922,9 @@ export class CanvasManager {
 
       if (Array.isArray(obj.customPoints)) {
         FabricControls.createCurveControls(obj);
+      }
+      if (typeof obj.__mosUpdateCurveDecorators === 'function') {
+        obj.__mosUpdateCurveDecorators();
       }
 
       const canvas = obj.canvas;
@@ -1093,18 +1249,8 @@ export class CanvasManager {
         objects.forEach(o => {
           if (o?.type === 'path' && Array.isArray(o.customPoints)) {
             if (!o.__curveTransformActive || o.__curveBakedThisGesture) return;
-            const action = o.__curveTransformAction;
-            const isRotateOrSkew =
-              action === 'rotate' || action === 'skew' || action === 'skewX' || action === 'skewY';
             if (o.group && o.group.type === 'activeSelection') {
-              if (isRotateOrSkew) {
-                bakeCurveTransform({ target: o, forceUngroup: true });
-              } else {
-                console.log(
-                  '[CURVE SCALE] mouse:up - scheduling bake after finalize (still in activeSelection)'
-                );
-                scheduleBakeAfterFinalize(o);
-              }
+              bakeCurveTransform({ target: o, forceUngroup: true });
             } else {
               bakeCurveTransform({ target: o });
             }
@@ -1116,21 +1262,8 @@ export class CanvasManager {
 
       const obj = this.__activeCurveTransformTarget || activeTarget;
       if (obj?.__curveTransformActive && !obj.__curveBakedThisGesture) {
-        // CRITICAL: If curve is inside activeSelection, use scheduleBakeAfterFinalize
-        // to wait until the curve is ungrouped. Otherwise canonicalize runs with
-        // the curve still in selection context, causing position mismatch.
         if (obj.group && obj.group.type === 'activeSelection') {
-          const action = obj.__curveTransformAction;
-          const isRotateOrSkew =
-            action === 'rotate' || action === 'skew' || action === 'skewX' || action === 'skewY';
-          if (isRotateOrSkew) {
-            bakeCurveTransform({ target: obj, forceUngroup: true });
-          } else {
-            console.log(
-              '[CURVE SCALE] mouse:up - scheduling bake after finalize (still in activeSelection)'
-            );
-            scheduleBakeAfterFinalize(obj);
-          }
+          bakeCurveTransform({ target: obj, forceUngroup: true });
         } else {
           bakeCurveTransform({ target: obj });
         }
@@ -1320,6 +1453,9 @@ export class CanvasManager {
 
       if (strokePanel && imagePanel && mainLayout && canvasWrapper) {
         console.log('[CanvasManager] Enforcing Floating Layout (Full Screen Canvas)');
+        const splitActive = canvasWrapper.classList.contains('guide-split-active');
+        const measurementSplitActive =
+          splitActive && window.isMeasurementSplitWorkspaceActive?.() === true;
 
         // 1. Main Layout: Relative container, block display (not flex)
         mainLayout.style.setProperty('position', 'relative', 'important');
@@ -1333,37 +1469,74 @@ export class CanvasManager {
         canvasWrapper.style.setProperty('width', '100%', 'important');
         canvasWrapper.style.setProperty('height', '100%', 'important');
         canvasWrapper.style.setProperty('z-index', '0', 'important');
-
-        // Move panels to body to ensure they can float above everything (escape main-layout stacking context)
-        if (strokePanel.parentNode !== document.body) {
-          document.body.appendChild(strokePanel);
+        canvasWrapper.style.setProperty('overflow', 'hidden', 'important');
+        canvasWrapper.style.setProperty('display', 'block', 'important');
+        canvasWrapper.style.removeProperty('grid-template-columns');
+        canvasWrapper.style.removeProperty('grid-template-rows');
+        canvasWrapper.style.removeProperty('align-items');
+        canvasWrapper.style.removeProperty('gap');
+        if (splitActive) {
+          canvasWrapper.style.setProperty('padding', '0', 'important');
+          canvasWrapper.style.setProperty('background', '#fff', 'important');
+        } else {
+          canvasWrapper.style.removeProperty('padding');
+          canvasWrapper.style.removeProperty('background');
         }
-        if (imagePanel.parentNode !== document.body) {
-          document.body.appendChild(imagePanel);
+
+        if (measurementSplitActive) {
+          strokePanel.style.setProperty('display', 'none', 'important');
+          strokePanel.style.setProperty('visibility', 'hidden', 'important');
+          strokePanel.style.setProperty('opacity', '0', 'important');
+          strokePanel.style.setProperty('pointer-events', 'none', 'important');
+
+          imagePanel.style.setProperty('display', 'none', 'important');
+          imagePanel.style.setProperty('visibility', 'hidden', 'important');
+          imagePanel.style.setProperty('opacity', '0', 'important');
+          imagePanel.style.setProperty('pointer-events', 'none', 'important');
+        } else {
+          // Move panels to body to ensure they can float above everything (escape main-layout stacking context)
+          if (strokePanel.parentNode !== document.body) {
+            document.body.appendChild(strokePanel);
+          }
+          if (imagePanel.parentNode !== document.body) {
+            document.body.appendChild(imagePanel);
+          }
+
+          if (splitActive) {
+            strokePanel.style.setProperty('display', 'flex', 'important');
+            strokePanel.style.setProperty('visibility', 'visible', 'important');
+            strokePanel.style.setProperty('opacity', '1', 'important');
+            strokePanel.style.removeProperty('pointer-events');
+
+            imagePanel.style.setProperty('display', 'flex', 'important');
+            imagePanel.style.setProperty('visibility', 'visible', 'important');
+            imagePanel.style.setProperty('opacity', '1', 'important');
+            imagePanel.style.removeProperty('pointer-events');
+          } else {
+            // 3. Panels: restore the normal floating sidebars for the standard workspace.
+            strokePanel.style.setProperty('position', 'fixed', 'important'); // Use fixed to stay on screen
+            strokePanel.style.setProperty('left', '0', 'important');
+            strokePanel.style.setProperty('top', '48px', 'important'); // Account for toolbar
+            strokePanel.style.setProperty('height', 'calc(100% - 128px)', 'important'); // Full height minus toolbar and stepper
+            strokePanel.style.setProperty('z-index', '2000', 'important');
+            strokePanel.style.setProperty('opacity', '1', 'important');
+            strokePanel.style.setProperty('visibility', 'visible', 'important');
+            strokePanel.style.setProperty('display', 'flex', 'important');
+            strokePanel.style.setProperty('flex-direction', 'column', 'important');
+            strokePanel.style.removeProperty('pointer-events');
+
+            imagePanel.style.setProperty('position', 'fixed', 'important'); // Use fixed to stay on screen
+            imagePanel.style.setProperty('right', '0', 'important');
+            imagePanel.style.setProperty('top', '48px', 'important'); // Account for toolbar
+            imagePanel.style.setProperty('height', 'calc(100% - 128px)', 'important'); // Full height minus toolbar and stepper
+            imagePanel.style.setProperty('z-index', '2000', 'important');
+            imagePanel.style.setProperty('opacity', '1', 'important');
+            imagePanel.style.setProperty('visibility', 'visible', 'important');
+            imagePanel.style.setProperty('display', 'flex', 'important');
+            imagePanel.style.setProperty('flex-direction', 'column', 'important');
+            imagePanel.style.removeProperty('pointer-events');
+          }
         }
-
-        // 3. Panels: Absolute, Floating, Top Layer
-        // Stroke Panel (Left)
-        strokePanel.style.setProperty('position', 'fixed', 'important'); // Use fixed to stay on screen
-        strokePanel.style.setProperty('left', '0', 'important');
-        strokePanel.style.setProperty('top', '48px', 'important'); // Account for toolbar
-        strokePanel.style.setProperty('height', 'calc(100% - 128px)', 'important'); // Full height minus toolbar and stepper
-        strokePanel.style.setProperty('z-index', '2000', 'important');
-        strokePanel.style.setProperty('opacity', '1', 'important');
-        strokePanel.style.setProperty('visibility', 'visible', 'important');
-        strokePanel.style.setProperty('display', 'flex', 'important');
-        strokePanel.style.setProperty('flex-direction', 'column', 'important');
-
-        // Image Panel (Right)
-        imagePanel.style.setProperty('position', 'fixed', 'important'); // Use fixed to stay on screen
-        imagePanel.style.setProperty('right', '0', 'important');
-        imagePanel.style.setProperty('top', '48px', 'important'); // Account for toolbar
-        imagePanel.style.setProperty('height', 'calc(100% - 128px)', 'important'); // Full height minus toolbar and stepper
-        imagePanel.style.setProperty('z-index', '2000', 'important');
-        imagePanel.style.setProperty('opacity', '1', 'important');
-        imagePanel.style.setProperty('visibility', 'visible', 'important');
-        imagePanel.style.setProperty('display', 'flex', 'important');
-        imagePanel.style.setProperty('flex-direction', 'column', 'important');
 
         // Force resize to update canvas dimensions
         setTimeout(() => {
@@ -1384,12 +1557,19 @@ export class CanvasManager {
   }
 
   setupResizeObserver(): void {
-    const wrapper = document.getElementById('main-canvas-wrapper');
+    const wrapper = this.getContainerElement();
     if (!wrapper) return;
 
     this.resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
       for (const entry of entries) {
         if (entry.target === wrapper) {
+          // When guide-split is active, the split layout sync pipeline manages canvas
+          // dimensions and viewport directly via resizeGuideSplitCanvasManagerNow.
+          // Letting the ResizeObserver also trigger resize() creates a feedback loop
+          // where dimensions and viewport oscillate between split and full-width values.
+          if (this.isGuideSplitActive()) {
+            continue;
+          }
           // Debounce the resize call
           if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
           this.resizeTimeout = setTimeout(() => {
@@ -1405,6 +1585,7 @@ export class CanvasManager {
   initKeyboardShortcuts(): void {
     // Delete key handler
     document.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (!this.isInteractionActive()) return;
       // Don't delete if typing in an input
       // Don't delete if typing in an input
       const target = e.target as HTMLElement | null;
@@ -1538,6 +1719,12 @@ export class CanvasManager {
       const label = obj.strokeMetadata?.strokeLabel || obj.strokeMetadata?.label;
       if (label) {
         data._originalStrokeLabel = label;
+
+        const sourceImageLabel = obj.strokeMetadata?.imageLabel || window.currentImageLabel;
+        const tagTheme = window.app?.tagManager?.getTagThemeOverride?.(label, sourceImageLabel);
+        if (tagTheme) {
+          data._copiedTagTheme = tagTheme;
+        }
       }
       return data;
     });
@@ -1578,6 +1765,9 @@ export class CanvasManager {
         if (payload[idx]?._originalStrokeLabel) {
           obj._originalStrokeLabel = payload[idx]._originalStrokeLabel;
         }
+        if (payload[idx]?._copiedTagTheme) {
+          obj._copiedTagTheme = payload[idx]._copiedTagTheme;
+        }
 
         // Re-initialize text dimensions after deserialization so text renders visually
         if (
@@ -1588,12 +1778,56 @@ export class CanvasManager {
           obj.dirty = true;
         }
 
-        obj.set({
-          left: (obj.left || 0) + offset,
-          top: (obj.top || 0) + offset,
-        });
+        const isCurvePath = obj.type === 'path' && Array.isArray((obj as any).customPoints);
+        if (isCurvePath) {
+          obj.set({ objectCaching: false });
+          // Move curve anchors in world-space first; the path geometry is rebuilt from these points.
+          // If we only offset left/top, the visual path shifts but customPoints stay behind.
+          obj.customPoints.forEach((point: { x: number; y: number }) => {
+            point.x += offset;
+            point.y += offset;
+          });
+          FabricControls.canonicalizeCurveFromWorldPoints(obj, null, obj.angle || 0);
+        }
+
+        const hasOriginalLabel = Boolean(payload[idx]?._originalStrokeLabel);
+        const rawMeta = obj.strokeMetadata || {};
+        const isBareTriangleArtifact =
+          obj.type === 'triangle' &&
+          !hasOriginalLabel &&
+          !rawMeta?.strokeLabel &&
+          !rawMeta?.label &&
+          rawMeta?.type !== 'shape' &&
+          (obj as any)?.customData?.layerType !== 'mos-overlay';
+        if (isBareTriangleArtifact) {
+          return;
+        }
+
+        const mosId = String((obj as any).__mosId || '');
+        const isMosCurveArrowDecorator =
+          (obj as any)?.customData?.layerType === 'mos-overlay' &&
+          obj.type === 'triangle' &&
+          (mosId.includes('_curve_start_arrow') || mosId.includes('_curve_end_arrow'));
+        if (isMosCurveArrowDecorator) {
+          obj.set({
+            selectable: false,
+            evented: false,
+            excludeFromExport: true,
+          });
+        }
+
+        if (!isCurvePath) {
+          obj.set({
+            left: (obj.left || 0) + offset,
+            top: (obj.top || 0) + offset,
+          });
+        }
         if (typeof obj.setCoords === 'function') {
           obj.setCoords();
+        }
+        if (obj.type === 'path' && typeof obj.getCenterPoint === 'function') {
+          const center = obj.getCenterPoint();
+          obj.__lastCenter = { x: center.x, y: center.y };
         }
         this.fabricCanvas.add(obj);
         this.attachMetadataForPaste(obj, imageLabel);
@@ -1624,6 +1858,30 @@ export class CanvasManager {
     if (!metadataManager || !obj) return;
 
     const meta = obj.strokeMetadata || {};
+    const originalLabel = obj._originalStrokeLabel || meta.strokeLabel || meta.label;
+
+    // Keep MOS curve arrowhead decorators as unlabeled visual primitives.
+    // If we auto-label these triangles during paste, they steal tags (e.g. C3/C4).
+    const mosId = String((obj as any).__mosId || '');
+    const isMosCurveArrowDecorator =
+      (obj as any)?.customData?.layerType === 'mos-overlay' &&
+      obj.type === 'triangle' &&
+      !originalLabel &&
+      (mosId.includes('_curve_start_arrow') || mosId.includes('_curve_end_arrow'));
+    if (isMosCurveArrowDecorator) {
+      return;
+    }
+
+    // Guardrail: unlabeled bare triangles are usually leaked arrowhead artifacts
+    // from historical copies. Keep them visual-only and never assign stroke labels.
+    const isBareTriangleArtifact =
+      obj.type === 'triangle' &&
+      !originalLabel &&
+      meta?.type !== 'shape' &&
+      (obj as any)?.customData?.layerType !== 'mos-overlay';
+    if (isBareTriangleArtifact) {
+      return;
+    }
 
     if (meta.type === 'text' || obj.type === 'i-text' || obj.type === 'text') {
       metadataManager.attachTextMetadata(obj, imageLabel);
@@ -1641,7 +1899,6 @@ export class CanvasManager {
     }
 
     // Smart tag deduplication: preserve original label when no conflict, suffix when duplicate
-    const originalLabel = obj._originalStrokeLabel || meta.strokeLabel || meta.label;
     let strokeLabel: string;
     if (originalLabel) {
       // Use the scoped label (same normalization as attachMetadata) for conflict check
@@ -1672,9 +1929,16 @@ export class CanvasManager {
     if (obj.type === 'line') {
       FabricControls.createLineControls(obj);
     } else if (obj.type === 'path' && meta.type !== 'shape') {
+      obj.set({ objectCaching: false });
       FabricControls.createCurveControls(obj);
+      this.ensureCurveDecoratorsForPath(obj);
     } else if (obj.type === 'group' && (obj.isArrow || meta.isArrow)) {
       FabricControls.createArrowControls(obj);
+    }
+
+    if (obj._copiedTagTheme && window.app?.tagManager?.setTagTheme) {
+      window.app.tagManager.setTagTheme(strokeLabel, imageLabel, obj._copiedTagTheme);
+      delete obj._copiedTagTheme;
     }
 
     if (obj.arrowSettings && window.app?.arrowManager) {
@@ -1683,14 +1947,111 @@ export class CanvasManager {
     }
   }
 
+  private ensureCurveDecoratorsForPath(pathObj: FabricObject): void {
+    if (!pathObj || pathObj.type !== 'path' || !Array.isArray(pathObj.customPoints)) return;
+    if (pathObj.customPoints.length < 2) return;
+
+    const canvas = pathObj.canvas || this.fabricCanvas;
+    if (!canvas) return;
+
+    const strokeColor = pathObj.stroke || '#000000';
+    const strokeWidth = Number(pathObj.strokeWidth) || 3;
+    const arrowSize = 12;
+
+    const makeArrow = () =>
+      new fabric.Triangle({
+        width: arrowSize,
+        height: arrowSize,
+        fill: strokeColor,
+        stroke: strokeColor,
+        strokeWidth: Math.max(1, strokeWidth * 0.4),
+        originX: 'center',
+        originY: 'center',
+        selectable: false,
+        evented: false,
+        objectCaching: false,
+        excludeFromExport: true,
+      });
+
+    let startArrow = pathObj.__curveStartArrowObj;
+    let endArrow = pathObj.__curveEndArrowObj;
+
+    if (!startArrow || !canvas.contains(startArrow)) {
+      startArrow = makeArrow();
+      pathObj.__curveStartArrowObj = startArrow;
+      canvas.add(startArrow);
+    }
+    if (!endArrow || !canvas.contains(endArrow)) {
+      endArrow = makeArrow();
+      pathObj.__curveEndArrowObj = endArrow;
+      canvas.add(endArrow);
+    }
+
+    const updateDecorators = () => {
+      if (!Array.isArray(pathObj.customPoints) || pathObj.customPoints.length < 2) return;
+
+      const points = pathObj.customPoints;
+      const pStart = points[0];
+      const pStartNext = points[1];
+      const pEndPrev = points[points.length - 2];
+      const pEnd = points[points.length - 1];
+
+      const startAngle =
+        (Math.atan2(pStartNext.y - pStart.y, pStartNext.x - pStart.x) * 180) / Math.PI;
+      const endAngle = (Math.atan2(pEnd.y - pEndPrev.y, pEnd.x - pEndPrev.x) * 180) / Math.PI;
+
+      startArrow.set({
+        left: pStart.x,
+        top: pStart.y,
+        angle: startAngle - 90,
+        fill: pathObj.stroke || strokeColor,
+        stroke: pathObj.stroke || strokeColor,
+        selectable: false,
+        evented: false,
+        excludeFromExport: true,
+      });
+      endArrow.set({
+        left: pEnd.x,
+        top: pEnd.y,
+        angle: endAngle + 90,
+        fill: pathObj.stroke || strokeColor,
+        stroke: pathObj.stroke || strokeColor,
+        selectable: false,
+        evented: false,
+        excludeFromExport: true,
+      });
+      startArrow.setCoords?.();
+      endArrow.setCoords?.();
+      canvas.requestRenderAll?.();
+    };
+
+    pathObj.__mosUpdateCurveDecorators = updateDecorators;
+    updateDecorators();
+
+    if (!pathObj.__curveDecoratorHandlersAttached) {
+      pathObj.__curveDecoratorHandlersAttached = true;
+      pathObj.on('moving', updateDecorators);
+      pathObj.on('modified', updateDecorators);
+      pathObj.on('scaling', updateDecorators);
+      pathObj.on('rotating', updateDecorators);
+      pathObj.on('changed', updateDecorators);
+      pathObj.on('removed', () => {
+        if (pathObj.__curveStartArrowObj && canvas.contains(pathObj.__curveStartArrowObj)) {
+          canvas.remove(pathObj.__curveStartArrowObj);
+        }
+        if (pathObj.__curveEndArrowObj && canvas.contains(pathObj.__curveEndArrowObj)) {
+          canvas.remove(pathObj.__curveEndArrowObj);
+        }
+      });
+    }
+  }
+
   /**
    * Calculate available canvas size (works before fabricCanvas is initialized)
    * Now simplified to use the flex layout container dimensions directly
    */
   calculateAvailableSize(): Size {
-    // With the new flex layout, canvas is inside #main-canvas-wrapper
-    // Just measure that container's dimensions
-    const canvasContainer = document.getElementById('main-canvas-wrapper');
+    const canvasContainer = this.getContainerElement();
 
     if (canvasContainer) {
       // Use clientWidth/clientHeight to get the inner dimension (excluding borders)
@@ -1790,6 +2151,53 @@ export class CanvasManager {
     return this.calculateAvailableSize();
   }
 
+  getBackgroundPlacementFrame(): FrameState {
+    const canvasWidth = Number(this.fabricCanvas?.width) || 0;
+    const canvasHeight = Number(this.fabricCanvas?.height) || 0;
+    const fallbackFrame = {
+      width: canvasWidth,
+      height: canvasHeight,
+      left: 0,
+      top: 0,
+    };
+
+    if (!this.enableFloatingLayoutMode || this.containerId !== 'main-canvas-wrapper') {
+      return fallbackFrame;
+    }
+
+    const captureFrame = document.getElementById('captureFrame');
+    if (!captureFrame) {
+      return fallbackFrame;
+    }
+
+    const frameRect = captureFrame.getBoundingClientRect();
+    if (!frameRect.width || !frameRect.height) {
+      return fallbackFrame;
+    }
+
+    const canvasRect = this.fabricCanvas?.getElement?.()?.getBoundingClientRect?.();
+    if (!canvasRect) {
+      return fallbackFrame;
+    }
+
+    return {
+      width: frameRect.width,
+      height: frameRect.height,
+      left: frameRect.left - canvasRect.left,
+      top: frameRect.top - canvasRect.top,
+    };
+  }
+
+  isGuideSplitActive(): boolean {
+    if (!this.enableFloatingLayoutMode || this.containerId !== 'main-canvas-wrapper') {
+      return false;
+    }
+    return (
+      document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
+      true
+    );
+  }
+
   /**
    * Calculate target frame size based on canvas dimensions
    * Centralized logic to ensure consistency between image scaling and frame resizing
@@ -1859,6 +2267,14 @@ export class CanvasManager {
       return;
     }
 
+    if (
+      this.enableFloatingLayoutMode &&
+      this.containerId === 'main-canvas-wrapper' &&
+      this.isGuideSplitActive()
+    ) {
+      return;
+    }
+
     // If no image label OR no background image, we're dealing with stroke-only canvas
     // We must check backgroundImage because sometimes we have a viewId but no image (e.g. cleared or template)
     const isStrokeOnlyCanvas =
@@ -1884,11 +2300,241 @@ export class CanvasManager {
     captureFrame.style.top = `${targetFrame.top}px`;
   }
 
+  normalizeFabricWrapperElement(targetWidth: number, targetHeight: number): void {
+    if (!this.fabricCanvas?.wrapperEl) {
+      return;
+    }
+
+    const wrapperEl = this.fabricCanvas.wrapperEl as HTMLElement;
+    wrapperEl.style.position = 'relative';
+    wrapperEl.style.left = '0px';
+    wrapperEl.style.top = '0px';
+    wrapperEl.style.right = 'auto';
+    wrapperEl.style.bottom = 'auto';
+    wrapperEl.style.inset = 'auto';
+    wrapperEl.style.width = `${targetWidth}px`;
+    wrapperEl.style.height = `${targetHeight}px`;
+    wrapperEl.style.minWidth = 'unset';
+    wrapperEl.style.minHeight = 'unset';
+    wrapperEl.style.maxWidth = 'unset';
+    wrapperEl.style.maxHeight = 'unset';
+    wrapperEl.style.margin = '0';
+    wrapperEl.style.overflow = 'hidden';
+    wrapperEl.style.display = 'block';
+  }
+
+  getStoredBackgroundFitMode(): string {
+    const backgroundImage = this.fabricCanvas?.backgroundImage;
+    const storedFitMode = String(
+      backgroundImage?.openpaintFitMode || backgroundImage?.customData?.openpaintFitMode || ''
+    ).trim();
+    if (storedFitMode) {
+      return storedFitMode;
+    }
+
+    const projectManager = window.app?.projectManager || window.projectManager;
+    const currentViewId = String(projectManager?.currentViewId || '').trim();
+    if (currentViewId && projectManager?.views?.[currentViewId]?.fitMode) {
+      return String(projectManager.views[currentViewId].fitMode).trim() || 'fit-canvas';
+    }
+
+    const backgroundSrc = String(
+      backgroundImage?.getSrc?.() || backgroundImage?.src || backgroundImage?._element?.src || ''
+    ).trim();
+    if (backgroundSrc && projectManager?.views && typeof projectManager.views === 'object') {
+      const matchedView = Object.values(projectManager.views).find(
+        (view: any) => String(view?.image || '').trim() === backgroundSrc
+      );
+      if (matchedView?.fitMode) {
+        return String(matchedView.fitMode).trim() || 'fit-canvas';
+      }
+    }
+
+    return 'fit-canvas';
+  }
+
+  getBackgroundWorldRect(): FrameState | null {
+    const backgroundImage = this.fabricCanvas?.backgroundImage;
+    if (!backgroundImage) {
+      return null;
+    }
+
+    const centerX = Number(backgroundImage.left);
+    const centerY = Number(backgroundImage.top);
+    const width =
+      (Number(backgroundImage.width) || Number(backgroundImage?._element?.naturalWidth) || 0) *
+      (Number(backgroundImage.scaleX) || 1);
+    const height =
+      (Number(backgroundImage.height) || Number(backgroundImage?._element?.naturalHeight) || 0) *
+      (Number(backgroundImage.scaleY) || 1);
+
+    if (!Number.isFinite(centerX) || !Number.isFinite(centerY) || !width || !height) {
+      return null;
+    }
+
+    return {
+      left: centerX - width / 2,
+      top: centerY - height / 2,
+      width,
+      height,
+    };
+  }
+
+  shouldFitBackgroundWithViewportOnResize(): boolean {
+    if (!this.fabricCanvas?.backgroundImage) {
+      return false;
+    }
+
+    if (!this.enableFloatingLayoutMode || this.containerId !== 'main-canvas-wrapper') {
+      return false;
+    }
+
+    return this.getStoredBackgroundFitMode() !== 'actual-size';
+  }
+
+  hasAuthoritativeCaptureTabState(): boolean {
+    const projectManager = window.app?.projectManager || window.projectManager;
+    const currentViewId = String(projectManager?.currentViewId || '').trim();
+    if (!currentViewId) {
+      return false;
+    }
+
+    const liveTabState = window.captureTabsByLabel?.[currentViewId];
+    const savedTabState = projectManager?.views?.[currentViewId]?.tabs;
+    const tabState =
+      liveTabState && Array.isArray(liveTabState.tabs)
+        ? liveTabState
+        : savedTabState && Array.isArray(savedTabState.tabs)
+          ? savedTabState
+          : null;
+    const activeTabId = tabState?.activeTabId || null;
+    const activeTab = tabState?.tabs?.find?.(tab => tab.id === activeTabId) || null;
+    return Boolean(
+      activeTab &&
+      activeTab.type !== 'master' &&
+      (activeTab.viewport || activeTab?.captureFrame?.worldRect)
+    );
+  }
+
+  fitViewportToBackgroundPlacementFrame(
+    backgroundWorldRect: FrameState,
+    targetFrame: FrameState,
+    viewportSeed?: {
+      zoom?: number;
+      panX?: number;
+      panY?: number;
+      rotation?: number;
+    }
+  ): boolean {
+    if (!this.fabricCanvas) {
+      return false;
+    }
+
+    const nextViewport = fitViewportToWorldRect(
+      backgroundWorldRect,
+      normalizeViewportRecord({
+        zoom:
+          Number(viewportSeed?.zoom) > 0
+            ? Number(viewportSeed?.zoom)
+            : this.zoomLevel || this.fabricCanvas.getZoom() || 1,
+        panX: Number.isFinite(Number(viewportSeed?.panX)) ? Number(viewportSeed.panX) : this.panX,
+        panY: Number.isFinite(Number(viewportSeed?.panY)) ? Number(viewportSeed.panY) : this.panY,
+        rotation: Number.isFinite(Number(viewportSeed?.rotation))
+          ? Number(viewportSeed.rotation)
+          : this.rotateViewport
+            ? this.rotationDegrees
+            : 0,
+      }),
+      targetFrame,
+      {
+        canvasRect: {
+          left: 0,
+          top: 0,
+          width: Number(this.fabricCanvas.width) || 0,
+          height: Number(this.fabricCanvas.height) || 0,
+        },
+        center: this.getRotationCenter(),
+      }
+    );
+
+    if (!nextViewport) {
+      return false;
+    }
+
+    this.zoomLevel = Number.isFinite(nextViewport.zoom) ? nextViewport.zoom : zoomLevel;
+    this.panX = Number.isFinite(nextViewport.panX) ? nextViewport.panX : 0;
+    this.panY = Number.isFinite(nextViewport.panY) ? nextViewport.panY : 0;
+    return true;
+  }
+
+  refitBackgroundImageToPlacementFrame(): boolean {
+    if (!this.fabricCanvas?.backgroundImage) {
+      return false;
+    }
+
+    const backgroundImage = this.fabricCanvas.backgroundImage;
+    const requiresLiveCaptureFrame =
+      this.enableFloatingLayoutMode &&
+      this.containerId === 'main-canvas-wrapper' &&
+      !this.isGuideSplitActive();
+    if (requiresLiveCaptureFrame) {
+      const captureFrame = document.getElementById('captureFrame');
+      const captureFrameRect = captureFrame?.getBoundingClientRect?.();
+      if (!captureFrameRect?.width || !captureFrameRect?.height) {
+        return false;
+      }
+    }
+
+    const placementFrame = this.getBackgroundPlacementFrame();
+    const canvasWidth = Number(this.fabricCanvas.width) || 0;
+    const canvasHeight = Number(this.fabricCanvas.height) || 0;
+    const frameWidth = placementFrame.width || canvasWidth;
+    const frameHeight = placementFrame.height || canvasHeight;
+    const frameLeft = Number.isFinite(placementFrame.left) ? placementFrame.left : 0;
+    const frameTop = Number.isFinite(placementFrame.top) ? placementFrame.top : 0;
+    const imgWidth =
+      Number(backgroundImage.width) || Number(backgroundImage?._element?.naturalWidth) || 0;
+    const imgHeight =
+      Number(backgroundImage.height) || Number(backgroundImage?._element?.naturalHeight) || 0;
+
+    if (!frameWidth || !frameHeight || !imgWidth || !imgHeight) {
+      return false;
+    }
+
+    let scale = 1;
+    switch (this.getStoredBackgroundFitMode()) {
+      case 'fit-width':
+        scale = frameWidth / imgWidth;
+        break;
+      case 'fit-height':
+        scale = frameHeight / imgHeight;
+        break;
+      case 'actual-size':
+        scale = 1;
+        break;
+      case 'fit-canvas':
+      default:
+        scale = Math.min(frameWidth / imgWidth, frameHeight / imgHeight);
+        break;
+    }
+
+    backgroundImage.set({
+      originX: 'center',
+      originY: 'center',
+      left: frameLeft + frameWidth / 2,
+      top: frameTop + frameHeight / 2,
+      scaleX: scale,
+      scaleY: scale,
+    });
+    backgroundImage.setCoords?.();
+    return true;
+  }
+
   /**
    * Apply resize with debouncing and smooth transitions
    */
   applyResize(width?: number, height?: number): void {
-    if (!this.fabricCanvas) {
+    if (!this.fabricCanvas || !this.fabricCanvas.lowerCanvasEl) {
       return;
     }
 
@@ -1936,9 +2582,18 @@ export class CanvasManager {
       this.showResizeOverlay(targetWidth, targetHeight);
     }
 
+    const currentSplitActive = this.isGuideSplitActive();
+    const shouldRefitBackgroundOnResize = sizeChanged && !!this.fabricCanvas.backgroundImage;
+    const hasAuthoritativeCaptureTabState =
+      !currentSplitActive && this.hasAuthoritativeCaptureTabState();
+    const backgroundWorldRectBeforeResize = shouldRefitBackgroundOnResize
+      ? this.getBackgroundWorldRect()
+      : null;
+
     // Update Fabric.js canvas dimensions
     this.fabricCanvas.setWidth(targetWidth);
     this.fabricCanvas.setHeight(targetHeight);
+    this.normalizeFabricWrapperElement(targetWidth, targetHeight);
 
     // CRITICAL FIX: Remove all CSS constraints that cause canvas stretching/shrinking issues
     // These style overrides ensure the canvas displays at its actual size, not hardcoded sizes
@@ -1948,6 +2603,8 @@ export class CanvasManager {
       canvasEl.style.minHeight = 'unset';
       canvasEl.style.maxWidth = 'unset';
       canvasEl.style.maxHeight = 'unset';
+      canvasEl.style.left = '0px';
+      canvasEl.style.top = '0px';
       // Clear any hardcoded width/height from HTML that prevents dynamic sizing
       canvasEl.style.width = `${targetWidth}px`;
       canvasEl.style.height = `${targetHeight}px`;
@@ -1958,6 +2615,8 @@ export class CanvasManager {
       upperCanvasEl.style.minHeight = 'unset';
       upperCanvasEl.style.maxWidth = 'unset';
       upperCanvasEl.style.maxHeight = 'unset';
+      upperCanvasEl.style.left = '0px';
+      upperCanvasEl.style.top = '0px';
       // Clear any hardcoded width/height from HTML that prevents dynamic sizing
       upperCanvasEl.style.width = `${targetWidth}px`;
       upperCanvasEl.style.height = `${targetHeight}px`;
@@ -1966,204 +2625,123 @@ export class CanvasManager {
     // Also clear styles on the original canvas element to remove hardcoded dimensions from HTML
     const originalCanvasEl = document.getElementById(this.canvasId);
     if (originalCanvasEl) {
+      originalCanvasEl.style.left = '0px';
+      originalCanvasEl.style.top = '0px';
       originalCanvasEl.style.width = `${targetWidth}px`;
       originalCanvasEl.style.height = `${targetHeight}px`;
     }
 
-    // Store old size for stroke scaling calculations BEFORE updating
-    const oldCanvasWidth = this.lastCanvasSize.width;
-    const oldCanvasHeight = this.lastCanvasSize.height;
+    this.updateCaptureFrameOnResize(targetWidth, targetHeight);
+    const safeZoom = Number.isFinite(oldZoom) && oldZoom > 0 ? oldZoom : this.zoomLevel || 1;
+    const splitLayoutChanged =
+      this.lastGuideSplitActive === null
+        ? currentSplitActive
+        : this.lastGuideSplitActive !== currentSplitActive;
+    const viewportFitSeed = {
+      zoom: safeZoom,
+      panX: splitLayoutChanged ? 0 : this.panX,
+      panY: splitLayoutChanged ? 0 : this.panY,
+      rotation: this.rotateViewport ? this.rotationDegrees : 0,
+    };
+    // Skip viewport fit when entering/exiting split — the capture frame position is stale
+    // during the transition and will be corrected by the split layout sync immediately after.
+    // Also skip when split is already active — the split layout sync pipeline
+    // (fitGuideSplitPrimaryBackgroundToFrame) owns viewport positioning in split mode.
+    // Without this guard, the ResizeObserver triggers applyResize which recomputes zoom
+    // based on canvas dimensions that may not match the split half-width, causing a
+    // zoom oscillation (e.g. 0.815 ↔ 1.649, exactly 2×).
+    const didFitBackgroundViewport =
+      shouldRefitBackgroundOnResize &&
+      !!backgroundWorldRectBeforeResize &&
+      !hasAuthoritativeCaptureTabState &&
+      !splitLayoutChanged &&
+      !currentSplitActive &&
+      !window.__isLoadingProject &&
+      this.shouldFitBackgroundWithViewportOnResize()
+        ? this.fitViewportToBackgroundPlacementFrame(
+            backgroundWorldRectBeforeResize,
+            this.getBackgroundPlacementFrame(),
+            viewportFitSeed
+          )
+        : false;
+    // When guide-split is active, skip direct background repositioning — the split
+    // layout sync handles it via viewport transforms so vectors stay in sync.
+    const didRefitBackground =
+      !didFitBackgroundViewport &&
+      !hasAuthoritativeCaptureTabState &&
+      !splitLayoutChanged &&
+      !currentSplitActive &&
+      shouldRefitBackgroundOnResize
+        ? this.refitBackgroundImageToPlacementFrame()
+        : false;
+
+    // Store old size before updating
+    const oldCanvasWidth = this.lastCanvasSize.width || targetWidth;
+    const oldCanvasHeight = this.lastCanvasSize.height || targetHeight;
+
+    let centerWorldPoint = null;
+    if (
+      !didFitBackgroundViewport &&
+      !didRefitBackground &&
+      !splitLayoutChanged &&
+      oldCanvasWidth > 0 &&
+      oldCanvasHeight > 0
+    ) {
+      try {
+        const inverse = fabric.util.invertTransform(oldVpt);
+        centerWorldPoint = fabric.util.transformPoint(
+          new fabric.Point(oldCanvasWidth / 2, oldCanvasHeight / 2),
+          inverse
+        );
+      } catch (error) {
+        console.warn('[CanvasManager] Failed to preserve center point during resize', error);
+      }
+    }
 
     // Update last known size
     this.lastCanvasSize = { width: targetWidth, height: targetHeight };
 
-    // UNIFIED RESIZING LOGIC:
-    // We now use the zoom-based resizing (floating layout) for BOTH empty canvas and images.
-    // This ensures consistent behavior where the content (image or strokes) stays centered
-    // and scales to fit the window, preserving the "floating paper" effect.
-
     if (sizeChanged) {
-      // Apply simple proportional scaling / zoom logic
       console.log(
         `[CanvasManager] Canvas resize: ${oldCanvasWidth}x${oldCanvasHeight} -> ${targetWidth}x${targetHeight}`
       );
 
-      // Scale from original positions to prevent accumulation
-      if (oldCanvasWidth > 0 && oldCanvasHeight > 0) {
-        // Initialize original canvas size and object states if not set
-        if (this.originalCanvasSize.width === 0) {
-          this.originalCanvasSize = { width: oldCanvasWidth, height: oldCanvasHeight };
+      // When guide-split is active, the split layout sync pipeline owns the viewport
+      // (zoom, panX, panY). Do NOT recompute or apply viewport here — doing so causes
+      // the ResizeObserver feedback loop where applyResize computes a wrong zoom (based
+      // on full canvas width instead of split half-width), then the split sync corrects
+      // it, then ResizeObserver fires again, creating a ~900ms oscillation.
+      // On split exit, the old viewport still belongs to the half-width split
+      // canvas. Preserving that center into the restored full-width canvas makes
+      // the image drift sideways before ProjectManager restores the active view.
+      if (!currentSplitActive && !splitLayoutChanged) {
+        if (!didFitBackgroundViewport) {
+          this.zoomLevel = safeZoom;
 
-          this.fabricCanvas.getObjects().forEach(obj => {
-            if (!this.originalObjectStates.has(obj)) {
-              this.originalObjectStates.set(obj, {
-                left: obj.left,
-                top: obj.top,
-                scaleX: obj.scaleX || 1,
-                scaleY: obj.scaleY || 1,
-                strokeWidth: obj.strokeWidth || 1,
-              });
-            }
-          });
-        }
+          if (didRefitBackground) {
+            // Only zero pan after a true background refit. Viewport-fit resizing keeps the
+            // existing world rect intact so vectors stay locked to the image.
+            this.panX = 0;
+            this.panY = 0;
+          } else if (centerWorldPoint) {
+            const angleRadians = this.rotateViewport ? (this.rotationDegrees * Math.PI) / 180 : 0;
+            const cos = Math.cos(angleRadians);
+            const sin = Math.sin(angleRadians);
+            const rotationCenter = this.getRotationCenter();
+            const base = [safeZoom * cos, safeZoom * sin, -safeZoom * sin, safeZoom * cos, 0, 0];
+            const translateToOrigin = [1, 0, 0, 1, -rotationCenter.x, -rotationCenter.y];
+            const translateBack = [1, 0, 0, 1, rotationCenter.x, rotationCenter.y];
+            let transform = fabric.util.multiplyTransformMatrices(base, translateToOrigin);
+            transform = fabric.util.multiplyTransformMatrices(translateBack, transform);
 
-        // Calculate scale factors from ORIGINAL canvas size
-        const scaleX = targetWidth / this.originalCanvasSize.width;
-        const scaleY = targetHeight / this.originalCanvasSize.height;
-
-        // Guard against NaN values from invalid dimensions during window drag
-        if (
-          Number.isNaN(scaleX) ||
-          Number.isNaN(scaleY) ||
-          !isFinite(scaleX) ||
-          !isFinite(scaleY)
-        ) {
-          console.warn(
-            `[CanvasManager] Invalid scale factors: ${scaleX}, ${scaleY} - aborting resize`
-          );
-          this.updateCaptureFrameOnResize(targetWidth, targetHeight);
-          this.isResizing = false;
-          return;
-        }
-
-        // ZOOM-BASED RESIZING: Use Fabric's zoom instead of scaling objects
-        // Calculate zoom to fit the original canvas size into the new window size
-        let zoom = Math.min(scaleX, scaleY);
-
-        // RESPONSIVE FIX: If we have enough space to show the original canvas at 100% (zoom >= 1),
-        // we should EXPAND the "original" canvas size to fill the new space.
-        // This prevents "grey bars" when the window grows larger than the initial load size.
-        // We only shrink (zoom < 1) if the window is smaller than the content.
-        if (zoom >= 1) {
-          console.log(
-            `[CanvasManager] Expanding originalCanvasSize to fill available space (Zoom >= 1)`
-          );
-          this.originalCanvasSize = { width: targetWidth, height: targetHeight };
-          zoom = 1;
-
-          // RECENTERING FIX: When expanding, we want the frame to stay centered in the new larger space.
-          // We update the base state's position mathematically (smoothly) to match the new center.
-          if (this.baseFrameState) {
-            this.baseFrameState.left = (targetWidth - this.baseFrameState.width) / 2;
-            this.baseFrameState.top = (targetHeight - this.baseFrameState.height) / 2;
+            const mappedCenter = fabric.util.transformPoint(centerWorldPoint, transform);
+            this.panX = targetWidth / 2 - mappedCenter.x;
+            this.panY = targetHeight / 2 - mappedCenter.y;
           }
-          // this.baseFrameState = null;
         }
 
-        console.log(
-          `[CanvasManager] Applying zoom-based resize: zoom=${zoom.toFixed(3)} (canvas: ${targetWidth}x${targetHeight})`
-        );
-
-        // ITERATIVE FRAME SCALING:
-        // Calculate virtual frame size based on OLD zoom, then apply NEW zoom
-        // This preserves manual frame resizing while keeping it in sync with zoom
-        const captureFrame = document.getElementById('captureFrame');
-        if (captureFrame) {
-          // Use the oldZoom captured at the start of the function
-
-          // Use getComputedStyle to handle 'calc' values in initial HTML
-          const computedStyle = window.getComputedStyle(captureFrame);
-          const currentFrameWidth =
-            parseFloat(captureFrame.style.width) || parseFloat(computedStyle.width) || 800;
-          const currentFrameHeight =
-            parseFloat(captureFrame.style.height) || parseFloat(computedStyle.height) || 600;
-          const currentFrameLeft =
-            parseFloat(captureFrame.style.left) || parseFloat(computedStyle.left) || 0;
-          const currentFrameTop =
-            parseFloat(captureFrame.style.top) || parseFloat(computedStyle.top) || 0;
-
-          // Use the oldVpt captured at the start of the function
-          const oldPanX = oldVpt[4];
-          const oldPanY = oldVpt[5];
-
-          // Initialize base state if missing (first run or after reload)
-          let shouldUpdateBaseState = !this.baseFrameState;
-
-          let virtualWidth, virtualHeight, virtualLeft, virtualTop;
-
-          if (shouldUpdateBaseState) {
-            // Calculate from DOM only on first run
-            virtualWidth = currentFrameWidth / oldZoom;
-            virtualHeight = currentFrameHeight / oldZoom;
-            virtualLeft = (currentFrameLeft - oldPanX) / oldZoom;
-            virtualTop = (currentFrameTop - oldPanY) / oldZoom;
-
-            // CRITICAL FIX: In stroke-only mode, ignore the current DOM position (which might be off-center due to layout shifts)
-            // and FORCE the base state to be centered in the original canvas.
-            const isStrokeOnly = !this.fabricCanvas.backgroundImage;
-
-            if (isStrokeOnly && this.originalCanvasSize && this.originalCanvasSize.width > 0) {
-              console.log('[CanvasManager] Enforcing centered baseFrameState for stroke-only mode');
-              // Use standard 800x600 if DOM values seem weird (e.g. too small)
-              if (virtualWidth < 100) virtualWidth = 800;
-              if (virtualHeight < 100) virtualHeight = 600;
-
-              virtualLeft = (this.originalCanvasSize.width - virtualWidth) / 2;
-              virtualTop = (this.originalCanvasSize.height - virtualHeight) / 2;
-            }
-
-            this.baseFrameState = {
-              width: virtualWidth,
-              height: virtualHeight,
-              left: virtualLeft,
-              top: virtualTop,
-            };
-            console.log('[CanvasManager] Initialized baseFrameState:', this.baseFrameState);
-          } else {
-            // Use stored base state to prevent drift - Single Source of Truth
-            // We ignore the current DOM state because it might be polluted by layout shifts or transitions
-            virtualWidth = this.baseFrameState.width;
-            virtualHeight = this.baseFrameState.height;
-            virtualLeft = this.baseFrameState.left;
-            virtualTop = this.baseFrameState.top;
-          }
-
-          // Calculate new centering offsets (will be applied to viewport)
-          const scaledOriginalWidth = this.originalCanvasSize.width * zoom;
-          const scaledOriginalHeight = this.originalCanvasSize.height * zoom;
-
-          // Standard centering relative to the container
-          const centerOffsetX = (targetWidth - scaledOriginalWidth) / 2;
-          const centerOffsetY = (targetHeight - scaledOriginalHeight) / 2;
-
-          // Apply new zoom and offset to frame
-          const newFrameWidth = virtualWidth * zoom;
-          const newFrameHeight = virtualHeight * zoom;
-          const newFrameLeft = virtualLeft * zoom + centerOffsetX;
-          const newFrameTop = virtualTop * zoom + centerOffsetY;
-
-          captureFrame.style.width = `${newFrameWidth}px`;
-          captureFrame.style.height = `${newFrameHeight}px`;
-          captureFrame.style.left = `${newFrameLeft}px`;
-          captureFrame.style.top = `${newFrameTop}px`;
-
-          console.log(
-            `[CanvasManager] Scaled frame: ${currentFrameWidth.toFixed(0)}->${newFrameWidth.toFixed(0)} (zoom: ${oldZoom.toFixed(2)}->${zoom.toFixed(2)})`
-          );
-        }
-
-        // Calculate centering offsets to keep content centered
-        const scaledOriginalWidth = this.originalCanvasSize.width * zoom;
-        const scaledOriginalHeight = this.originalCanvasSize.height * zoom;
-
-        // Standard centering relative to the container
-        const centerOffsetX = (targetWidth - scaledOriginalWidth) / 2;
-        const centerOffsetY = (targetHeight - scaledOriginalHeight) / 2;
-
-        console.log(
-          `[CanvasManager] Centering: Target=${targetWidth}x${targetHeight}, Scaled=${scaledOriginalWidth.toFixed(1)}x${scaledOriginalHeight.toFixed(1)}, Offset=${centerOffsetX.toFixed(1)},${centerOffsetY.toFixed(1)}, Zoom=${zoom.toFixed(3)}`
-        );
-
-        // Apply zoom and centering while preserving rotation
-        this.zoomLevel = zoom;
-        this.panX = centerOffsetX;
-        this.panY = centerOffsetY;
         this.applyViewportTransform();
       }
-
-      // We do NOT call updateCaptureFrameOnResize here because the zoom logic above
-      // already updated the frame style to match the zoom.
-      // Calling it would overwrite the correct frame with the default "85% of window" frame.
     }
 
     // Redraw canvas
@@ -2178,6 +2756,7 @@ export class CanvasManager {
     this.pendingResizeWidth = null;
     this.pendingResizeHeight = null;
     this.isResizing = false;
+    this.lastGuideSplitActive = currentSplitActive;
   }
 
   /**
@@ -2254,12 +2833,21 @@ export class CanvasManager {
         this.panX = vpt[4] - centerX * (1 - zoom);
         this.panY = vpt[5] - centerY * (1 - zoom);
       }
+      this.markGuideSplitViewportInteraction();
 
       pendingWheelDelta = 0;
       pendingWheelPoint = null;
     };
 
     this.fabricCanvas.on('mouse:wheel', (opt: FabricIEvent) => {
+      if (!this.isInteractionActive()) return;
+      if (opt?.e?.altKey === true) {
+        if (!opt?.e?.__brushSizeHandled) {
+          opt.e.preventDefault();
+          opt.e.stopPropagation();
+        }
+        return;
+      }
       if (opt?.e?.__brushSizeHandled) {
         return;
       }
@@ -2293,6 +2881,7 @@ export class CanvasManager {
     };
 
     this.fabricCanvas.on('mouse:down', (opt: FabricIEvent) => {
+      if (!this.isInteractionActive()) return;
       const evt = opt.e;
       if (evt.altKey === true || evt.shiftKey === true) {
         console.log('[PAN] Starting pan gesture with', evt.altKey ? 'Alt' : 'Shift');
@@ -2308,17 +2897,20 @@ export class CanvasManager {
     });
 
     this.fabricCanvas.on('mouse:move', (opt: FabricIEvent) => {
+      if (!this.isInteractionActive()) return;
       if (isDragging) {
         const e = opt.e;
         this.panX += e.clientX - lastPosX;
         this.panY += e.clientY - lastPosY;
         this.applyViewportTransform();
+        this.markGuideSplitViewportInteraction();
         lastPosX = e.clientX;
         lastPosY = e.clientY;
       }
     });
 
     this.fabricCanvas.on('mouse:up', (opt: FabricIEvent) => {
+      if (!this.isInteractionActive()) return;
       if (isDragging) {
         console.log('[PAN] Ending pan gesture');
         this.applyViewportTransform();
@@ -2475,6 +3067,88 @@ export class CanvasManager {
       }
     };
 
+    const updateCurveDecoratorsForScaling = (scalingObj: FabricObject) => {
+      if (!scalingObj) return;
+
+      const getDisplayCurvePoints = (obj: FabricObject) => {
+        if (!Array.isArray(obj?.customPoints) || obj.customPoints.length < 2) return null;
+
+        if (
+          obj.__curveTransformActive &&
+          obj.__curveOrigMatrix &&
+          Array.isArray(obj.__curveOrigPoints) &&
+          obj.__curveOrigPoints.length >= 2
+        ) {
+          try {
+            const before = obj.__curveOrigMatrix;
+            const after = obj.calcTransformMatrix();
+            const delta = fabric.util.multiplyTransformMatrices(
+              after,
+              fabric.util.invertTransform(before)
+            );
+            return obj.__curveOrigPoints.map((p: { x: number; y: number }) => {
+              const transformed = fabric.util.transformPoint(new fabric.Point(p.x, p.y), delta);
+              return { x: transformed.x, y: transformed.y };
+            });
+          } catch {
+            return obj.customPoints;
+          }
+        }
+
+        return obj.customPoints;
+      };
+
+      const updateForStroke = (obj: FabricObject) => {
+        if (obj?.type === 'path' && typeof obj.__mosUpdateCurveDecorators === 'function') {
+          const displayPoints = getDisplayCurvePoints(obj);
+          const startArrow = obj.__curveStartArrowObj;
+          const endArrow = obj.__curveEndArrowObj;
+
+          if (Array.isArray(displayPoints) && displayPoints.length >= 2 && startArrow && endArrow) {
+            const pStart = displayPoints[0];
+            const pStartNext = displayPoints[1];
+            const pEndPrev = displayPoints[displayPoints.length - 2];
+            const pEnd = displayPoints[displayPoints.length - 1];
+            const startAngle =
+              (Math.atan2(pStartNext.y - pStart.y, pStartNext.x - pStart.x) * 180) / Math.PI;
+            const endAngle = (Math.atan2(pEnd.y - pEndPrev.y, pEnd.x - pEndPrev.x) * 180) / Math.PI;
+
+            startArrow.set({
+              left: pStart.x,
+              top: pStart.y,
+              angle: startAngle - 90,
+              visible: true,
+            });
+            endArrow.set({ left: pEnd.x, top: pEnd.y, angle: endAngle + 90, visible: true });
+            startArrow.setCoords?.();
+            endArrow.setCoords?.();
+          } else {
+            obj.__mosUpdateCurveDecorators();
+          }
+        }
+      };
+
+      if (scalingObj.type === 'activeSelection') {
+        scalingObj.getObjects().forEach(updateForStroke);
+      } else {
+        updateForStroke(scalingObj);
+      }
+    };
+
+    const restoreCurveDecorators = (targetObj: FabricObject) => {
+      if (!targetObj) return;
+      const restoreForStroke = (obj: FabricObject) => {
+        if (obj?.type !== 'path' || typeof obj.__mosUpdateCurveDecorators !== 'function') return;
+        obj.__mosUpdateCurveDecorators();
+      };
+
+      if (targetObj.type === 'activeSelection') {
+        targetObj.getObjects?.().forEach((child: FabricObject) => restoreForStroke(child));
+      } else {
+        restoreForStroke(targetObj);
+      }
+    };
+
     // Update tag connectors while scaling for smoother feedback.
     this.fabricCanvas.on('object:scaling', (e: FabricIEvent) => {
       const scalingObj = e.target;
@@ -2482,12 +3156,14 @@ export class CanvasManager {
       this.__tagScaleActive = true;
       this.__tagScaleTarget = scalingObj;
       updateTagConnectorsForScaling(scalingObj);
+      updateCurveDecoratorsForScaling(scalingObj);
     });
 
     // Keep connectors in sync on each render tick while scaling.
     this.fabricCanvas.on('after:render', () => {
       if (!this.__tagScaleActive || !this.__tagScaleTarget) return;
       updateTagConnectorsForScaling(this.__tagScaleTarget);
+      updateCurveDecoratorsForScaling(this.__tagScaleTarget);
     });
 
     const clearScaleTracking = () => {
@@ -2497,6 +3173,48 @@ export class CanvasManager {
 
     this.fabricCanvas.on('object:scaled', clearScaleTracking);
     this.fabricCanvas.on('mouse:up', clearScaleTracking);
+
+    // Ensure curve decorators are snapped to final geometry after transform commits.
+    this.fabricCanvas.on('object:modified', (e: FabricIEvent) => {
+      const obj = e?.target;
+      if (!obj) return;
+      const action = e?.transform?.action;
+      const isNonDragTransform =
+        action === 'scale' ||
+        action === 'scaleX' ||
+        action === 'scaleY' ||
+        action === 'rotate' ||
+        action === 'skew' ||
+        action === 'skewX' ||
+        action === 'skewY';
+      const recanonicalizeCurve = (curveObj: FabricObject) => {
+        if (
+          !curveObj ||
+          curveObj.type !== 'path' ||
+          !Array.isArray(curveObj.customPoints) ||
+          curveObj.customPoints.length < 2 ||
+          curveObj.isEditingControlPoint
+        ) {
+          return;
+        }
+        if (!isNonDragTransform) {
+          return;
+        }
+
+        // Final post-transform canonicalization keeps visual path, anchors, and decorators aligned
+        // immediately after mouse-up (without needing a deselect/click-away step).
+        FabricControls.canonicalizeCurveFromWorldPoints(curveObj, null, curveObj.angle || 0);
+        FabricControls.createCurveControls(curveObj);
+      };
+
+      if (obj.type === 'path') {
+        recanonicalizeCurve(obj);
+      } else if (obj.type === 'activeSelection') {
+        obj.getObjects?.().forEach((child: FabricObject) => recanonicalizeCurve(child));
+      }
+
+      restoreCurveDecorators(obj);
+    });
 
     // Touch gesture helpers
     const getTwoFingerCenter = (touches: TouchList) => {
@@ -2636,6 +3354,7 @@ export class CanvasManager {
               this.panX += deltaX;
               this.panY += deltaY;
               this.applyViewportTransform();
+              this.markGuideSplitViewportInteraction();
 
               touchGestureState.lastTwoFingerCenter = currentCenter;
             }
@@ -2704,6 +3423,7 @@ export class CanvasManager {
 
     // Keyboard event listeners for cursor feedback on shift key
     document.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (!this.isInteractionActive()) return;
       if (e.key === 'Shift' && !isDragging) {
         console.log('[PAN] Shift key pressed - showing grab cursor');
         this.fabricCanvas.upperCanvasEl.style.cursor = 'grab';
@@ -2711,6 +3431,7 @@ export class CanvasManager {
     });
 
     document.addEventListener('keyup', (e: KeyboardEvent) => {
+      if (!this.isInteractionActive()) return;
       if (e.key === 'Shift' && !isDragging) {
         console.log('[PAN] Shift key released - restoring default cursor');
         this.fabricCanvas.upperCanvasEl.style.cursor = 'default';
@@ -2719,12 +3440,21 @@ export class CanvasManager {
   }
 
   clear(): void {
-    if (!this.fabricCanvas) return;
+    if (!this.fabricCanvas || !this.fabricCanvas.lowerCanvasEl) return;
     this.fabricCanvas.clear();
     this.fabricCanvas.setBackgroundColor(
       '#ffffff',
       this.fabricCanvas.renderAll.bind(this.fabricCanvas)
     );
+    this.applyViewportTransform();
+  }
+
+  /** Reset viewport to identity (zoom 1, no pan/rotation). Used when tearing down reusable canvases. */
+  resetViewport(): void {
+    this.panX = 0;
+    this.panY = 0;
+    this.zoomLevel = 1;
+    this.rotationDegrees = 0;
     this.applyViewportTransform();
   }
 
@@ -2741,6 +3471,30 @@ export class CanvasManager {
 
   getRotationDegrees(): number {
     return this.rotationDegrees;
+  }
+
+  setBackgroundImageRotationDegrees(degrees: number): void {
+    if (!this.fabricCanvas?.backgroundImage) return;
+    const normalized = ((degrees % 360) + 360) % 360;
+    this.fabricCanvas.backgroundImage.set({
+      angle: normalized,
+      originX: 'center',
+      originY: 'center',
+    });
+    this.fabricCanvas.backgroundImage.setCoords?.();
+    this.fabricCanvas.requestRenderAll();
+  }
+
+  rotateBackgroundImageBy(deltaDegrees: number): number {
+    const current = this.getBackgroundImageRotationDegrees();
+    const next = (((current + (deltaDegrees || 0)) % 360) + 360) % 360;
+    this.setBackgroundImageRotationDegrees(next);
+    return next;
+  }
+
+  getBackgroundImageRotationDegrees(): number {
+    const angle = Number(this.fabricCanvas?.backgroundImage?.angle);
+    return Number.isFinite(angle) ? ((angle % 360) + 360) % 360 : 0;
   }
 
   setViewportState({
@@ -2978,6 +3732,7 @@ export class CanvasManager {
   // Also restores custom controls for lines, curves, and arrows
   loadFromJSON(json: any, callback?: () => void): void {
     if (!this.fabricCanvas) {
+      callback?.();
       return;
     }
     this.fabricCanvas.loadFromJSON(

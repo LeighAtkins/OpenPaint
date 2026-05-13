@@ -1,0 +1,696 @@
+// @ts-nocheck
+/**
+ * MOS Generate UI — adds the "Generate Overlay" button and modal to the editor.
+ *
+ * Integrates into the existing toolbar/measurement area. Creates a modal dialog
+ * matching the MeasurementDialog.js visual style for configuration and feedback.
+ */
+
+import type { MosGenerateRequest } from './types';
+import { generateMosOverlay, captureBackgroundImageDataUrl } from './mos-generate-client';
+import type { MeasurementOverlayManager } from './MeasurementOverlayManager';
+
+const DEFAULT_ROLE_OPTIONS = [
+  { value: 'A1', label: 'A1' },
+  { value: 'A2', label: 'A2' },
+  { value: 'A3', label: 'A3' },
+  { value: 'A4', label: 'A4' },
+  { value: 'B1', label: 'B1' },
+  { value: 'B2', label: 'B2' },
+  { value: 'C1', label: 'C1' },
+  { value: 'C2', label: 'C2' },
+  { value: 'C3', label: 'C3' },
+  { value: 'C4', label: 'C4' },
+  { value: 'D', label: 'D' },
+  { value: 'E1', label: 'E1' },
+  { value: 'E2', label: 'E2' },
+  { value: 'W', label: 'W' },
+  { value: 'H', label: 'H' },
+];
+
+const SUPPORTED_ROLE_SET = new Set(DEFAULT_ROLE_OPTIONS.map(option => option.value));
+
+const guideRoleCache = new Map<string, { value: string; label: string }[]>();
+const MAX_SELECTED_ROLES = 16;
+
+function mosDebugEnabled(): boolean {
+  return new URLSearchParams(window.location.search).has('debug');
+}
+
+function ensureMosDebugStore(): void {
+  const w = window as any;
+  if (!Array.isArray(w.__MOS_DEBUG_LOGS)) {
+    w.__MOS_DEBUG_LOGS = [];
+  }
+  if (!w.__MOS_DEBUG_LAST) {
+    w.__MOS_DEBUG_LAST = null;
+  }
+}
+
+function pushMosDebugLog(stage: string, payload: Record<string, unknown> = {}): void {
+  ensureMosDebugStore();
+  const w = window as any;
+  w.__MOS_DEBUG_LOGS.push({
+    ts: new Date().toISOString(),
+    stage,
+    ...payload,
+  });
+  w.__MOS_DEBUG_LAST = { stage, ...payload };
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+/**
+ * Initialise the MOS generate UI. Call once after deferred managers are ready.
+ * Returns a cleanup function.
+ */
+export function initMosGenerateUI(
+  manager: MeasurementOverlayManager,
+  canvasManager: any,
+  projectManager: any
+): () => void {
+  if (mosDebugEnabled()) {
+    ensureMosDebugStore();
+    pushMosDebugLog('init', { location: window.location.href });
+  }
+
+  const { overlay, destroy } = createGenerateDialog(manager, canvasManager, projectManager);
+  document.body.appendChild(overlay);
+
+  // Add toolbar button
+  const btn = createToolbarButton(() => openDialog(overlay));
+  const toolbar = document.querySelector(
+    '.measurement-toolbar, #measurementPanel, .toolbar-bottom'
+  );
+  if (toolbar) {
+    toolbar.appendChild(btn);
+  } else {
+    // Fallback: add to body as floating button
+    btn.style.position = 'fixed';
+    btn.style.bottom = '80px';
+    btn.style.right = '20px';
+    btn.style.zIndex = '9999';
+    document.body.appendChild(btn);
+  }
+
+  return () => {
+    overlay.remove();
+    btn.remove();
+    destroy();
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Dialog creation
+// ---------------------------------------------------------------------------
+
+function createGenerateDialog(
+  manager: MeasurementOverlayManager,
+  canvasManager: any,
+  projectManager: any
+): { overlay: HTMLElement; destroy: () => void } {
+  const overlay = document.createElement('div');
+  overlay.id = 'mosGenerateOverlay';
+  overlay.setAttribute('aria-hidden', 'true');
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(11, 13, 16, 0.5);
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  `;
+
+  const dialog = document.createElement('div');
+  dialog.setAttribute('role', 'dialog');
+  dialog.setAttribute('aria-modal', 'true');
+  dialog.setAttribute('tabindex', '-1');
+  dialog.style.cssText = `
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 24px 48px rgba(11, 13, 16, 0.18), 0 8px 16px rgba(11, 13, 16, 0.08);
+    font-family: 'Instrument Sans', 'Inter', sans-serif;
+  `;
+
+  dialog.innerHTML = `
+    <h2 style="margin-top: 0; margin-bottom: 16px; color: #151A20; font-size: 22px; font-weight: 600;">
+      Generate Measurement Overlay
+    </h2>
+    <p style="margin-top: 0; margin-bottom: 20px; color: #3E4752; font-size: 13px;">
+      Use AI to generate measurement lines for the current image.
+    </p>
+
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; margin-bottom: 6px; color: #3E4752; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;">
+        Measurement Roles
+      </label>
+      <div id="mosRolesContainer" style="display: flex; flex-wrap: wrap; gap: 8px;">
+      </div>
+    </div>
+
+    <div id="mosGenerateStatus" style="margin-bottom: 16px; display: none;">
+      <div id="mosGenerateSpinner" style="display: flex; align-items: center; gap: 8px; color: #3E4752; font-size: 13px;">
+        <svg width="16" height="16" viewBox="0 0 16 16" style="animation: mos-spin 1s linear infinite;">
+          <circle cx="8" cy="8" r="6" fill="none" stroke="#2D6BFF" stroke-width="2" stroke-dasharray="32" stroke-dashoffset="8" />
+        </svg>
+        <span>Generating overlay...</span>
+      </div>
+      <div id="mosGenerateError" style="display: none; color: #DC2626; font-size: 13px; margin-top: 8px;"></div>
+      <div id="mosGenerateSuccess" style="display: none; color: #059669; font-size: 13px; margin-top: 8px;"></div>
+    </div>
+
+    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+      <button id="mosGenerateCancel" type="button" style="
+        padding: 10px 20px;
+        border: 1px solid #E7EAEE;
+        background: #F6F7F9;
+        color: #0B0D10;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'Instrument Sans', 'Inter', sans-serif;
+      ">Cancel</button>
+      <button id="mosGenerateSubmit" type="button" style="
+        padding: 10px 20px;
+        border: none;
+        background: #0B0D10;
+        color: #fff;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: 'Instrument Sans', 'Inter', sans-serif;
+      ">Generate</button>
+    </div>
+  `;
+
+  overlay.appendChild(dialog);
+
+  // Add spinner animation style
+  if (!document.getElementById('mos-spin-style')) {
+    const style = document.createElement('style');
+    style.id = 'mos-spin-style';
+    style.textContent = `@keyframes mos-spin { to { transform: rotate(360deg); } }`;
+    document.head.appendChild(style);
+  }
+
+  // --- Wire events ---
+  const cancelBtn = dialog.querySelector('#mosGenerateCancel')!;
+  const submitBtn = dialog.querySelector('#mosGenerateSubmit')!;
+  const statusDiv = dialog.querySelector('#mosGenerateStatus')!;
+  const spinnerDiv = dialog.querySelector('#mosGenerateSpinner')!;
+  const errorDiv = dialog.querySelector('#mosGenerateError')!;
+  const successDiv = dialog.querySelector('#mosGenerateSuccess')!;
+  const rolesContainer = dialog.querySelector('#mosRolesContainer') as HTMLElement | null;
+  if (!rolesContainer) {
+    throw new Error('[MOS] Missing roles container in generate dialog');
+  }
+
+  renderRoleOptions(
+    rolesContainer,
+    DEFAULT_ROLE_OPTIONS,
+    new Set(DEFAULT_ROLE_OPTIONS.map(option => option.value))
+  );
+
+  const refreshRolesFromGuide = async () => {
+    try {
+      const templateId = resolveTemplateId(projectManager);
+      if (!templateId) {
+        renderRoleOptions(
+          rolesContainer,
+          DEFAULT_ROLE_OPTIONS,
+          new Set(DEFAULT_ROLE_OPTIONS.map(option => option.value))
+        );
+        return;
+      }
+
+      const viewId = projectManager?.currentViewId || 'front';
+      const imagePartLabel = resolveImagePartLabel(projectManager, viewId);
+      const guideView = inferGuideView(viewId, imagePartLabel);
+      const options = await fetchGuideRoleOptions(templateId, guideView);
+      const supportedOptions = options.filter(option => SUPPORTED_ROLE_SET.has(option.value));
+
+      if (supportedOptions.length > 0) {
+        const mergedByValue = new Map<string, { value: string; label: string }>();
+        DEFAULT_ROLE_OPTIONS.forEach(option => {
+          mergedByValue.set(option.value, option);
+        });
+        supportedOptions.forEach(option => {
+          if (!mergedByValue.has(option.value)) {
+            mergedByValue.set(option.value, option);
+          }
+        });
+        const mergedOptions = Array.from(mergedByValue.values());
+        renderRoleOptions(
+          rolesContainer,
+          mergedOptions,
+          new Set(mergedOptions.slice(0, MAX_SELECTED_ROLES).map(opt => opt.value))
+        );
+      } else {
+        renderRoleOptions(
+          rolesContainer,
+          DEFAULT_ROLE_OPTIONS,
+          new Set(DEFAULT_ROLE_OPTIONS.map(option => option.value))
+        );
+      }
+    } catch (error) {
+      console.warn('[MOS] Failed to load guide role options:', error);
+      renderRoleOptions(
+        rolesContainer,
+        DEFAULT_ROLE_OPTIONS,
+        new Set(DEFAULT_ROLE_OPTIONS.map(option => option.value))
+      );
+    }
+  };
+
+  (overlay as any).__refreshMosRoles = refreshRolesFromGuide;
+
+  cancelBtn.addEventListener('click', () => closeDialog(overlay));
+
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) closeDialog(overlay);
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  submitBtn.addEventListener('click', async () => {
+    const debugMode = mosDebugEnabled();
+    // Gather selected roles
+    const roleCheckboxes = dialog.querySelectorAll(
+      '#mosRolesContainer input[type="checkbox"]:checked'
+    );
+    const selectedRoles = Array.from(roleCheckboxes).map((cb: HTMLInputElement) => cb.value);
+    const roles = selectedRoles.slice(0, MAX_SELECTED_ROLES);
+
+    if (roles.length === 0) {
+      errorDiv.textContent = 'Select at least one measurement role.';
+      errorDiv.style.display = 'block';
+      statusDiv.style.display = 'block';
+      return;
+    }
+
+    if (selectedRoles.length > MAX_SELECTED_ROLES) {
+      errorDiv.textContent = `Using first ${MAX_SELECTED_ROLES} selected roles to keep generation responsive.`;
+      errorDiv.style.display = 'block';
+      statusDiv.style.display = 'block';
+    }
+
+    // Show spinner
+    submitBtn.disabled = true;
+    cancelBtn.disabled = true;
+    statusDiv.style.display = 'block';
+    spinnerDiv.style.display = 'flex';
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+
+    try {
+      const canvas = canvasManager.fabricCanvas;
+      const bgImg = canvas?.backgroundImage;
+
+      // Determine image dimensions
+      const imageWidth = bgImg?.width || canvas?.width || 1;
+      const imageHeight = bgImg?.height || canvas?.height || 1;
+
+      // Build request
+      const request: MosGenerateRequest = {
+        viewId: projectManager?.currentViewId || 'front',
+        imageWidth,
+        imageHeight,
+        requestedRoles: roles,
+        units: 'cm',
+      };
+
+      const imagePartLabel = resolveImagePartLabel(projectManager, request.viewId || 'front');
+      const guideView = inferGuideView(request.viewId || 'front', imagePartLabel);
+      request.imagePartLabel = imagePartLabel;
+      request.guideView = guideView;
+
+      // Attach guide code from sofa metadata so the server can fetch a reference template SVG
+      const sofaMeta = projectManager?.getProjectMetadata?.() || (window as any).projectMetadata;
+      const guideCodes = resolveGuideCodesForView(sofaMeta, request.viewId || 'front');
+      if (guideCodes.length > 0) {
+        request.templateId = guideCodes[0];
+      }
+
+      // Try to get R2 key from current image, fallback to data URL
+      const imageDataUrl = captureBackgroundImageDataUrl(canvas);
+      if (imageDataUrl) {
+        request.imageDataUrl = imageDataUrl;
+      } else {
+        throw new Error('No background image available to generate overlay from.');
+      }
+
+      if (debugMode) {
+        pushMosDebugLog('request', {
+          viewId: request.viewId,
+          guideView: request.guideView,
+          templateId: request.templateId,
+          requestedRoles: request.requestedRoles,
+          imageBytes: Math.round((request.imageDataUrl?.length || 0) * 0.75),
+        });
+      }
+
+      const response = await generateMosOverlay(request);
+      if (debugMode) {
+        pushMosDebugLog('response', {
+          traceId: response.traceId,
+          success: response.success,
+          attempt: response.attempt,
+          attemptMode: response.attemptMode,
+          rolesApplied: response.rolesApplied,
+          missingRoles: response.missingRoles,
+          validationErrors: response.validationErrors,
+          debug: response.debug,
+        });
+      }
+
+      if (response.success && response.svg) {
+        // Import the generated SVG as an overlay
+        const viewId = projectManager?.currentViewId || 'front';
+        await manager.importSvg(response.svg, viewId, {
+          sourceR2Key: response.r2Key,
+          supabaseId: response.supabaseId,
+        });
+
+        const debugSuffix = debugMode
+          ? ` Trace: ${response.traceId || 'n/a'}. Roles applied: ${Array.isArray(response.rolesApplied) ? response.rolesApplied.join(', ') || 'none' : 'none'}.`
+          : '';
+        successDiv.textContent = `Overlay generated (attempt ${response.attempt || 1}). ${response.usage ? `Tokens: ${response.usage.totalTokenCount}` : ''}${debugSuffix}`;
+        successDiv.style.display = 'block';
+        spinnerDiv.style.display = 'none';
+
+        // Auto-close after brief delay
+        setTimeout(() => closeDialog(overlay), 1500);
+      } else {
+        const detailParts: string[] = [];
+        if (Array.isArray(response.validationErrors) && response.validationErrors.length) {
+          detailParts.push(`validation: ${response.validationErrors.slice(0, 2).join(' | ')}`);
+        }
+        if (Array.isArray(response.missingRoles) && response.missingRoles.length) {
+          detailParts.push(`missing roles: ${response.missingRoles.join(', ')}`);
+        }
+        if (Array.isArray(response.rolesApplied)) {
+          detailParts.push(`roles applied: ${response.rolesApplied.length}`);
+        }
+        if (response.debug) {
+          detailParts.push(
+            `ops parsed/fallback: ${response.debug.parsedOpsCount || 0}/${response.debug.fallbackOpsCount || 0}`
+          );
+          const stages = (response.debug as any).stageAnswers;
+          if (stages) {
+            detailParts.push(
+              `stages image/template/svg/roles: ${stages.imageSentToGemini ? 'Y' : 'N'}/${stages.templateSvgFetched ? 'Y' : 'N'}/${stages.modelReturnedSvgText ? 'Y' : 'N'}/${stages.rolesMappedToVectors ? 'Y' : 'N'}`
+            );
+          }
+          const traceId = (response.debug as any)?.trace?.traceId;
+          if (traceId) {
+            detailParts.push(`trace: ${traceId}`);
+          }
+        }
+
+        const message = response.error || 'Unknown generation error';
+        if (debugMode) {
+          const debugPayload = {
+            attemptMode: response.attemptMode,
+            rolesApplied: response.rolesApplied,
+            missingRoles: response.missingRoles,
+            validationErrors: response.validationErrors,
+            debug: response.debug,
+          };
+          detailParts.push(`debug: ${JSON.stringify(debugPayload)}`);
+          errorDiv.style.whiteSpace = 'pre-wrap';
+          errorDiv.style.maxHeight = '180px';
+          errorDiv.style.overflow = 'auto';
+        } else {
+          errorDiv.style.whiteSpace = '';
+          errorDiv.style.maxHeight = '';
+          errorDiv.style.overflow = '';
+        }
+        throw new Error(
+          detailParts.length > 0 ? `${message}. ${detailParts.join(' · ')}` : message
+        );
+      }
+    } catch (err) {
+      spinnerDiv.style.display = 'none';
+      errorDiv.textContent = err.message || 'Generation failed';
+      errorDiv.style.display = 'block';
+    } finally {
+      submitBtn.disabled = false;
+      cancelBtn.disabled = false;
+    }
+  });
+
+  const destroy = () => {
+    /* noop */
+  };
+
+  return { overlay, destroy };
+}
+
+// ---------------------------------------------------------------------------
+// Toolbar button
+// ---------------------------------------------------------------------------
+
+function createToolbarButton(onClick: () => void): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.id = 'mosGenerateBtn';
+  btn.title = 'Generate Measurement Overlay (AI)';
+  btn.setAttribute('aria-label', 'Generate Measurement Overlay');
+  btn.style.cssText = `
+    padding: 8px 14px;
+    border: 1px solid #E7EAEE;
+    background: #fff;
+    color: #0B0D10;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Instrument Sans', 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s, border-color 0.15s;
+  `;
+
+  btn.innerHTML = `
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 1v14M1 8h14M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    MOS Overlay
+  `;
+
+  btn.addEventListener('mouseenter', () => {
+    btn.style.background = '#F6F7F9';
+    btn.style.borderColor = '#D1D5DB';
+  });
+  btn.addEventListener('mouseleave', () => {
+    btn.style.background = '#fff';
+    btn.style.borderColor = '#E7EAEE';
+  });
+  btn.addEventListener('click', onClick);
+
+  return btn;
+}
+
+// ---------------------------------------------------------------------------
+// Dialog open/close helpers
+// ---------------------------------------------------------------------------
+
+function openDialog(overlay: HTMLElement): void {
+  overlay.style.display = 'flex';
+  overlay.setAttribute('aria-hidden', 'false');
+
+  const refreshRoles = (overlay as any).__refreshMosRoles;
+  if (typeof refreshRoles === 'function') {
+    void refreshRoles();
+  }
+
+  // Reset state
+  const statusDiv = overlay.querySelector('#mosGenerateStatus')!;
+  if (statusDiv) statusDiv.style.display = 'none';
+
+  const dialog = overlay.querySelector('[role="dialog"]')!;
+  dialog?.focus();
+}
+
+function closeDialog(overlay: HTMLElement): void {
+  overlay.style.display = 'none';
+  overlay.setAttribute('aria-hidden', 'true');
+}
+
+function resolveGuideCodesForView(metadata: any, viewId: string): string[] {
+  const source = metadata || {};
+  const scoped =
+    source?.measurementGuideCodesByView && typeof source.measurementGuideCodesByView === 'object'
+      ? source.measurementGuideCodesByView
+      : {};
+  const scopedCodes = Array.isArray(scoped?.[viewId])
+    ? scoped[viewId]
+        .map((code: unknown) => (typeof code === 'string' ? code.trim().toUpperCase() : ''))
+        .filter(Boolean)
+    : [];
+  if (scopedCodes.length) {
+    return scopedCodes;
+  }
+
+  const globalCodes = Array.isArray(source?.measurementGuideCodes)
+    ? source.measurementGuideCodes
+        .map((code: unknown) => (typeof code === 'string' ? code.trim().toUpperCase() : ''))
+        .filter(Boolean)
+    : [];
+
+  if (globalCodes.length) {
+    return globalCodes;
+  }
+
+  const single = String(source?.measurementGuideCode || '')
+    .trim()
+    .toUpperCase();
+  return single ? [single] : [];
+}
+
+function resolveTemplateId(projectManager: any): string {
+  const metadata = projectManager?.getProjectMetadata?.() || (window as any).projectMetadata || {};
+  const viewId = String(projectManager?.currentViewId || 'front');
+  const codes = resolveGuideCodesForView(metadata, viewId);
+  return (codes[0] || '').trim();
+}
+
+function resolveImagePartLabel(projectManager: any, viewId: string): string {
+  const metadata = projectManager?.getProjectMetadata?.() || (window as any).projectMetadata || {};
+  const labelFromMeta = metadata?.imagePartLabels?.[viewId];
+  const currentInput = document.getElementById('currentImageNameBox') as HTMLInputElement | null;
+  if (currentInput?.dataset?.activeViewId === viewId && currentInput.value?.trim()) {
+    return currentInput.value.trim();
+  }
+  return String(labelFromMeta || '').trim();
+}
+
+function inferGuideView(viewId: string, imagePartLabel: string): 'front' | 'back' | 'side' {
+  const value = `${viewId || ''} ${imagePartLabel || ''}`.toLowerCase();
+  if (value.includes('back') || value.includes('rear')) return 'back';
+  if (
+    value.includes('side') ||
+    value.includes('left') ||
+    value.includes('right') ||
+    value.includes('arm')
+  ) {
+    return 'side';
+  }
+  if (value.includes('cc') || value.includes('cushion')) {
+    return 'front';
+  }
+  return 'front';
+}
+
+async function fetchGuideRoleOptions(
+  templateId: string,
+  guideView: 'front' | 'back' | 'side'
+): Promise<{ value: string; label: string }[]> {
+  const key = `${templateId}::${guideView}`;
+  if (guideRoleCache.has(key)) {
+    return guideRoleCache.get(key) || [];
+  }
+
+  const response = await fetch(
+    `/api/measurement-guides/svg?code=${encodeURIComponent(templateId)}&view=${encodeURIComponent(guideView)}`,
+    { method: 'GET' }
+  );
+  if (!response.ok) {
+    throw new Error(`Guide role fetch failed (${response.status})`);
+  }
+
+  const svgText = await response.text();
+  const options = extractRoleOptionsFromSvg(svgText);
+  guideRoleCache.set(key, options);
+  return options;
+}
+
+function extractRoleOptionsFromSvg(svgText: string): { value: string; label: string }[] {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgText, 'image/svg+xml');
+  const byCanonical = new Map<string, string>();
+
+  doc.querySelectorAll('text').forEach(node => {
+    const token = normalizeRoleToken(node.textContent || '');
+    if (!token) return;
+    const canonical = canonicalRoleToken(token);
+    if (!canonical) return;
+    if (!byCanonical.has(canonical) || token.length < (byCanonical.get(canonical) || '').length) {
+      byCanonical.set(canonical, token);
+    }
+  });
+
+  doc.querySelectorAll('[id]').forEach(node => {
+    const id = node.getAttribute('id') || '';
+    const token = roleTokenFromElementId(id);
+    if (!token) return;
+    const canonical = canonicalRoleToken(token);
+    if (!canonical) return;
+    if (!byCanonical.has(canonical) || token.length < (byCanonical.get(canonical) || '').length) {
+      byCanonical.set(canonical, token);
+    }
+  });
+
+  return Array.from(byCanonical.values()).map(value => ({
+    value,
+    label: value,
+  }));
+}
+
+function roleTokenFromElementId(id: string): string {
+  const normalized = (id || '').replace(/^mos\d+_/, '').trim();
+  if (!normalized || normalized.length < 2) return '';
+
+  if (/^[mbc][a-z0-9_-]+$/i.test(normalized)) {
+    let token = normalized.substring(1).toUpperCase();
+    token = token.replace(/_(LABEL|TEXT)$/i, '');
+    token = token.replace(/(CM|MM|IN)$/i, '');
+    token = token.replace(/[^A-Z0-9-]/g, '');
+    return normalizeRoleToken(token);
+  }
+
+  return '';
+}
+
+function normalizeRoleToken(value: string): string {
+  const token = (value || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9-]/g, '');
+  if (!token) return '';
+  if (token.length > 20) return '';
+  if (/^\d+$/.test(token)) return '';
+  return token;
+}
+
+function canonicalRoleToken(value: string): string {
+  const token = normalizeRoleToken(value);
+  if (!token) return '';
+  const strippedUnits = token.replace(/(?:CM|MM|IN)\d*$/i, '');
+  return strippedUnits || token;
+}
+
+function renderRoleOptions(
+  container: HTMLElement,
+  options: { value: string; label: string }[],
+  selected: Set<string>
+): void {
+  container.innerHTML = options
+    .map(option => {
+      const checked = selected.has(option.value) ? 'checked' : '';
+      return `
+        <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; color: #3E4752;">
+          <input type="checkbox" value="${option.value}" ${checked}> ${option.label}
+        </label>
+      `;
+    })
+    .join('');
+}

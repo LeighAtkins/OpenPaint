@@ -30,6 +30,7 @@ export const DATABASE_TABLES = {
   PROJECTS: 'projects',
   PROJECT_IMAGES: 'project_images',
   USER_PROFILES: 'user_profiles',
+  MOS_OVERLAYS: 'mos_overlays',
 } as const;
 
 // RLS (Row Level Security) policies
