@@ -961,32 +961,32 @@ export class ProjectManager {
         skipViewport ||
         document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
           true;
-      if (skipViewport) {
+      const previousCanvasData = this.views[this.currentViewId].canvasData;
+      if (isGuideSplitActive) {
         // Split mode mutates Fabric's serialized viewport/canvas size for the
         // half-width pane. Preserve object data, but never persist that transient
         // transform back into the view JSON we restore after closing split mode.
         delete json.viewportTransform;
         delete json.width;
         delete json.height;
+        if (previousCanvasData?.backgroundImage) {
+          json.backgroundImage = JSON.parse(JSON.stringify(previousCanvasData.backgroundImage));
+        }
       }
       this.views[this.currentViewId].canvasData = json;
       this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();
       this.views[this.currentViewId].backgroundRotation =
-        this.canvasManager.getBackgroundImageRotationDegrees();
-      if (!skipViewport) {
+        Number(this.views[this.currentViewId].backgroundRotation) || 0;
+      if (!isGuideSplitActive) {
         // Save backgroundWorldRect so setBackgroundImage can restore the exact
-        // position on the next visit.  In split mode, setBackgroundImage already
-        // uses the saved rect (or originalCanvasSize as fallback) to place the BG
-        // at the full-width position, so saving it here is safe and ensures
-        // consistent positioning across view switches.
+        // position on the next visit. Split mode preserves the previous rect
+        // because the live canvas is temporarily fitted to a half-width pane.
         const backgroundWorldRect = this.canvasManager.getBackgroundWorldRect?.() || null;
         if (backgroundWorldRect) {
           this.views[this.currentViewId].backgroundWorldRect = JSON.parse(
             JSON.stringify(backgroundWorldRect)
           );
-        } else if (!isGuideSplitActive) {
-          // Only delete the rect outside split mode — in split mode, preserve
-          // whatever was saved earlier (e.g. from the pre-split snapshot).
+        } else {
           delete this.views[this.currentViewId].backgroundWorldRect;
         }
       }
@@ -2430,6 +2430,9 @@ export class ProjectManager {
 
   async getProjectData(options = {}) {
     const { embedImages = true, uploadImagesToR2 = false } = options;
+    const isGuideSplitActive =
+      document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
+      true;
     if (window.captureTabsSyncActive) {
       window.captureTabsSyncActive(this.currentViewId, { syncRotation: true });
     }
@@ -2528,10 +2531,19 @@ export class ProjectManager {
         backgroundWorldRect: null,
       };
 
+      const stableCanvasJSON = view.canvasData || legacyEntry.canvasJSON || null;
       if (viewId === this.currentViewId && fabricCanvas) {
         entry.canvasJSON = fabricCanvas.toJSON(customProps);
+        if (isGuideSplitActive) {
+          delete entry.canvasJSON.viewportTransform;
+          delete entry.canvasJSON.width;
+          delete entry.canvasJSON.height;
+          if (stableCanvasJSON?.backgroundImage) {
+            entry.canvasJSON.backgroundImage = deepClone(stableCanvasJSON.backgroundImage);
+          }
+        }
       } else {
-        entry.canvasJSON = view.canvasData || legacyEntry.canvasJSON || null;
+        entry.canvasJSON = stableCanvasJSON;
       }
       this.stripMosOverlayObjects(entry.canvasJSON);
 
@@ -2621,16 +2633,23 @@ export class ProjectManager {
         ),
       };
 
-      entry.tabs = deepClone(window.captureTabsByLabel?.[viewId] || view.tabs || legacyEntry.tabs);
+      const shouldUseLiveCurrentViewState = viewId === this.currentViewId && !isGuideSplitActive;
+      entry.tabs = deepClone(
+        shouldUseLiveCurrentViewState
+          ? window.captureTabsByLabel?.[viewId] || view.tabs || legacyEntry.tabs
+          : view.tabs || legacyEntry.tabs || window.captureTabsByLabel?.[viewId]
+      );
       const serializedBackgroundWorldRect = this.inferBackgroundWorldRectFromSerializedBackground(
         entry.canvasJSON?.backgroundImage
       );
       if (viewId === this.currentViewId) {
         entry.backgroundWorldRect = deepClone(
-          this.canvasManager?.getBackgroundWorldRect?.() ||
-            view.backgroundWorldRect ||
-            serializedBackgroundWorldRect ||
-            null
+          isGuideSplitActive
+            ? view.backgroundWorldRect || serializedBackgroundWorldRect || null
+            : this.canvasManager?.getBackgroundWorldRect?.() ||
+                view.backgroundWorldRect ||
+                serializedBackgroundWorldRect ||
+                null
         );
       } else {
         entry.backgroundWorldRect = deepClone(
@@ -2641,10 +2660,7 @@ export class ProjectManager {
       if (viewId === this.currentViewId) {
         const liveRotation = this.canvasManager?.getRotationDegrees?.();
         entry.rotation = Number.isFinite(liveRotation) ? liveRotation : Number(view.rotation) || 0;
-        const liveBackgroundRotation = this.canvasManager?.getBackgroundImageRotationDegrees?.();
-        entry.backgroundRotation = Number.isFinite(liveBackgroundRotation)
-          ? liveBackgroundRotation
-          : Number(view.backgroundRotation) || 0;
+        entry.backgroundRotation = Number(view.backgroundRotation) || 0;
       } else {
         entry.rotation = Number(view.rotation) || 0;
         entry.backgroundRotation = Number(view.backgroundRotation) || 0;
@@ -2652,18 +2668,22 @@ export class ProjectManager {
 
       // Persist per-image viewport (zoom/pan) so framing is restored on load
       if (viewId === this.currentViewId) {
-        entry.viewport = {
-          ...this.canvasManager.getViewportState(),
-          savedCanvasWidth: this.canvasManager.fabricCanvas?.width || 0,
-          savedCanvasHeight: this.canvasManager.fabricCanvas?.height || 0,
-        };
+        entry.viewport = isGuideSplitActive
+          ? view.viewport
+            ? deepClone(view.viewport)
+            : null
+          : {
+              ...this.canvasManager.getViewportState(),
+              savedCanvasWidth: this.canvasManager.fabricCanvas?.width || 0,
+              savedCanvasHeight: this.canvasManager.fabricCanvas?.height || 0,
+            };
       } else if (view.viewport) {
         entry.viewport = deepClone(view.viewport);
       }
 
       // Persist backgroundWorldRect so the background image is placed at the
       // exact same world-space position on reload (even if window size changed)
-      if (viewId === this.currentViewId) {
+      if (viewId === this.currentViewId && !isGuideSplitActive) {
         const liveWorldRect = this.canvasManager.getBackgroundWorldRect?.();
         if (liveWorldRect) {
           entry.backgroundWorldRect = JSON.parse(JSON.stringify(liveWorldRect));

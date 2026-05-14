@@ -58,6 +58,39 @@ function mapRow(row: any): any {
   };
 }
 
+function createCloudSaveProof(): string {
+  const cryptoApi = globalThis.crypto;
+  if (typeof cryptoApi?.randomUUID === 'function') {
+    return cryptoApi.randomUUID();
+  }
+  const random = Math.random().toString(36).slice(2);
+  return `${Date.now().toString(36)}-${random}`;
+}
+
+function withCloudSaveProof(
+  projectData: Record<string, unknown>,
+  proof: string,
+  savedAt: string
+): Record<string, unknown> {
+  const meta =
+    projectData._meta && typeof projectData._meta === 'object'
+      ? (projectData._meta as Record<string, unknown>)
+      : {};
+  return {
+    ...projectData,
+    updatedAt: savedAt,
+    _meta: {
+      ...meta,
+      cloudSaveProof: proof,
+      cloudSavedAt: savedAt,
+    },
+  };
+}
+
+function getCloudSaveProof(row: any): string {
+  return String(row?.data?._meta?.cloudSaveProof || '');
+}
+
 class CloudSaveService {
   private currentCloudProjectId: string | null = null;
 
@@ -149,7 +182,10 @@ class CloudSaveService {
     const { name, projectData, currentProjectId } = options;
 
     try {
-      const payloadSize = JSON.stringify(projectData).length;
+      const savedAt = new Date().toISOString();
+      const saveProof = createCloudSaveProof();
+      const stampedProjectData = withCloudSaveProof(projectData, saveProof, savedAt);
+      const payloadSize = JSON.stringify(stampedProjectData).length;
       const payloadMB = (payloadSize / (1024 * 1024)).toFixed(1);
       console.warn(`[CloudSave] Payload size: ${payloadMB} MB`);
       if (payloadSize > 50 * 1024 * 1024) {
@@ -178,6 +214,45 @@ class CloudSaveService {
       const timer = setTimeout(() => controller.abort(), 30000);
 
       try {
+        const verifyWrite = async (
+          savedProjectId: string
+        ): Promise<Result<CloudProject, AppError>> => {
+          const { data: verifyData, error: verifyError } = await this.postgrest(
+            `/projects?id=eq.${savedProjectId}&created_by=eq.${userId}&select=id,project_name,created_by,created_at,updated_at,data&limit=1`,
+            { method: 'GET', signal: controller.signal }
+          );
+
+          if (verifyError) {
+            return Result.err(
+              new AppError(
+                ErrorCode.SUPABASE_QUERY_ERROR,
+                `Save verification failed: ${verifyError}`
+              )
+            );
+          }
+
+          const verifyRow = Array.isArray(verifyData) ? verifyData[0] : verifyData;
+          const verifiedProof = getCloudSaveProof(verifyRow);
+          if (!verifyRow?.id || verifiedProof !== saveProof) {
+            return Result.err(
+              new AppError(
+                ErrorCode.SUPABASE_QUERY_ERROR,
+                'Cloud save did not verify. The database did not return the just-saved project data.'
+              )
+            );
+          }
+
+          const mapped = mapRow(verifyRow);
+          if (!mapped?.id) {
+            return Result.err(
+              new AppError(ErrorCode.SUPABASE_QUERY_ERROR, 'Verified save row was malformed')
+            );
+          }
+
+          this.currentCloudProjectId = mapped.id;
+          return Result.ok(mapped as CloudProject);
+        };
+
         if (projectId) {
           console.warn('[CloudSave] Sending UPDATE...');
           const { data, error } = await this.postgrest(
@@ -186,8 +261,8 @@ class CloudSaveService {
               method: 'PATCH',
               body: {
                 project_name: name,
-                data: projectData,
-                updated_at: new Date().toISOString(),
+                data: stampedProjectData,
+                updated_at: savedAt,
               },
               signal: controller.signal,
             }
@@ -228,7 +303,7 @@ class CloudSaveService {
             }
 
             console.warn('[CloudSave] Update succeeded (fallback row fetch)');
-            return Result.ok({ ...mappedFallback, data: {} } as CloudProject);
+            return await verifyWrite(mappedFallback.id);
           }
 
           console.warn('[CloudSave] Update succeeded');
@@ -238,7 +313,7 @@ class CloudSaveService {
               new AppError(ErrorCode.SUPABASE_QUERY_ERROR, 'Update returned malformed project row')
             );
           }
-          return Result.ok({ ...mapped, data: {} } as CloudProject);
+          return await verifyWrite(mapped.id);
         } else {
           console.warn('[CloudSave] Sending INSERT...');
           const { data, error } = await this.postgrest(
@@ -248,7 +323,7 @@ class CloudSaveService {
               body: {
                 project_name: name,
                 created_by: userId,
-                data: projectData,
+                data: stampedProjectData,
               },
               signal: controller.signal,
             }
@@ -288,7 +363,7 @@ class CloudSaveService {
 
           this.currentCloudProjectId = mapped.id;
           console.warn('[CloudSave] Insert succeeded, id:', mapped.id);
-          return Result.ok({ ...mapped, data: {} } as CloudProject);
+          return await verifyWrite(mapped.id);
         }
       } finally {
         clearTimeout(timer);
