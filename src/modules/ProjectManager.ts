@@ -2547,9 +2547,15 @@ export class ProjectManager {
       }
       this.stripMosOverlayObjects(entry.canvasJSON);
 
-      if (uploadImagesToR2 && view.image) {
+      const backgroundImageSrc =
+        typeof entry.canvasJSON?.backgroundImage?.src === 'string'
+          ? entry.canvasJSON.backgroundImage.src
+          : '';
+      const imagePersistenceSource = view.image || legacyEntry.imageUrl || backgroundImageSrc || '';
+
+      if (uploadImagesToR2 && imagePersistenceSource) {
         try {
-          const r2Key = await this.uploadViewImageToR2(viewId, view.image);
+          const r2Key = await this.uploadViewImageToR2(viewId, imagePersistenceSource);
           if (r2Key) {
             entry.imageDataURL = null;
             entry.imageUrl =
@@ -2568,9 +2574,9 @@ export class ProjectManager {
         } catch (err) {
           console.warn(`[Save] Could not upload image to R2 for ${viewId}:`, err);
         }
-      } else if (embedImages && view.image) {
+      } else if (embedImages && imagePersistenceSource) {
         try {
-          entry.imageDataURL = await this.fetchImageAsDataURL(view.image);
+          entry.imageDataURL = await this.fetchImageAsDataURL(imagePersistenceSource);
         } catch (err) {
           console.warn(`[Save] Could not capture image for ${viewId}:`, err);
         }
@@ -2581,6 +2587,10 @@ export class ProjectManager {
         entry.imageUrl = entry.imageDataURL;
       } else if (isBlobUrl(entry.imageUrl)) {
         entry.imageUrl = null;
+      }
+
+      if (entry.canvasJSON?.backgroundImage && isBlobUrl(entry.canvasJSON.backgroundImage.src)) {
+        entry.canvasJSON.backgroundImage.src = '';
       }
 
       // Ensure backgroundImage src isn't blank when canvasJSON exists
