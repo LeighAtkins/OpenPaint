@@ -3191,6 +3191,9 @@ export function initToolbarController() {
       const state = ensureCaptureTabsForLabel(baseLabel);
       const targetTab = state.tabs.find(tab => tab.id === tabId);
       if (!targetTab) return;
+      const targetViewport = targetTab.viewport
+        ? normalizeViewportRecord(JSON.parse(JSON.stringify(targetTab.viewport)))
+        : null;
       // Discard selection early so control anchors don't persist across tab switches
       const _tabCanvas = window.app?.canvasManager?.fabricCanvas;
       if (_tabCanvas) _tabCanvas.discardActiveObject();
@@ -3212,6 +3215,22 @@ export function initToolbarController() {
       }
       window.currentImageLabel = getActiveScopedLabel(baseLabel);
       applyCaptureFrameForLabel(baseLabel);
+      if (targetViewport) {
+        const restoredTab = getActiveTab(baseLabel);
+        if (restoredTab) {
+          restoredTab.viewport = {
+            ...(restoredTab.viewport || {}),
+            ...targetViewport,
+          };
+          suspendCaptureTabViewportTracking(700);
+          applyViewportRecord(restoredTab.viewport);
+          replayCaptureFrameForLabelFromWorldRect(baseLabel, {
+            viewport: restoredTab.viewport,
+            skipFit: true,
+            applyViewport: false,
+          });
+        }
+      }
       syncCanvasVisibilityForActiveTab(baseLabel);
       window.app?.metadataManager?.updateStrokeVisibilityControls?.();
       renderTabBar(baseLabel);
