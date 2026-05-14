@@ -798,13 +798,42 @@ export class ProjectManager {
       return;
     }
 
+    const cloneViewportRecord = viewport => {
+      if (!viewport || typeof viewport !== 'object') return null;
+      const zoom = Number(viewport.zoom);
+      if (!Number.isFinite(zoom) || zoom <= 0) return null;
+      return {
+        ...JSON.parse(JSON.stringify(viewport)),
+        zoom,
+        panX: Number.isFinite(Number(viewport.panX)) ? Number(viewport.panX) : 0,
+        panY: Number.isFinite(Number(viewport.panY)) ? Number(viewport.panY) : 0,
+      };
+    };
+    const restoreSavedCaptureTabViewport = savedViewport => {
+      if (!savedViewport) return false;
+      const state = window.captureTabsByLabel?.[viewId];
+      const activeTab = state?.tabs?.find?.(tab => tab.id === state.activeTabId) || null;
+      if (activeTab) {
+        activeTab.viewport = {
+          ...(activeTab.viewport || {}),
+          ...savedViewport,
+        };
+      }
+      this.canvasManager.setViewportState(savedViewport);
+      return true;
+    };
+
     // Capture-tab path — handles cross-resolution correctly via geometry-aware
     // fitViewportToWorldRect (which uses current canvas center/dimensions).
     if (
       window.captureTabsByLabel?.[viewId] &&
       typeof window.applyCaptureFrameForLabel === 'function'
     ) {
+      const state = window.captureTabsByLabel?.[viewId];
+      const activeTab = state?.tabs?.find?.(tab => tab.id === state.activeTabId) || null;
+      const savedViewport = cloneViewportRecord(activeTab?.viewport);
       window.applyCaptureFrameForLabel(viewId);
+      restoreSavedCaptureTabViewport(savedViewport);
       return;
     }
 
