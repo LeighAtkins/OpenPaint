@@ -461,6 +461,7 @@ export class ProjectManager {
       if (!view.canvasData) {
         this.canvasManager.clear();
       }
+      this.removeCanvasObjectsOutsideViewScope(viewId);
 
       if (window.ensureCaptureTabsForLabel) {
         window.ensureCaptureTabsForLabel(viewId);
@@ -487,37 +488,7 @@ export class ProjectManager {
         });
         // Sanitize canvas data and fix image URLs before loading
         let sanitizedData = this.sanitizeCanvasJSON(view.canvasData);
-
-        // Filter out objects that belong to a different view (prevents cross-view stroke bleed)
-        if (sanitizedData?.objects && Array.isArray(sanitizedData.objects)) {
-          sanitizedData.objects = sanitizedData.objects
-            .map(obj => {
-              if (!obj || typeof obj !== 'object') return obj;
-              if (obj.customData?.layerType === 'mos-overlay') {
-                return null;
-              }
-              // Filter guide-scoped objects that may have leaked into canvas data
-              const objImageLabel = obj.customData?.imageLabel || obj.imageLabel || '';
-              if (typeof objImageLabel === 'string' && objImageLabel.startsWith('__guide__:')) {
-                return null;
-              }
-              if (obj.customData?.guideReferenceOnly === true) {
-                return null;
-              }
-              if (obj.strokeMetadata) {
-                if (!obj.strokeMetadata.imageLabel) {
-                  obj.strokeMetadata.imageLabel = viewId;
-                } else if (
-                  obj.strokeMetadata.imageLabel !== viewId &&
-                  !obj.strokeMetadata.imageLabel.startsWith(`${viewId}::tab:`)
-                ) {
-                  return null;
-                }
-              }
-              return obj;
-            })
-            .filter(Boolean);
-        }
+        sanitizedData = this.filterCanvasJsonObjectsForView(sanitizedData, viewId);
 
         // Background images are restored separately via setBackgroundImage().
         // Keeping Fabric's serialized background image here causes duplicate async loads
@@ -688,11 +659,16 @@ export class ProjectManager {
         }
         // Clear metadata for this view if no saved data
         if (window.app?.metadataManager) {
+          if (typeof window.app.metadataManager.clearScopedBucketsForView === 'function') {
+            window.app.metadataManager.clearScopedBucketsForView(viewId);
+          }
           window.app.metadataManager.clearImageMetadata(viewId);
         }
 
         this.historyManager.saveState();
       }
+
+      this.removeCanvasObjectsOutsideViewScope(viewId);
 
       this.restoreViewportForView(viewId);
 
@@ -985,6 +961,7 @@ export class ProjectManager {
     );
     this.stripMosOverlayObjects(json);
     if (this.views[this.currentViewId]) {
+      this.filterCanvasJsonObjectsForView(json, this.currentViewId);
       const skipViewport = options?.skipViewport === true;
       const isGuideSplitActive =
         skipViewport ||
@@ -1061,6 +1038,84 @@ export class ProjectManager {
       }
     });
     return scoped;
+  }
+
+  getCanvasObjectScopeLabel(obj) {
+    const candidates = [
+      obj?.strokeMetadata?.imageLabel,
+      obj?.customData?.imageLabel,
+      obj?.imageLabel,
+      obj?.scopedLabel,
+      obj?.tagImageLabel,
+      obj?.connectedStroke?.strokeMetadata?.imageLabel,
+      obj?.connectedStroke?.imageLabel,
+    ];
+
+    for (const candidate of candidates) {
+      if (typeof candidate === 'string' && candidate.trim()) {
+        return candidate.trim();
+      }
+    }
+    return '';
+  }
+
+  isScopeLabelForView(scopeLabel, viewId) {
+    if (!scopeLabel || !viewId) return false;
+    if (typeof scopeLabel === 'string' && scopeLabel.startsWith('__guide__:')) return false;
+    return scopeLabel === viewId || scopeLabel.startsWith(`${viewId}::tab:`);
+  }
+
+  filterCanvasJsonObjectsForView(canvasJson, viewId) {
+    if (!canvasJson?.objects || !Array.isArray(canvasJson.objects) || !viewId) return canvasJson;
+
+    const beforeCount = canvasJson.objects.length;
+    canvasJson.objects = canvasJson.objects
+      .map(obj => {
+        if (!obj || typeof obj !== 'object') return obj;
+        if (obj.customData?.layerType === 'mos-overlay') return null;
+        if (obj.customData?.guideReferenceOnly === true) return null;
+
+        const scopeLabel = this.getCanvasObjectScopeLabel(obj);
+        if (scopeLabel) {
+          if (scopeLabel.startsWith('__guide__:')) return null;
+          if (!this.isScopeLabelForView(scopeLabel, viewId)) return null;
+        }
+
+        if (obj.strokeMetadata && !obj.strokeMetadata.imageLabel) {
+          obj.strokeMetadata.imageLabel = viewId;
+        }
+
+        return obj;
+      })
+      .filter(Boolean);
+
+    const removedCount = beforeCount - canvasJson.objects.length;
+    if (removedCount > 0) {
+      console.warn(`[ProjectManager] Removed ${removedCount} out-of-scope canvas object(s)`, {
+        viewId,
+      });
+    }
+
+    return canvasJson;
+  }
+
+  removeCanvasObjectsOutsideViewScope(viewId) {
+    const canvas = this.canvasManager?.fabricCanvas;
+    if (!canvas || !viewId || typeof canvas.getObjects !== 'function') return 0;
+
+    const toRemove = canvas.getObjects().filter(obj => {
+      const scopeLabel = this.getCanvasObjectScopeLabel(obj);
+      return Boolean(scopeLabel) && !this.isScopeLabelForView(scopeLabel, viewId);
+    });
+
+    toRemove.forEach(obj => canvas.remove(obj));
+    if (toRemove.length > 0) {
+      console.warn(`[ProjectManager] Removed ${toRemove.length} live out-of-scope object(s)`, {
+        viewId,
+      });
+      canvas.requestRenderAll?.();
+    }
+    return toRemove.length;
   }
 
   stripMosOverlayObjects(canvasJson) {

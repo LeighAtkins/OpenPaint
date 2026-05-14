@@ -1861,7 +1861,13 @@ export function initToolbarController() {
 
       canvas.getObjects().forEach(obj => {
         const objectLabel = getObjectScopeLabel(obj);
-        if (!objectLabel || !isLabelInViewScope(objectLabel, resolved)) return;
+        if (objectLabel && !isLabelInViewScope(objectLabel, resolved)) {
+          obj.visible = false;
+          obj.evented = false;
+          obj.selectable = false;
+          return;
+        }
+        if (!objectLabel) return;
         const strokeLabel = getObjectStrokeLabel(obj);
         const strokeVisible = isStrokeVisibleInScope(objectLabel, strokeLabel);
         const labelVisible = isLabelVisibleInScope(objectLabel, strokeLabel);
