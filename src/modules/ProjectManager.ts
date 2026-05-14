@@ -2943,24 +2943,41 @@ export class ProjectManager {
     const safeViewId = sanitizeFilenamePart(viewId, 'view');
     const objectKey = `projects/views/${safeViewId}/${Date.now()}.${ext}`;
 
-    const uploadResponse = await fetch(
-      `/api/storage/r2/upload?key=${encodeURIComponent(objectKey)}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': blob.type || 'image/png',
-          'X-Cache-Control': 'public, max-age=31536000, immutable',
-        },
-        body: blob,
-      }
-    );
+    const contentTypeHeader = blob.type || 'image/png';
+    const cacheControl = 'public, max-age=31536000, immutable';
+    const presignResponse = await fetch('/api/storage/r2/presign-upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        key: objectKey,
+        contentType: contentTypeHeader,
+        cacheControl,
+        expiresIn: 600,
+      }),
+    });
 
-    const uploadBody = await uploadResponse.json().catch(() => ({}));
-    if (!uploadResponse.ok || !uploadBody?.success) {
-      throw new Error(uploadBody?.message || `R2 upload failed (${uploadResponse.status})`);
+    const presignBody = await presignResponse.json().catch(() => ({}));
+    if (!presignResponse.ok || !presignBody?.success || !presignBody?.uploadUrl) {
+      throw new Error(
+        presignBody?.message || `R2 presign failed (${presignResponse.status}) for ${viewId}`
+      );
     }
 
-    return objectKey;
+    const uploadResponse = await fetch(presignBody.uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': contentTypeHeader,
+        'Cache-Control': cacheControl,
+      },
+      body: blob,
+    });
+
+    if (!uploadResponse.ok) {
+      const uploadText = await uploadResponse.text().catch(() => '');
+      throw new Error(uploadText || `R2 upload failed (${uploadResponse.status})`);
+    }
+
+    return presignBody.key || objectKey;
   }
 
   extractR2ObjectKeyFromUrl(sourceUrl) {
