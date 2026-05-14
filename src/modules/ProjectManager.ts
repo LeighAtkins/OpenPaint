@@ -2496,6 +2496,39 @@ export class ProjectManager {
     }
 
     const isBlobUrl = url => typeof url === 'string' && url.startsWith('blob:');
+    const firstNonEmptyString = (...values) =>
+      values.find(value => typeof value === 'string' && value.trim()) || '';
+    const getCanvasBackgroundImageSource = canvas => {
+      const backgroundImage = canvas?.backgroundImage;
+      if (!backgroundImage) return '';
+      return firstNonEmptyString(
+        backgroundImage.getSrc?.(),
+        backgroundImage.src,
+        backgroundImage._element?.currentSrc,
+        backgroundImage._element?.src,
+        backgroundImage._originalElement?.currentSrc,
+        backgroundImage._originalElement?.src
+      );
+    };
+    const getRuntimeImageSourceForView = viewId => {
+      const galleryItem = window.imageGallery?.getData?.()?.find?.(item => {
+        const label = item?.original?.label || item?.label || item?.name || '';
+        return label === viewId;
+      });
+      const escapedViewId =
+        typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+          ? CSS.escape(viewId)
+          : String(viewId).replace(/"/g, '\\"');
+      return firstNonEmptyString(
+        window.originalImages?.[viewId],
+        galleryItem?.original?.src,
+        galleryItem?.original?.url,
+        galleryItem?.src,
+        galleryItem?.url,
+        document.querySelector(`.image-container[data-label="${escapedViewId}"] img`)?.src,
+        document.querySelector(`img[data-label="${escapedViewId}"]`)?.src
+      );
+    };
     const runWithConcurrency = async (items, limit, worker) => {
       const queue = Array.isArray(items) ? items.slice() : [];
       if (!queue.length) return;
@@ -2551,7 +2584,17 @@ export class ProjectManager {
         typeof entry.canvasJSON?.backgroundImage?.src === 'string'
           ? entry.canvasJSON.backgroundImage.src
           : '';
-      const imagePersistenceSource = view.image || legacyEntry.imageUrl || backgroundImageSrc || '';
+      const liveCanvasBackgroundSource =
+        viewId === this.currentViewId && fabricCanvas
+          ? getCanvasBackgroundImageSource(fabricCanvas)
+          : '';
+      const imagePersistenceSource = firstNonEmptyString(
+        view.image,
+        legacyEntry.imageUrl,
+        liveCanvasBackgroundSource,
+        getRuntimeImageSourceForView(viewId),
+        backgroundImageSrc
+      );
 
       if (uploadImagesToR2 && imagePersistenceSource) {
         try {
