@@ -1467,9 +1467,12 @@ export class ProjectManager {
               Math.abs(a.height - b.height) > epsilon
             );
           };
+          const viewRotation = Number(this.views?.[this.currentViewId]?.rotation) || 0;
           const backgroundRotation =
             Number(this.views?.[this.currentViewId]?.backgroundRotation) || 0;
-          const normalizedBackgroundRotation = ((backgroundRotation % 360) + 360) % 360;
+          const visualBackgroundRotation = viewRotation + backgroundRotation;
+          const normalizedBackgroundRotation =
+            ((visualBackgroundRotation % 360) + 360) % 360;
           const rotationRadians = (normalizedBackgroundRotation * Math.PI) / 180;
           const rotationCos = Math.abs(Math.cos(rotationRadians));
           const rotationSin = Math.abs(Math.sin(rotationRadians));
@@ -1586,7 +1589,7 @@ export class ProjectManager {
             top: top,
             scaleX: scale,
             scaleY: scale,
-            angle: ((backgroundRotation % 360) + 360) % 360,
+            angle: normalizedBackgroundRotation,
             selectable: false,
             evented: false,
           });
