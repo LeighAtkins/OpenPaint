@@ -18,7 +18,7 @@
   ],
   "functions": {
     "api/[...all].js": {
-      "includeFiles": "{server/**,app.js,index.html,shared.html,shared.js,css/**,src/**,public/assets/**,public/css/**,public/favicon.ico}"
+      "includeFiles": "{server/**,app.js,index.html,shared.html,shared.js,css/**,src/**,public/assets/**,public/css/**,public/favicon.ico,public/measurement-guides/manifest.json}"
     },
     "api/integrations/cw/[action].js": {
       "includeFiles": "server/**"
@@ -36,7 +36,10 @@
       "includeFiles": "server/**"
     },
     "api/measurement-guides/svg.js": {
-      "includeFiles": "server/**"
+      "includeFiles": "{server/**,public/measurement-guides/manifest.json}"
+    },
+    "api/measurement-guides/file.js": {
+      "includeFiles": "{public/measurement-guides/manifest.json}"
     },
     "api/storage/r2/[action].js": {
       "includeFiles": "server/**"

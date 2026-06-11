@@ -77,15 +77,22 @@ export class UploadManager {
   }
 
   openFileDialog() {
+    const existing = document.getElementById('__uploadInput');
+    if (existing) existing.remove();
     const input = document.createElement('input');
+    input.id = '__uploadInput';
     input.type = 'file';
     input.multiple = true;
     input.accept = 'image/*,.heic,.heif';
+    input.style.display = 'none';
     input.addEventListener('change', e => {
-      if (e.target.files?.length) {
-        this.handleFiles(e.target.files);
+      const files = e.target.files;
+      input.remove();
+      if (files?.length) {
+        this.handleFiles(files);
       }
     });
+    document.body.appendChild(input);
     input.click();
   }
 
@@ -171,10 +178,16 @@ export class UploadManager {
     let workingFile = file;
 
     if (this.isHeicFile(file)) {
+      document.body.style.cursor = 'wait';
+      await new Promise(r => requestAnimationFrame(r)); // let browser paint cursor
       if (canMark) {
         performance.mark(`upload-heic-start:${perfId}`);
       }
-      workingFile = await this.convertHeicFile(file);
+      try {
+        workingFile = await this.convertHeicFile(file);
+      } finally {
+        document.body.style.cursor = '';
+      }
       if (canMark && performance.measure) {
         try {
           performance.mark(`upload-heic-end:${perfId}`);

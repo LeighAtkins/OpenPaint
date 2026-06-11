@@ -27,11 +27,12 @@ const AUTH_STYLES = /* css */ `
   .auth-toolbar-group {
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-left: 6px;
+    gap: 6px;
+    margin-left: 0;
     min-width: 0;
     flex: 0 0 auto;
     flex-wrap: nowrap;
+    position: relative;
   }
 
   .auth-sign-in-btn {
@@ -49,11 +50,19 @@ const AUTH_STYLES = /* css */ `
     gap: 6px;
     min-width: 0;
     flex: 0 0 auto;
-    padding: 3px 8px 3px 3px;
+    padding: 2px 8px 2px 2px;
     border-radius: 999px;
     border: 1px solid rgba(148, 163, 184, 0.35);
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%);
     box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    cursor: pointer;
+  }
+
+  .auth-user-area::after {
+    content: '▾';
+    font-size: 10px;
+    color: #64748b;
+    line-height: 1;
   }
 
   .auth-avatar {
@@ -80,27 +89,46 @@ const AUTH_STYLES = /* css */ `
 
   .auth-sign-out-btn {
     font-size: 11px;
-    padding: 2px 6px;
+    width: 100%;
+    padding: 7px 9px;
     background: rgba(255, 255, 255, 0.72);
     border: 1px solid var(--ob-border-color, #d1d5db);
-    border-radius: 999px;
+    border-radius: 8px;
     color: var(--ob-text-secondary, #6b7280);
     cursor: pointer;
     flex-shrink: 0;
     white-space: nowrap;
+    text-align: left;
   }
   .auth-sign-out-btn:hover {
     background: var(--ob-bg-surface, #f3f4f6);
     color: var(--ob-text-primary, #374151);
   }
 
-  /* Responsive: hide name on tight viewports, keep avatar + sign out */
+  .auth-menu-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    width: 150px;
+    display: none;
+    padding: 8px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.18);
+    z-index: 2600;
+  }
+
+  .auth-toolbar-group.open .auth-menu-panel {
+    display: block;
+  }
+
+  /* Responsive: hide name on tight viewports, keep avatar */
   @media (max-width: 1100px) {
     .auth-display-name { display: none; }
   }
 
   @media (max-width: 768px) {
-    .auth-sign-out-btn { display: none; }
     .auth-avatar { width: 24px; height: 24px; }
     .auth-user-area { padding-right: 6px; }
   }
@@ -256,10 +284,13 @@ function createToolbarGroup(): HTMLElement {
   signInBtn.addEventListener('click', openModal);
 
   // User area (shown when logged in): avatar + name + sign out
-  const userArea = document.createElement('div');
+  const userArea = document.createElement('button');
+  userArea.type = 'button';
   userArea.className = 'auth-user-area';
   userArea.id = 'authUserArea';
   userArea.style.display = 'none';
+  userArea.setAttribute('aria-label', 'Account menu');
+  userArea.setAttribute('aria-expanded', 'false');
 
   const avatar = document.createElement('img');
   avatar.className = 'auth-avatar';
@@ -296,10 +327,33 @@ function createToolbarGroup(): HTMLElement {
 
   userArea.appendChild(avatar);
   userArea.appendChild(displayName);
-  userArea.appendChild(signOutBtn);
+
+  const menu = document.createElement('div');
+  menu.className = 'auth-menu-panel';
+  menu.appendChild(signOutBtn);
+
+  userArea.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    const nextOpen = !group.classList.contains('open');
+    group.classList.toggle('open', nextOpen);
+    userArea.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
+  });
+
+  document.addEventListener('click', () => {
+    group.classList.remove('open');
+    userArea.setAttribute('aria-expanded', 'false');
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      group.classList.remove('open');
+      userArea.setAttribute('aria-expanded', 'false');
+    }
+  });
 
   group.appendChild(signInBtn);
   group.appendChild(userArea);
+  group.appendChild(menu);
 
   return group;
 }

@@ -1492,8 +1492,8 @@ function ensureStyles() {
     }
     .guide-gallery-toolbar {
       margin-top: 12px;
-      display: grid;
-      grid-template-columns: 1fr auto auto auto auto;
+      display: flex;
+      flex-wrap: wrap;
       gap: 8px;
       align-items: center;
     }
@@ -1546,7 +1546,7 @@ function ensureStyles() {
       color: #1e3a8a;
     }
     .guide-gallery-status {
-      grid-column: 1 / -1;
+      flex: 1 0 100%;
       font-size: 11px;
       color: #475569;
     }
@@ -2033,12 +2033,6 @@ function ensureStyles() {
       max-width: 100%;
       max-height: 100%;
     }
-    body.guide-split-workspace-active #strokePanelIcon,
-    body.guide-split-workspace-active #imagePanelIcon {
-      display: none !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
-    }
     body.measurement-split-workspace-active #imagePanel {
       display: none !important;
       visibility: hidden !important;
@@ -2270,6 +2264,38 @@ function ensureStyles() {
       max-height: 280px;
       object-fit: contain;
     }
+    .guide-gallery-item-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 10px 12px 12px;
+      border-top: 1px solid rgba(203, 213, 225, 0.6);
+      background: #f8fafc;
+    }
+    .guide-gallery-item-action {
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      background: #fff;
+      color: #0f172a;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 9px;
+    }
+    .guide-gallery-item-action:hover {
+      background: #eef2ff;
+      border-color: #93c5fd;
+      color: #1e3a8a;
+    }
+    .guide-gallery-item-action.primary {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #fff;
+    }
+    .guide-gallery-item-action:disabled {
+      cursor: wait;
+      opacity: 0.62;
+    }
     .guide-gallery-close {
       position: absolute;
       top: 12px;
@@ -2305,6 +2331,194 @@ function ensureStyles() {
         grid-template-columns: 1fr;
       }
     }
+      .guide-gallery-tree {
+        max-width: 900px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      }
+      .guide-tree-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .guide-tree-header h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+        color: #0f172a;
+      }
+      .guide-tree-header-count {
+        font-size: 11px;
+        color: #64748b;
+        font-weight: 400;
+      }
+      .guide-tree-category {
+        margin-bottom: 12px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      .guide-tree-category-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 700;
+        color: #0f172a;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        user-select: none;
+        transition: background 0.1s;
+      }
+      .guide-tree-category-header:hover {
+        background: #f1f5f9;
+      }
+      .guide-tree-category-header .guide-tree-toggle-icon {
+        font-size: 10px;
+        color: #64748b;
+        transition: transform 0.15s;
+        width: 14px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      .guide-tree-category-header.expanded .guide-tree-toggle-icon {
+        transform: rotate(90deg);
+      }
+      .guide-tree-category-header .guide-tree-count {
+        margin-left: auto;
+        font-size: 11px;
+        font-weight: 400;
+        color: #64748b;
+      }
+      .guide-tree-category-body {
+        display: none;
+      }
+      .guide-tree-category-body.expanded {
+        display: block;
+      }
+      .guide-tree-variant {
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .guide-tree-variant:last-child {
+        border-bottom: none;
+      }
+      .guide-tree-variant-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px 8px 24px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+        user-select: none;
+        transition: background 0.1s;
+      }
+      .guide-tree-variant-header:hover {
+        background: #f8fafc;
+      }
+      .guide-tree-variant-header .guide-tree-toggle-icon {
+        font-size: 10px;
+        color: #94a3b8;
+        transition: transform 0.15s;
+        width: 14px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      .guide-tree-variant-header.expanded .guide-tree-toggle-icon {
+        transform: rotate(90deg);
+      }
+      .guide-tree-variant-body {
+        display: none;
+        padding: 0 14px 6px 38px;
+      }
+      .guide-tree-variant-body.expanded {
+        display: block;
+      }
+      .guide-tree-file {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 8px;
+        border-radius: 6px;
+        transition: background 0.1s;
+      }
+      .guide-tree-file:hover {
+        background: #f1f5f9;
+      }
+      .guide-tree-file-icon {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .guide-tree-file-icon.svg {
+        background: #dbeafe;
+        color: #2563eb;
+      }
+      .guide-tree-file-icon.pdf {
+        background: #fce7f3;
+        color: #db2777;
+      }
+      .guide-tree-file-icon.jpg {
+        background: #d1fae5;
+        color: #059669;
+      }
+      .guide-tree-file-name {
+        font-size: 12px;
+        color: #1e293b;
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .guide-tree-file-actions {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+      }
+      .guide-tree-file-btn {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 9px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        background: #fff;
+        color: #1e293b;
+        cursor: pointer;
+        transition: all 0.1s;
+      }
+      .guide-tree-file-btn:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+      }
+      .guide-tree-file-btn.primary {
+        background: #2563eb;
+        border-color: #2563eb;
+        color: #fff;
+      }
+      .guide-tree-file-btn.primary:hover {
+        background: #1d4ed8;
+      }
+      .guide-tree-empty {
+        text-align: center;
+        padding: 40px 20px;
+        color: #64748b;
+        font-size: 13px;
+      }
   `;
   document.head.appendChild(style);
 }
@@ -2814,7 +3028,9 @@ export async function fetchGuideRasterUrl(code, view, options = {}) {
   }
 
   const rawSvg = await fetchGuideSvgText(code, view);
-  const prepared = prepareSvgForRaster(rawSvg, { ...options, mode, activeRole, dimInactive });
+  // Strip original SVG text labels and their background boxes from raster when requested
+  const rasterSvg = options.stripText ? stripSvgLabels(rawSvg) : rawSvg;
+  const prepared = prepareSvgForRaster(rasterSvg, { ...options, mode, activeRole, dimInactive });
   const svgBlob = new Blob([prepared.svgText], {
     type: 'image/svg+xml;charset=utf-8',
   });
@@ -3082,7 +3298,7 @@ async function applyGuideAsBackground(code, view) {
     return;
   }
 
-  const url = await fetchGuideRasterUrl(code, view);
+  const url = await fetchGuideRasterUrl(code, view, { stripText: true });
   await manager.setBackgroundImage(url, 'fit-canvas');
   const currentViewId = getCurrentViewId();
   saveGuideCodes([code], currentViewId);
@@ -3364,7 +3580,7 @@ async function addGuideAsNewImage(code, view, options = {}) {
   }
 
   const shouldImportGuideSvg = options.includeGuideSvgOverlay !== false;
-  const imageUrl = await fetchGuideRasterUrl(code, view);
+  const imageUrl = await fetchGuideRasterUrl(code, view, { stripText: true });
   const label = createGuideViewId(`${code}-${view}`);
 
   let guideSvgText = '';
@@ -3404,7 +3620,9 @@ async function addGuideAsNewImage(code, view, options = {}) {
       if (typeof manager.switchView === 'function' && activeBeforeImport !== label) {
         await manager.switchView(label, true);
       }
-      await measurementOverlayManager.importSvg(guideSvgText, label);
+      // Strip furniture outline and rect boxes, preserve text labels for measurement names
+      const mosReadySvg = stripNonMeasurementElements(guideSvgText);
+      await measurementOverlayManager.importSvg(mosReadySvg, label);
     } catch (error) {
       console.warn('[Guide] Failed to import guide SVG overlay:', error);
     } finally {
@@ -3467,6 +3685,186 @@ async function addGuideAsNewImage(code, view, options = {}) {
     }
   } else {
     console.log(`[addGuideAsNewImage] Measurement import disabled by options`);
+  }
+
+  return label;
+}
+
+/**
+ * Strip original SVG text labels and their background boxes.
+ * Removes <text> elements and orphaned <rect> label backgrounds
+ * that are not part of measurement groups (no m/b/c ID prefix).
+ */
+function stripSvgLabels(svgText) {
+  // 1. Strip <text> elements
+  var result = svgText.replace(/<text[^>]*>[\s\S]*?<\/text>/gi, '');
+  // 2. Strip label background boxes: <g> groups containing only <rect>
+  //    (no lines/paths) that are not in measurement groups
+  try {
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(result, 'image/svg+xml');
+    var allGroups = Array.from(doc.querySelectorAll('g'));
+    allGroups.forEach(function (g) {
+      var id = String(g.getAttribute('id') || '').trim();
+      if (!id.match(/^[mbc]/i)) {
+        var rects = g.querySelectorAll('rect');
+        var paths = g.querySelectorAll('line, path, polyline, polygon');
+        if (rects.length > 0 && paths.length === 0) {
+          g.parentNode?.removeChild(g);
+        }
+      }
+    });
+    result = new XMLSerializer().serializeToString(doc);
+  } catch (e) {
+    // Fallback: text-only stripping is better than nothing
+  }
+  return result;
+}
+
+function stripNonMeasurementElements(svgText) {
+  try {
+    var parser = new DOMParser();
+    var doc = parser.parseFromString(svgText, 'image/svg+xml');
+    var svgRoot = doc.querySelector('svg');
+    if (!svgRoot) return svgText;
+    // Remove top-level non-group elements (furniture outline, stray lines, etc.)
+    var keep = new Set(['g', 'defs', 'style', 'title', 'desc', 'svg']);
+    Array.from(svgRoot.childNodes).forEach(function (node) {
+      if (node.nodeType === 1 && !keep.has(node.localName?.toLowerCase())) {
+        svgRoot.removeChild(node);
+      }
+    });
+    // Merge label text into measurement groups, remove label box groups entirely
+    var groups = Array.from(svgRoot.querySelectorAll(':scope > g'));
+    var labelGroups = new Set();
+    groups.forEach(function (g) {
+      if (g.querySelector('rect') && g.querySelector('text')) {
+        labelGroups.add(g);
+      }
+    });
+    var prevMeasurement = null;
+    groups.forEach(function (g) {
+      if (labelGroups.has(g)) {
+        var textEl = g.querySelector('text');
+        if (textEl && prevMeasurement && !prevMeasurement.querySelector('text')) {
+          prevMeasurement.appendChild(textEl.cloneNode(true));
+        }
+        g.parentNode?.removeChild(g);
+        return;
+      }
+      Array.from(g.querySelectorAll('rect')).forEach(function (r) {
+        r.parentNode?.removeChild(r);
+      });
+      prevMeasurement = g;
+    });
+    return new XMLSerializer().serializeToString(doc);
+  } catch (e) {
+    return svgText;
+  }
+}
+
+async function importGuideSvgFromPath(svgPath, svgUrl) {
+  const manager = window.app?.projectManager || window.projectManager;
+  if (!manager || typeof manager.addImage !== 'function') {
+    throw new Error('Project manager not ready to add images');
+  }
+
+  // Fetch SVG text via file API (works locally and on Vercel; handles R2 proxy later)
+  const apiUrl = `/api/measurement-guides/file?path=${encodeURIComponent(svgPath)}`;
+  const response = await fetch(apiUrl, { method: 'GET' }).catch(() => null);
+  if (!response?.ok) {
+    // Fallback: direct fetch for local dev
+    const fallback = await fetch(svgUrl, { method: 'GET' });
+    if (!fallback.ok) throw new Error(`Failed to fetch SVG (${fallback.status})`);
+    const svgText = await fallback.text();
+    return importSvgFromText(svgText, svgPath, manager);
+  }
+  const svgText = await response.text();
+  return importSvgFromText(svgText, svgPath, manager);
+}
+
+/** Import SVG via MOS pipeline, with cleaned raster background */
+async function importSvgFromText(svgText, svgPath, manager) {
+  // Strip original SVG text labels and background boxes
+  var cleanedSvg = stripSvgLabels(svgText);
+
+  // Derive a label from the SVG filename
+  const label = createGuideViewId(
+    svgPath
+      .replace(/^.*[/\\]/, '')
+      .replace(/\.\w+$/, '')
+      .toLowerCase()
+  );
+
+  // Get SVG dimensions from viewBox
+  var svgWidth = 1600,
+    svgHeight = 1200;
+  try {
+    var vbMatch = svgText.match(/viewBox=["']([^"']+)["']/);
+    if (vbMatch) {
+      var vbParts = vbMatch[1].trim().split(/\s+/).map(Number);
+      if (vbParts.length === 4 && vbParts[2] > 0 && vbParts[3] > 0) {
+        svgWidth = vbParts[2];
+        svgHeight = vbParts[3];
+      }
+    }
+  } catch (e) {}
+
+  // Render cleaned SVG as raster PNG for the view background (shows cushion shape + structural elements)
+  const svgBlob = new Blob([cleanedSvg], { type: 'image/svg+xml;charset=utf-8' });
+  const blobUrl = URL.createObjectURL(svgBlob);
+  var imageUrl;
+  try {
+    const img = await loadImage(blobUrl);
+    const bgCanvas = document.createElement('canvas');
+    bgCanvas.width = img.naturalWidth || svgWidth;
+    bgCanvas.height = img.naturalHeight || svgHeight;
+    var bgCtx = bgCanvas.getContext('2d');
+    if (bgCtx) {
+      bgCtx.fillStyle = '#ffffff';
+      bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+      bgCtx.drawImage(img, 0, 0, bgCanvas.width, bgCanvas.height);
+    }
+    imageUrl = bgCanvas.toDataURL('image/png');
+  } finally {
+    URL.revokeObjectURL(blobUrl);
+  }
+
+  // Add the raster background as a new project image/view
+  await manager.addImage(label, imageUrl, { refreshBackground: false });
+  if (typeof window.addImageToSidebar === 'function') {
+    window.addImageToSidebar(imageUrl, label, `${label}.png`);
+  }
+
+  // Switch to the new view before placing objects
+  if (typeof manager.switchView === 'function') {
+    await manager.switchView(label, true);
+  }
+
+  // Initialize MOS manager if needed
+  let mosManager = window.app?.measurementOverlayManager || null;
+  if (!mosManager?.importSvg && window.app?.initDeferredManagers) {
+    try {
+      await window.app.initDeferredManagers();
+      mosManager = window.app?.measurementOverlayManager || null;
+    } catch (error) {
+      console.warn('[Guide] Deferred manager init failed before MOS import:', error);
+    }
+  }
+
+  // Use MOS pipeline to import the SVG as a structured overlay (measurement groups only, labels preserved)
+  var mosSvg = stripNonMeasurementElements(svgText);
+  if (mosSvg && mosManager?.importSvg) {
+    try {
+      await mosManager.importSvg(mosSvg, label);
+    } catch (e) {
+      console.warn('[importGuideSvgFromPath] MOS import failed:', e);
+    }
+  }
+
+  // Ensure the view is active
+  if (typeof manager.switchView === 'function') {
+    await manager.switchView(label, true);
   }
 
   return label;
@@ -4638,8 +5036,8 @@ function isGuideSplitCompareCanvasReadyForTempView(viewId) {
   const compareCanvas = guideSplitCompareCanvasManager?.fabricCanvas || null;
   return Boolean(
     compareCanvas?.backgroundImage &&
-    guideSplitActiveTempScopeId === tempScopeId &&
-    hasGuideSplitTempScopeData(tempScopeId)
+      guideSplitActiveTempScopeId === tempScopeId &&
+      hasGuideSplitTempScopeData(tempScopeId)
   );
 }
 
@@ -4826,6 +5224,7 @@ async function updateGuideSplitHighlightOverlay(
     const backgroundUrl = await fetchGuideRasterUrl(normalizedCode, normalizedVariant, {
       mode: 'preview',
       dimInactive: false,
+      stripText: true,
     });
     await replaceGuideSplitCompareBackgroundImage(backgroundUrl, compareCanvas);
     guideSplitCompareBackgroundVisualKey = visualKey;
@@ -4843,6 +5242,7 @@ async function updateGuideSplitHighlightOverlay(
     mode: 'preview',
     activeRole,
     dimInactive: true,
+    stripText: true,
   });
   await replaceGuideSplitCompareBackgroundImage(backgroundUrl, compareCanvas);
   guideSplitCompareBackgroundVisualKey = visualKey;
@@ -5077,6 +5477,7 @@ async function loadGuideIntoCompareCanvas(selection, compareCanvasManager) {
       fetchGuideRasterUrl(normalizedCode, normalizedVariant, {
         mode: 'preview',
         dimInactive: false,
+        stripText: true,
       }),
       fetchGuideSvgText(normalizedCode, normalizedVariant),
     ]);
@@ -5926,6 +6327,84 @@ function showGuideGallery(options = {}) {
   allCodes.forEach(code => {
     viewsByCode[code] = ['front', 'back', 'side'];
   });
+  let collectionsByCode = {};
+  let categoriesByCode = {};
+
+  // Load local manifest codes (Modular MT, etc.)
+  let libraryManifest = null;
+  fetch('/measurement-guides/manifest.json')
+    .then(r => (r.ok ? r.json() : null))
+    .then(manifest => {
+      if (!manifest) return;
+      libraryManifest = manifest;
+      console.log(
+        '[Guide] Modular MT manifest loaded:',
+        Object.keys(manifest).length,
+        'collections'
+      );
+      for (const [, collection] of Object.entries(manifest)) {
+        if (collection.type === 'tree' && collection.tree) {
+          // Extract SVG codes from tree for the grid view
+          function stripViewSuffix(fileName) {
+            const match = fileName.match(/^(.+?)[-_](Side|Front|Back)$/i);
+            if (match) {
+              return { baseName: match[1], view: match[2].toLowerCase() };
+            }
+            return null;
+          }
+          function extractCodes(node, parentCategory) {
+            if (node.files) {
+              const svgs = node.files.filter(f => f.type === 'svg');
+              for (const svg of svgs) {
+                const fileName = svg.name.replace(/\.[^/.]+$/, '');
+                let code = fileName.replace(/^(Front|Back|Side)_/i, '');
+                const viewSuffix = stripViewSuffix(code);
+                if (viewSuffix) {
+                  code = viewSuffix.baseName;
+                }
+                code = code.replace(/^[^a-zA-Z0-9]+/, '').replace(/\s*\([^)]*\)\s*$/, '');
+                if (!code) continue;
+                const nc = code.toUpperCase();
+                if (!allCodes.includes(nc)) allCodes.push(nc);
+                const viewMatch = fileName.match(/^(Front|Back|Side)_/i);
+                const view = viewSuffix?.view || (viewMatch ? viewMatch[1].toLowerCase() : 'front');
+                if (!viewsByCode[nc]) viewsByCode[nc] = [];
+                if (!viewsByCode[nc].includes(view)) viewsByCode[nc].push(view);
+                collectionsByCode[nc] = collection.displayName || '';
+                categoriesByCode[nc] = parentCategory || '';
+              }
+            }
+            if (node.children) {
+              for (const c of node.children) {
+                extractCodes(c, parentCategory || c.name);
+              }
+            }
+          }
+          extractCodes(collection.tree, '');
+        } else {
+          // Legacy flat format
+          for (const [catName, category] of Object.entries(collection.categories || {})) {
+            for (const [code, info] of Object.entries(category.codes || {})) {
+              const nc = code.toUpperCase();
+              if (!allCodes.includes(nc)) allCodes.push(nc);
+              viewsByCode[nc] = info.views || ['front'];
+              collectionsByCode[nc] = collection.displayName || '';
+              categoriesByCode[nc] = catName;
+            }
+          }
+        }
+      }
+      // Sort views for each code
+      for (const code of Object.keys(viewsByCode)) {
+        viewsByCode[code] = viewsByCode[code].sort(
+          (a, b) => ['front', 'back', 'side'].indexOf(a) - ['front', 'back', 'side'].indexOf(b)
+        );
+      }
+      allCodes.sort((a, b) => a.localeCompare(b));
+      if (galleryOverlay) renderGallery();
+    })
+    .catch(() => {});
+
   let query = '';
   const currentViewId = getCurrentViewId();
   const currentCodes = resolveGuideContext(currentViewId).codes;
@@ -6019,6 +6498,117 @@ function showGuideGallery(options = {}) {
     window.dispatchEvent(new Event('openpaint:guide-binding-changed'));
   };
 
+  // Tree browser for Modular MT Library
+  function renderLibraryTree(manifest) {
+    if (!manifest) return '<div class="guide-tree-empty">Loading library...</div>';
+    const collection = Object.values(manifest)[0];
+    if (!collection?.tree) return '<div class="guide-tree-empty">No library available.</div>';
+
+    function fileUrl(filePath) {
+      return (
+        '/' +
+        filePath
+          .replace(/^public\//, '')
+          .replace(/\\/g, '/')
+          .split('/')
+          .map(s => encodeURIComponent(s))
+          .join('/')
+      );
+    }
+
+    function countFiles(node) {
+      let n = (node.files || []).length;
+      if (node.children) for (const c of node.children) n += countFiles(c);
+      return n;
+    }
+
+    function renderFileActions(file) {
+      if (file.type === 'svg') {
+        // Use file path directly instead of deriving code+view
+        const svgUrl = fileUrl(file.path);
+        return `<div class="guide-tree-file-actions">
+          <button type="button" class="guide-tree-file-btn primary" data-tree-action="edit-svg" data-tree-svg-path="${file.path}" data-tree-svg-url="${svgUrl}">Edit</button>
+        </div>`;
+      }
+      if (file.type === 'pdf') {
+        const url = fileUrl(file.path);
+        return `<div class="guide-tree-file-actions">
+          <button type="button" class="guide-tree-file-btn" data-tree-action="view-pdf" data-tree-url="${url}">View</button>
+        </div>`;
+      }
+      if (file.type === 'jpg') {
+        const url = fileUrl(file.path);
+        return `<div class="guide-tree-file-actions">
+          <button type="button" class="guide-tree-file-btn primary" data-tree-action="import-jpg" data-tree-url="${url}" data-tree-name="${file.name}">Import</button>
+        </div>`;
+      }
+      return '';
+    }
+
+    function renderTreeNode(node, depth) {
+      let html = '';
+
+      if (node.files) {
+        const fileItems = node.files
+          .map(
+            f => `
+          <div class="guide-tree-file">
+            <span class="guide-tree-file-icon ${f.type}">${f.type.toUpperCase()}</span>
+            <span class="guide-tree-file-name" title="${f.name}">${f.name}</span>
+            ${renderFileActions(f)}
+          </div>
+        `
+          )
+          .join('');
+        if (fileItems) html += fileItems;
+      }
+
+      if (node.children) {
+        html += node.children
+          .map(c => {
+            const fc = countFiles(c);
+            return `
+            <div class="guide-tree-variant" data-tree-variant="${c.name}">
+              <div class="guide-tree-variant-header" data-tree-toggle>
+                <span class="guide-tree-toggle-icon">▶</span>
+                ${c.name}
+                <span class="guide-tree-count">${fc} file${fc !== 1 ? 's' : ''}</span>
+              </div>
+              <div class="guide-tree-variant-body">${renderTreeNode(c, depth + 1)}</div>
+            </div>
+          `;
+          })
+          .join('');
+      }
+
+      return html;
+    }
+
+    const categoriesHtml = collection.tree.children
+      .map(cat => {
+        const fc = countFiles(cat);
+        return `
+        <div class="guide-tree-category" data-tree-category="${cat.name}">
+          <div class="guide-tree-category-header expanded" data-tree-toggle>
+            <span class="guide-tree-toggle-icon">▶</span>
+            ${cat.name}
+            <span class="guide-tree-count">${fc} file${fc !== 1 ? 's' : ''}</span>
+          </div>
+          <div class="guide-tree-category-body expanded">${renderTreeNode(cat, 1)}</div>
+        </div>
+      `;
+      })
+      .join('');
+
+    return `<div class="guide-gallery-tree">
+      <div class="guide-tree-header">
+        <h3>Modular MT Library</h3>
+        <span class="guide-tree-header-count">(All files: SVGs for editing, PDFs for reference, images for importing)</span>
+      </div>
+      ${categoriesHtml}
+    </div>`;
+  }
+
   const renderGallery = () => {
     const runtimeCurrentViewId = getCurrentViewId();
     const bindTargets = getBindTargetOptions();
@@ -6078,6 +6668,18 @@ function showGuideGallery(options = {}) {
             ? bindVariantByCode[code]
             : views[0];
         const isCodeQueued = modelState.selections.some(item => item.code === code);
+        const quickViews = ['front', 'back', 'side'].filter(view => views.includes(view));
+        const fallbackViews = quickViews.length ? quickViews : views.slice(0, 3);
+        const actionButtons = fallbackViews
+          .map(
+            view =>
+              `<button type="button" class="guide-gallery-item-action" data-guide-quick-add="${code}" data-guide-quick-view="${view}">Add ${view.toUpperCase()}</button>`
+          )
+          .join('');
+        const allButton =
+          views.length > 1
+            ? `<button type="button" class="guide-gallery-item-action primary" data-guide-quick-add="${code}" data-guide-quick-view="all">Add All</button>`
+            : '';
         return `
           <div class="guide-gallery-item${selectedClass}" data-code="${code}">
             <div class="guide-gallery-item-label">
@@ -6088,6 +6690,9 @@ function showGuideGallery(options = {}) {
             </div>
             <div class="guide-gallery-item-body">
               <img src="${buildGuidePreviewUrl(code, activeView)}" alt="${code} ${activeView} view" loading="lazy" data-guide-code="${code}" data-guide-view="${activeView}" />
+            </div>
+            <div class="guide-gallery-item-actions">
+              ${actionButtons}${allButton}
             </div>
           </div>
         `;
@@ -6226,10 +6831,11 @@ function showGuideGallery(options = {}) {
               <input type="text" class="guide-gallery-search" placeholder="Search..." value="${query}" />
             </div>
             <div class="guide-gallery-toolbar">
-              <button type="button" class="guide-gallery-mode ${galleryMode === 'select' ? 'active' : ''}" data-gallery-mode="select">Select Mode</button>
-              <button type="button" class="guide-gallery-mode ${galleryMode === 'bind' ? 'active' : ''}" data-gallery-mode="bind">Bind Mode</button>
+              <button type="button" class="guide-gallery-mode ${galleryMode === 'select' ? 'active' : ''}" data-gallery-mode="select">Browse</button>
+              <button type="button" class="guide-gallery-mode ${galleryMode === 'bind' ? 'active' : ''}" data-gallery-mode="bind">Bind</button>
+              <button type="button" class="guide-gallery-mode ${galleryMode === 'library' ? 'active' : ''}" data-gallery-mode="library">Library</button>
               <button type="button" class="guide-gallery-toggle-search">${searchVisible ? 'Hide Search' : 'Show Search'}</button>
-              <button type="button" class="guide-gallery-toggle-panel">${panelHidden ? 'Show Panel' : 'Hide Panel'}</button>
+              <button type="button" class="guide-gallery-toggle-panel">${panelHidden ? 'Show Details' : 'Hide Details'}</button>
               ${
                 showBindTargetSelect
                   ? `<select class="guide-gallery-bind-target">${bindTargets
@@ -6241,12 +6847,12 @@ function showGuideGallery(options = {}) {
                       .join('')}</select>`
                   : `<div style="font-size:12px;color:#334155;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;">Bind target: ${bindTargetViewId ? imageDisplayById[bindTargetViewId] || bindTargetViewId : 'none'}</div>`
               }
-              <button type="button" class="guide-gallery-load-current">Load Current</button>
-              <button type="button" class="guide-gallery-add-image">Add Image</button>
-              <button type="button" class="guide-gallery-add-all">Add Front/Back/Side</button>
-              <button type="button" class="guide-gallery-add-selected">Add Selected Models</button>
-              <button type="button" class="guide-gallery-bind">Bind</button>
-              <div id="guideGalleryStatus" class="guide-gallery-status ${selectedCode ? '' : 'empty'}">${selectedCode ? `Selected: ${selectedCode} · Variant: ${selectedView.toUpperCase()} · Queue: ${modelState.selections.length}` : `Select a model card and variant. Queue: ${modelState.selections.length}`}</div>
+              <button type="button" class="guide-gallery-load-current">Use On Current</button>
+              <button type="button" class="guide-gallery-add-image">Add Current View</button>
+              <button type="button" class="guide-gallery-add-all">Add All Views</button>
+              <button type="button" class="guide-gallery-add-selected">Add Queued</button>
+              <button type="button" class="guide-gallery-bind">Bind Selected</button>
+              <div id="guideGalleryStatus" class="guide-gallery-status ${selectedCode ? '' : 'empty'}">${selectedCode ? `Selected: ${selectedCode} · Variant: ${selectedView.toUpperCase()} · Queue: ${modelState.selections.length}` : `Select a model card, or use Add buttons on any card. Queue: ${modelState.selections.length}`}</div>
             </div>
             ${
               galleryMode === 'bind'
@@ -6262,7 +6868,18 @@ function showGuideGallery(options = {}) {
           </div>
         </div>
         <div class="guide-gallery-content">
-          <div class="guide-gallery-grid">${items || '<p class="guide-gallery-preview-empty">No model codes found.</p>'}</div>
+          ${
+            galleryMode === 'library'
+              ? (() => {
+                  try {
+                    return renderLibraryTree(libraryManifest);
+                  } catch (e) {
+                    console.error('[Guide] Library tree render error:', e);
+                    return "<div class='guide-tree-empty'>Error loading library. Check console for details.</div>";
+                  }
+                })()
+              : `<div class="guide-gallery-grid">${items || '<p class="guide-gallery-preview-empty">No model codes found.</p>'}</div>`
+          }
         </div>
       </div>
     `;
@@ -6290,7 +6907,7 @@ function showGuideGallery(options = {}) {
       const compact = panelHidden || autoCompactHeader;
       headerEl.classList.toggle('compact', compact);
       if (togglePanelBtn) {
-        togglePanelBtn.textContent = compact ? 'Show Panel' : 'Hide Panel';
+        togglePanelBtn.textContent = compact ? 'Show Details' : 'Hide Details';
       }
     };
 
@@ -6352,16 +6969,14 @@ function showGuideGallery(options = {}) {
       if (addSelectedBtn) {
         addSelectedBtn.disabled = selectedModelIds.size === 0;
         addSelectedBtn.textContent =
-          selectedModelIds.size > 0
-            ? `Add Selected Models (${selectedModelIds.size})`
-            : 'Add Selected Models';
+          selectedModelIds.size > 0 ? `Add Queued (${selectedModelIds.size})` : 'Add Queued';
       }
 
       if (statusEl) {
         statusEl.classList.toggle('empty', !selectedCode);
         statusEl.textContent = selectedCode
           ? `Selected: ${selectedCode} · Variant: ${selectedView.toUpperCase()} · Queue: ${state.selections.length}`
-          : `Select a model card and variant. Queue: ${state.selections.length}`;
+          : `Select a model card, or use Add buttons on any card. Queue: ${state.selections.length}`;
       }
 
       galleryOverlay.querySelectorAll('[data-bind-model-view]').forEach(select => {
@@ -6522,9 +7137,7 @@ function showGuideGallery(options = {}) {
     if (addSelectedBtn) {
       addSelectedBtn.disabled = selectedModelIds.size === 0;
       addSelectedBtn.textContent =
-        selectedModelIds.size > 0
-          ? `Add Selected Models (${selectedModelIds.size})`
-          : 'Add Selected Models';
+        selectedModelIds.size > 0 ? `Add Queued (${selectedModelIds.size})` : 'Add Queued';
     }
     if (bindBtn && !bindTargetViewId) {
       bindBtn.disabled = true;
@@ -6594,7 +7207,7 @@ function showGuideGallery(options = {}) {
     modeButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         const mode = String(btn.getAttribute('data-gallery-mode') || '').trim();
-        if (mode !== 'select' && mode !== 'bind') return;
+        if (mode !== 'select' && mode !== 'bind' && mode !== 'library') return;
         galleryMode = mode;
         if (galleryMode === 'bind' && selectedModelIds.size > 1) {
           selectedModelIds = new Set(Array.from(selectedModelIds).slice(0, 1));
@@ -6652,7 +7265,7 @@ function showGuideGallery(options = {}) {
         console.error('[Guide] Load current failed:', error);
       } finally {
         loadCurrentBtn.disabled = false;
-        loadCurrentBtn.textContent = originalText || 'Load Current';
+        loadCurrentBtn.textContent = originalText || 'Use On Current';
       }
     });
 
@@ -6670,7 +7283,7 @@ function showGuideGallery(options = {}) {
         console.error('[Guide] Add image failed:', error);
       } finally {
         addImageBtn.disabled = false;
-        addImageBtn.textContent = originalText || 'Add Image';
+        addImageBtn.textContent = originalText || 'Add Current View';
       }
     });
 
@@ -6708,7 +7321,7 @@ function showGuideGallery(options = {}) {
         );
       }
       addAllBtn.disabled = false;
-      addAllBtn.textContent = originalText || 'Add Front/Back/Side';
+      addAllBtn.textContent = originalText || 'Add All Views';
     });
 
     addSelectedBtn?.addEventListener('click', async event => {
@@ -6748,7 +7361,7 @@ function showGuideGallery(options = {}) {
         setStatusMessage(`Failed: ${failed.join(', ')}`, 'warning');
       }
       addSelectedBtn.disabled = false;
-      addSelectedBtn.textContent = originalText || 'Add Selected Models';
+      addSelectedBtn.textContent = originalText || 'Add Queued';
       renderGallery();
     });
 
@@ -6776,7 +7389,142 @@ function showGuideGallery(options = {}) {
       syncBindActionState();
     });
 
+    // Tree toggle: expand/collapse on header click
+    galleryOverlay.querySelectorAll('[data-tree-toggle]').forEach(header => {
+      header.onclick = event => {
+        event.stopPropagation();
+        const body = header.nextElementSibling;
+        if (body) {
+          const isExpanded = body.classList.toggle('expanded');
+          header.classList.toggle('expanded', isExpanded);
+        }
+      };
+    });
+
     galleryOverlay.onclick = async event => {
+      // Tree file actions
+      const treeActionBtn = event.target?.closest?.('[data-tree-action]');
+      if (treeActionBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        const action = String(treeActionBtn.getAttribute('data-tree-action') || '').trim();
+
+        if (action === 'edit-svg') {
+          const svgPath = String(treeActionBtn.getAttribute('data-tree-svg-path') || '').trim();
+          const svgUrl = String(treeActionBtn.getAttribute('data-tree-svg-url') || '').trim();
+          if (!svgUrl) return;
+          treeActionBtn.disabled = true;
+          const originalText = treeActionBtn.textContent;
+          treeActionBtn.textContent = 'Adding...';
+          try {
+            await importGuideSvgFromPath(svgPath, svgUrl);
+            setStatusMessage('Imported guide SVG for editing.', 'success');
+            hideGuideGallery();
+          } catch (error) {
+            setStatusMessage('Failed to import guide SVG.', 'error');
+            console.error('[Guide] Tree edit failed:', error);
+          } finally {
+            treeActionBtn.disabled = false;
+            treeActionBtn.textContent = originalText || 'Edit';
+          }
+          return;
+        }
+
+        if (action === 'view-pdf') {
+          const url = String(treeActionBtn.getAttribute('data-tree-url') || '').trim();
+          if (url) window.open(url, '_blank');
+          return;
+        }
+
+        if (action === 'import-jpg') {
+          const url = String(treeActionBtn.getAttribute('data-tree-url') || '').trim();
+          const name = String(treeActionBtn.getAttribute('data-tree-name') || 'Reference').trim();
+          if (!url) return;
+          // Add JPG as a new image in the app
+          try {
+            const manager = window.app?.projectManager || window.projectManager;
+            if (manager && typeof manager.addImage === 'function') {
+              const label = name.replace(/[^a-zA-Z0-9-_]/g, '-').toLowerCase();
+              await manager.addImage(label, url, { refreshBackground: false });
+              if (typeof window.addImageToSidebar === 'function') {
+                window.addImageToSidebar(url, label, name);
+              }
+              if (typeof manager.switchView === 'function') {
+                await manager.switchView(label, true);
+              }
+              setStatusMessage(`Imported ${name} reference image.`, 'success');
+            } else {
+              window.open(url, '_blank');
+            }
+          } catch (error) {
+            console.error('[Guide] JPG import failed:', error);
+            window.open(url, '_blank');
+          }
+          return;
+        }
+
+        return;
+      }
+
+      const quickAddBtn = event.target?.closest?.('[data-guide-quick-add]');
+      if (quickAddBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        const code = String(quickAddBtn.getAttribute('data-guide-quick-add') || '').trim();
+        const requestedView = String(quickAddBtn.getAttribute('data-guide-quick-view') || '')
+          .trim()
+          .toLowerCase();
+        if (!code || !requestedView) return;
+
+        selectedCode = code;
+        const views =
+          requestedView === 'all'
+            ? availableViewsForCode(code, viewsByCode)
+            : [requestedView].filter(view =>
+                availableViewsForCode(code, viewsByCode).includes(view)
+              );
+        if (!views.length) {
+          setStatusMessage(`No guide images found for ${code}.`, 'warning');
+          return;
+        }
+        selectedView = views[0];
+        quickAddBtn.disabled = true;
+        const originalText = quickAddBtn.textContent;
+        quickAddBtn.textContent = requestedView === 'all' ? 'Adding All...' : 'Adding...';
+        const added = [];
+        const failed = [];
+        for (const view of views) {
+          try {
+            // eslint-disable-next-line no-await-in-loop
+            const label = await addGuideAsNewImage(code, view, { switchToNew: false });
+            added.push(label);
+          } catch (error) {
+            failed.push(view);
+            console.error('[Guide] Quick add failed:', { code, view, error });
+          }
+        }
+        if (added.length && window.app?.projectManager?.switchView) {
+          try {
+            await window.app.projectManager.switchView(added[0], true);
+          } catch {
+            // no-op
+          }
+        }
+        if (added.length) {
+          setStatusMessage(`Added ${added.length} image(s) from ${code}.`, 'success');
+        }
+        if (failed.length) {
+          setStatusMessage(
+            `Failed to add ${failed.join(', ').toUpperCase()} for ${code}.`,
+            'warning'
+          );
+        }
+        quickAddBtn.disabled = false;
+        quickAddBtn.textContent = originalText || (requestedView === 'all' ? 'Add All' : 'Add');
+        renderGallery();
+        return;
+      }
+
       const actionBtn = event.target?.closest?.('[data-link-action]');
       if (actionBtn) {
         const action = String(actionBtn.getAttribute('data-link-action') || '').trim();
@@ -6914,6 +7662,7 @@ function showGuideGallery(options = {}) {
     galleryOverlay.querySelectorAll('.guide-gallery-item').forEach(item => {
       item.addEventListener('click', event => {
         if (event.target?.closest('[data-select-code]')) return;
+        if (event.target?.closest('[data-guide-quick-add]')) return;
         if (event.target?.closest('.guide-gallery-item-label')) return;
         const code = item.getAttribute('data-code');
         if (!code) return;
@@ -7074,8 +7823,39 @@ function syncGuideOverlayToActiveView() {
   showGuideFlash({ holdMode: true, preservePinnedContext: false });
 }
 
+function attachGuideGalleryToolbarButton() {
+  if (document.getElementById('measurementGuideGalleryBtn')) return;
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.id = 'measurementGuideGalleryBtn';
+  button.className = 'tbtn';
+  button.title = 'Open Measurement Guide Gallery (Alt + \\)';
+  button.setAttribute('aria-label', 'Open Measurement Guide Gallery');
+  button.innerHTML =
+    '<span class="label-long">Gallery</span><span class="label-short">Guides</span>';
+  button.addEventListener('click', event => {
+    event.preventDefault();
+    showGuideGallery({ source: 'toolbar', mode: 'select' });
+  });
+
+  const tbRight = document.getElementById('tbRight');
+  const projectMenu = document.getElementById('projectMenuWrapper');
+  if (tbRight && projectMenu?.parentElement === tbRight) {
+    tbRight.insertBefore(button, projectMenu);
+    return;
+  }
+  if (tbRight) {
+    tbRight.appendChild(button);
+    return;
+  }
+  const fallbackTarget = document.getElementById('canvasControlsContent');
+  fallbackTarget?.appendChild(button);
+}
+
 export function initMeasurementGuideFlash() {
   ensureStyles();
+  attachGuideGalleryToolbarButton();
   guideCompareWorkspaceState.leftViewId = toBaseViewId(getCurrentViewId());
   refreshGuideSplitInteractionGuards();
   void applyGuideSplitLayout();

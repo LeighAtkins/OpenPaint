@@ -29,7 +29,7 @@ export function initPanelRelocation(): void {
     // 1. strokePanel (Left)
     mainLayout.insertBefore(strokePanel, mainLayout.firstChild);
     strokePanel.style.cssText +=
-      'order: 1 !important; position: fixed !important; left: 0 !important; top: 48px !important; height: calc(100% - 128px) !important; flex: none !important; display: flex !important; flex-direction: column !important;';
+      'order: 1 !important; position: fixed !important; left: 0 !important; top: 48px !important; bottom: 0 !important; flex: none !important; display: flex !important; flex-direction: column !important;';
 
     // 2. canvasContainer (Center)
     mainLayout.appendChild(canvasContainer);
@@ -39,7 +39,7 @@ export function initPanelRelocation(): void {
     // 3. imagePanel (Right)
     mainLayout.appendChild(imagePanel);
     imagePanel.style.cssText +=
-      'order: 3 !important; position: fixed !important; right: 0 !important; left: auto !important; top: 48px !important; height: calc(100% - 128px) !important; flex: none !important; display: flex !important; flex-direction: column !important; border-left-width: 1px !important; border-right-width: 0 !important;';
+      'order: 3 !important; position: fixed !important; right: 0 !important; left: auto !important; top: 48px !important; bottom: 0 !important; flex: none !important; display: flex !important; flex-direction: column !important; border-left-width: 1px !important; border-right-width: 0 !important;';
 
     // Trigger resize to ensure CanvasManager updates its size
     window.dispatchEvent(new Event('resize'));

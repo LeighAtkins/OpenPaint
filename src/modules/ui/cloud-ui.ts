@@ -15,6 +15,11 @@ const CLOUD_UI_STYLES = /* css */ `
     flex-wrap: nowrap;
   }
 
+  #projectCloudActions .cloud-toolbar-group {
+    margin-left: 0;
+    width: 100%;
+  }
+
   .cloud-save-btn {
     display: inline-flex;
     align-items: center;
@@ -706,9 +711,14 @@ export function initCloudUI(): void {
   style.textContent = CLOUD_UI_STYLES;
   document.head.appendChild(style);
 
+  const projectCloudActions = document.getElementById('projectCloudActions');
   const tbRight = document.getElementById('tbRight');
   const authToolbarGroup = document.getElementById('authToolbarGroup');
-  if (tbRight) {
+  if (projectCloudActions) {
+    cloudToolbarGroup = createCloudToolbarGroup();
+    cloudToolbarGroup.style.display = 'none';
+    projectCloudActions.appendChild(cloudToolbarGroup);
+  } else if (tbRight) {
     cloudToolbarGroup = createCloudToolbarGroup();
     cloudToolbarGroup.style.display = 'none';
     if (authToolbarGroup?.nextSibling) {

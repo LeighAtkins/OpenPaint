@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 27.3.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 792 792" style="enable-background:new 0 0 792 792;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:none;stroke:#A6A8AB;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;}
+	.st1{fill:none;stroke:#020202;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;}
+	.st2{fill:none;stroke:#40DD8B;stroke-miterlimit:10;}
+	.st3{font-family:'SetupGrotesk-Medium';}
+	.st4{font-size:20px;}
+	.st5{fill:none;stroke:#EA1F27;stroke-width:2;stroke-miterlimit:10;}
+	.st6{fill:#EA1F27;}
+	.st7{fill:#FFFFFF;stroke:#EA1F27;stroke-miterlimit:10;}
+	.st8{fill:none;stroke:#EA1F27;stroke-miterlimit:10;}
+	.st9{fill:none;stroke:#40DD8B;stroke-width:2;stroke-miterlimit:10;}
+	.st10{fill:#40DD8B;}
+</style>
+<line class="st0" x1="691.4" y1="420" x2="381.1" y2="420"/>
+<line class="st0" x1="261.5" y1="480.1" x2="691.4" y2="480.1"/>
+<line class="st0" x1="260.1" y1="620.7" x2="691.4" y2="620.7"/>
+<polyline class="st1" points="222.9,694.4 243.2,679 251.1,620.7 "/>
+<polyline class="st1" points="143.9,620.7 151.4,694.4 222.9,694.4 230.4,620.7 "/>
+<path class="st1" d="M130.7,388c4.9-12,11.3-22.9,18.8-32.7c17.3-22.2,38.7-41.4,54.5-65c17.7-26.3,28.6-56.4,36.8-86.8
+	c7.9-28.9,10.9-70.7,25.2-97.7c2.3-4.5,7.9-6.8,13.5-6.8h101.5c-1.5,0-6.4,16.5-6.8,18c-15.8,44-19.9,101.5-33.1,145.9
+	c-10.2,34.6-29.7,65-50.8,94c-20.3,28.2-30.1,62-30.1,97v166.5H114.2c0-53.8-0.4-26.7-0.4-80.5C113.8,485.4,110.8,434.6,130.7,388
+	L130.7,388z"/>
+<line class="st0" x1="691.4" y1="98.9" x2="383" y2="98.9"/>
+<polyline class="st1" points="261.5,480.1 290.9,464.7 350.3,435.4 381.1,420 "/>
+<line class="st1" x1="381.1" y1="420" x2="381.1" y2="98.9"/>
+<g>
+	<rect x="297.8" y="121.3" class="st2" width="42.5" height="27.6"/>
+	<text transform="matrix(1 0 0 1 305.52 142.23)" class="st3 st4">C1</text>
+	<line class="st2" x1="319.1" y1="108.2" x2="319.1" y2="121.3"/>
+</g>
+<g>
+	<line class="st5" x1="370.5" y1="417.5" x2="270.5" y2="466.6"/>
+	<polygon class="st6" points="270.2,461.1 264.3,469.2 274.3,470.2 	"/>
+	<polygon class="st6" points="368.3,412.9 378.2,414.2 372.1,422.1 	"/>
+</g>
+<g>
+	<rect x="219.6" y="282.8" class="st7" width="42.5" height="27.6"/>
+	<text transform="matrix(1 0 0 1 227.8 303.64)" class="st3 st4">C</text>
+	<text transform="matrix(1 0 0 1 243.58 303.64)" class="st3 st4">3</text>
+	<line class="st8" x1="219.6" y1="296.8" x2="186.9" y2="296.8"/>
+</g>
+<g>
+	<line class="st5" x1="373.2" y1="345.8" x2="280.6" y2="390.3"/>
+	<polygon class="st6" points="280.3,384.8 274.4,392.9 284.3,393.9 	"/>
+	<polygon class="st6" points="368.9,342.1 378.9,343.5 372.8,351.4 	"/>
+</g>
+<g>
+	<line class="st9" x1="249.2" y1="481.3" x2="122.8" y2="481.6"/>
+	<polygon class="st10" points="126.6,476.3 117.9,481.3 126.5,486.3 	"/>
+	<polygon class="st10" points="248.9,476.4 257.5,481.5 248.8,486.4 	"/>
+</g>
+<path class="st5" d="M103.6,617.7c0-53.8-0.4-26.7-0.4-80.5c0-54.5-3-105.3,16.9-151.9c4.9-12,11.3-22.9,18.8-32.7
+	c17.3-22.2,38.7-41.4,54.5-65c17.7-26.3,28.6-56.4,36.8-86.8c7.9-28.9,10.9-70.7,25.2-97.7c2.3-4.5,7.9-6.8,13.5-6.8"/>
+<polygon class="st6" points="265.1,102.1 271.9,94.6 262.1,92.6 "/>
+<polygon class="st6" points="98.6,613.4 103.6,622.1 108.6,613.4 "/>
+<g>
+	<line class="st9" x1="365.9" y1="108.1" x2="273.9" y2="108.4"/>
+	<polygon class="st10" points="277.7,103.1 269,108.1 277.6,113.1 	"/>
+	<polygon class="st10" points="364.5,103.4 373.2,108.5 364.5,113.4 	"/>
+</g>
+<g>
+	<rect x="167.3" y="504.8" class="st2" width="42.5" height="27.6"/>
+	<text transform="matrix(1 0 0 1 175.03 525.69)" class="st3 st4">C</text>
+	<text transform="matrix(1 0 0 1 190.81 525.69)" class="st3 st4">2</text>
+	<line class="st2" x1="188.6" y1="481.3" x2="188.6" y2="504.8"/>
+</g>
+<g>
+	<rect x="305.7" y="460.8" class="st7" width="42.5" height="27.6"/>
+	<line class="st8" x1="326.9" y1="460.8" x2="326.9" y2="438.5"/>
+</g>
+<g>
+	<rect x="300.4" y="310.2" class="st7" width="42.5" height="27.6"/>
+	<text transform="matrix(1 0 0 1 317.1064 481.5898)" class="st3 st4">B1</text>
+	<line class="st8" x1="321.6" y1="370.6" x2="321.6" y2="337.5"/>
+</g>
+<g>
+	<line class="st5" x1="390.9" y1="412.9" x2="390.9" y2="110.3"/>
+	<polygon class="st6" points="395.9,112.1 390.9,103.4 385.9,112.1 	"/>
+	<polygon class="st6" points="395.8,408.8 390.7,417.5 385.8,408.8 	"/>
+</g>
+<g>
+	<rect x="423.5" y="259.5" class="st7" width="42.5" height="27.6"/>
+	<text transform="matrix(1 0 0 1 434.41 280.35)" class="st3 st4">E1</text>
+	<line class="st8" x1="423.5" y1="273.5" x2="390.8" y2="273.5"/>
+</g>
+<text transform="matrix(1 0 0 1 309.5412 331.7607)" class="st3 st4">B2</text>
+</svg>

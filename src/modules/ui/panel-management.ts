@@ -560,148 +560,6 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
     });
   }
 
-  // Mobile panel toggle icons functionality
-  function initializePanelToggleIcons() {
-    const strokePanel = document.getElementById('strokePanel');
-    const imagePanel = document.getElementById('imagePanel');
-    const strokeIcon = document.getElementById('strokePanelIcon');
-    const imageIcon = document.getElementById('imagePanelIcon');
-
-    if (!strokePanel || !imagePanel || !strokeIcon || !imageIcon) {
-      console.warn('Panel toggle icons or panels not found');
-      return;
-    }
-
-    const strokePanelEl = strokePanel;
-    const imagePanelEl = imagePanel;
-    const strokeIconEl = strokeIcon;
-    const imageIconEl = imageIcon;
-
-    // Initialize panel states - start minimized on mobile, expanded on desktop
-    const isMobile = isMobileDevice();
-    if (!strokePanelEl.getAttribute('data-mobile-state')) {
-      strokePanelEl.setAttribute('data-mobile-state', isMobile ? 'minimized' : 'expanded');
-    }
-    if (!imagePanelEl.getAttribute('data-mobile-state')) {
-      imagePanelEl.setAttribute('data-mobile-state', isMobile ? 'minimized' : 'expanded');
-    }
-
-    // Sync icon visual state with panel state
-    function syncIconState(panel: HTMLElement, icon: HTMLElement) {
-      icon.classList.remove('minimized', 'expanded');
-      panel.classList.remove('minimized', 'expanded');
-
-      const isOpen = panel.getAttribute('data-mobile-state') === 'expanded';
-      if (isOpen) {
-        icon.classList.add('expanded');
-        panel.classList.add('expanded');
-        panel.style.display = 'flex';
-        // Ensure panel content is visible
-        const contentId = panel.id === 'strokePanel' ? 'elementsBody' : 'imagePanelContent';
-        const content = document.getElementById(contentId);
-        if (content) {
-          content.classList.remove('hidden');
-          content.style.maxHeight = 'none';
-        }
-      } else {
-        icon.classList.add('minimized');
-        panel.classList.add('minimized');
-        // On mobile, hide the panel when minimized
-        if (isMobileDevice()) {
-          panel.style.display = 'none';
-        }
-      }
-
-      if (panel.id === 'imagePanel') {
-        setImagePanelState(isOpen ? IMAGE_PANEL_STATES.expanded : IMAGE_PANEL_STATES.collapsed);
-      }
-    }
-
-    // Toggle panel on icon click
-    function setupIconToggle(panel: HTMLElement, icon: HTMLElement) {
-      icon.addEventListener('click', e => {
-        if (!isMobileDevice()) return;
-        e.stopPropagation();
-
-        const isCurrentlyOpen = panel.getAttribute('data-mobile-state') === 'expanded';
-        panel.setAttribute('data-mobile-state', isCurrentlyOpen ? 'minimized' : 'expanded');
-        syncIconState(panel, icon);
-      });
-    }
-
-    // Show/hide icons and panels based on device type
-    function updatePanelVisibility() {
-      const isMobile = isMobileDevice();
-
-      // On desktop, always show panels and ensure content is visible
-      if (!isMobile) {
-        strokePanelEl.style.setProperty('display', 'flex', 'important');
-        imagePanelEl.style.setProperty('display', 'flex', 'important');
-
-        // CRITICAL FIX: Remove minimized class on desktop to restore width constraints
-        // The minimized class forces width:auto, which causes the panel to expand uncontrollably
-        strokePanelEl.classList.remove('minimized');
-        imagePanelEl.classList.remove('minimized');
-
-        // Ensure content is visible ONLY if not manually collapsed
-        const strokeContent = document.getElementById('elementsBody');
-        const imageContent = document.getElementById('imagePanelContent');
-
-        if (!strokePanelEl.classList.contains('collapsed')) {
-          if (strokeContent) {
-            strokeContent.classList.remove('hidden');
-            strokeContent.style.maxHeight = 'none';
-            strokeContent.style.setProperty('display', 'flex', 'important');
-          }
-        } else {
-          // If collapsed, ensure content is hidden
-          if (strokeContent) {
-            strokeContent.style.setProperty('display', 'none', 'important');
-          }
-        }
-
-        if (!imagePanelEl.classList.contains('collapsed')) {
-          if (imageContent) {
-            imageContent.classList.remove('hidden');
-            imageContent.style.maxHeight = 'none';
-            imageContent.style.setProperty('display', 'block', 'important');
-          }
-        } else {
-          // If collapsed, ensure content is hidden
-          if (imageContent) {
-            imageContent.style.setProperty('display', 'none', 'important');
-          }
-        }
-      } else {
-        // On mobile, show icons with smooth fade-in
-        strokeIconEl.style.display = 'flex';
-        imageIconEl.style.display = 'flex';
-        // Fade in icons smoothly
-        requestAnimationFrame(() => {
-          strokeIconEl.style.opacity = '1';
-          imageIconEl.style.opacity = '1';
-        });
-        // Sync panel state with icons
-        syncIconState(strokePanelEl, strokeIconEl);
-        syncIconState(imagePanelEl, imageIconEl);
-      }
-    }
-
-    // Initialize
-    setupIconToggle(strokePanelEl, strokeIconEl);
-    setupIconToggle(imagePanelEl, imageIconEl);
-    updatePanelVisibility();
-
-    // Update on window resize
-    let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
-    window.addEventListener('resize', () => {
-      if (resizeTimeout) {
-        clearTimeout(resizeTimeout);
-      }
-      resizeTimeout = setTimeout(updatePanelVisibility, 150);
-    });
-  }
-
   // Ensure Vectors and tags and Images are open by default on desktop, closed on mobile
   function expandPanelsByDefault() {
     function ensurePanelsExpanded() {
@@ -817,9 +675,6 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
       createSidebarToggle('imagePanel', 'imagePanelContent', 'toggleImagePanel');
 
       expandPanelsByDefault();
-
-      // Initialize panel toggle icons after a short delay to ensure DOM is ready
-      setTimeout(initializePanelToggleIcons, 100);
     });
   } else {
     createPanelToggle('projectPanel', 'projectPanelContent', 'toggleProjectPanel');
@@ -831,7 +686,6 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
     createSidebarToggle('imagePanel', 'imagePanelContent', 'toggleImagePanel');
 
     expandPanelsByDefault();
-    setTimeout(initializePanelToggleIcons, 100);
   }
 
   // Expose functions globally

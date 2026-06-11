@@ -1097,14 +1097,14 @@ export class CanvasManager {
         const objects = obj.getObjects();
         // Capture transform start for each line in the selection
         for (const o of objects) {
-          if (o.type === 'line' && !o.__lineTransformActive) {
+          if (o.type === 'line' && !o.isConnectorLine && !o.__lineTransformActive) {
             this.captureLineState(o, opt);
           }
         }
         return;
       }
 
-      if (obj.type !== 'line') {
+      if (obj.type !== 'line' || obj.isConnectorLine) {
         return;
       }
       // Skip lines that are inside a permanent group (like arrows)
@@ -1134,7 +1134,12 @@ export class CanvasManager {
       if (obj.type === 'activeSelection') {
         const objects = obj.getObjects();
         for (const o of objects) {
-          if (o.type === 'line' && o.__lineTransformActive && !o.__lineBakedThisGesture) {
+          if (
+            o.type === 'line' &&
+            !o.isConnectorLine &&
+            o.__lineTransformActive &&
+            !o.__lineBakedThisGesture
+          ) {
             // Schedule bake to happen after the selection is ungrouped
             scheduleLineBakeAfterFinalize(o);
           }
@@ -1142,7 +1147,7 @@ export class CanvasManager {
         return;
       }
 
-      if (obj.type !== 'line') {
+      if (obj.type !== 'line' || obj.isConnectorLine) {
         return;
       }
       if (!obj.__lineTransformActive) {
@@ -1171,7 +1176,12 @@ export class CanvasManager {
     // Also handle mouse:up for lines to ensure baking happens
     this.fabricCanvas.on('mouse:up', (opt: FabricIEvent) => {
       const obj = opt?.target;
-      if (obj?.type === 'line' && obj.__lineTransformActive && !obj.__lineBakedThisGesture) {
+      if (
+        obj?.type === 'line' &&
+        !obj.isConnectorLine &&
+        obj.__lineTransformActive &&
+        !obj.__lineBakedThisGesture
+      ) {
         // If line is inside activeSelection, schedule bake for later
         if (obj.group && obj.group.type === 'activeSelection') {
           const action = obj.__lineTransformAction;
@@ -1205,7 +1215,12 @@ export class CanvasManager {
         const objects = obj.getObjects();
         const rotateOrSkewLines = [];
         for (const o of objects) {
-          if (o.type === 'line' && o.__lineTransformActive && !o.__lineBakedThisGesture) {
+          if (
+            o.type === 'line' &&
+            !o.isConnectorLine &&
+            o.__lineTransformActive &&
+            !o.__lineBakedThisGesture
+          ) {
             const action = o.__lineTransformAction;
             const isRotateOrSkew =
               action === 'rotate' || action === 'skew' || action === 'skewX' || action === 'skewY';
@@ -1315,7 +1330,10 @@ export class CanvasManager {
         };
       }
 
-      tagManager.updateConnector(tagObj.strokeLabel || strokeLabel, tagObj.imageLabel);
+      tagManager.updateConnector(
+        tagObj.strokeLabel || strokeLabel,
+        tagObj.scopedLabel || tagObj.imageLabel
+      );
       break;
     }
   }
@@ -1517,7 +1535,7 @@ export class CanvasManager {
             strokePanel.style.setProperty('position', 'fixed', 'important'); // Use fixed to stay on screen
             strokePanel.style.setProperty('left', '0', 'important');
             strokePanel.style.setProperty('top', '48px', 'important'); // Account for toolbar
-            strokePanel.style.setProperty('height', 'calc(100% - 128px)', 'important'); // Full height minus toolbar and stepper
+            strokePanel.style.setProperty('bottom', '0', 'important');
             strokePanel.style.setProperty('z-index', '2000', 'important');
             strokePanel.style.setProperty('opacity', '1', 'important');
             strokePanel.style.setProperty('visibility', 'visible', 'important');
@@ -1528,7 +1546,7 @@ export class CanvasManager {
             imagePanel.style.setProperty('position', 'fixed', 'important'); // Use fixed to stay on screen
             imagePanel.style.setProperty('right', '0', 'important');
             imagePanel.style.setProperty('top', '48px', 'important'); // Account for toolbar
-            imagePanel.style.setProperty('height', 'calc(100% - 128px)', 'important'); // Full height minus toolbar and stepper
+            imagePanel.style.setProperty('bottom', '0', 'important');
             imagePanel.style.setProperty('z-index', '2000', 'important');
             imagePanel.style.setProperty('opacity', '1', 'important');
             imagePanel.style.setProperty('visibility', 'visible', 'important');
@@ -1570,11 +1588,13 @@ export class CanvasManager {
           if (this.isGuideSplitActive()) {
             continue;
           }
-          // Debounce the resize call
-          if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
-          this.resizeTimeout = setTimeout(() => {
-            this.resize();
-          }, 100); // Standard debounce for stability
+          const windowResizeSuppressUntil = Number(
+            (window as any).__openpaintWindowResizeSuppressCanvasResizeUntil || 0
+          );
+          if (windowResizeSuppressUntil > Date.now()) {
+            continue;
+          }
+          this.resize();
         }
       }
     });
@@ -1950,6 +1970,14 @@ export class CanvasManager {
   private ensureCurveDecoratorsForPath(pathObj: FabricObject): void {
     if (!pathObj || pathObj.type !== 'path' || !Array.isArray(pathObj.customPoints)) return;
     if (pathObj.customPoints.length < 2) return;
+    const mosId = String(pathObj.__mosId || pathObj.customData?.mosId || '');
+    const isMosCurve =
+      pathObj.customData?.layerType === 'mos-overlay' ||
+      (mosId &&
+        mosId.includes('_line') &&
+        !mosId.includes('_curve_start_arrow') &&
+        !mosId.includes('_curve_end_arrow'));
+    if (!isMosCurve) return;
 
     const canvas = pathObj.canvas || this.fabricCanvas;
     if (!canvas) return;
@@ -2275,6 +2303,16 @@ export class CanvasManager {
       return;
     }
 
+    if (
+      this.enableFloatingLayoutMode &&
+      this.containerId === 'main-canvas-wrapper' &&
+      this.hasAuthoritativeCaptureTabState() &&
+      this.getStoredBackgroundFitMode() !== 'scale-page-size' &&
+      this.getStoredBackgroundFitMode() !== 'fill-frame'
+    ) {
+      return;
+    }
+
     // If no image label OR no background image, we're dealing with stroke-only canvas
     // We must check backgroundImage because sometimes we have a viewId but no image (e.g. cleared or template)
     const isStrokeOnlyCanvas =
@@ -2321,6 +2359,42 @@ export class CanvasManager {
     wrapperEl.style.margin = '0';
     wrapperEl.style.overflow = 'hidden';
     wrapperEl.style.display = 'block';
+  }
+
+  syncCanvasElementDimensions(
+    targetWidth: number,
+    targetHeight: number,
+    viewportTransform?: ViewportTransform
+  ): void {
+    if (!this.fabricCanvas || !Number.isFinite(targetWidth) || !Number.isFinite(targetHeight)) {
+      return;
+    }
+
+    const preservedViewport =
+      viewportTransform ||
+      ([...(this.fabricCanvas.viewportTransform || [1, 0, 0, 1, 0, 0])] as ViewportTransform);
+
+    this.fabricCanvas.setWidth(targetWidth);
+    this.fabricCanvas.setHeight(targetHeight);
+    this.fabricCanvas.setViewportTransform(preservedViewport);
+    this.normalizeFabricWrapperElement(targetWidth, targetHeight);
+
+    const syncElement = (element?: HTMLElement | null) => {
+      if (!element) return;
+      element.style.minWidth = 'unset';
+      element.style.minHeight = 'unset';
+      element.style.maxWidth = 'unset';
+      element.style.maxHeight = 'unset';
+      element.style.left = '0px';
+      element.style.top = '0px';
+      element.style.width = `${targetWidth}px`;
+      element.style.height = `${targetHeight}px`;
+    };
+
+    syncElement(this.fabricCanvas.lowerCanvasEl);
+    syncElement(this.fabricCanvas.upperCanvasEl);
+    syncElement(document.getElementById(this.canvasId));
+    this.fabricCanvas.calcOffset?.();
   }
 
   getStoredBackgroundFitMode(): string {
@@ -2411,8 +2485,8 @@ export class CanvasManager {
     const activeTab = tabState?.tabs?.find?.(tab => tab.id === activeTabId) || null;
     return Boolean(
       activeTab &&
-      activeTab.type !== 'master' &&
-      (activeTab.viewport || activeTab?.captureFrame?.worldRect)
+        activeTab.type !== 'master' &&
+        (activeTab.viewport || activeTab?.captureFrame?.worldRect)
     );
   }
 
@@ -2512,7 +2586,13 @@ export class CanvasManager {
       case 'actual-size':
         scale = 1;
         break;
+      case 'scale-page-size':
       case 'fit-canvas':
+        scale = Math.min(frameWidth / imgWidth, frameHeight / imgHeight);
+        break;
+      case 'fill-frame':
+        scale = Math.max(frameWidth / imgWidth, frameHeight / imgHeight);
+        break;
       default:
         scale = Math.min(frameWidth / imgWidth, frameHeight / imgHeight);
         break;
@@ -2555,6 +2635,45 @@ export class CanvasManager {
     const oldVpt: ViewportTransform = this.fabricCanvas
       ? ([...(this.fabricCanvas.viewportTransform || [1, 0, 0, 1, 0, 0])] as ViewportTransform)
       : [1, 0, 0, 1, 0, 0];
+    const oldAnchorFrame = this.getBackgroundPlacementFrame();
+    const oldResizeAnchor = {
+      x: oldAnchorFrame.left + oldAnchorFrame.width / 2,
+      y: oldAnchorFrame.top + oldAnchorFrame.height / 2,
+    };
+    const mapWorldRectToCanvasRect = (rect: FrameState | null, transform: ViewportTransform) => {
+      if (!rect || !this.fabricCanvas) return null;
+      const corners = [
+        new fabric.Point(rect.left, rect.top),
+        new fabric.Point(rect.left + rect.width, rect.top),
+        new fabric.Point(rect.left, rect.top + rect.height),
+        new fabric.Point(rect.left + rect.width, rect.top + rect.height),
+      ].map(point => fabric.util.transformPoint(point, transform));
+      const xs = corners.map(point => point.x);
+      const ys = corners.map(point => point.y);
+      const left = Math.min(...xs);
+      const top = Math.min(...ys);
+      const right = Math.max(...xs);
+      const bottom = Math.max(...ys);
+      return {
+        left,
+        top,
+        width: right - left,
+        height: bottom - top,
+      };
+    };
+    const backgroundWorldRectForResize = this.getBackgroundWorldRect();
+    const backgroundRectBeforeResize = mapWorldRectToCanvasRect(
+      backgroundWorldRectForResize,
+      oldVpt
+    );
+    const backgroundFrameOffset =
+      backgroundRectBeforeResize && oldAnchorFrame.width > 0 && oldAnchorFrame.height > 0
+        ? {
+            leftRatio:
+              (backgroundRectBeforeResize.left - oldAnchorFrame.left) / oldAnchorFrame.width,
+            topRatio: (backgroundRectBeforeResize.top - oldAnchorFrame.top) / oldAnchorFrame.height,
+          }
+        : null;
     // console.log(`[CanvasManager] applyResize started. Old Zoom: ${oldZoom}, Old Pan: [${oldVpt[4]}, ${oldVpt[5]}]`);
 
     const sizeChanged =
@@ -2583,55 +2702,27 @@ export class CanvasManager {
     }
 
     const currentSplitActive = this.isGuideSplitActive();
-    const shouldRefitBackgroundOnResize = sizeChanged && !!this.fabricCanvas.backgroundImage;
+    const storedBackgroundFitMode = this.getStoredBackgroundFitMode();
+    const shouldScaleToPageSize =
+      storedBackgroundFitMode === 'scale-page-size' || storedBackgroundFitMode === 'fill-frame';
+    // During live resize, preserve the existing background world rect and zoom.
+    // Only the explicit Scale to Page Size mode opts into viewport re-fit on resize.
+    const shouldRefitBackgroundOnResize =
+      shouldScaleToPageSize && sizeChanged && !!this.fabricCanvas.backgroundImage;
     const hasAuthoritativeCaptureTabState =
       !currentSplitActive && this.hasAuthoritativeCaptureTabState();
     const backgroundWorldRectBeforeResize = shouldRefitBackgroundOnResize
       ? this.getBackgroundWorldRect()
       : null;
 
-    // Update Fabric.js canvas dimensions
-    this.fabricCanvas.setWidth(targetWidth);
-    this.fabricCanvas.setHeight(targetHeight);
-    this.normalizeFabricWrapperElement(targetWidth, targetHeight);
-
-    // CRITICAL FIX: Remove all CSS constraints that cause canvas stretching/shrinking issues
-    // These style overrides ensure the canvas displays at its actual size, not hardcoded sizes
-    const canvasEl = this.fabricCanvas.lowerCanvasEl;
-    if (canvasEl) {
-      canvasEl.style.minWidth = 'unset';
-      canvasEl.style.minHeight = 'unset';
-      canvasEl.style.maxWidth = 'unset';
-      canvasEl.style.maxHeight = 'unset';
-      canvasEl.style.left = '0px';
-      canvasEl.style.top = '0px';
-      // Clear any hardcoded width/height from HTML that prevents dynamic sizing
-      canvasEl.style.width = `${targetWidth}px`;
-      canvasEl.style.height = `${targetHeight}px`;
-    }
-    const upperCanvasEl = this.fabricCanvas.upperCanvasEl;
-    if (upperCanvasEl) {
-      upperCanvasEl.style.minWidth = 'unset';
-      upperCanvasEl.style.minHeight = 'unset';
-      upperCanvasEl.style.maxWidth = 'unset';
-      upperCanvasEl.style.maxHeight = 'unset';
-      upperCanvasEl.style.left = '0px';
-      upperCanvasEl.style.top = '0px';
-      // Clear any hardcoded width/height from HTML that prevents dynamic sizing
-      upperCanvasEl.style.width = `${targetWidth}px`;
-      upperCanvasEl.style.height = `${targetHeight}px`;
-    }
-
-    // Also clear styles on the original canvas element to remove hardcoded dimensions from HTML
-    const originalCanvasEl = document.getElementById(this.canvasId);
-    if (originalCanvasEl) {
-      originalCanvasEl.style.left = '0px';
-      originalCanvasEl.style.top = '0px';
-      originalCanvasEl.style.width = `${targetWidth}px`;
-      originalCanvasEl.style.height = `${targetHeight}px`;
-    }
+    this.syncCanvasElementDimensions(targetWidth, targetHeight, oldVpt);
 
     this.updateCaptureFrameOnResize(targetWidth, targetHeight);
+    const nextAnchorFrame = this.getBackgroundPlacementFrame();
+    const nextResizeAnchor = {
+      x: nextAnchorFrame.left + nextAnchorFrame.width / 2,
+      y: nextAnchorFrame.top + nextAnchorFrame.height / 2,
+    };
     const safeZoom = Number.isFinite(oldZoom) && oldZoom > 0 ? oldZoom : this.zoomLevel || 1;
     const splitLayoutChanged =
       this.lastGuideSplitActive === null
@@ -2653,7 +2744,7 @@ export class CanvasManager {
     const didFitBackgroundViewport =
       shouldRefitBackgroundOnResize &&
       !!backgroundWorldRectBeforeResize &&
-      !hasAuthoritativeCaptureTabState &&
+      (!hasAuthoritativeCaptureTabState || shouldScaleToPageSize) &&
       !splitLayoutChanged &&
       !currentSplitActive &&
       !window.__isLoadingProject &&
@@ -2668,7 +2759,7 @@ export class CanvasManager {
     // layout sync handles it via viewport transforms so vectors stay in sync.
     const didRefitBackground =
       !didFitBackgroundViewport &&
-      !hasAuthoritativeCaptureTabState &&
+      (!hasAuthoritativeCaptureTabState || shouldScaleToPageSize) &&
       !splitLayoutChanged &&
       !currentSplitActive &&
       shouldRefitBackgroundOnResize
@@ -2690,7 +2781,7 @@ export class CanvasManager {
       try {
         const inverse = fabric.util.invertTransform(oldVpt);
         centerWorldPoint = fabric.util.transformPoint(
-          new fabric.Point(oldCanvasWidth / 2, oldCanvasHeight / 2),
+          new fabric.Point(oldResizeAnchor.x, oldResizeAnchor.y),
           inverse
         );
       } catch (error) {
@@ -2735,12 +2826,27 @@ export class CanvasManager {
             transform = fabric.util.multiplyTransformMatrices(translateBack, transform);
 
             const mappedCenter = fabric.util.transformPoint(centerWorldPoint, transform);
-            this.panX = targetWidth / 2 - mappedCenter.x;
-            this.panY = targetHeight / 2 - mappedCenter.y;
+            this.panX = nextResizeAnchor.x - mappedCenter.x;
+            this.panY = nextResizeAnchor.y - mappedCenter.y;
           }
         }
 
         this.applyViewportTransform();
+        if (backgroundFrameOffset && backgroundWorldRectForResize) {
+          const backgroundRectAfterResize = mapWorldRectToCanvasRect(
+            backgroundWorldRectForResize,
+            this.fabricCanvas.viewportTransform as ViewportTransform
+          );
+          if (backgroundRectAfterResize) {
+            const desiredBackgroundLeft =
+              nextAnchorFrame.left + nextAnchorFrame.width * backgroundFrameOffset.leftRatio;
+            const desiredBackgroundTop =
+              nextAnchorFrame.top + nextAnchorFrame.height * backgroundFrameOffset.topRatio;
+            this.panX += desiredBackgroundLeft - backgroundRectAfterResize.left;
+            this.panY += desiredBackgroundTop - backgroundRectAfterResize.top;
+            this.applyViewportTransform();
+          }
+        }
       }
     }
 
@@ -2781,17 +2887,30 @@ export class CanvasManager {
       return;
     }
 
-    const { width, height } = this.getAvailableCanvasSize();
+    const immediateSize = this.getAvailableCanvasSize();
+    this.syncCanvasElementDimensions(immediateSize.width, immediateSize.height);
+    this.fabricCanvas.requestRenderAll?.();
 
-    // REMOVED THRESHOLD: We want smooth resizing, so we process even small changes.
-    // REMOVED DEBOUNCE: ResizeObserver already debounces calls to this method (50ms).
-    // Adding another debounce here (150ms) caused the "last moment" update behavior
-    // because the timer kept getting reset during continuous drags.
+    if (this.pendingResizeFrame !== null) {
+      cancelAnimationFrame(this.pendingResizeFrame);
+      this.pendingResizeFrame = null;
+    }
 
-    // Use requestAnimationFrame to ensure we don't thrash the layout loop
-    requestAnimationFrame(() => {
-      this.applyResize(width, height);
-    });
+    if (this.resizeTimeout) {
+      clearTimeout(this.resizeTimeout);
+    }
+
+    // Window drags can emit many wrapper resize events with partially-settled
+    // toolbar/sidebar geometry. Snap after the layout settles instead of
+    // applying every intermediate size, which makes the image visibly jiggle.
+    this.resizeTimeout = setTimeout(() => {
+      this.resizeTimeout = null;
+      const { width, height } = this.getAvailableCanvasSize();
+      this.pendingResizeFrame = requestAnimationFrame(() => {
+        this.pendingResizeFrame = null;
+        this.applyResize(width, height);
+      });
+    }, 140);
   }
 
   initZoomPan(): void {
@@ -3014,7 +3133,10 @@ export class CanvasManager {
             // Find the tag associated with this stroke
             for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
               if (tagObj.connectedStroke === obj) {
-                tagManager.updateConnector(tagObj.strokeLabel || strokeLabel, tagObj.imageLabel);
+                tagManager.updateConnector(
+                  tagObj.strokeLabel || strokeLabel,
+                  tagObj.scopedLabel || tagObj.imageLabel
+                );
                 didUpdateConnectors = true;
                 break;
               }
@@ -3032,7 +3154,10 @@ export class CanvasManager {
         const tagManager = window.app.tagManager;
         for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
           if (tagObj.connectedStroke === movingObj) {
-            tagManager.updateConnector(tagObj.strokeLabel || strokeLabel, tagObj.imageLabel);
+            tagManager.updateConnector(
+              tagObj.strokeLabel || strokeLabel,
+              tagObj.scopedLabel || tagObj.imageLabel
+            );
             didUpdateConnectors = true;
             break;
           }
@@ -3053,7 +3178,10 @@ export class CanvasManager {
         if ((obj.type === 'line' || obj.type === 'path' || obj.type === 'group') && !obj.isTag) {
           for (const [strokeLabel, tagObj] of tagManager.tagObjects.entries()) {
             if (tagObj.connectedStroke === obj) {
-              tagManager.updateConnector(tagObj.strokeLabel || strokeLabel, tagObj.imageLabel);
+              tagManager.updateConnector(
+                tagObj.strokeLabel || strokeLabel,
+                tagObj.scopedLabel || tagObj.imageLabel
+              );
               break;
             }
           }
@@ -3694,7 +3822,10 @@ export class CanvasManager {
     if (window.app?.tagManager) {
       tags.forEach(tagObj => {
         if (tagObj?.strokeLabel) {
-          window.app.tagManager.updateConnector(tagObj.strokeLabel, tagObj.imageLabel);
+          window.app.tagManager.updateConnector(
+            tagObj.strokeLabel,
+            tagObj.scopedLabel || tagObj.imageLabel
+          );
         }
       });
     }
@@ -3714,6 +3845,7 @@ export class CanvasManager {
       'customPoints',
       'tagOffset',
       'arrowSettings',
+      'isPrivacyErase',
     ]);
     const exportableObjects = this.fabricCanvas.getObjects().filter(obj => !obj?.excludeFromExport);
     if (json?.objects && exportableObjects.length === json.objects.length) {
@@ -3788,8 +3920,24 @@ export class CanvasManager {
         if (o.tagOffset) {
           object.tagOffset = o.tagOffset;
         }
+        if (o.isPrivacyErase) {
+          object.isPrivacyErase = o.isPrivacyErase;
+          object.selectable = false;
+          object.evented = false;
+        }
         if (!object.arrowSettings && o.strokeMetadata?.arrowSettings) {
           object.arrowSettings = o.strokeMetadata.arrowSettings;
+        }
+
+        // Migrate 'gummy' lineStyle to 'stretchy'
+        if (object.arrowSettings?.lineStyle === 'gummy') {
+          object.arrowSettings.lineStyle = 'stretchy';
+        }
+        if (object.dashSettings?.style === 'gummy') {
+          object.dashSettings.style = 'stretchy';
+        }
+        if (object.lineStyle === 'gummy') {
+          object.lineStyle = 'stretchy';
         }
       }
     );

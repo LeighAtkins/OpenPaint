@@ -79,6 +79,14 @@ export function initMosGenerateUI(
   const { overlay, destroy } = createGenerateDialog(manager, canvasManager, projectManager);
   document.body.appendChild(overlay);
 
+  const showMosOverlayLauncher = (window as any).__openpaintShowMosOverlayLauncher === true;
+  if (!showMosOverlayLauncher) {
+    return () => {
+      overlay.remove();
+      destroy();
+    };
+  }
+
   // Add toolbar button
   const btn = createToolbarButton(() => openDialog(overlay));
   const toolbar = document.querySelector(

@@ -126,8 +126,9 @@ export function initScrollSelectSystem() {
   function isScrollSelectEnabled(): boolean {
     const splitWrapper = document.getElementById('main-canvas-wrapper');
     const splitActive = splitWrapper?.classList.contains('guide-split-active') === true;
-    const measurementSplitActive =
-      document.body?.classList.contains('measurement-split-workspace-active') === true;
+    const measurementSplitActive = document.body?.classList.contains(
+      'measurement-split-workspace-active'
+    );
     if (
       document.hidden ||
       (window.__suppressScrollSelectUntil && Date.now() < window.__suppressScrollSelectUntil) ||
@@ -250,9 +251,9 @@ export function initScrollSelectSystem() {
   (function initMiniStepper() {
     // Configuration
     const cfg = {
-      activeClasses: 'text-white scale-105 shadow-md',
+      activeClasses: 'text-white scale-[1.03] shadow-sm',
       inactiveClasses: 'bg-white text-slate-600 border border-slate-300',
-      pillSize: 'w-8 h-8',
+      pillSize: 'w-7 h-7',
       threshold: 0.3,
     };
 
@@ -384,21 +385,25 @@ export function initScrollSelectSystem() {
 
       // Auto-scroll the active pill to center
       if (activeButton && stepper && !panelCollapsed) {
+        const pillsList = stepper.querySelector('ol');
+        const scrollEl = pillsList || stepper;
         const activeLabel = activeButton.dataset.target || '';
         const lastAutoScrollLabel = window.__miniStepperLastAutoScrollLabel || '';
-        // Don't keep re-centering the same active pill on every refresh.
-        if (!forceCenter && activeLabel && activeLabel === lastAutoScrollLabel) {
-          return;
-        }
-
         const stepperRect = stepper.getBoundingClientRect();
         const btnRect = activeButton.getBoundingClientRect();
         const delta = btnRect.left - stepperRect.left + btnRect.width / 2 - stepperRect.width / 2;
+        if (
+          !forceCenter &&
+          activeLabel &&
+          activeLabel === lastAutoScrollLabel &&
+          Math.abs(delta) <= 1
+        ) {
+          return;
+        }
         if (Math.abs(delta) > 1) {
           const scrollBehavior = animate ? 'smooth' : 'instant';
-          // Instant scrolls complete immediately, so use a very short suppression
           window.__miniStepperProgrammaticScrollUntil = Date.now() + (animate ? 150 : 30);
-          stepper.scrollBy({ left: delta, behavior: scrollBehavior as ScrollBehavior });
+          scrollEl.scrollBy({ left: delta, behavior: scrollBehavior as ScrollBehavior });
           window.__miniStepperLastAutoScrollLabel = activeLabel;
         } else if (activeLabel) {
           window.__miniStepperLastAutoScrollLabel = activeLabel;
@@ -709,6 +714,9 @@ export function initScrollSelectSystem() {
       const stepper = document.getElementById('mini-stepper');
       if (!stepper) return;
 
+      const pillsList = stepper.querySelector('ol');
+      if (!pillsList) return;
+
       // Clean up previous observer if any
       if (window.__pillCenteringObserver) {
         window.__pillCenteringObserver.disconnect();
@@ -776,7 +784,7 @@ export function initScrollSelectSystem() {
       // Only switch images on scroll when the user recently interacted with the stepper
       let scrollTimeout = null;
 
-      stepper.addEventListener(
+      pillsList.addEventListener(
         'scroll',
         () => {
           // Ignore programmatic scrolls
@@ -989,13 +997,8 @@ export function initScrollSelectSystem() {
         return;
       }
 
-      // Position the navigation container directly under frame-capture
-      navContainer.style.position = 'fixed';
-      navContainer.style.bottom = '0';
-      navContainer.style.left = '0';
-      navContainer.style.right = '0';
-      navContainer.style.width = '100%';
-      navContainer.style.zIndex = '5000';
+      // Now inside main-canvas-wrapper — no need for fixed positioning
+      // Tailwind classes handle absolute bottom-center placement
     }
 
     function getMiniStepperGuideState(label: string): {
@@ -1161,19 +1164,22 @@ export function initScrollSelectSystem() {
           });
       }
 
+      const pillsList = stepper.querySelector('ol');
+      const indicator = document.getElementById('mini-stepper-indicator');
+      if (!pillsList) return [];
+
       if (imageLabels.length === 0) {
-        stepper.innerHTML = '<li class="px-4 py-2 text-slate-500 text-sm">No images yet</li>';
-        // Ensure base classes are applied even when empty
-        stepper.className =
-          'flex gap-3 px-4 py-3 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[60px]';
-        return []; // Return empty array instead of undefined
+        if (indicator) indicator.style.display = 'none';
+        pillsList.innerHTML = '<li class="px-2 py-1 text-slate-500 text-xs">No images yet</li>';
+        pillsList.className =
+          'flex gap-2 px-2 py-1 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[40px]';
+        return [];
       }
 
-      // Ensure stepper has base classes
-      stepper.className =
-        'flex gap-3 px-4 py-3 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[60px]';
+      if (indicator) indicator.style.display = '';
+      pillsList.className =
+        'flex gap-2 px-2 py-1 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[40px]';
 
-      // Build pills for each unique image label
       const pillsHTML = imageLabels
         .map((label, idx) => {
           const n = idx + 1;
@@ -1181,7 +1187,7 @@ export function initScrollSelectSystem() {
                           <li class="snap-center">
                               <button
                                   type="button"
-                                  class="step relative w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200 bg-white text-slate-600 border border-slate-300 hover:scale-105 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-500"
+                                  class="step relative w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-200 bg-white text-slate-600 border border-slate-300 hover:scale-[1.03] hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
                                   aria-label="Go to ${label}"
                                   data-target="${label}"
                                   data-index="${idx}">
@@ -1191,8 +1197,7 @@ export function initScrollSelectSystem() {
         })
         .join('');
 
-      const indicatorMarkup = '<span id="mini-stepper-indicator" aria-hidden="true"></span>';
-      stepper.innerHTML = indicatorMarkup + pillsHTML;
+      pillsList.innerHTML = pillsHTML;
 
       const stepButtons = Array.from(stepper.querySelectorAll('button[data-target]'));
 
@@ -1216,11 +1221,12 @@ export function initScrollSelectSystem() {
 
           if (!stepper) return;
 
-          // First, center the pill in the stepper
-          const stepperRect = stepper.getBoundingClientRect();
+          const pillsList = stepper.querySelector('ol');
+          const scrollEl = pillsList || stepper;
+          const stepperRect = scrollEl.getBoundingClientRect();
           const btnRect = btn.getBoundingClientRect();
           const delta = btnRect.left - stepperRect.left + btnRect.width / 2 - stepperRect.width / 2;
-          stepper.scrollBy({ left: delta, behavior: 'smooth' });
+          scrollEl.scrollBy({ left: delta, behavior: 'smooth' });
 
           // Then switch to the image
           if (window.switchToImage && typeof window.switchToImage === 'function') {
@@ -1404,6 +1410,26 @@ export function initScrollSelectSystem() {
 
       // Update active pill immediately
       updateActivePill({ animate: false });
+
+      window.addEventListener('resize', () => {
+        window.__miniStepperLastAutoScrollLabel = '';
+        window.__miniStepperProgrammaticScrollUntil = Date.now() + 200;
+        requestAnimationFrame(() => {
+          updateActivePill({ animate: false, forceCenter: true });
+        });
+      });
+
+      window.addEventListener('openpaint:view-switched', () => {
+        window.__miniStepperLastAutoScrollLabel = '';
+        window.__miniStepperProgrammaticScrollUntil = Date.now() + 200;
+        updateActivePill({ animate: false, forceCenter: true });
+        requestAnimationFrame(() => {
+          updateActivePill({ animate: false, forceCenter: true });
+        });
+        setTimeout(() => {
+          updateActivePill({ animate: false, forceCenter: true });
+        }, 90);
+      });
 
       window.addEventListener('openpaint:guide-binding-changed', () => {
         const currentButtons = Array.from(

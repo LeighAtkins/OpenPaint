@@ -290,7 +290,27 @@ export function parseSvgMeasurements(svgText) {
 
   const dimensions = getSvgDimensions(svgRoot);
   const tokenizedMeasurements = collectTokenizedMeasurements(svgRoot);
+
   if (tokenizedMeasurements.length > 0) {
+    // Also check for measurements in non-m-prefixed groups that have
+    // child text labels (legacy format mixed with m-prefixed groups)
+    const seenLabels = new Set(tokenizedMeasurements.map(m => m.label));
+    const extraMeasurements = [];
+
+    Array.from(svgRoot.querySelectorAll('g:not([id*="m" i])')).forEach(groupEl => {
+      const hasLabel = groupEl.querySelector('text, tspan');
+      if (!hasLabel) return;
+      const measurement = collectMeasurementFromGroup(groupEl, 0);
+      if (!measurement) return;
+      if (seenLabels.has(measurement.label)) return;
+      seenLabels.add(measurement.label);
+      extraMeasurements.push(measurement);
+    });
+
+    if (extraMeasurements.length > 0) {
+      tokenizedMeasurements.push(...extraMeasurements);
+    }
+
     return {
       dimensions,
       measurements: tokenizedMeasurements,
@@ -314,10 +334,12 @@ export function parseSvgMeasurements(svgText) {
       ? groupedMeasurements
       : collectStandaloneMeasurements(svgRoot, seenLabels);
 
+  const validMeasurements = measurements.filter(m => /^[A-Za-z]\d*$/.test(m.label));
+
   return {
     dimensions,
-    measurements,
-    totalMeasurements: measurements.length,
+    measurements: validMeasurements.length ? validMeasurements : measurements,
+    totalMeasurements: validMeasurements.length || measurements.length,
   };
 }
 

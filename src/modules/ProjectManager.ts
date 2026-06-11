@@ -407,7 +407,7 @@ export class ProjectManager {
         !window.__suspendSaveCurrentView
       ) {
         if (window.captureTabsSyncActive) {
-          window.captureTabsSyncActive(this.currentViewId);
+          window.captureTabsSyncActive(this.currentViewId, { preserveWorldRect: true });
         }
         this.saveCurrentViewState();
       } else {
@@ -584,37 +584,11 @@ export class ProjectManager {
                 window.app.tagManager.clearAllTags();
               }
 
-              // Only fall back to the dominant object scope when the saved active tab is missing
-              // or points at master. Real projects can intentionally keep a different active frame
-              // than the one containing most drawn objects.
-              if (typeof window.setActiveCaptureTab === 'function') {
-                const canvasObjs = this.canvasManager.fabricCanvas?.getObjects() || [];
-                const tabCounts: Record<string, number> = {};
-                canvasObjs.forEach(obj => {
-                  const lbl =
-                    (obj as { strokeMetadata?: { imageLabel?: string }; imageLabel?: string })
-                      ?.strokeMetadata?.imageLabel || (obj as { imageLabel?: string })?.imageLabel;
-                  if (lbl && typeof lbl === 'string' && lbl.includes('::tab:')) {
-                    const tid = lbl.split('::tab:')[1];
-                    tabCounts[tid] = (tabCounts[tid] || 0) + 1;
-                  }
-                });
-                const topEntry = Object.entries(tabCounts).sort((a, b) => b[1] - a[1])[0];
-                if (topEntry) {
-                  const dominantTabId = topEntry[0];
-                  const curState = window.captureTabsByLabel?.[viewId];
-                  const activeTabId = String(curState?.activeTabId || '').trim();
-                  const activeTab = curState?.tabs?.find?.(tab => tab.id === activeTabId) || null;
-                  const shouldRepairActiveTab =
-                    !!curState &&
-                    (!activeTab ||
-                      activeTab.type === 'master' ||
-                      !curState.tabs?.some?.(tab => tab.id === activeTabId));
-                  if (shouldRepairActiveTab && activeTabId !== dominantTabId) {
-                    window.setActiveCaptureTab(viewId, dominantTabId, { skipSave: true });
-                  }
-                }
-              }
+              // If the active frame is empty but restored strokes belong to another
+              // frame scope, the frame visibility gate hides all vectors. This can
+              // happen after CW import image switching creates/normalizes frame tabs
+              // in a different order than the drawn stroke scopes.
+              this.repairActiveCaptureTabForLoadedObjects(viewId);
 
               const activeScope =
                 window.app.metadataManager.normalizeImageLabel?.(viewId) || viewId;
@@ -785,31 +759,13 @@ export class ProjectManager {
         panY: Number.isFinite(Number(viewport.panY)) ? Number(viewport.panY) : 0,
       };
     };
-    const restoreSavedCaptureTabViewport = savedViewport => {
-      if (!savedViewport) return false;
-      const state = window.captureTabsByLabel?.[viewId];
-      const activeTab = state?.tabs?.find?.(tab => tab.id === state.activeTabId) || null;
-      if (activeTab) {
-        activeTab.viewport = {
-          ...(activeTab.viewport || {}),
-          ...savedViewport,
-        };
-      }
-      this.canvasManager.setViewportState(savedViewport);
-      return true;
-    };
-
     // Capture-tab path — handles cross-resolution correctly via geometry-aware
     // fitViewportToWorldRect (which uses current canvas center/dimensions).
     if (
       window.captureTabsByLabel?.[viewId] &&
       typeof window.applyCaptureFrameForLabel === 'function'
     ) {
-      const state = window.captureTabsByLabel?.[viewId];
-      const activeTab = state?.tabs?.find?.(tab => tab.id === state.activeTabId) || null;
-      const savedViewport = cloneViewportRecord(activeTab?.viewport);
       window.applyCaptureFrameForLabel(viewId);
-      restoreSavedCaptureTabViewport(savedViewport);
       return;
     }
 
@@ -952,6 +908,60 @@ export class ProjectManager {
       width,
       height,
     };
+  }
+
+  resolveRestoreWorldRectForView(viewId) {
+    const baseViewId = String(viewId || '')
+      .split('::tab:')[0]
+      .trim();
+    if (!baseViewId) return null;
+
+    const normalizeRect = rectLike => {
+      const left = Number(rectLike?.left);
+      const top = Number(rectLike?.top);
+      const width = Number(rectLike?.width);
+      const height = Number(rectLike?.height);
+      if (
+        !Number.isFinite(left) ||
+        !Number.isFinite(top) ||
+        !Number.isFinite(width) ||
+        !Number.isFinite(height) ||
+        width <= 0 ||
+        height <= 0
+      ) {
+        return null;
+      }
+      return { left, top, width, height };
+    };
+
+    const view = this.views?.[baseViewId] || null;
+    const savedRect =
+      normalizeRect(view?.backgroundWorldRect) ||
+      normalizeRect(
+        this.inferBackgroundWorldRectFromSerializedBackground(view?.canvasData?.backgroundImage)
+      );
+    if (savedRect) {
+      return savedRect;
+    }
+
+    if (baseViewId !== this.currentViewId) {
+      return null;
+    }
+
+    const backgroundImage = this.canvasManager?.fabricCanvas?.backgroundImage || null;
+    const backgroundSrc = String(
+      backgroundImage?.getSrc?.() ||
+        backgroundImage?.src ||
+        backgroundImage?._element?.currentSrc ||
+        backgroundImage?._element?.src ||
+        ''
+    ).trim();
+    const viewImage = String(view?.image || '').trim();
+    if (viewImage && backgroundSrc && backgroundSrc !== viewImage) {
+      return null;
+    }
+
+    return normalizeRect(this.canvasManager?.getBackgroundWorldRect?.());
   }
 
   saveCurrentViewState(options?: { skipViewport?: boolean }) {
@@ -1116,6 +1126,59 @@ export class ProjectManager {
       canvas.requestRenderAll?.();
     }
     return toRemove.length;
+  }
+
+  repairActiveCaptureTabForLoadedObjects(viewId) {
+    if (!viewId || typeof window.setActiveCaptureTab !== 'function') return;
+
+    const canvas = this.canvasManager?.fabricCanvas;
+    const state = window.captureTabsByLabel?.[viewId];
+    if (!canvas || !state || !Array.isArray(state.tabs)) return;
+
+    const getTabIdFromScope = scopeLabel => {
+      const raw = typeof scopeLabel === 'string' ? scopeLabel.trim() : '';
+      const marker = `${viewId}::tab:`;
+      return raw.startsWith(marker) ? raw.slice(marker.length) : '';
+    };
+    const isDrawableStrokeObject = obj =>
+      Boolean(obj?.strokeMetadata?.strokeLabel) &&
+      obj?.isTag !== true &&
+      obj?.isTagGroup !== true &&
+      obj?.isConnectorLine !== true &&
+      obj?.excludeFromExport !== true;
+
+    const tabCounts = {};
+    canvas.getObjects().forEach(obj => {
+      if (!isDrawableStrokeObject(obj)) return;
+      const scopeLabel = this.getCanvasObjectScopeLabel(obj);
+      const tabId = getTabIdFromScope(scopeLabel);
+      if (tabId) {
+        tabCounts[tabId] = (tabCounts[tabId] || 0) + 1;
+      }
+    });
+
+    const dominantEntry = Object.entries(tabCounts).sort((a, b) => b[1] - a[1])[0];
+    if (!dominantEntry) return;
+
+    const dominantTabId = dominantEntry[0];
+    const activeTabId = String(state.activeTabId || '').trim();
+    const activeTab = state.tabs.find(tab => tab.id === activeTabId) || null;
+    const activeTabStrokeCount = tabCounts[activeTabId] || 0;
+    const hasDominantTab = state.tabs.some(tab => tab.id === dominantTabId);
+    const shouldRepairActiveTab =
+      hasDominantTab &&
+      activeTabId !== dominantTabId &&
+      (!activeTab || activeTab.type === 'master' || activeTabStrokeCount === 0);
+
+    if (shouldRepairActiveTab) {
+      console.warn('[ProjectManager] Repaired active frame tab to restored stroke scope', {
+        viewId,
+        previousTabId: activeTabId,
+        nextTabId: dominantTabId,
+        tabCounts,
+      });
+      window.setActiveCaptureTab(viewId, dominantTabId, { skipSave: true });
+    }
   }
 
   stripMosOverlayObjects(canvasJson) {
@@ -1348,10 +1411,10 @@ export class ProjectManager {
     if (projectData.views && Object.keys(projectData.views).length) return false;
     return Boolean(
       Array.isArray(projectData.imageLabels) ||
-      projectData.currentImageLabel ||
-      Object.keys(projectData.originalImages || {}).length ||
-      Object.keys(projectData.strokes || {}).length ||
-      Object.keys(projectData.strokeMeasurements || {}).length
+        projectData.currentImageLabel ||
+        Object.keys(projectData.originalImages || {}).length ||
+        Object.keys(projectData.strokes || {}).length ||
+        Object.keys(projectData.strokeMeasurements || {}).length
     );
   }
 
@@ -1453,7 +1516,9 @@ export class ProjectManager {
     // Only refresh background if explicitly requested and this is the current view
     // This prevents flicker during batch uploads
     if (refreshBackground && this.currentViewId === viewId) {
-      await this.setBackgroundImage(imageUrl);
+      await this.setBackgroundImage(imageUrl, this.views[viewId].fitMode || 'fit-canvas', {
+        restoreSavedPlacement: previousImage === imageUrl,
+      });
       const liveRotation = this.canvasManager?.getRotationDegrees?.();
       if (typeof liveRotation === 'number') {
         this.views[viewId].rotation = liveRotation;
@@ -1464,7 +1529,7 @@ export class ProjectManager {
     }
   }
 
-  async setBackgroundImage(url, fitMode = 'fit-canvas') {
+  async setBackgroundImage(url, fitMode = 'fit-canvas', options = {}) {
     console.log(`\n[Image Debug] ===== SET BACKGROUND IMAGE =====`);
     console.log(`[Image Debug] URL: ${url?.substring?.(0, 50)}...`);
     console.log(`[Image Debug] Fit mode: ${fitMode}`);
@@ -1475,10 +1540,15 @@ export class ProjectManager {
         resolve();
       }, 10000);
 
+      const imgOptions = url.startsWith('blob:') ? {} : { crossOrigin: 'anonymous' };
       fabric.Image.fromURL(
         url,
-        img => {
+        (img, isError) => {
           clearTimeout(timeout);
+          if (isError || !img) {
+            console.error('[Image Debug] Failed to load image:', url?.substring?.(0, 80));
+            return resolve();
+          }
           const canvas = this.canvasManager.fabricCanvas;
           if (!canvas) {
             console.log('[Image Debug] ❌ No canvas available');
@@ -1496,7 +1566,6 @@ export class ProjectManager {
           let frameLeft = placementFrame.left;
           let frameTop = placementFrame.top;
 
-          // If frame is not laid out yet, fallback to canvas dimensions
           if (!frameWidth || !frameHeight) {
             console.warn('[Image Debug] Capture frame size invalid, using canvas size');
             frameWidth = canvas.width;
@@ -1511,9 +1580,7 @@ export class ProjectManager {
           if (!imgWidth || !imgHeight) {
             console.warn(
               '[Image Debug] Failed to load image dimensions; skipping background update',
-              {
-                url,
-              }
+              { url }
             );
             return resolve();
           }
@@ -1551,34 +1618,42 @@ export class ProjectManager {
               Math.abs(a.height - b.height) > epsilon
             );
           };
-          const viewRotation = Number(this.views?.[this.currentViewId]?.rotation) || 0;
-          const backgroundRotation =
-            Number(this.views?.[this.currentViewId]?.backgroundRotation) || 0;
+          const viewState = this.views?.[this.currentViewId] || null;
+          const restoreSavedPlacement = options?.restoreSavedPlacement !== false;
+          const viewRotation = Number(viewState?.rotation) || 0;
+          const backgroundRotation = Number(viewState?.backgroundRotation) || 0;
           const visualBackgroundRotation = viewRotation + backgroundRotation;
-          const normalizedBackgroundRotation =
-            ((visualBackgroundRotation % 360) + 360) % 360;
+          const normalizedBackgroundRotation = ((visualBackgroundRotation % 360) + 360) % 360;
           const rotationRadians = (normalizedBackgroundRotation * Math.PI) / 180;
           const rotationCos = Math.abs(Math.cos(rotationRadians));
           const rotationSin = Math.abs(Math.sin(rotationRadians));
           const rotatedWidthBasis = imgWidth * rotationCos + imgHeight * rotationSin;
           const rotatedHeightBasis = imgWidth * rotationSin + imgHeight * rotationCos;
-          const savedBackgroundWorldRect = normalizeWorldRect(
-            this.views?.[this.currentViewId]?.backgroundWorldRect
-          );
+          const savedBackgroundWorldRect = normalizeWorldRect(viewState?.backgroundWorldRect);
           const preferredRestoreWorldRect = savedBackgroundWorldRect;
-          const tabState = this.views?.[this.currentViewId]?.tabs || null;
+          const liveTabState = window.captureTabsByLabel?.[this.currentViewId] || null;
+          const savedTabState = viewState?.tabs || null;
+          const tabState =
+            liveTabState && Array.isArray(liveTabState.tabs)
+              ? liveTabState
+              : savedTabState && Array.isArray(savedTabState.tabs)
+                ? savedTabState
+                : null;
           const activeTabId = tabState?.activeTabId || null;
           const activeTab = tabState?.tabs?.find?.(tab => tab.id === activeTabId) || null;
           const hasAuthoritativeActiveTabState =
             activeTab?.type !== 'master' &&
             (Boolean(activeTab?.viewport) || Boolean(activeTab?.captureFrame?.worldRect));
+          const viewHasSavedDrawingState = Boolean(
+            viewState?.canvasData ||
+              viewState?.viewport ||
+              viewState?.tabs ||
+              liveTabState?.tabs?.length ||
+              viewState?.metadata ||
+              viewState?.backgroundWorldRect
+          );
           const hasSavedBackgroundWorldRect =
-            Boolean(preferredRestoreWorldRect) &&
-            Boolean(
-              this.views?.[this.currentViewId]?.canvasData ||
-              this.views?.[this.currentViewId]?.viewport ||
-              this.views?.[this.currentViewId]?.tabs
-            );
+            restoreSavedPlacement && Boolean(preferredRestoreWorldRect) && viewHasSavedDrawingState;
 
           // Center based on frame center
           let left = frameLeft + frameWidth / 2;
@@ -1597,10 +1672,11 @@ export class ProjectManager {
               .getElementById('main-canvas-wrapper')
               ?.classList.contains('guide-split-active') === true;
           const shouldUseSavedBackgroundWorldRect =
-            Boolean(preferredRestoreWorldRect) &&
+            hasSavedBackgroundWorldRect &&
             (fitMode === 'actual-size' ||
               isGuideSplitActiveForPlacement ||
-              hasAuthoritativeActiveTabState);
+              hasAuthoritativeActiveTabState ||
+              viewHasSavedDrawingState);
           if (isGuideSplitActiveForPlacement && !hasSavedBackgroundWorldRect) {
             const origSize = this.canvasManager?.originalCanvasSize;
             if (origSize && origSize.width > 0 && origSize.height > 0) {
@@ -1649,8 +1725,14 @@ export class ProjectManager {
                 break;
 
               case 'fit-canvas':
+              case 'scale-page-size':
                 scale = Math.min(frameWidth / rotatedWidthBasis, frameHeight / rotatedHeightBasis);
                 console.log(`[Image Fit Canvas] Scale: ${scale.toFixed(3)}`);
+                break;
+
+              case 'fill-frame':
+                scale = Math.max(frameWidth / rotatedWidthBasis, frameHeight / rotatedHeightBasis);
+                console.log(`[Image Fill Frame] Scale: ${scale.toFixed(3)}`);
                 break;
 
               case 'actual-size':
@@ -1704,7 +1786,7 @@ export class ProjectManager {
 
           resolve();
         },
-        { crossOrigin: 'anonymous' }
+        imgOptions
       );
     });
   }
@@ -2521,7 +2603,10 @@ export class ProjectManager {
       document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
       true;
     if (window.captureTabsSyncActive) {
-      window.captureTabsSyncActive(this.currentViewId, { syncRotation: true });
+      window.captureTabsSyncActive(this.currentViewId, {
+        preserveWorldRect: true,
+        syncRotation: true,
+      });
     }
     this.saveCurrentViewState();
 
@@ -2630,6 +2715,7 @@ export class ProjectManager {
     };
 
     const viewEntries = {};
+    const imageUploadFailures = [];
     const persistConcurrency = uploadImagesToR2 ? 3 : 1;
 
     await runWithConcurrency(viewIds, persistConcurrency, async viewId => {
@@ -2702,6 +2788,10 @@ export class ProjectManager {
             }
           }
         } catch (err) {
+          imageUploadFailures.push({
+            viewId,
+            message: err instanceof Error ? err.message : String(err),
+          });
           console.warn(`[Save] Could not upload image to R2 for ${viewId}:`, err);
         }
       } else if (embedImages && imagePersistenceSource) {
@@ -2834,6 +2924,15 @@ export class ProjectManager {
 
       viewEntries[viewId] = entry;
     });
+
+    if (uploadImagesToR2 && imageUploadFailures.length > 0) {
+      const failedViews = imageUploadFailures.map(failure => failure.viewId).join(', ');
+      const error = new Error(
+        `Cloud image upload failed for ${failedViews}. Project was not saved to avoid losing images.`
+      );
+      error.imageUploadFailures = imageUploadFailures;
+      throw error;
+    }
 
     for (const viewId of viewIds) {
       projectData.views[viewId] = viewEntries[viewId] || {};
@@ -3032,6 +3131,29 @@ export class ProjectManager {
 
     const contentTypeHeader = blob.type || 'image/png';
     const cacheControl = 'public, max-age=31536000, immutable';
+    const uploadViaLocalProxy = async () => {
+      const proxyResponse = await fetch(
+        `/api/storage/r2/upload?key=${encodeURIComponent(objectKey)}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': contentTypeHeader,
+            'Cache-Control': cacheControl,
+          },
+          body: blob,
+        }
+      );
+      const proxyBody = await proxyResponse.json().catch(() => ({}));
+      if (!proxyResponse.ok || !proxyBody?.success) {
+        throw new Error(
+          proxyBody?.message || `R2 local upload failed (${proxyResponse.status}) for ${viewId}`
+        );
+      }
+      return proxyBody.key || objectKey;
+    };
+    const isLocalDevHost =
+      typeof window !== 'undefined' &&
+      ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
     const presignResponse = await fetch('/api/storage/r2/presign-upload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3050,18 +3172,36 @@ export class ProjectManager {
       );
     }
 
-    const uploadResponse = await fetch(presignBody.uploadUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': contentTypeHeader,
-        'Cache-Control': cacheControl,
-      },
-      body: blob,
-    });
+    try {
+      const uploadResponse = await fetch(presignBody.uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': contentTypeHeader,
+          'Cache-Control': cacheControl,
+        },
+        body: blob,
+      });
 
-    if (!uploadResponse.ok) {
-      const uploadText = await uploadResponse.text().catch(() => '');
-      throw new Error(uploadText || `R2 upload failed (${uploadResponse.status})`);
+      if (!uploadResponse.ok) {
+        const uploadText = await uploadResponse.text().catch(() => '');
+        if (isLocalDevHost) {
+          console.warn('[Save] Direct R2 upload failed locally; retrying through API proxy', {
+            viewId,
+            status: uploadResponse.status,
+          });
+          return await uploadViaLocalProxy();
+        }
+        throw new Error(uploadText || `R2 upload failed (${uploadResponse.status})`);
+      }
+    } catch (error) {
+      if (isLocalDevHost) {
+        console.warn('[Save] Direct R2 upload errored locally; retrying through API proxy', {
+          viewId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return await uploadViaLocalProxy();
+      }
+      throw error;
     }
 
     return presignBody.key || objectKey;
@@ -3109,20 +3249,27 @@ export class ProjectManager {
         return null;
       }
       const contentType = (response.headers.get('content-type') || '').toLowerCase();
-      const isImageResponse = contentType.startsWith('image/') || contentType.includes('svg');
-      if (!isImageResponse) {
+      const blob = await response.blob();
+      if (blob.size === 0) {
+        console.warn('[Load] R2 image blob is empty!', { objectKey });
+        return null;
+      }
+      const headerImageType =
+        contentType.startsWith('image/') || contentType.includes('svg')
+          ? contentType.split(';')[0]
+          : '';
+      const detectedImageType = await this.detectImageMimeType(blob, { allowDefault: false });
+      const imageContentType = headerImageType || detectedImageType;
+      if (!imageContentType) {
         console.warn('[Load] R2 proxy returned non-image content', {
           objectKey,
           contentType: contentType || 'unknown',
         });
         return null;
       }
-      const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      if (blob.size === 0) {
-        console.warn('[Load] R2 image blob is empty!', { objectKey });
-        return null;
-      }
+      const imageBlob =
+        blob.type === imageContentType ? blob : new Blob([blob], { type: imageContentType });
+      const objectUrl = URL.createObjectURL(imageBlob);
       this.remoteImageObjectUrlCache.set(objectKey, objectUrl);
       this.loadedProjectObjectUrls.push(objectUrl);
       return objectUrl;
@@ -3132,9 +3279,12 @@ export class ProjectManager {
     }
   }
 
-  async detectImageMimeType(blob: Blob): Promise<string> {
+  async detectImageMimeType(
+    blob: Blob,
+    options: { allowDefault?: boolean } = {}
+  ): Promise<string | null> {
     try {
-      const header = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+      const header = new Uint8Array(await blob.slice(0, 512).arrayBuffer());
       // PNG: 89 50 4E 47
       if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4e && header[3] === 0x47) {
         return 'image/png';
@@ -3164,6 +3314,10 @@ export class ProjectManager {
       if (header[0] === 0x42 && header[1] === 0x4d) {
         return 'image/bmp';
       }
+      const textHeader = new TextDecoder().decode(header).trimStart().toLowerCase();
+      if (textHeader.startsWith('<svg') || textHeader.includes('<svg')) {
+        return 'image/svg+xml';
+      }
     } catch {
       // ignore
     }
@@ -3171,7 +3325,7 @@ export class ProjectManager {
     if (blob.type && blob.type.startsWith('image/')) {
       return blob.type;
     }
-    return 'image/png'; // safe default for a drawing app
+    return options.allowDefault === false ? null : 'image/png';
   }
 
   revokeLoadedProjectObjectUrls(): void {

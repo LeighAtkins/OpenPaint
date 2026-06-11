@@ -12,6 +12,31 @@ export function initToolbarLayout(): void {
   let resizeTimer: ReturnType<typeof setTimeout> | null = null;
   let isCalculating = false;
 
+  const measureFullToolbarScrollWidth = (toolbarWrap: HTMLElement, width: number): number => {
+    const clone = toolbarWrap.cloneNode(true) as HTMLElement;
+    clone.removeAttribute('id');
+    clone.querySelectorAll<HTMLElement>('[id]').forEach(el => el.removeAttribute('id'));
+    clone.querySelectorAll<HTMLElement>('.label-long').forEach(el => {
+      el.style.setProperty('display', 'inline-block', 'important');
+      el.style.whiteSpace = 'nowrap';
+    });
+    clone.querySelectorAll<HTMLElement>('.label-short').forEach(el => {
+      el.style.setProperty('display', 'none', 'important');
+    });
+    clone.style.position = 'absolute';
+    clone.style.left = '-10000px';
+    clone.style.top = '0';
+    clone.style.width = `${Math.max(1, Math.round(width))}px`;
+    clone.style.height = 'auto';
+    clone.style.visibility = 'hidden';
+    clone.style.pointerEvents = 'none';
+    clone.style.contain = 'layout style';
+    document.body.appendChild(clone);
+    const scrollWidth = clone.scrollWidth;
+    clone.remove();
+    return scrollWidth;
+  };
+
   const calculateToolbarMode = (): void => {
     // Prevent concurrent calculations
     if (isCalculating) return;
@@ -24,19 +49,22 @@ export function initToolbarLayout(): void {
       return;
     }
 
-    // Temporarily set to full mode for accurate measurement
-    document.documentElement.setAttribute('data-toolbar-mode', 'full');
-
-    // Force layout calculation
-    void toolbarWrap.offsetWidth;
-
-    // Measure if content overflows — applies to both desktop and mobile
     const toolbarWidth = toolbarWrap.clientWidth;
-    const toolbarScrollWidth = toolbarWrap.scrollWidth;
-    const needsCompact = toolbarScrollWidth > toolbarWidth;
+    const currentMode = document.documentElement.getAttribute('data-toolbar-mode') || 'full';
+    const overflowBuffer = 4;
+    const expandBuffer = 24;
 
-    // Set the correct mode based on measurement
-    document.documentElement.setAttribute('data-toolbar-mode', needsCompact ? 'compact' : 'full');
+    let nextMode = currentMode;
+    if (currentMode === 'compact') {
+      const fullScrollWidth = measureFullToolbarScrollWidth(toolbarWrap, toolbarWidth);
+      nextMode = fullScrollWidth > toolbarWidth - expandBuffer ? 'compact' : 'full';
+    } else {
+      nextMode = toolbarWrap.scrollWidth > toolbarWidth + overflowBuffer ? 'compact' : 'full';
+    }
+
+    if (nextMode !== currentMode) {
+      document.documentElement.setAttribute('data-toolbar-mode', nextMode);
+    }
 
     isCalculating = false;
   };

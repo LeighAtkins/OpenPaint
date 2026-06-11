@@ -15,6 +15,8 @@ export class ArrowManager {
       arrowSpread: 1,
       ghostBaseline: true,
       dimensionOffset: 18,
+      lineStyle: 'solid',
+      tapeTickSpacing: 1,
     };
 
     this.dimensionDragState = null;
@@ -43,37 +45,23 @@ export class ArrowManager {
     const bindArrowToggleButton = (button, side) => {
       if (!button) return;
 
-      let clickTimer = null;
-      const cancelPendingToggle = () => {
-        if (clickTimer !== null) {
-          clearTimeout(clickTimer);
-          clickTimer = null;
-        }
-      };
-
       button.addEventListener(
         'click',
         e => {
           e.preventDefault();
           e.stopImmediatePropagation();
-          cancelPendingToggle();
-          clickTimer = setTimeout(() => {
-            clickTimer = null;
-            this.toggleArrow(side);
-          }, 220);
+          this.toggleArrow(side);
         },
         true
       );
       button.addEventListener('contextmenu', e => {
         e.preventDefault();
         e.stopPropagation();
-        cancelPendingToggle();
         this.openOptionsMenuFromButton(button, optionsMenu);
       });
       button.addEventListener('dblclick', e => {
         e.preventDefault();
         e.stopPropagation();
-        cancelPendingToggle();
         this.openOptionsMenuFromButton(button, optionsMenu);
       });
     };
@@ -280,6 +268,9 @@ export class ArrowManager {
           if (!obj.arrowSettings) {
             obj.arrowSettings = { ...this.defaultSettings };
           }
+          if (obj.type === 'path') {
+            obj.arrowSettings.curveArrows = true;
+          }
 
           if (side === 'start') {
             obj.arrowSettings.startArrow = !obj.arrowSettings.startArrow;
@@ -318,6 +309,9 @@ export class ArrowManager {
         validObjects.forEach(obj => {
           if (!obj.arrowSettings) {
             obj.arrowSettings = { ...this.defaultSettings };
+          }
+          if (obj.type === 'path') {
+            obj.arrowSettings.curveArrows = true;
           }
 
           obj.arrowSettings[key] = value;
@@ -380,18 +374,47 @@ export class ArrowManager {
       : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>';
   }
 
-  updateArrowButtonIcons(style) {
+  buildTapeCapIconSvg(side) {
+    const isStart = side === 'start';
+    const capX = isStart ? 4 : 15;
+    const tapeX = isStart ? 9 : 4;
+    return `
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+        <defs>
+          <linearGradient id="tape-cap-metal-${side}" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stop-color="#475569"/>
+            <stop offset=".45" stop-color="#f8fafc"/>
+            <stop offset="1" stop-color="#334155"/>
+          </linearGradient>
+        </defs>
+        <rect x="${tapeX}" y="8" width="11" height="8" rx="1" fill="#facc15" stroke="#713f12" stroke-width="1"/>
+        <path d="M${tapeX + 3} 8v8M${tapeX + 7} 8v5" stroke="#111827" stroke-width="1"/>
+        <rect x="${capX}" y="6" width="5" height="12" rx=".8" fill="url(#tape-cap-metal-${side})" stroke="#334155" stroke-width="1"/>
+      </svg>
+    `;
+  }
+
+  updateArrowButtonIcons(style, capMode = false) {
     const startBtn = document.getElementById('arrowStartBtn');
     const endBtn = document.getElementById('arrowEndBtn');
     const normalizedStyle = style === 'hand-drawn' ? 'hand-2' : style || 'triangular';
 
     if (startBtn) {
-      startBtn.innerHTML = this.buildArrowIconSvg('start', normalizedStyle);
-      startBtn.setAttribute('title', 'Start Arrow (right-click for options)');
+      startBtn.innerHTML = capMode
+        ? this.buildTapeCapIconSvg('start')
+        : this.buildArrowIconSvg('start', normalizedStyle);
+      startBtn.setAttribute(
+        'title',
+        capMode ? 'Start cap' : 'Start Arrow (right-click for options)'
+      );
+      startBtn.setAttribute('aria-label', capMode ? 'Toggle start cap' : 'Toggle start arrow');
     }
     if (endBtn) {
-      endBtn.innerHTML = this.buildArrowIconSvg('end', normalizedStyle);
-      endBtn.setAttribute('title', 'End Arrow (right-click for options)');
+      endBtn.innerHTML = capMode
+        ? this.buildTapeCapIconSvg('end')
+        : this.buildArrowIconSvg('end', normalizedStyle);
+      endBtn.setAttribute('title', capMode ? 'End cap' : 'End Arrow (right-click for options)');
+      endBtn.setAttribute('aria-label', capMode ? 'Toggle end cap' : 'Toggle end arrow');
     }
   }
 
@@ -415,12 +438,17 @@ export class ArrowManager {
     let ghostBaseline = true;
     let isMixedSize = false;
     let isMixedStyle = false;
+    let capMode =
+      typeof window !== 'undefined' && window.app?.currentDashSettings?.style === 'tape';
 
     // Handle array of objects (multi-selection)
     if (Array.isArray(objOrArray) && objOrArray.length > 0) {
       const validObjects = objOrArray.filter(obj => obj.type === 'line' || obj.type === 'path');
 
       if (validObjects.length > 0) {
+        capMode = validObjects.some(
+          obj => obj.lineStyle === 'tape' || obj.arrowSettings?.lineStyle === 'tape'
+        );
         // Check start arrow state
         const startStates = validObjects.map(obj => obj.arrowSettings?.startArrow ?? false);
         const endStates = validObjects.map(obj => obj.arrowSettings?.endArrow ?? false);
@@ -452,6 +480,7 @@ export class ArrowManager {
     }
     // Handle single object
     else if (objOrArray && (objOrArray.type === 'line' || objOrArray.type === 'path')) {
+      capMode = objOrArray.lineStyle === 'tape' || objOrArray.arrowSettings?.lineStyle === 'tape';
       const settings = objOrArray.arrowSettings || {
         startArrow: false,
         endArrow: false,
@@ -518,7 +547,7 @@ export class ArrowManager {
       styleSelectTop.style.opacity = isMixedStyle ? '0.6' : '';
     }
 
-    this.updateArrowButtonIcons(styleForUi);
+    this.updateArrowButtonIcons(styleForUi, capMode);
 
     if (spreadInputTop) {
       spreadInputTop.value = String(Math.round((spread || 1) * 100));
@@ -553,6 +582,13 @@ export class ArrowManager {
   applyArrows(object) {
     // Apply current default settings to a new object
     object.arrowSettings = { ...this.defaultSettings };
+    const explicitLineStyle = object.lineStyle || object.dashSettings?.style;
+    if (explicitLineStyle) {
+      object.arrowSettings.lineStyle = explicitLineStyle;
+    }
+    if (object.type === 'path') {
+      object.arrowSettings.curveArrows = true;
+    }
     object.objectCaching = false;
     this.attachArrowRendering(object);
     this.syncArrowMetadata(object);
@@ -615,8 +651,29 @@ export class ArrowManager {
     const ARROW_TAN_30 = Math.tan(Math.PI / 6); // ~0.577
 
     object._render = function (ctx) {
-      // Don't render arrows if no settings
-      if (!this.arrowSettings || (!this.arrowSettings.startArrow && !this.arrowSettings.endArrow)) {
+      const lineStyle = this.arrowSettings?.lineStyle || this.lineStyle || this.dashSettings?.style;
+      const shouldRenderTapeLine = this.type === 'line' && lineStyle === 'tape';
+      const shouldRenderTapePath = this.type === 'path' && lineStyle === 'tape';
+      const shouldRenderStretchyLine = this.type === 'line' && lineStyle === 'stretchy';
+      const shouldRenderStretchyPath = this.type === 'path' && lineStyle === 'stretchy';
+      const shouldRenderCustomLine = shouldRenderTapeLine || shouldRenderStretchyLine;
+      const shouldRenderCustomPath = shouldRenderTapePath || shouldRenderStretchyPath;
+      const shouldRenderCustom = shouldRenderCustomLine || shouldRenderCustomPath;
+      const hasVisibleArrows = !!(
+        this.arrowSettings &&
+        (this.arrowSettings.startArrow || this.arrowSettings.endArrow)
+      );
+
+      // Don't render arrows if no settings, but still allow custom line bodies.
+      if (!this.arrowSettings || (!hasVisibleArrows && !shouldRenderCustom)) {
+        originalRender.call(this, ctx);
+        return;
+      }
+      if (
+        this.type === 'path' &&
+        this.arrowSettings.curveArrows !== true &&
+        !shouldRenderCustomPath
+      ) {
         originalRender.call(this, ctx);
         return;
       }
@@ -831,58 +888,113 @@ export class ArrowManager {
           return;
         }
 
-        if (startArrow) {
-          startX = x1 + Math.cos(angle) * extensionDistance;
-          startY = y1 + Math.sin(angle) * extensionDistance;
-
-          // Draw start arrow
-          self.drawArrowhead(
+        if (shouldRenderTapeLine) {
+          self.drawMeasuringTapeLine(
             ctx,
             x1,
             y1,
-            angle + Math.PI,
-            scaledArrowSize,
-            normalizedStyle,
-            this.stroke,
-            arrowSpread
-          );
-        }
-
-        if (endArrow) {
-          endX = x2 - Math.cos(angle) * extensionDistance;
-          endY = y2 - Math.sin(angle) * extensionDistance;
-
-          // Draw end arrow
-          self.drawArrowhead(
-            ctx,
             x2,
             y2,
-            angle,
-            scaledArrowSize,
-            normalizedStyle,
-            this.stroke,
-            arrowSpread
+            this.strokeWidth,
+            this.arrowSettings?.tapeTickSpacing,
+            {
+              startCap: startArrow,
+              endCap: endArrow,
+            }
           );
-        }
+        } else if (shouldRenderStretchyLine) {
+          const lineLength = Math.hypot(x2 - x1, y2 - y1);
+          const arrowInset = Math.min(
+            lineLength * 0.38,
+            Math.max(0, Number(scaledArrowSize || 0)) * 0.82
+          );
+          const totalInset = (startArrow ? arrowInset : 0) + (endArrow ? arrowInset : 0);
+          const bodyLength = Math.max(1, lineLength - totalInset);
+          const stretchyArrowSize = self.computeStretchyArrowSize(this.strokeWidth, bodyLength);
+          const effectiveArrowSize = Math.max(scaledArrowSize, stretchyArrowSize);
+          self.drawStretchyLine(ctx, x1, y1, x2, y2, this.strokeWidth, this.stroke, {
+            startArrow,
+            endArrow,
+            arrowSize: effectiveArrowSize,
+          });
+          if (startArrow) {
+            self.drawArrowhead(
+              ctx,
+              x1,
+              y1,
+              angle + Math.PI,
+              effectiveArrowSize,
+              normalizedStyle,
+              this.stroke,
+              arrowSpread
+            );
+          }
+          if (endArrow) {
+            self.drawArrowhead(
+              ctx,
+              x2,
+              y2,
+              angle,
+              effectiveArrowSize,
+              normalizedStyle,
+              this.stroke,
+              arrowSpread
+            );
+          }
+        } else {
+          if (startArrow) {
+            startX = x1 + Math.cos(angle) * extensionDistance;
+            startY = y1 + Math.sin(angle) * extensionDistance;
 
-        // Draw the shortened line
-        ctx.setLineDash(this.strokeDashArray || []);
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
-        ctx.lineWidth = this.strokeWidth;
-        ctx.strokeStyle = this.stroke;
-        ctx.lineCap = this.strokeLineCap;
-        ctx.stroke();
+            // Draw start arrow
+            self.drawArrowhead(
+              ctx,
+              x1,
+              y1,
+              angle + Math.PI,
+              scaledArrowSize,
+              normalizedStyle,
+              this.stroke,
+              arrowSpread
+            );
+          }
+
+          if (endArrow) {
+            endX = x2 - Math.cos(angle) * extensionDistance;
+            endY = y2 - Math.sin(angle) * extensionDistance;
+
+            // Draw end arrow
+            self.drawArrowhead(
+              ctx,
+              x2,
+              y2,
+              angle,
+              scaledArrowSize,
+              normalizedStyle,
+              this.stroke,
+              arrowSpread
+            );
+          }
+
+          // Draw the shortened line
+          ctx.setLineDash(this.strokeDashArray || []);
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(endX, endY);
+          ctx.lineWidth = this.strokeWidth;
+          ctx.strokeStyle = this.stroke;
+          ctx.lineCap = this.strokeLineCap;
+          ctx.stroke();
+        }
       } else if (this.type === 'path') {
         if (!this.arrowSettings?.baselineCaptured && this.selectable) {
           self.captureBaselineGeometry(this);
           self.syncArrowMetadata(this);
         }
-        originalRender.call(this, ctx);
 
         const path = this.path;
         if (!path || path.length < 2) {
+          originalRender.call(this, ctx);
           ctx.restore();
           return;
         }
@@ -907,6 +1019,55 @@ export class ArrowManager {
         if (fabricUtil?.getPathSegmentsInfo) {
           infos = fabricUtil.getPathSegmentsInfo(path);
           totalLength = infos.length ? infos[infos.length - 1].length : 0;
+        }
+
+        let pathEffectiveArrowSize = scaledArrowSize;
+
+        if (shouldRenderTapePath) {
+          self.drawCurvedMeasuringTapeLine(
+            ctx,
+            path,
+            offsetX,
+            offsetY,
+            this.strokeWidth,
+            infos,
+            totalLength,
+            this.arrowSettings?.tapeTickSpacing,
+            {
+              startCap: startArrow,
+              endCap: endArrow,
+            }
+          );
+        } else if (shouldRenderStretchyPath) {
+          const curvedInset = Math.min(
+            totalLength * 0.38,
+            Math.max(0, Number(scaledArrowSize || 0)) * 0.82
+          );
+          const curvedTotalInset = (startArrow ? curvedInset : 0) + (endArrow ? curvedInset : 0);
+          const curvedBodyLength = Math.max(1, totalLength - curvedTotalInset);
+          const curvedStretchyArrowSize = self.computeStretchyArrowSize(
+            this.strokeWidth,
+            curvedBodyLength,
+            true
+          );
+          pathEffectiveArrowSize = Math.max(scaledArrowSize, curvedStretchyArrowSize);
+          self.drawCurvedStretchyLine(
+            ctx,
+            path,
+            offsetX,
+            offsetY,
+            this.strokeWidth,
+            this.stroke,
+            infos,
+            totalLength,
+            {
+              startArrow,
+              endArrow,
+              arrowSize: scaledArrowSize,
+            }
+          );
+        } else {
+          originalRender.call(this, ctx);
         }
 
         if (fabricUtil?.getPointOnPath && infos) {
@@ -972,44 +1133,26 @@ export class ArrowManager {
           }
         }
 
-        // Clear overlap under arrowheads to visually shorten the path.
-        // Use a smaller cutout radius so the arrow connects cleanly to the line.
-        const cutoutRadius = Math.max(scaledArrowSize * 0.45, strokeActualWidth * scale * 0.5);
-        ctx.save();
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.fillStyle = '#000';
-        if (startArrow) {
-          ctx.beginPath();
-          ctx.arc(startPoint.x - offsetX, startPoint.y - offsetY, cutoutRadius, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        if (endArrow) {
-          ctx.beginPath();
-          ctx.arc(endPoint.x - offsetX, endPoint.y - offsetY, cutoutRadius, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.restore();
-
-        if (startArrow) {
+        if (!shouldRenderTapePath && startArrow) {
           self.drawArrowhead(
             ctx,
             startPoint.x - offsetX,
             startPoint.y - offsetY,
             startAngle,
-            scaledArrowSize,
+            pathEffectiveArrowSize,
             normalizedStyle,
             this.stroke,
             arrowSpread
           );
         }
 
-        if (endArrow) {
+        if (!shouldRenderTapePath && endArrow) {
           self.drawArrowhead(
             ctx,
             endPoint.x - offsetX,
             endPoint.y - offsetY,
             endAngle,
-            scaledArrowSize,
+            pathEffectiveArrowSize,
             normalizedStyle,
             this.stroke,
             arrowSpread
@@ -1021,6 +1164,858 @@ export class ArrowManager {
     };
 
     object._arrowRenderingAttached = true;
+  }
+
+  normalizeTapeTickSpacing(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return 1;
+    return Math.max(0.55, Math.min(2.25, numeric));
+  }
+
+  drawRoundedRect(ctx, x, y, width, height, radius) {
+    const r = Math.max(0, Math.min(radius, Math.abs(width) / 2, Math.abs(height) / 2));
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + width - r, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+    ctx.lineTo(x + width, y + height - r);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    ctx.lineTo(x + r, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  drawTapeNumberLabel(ctx, text, x, y, angle, tapeHeight, backgroundColor, textColor) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    const fontSize = Math.max(7, tapeHeight * 0.34);
+    ctx.font = `700 ${fontSize}px Arial, sans-serif`;
+    const width = Math.max(tapeHeight * 0.5, ctx.measureText(text).width + tapeHeight * 0.22);
+    const height = fontSize + tapeHeight * 0.16;
+    ctx.fillStyle = backgroundColor;
+    this.drawRoundedRect(
+      ctx,
+      -width / 2,
+      -height / 2,
+      width,
+      height,
+      Math.max(2, tapeHeight * 0.12)
+    );
+    ctx.fill();
+    ctx.fillStyle = textColor;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 0, 0);
+    ctx.restore();
+  }
+
+  drawStretchyLine(
+    ctx,
+    x1,
+    y1,
+    x2,
+    y2,
+    strokeWidth = 2,
+    color = '#111827',
+    { startArrow = false, endArrow = false, arrowSize = 10 } = {}
+  ) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const fullLength = Math.hypot(dx, dy);
+    if (fullLength < 1) return;
+
+    const angle = Math.atan2(dy, dx);
+    const ux = dx / fullLength;
+    const uy = dy / fullLength;
+    const endpointInset = Math.min(fullLength * 0.38, Math.max(0, Number(arrowSize || 0)) * 0.82);
+    const startInset = startArrow ? endpointInset : 0;
+    const endInset = endArrow ? endpointInset : 0;
+    const bodyX1 = x1 + ux * startInset;
+    const bodyY1 = y1 + uy * startInset;
+    const bodyX2 = x2 - ux * endInset;
+    const bodyY2 = y2 - uy * endInset;
+    const length = Math.hypot(bodyX2 - bodyX1, bodyY2 - bodyY1);
+    if (length < 1) return;
+
+    const base = Math.max(1, Number(strokeWidth || 2));
+    const stretch = Math.max(0.28, Math.min(1, length / Math.max(80, base * 70)));
+    const wideHalf = Math.max(base * 1.2, base * (1.5 + stretch * 0.6));
+    const narrowHalf = Math.max(base * 0.5, base * (0.45 + stretch * 0.1));
+    const waistHalf = Math.max(base * 0.48, base * (1.05 - stretch * 0.48));
+
+    const startHalf = startArrow ? wideHalf : narrowHalf;
+    const endHalfBody = endArrow ? wideHalf : narrowHalf;
+    const isAsymmetric = startHalf !== endHalfBody;
+
+    const outlineWidth = Math.max(0.9, base * 0.18);
+    const mid = length / 2;
+
+    ctx.save();
+    ctx.translate(bodyX1, bodyY1);
+    ctx.rotate(angle);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = color;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = outlineWidth;
+    ctx.beginPath();
+
+    if (isAsymmetric) {
+      ctx.moveTo(0, -startHalf * 0.5);
+      ctx.bezierCurveTo(
+        length * 0.28,
+        -startHalf * 0.7,
+        length * 0.72,
+        -endHalfBody * 0.9,
+        length,
+        -endHalfBody * 0.5
+      );
+      if (endArrow) {
+        ctx.lineTo(length, endHalfBody * 0.5);
+      } else {
+        ctx.quadraticCurveTo(length + endHalfBody * 0.6, 0, length, endHalfBody * 0.5);
+      }
+      ctx.bezierCurveTo(
+        length * 0.72,
+        endHalfBody * 0.9,
+        length * 0.28,
+        startHalf * 0.7,
+        0,
+        startHalf * 0.5
+      );
+      if (startArrow) {
+        ctx.lineTo(0, -startHalf * 0.5);
+      } else {
+        ctx.quadraticCurveTo(-startHalf * 0.6, 0, 0, -startHalf * 0.5);
+      }
+    } else {
+      const leftShoulder = Math.min(length * 0.24, wideHalf * 3);
+      const rightShoulder = Math.max(length - leftShoulder, length * 0.76);
+
+      ctx.moveTo(0, -wideHalf * 0.72);
+      ctx.bezierCurveTo(
+        leftShoulder * 0.32,
+        -wideHalf * 1.12,
+        mid * 0.72,
+        -waistHalf * 1.2,
+        mid,
+        -waistHalf
+      );
+      ctx.bezierCurveTo(
+        mid * 1.28,
+        -waistHalf * 1.2,
+        rightShoulder,
+        -wideHalf * 1.12,
+        length,
+        -wideHalf * 0.72
+      );
+      if (endArrow) {
+        ctx.lineTo(length, wideHalf * 0.72);
+      } else {
+        ctx.quadraticCurveTo(length + wideHalf * 0.9, 0, length, wideHalf * 0.72);
+      }
+      ctx.bezierCurveTo(
+        rightShoulder,
+        wideHalf * 1.12,
+        mid * 1.28,
+        waistHalf * 1.2,
+        mid,
+        waistHalf
+      );
+      ctx.bezierCurveTo(
+        mid * 0.72,
+        waistHalf * 1.2,
+        leftShoulder * 0.32,
+        wideHalf * 1.12,
+        0,
+        wideHalf * 0.72
+      );
+      if (startArrow) {
+        ctx.lineTo(0, -wideHalf * 0.72);
+      } else {
+        ctx.quadraticCurveTo(-wideHalf * 0.9, 0, 0, -wideHalf * 0.72);
+      }
+    }
+
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  drawCurvedStretchyLine(
+    ctx,
+    path,
+    offsetX,
+    offsetY,
+    strokeWidth = 2,
+    color = '#111827',
+    infos = null,
+    totalLength = 0,
+    { startArrow = false, endArrow = false, arrowSize = 10 } = {}
+  ) {
+    const fabricUtil = globalThis.fabric?.util;
+    if (!fabricUtil?.getPathSegmentsInfo || !fabricUtil?.getPointOnPath || !Array.isArray(path)) {
+      return;
+    }
+
+    const segmentInfo = infos || fabricUtil.getPathSegmentsInfo(path);
+    const pathLength =
+      totalLength || (segmentInfo.length ? segmentInfo[segmentInfo.length - 1].length : 0);
+    if (!pathLength || pathLength < 1) return;
+
+    const base = Math.max(1, Number(strokeWidth || 2));
+    const sampleStep = Math.max(4, Math.min(10, base * 1.4));
+    const stretch = Math.max(0.28, Math.min(1, pathLength / Math.max(90, base * 75)));
+    const wideWidth = Math.max(base * 2.2, base * (2.8 + stretch * 1.2));
+    const waistWidth = Math.max(base * 1.08, base * (2.05 - stretch * 0.82));
+    const narrowWidth = Math.max(base * 0.6, base * (0.55 + stretch * 0.15));
+
+    const startWidthWide = startArrow ? wideWidth : narrowWidth;
+    const endWidthVal = endArrow ? wideWidth : narrowWidth;
+    const isAsymmetric = startWidthWide !== endWidthVal;
+
+    const getCommandPoint = cmd => {
+      if (!cmd || cmd.length < 3) return null;
+      return { x: cmd[cmd.length - 2], y: cmd[cmd.length - 1] };
+    };
+    const startRaw = getCommandPoint(path[0]);
+    const endRaw = getCommandPoint(path[path.length - 1]);
+
+    const pointAt = distance => {
+      const clampedDistance = Math.max(0, Math.min(pathLength, distance));
+      if (clampedDistance === 0 && startRaw) {
+        return { x: startRaw.x - offsetX, y: startRaw.y - offsetY, d: clampedDistance };
+      }
+      if (clampedDistance === pathLength && endRaw) {
+        return { x: endRaw.x - offsetX, y: endRaw.y - offsetY, d: clampedDistance };
+      }
+      const point = fabricUtil.getPointOnPath(path, clampedDistance, segmentInfo);
+      if (!point) return null;
+      return { x: point.x - offsetX, y: point.y - offsetY, d: clampedDistance };
+    };
+
+    const samples = [];
+    const endpointInset = Math.min(pathLength * 0.38, Math.max(0, Number(arrowSize || 0)) * 0.82);
+    const startDistance = startArrow ? endpointInset : 0;
+    const endDistance = endArrow
+      ? Math.max(startDistance + 1, pathLength - endpointInset)
+      : pathLength;
+
+    for (let d = startDistance; d <= endDistance; d += sampleStep) {
+      const point = pointAt(d);
+      const previous = samples[samples.length - 1];
+      if (
+        point &&
+        (!previous || Math.hypot(point.x - previous.x, point.y - previous.y) < sampleStep * 8)
+      ) {
+        samples.push(point);
+      }
+    }
+    const finalPoint = pointAt(endDistance);
+    if (finalPoint) samples.push(finalPoint);
+    if (samples.length < 2) return;
+
+    const widthAt = distance => {
+      const t = Math.max(0, Math.min(1, distance / pathLength));
+      if (!isAsymmetric) {
+        const centerPinch = Math.sin(Math.PI * t);
+        return wideWidth * (1 - centerPinch) + waistWidth * centerPinch;
+      }
+      const smoothstep = t * t * (3 - 2 * t);
+      return startWidthWide + (endWidthVal - startWidthWide) * smoothstep;
+    };
+
+    const strokeSegments = (widthScale, strokeStyle, alpha = 1) => {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.setLineDash([]);
+      for (let i = 1; i < samples.length; i += 1) {
+        const prev = samples[i - 1];
+        const next = samples[i];
+        ctx.lineWidth = Math.max(0.8, widthAt((prev.d + next.d) / 2) * widthScale);
+        ctx.beginPath();
+        ctx.moveTo(prev.x, prev.y);
+        ctx.lineTo(next.x, next.y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    };
+
+    strokeSegments(1.08, color, 1);
+    strokeSegments(1, color, 1);
+  }
+
+  computeStretchyArrowSize(strokeWidth, bodyLength, curved = false) {
+    const base = Math.max(1, Number(strokeWidth || 2));
+    const normLength = curved ? Math.max(90, base * 75) : Math.max(80, base * 70);
+    const stretch = Math.max(0.28, Math.min(1, bodyLength / normLength));
+    const wideSize = curved
+      ? Math.max(base * 2.8, base * (3.4 + stretch * 1.5))
+      : Math.max(base * 1.8, base * (2.2 + stretch * 0.8));
+    const tangentHalf = Math.tan(Math.PI / 6);
+    return Math.ceil(wideSize / tangentHalf);
+  }
+
+  drawStraightTapeEnds(ctx, length, tapeHeight, { startCap = true, endCap = true } = {}) {
+    const half = tapeHeight / 2;
+
+    if (startCap) {
+      const hookDepth = Math.max(12, tapeHeight * 0.9);
+      const lip = Math.max(3, tapeHeight * 0.18);
+      const metalGradient = ctx.createLinearGradient(-hookDepth, -half, 2, half);
+      metalGradient.addColorStop(0, '#64748b');
+      metalGradient.addColorStop(0.3, '#f8fafc');
+      metalGradient.addColorStop(0.62, '#94a3b8');
+      metalGradient.addColorStop(1, '#334155');
+
+      ctx.save();
+      ctx.fillStyle = metalGradient;
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = Math.max(1, tapeHeight * 0.08);
+      ctx.beginPath();
+      ctx.moveTo(1, -half - lip * 0.45);
+      ctx.lineTo(-hookDepth * 0.58, -half - lip);
+      ctx.quadraticCurveTo(-hookDepth * 0.92, -half * 0.92, -hookDepth, -half * 0.44);
+      ctx.lineTo(-hookDepth, half * 0.44);
+      ctx.quadraticCurveTo(-hookDepth * 0.9, half * 0.92, -hookDepth * 0.58, half + lip);
+      ctx.lineTo(1, half + lip * 0.45);
+      ctx.lineTo(1, half * 0.55);
+      ctx.lineTo(-hookDepth * 0.33, half * 0.46);
+      ctx.quadraticCurveTo(-hookDepth * 0.53, half * 0.26, -hookDepth * 0.52, 0);
+      ctx.quadraticCurveTo(-hookDepth * 0.53, -half * 0.26, -hookDepth * 0.33, -half * 0.46);
+      ctx.lineTo(1, -half * 0.55);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+      ctx.lineWidth = Math.max(0.8, tapeHeight * 0.04);
+      ctx.beginPath();
+      ctx.moveTo(-hookDepth * 0.72, -half * 0.54);
+      ctx.quadraticCurveTo(-hookDepth * 0.88, 0, -hookDepth * 0.72, half * 0.54);
+      ctx.stroke();
+
+      const rivetRadius = Math.max(1.4, tapeHeight * 0.09);
+      [-half * 0.42, half * 0.42].forEach(y => {
+        ctx.beginPath();
+        ctx.fillStyle = '#334155';
+        ctx.arc(-hookDepth * 0.2, y, rivetRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.arc(-hookDepth * 0.22, y - rivetRadius * 0.28, rivetRadius * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+    }
+
+    if (endCap) {
+      const caseWidth = Math.max(42, tapeHeight * 3.4);
+      const caseHeight = Math.max(34, tapeHeight * 2.55);
+      const caseX = length + tapeHeight * 0.22;
+      const caseY = -caseHeight * 0.5;
+      const wheelRadius = caseHeight * 0.32;
+      const wheelX = caseX + caseWidth * 0.57;
+      const bodyGradient = ctx.createLinearGradient(
+        caseX,
+        caseY,
+        caseX + caseWidth,
+        caseY + caseHeight
+      );
+      bodyGradient.addColorStop(0, '#6b7280');
+      bodyGradient.addColorStop(0.34, '#334155');
+      bodyGradient.addColorStop(0.72, '#475569');
+      bodyGradient.addColorStop(1, '#1f2937');
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(15,23,42,0.18)';
+      ctx.beginPath();
+      ctx.ellipse(
+        caseX + caseWidth * 0.5,
+        caseHeight * 0.52,
+        caseWidth * 0.55,
+        caseHeight * 0.18,
+        0,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+
+      ctx.fillStyle = bodyGradient;
+      ctx.strokeStyle = '#111827';
+      ctx.lineWidth = Math.max(1.4, tapeHeight * 0.085);
+      ctx.beginPath();
+      ctx.moveTo(caseX, caseY + caseHeight * 0.24);
+      ctx.quadraticCurveTo(
+        caseX + caseWidth * 0.08,
+        caseY + caseHeight * 0.08,
+        caseX + caseWidth * 0.24,
+        caseY + caseHeight * 0.05
+      );
+      ctx.lineTo(caseX + caseWidth * 0.7, caseY + caseHeight * 0.05);
+      ctx.quadraticCurveTo(
+        caseX + caseWidth * 0.96,
+        caseY + caseHeight * 0.12,
+        caseX + caseWidth * 0.98,
+        caseY + caseHeight * 0.42
+      );
+      ctx.lineTo(caseX + caseWidth * 0.9, caseY + caseHeight * 0.82);
+      ctx.quadraticCurveTo(
+        caseX + caseWidth * 0.84,
+        caseY + caseHeight * 0.97,
+        caseX + caseWidth * 0.62,
+        caseY + caseHeight * 0.97
+      );
+      ctx.lineTo(caseX + caseWidth * 0.15, caseY + caseHeight * 0.94);
+      ctx.quadraticCurveTo(
+        caseX + caseWidth * 0.02,
+        caseY + caseHeight * 0.86,
+        caseX,
+        caseY + caseHeight * 0.68
+      );
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      const wheelGradient = ctx.createRadialGradient(
+        wheelX - wheelRadius * 0.35,
+        -wheelRadius * 0.36,
+        wheelRadius * 0.08,
+        wheelX,
+        0,
+        wheelRadius
+      );
+      wheelGradient.addColorStop(0, '#fff7cc');
+      wheelGradient.addColorStop(0.25, '#fde68a');
+      wheelGradient.addColorStop(0.72, '#f59e0b');
+      wheelGradient.addColorStop(1, '#92400e');
+      ctx.fillStyle = wheelGradient;
+      ctx.strokeStyle = '#111827';
+      ctx.lineWidth = Math.max(1.2, tapeHeight * 0.07);
+      ctx.beginPath();
+      ctx.arc(wheelX, 0, wheelRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(120,53,15,0.78)';
+      ctx.lineWidth = Math.max(0.9, tapeHeight * 0.045);
+      ctx.beginPath();
+      ctx.arc(wheelX, 0, wheelRadius * 0.72, Math.PI * 0.04, Math.PI * 1.94);
+      ctx.arc(wheelX, 0, wheelRadius * 0.47, Math.PI * 1.9, Math.PI * 0.12, true);
+      ctx.stroke();
+
+      ctx.fillStyle = '#111827';
+      [caseX + caseWidth * 0.22, caseX + caseWidth * 0.84].forEach((x, idx) => {
+        const y = idx === 0 ? caseY + caseHeight * 0.66 : caseY + caseHeight * 0.72;
+        ctx.beginPath();
+        ctx.arc(x, y, Math.max(2.3, tapeHeight * 0.14), 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      const buttonGradient = ctx.createLinearGradient(
+        caseX + caseWidth * 0.08,
+        caseY - tapeHeight * 0.1,
+        caseX + caseWidth * 0.32,
+        caseY + caseHeight * 0.42
+      );
+      buttonGradient.addColorStop(0, '#fef3c7');
+      buttonGradient.addColorStop(0.45, '#fbbf24');
+      buttonGradient.addColorStop(1, '#b45309');
+      ctx.fillStyle = buttonGradient;
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = Math.max(1, tapeHeight * 0.055);
+      this.drawRoundedRect(
+        ctx,
+        caseX + caseWidth * 0.05,
+        caseY + caseHeight * 0.08,
+        caseWidth * 0.22,
+        caseHeight * 0.46,
+        Math.max(4, tapeHeight * 0.25)
+      );
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = Math.max(1, tapeHeight * 0.05);
+      ctx.beginPath();
+      ctx.moveTo(caseX + caseWidth * 0.42, caseY + caseHeight * 0.16);
+      ctx.quadraticCurveTo(
+        caseX + caseWidth * 0.72,
+        caseY + caseHeight * 0.22,
+        caseX + caseWidth * 0.82,
+        caseY + caseHeight * 0.48
+      );
+      ctx.stroke();
+
+      ctx.strokeStyle = '#111827';
+      ctx.lineWidth = Math.max(2.1, tapeHeight * 0.13);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(caseX + caseWidth * 0.94, caseY + caseHeight * 0.72);
+      ctx.quadraticCurveTo(
+        caseX + caseWidth * 1.25,
+        caseY + caseHeight * 0.65,
+        caseX + caseWidth * 1.36,
+        caseY + caseHeight * 0.9
+      );
+      ctx.quadraticCurveTo(
+        caseX + caseWidth * 1.14,
+        caseY + caseHeight * 0.84,
+        caseX + caseWidth * 0.97,
+        caseY + caseHeight * 0.84
+      );
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  drawCurvedTapeEndCap(ctx, x, y, angle, tapeHeight, accent = false) {
+    const capWidth = Math.max(9, tapeHeight * 0.68);
+    const capHeight = tapeHeight + 5;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    const gradient = ctx.createLinearGradient(-capWidth / 2, 0, capWidth / 2, 0);
+    gradient.addColorStop(0, '#475569');
+    gradient.addColorStop(0.22, '#f8fafc');
+    gradient.addColorStop(0.58, '#94a3b8');
+    gradient.addColorStop(1, '#1f2937');
+    ctx.fillStyle = gradient;
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = Math.max(1, tapeHeight * 0.075);
+    ctx.beginPath();
+    ctx.rect(-capWidth / 2, -capHeight / 2, capWidth, capHeight);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.72)';
+    ctx.lineWidth = Math.max(0.8, tapeHeight * 0.04);
+    ctx.beginPath();
+    ctx.moveTo(-capWidth * 0.18, -capHeight * 0.42);
+    ctx.lineTo(-capWidth * 0.18, capHeight * 0.42);
+    ctx.stroke();
+    if (accent) {
+      ctx.strokeStyle = '#dc2626';
+      ctx.lineWidth = Math.max(1.4, tapeHeight * 0.1);
+      ctx.beginPath();
+      ctx.moveTo(0, -capHeight * 0.35);
+      ctx.lineTo(0, capHeight * 0.35);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  drawMeasuringTapeLine(ctx, x1, y1, x2, y2, strokeWidth = 2, tickSpacing = 1, endOptions = {}) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const length = Math.hypot(dx, dy);
+    if (length < 1) return;
+
+    const angle = Math.atan2(dy, dx);
+    const tapeHeight = Math.max(16, Math.min(38, Number(strokeWidth || 2) * 7.2));
+    const half = tapeHeight / 2;
+    const spacing = this.normalizeTapeTickSpacing(tickSpacing);
+    const tickStep = Math.max(6, tapeHeight * 0.48 * spacing);
+    const majorEvery = 5;
+    const numberEvery = 10;
+
+    ctx.save();
+    ctx.translate(x1, y1);
+    ctx.rotate(angle);
+    ctx.lineCap = 'butt';
+    ctx.lineJoin = 'round';
+    ctx.setLineDash([]);
+
+    const bodyGradient = ctx.createLinearGradient(0, -half, 0, half);
+    bodyGradient.addColorStop(0, '#fff7a8');
+    bodyGradient.addColorStop(0.18, '#fde047');
+    bodyGradient.addColorStop(0.48, '#facc15');
+    bodyGradient.addColorStop(0.78, '#f59e0b');
+    bodyGradient.addColorStop(1, '#b45309');
+
+    ctx.fillStyle = bodyGradient;
+    ctx.fillRect(0, -half, length, tapeHeight);
+
+    ctx.globalAlpha = 0.42;
+    ctx.fillStyle = '#fff7cc';
+    ctx.fillRect(0, -half + tapeHeight * 0.12, length, tapeHeight * 0.16);
+    ctx.globalAlpha = 0.36;
+    ctx.fillStyle = '#92400e';
+    ctx.fillRect(0, half - tapeHeight * 0.22, length, tapeHeight * 0.12);
+    ctx.globalAlpha = 1;
+
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = Math.max(0.75, tapeHeight * 0.08);
+    ctx.strokeRect(0, -half, length, tapeHeight);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+    ctx.lineWidth = Math.max(0.7, tapeHeight * 0.045);
+    ctx.beginPath();
+    ctx.moveTo(0, -half + tapeHeight * 0.24);
+    ctx.lineTo(length, -half + tapeHeight * 0.24);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#991b1b';
+    ctx.lineWidth = Math.max(1, tapeHeight * 0.055);
+    ctx.beginPath();
+    ctx.moveTo(0, half - tapeHeight * 0.1);
+    ctx.lineTo(length, half - tapeHeight * 0.1);
+    ctx.stroke();
+
+    const tickCount = Math.floor(length / tickStep);
+    for (let i = 0; i <= tickCount; i += 1) {
+      const x = Math.min(length, i * tickStep);
+      const isMajor = i % majorEvery === 0;
+      const isNumber = i > 0 && i % numberEvery === 0;
+      const tickLength = isMajor
+        ? tapeHeight * 0.86
+        : i % 2 === 0
+          ? tapeHeight * 0.56
+          : tapeHeight * 0.34;
+      const color = isNumber ? '#b91c1c' : '#111827';
+
+      ctx.strokeStyle = color;
+      ctx.lineWidth = isMajor
+        ? Math.max(1.35, tapeHeight * 0.085)
+        : Math.max(0.8, tapeHeight * 0.045);
+      ctx.beginPath();
+      if (isMajor) {
+        ctx.moveTo(x, -half + 1);
+        ctx.lineTo(x, half - tapeHeight * 0.14);
+      } else {
+        ctx.moveTo(x, -half + 1);
+        ctx.lineTo(x, -half + tickLength);
+        if (i % 2 === 0) {
+          ctx.moveTo(x, half - tapeHeight * 0.12);
+          ctx.lineTo(x, half - tickLength * 0.48);
+        }
+      }
+      ctx.stroke();
+
+      if (isNumber && length > 95) {
+        this.drawTapeNumberLabel(
+          ctx,
+          String(i / numberEvery),
+          x + tickStep * 0.18,
+          tapeHeight * 0.14,
+          -Math.PI / 2,
+          tapeHeight,
+          'rgba(254,243,199,0.96)',
+          color
+        );
+      }
+    }
+
+    const rivetRadius = Math.max(1.2, tapeHeight * 0.08);
+    [Math.min(length * 0.18, 24), Math.max(length - Math.min(length * 0.18, 24), 0)].forEach(x => {
+      if (x <= 0 || x >= length) return;
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(120,53,15,0.45)';
+      ctx.arc(x, 0, rivetRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.arc(x - rivetRadius * 0.35, -rivetRadius * 0.35, rivetRadius * 0.36, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    this.drawStraightTapeEnds(ctx, length, tapeHeight, endOptions);
+
+    ctx.restore();
+  }
+
+  drawCurvedMeasuringTapeLine(
+    ctx,
+    path,
+    offsetX,
+    offsetY,
+    strokeWidth = 2,
+    infos = null,
+    totalLength = 0,
+    tickSpacing = 1,
+    { startCap = true, endCap = true } = {}
+  ) {
+    const fabricUtil = globalThis.fabric?.util;
+    if (!fabricUtil?.getPathSegmentsInfo || !fabricUtil?.getPointOnPath || !Array.isArray(path)) {
+      return;
+    }
+
+    const segmentInfo = infos || fabricUtil.getPathSegmentsInfo(path);
+    const pathLength =
+      totalLength || (segmentInfo.length ? segmentInfo[segmentInfo.length - 1].length : 0);
+    if (!pathLength || pathLength < 1) return;
+
+    const tapeHeight = Math.max(12, Math.min(30, Number(strokeWidth || 2) * 5));
+    const sampleStep = Math.max(3, Math.min(8, tapeHeight * 0.35));
+    const spacing = this.normalizeTapeTickSpacing(tickSpacing);
+    const tickStep = Math.max(7, tapeHeight * 0.75 * spacing);
+    const majorEvery = 5;
+    const numberEvery = 10;
+
+    const getCommandPoint = cmd => {
+      if (!cmd || cmd.length < 3) return null;
+      return { x: cmd[cmd.length - 2], y: cmd[cmd.length - 1] };
+    };
+    const startRaw = getCommandPoint(path[0]);
+    const endRaw = getCommandPoint(path[path.length - 1]);
+    const endpointIsOrigin =
+      (startRaw && Math.hypot(startRaw.x, startRaw.y) < 0.5) ||
+      (endRaw && Math.hypot(endRaw.x, endRaw.y) < 0.5);
+
+    const pointAt = distance => {
+      const clampedDistance = Math.max(0, Math.min(pathLength, distance));
+      if (clampedDistance === 0 && startRaw) {
+        return { x: startRaw.x - offsetX, y: startRaw.y - offsetY };
+      }
+      if (clampedDistance === pathLength && endRaw) {
+        return { x: endRaw.x - offsetX, y: endRaw.y - offsetY };
+      }
+
+      const point = fabricUtil.getPointOnPath(path, clampedDistance, segmentInfo);
+      if (!point) return null;
+
+      // Fabric can report a synthetic {0,0} point for some path endpoints.
+      // In object render space that becomes a huge negative offset, causing
+      // a phantom tape segment to shoot toward the top-left of the canvas.
+      if (!endpointIsOrigin && Math.hypot(point.x, point.y) < 0.5) {
+        if (clampedDistance <= sampleStep && startRaw) {
+          return { x: startRaw.x - offsetX, y: startRaw.y - offsetY };
+        }
+        if (pathLength - clampedDistance <= sampleStep && endRaw) {
+          return { x: endRaw.x - offsetX, y: endRaw.y - offsetY };
+        }
+        return null;
+      }
+
+      return point ? { x: point.x - offsetX, y: point.y - offsetY } : null;
+    };
+
+    const samples = [];
+    for (let d = 0; d <= pathLength; d += sampleStep) {
+      const point = pointAt(d);
+      const previous = samples[samples.length - 1];
+      if (
+        point &&
+        (!previous || Math.hypot(point.x - previous.x, point.y - previous.y) < sampleStep * 8)
+      ) {
+        samples.push(point);
+      }
+    }
+    const finalPoint = pointAt(pathLength);
+    const previous = samples[samples.length - 1];
+    if (
+      finalPoint &&
+      (!previous ||
+        Math.hypot(finalPoint.x - previous.x, finalPoint.y - previous.y) < sampleStep * 8)
+    ) {
+      samples.push(finalPoint);
+    }
+    if (samples.length < 2) return;
+
+    const strokeSamples = (width, color, alpha = 1) => {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'butt';
+      ctx.lineJoin = 'round';
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(samples[0].x, samples[0].y);
+      for (let i = 1; i < samples.length; i += 1) {
+        ctx.lineTo(samples[i].x, samples[i].y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    };
+
+    strokeSamples(tapeHeight + 2.5, '#334155', 0.72);
+    strokeSamples(tapeHeight, '#f8fafc', 1);
+    strokeSamples(Math.max(2, tapeHeight * 0.34), 'rgba(255,255,255,0.92)', 1);
+    strokeSamples(Math.max(1.2, tapeHeight * 0.1), 'rgba(148,163,184,0.55)', 1);
+
+    const tickCount = Math.floor(pathLength / tickStep);
+    for (let i = 0; i <= tickCount; i += 1) {
+      const distance = Math.min(pathLength, i * tickStep);
+      const center = pointAt(distance);
+      const before = pointAt(distance - Math.max(2, tickStep * 0.18));
+      const after = pointAt(distance + Math.max(2, tickStep * 0.18));
+      if (!center || !before || !after) continue;
+
+      const dx = after.x - before.x;
+      const dy = after.y - before.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const nx = -dy / len;
+      const ny = dx / len;
+      const isMajor = i % majorEvery === 0;
+      const isNumber = i > 0 && i % numberEvery === 0;
+      const tickLength = isMajor
+        ? tapeHeight * 0.78
+        : i % 2 === 0
+          ? tapeHeight * 0.55
+          : tapeHeight * 0.36;
+      const color = isNumber ? '#dc2626' : '#111827';
+
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = isMajor
+        ? Math.max(1.1, tapeHeight * 0.075)
+        : Math.max(0.75, tapeHeight * 0.045);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(center.x - nx * tickLength * 0.5, center.y - ny * tickLength * 0.5);
+      ctx.lineTo(center.x + nx * tickLength * 0.5, center.y + ny * tickLength * 0.5);
+      ctx.stroke();
+      ctx.restore();
+
+      if (isNumber && pathLength > 130) {
+        const angle = Math.atan2(dy, dx);
+        this.drawTapeNumberLabel(
+          ctx,
+          String(i / numberEvery),
+          center.x + nx * tapeHeight * 0.13,
+          center.y + ny * tapeHeight * 0.13,
+          angle,
+          tapeHeight,
+          'rgba(248,250,252,0.96)',
+          color
+        );
+      }
+    }
+
+    const start = samples[0];
+    const second = samples[Math.min(2, samples.length - 1)] || samples[1];
+    const end = samples[samples.length - 1];
+    const beforeEnd = samples[Math.max(0, samples.length - 3)] || samples[samples.length - 2];
+    if (startCap && start && second) {
+      this.drawCurvedTapeEndCap(
+        ctx,
+        start.x,
+        start.y,
+        Math.atan2(second.y - start.y, second.x - start.x),
+        tapeHeight,
+        true
+      );
+    }
+    if (endCap && end && beforeEnd) {
+      this.drawCurvedTapeEndCap(
+        ctx,
+        end.x,
+        end.y,
+        Math.atan2(end.y - beforeEnd.y, end.x - beforeEnd.x),
+        tapeHeight,
+        false
+      );
+    }
   }
 
   drawArrowhead(ctx, x, y, angle, size, style, color, spread = 1) {
