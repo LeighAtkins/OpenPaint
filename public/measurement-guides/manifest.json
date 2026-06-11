@@ -1,0 +1,2049 @@
+{
+  "modular-mt": {
+    "displayName": "Modular MT",
+    "type": "tree",
+    "tree": {
+      "children": [
+        {
+          "name": "Arm Shape",
+          "type": "folder",
+          "children": [
+            {
+              "name": "Barrel Arm",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-BRL.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Barrel Arm/-BRL.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Belgian Rolled Arm",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-BRA.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Belgian Rolled Arm/-BRA.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Bullet Arm",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-BLT.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Bullet Arm/-BLT.pdf"
+                }
+              ]
+            },
+            {
+              "name": "English Rolled Arm",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "MT-English-Arm-L.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/English Rolled Arm/MT-English-Arm-L.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Flare Arm",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-FLR.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Flare Arm/-FLR.pdf"
+                }
+              ]
+            },
+            {
+              "name": "JPG",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Barrel-Arm-L1.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/JPG/Barrel-Arm-L1.jpg"
+                },
+                {
+                  "name": "Barrel-Arm-L2.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/JPG/Barrel-Arm-L2.jpg"
+                },
+                {
+                  "name": "Belgian-Arm-L-1.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/JPG/Belgian-Arm-L-1.jpg"
+                },
+                {
+                  "name": "Belgian-Arm-R-2.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/JPG/Belgian-Arm-R-2.jpg"
+                },
+                {
+                  "name": "Bullet-Arm-R.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/JPG/Bullet-Arm-R.jpg"
+                },
+                {
+                  "name": "English-Arm-L1.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/JPG/English-Arm-L1.jpg"
+                },
+                {
+                  "name": "Flare-Arm-L.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/JPG/Flare-Arm-L.jpg"
+                },
+                {
+                  "name": "Flare-Arm-R-Inner.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/JPG/Flare-Arm-R-Inner.jpg"
+                },
+                {
+                  "name": "Key-Arm-R-1.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/JPG/Key-Arm-R-1.jpg"
+                },
+                {
+                  "name": "Key-Arm-R-2.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/JPG/Key-Arm-R-2.jpg"
+                },
+                {
+                  "name": "Rounded-Corner-L.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/JPG/Rounded-Corner-L.jpg"
+                },
+                {
+                  "name": "Thin-Arm-L.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/JPG/Thin-Arm-L.jpg"
+                }
+              ]
+            },
+            {
+              "name": "Key Arm",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-KEY.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Key Arm/-KEY.pdf"
+                }
+              ]
+            },
+            {
+              "name": "No Arm - Boxy Backrest",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "NA-HB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/No Arm - Boxy Backrest/NA-HB.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-NA-HB-Side.svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/No Arm - Boxy Backrest/Archive/-NA-HB-Side.svg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "No Arm - Curved Backrest",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "NA-RB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/No Arm - Curved Backrest/NA-RB.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-NA-RB-Side.svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/No Arm - Curved Backrest/Archive/-NA-RB-Side.svg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Nose Round, High Back",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-NA-R.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Nose Round, High Back/-NA-R.pdf"
+                },
+                {
+                  "name": "-NA-R.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Nose Round, High Back/-NA-R.svg"
+                },
+                {
+                  "name": "-NoseArm-HB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Nose Round, High Back/-NoseArm-HB.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Nose Square, High back",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-NA-S.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Nose Square, High back/-NA-S.pdf"
+                },
+                {
+                  "name": "-NA-S.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Nose Square, High back/-NA-S.svg"
+                }
+              ]
+            },
+            {
+              "name": "Round Arm, High Back",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-RA-HB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Round Arm, High Back/-RA-HB.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Round Arm, short back",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-RA-SB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Round Arm, short back/-RA-SB.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Round, high back, T-L seat variant",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-RA-HB-L.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Round, high back, T-L seat variant/-RA-HB-L.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Round, short back, T-L seat variant",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-RA-SB-L.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Round, short back, T-L seat variant/-RA-SB-L.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Rounded corner",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "MT-Rounded-Corner-L.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Rounded corner/MT-Rounded-Corner-L.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Slope Arm Incline",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-SLA-Incline-1.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Slope Arm Incline/-SLA-Incline-1.svg"
+                },
+                {
+                  "name": "-SLA-incline.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Slope Arm Incline/-SLA-incline.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Slope Arm, decline, boxy",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-SLA-B-1.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Slope Arm, decline, boxy/-SLA-B-1.pdf"
+                },
+                {
+                  "name": "-SLA-B-1.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Slope Arm, decline, boxy/-SLA-B-1.svg"
+                }
+              ]
+            },
+            {
+              "name": "Slope Arm, decline, boxy, A4",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-SLA-B2-1.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Slope Arm, decline, boxy, A4/-SLA-B2-1.pdf"
+                },
+                {
+                  "name": "-SLA-B2-1.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Slope Arm, decline, boxy, A4/-SLA-B2-1.svg"
+                }
+              ]
+            },
+            {
+              "name": "Slope Arm, decline, curved",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-SLA-C-1.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Slope Arm, decline, curved/-SLA-C-1.pdf"
+                },
+                {
+                  "name": "-SLA-C-1.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Slope Arm, decline, curved/-SLA-C-1.svg"
+                }
+              ]
+            },
+            {
+              "name": "Slope Decline, High Back",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-SLA-Decline-1.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Slope Decline, High Back/-SLA-Decline-1.svg"
+                },
+                {
+                  "name": "-SLA-decline.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Slope Decline, High Back/-SLA-decline.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Square Arm, High Back",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-SA-HB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Square Arm, High Back/-SA-HB.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-SA-2.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Square Arm, High Back/Archive/-SA-2.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Square Arm, Short Back",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-SA-SB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Square Arm, Short Back/-SA-SB.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-SA-SB-1.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Square Arm, Short Back/Archive/-SA-SB-1.pdf"
+                    },
+                    {
+                      "name": "-SA-SB.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Square Arm, Short Back/Archive/-SA-SB.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Square, high back, T-L Seat variant",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-SA-HB-L.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Square, high back, T-L Seat variant/-SA-HB-L.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-SA-HB-1-L.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Square, high back, T-L Seat variant/Archive/-SA-HB-1-L.pdf"
+                    },
+                    {
+                      "name": "-SA-HB-L.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Square, high back, T-L Seat variant/Archive/-SA-HB-L.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Square, short back,  T-L Seat variant",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-SA-SB-L.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Square, short back,  T-L Seat variant/-SA-SB-L.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-SA-SB-1-L.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Square, short back,  T-L Seat variant/Archive/-SA-SB-1-L.pdf"
+                    },
+                    {
+                      "name": "-SA-SB-L.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Square, short back,  T-L Seat variant/Archive/-SA-SB-L.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Thin Arm",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "MT-Thin-Arm-L.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Thin Arm/MT-Thin-Arm-L.pdf"
+                },
+                {
+                  "name": "MT-Thin-Arm(new)(fillable).pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Thin Arm/MT-Thin-Arm(new)(fillable).pdf"
+                }
+              ]
+            },
+            {
+              "name": "Wedge Arm, Boxy, High Back",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-WA2-HB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge Arm, Boxy, High Back/-WA2-HB.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-WA2-HB.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge Arm, Boxy, High Back/Archive/-WA2-HB.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Wedge Arm, Boxy, Short Back",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-WA2-SB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge Arm, Boxy, Short Back/-WA2-SB.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-WA2-SB.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge Arm, Boxy, Short Back/Archive/-WA2-SB.pdf"
+                    },
+                    {
+                      "name": "-WA2-SB.svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge Arm, Boxy, Short Back/Archive/-WA2-SB.svg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Wedge Arm, High Back",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-WA-HB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge Arm, High Back/-WA-HB.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-WA-HB.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge Arm, High Back/Archive/-WA-HB.pdf"
+                    },
+                    {
+                      "name": "-WA-HB.svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge Arm, High Back/Archive/-WA-HB.svg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Wedge Arm, Short Back",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-WA-SB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge Arm, Short Back/-WA-SB.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-WA-SB.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge Arm, Short Back/Archive/-WA-SB.pdf"
+                    },
+                    {
+                      "name": "-WA-SB.svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge Arm, Short Back/Archive/-WA-SB.svg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Wedge, boxy, high back, T-L-Seat variant",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-WA2-HB-L.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge, boxy, high back, T-L-Seat variant/-WA2-HB-L.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-WA2-HB-L.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge, boxy, high back, T-L-Seat variant/Archive/-WA2-HB-L.pdf"
+                    },
+                    {
+                      "name": "-WA2-HB-L.svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge, boxy, high back, T-L-Seat variant/Archive/-WA2-HB-L.svg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Wedge, boxy, short back, T-L-Seat variant",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-WA2-SB-L.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge, boxy, short back, T-L-Seat variant/-WA2-SB-L.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-WA2-SB-L.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge, boxy, short back, T-L-Seat variant/Archive/-WA2-SB-L.pdf"
+                    },
+                    {
+                      "name": "-WA2-SB-L.svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge, boxy, short back, T-L-Seat variant/Archive/-WA2-SB-L.svg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Wedge, high back, T-L-Seat variant",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-WA-HB-L.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge, high back, T-L-Seat variant/-WA-HB-L.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-WA-HB-L.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge, high back, T-L-Seat variant/Archive/-WA-HB-L.pdf"
+                    },
+                    {
+                      "name": "-WA-L-HB.svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge, high back, T-L-Seat variant/Archive/-WA-L-HB.svg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Wedge, short back, T-L-Seat variant",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-WA-SB-L.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge, short back, T-L-Seat variant/-WA-SB-L.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-WA-L-SB.svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge, short back, T-L-Seat variant/Archive/-WA-L-SB.svg"
+                    },
+                    {
+                      "name": "-WA-SB-L.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Arm Shape/Wedge, short back, T-L-Seat variant/Archive/-WA-SB-L.pdf"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Back Shape",
+          "type": "folder",
+          "children": [
+            {
+              "name": "Barrel Back",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-BRL.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Barrel Back/-BRL.pdf"
+                },
+                {
+                  "name": "MT-Barrel-Back-Back.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Barrel Back/MT-Barrel-Back-Back.pdf"
+                },
+                {
+                  "name": "MT-Barrel-Back-Front.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Barrel Back/MT-Barrel-Back-Front.pdf"
+                }
+              ]
+            },
+            {
+              "name": "High Back, Round Arm",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Back-RA-HB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/High Back, Round Arm/Back-RA-HB.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "Back-RA-HB-1.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Back Shape/High Back, Round Arm/Archive/Back-RA-HB-1.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "High Back, Square Arm, Flushed",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Back-SA-HB2.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/High Back, Square Arm, Flushed/Back-SA-HB2.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "Back-SA-HB2-1.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Back Shape/High Back, Square Arm, Flushed/Archive/Back-SA-HB2-1.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "High Back, Square Arm, protruding",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Back-SA-HB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/High Back, Square Arm, protruding/Back-SA-HB.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "Back-SA-HB-1.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Back Shape/High Back, Square Arm, protruding/Archive/Back-SA-HB-1.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "High Back, Wedge Arm, protruding",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Back-WA-HB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/High Back, Wedge Arm, protruding/Back-WA-HB.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "Back-WA-HB-1.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Back Shape/High Back, Wedge Arm, protruding/Archive/Back-WA-HB-1.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "JPG",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Barrel-Back-Back.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/JPG/Barrel-Back-Back.jpg"
+                },
+                {
+                  "name": "Barrel-Back-Front.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/JPG/Barrel-Back-Front.jpg"
+                },
+                {
+                  "name": "RollBack-Back.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/JPG/RollBack-Back.jpg"
+                },
+                {
+                  "name": "RollBack-Front.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/JPG/RollBack-Front.jpg"
+                },
+                {
+                  "name": "RoundBack-Back.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/JPG/RoundBack-Back.jpg"
+                },
+                {
+                  "name": "RoundBack-Front.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/JPG/RoundBack-Front.jpg"
+                },
+                {
+                  "name": "Thin(KnifeEdge)-Back.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/JPG/Thin(KnifeEdge)-Back.jpg"
+                },
+                {
+                  "name": "WingBack-Back.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/JPG/WingBack-Back.jpg"
+                },
+                {
+                  "name": "WingBack-Front.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/JPG/WingBack-Front.jpg"
+                }
+              ]
+            },
+            {
+              "name": "No Arms",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Back-NA (1).pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/No Arms/Back-NA (1).pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "Back-NA.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Back Shape/No Arms/Archive/Back-NA.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Roll",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-ROL.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Roll/-ROL.pdf"
+                },
+                {
+                  "name": "MT-RollBack-Back.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Roll/MT-RollBack-Back.pdf"
+                },
+                {
+                  "name": "MT-RollBack-Front.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Roll/MT-RollBack-Front.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Round",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-RND.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Round/-RND.pdf"
+                },
+                {
+                  "name": "Copy of MT-RoundBack-Back.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Round/Copy of MT-RoundBack-Back.pdf"
+                },
+                {
+                  "name": "Copy of MT-RoundBack-Front.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Round/Copy of MT-RoundBack-Front.pdf"
+                },
+                {
+                  "name": "MT-RoundBack-Back.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Round/MT-RoundBack-Back.pdf"
+                },
+                {
+                  "name": "MT-RoundBack-Front.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Round/MT-RoundBack-Front.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Round Back, Round Arm",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Back-CS1X-RA-RB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Round Back, Round Arm/Back-CS1X-RA-RB.pdf"
+                },
+                {
+                  "name": "Back-CS3X-RA-RB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Round Back, Round Arm/Back-CS3X-RA-RB.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "Back-CS1X-RA-RB.svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Back Shape/Round Back, Round Arm/Archive/Back-CS1X-RA-RB.svg"
+                    },
+                    {
+                      "name": "Back-CS3X-RA-RB.svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Back Shape/Round Back, Round Arm/Archive/Back-CS3X-RA-RB.svg"
+                    },
+                    {
+                      "name": "Back-RA-RB-1.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Back Shape/Round Back, Round Arm/Archive/Back-RA-RB-1.pdf"
+                    },
+                    {
+                      "name": "Back-RA-RB.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Back Shape/Round Back, Round Arm/Archive/Back-RA-RB.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Sectional, High, Round arm",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Sectional, High, Round arm.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Sectional, High, Round arm/Sectional, High, Round arm.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Sectional, High, Square arm",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Sectional, High, Square arm.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Sectional, High, Square arm/Sectional, High, Square arm.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Sectional, Short, Round arm, flat-top backrest",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Sectional, Short, Round arm, flat-top backrest.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Sectional, Short, Round arm, flat-top backrest/Sectional, Short, Round arm, flat-top backrest.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Sectional, Short, Square arm",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Sectional, Short, Square arm.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Sectional, Short, Square arm/Sectional, Short, Square arm.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Short Back, Round Arm",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Back-RA-SB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Short Back, Round Arm/Back-RA-SB.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "Back-RA-SB-1.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Back Shape/Short Back, Round Arm/Archive/Back-RA-SB-1.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Short Back, Straight Arm",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Back-SA-SB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Short Back, Straight Arm/Back-SA-SB.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "Back-SA-SB-1.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Back Shape/Short Back, Straight Arm/Archive/Back-SA-SB-1.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Short Back, Wedge Arm",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Back-WA-SB.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Short Back, Wedge Arm/Back-WA-SB.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "Back-WA-SB-1.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Back Shape/Short Back, Wedge Arm/Archive/Back-WA-SB-1.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Short Back, Wedge Arm, boxy",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Back-WA2-SB-1 (1).pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Short Back, Wedge Arm, boxy/Back-WA2-SB-1 (1).pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "Back-WA2-SB-1.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Back Shape/Short Back, Wedge Arm, boxy/Archive/Back-WA2-SB-1.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Thin",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-THN.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Thin/-THN.pdf"
+                },
+                {
+                  "name": "Copy of MT-Thin(KnifeEdge)-Back.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Thin/Copy of MT-Thin(KnifeEdge)-Back.pdf"
+                },
+                {
+                  "name": "MT-Thin(KnifeEdge)-Back.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Thin/MT-Thin(KnifeEdge)-Back.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Wing",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "-WNG.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Wing/-WNG.pdf"
+                },
+                {
+                  "name": "MT-WingBack-Back.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Wing/MT-WingBack-Back.pdf"
+                },
+                {
+                  "name": "MT-WingBack-Front.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Back Shape/Wing/MT-WingBack-Front.pdf"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Backrest A3",
+          "type": "folder",
+          "files": [
+            {
+              "name": "BACK-CS-CVB.pdf",
+              "type": "pdf",
+              "path": "public/measurement-guides/Modular MT /Backrest A3/BACK-CS-CVB.pdf"
+            },
+            {
+              "name": "BACK-CS-SLB.pdf",
+              "type": "pdf",
+              "path": "public/measurement-guides/Modular MT /Backrest A3/BACK-CS-SLB.pdf"
+            },
+            {
+              "name": "BACK-CS-WGB.pdf",
+              "type": "pdf",
+              "path": "public/measurement-guides/Modular MT /Backrest A3/BACK-CS-WGB.pdf"
+            }
+          ]
+        },
+        {
+          "name": "Corner",
+          "type": "folder",
+          "children": [
+            {
+              "name": "CS1-CNR",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CS1-CNR.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Corner/CS1-CNR/CS1-CNR.pdf"
+                }
+              ]
+            },
+            {
+              "name": "CS1-CNR-W",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CS1-CNR-W.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Corner/CS1-CNR-W/CS1-CNR-W.pdf"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Cushions",
+          "type": "folder",
+          "children": [
+            {
+              "name": "BCH-W - Half Wedge",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-BCH-W.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/BCH-W - Half Wedge/CC-BCH-W.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-BCH-W (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/BCH-W - Half Wedge/Archive/-BCH-W (1).svg"
+                    },
+                    {
+                      "name": "CC-BCH-W_REV001.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/BCH-W - Half Wedge/Archive/CC-BCH-W_REV001.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "BL - Bullet Arm ",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-BL_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/BL - Bullet Arm /CC-BL_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-BL.svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/BL - Bullet Arm /Archive/-BL.svg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Bolster",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-BOL_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/Bolster/CC-BOL_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-BOL (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Bolster/Archive/-BOL (1).svg"
+                    },
+                    {
+                      "name": "CC-BOL.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Bolster/Archive/CC-BOL.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Boxed Edge",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-BE_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/Boxed Edge/CC-BE_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-BE (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Boxed Edge/Archive/-BE (1).svg"
+                    },
+                    {
+                      "name": "CC-BE.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Boxed Edge/Archive/CC-BE.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Boxed Edge, L-shape",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-L_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/Boxed Edge, L-shape/CC-L_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-L (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Boxed Edge, L-shape/Archive/-L (1).svg"
+                    },
+                    {
+                      "name": "CC-L.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Boxed Edge, L-shape/Archive/CC-L.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Boxed Edge, T-shaped",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-T_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/Boxed Edge, T-shaped/CC-T_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-T (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Boxed Edge, T-shaped/Archive/-T (1).svg"
+                    },
+                    {
+                      "name": "CC-T.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Boxed Edge, T-shaped/Archive/CC-T.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Boxed half-knife",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-HK_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/Boxed half-knife/CC-HK_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-HK (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Boxed half-knife/Archive/-HK (1).svg"
+                    },
+                    {
+                      "name": "CC-HK.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Boxed half-knife/Archive/CC-HK.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Boxed Wedge",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-BE2_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/Boxed Wedge/CC-BE2_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-BE2 (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Boxed Wedge/Archive/-BE2 (1).svg"
+                    },
+                    {
+                      "name": "CC-BE2.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Boxed Wedge/Archive/CC-BE2.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Corner",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-CNR_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/Corner/CC-CNR_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-CNR (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Corner/Archive/-CNR (1).svg"
+                    },
+                    {
+                      "name": "CC-CNR.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Corner/Archive/CC-CNR.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "HXG - Hexagon",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-HXG_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/HXG - Hexagon/CC-HXG_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "CC-HXG.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/HXG - Hexagon/Archive/CC-HXG.pdf"
+                    },
+                    {
+                      "name": "Hexagon (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/HXG - Hexagon/Archive/Hexagon (1).svg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Knife Edge",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-KE_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/Knife Edge/CC-KE_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-KE (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Knife Edge/Archive/-KE (1).svg"
+                    },
+                    {
+                      "name": "CC-KE.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Knife Edge/Archive/CC-KE.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Oval",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-OV_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/Oval/CC-OV_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-OV (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Oval/Archive/-OV (1).svg"
+                    },
+                    {
+                      "name": "CC-OV.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Oval/Archive/CC-OV.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Round",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-R_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/Round/CC-R_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-Rounded (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Round/Archive/-Rounded (1).svg"
+                    },
+                    {
+                      "name": "CC-R.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Round/Archive/CC-R.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Rounded Front",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-HR_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/Rounded Front/CC-HR_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "CC-HR.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Rounded Front/Archive/CC-HR.pdf"
+                    },
+                    {
+                      "name": "Rounded Front (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Rounded Front/Archive/Rounded Front (1).svg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Rounded L",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-RL_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/Rounded L/CC-RL_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-RL (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Rounded L/Archive/-RL (1).svg"
+                    },
+                    {
+                      "name": "CC-RL.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Rounded L/Archive/CC-RL.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Rounded T",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-RT_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/Rounded T/CC-RT_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-RT (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Rounded T/Archive/-RT (1).svg"
+                    },
+                    {
+                      "name": "CC-RT.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Rounded T/Archive/CC-RT.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Wedge",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CC-W_REV001.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Cushions/Wedge/CC-W_REV001.pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "-W (1).svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Wedge/Archive/-W (1).svg"
+                    },
+                    {
+                      "name": "CC-W.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Cushions/Wedge/Archive/CC-W.pdf"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Dining Chair",
+          "type": "folder",
+          "children": [
+            {
+              "name": "CSDC-CNRP",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Back_CSDC-CNRP.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Dining Chair/CSDC-CNRP/Back_CSDC-CNRP.svg"
+                },
+                {
+                  "name": "CSDC-CNRP.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Dining Chair/CSDC-CNRP/CSDC-CNRP.pdf"
+                },
+                {
+                  "name": "Front_CSDC-CNRP.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Dining Chair/CSDC-CNRP/Front_CSDC-CNRP.svg"
+                }
+              ]
+            },
+            {
+              "name": "CSDC-MSKT",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Back_CSDC-MSKT.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Dining Chair/CSDC-MSKT/Back_CSDC-MSKT.svg"
+                },
+                {
+                  "name": "CSDC-MSKT.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Dining Chair/CSDC-MSKT/CSDC-MSKT.pdf"
+                },
+                {
+                  "name": "Front_CSDC-MSKT.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Dining Chair/CSDC-MSKT/Front_CSDC-MSKT.svg"
+                }
+              ]
+            },
+            {
+              "name": "CSDC-SA-SNUG",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Back_CSDC-SA-SNUG.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Dining Chair/CSDC-SA-SNUG/Back_CSDC-SA-SNUG.svg"
+                },
+                {
+                  "name": "CSDC-SA-SNUG.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Dining Chair/CSDC-SA-SNUG/CSDC-SA-SNUG.pdf"
+                },
+                {
+                  "name": "Front_CSDC-SA-SNUG.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Dining Chair/CSDC-SA-SNUG/Front_CSDC-SA-SNUG.svg"
+                }
+              ]
+            },
+            {
+              "name": "CSDC-SNUG",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Back_CSDC-SNUG.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Dining Chair/CSDC-SNUG/Back_CSDC-SNUG.svg"
+                },
+                {
+                  "name": "CSDC-SNUG.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Dining Chair/CSDC-SNUG/CSDC-SNUG.pdf"
+                },
+                {
+                  "name": "Front_CSDC-SNUG.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Dining Chair/CSDC-SNUG/Front_CSDC-SNUG.svg"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Ottoman",
+          "type": "folder",
+          "children": [
+            {
+              "name": "CS0-CNRP - Long Skirt",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CS0-CNRP (1).svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Ottoman/CS0-CNRP - Long Skirt/CS0-CNRP (1).svg"
+                },
+                {
+                  "name": "CS0-CNRP.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Ottoman/CS0-CNRP - Long Skirt/CS0-CNRP.pdf"
+                }
+              ]
+            },
+            {
+              "name": "CS0-CNRP-V2",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CS0-CNRP-V2 (1).svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Ottoman/CS0-CNRP-V2/CS0-CNRP-V2 (1).svg"
+                },
+                {
+                  "name": "CS0-CNRP-V2.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Ottoman/CS0-CNRP-V2/CS0-CNRP-V2.pdf"
+                }
+              ]
+            },
+            {
+              "name": "CS0-SNUG - 1-piece SNUG",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CS0-SNUG (1).svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Ottoman/CS0-SNUG - 1-piece SNUG/CS0-SNUG (1).svg"
+                },
+                {
+                  "name": "CS0-SNUG.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Ottoman/CS0-SNUG - 1-piece SNUG/CS0-SNUG.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Round Ottoman",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Round Ottoman.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Ottoman/Round Ottoman/Round Ottoman.svg"
+                },
+                {
+                  "name": "Round-ottoman.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Ottoman/Round Ottoman/Round-ottoman.pdf"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Seat Shape",
+          "type": "folder",
+          "files": [
+            {
+              "name": "MT-Round-Seat-T2.pdf",
+              "type": "pdf",
+              "path": "public/measurement-guides/Modular MT /Seat Shape/MT-Round-Seat-T2.pdf"
+            },
+            {
+              "name": "MT-Round-Seat.pdf",
+              "type": "pdf",
+              "path": "public/measurement-guides/Modular MT /Seat Shape/MT-Round-Seat.pdf"
+            }
+          ],
+          "children": [
+            {
+              "name": "JPG",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "Kidney-Seat.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Seat Shape/JPG/Kidney-Seat.jpg"
+                },
+                {
+                  "name": "Round-Seat-T1.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Seat Shape/JPG/Round-Seat-T1.jpg"
+                },
+                {
+                  "name": "Round-Seat-T2.jpg",
+                  "type": "jpg",
+                  "path": "public/measurement-guides/Modular MT /Seat Shape/JPG/Round-Seat-T2.jpg"
+                }
+              ]
+            },
+            {
+              "name": "Kidney",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "MT-Kidney-Seat.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Seat Shape/Kidney/MT-Kidney-Seat.pdf"
+                },
+                {
+                  "name": "MT-Kidney-Seat(1).pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Seat Shape/Kidney/MT-Kidney-Seat(1).pdf"
+                }
+              ]
+            },
+            {
+              "name": "Round, circular",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "MT-Round-Seat-T2.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Seat Shape/Round, circular/MT-Round-Seat-T2.pdf"
+                },
+                {
+                  "name": "MT-Round-Seat.pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Seat Shape/Round, circular/MT-Round-Seat.pdf"
+                }
+              ]
+            },
+            {
+              "name": "Sectional - Chaise, Square L",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "CS5L-SA(2).pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Seat Shape/Sectional - Chaise, Square L/CS5L-SA(2).pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "CS5L-SA(1).pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Seat Shape/Sectional - Chaise, Square L/Archive/CS5L-SA(1).pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Square",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "ST-CS3(1).pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Seat Shape/Square/ST-CS3(1).pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "ST-CS3.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Seat Shape/Square/Archive/ST-CS3.pdf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "T-shaped (Recessed)",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "ST-CS3L(1).pdf",
+                  "type": "pdf",
+                  "path": "public/measurement-guides/Modular MT /Seat Shape/T-shaped (Recessed)/ST-CS3L(1).pdf"
+                }
+              ],
+              "children": [
+                {
+                  "name": "Archive",
+                  "type": "folder",
+                  "files": [
+                    {
+                      "name": "ST-CS3L.pdf",
+                      "type": "pdf",
+                      "path": "public/measurement-guides/Modular MT /Seat Shape/T-shaped (Recessed)/Archive/ST-CS3L.pdf"
+                    },
+                    {
+                      "name": "ST-CS3L.svg",
+                      "type": "svg",
+                      "path": "public/measurement-guides/Modular MT /Seat Shape/T-shaped (Recessed)/Archive/ST-CS3L.svg"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

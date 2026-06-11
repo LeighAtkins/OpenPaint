@@ -68,7 +68,8 @@ export class TagManager {
     for (const [key, tagObj] of this.tagObjects.entries()) {
       if (!tagObj) continue;
       if (tagObj.strokeLabel !== strokeLabel) continue;
-      if (viewId && tagObj.imageLabel && tagObj.imageLabel !== viewId) continue;
+      const tagScope = tagObj.scopedLabel || tagObj.imageLabel;
+      if (viewId && tagScope && tagScope !== viewId && tagObj.imageLabel !== viewId) continue;
       return key;
     }
 
@@ -325,10 +326,10 @@ export class TagManager {
     const config = this.tagStyleConfig || this.createDefaultTagStyleConfig();
     return Boolean(
       config.presets?.lettersOnly ||
-      config.presets?.lettersNumbers ||
-      config.presets?.highlight ||
-      Object.keys(config.perTagThemes || {}).length ||
-      config.highlightedTagKeys?.size
+        config.presets?.lettersNumbers ||
+        config.presets?.highlight ||
+        Object.keys(config.perTagThemes || {}).length ||
+        config.highlightedTagKeys?.size
     );
   }
 
@@ -571,6 +572,34 @@ export class TagManager {
     return Boolean(strokeObject && typeof strokeObject.getBoundingRect === 'function');
   }
 
+  getCanvasObjectCenter(obj) {
+    if (!obj) return null;
+    try {
+      if (obj.group && typeof obj.getCenterPoint === 'function' && fabric?.util?.transformPoint) {
+        const centerRelative = obj.getCenterPoint();
+        const groupMatrix = obj.group.calcTransformMatrix();
+        return fabric.util.transformPoint(centerRelative, groupMatrix);
+      }
+      if (typeof obj.getCenterPoint === 'function') {
+        return obj.getCenterPoint();
+      }
+      if (typeof obj.getBoundingRect === 'function') {
+        const bounds = obj.getBoundingRect(true, true);
+        return {
+          x: bounds.left + bounds.width / 2,
+          y: bounds.top + bounds.height / 2,
+        };
+      }
+    } catch {
+      return null;
+    }
+    return null;
+  }
+
+  getTagScopeLabel(tagObj) {
+    return tagObj?.scopedLabel || tagObj?.imageLabel || null;
+  }
+
   // Create a draggable, resizable tag object
   createTag(strokeLabel, imageLabel, strokeObject) {
     imageLabel = this.normalizeImageLabel(imageLabel);
@@ -593,10 +622,19 @@ export class TagManager {
     // Remove existing tag if any, but keep style state when rebuilding the tag.
     this.removeTag(strokeLabel, imageLabel, { preserveStyleState: true });
 
-    // Get tag position (near stroke center)
-    const bounds = strokeObject.getBoundingRect();
-    const centerX = bounds.left + bounds.width / 2;
-    const centerY = bounds.top + bounds.height / 2;
+    // Get tag position in canvas/world coordinates. Avoid viewport-sensitive
+    // bounding boxes here; tags are rebuilt during view switches before the
+    // final viewport/frame restore has always settled.
+    const strokeCenter = this.getCanvasObjectCenter(strokeObject);
+    if (!strokeCenter) {
+      console.warn('[TagManager] Skipping tag creation because stroke center could not resolve', {
+        strokeLabel,
+        imageLabel,
+      });
+      return null;
+    }
+    const centerX = strokeCenter.x;
+    const centerY = strokeCenter.y;
 
     // Create tag text (editable IText)
     let tagText;
@@ -777,11 +815,8 @@ export class TagManager {
     // Update connector line when tag moves
     tagGroup.on('moving', () => {
       // Update offset based on new position
-      const strokeBounds = strokeObject.getBoundingRect(true);
-      const strokeCenter = {
-        x: strokeBounds.left + strokeBounds.width / 2,
-        y: strokeBounds.top + strokeBounds.height / 2,
-      };
+      const strokeCenter = this.getCanvasObjectCenter(strokeObject);
+      if (!strokeCenter) return;
 
       tagGroup.tagOffset = {
         x: tagGroup.left - strokeCenter.x,
@@ -799,7 +834,7 @@ export class TagManager {
     });
 
     tagGroup.on('modified', () => {
-      this.updateConnector(strokeLabel, imageLabel);
+      this.updateConnector(strokeLabel, scopedImageLabel);
       if (window.app?.historyManager?.saveState) {
         window.app.historyManager.saveState({ force: true, reason: 'tag:modified' });
       }
@@ -808,16 +843,16 @@ export class TagManager {
     // Update connector when connected stroke moves
     if (strokeObject) {
       strokeObject.on('moving', () => {
-        this.updateConnector(strokeLabel, scopedImageLabel);
+        this.updateConnector(strokeLabel, scopedImageLabel, { repositionTag: true });
       });
       strokeObject.on('modified', () => {
-        this.updateConnector(strokeLabel, scopedImageLabel);
+        this.updateConnector(strokeLabel, scopedImageLabel, { repositionTag: true });
       });
       strokeObject.on('scaling', () => {
-        this.updateConnector(strokeLabel, scopedImageLabel);
+        this.updateConnector(strokeLabel, scopedImageLabel, { repositionTag: true });
       });
       strokeObject.on('rotating', () => {
-        this.updateConnector(strokeLabel, scopedImageLabel);
+        this.updateConnector(strokeLabel, scopedImageLabel, { repositionTag: true });
       });
     }
 
@@ -840,11 +875,12 @@ export class TagManager {
 
     canvas.add(tagGroup);
     tagGroup.strokeLabel = strokeLabel;
-    tagGroup.imageLabel = imageLabel;
+    tagGroup.imageLabel = baseImageLabel;
+    tagGroup.scopedLabel = scopedLabel;
     this.tagObjects.set(this.getTagKey(strokeLabel, imageLabel), tagGroup);
 
     // Update tag text to include measurement if showMeasurements is enabled
-    this.updateTagText(strokeLabel, imageLabel);
+    this.updateTagText(strokeLabel, scopedImageLabel);
 
     // Register global click handler for tags (fallback if object events don't fire)
     // This ensures clicks work even when drawing tools are active
@@ -873,7 +909,7 @@ export class TagManager {
     }
 
     // Create connector line
-    this.updateConnector(strokeLabel, imageLabel);
+    this.updateConnector(strokeLabel, scopedImageLabel);
 
     return tagGroup;
   }
@@ -1085,6 +1121,16 @@ export class TagManager {
   createConnectorObject(x1, y1, x2, y2, tagObj, strokeObj, strokeLabel) {
     const strokeWidth = 2;
     const snap = (value: number) => Math.round(value || 0);
+    const scopedLabel =
+      tagObj?.scopedLabel ||
+      tagObj?.imageLabel ||
+      strokeObj?.strokeMetadata?.imageLabel ||
+      strokeObj?.imageLabel ||
+      null;
+    const baseImageLabel =
+      typeof scopedLabel === 'string' && scopedLabel.includes('::tab:')
+        ? scopedLabel.split('::tab:')[0]
+        : scopedLabel;
     return new fabric.Line([x1, y1, x2, y2], {
       x1: snap(x1),
       y1: snap(y1),
@@ -1108,7 +1154,8 @@ export class TagManager {
       connectedTag: tagObj,
       connectedStroke: strokeObj,
       strokeLabel: strokeLabel,
-      imageLabel: tagObj.imageLabel || strokeObj?.strokeMetadata?.imageLabel || null,
+      imageLabel: baseImageLabel,
+      scopedLabel,
     });
   }
 
@@ -1117,11 +1164,8 @@ export class TagManager {
     if (!canvas) return null;
 
     // Get tag center
-    const tagBounds = tagObj.getBoundingRect();
-    const tagCenter = {
-      x: tagBounds.left + tagBounds.width / 2,
-      y: tagBounds.top + tagBounds.height / 2,
-    };
+    const tagCenter = this.getCanvasObjectCenter(tagObj);
+    if (!tagCenter) return null;
 
     // Get closest stroke endpoint
     const strokeEndpoint = this.getClosestStrokeEndpoint(strokeObj, tagCenter);
@@ -1140,7 +1184,7 @@ export class TagManager {
   }
 
   // Update connector line between tag and stroke
-  updateConnector(strokeLabel, imageLabel) {
+  updateConnector(strokeLabel, imageLabel, options = {}) {
     const canvas = this.canvas;
     if (!canvas) return;
 
@@ -1156,7 +1200,8 @@ export class TagManager {
       (typeof canvas.contains !== 'function' || canvas.contains(connectedStrokeObj));
     if (!isLiveStroke && this.metadataManager) {
       const scopedImageLabel =
-        tagObj.imageLabel || this.normalizeImageLabel(imageLabel || tagObj.imageLabel);
+        tagObj.scopedLabel ||
+        this.normalizeImageLabel(imageLabel || tagObj.imageLabel || window.currentImageLabel);
       const candidate =
         this.metadataManager.vectorStrokesByImage?.[scopedImageLabel]?.[displayLabel];
       if (candidate) {
@@ -1167,36 +1212,22 @@ export class TagManager {
 
     if (!connectedStrokeObj) return;
 
-    // Reposition tag to maintain its offset from the stroke
-    // Only if tag is NOT part of an active selection (multi-select)
-    // If it IS in active selection, Fabric handles the movement
+    // Only move the tag when the connected stroke itself moved. Measurement edits,
+    // tag drags, and style refreshes should only redraw the connector line.
     const activeObject = canvas.getActiveObject();
     const isTagInSelection =
       activeObject &&
       activeObject.type === 'activeSelection' &&
       activeObject.getObjects().includes(tagObj);
 
-    if (!isTagInSelection) {
-      let strokeCenter;
-
-      // Calculate absolute stroke center
-      if (connectedStrokeObj.group) {
-        // Stroke is in a group (activeSelection)
-        // getCenterPoint() returns coordinates relative to the group center
-        const centerRelative = connectedStrokeObj.getCenterPoint();
-        const groupMatrix = connectedStrokeObj.group.calcTransformMatrix();
-
-        // Transform to absolute canvas coordinates
-        strokeCenter = fabric.util.transformPoint(centerRelative, groupMatrix);
-      } else {
-        // Stroke is directly on canvas
-        strokeCenter = connectedStrokeObj.getCenterPoint();
-      }
+    if (options?.repositionTag === true && !isTagInSelection) {
+      const strokeCenter = this.getCanvasObjectCenter(connectedStrokeObj);
 
       if (strokeCenter) {
         // Use stored offset or default
         const tagOffset = tagObj.tagOffset || connectedStrokeObj.tagOffset || { x: 20, y: -10 };
         tagObj.tagOffset = { x: tagOffset.x, y: tagOffset.y };
+        connectedStrokeObj.tagOffset = { x: tagOffset.x, y: tagOffset.y };
         const newTagLeft = strokeCenter.x + tagOffset.x;
         const newTagTop = strokeCenter.y + tagOffset.y;
 
@@ -1210,20 +1241,8 @@ export class TagManager {
     }
 
     // Get tag center in canvas space
-    let tagCenter;
-
-    if (tagObj.group) {
-      // Tag is in a group (activeSelection)
-      // getCenterPoint() returns coordinates relative to the group center
-      const centerRelative = tagObj.getCenterPoint();
-      const groupMatrix = tagObj.group.calcTransformMatrix();
-
-      // Transform to absolute canvas coordinates
-      tagCenter = fabric.util.transformPoint(centerRelative, groupMatrix);
-    } else {
-      // Tag is directly on canvas
-      tagCenter = tagObj.getCenterPoint();
-    }
+    const tagCenter = this.getCanvasObjectCenter(tagObj);
+    if (!tagCenter) return;
 
     // Get closest stroke endpoint
     const strokeEndpoint = this.getClosestStrokeEndpoint(connectedStrokeObj, tagCenter);
@@ -1272,8 +1291,8 @@ export class TagManager {
     if (connector) {
       connector.set({
         visible: connectorVisible,
-        evented: connectorVisible,
-        selectable: connectorVisible,
+        evented: false,
+        selectable: false,
       });
     }
 
@@ -1346,13 +1365,23 @@ export class TagManager {
     if (!canvas || !currentScope) return;
 
     let removed = 0;
+    const normalizedScope = this.normalizeImageLabel(currentScope);
+    const baseScope =
+      typeof normalizedScope === 'string' && normalizedScope.includes('::tab:')
+        ? normalizedScope.split('::tab:')[0]
+        : normalizedScope;
+    const belongsToScope = obj => {
+      const objectScope = obj?.scopedLabel || obj?.imageLabel || '';
+      if (!objectScope || objectScope.startsWith('__guide__')) return true;
+      if (objectScope === normalizedScope) return true;
+      if (objectScope === baseScope && normalizedScope === baseScope) return true;
+      return false;
+    };
 
     // Remove tracked tags from wrong scope
     for (const [key, tagObj] of this.tagObjects.entries()) {
       if (!tagObj) continue;
-      const il = tagObj.imageLabel || '';
-      if (il.startsWith('__guide__')) continue;
-      if (il && il !== currentScope && !il.startsWith(`${currentScope}::tab:`)) {
+      if (!belongsToScope(tagObj)) {
         if (tagObj.connectorLine) canvas.remove(tagObj.connectorLine);
         canvas.remove(tagObj);
         this.tagObjects.delete(key);
@@ -1363,10 +1392,7 @@ export class TagManager {
     // Also sweep for untracked orphans from wrong scope
     const orphans = canvas.getObjects().filter(obj => {
       if (!obj.isTag && !obj.isConnectorLine) return false;
-      const il = obj.imageLabel || '';
-      if (il.startsWith('__guide__')) return false;
-      if (il && il !== currentScope && !il.startsWith(`${currentScope}::tab:`)) return true;
-      return false;
+      return !belongsToScope(obj);
     });
     for (const obj of orphans) {
       canvas.remove(obj);
@@ -1387,7 +1413,8 @@ export class TagManager {
 
     const { key, tagObj } = found;
     tagObj.strokeLabel = newLabel;
-    const resolvedImageLabel = tagObj.imageLabel || this.normalizeImageLabel(imageLabel);
+    const resolvedImageLabel =
+      this.getTagScopeLabel(tagObj) || this.normalizeImageLabel(imageLabel);
     const newKey = this.getTagKey(newLabel, resolvedImageLabel);
 
     this.tagObjects.delete(key);
@@ -1487,7 +1514,7 @@ export class TagManager {
     tagObj.setCoords();
 
     // Update connector line if needed
-    this.updateConnector(strokeLabel);
+    this.updateConnector(strokeLabel, tagObj.scopedLabel || tagObj.imageLabel);
 
     // Force canvas re-render
     if (this.canvas) {
@@ -1516,7 +1543,7 @@ export class TagManager {
   updateAllTagTexts() {
     for (const tagObj of this.tagObjects.values()) {
       if (!tagObj || !tagObj.strokeLabel) continue;
-      this.updateTagText(tagObj.strokeLabel, tagObj.imageLabel);
+      this.updateTagText(tagObj.strokeLabel, this.getTagScopeLabel(tagObj));
     }
   }
 
@@ -1573,7 +1600,7 @@ export class TagManager {
 
             // Update group coordinates and render
             tagObj.setCoords();
-            this.updateConnector(strokeLabel, currentViewId);
+            this.updateConnector(strokeLabel, this.getTagScopeLabel(tagObj) || currentViewId);
             canvas.renderAll();
           }, 10); // Small delay to allow text measurement
         }
@@ -1808,8 +1835,8 @@ export class TagManager {
     if (tagObj.connectorLine) {
       tagObj.connectorLine.set({
         visible: effectiveVisible,
-        evented: effectiveVisible,
-        selectable: effectiveVisible,
+        evented: false,
+        selectable: false,
       });
     }
     this.canvas?.requestRenderAll();
@@ -1819,8 +1846,9 @@ export class TagManager {
     const normalized = imageLabel ? this.normalizeImageLabel(imageLabel) : null;
     for (const tagObj of this.tagObjects.values()) {
       if (!tagObj || !tagObj.strokeLabel) continue;
-      if (normalized && tagObj.imageLabel !== normalized) continue;
-      this.updateConnector(tagObj.strokeLabel, tagObj.imageLabel);
+      const tagScope = tagObj.scopedLabel || tagObj.imageLabel;
+      if (normalized && tagScope !== normalized && tagObj.imageLabel !== normalized) continue;
+      this.updateConnector(tagObj.strokeLabel, tagScope);
     }
   }
 
@@ -1857,7 +1885,7 @@ export class TagManager {
     const tags = Array.from(this.tagObjects.values());
     tags.forEach(tagObj => {
       if (!tagObj?.strokeLabel || !tagObj?.connectedStroke) return;
-      this.createTag(tagObj.strokeLabel, tagObj.imageLabel, tagObj.connectedStroke);
+      this.createTag(tagObj.strokeLabel, this.getTagScopeLabel(tagObj), tagObj.connectedStroke);
     });
     this.canvas?.requestRenderAll();
   }
@@ -1867,7 +1895,7 @@ export class TagManager {
     uniqueKeys.forEach(key => {
       const tagObj = this.tagObjects.get(key);
       if (!tagObj?.strokeLabel || !tagObj?.connectedStroke) return;
-      this.createTag(tagObj.strokeLabel, tagObj.imageLabel, tagObj.connectedStroke);
+      this.createTag(tagObj.strokeLabel, this.getTagScopeLabel(tagObj), tagObj.connectedStroke);
     });
     this.canvas?.requestRenderAll();
   }
@@ -1930,10 +1958,13 @@ export class TagManager {
         obj.connectedStroke?.customData?.strokeLabel ||
         obj.connectedStroke?.customData?.label;
       const imageLabel =
+        obj.scopedLabel ||
         obj.imageLabel ||
         obj.strokeMetadata?.imageLabel ||
         obj.customData?.imageLabel ||
+        obj.connectedTag?.scopedLabel ||
         obj.connectedStroke?.strokeMetadata?.imageLabel ||
+        obj.connectedStroke?.scopedLabel ||
         obj.connectedStroke?.imageLabel ||
         obj.connectedStroke?.customData?.imageLabel;
 

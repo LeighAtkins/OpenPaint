@@ -12,10 +12,19 @@ const curveDebug = (...args) => {
     console.log(...args);
   }
 };
+const curveWarn = (...args) => {
+  if (CURVE_DEBUG_ENABLED) {
+    console.warn(...args);
+  }
+};
 
 export class FabricControls {
+  static isSnapModifier(event) {
+    return Boolean(event?.ctrlKey || event?.metaKey);
+  }
+
   /**
-   * Helper function to find snap point when Ctrl is held during editing
+   * Helper function to find snap point when the snap modifier is held during editing
    * @param {fabric.Canvas} canvas - The canvas
    * @param {Object} pointer - Current mouse position {x, y}
    * @param {fabric.Object} excludeObject - The object being edited (to exclude from snap)
@@ -311,7 +320,7 @@ export class FabricControls {
       cornerStrokeColor: '#3b82f6',
       lockScalingX: true,
       lockScalingY: true,
-      lockRotation: true,
+      lockRotation: false,
       perPixelTargetFind: true,
       padding: 8,
       objectCaching: false,
@@ -340,19 +349,19 @@ export class FabricControls {
       // Resolve event object (eventData might be the event itself or a wrapper)
       const event = eventData.e || eventData;
 
-      // Get pointer and check for Ctrl key (screen space)
+      // Get pointer and check for snap modifier (screen space)
       const rawPointer = canvas.getPointer(event);
-      const isCtrlHeld = event.ctrlKey;
+      const isSnapHeld = FabricControls.isSnapModifier(event);
 
-      if (isCtrlHeld) {
-        curveDebug('[FabricControls] Line start - Ctrl held, checking for snap');
+      if (isSnapHeld) {
+        curveDebug('[FabricControls] Line start - snap modifier held, checking for snap');
       }
 
-      const pointer = isCtrlHeld
+      const pointer = isSnapHeld
         ? FabricControls.getSnapPoint(canvas, rawPointer, lineObj)
         : rawPointer;
 
-      if (isCtrlHeld && pointer !== rawPointer) {
+      if (isSnapHeld && pointer !== rawPointer) {
         curveDebug('[FabricControls] Line start snapped to:', pointer);
       }
 
@@ -407,19 +416,19 @@ export class FabricControls {
       // Resolve event object
       const event = eventData.e || eventData;
 
-      // Get pointer and check for Ctrl key (screen space)
+      // Get pointer and check for snap modifier (screen space)
       const rawPointer = canvas.getPointer(event);
-      const isCtrlHeld = event.ctrlKey;
+      const isSnapHeld = FabricControls.isSnapModifier(event);
 
-      if (isCtrlHeld) {
-        curveDebug('[FabricControls] Line end - Ctrl held, checking for snap');
+      if (isSnapHeld) {
+        curveDebug('[FabricControls] Line end - snap modifier held, checking for snap');
       }
 
-      const pointer = isCtrlHeld
+      const pointer = isSnapHeld
         ? FabricControls.getSnapPoint(canvas, rawPointer, lineObj)
         : rawPointer;
 
-      if (isCtrlHeld && pointer !== rawPointer) {
+      if (isSnapHeld && pointer !== rawPointer) {
         curveDebug('[FabricControls] Line end snapped to:', pointer);
       }
 
@@ -507,13 +516,17 @@ export class FabricControls {
       cornerStrokeColor: '#3b82f6',
       lockScalingX: true,
       lockScalingY: true,
-      lockRotation: true,
+      lockRotation: false,
       perPixelTargetFind: true,
       padding: 8,
       objectCaching: false,
     });
 
     path.controls = {};
+    const rotateControl = fabric.Object?.prototype?.controls?.mtr;
+    if (rotateControl) {
+      path.controls.mtr = rotateControl;
+    }
     FabricControls.bindControlVisibility(path);
 
     const getCurveAnchorWorldPoint = (fabricObject, pointIndex) => {
@@ -702,17 +715,17 @@ export class FabricControls {
         // Resolve event object
         const event = eventData.e || eventData;
 
-        // Get pointer and check for Ctrl key
+        // Get pointer and check for snap modifier
         const rawPointer = canvas.getPointer(event);
-        const isCtrlHeld = event.ctrlKey;
+        const isSnapHeld = FabricControls.isSnapModifier(event);
 
         if (shouldLog) {
           curveDebug(
-            `[CURVE DEBUG] rawPointer: (${rawPointer.x.toFixed(1)}, ${rawPointer.y.toFixed(1)}), ctrlHeld: ${isCtrlHeld}`
+            `[CURVE DEBUG] rawPointer: (${rawPointer.x.toFixed(1)}, ${rawPointer.y.toFixed(1)}), snapHeld: ${isSnapHeld}`
           );
         }
 
-        const snappedPointer = isCtrlHeld
+        const snappedPointer = isSnapHeld
           ? FabricControls.getSnapPoint(canvas, rawPointer, pathObj)
           : rawPointer;
 
@@ -901,10 +914,10 @@ export class FabricControls {
       // Resolve event object
       const event = eventData.e || eventData;
 
-      // Get raw pointer and apply snap if Ctrl is held
+      // Get raw pointer and apply snap if the snap modifier is held
       const rawPointer = canvas.getPointer(event);
-      const isCtrlHeld = event.ctrlKey;
-      const pointer = isCtrlHeld
+      const isSnapHeld = FabricControls.isSnapModifier(event);
+      const pointer = isSnapHeld
         ? FabricControls.getSnapPoint(canvas, rawPointer, group)
         : rawPointer;
 
@@ -974,10 +987,10 @@ export class FabricControls {
       // Resolve event object
       const event = eventData.e || eventData;
 
-      // Get raw pointer and apply snap if Ctrl is held
+      // Get raw pointer and apply snap if the snap modifier is held
       const rawPointer = canvas.getPointer(event);
-      const isCtrlHeld = event.ctrlKey;
-      const pointer = isCtrlHeld
+      const isSnapHeld = FabricControls.isSnapModifier(event);
+      const pointer = isSnapHeld
         ? FabricControls.getSnapPoint(canvas, rawPointer, group)
         : rawPointer;
 

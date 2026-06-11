@@ -2,6 +2,7 @@ import {
   isR2Configured,
   getR2ConfigStatus,
   createPresignedUploadUrl,
+  uploadR2Object,
   createPresignedDownloadUrl,
   deleteR2Objects,
   copyR2Object,
@@ -54,6 +55,56 @@ export function registerR2Routes(app, basePath) {
       return res.status(400).json({
         success: false,
         message: error instanceof Error ? error.message : 'Failed to create presigned upload URL',
+      });
+    }
+  });
+
+  app.put(`${basePath}/upload`, async (req, res) => {
+    try {
+      if (!isR2Configured()) {
+        return res.status(503).json({
+          success: false,
+          message: 'R2 storage is not configured',
+          ...getR2ConfigStatus(),
+        });
+      }
+
+      const key = String(req.query?.key || '').trim();
+      if (!key) {
+        return res.status(400).json({
+          success: false,
+          message: 'key query parameter is required',
+        });
+      }
+
+      const body =
+        Buffer.isBuffer(req.body) || typeof req.body === 'string'
+          ? req.body
+          : req.rawBody || Buffer.from([]);
+      if (!body || body.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Upload body is empty',
+        });
+      }
+
+      const result = await uploadR2Object({
+        key,
+        body,
+        contentType: req.get('content-type') || 'application/octet-stream',
+        cacheControl: req.get('cache-control') || undefined,
+      });
+
+      return res.json({
+        success: true,
+        provider: 'r2',
+        key: result.key,
+        publicUrl: result.publicUrl,
+      });
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to upload object',
       });
     }
   });

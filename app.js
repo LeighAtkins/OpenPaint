@@ -27,12 +27,14 @@ import {
 import cwMeasurementsHandler from './server/vercel-routes/cw/measurements.js';
 import measurementGuideCodesHandler from './api/measurement-guides/codes.js';
 import measurementGuideSvgHandler from './api/measurement-guides/svg.js';
+import measurementGuideFileHandler from './api/measurement-guides/file.js';
 import { spawn } from 'child_process';
 import { createClient } from '@supabase/supabase-js';
 import { generateSamOverlay } from './server/mos/sam-overlay.js';
 const { registerR2Routes } = await import('./server/r2-routes.js');
-const { isR2Configured, createPresignedUploadUrl, getR2PublicUrl } =
-  await import('./server/r2-storage.js');
+const { isR2Configured, createPresignedUploadUrl, getR2PublicUrl } = await import(
+  './server/r2-storage.js'
+);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -472,10 +474,12 @@ app.use('/uploads', express.static(uploadDir));
 // Parse JSON request bodies (increase limit for large projects)
 app.use(express.json({ limit: '200mb' }));
 app.use(express.urlencoded({ extended: true, limit: '200mb' }));
+app.use('/api/storage/r2/upload', express.raw({ type: '*/*', limit: '200mb' }));
 
 registerR2Routes(app, '/api/storage/r2');
 app.all('/api/measurement-guides/codes', (req, res) => measurementGuideCodesHandler(req, res));
 app.all('/api/measurement-guides/svg', (req, res) => measurementGuideSvgHandler(req, res));
+app.all('/api/measurement-guides/file', (req, res) => measurementGuideFileHandler(req, res));
 
 // Route handlers
 app.get('/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
@@ -1001,12 +1005,12 @@ function getSaveQualification(projectData) {
     const v = views[k];
     return Boolean(
       v &&
-      (v.image ||
-        v.backgroundImage ||
-        v.imageData ||
-        v.imageUrl ||
-        v.imageDataURL ||
-        v.canvasJSON?.backgroundImage?.src)
+        (v.image ||
+          v.backgroundImage ||
+          v.imageData ||
+          v.imageUrl ||
+          v.imageDataURL ||
+          v.canvasJSON?.backgroundImage?.src)
     );
   });
 
@@ -2011,6 +2015,10 @@ app.get('/api/measurement-guides/codes', async (req, res) => {
 
 app.get('/api/measurement-guides/svg', async (req, res) => {
   return measurementGuideSvgHandler(req, res);
+});
+
+app.get('/api/measurement-guides/file', async (req, res) => {
+  return measurementGuideFileHandler(req, res);
 });
 
 // ============== END PROJECT CRUD API ROUTES ==============

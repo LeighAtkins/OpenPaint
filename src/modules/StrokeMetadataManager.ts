@@ -35,6 +35,37 @@ export class StrokeMetadataManager {
     return imageLabel === viewId || imageLabel.startsWith(`${viewId}::tab:`);
   }
 
+  getBaseViewIdFromScope(imageLabel) {
+    const raw = typeof imageLabel === 'string' ? imageLabel.trim() : '';
+    if (!raw) return '';
+    return raw.includes('::tab:') ? raw.split('::tab:')[0] || raw : raw;
+  }
+
+  persistActiveSplitStrokeSoon(scopedLabel) {
+    if (typeof window === 'undefined') return;
+
+    const wrapper = document.getElementById('main-canvas-wrapper');
+    const isGuideSplitActive = wrapper?.classList.contains('guide-split-active') === true;
+    const isMeasurementWorkspaceActive = window.isMeasurementSplitWorkspaceActive?.() === true;
+    if (!isGuideSplitActive && !isMeasurementWorkspaceActive) return;
+
+    const projectManager = window.app?.projectManager || window.projectManager;
+    if (!projectManager?.saveCurrentViewState) return;
+
+    const targetViewId = this.getBaseViewIdFromScope(scopedLabel);
+    const persistIfStillCurrent = () => {
+      const currentViewId = String(projectManager.currentViewId || '').trim();
+      if (!targetViewId || currentViewId !== targetViewId) return;
+      projectManager.saveCurrentViewState({ skipViewport: true });
+    };
+
+    persistIfStillCurrent();
+    requestAnimationFrame(() => {
+      persistIfStillCurrent();
+      setTimeout(persistIfStillCurrent, 90);
+    });
+  }
+
   clearScopedBucketsForView(viewId) {
     const clearMap = map => {
       Object.keys(map || {}).forEach(key => {
@@ -138,6 +169,7 @@ export class StrokeMetadataManager {
           },
         })
       );
+      this.persistActiveSplitStrokeSoon(scopedLabel);
     }
     // Set flag to auto-focus measurement input for this new stroke
     this._shouldAutoFocus = true;
@@ -312,7 +344,12 @@ export class StrokeMetadataManager {
               ? measurement.cm / 2.54
               : (typeof measurement.inchWhole === 'number' ? measurement.inchWhole : 0) +
                 (typeof measurement.inchFraction === 'number' ? measurement.inchFraction : 0),
-        inputUnit: measurement.inputUnit === 'cm' ? 'cm' : measurement.inputUnit === 'inches' ? 'inches' : undefined,
+        inputUnit:
+          measurement.inputUnit === 'cm'
+            ? 'cm'
+            : measurement.inputUnit === 'inches'
+              ? 'inches'
+              : undefined,
       };
       this.strokeMeasurements[imageLabel][strokeLabel] = validatedMeasurement;
     } else {
@@ -1167,6 +1204,9 @@ export class StrokeMetadataManager {
         if (window.app?.tagManager) {
           window.app.tagManager.updateTagVisibility(strokeLabel, currentViewId, newVisibility);
         }
+        if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+          window.syncCaptureTabCanvasVisibility(currentViewId);
+        }
         if (window.app?.canvasManager?.fabricCanvas) {
           window.app.canvasManager.fabricCanvas.renderAll();
         }
@@ -1263,6 +1303,9 @@ export class StrokeMetadataManager {
         this.setLabelVisibility(currentViewId, strokeLabel, newVisibility);
         if (window.app?.tagManager) {
           window.app.tagManager.updateTagVisibility(strokeLabel, currentViewId, newVisibility);
+        }
+        if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+          window.syncCaptureTabCanvasVisibility(currentViewId);
         }
         this.updateStrokeVisibilityControls();
       });

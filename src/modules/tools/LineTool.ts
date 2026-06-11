@@ -17,6 +17,8 @@ export class LineTool extends BaseTool {
     this.strokeColor = '#3b82f6'; // Default to bright blue
     this.strokeWidth = 2;
     this.dashPattern = []; // Empty = solid line
+    this.lineStyle = 'solid';
+    this.tapeTickSpacing = 1;
 
     // Snap-to-line properties
     this.snapPoint = null; // {x, y} or null
@@ -30,6 +32,10 @@ export class LineTool extends BaseTool {
     this.onMouseDown = this.onMouseDown.bind(this);
     this.onMouseMove = this.onMouseMove.bind(this);
     this.onMouseUp = this.onMouseUp.bind(this);
+  }
+
+  isSnapModifier(evt) {
+    return Boolean(evt?.ctrlKey || evt?.metaKey);
   }
 
   activate() {
@@ -82,15 +88,20 @@ export class LineTool extends BaseTool {
 
     const evt = o.e;
 
-    // If clicking on existing object AND Ctrl is NOT held, let Fabric handle dragging
-    // If Ctrl IS held, ignore the object and proceed to draw (with snap)
-    if (o.target && !evt.ctrlKey) {
-      console.log('[LineTool] Clicked on object without Ctrl - allowing selection');
+    const isSnapHeld = this.isSnapModifier(evt);
+
+    // If clicking on existing object AND snap modifier is NOT held, let Fabric handle dragging.
+    // If snap modifier IS held, ignore the object and proceed to draw with snap.
+    if (o.target && !isSnapHeld) {
+      console.log('[LineTool] Clicked on object without snap modifier - allowing selection');
       return;
     }
 
-    if (o.target && evt.ctrlKey) {
-      console.log('[LineTool] Clicked on object WITH Ctrl - ignoring selection, will draw');
+    if (o.target && isSnapHeld) {
+      evt.preventDefault?.();
+      console.log(
+        '[LineTool] Clicked on object WITH snap modifier - ignoring selection, will draw'
+      );
     }
 
     // Don't start drawing if this is a pan gesture (Alt, Shift, or touch gesture)
@@ -134,7 +145,13 @@ export class LineTool extends BaseTool {
       stroke: this.strokeColor,
       originX: 'center',
       originY: 'center',
-      strokeDashArray: this.dashPattern.length > 0 ? this.dashPattern : null,
+      strokeDashArray:
+        this.lineStyle === 'tape' || this.lineStyle === 'stretchy'
+          ? null
+          : this.dashPattern.length > 0
+            ? this.dashPattern
+            : null,
+      lineStyle: this.lineStyle,
       selectable: false,
       evented: false,
     });
@@ -142,6 +159,10 @@ export class LineTool extends BaseTool {
     // Apply arrow settings if available
     if (window.app && window.app.arrowManager) {
       window.app.arrowManager.applyArrows(this.line);
+      if (this.line.arrowSettings) {
+        this.line.arrowSettings.lineStyle = this.lineStyle;
+        this.line.arrowSettings.tapeTickSpacing = this.tapeTickSpacing;
+      }
     }
 
     this.canvas.add(this.line);
@@ -150,12 +171,14 @@ export class LineTool extends BaseTool {
   onMouseMove(o) {
     const evt = o.e;
     const pointer = this.canvas.getPointer(evt);
+    const isSnapHeld = this.isSnapModifier(evt);
 
     if (!this.isDrawing) {
       // Not drawing - check for snap on hover
-      if (evt.ctrlKey) {
+      if (isSnapHeld) {
+        evt.preventDefault?.();
         this.updateSnapPoint(pointer);
-        // Disable object selection while Ctrl is held (including tags)
+        // Disable object selection while snap modifier is held (including tags)
         this.canvas.forEachObject(obj => {
           if (!obj.isConnectorLine) {
             obj.set({
@@ -165,7 +188,7 @@ export class LineTool extends BaseTool {
           }
         });
       } else {
-        // Ctrl not held - clear snap and re-enable selection
+        // Snap modifier not held - clear snap and re-enable selection
         this.clearSnap();
         this.canvas.forEachObject(obj => {
           if (!obj.isConnectorLine) {
@@ -181,7 +204,8 @@ export class LineTool extends BaseTool {
     }
 
     // Drawing - update line endpoint with optional snap
-    if (evt.ctrlKey) {
+    if (isSnapHeld) {
+      evt.preventDefault?.();
       // Snap the endpoint while drawing
       const snapResult = this.findSnapPointForDrawing(pointer);
       if (snapResult) {
@@ -492,7 +516,49 @@ export class LineTool extends BaseTool {
     this.dashPattern = pattern || [];
     // Update existing line if drawing
     if (this.line && this.isDrawing) {
-      this.line.set('strokeDashArray', this.dashPattern.length > 0 ? this.dashPattern : null);
+      this.line.set(
+        'strokeDashArray',
+        this.lineStyle === 'tape' || this.lineStyle === 'stretchy'
+          ? null
+          : this.dashPattern.length > 0
+            ? this.dashPattern
+            : null
+      );
+      this.canvas.requestRenderAll();
+    }
+  }
+
+  setLineStyle(style) {
+    this.lineStyle = style === 'tape' || style === 'stretchy' ? style : 'solid';
+    if (this.line && this.isDrawing) {
+      this.line.lineStyle = this.lineStyle;
+      this.line.dashSettings = {
+        ...(this.line.dashSettings || {}),
+        style,
+      };
+      this.line.arrowSettings = this.line.arrowSettings || {};
+      this.line.arrowSettings.lineStyle = this.lineStyle;
+      this.line.arrowSettings.tapeTickSpacing = this.tapeTickSpacing;
+      this.line.set(
+        'strokeDashArray',
+        this.lineStyle === 'tape' || this.lineStyle === 'stretchy'
+          ? null
+          : this.dashPattern.length > 0
+            ? this.dashPattern
+            : null
+      );
+      this.line.dirty = true;
+      this.canvas.requestRenderAll();
+    }
+  }
+
+  setTapeTickSpacing(spacing) {
+    const numeric = Number(spacing);
+    this.tapeTickSpacing = Number.isFinite(numeric) ? Math.max(0.55, Math.min(2.25, numeric)) : 1;
+    if (this.line && this.isDrawing) {
+      this.line.arrowSettings = this.line.arrowSettings || {};
+      this.line.arrowSettings.tapeTickSpacing = this.tapeTickSpacing;
+      this.line.dirty = true;
       this.canvas.requestRenderAll();
     }
   }

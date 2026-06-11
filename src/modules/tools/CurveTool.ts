@@ -17,6 +17,8 @@ export class CurveTool extends BaseTool {
     this.strokeWidth = 2;
     this.isDrawing = false;
     this.dashPattern = []; // Dash pattern for curves
+    this.lineStyle = 'solid';
+    this.tapeTickSpacing = 1;
 
     // Snap properties
     this.snapPoint = null;
@@ -29,6 +31,10 @@ export class CurveTool extends BaseTool {
     this.onMouseMove = this.onMouseMove.bind(this);
     this.onDoubleClick = this.onDoubleClick.bind(this);
     this.onKeyDown = this.onKeyDown.bind(this);
+  }
+
+  isSnapModifier(evt) {
+    return Boolean(evt?.ctrlKey || evt?.metaKey);
   }
 
   activate() {
@@ -76,14 +82,16 @@ export class CurveTool extends BaseTool {
     if (!this.isActive) return;
 
     const evt = o.e;
+    const isSnapHeld = this.isSnapModifier(evt);
 
-    // If clicking on existing object AND Ctrl is NOT held, let Fabric handle dragging
-    // If Ctrl IS held, ignore the object and proceed to draw (with snap)
-    if (o.target && !evt.ctrlKey) {
+    // If clicking on existing object AND snap modifier is NOT held, let Fabric handle dragging.
+    // If snap modifier IS held, ignore the object and proceed to draw with snap.
+    if (o.target && !isSnapHeld) {
       return;
     }
 
-    if (o.target && evt.ctrlKey) {
+    if (o.target && isSnapHeld) {
+      evt.preventDefault?.();
       this.canvas.discardActiveObject();
     }
 
@@ -103,10 +111,11 @@ export class CurveTool extends BaseTool {
 
     const rawPointer = this.canvas.getPointer(o.e);
 
-    // Check for snap if Ctrl is held
+    // Check for snap if snap modifier is held
     let pointer = rawPointer;
     let snapTarget = null;
-    if (evt.ctrlKey) {
+    if (isSnapHeld) {
+      evt.preventDefault?.();
       const snapResult = this.findSnapPointForDrawing(rawPointer);
       if (snapResult) {
         pointer = snapResult.point;
@@ -130,6 +139,8 @@ export class CurveTool extends BaseTool {
       evented: false,
       hasControls: false,
       hasBorders: false,
+      excludeFromExport: true,
+      isCurveDrawingMarker: true,
     });
     this.canvas.add(marker);
     this.pointMarkers.push(marker);
@@ -154,9 +165,11 @@ export class CurveTool extends BaseTool {
 
     const rawPointer = this.canvas.getPointer(o.e);
     let pointer = rawPointer;
+    const isSnapHeld = this.isSnapModifier(o.e);
 
-    // Check for snap if Ctrl is held
-    if (o.e.ctrlKey) {
+    // Check for snap if snap modifier is held
+    if (isSnapHeld) {
+      o.e.preventDefault?.();
       const snapResult = this.findSnapPointForDrawing(rawPointer);
       if (snapResult) {
         pointer = snapResult.point;
@@ -328,7 +341,13 @@ export class CurveTool extends BaseTool {
       stroke: this.strokeColor,
       strokeWidth: this.strokeWidth,
       fill: '',
-      strokeDashArray: this.dashPattern.length > 0 ? this.dashPattern : null,
+      strokeDashArray:
+        this.lineStyle === 'tape' || this.lineStyle === 'stretchy'
+          ? null
+          : this.dashPattern.length > 0
+            ? this.dashPattern
+            : null,
+      lineStyle: this.lineStyle,
       selectable: false,
       evented: false,
       hasControls: false,
@@ -338,6 +357,10 @@ export class CurveTool extends BaseTool {
 
     if (window.app && window.app.arrowManager) {
       window.app.arrowManager.applyArrows(this.previewPath);
+      if (this.previewPath.arrowSettings) {
+        this.previewPath.arrowSettings.lineStyle = this.lineStyle;
+        this.previewPath.arrowSettings.tapeTickSpacing = this.tapeTickSpacing;
+      }
     }
 
     this.canvas.add(this.previewPath);
@@ -395,8 +418,7 @@ export class CurveTool extends BaseTool {
       this.canvas.remove(this.previewPath);
       this.previewPath = null;
     }
-    this.pointMarkers.forEach(marker => this.canvas.remove(marker));
-    this.pointMarkers = [];
+    this.cleanupDrawingMarkers();
 
     // Create final curve path
     const pathString = PathUtils.createSmoothPath(this.points);
@@ -404,7 +426,13 @@ export class CurveTool extends BaseTool {
       stroke: this.strokeColor,
       strokeWidth: this.strokeWidth,
       fill: 'transparent',
-      strokeDashArray: this.dashPattern.length > 0 ? this.dashPattern : null,
+      strokeDashArray:
+        this.lineStyle === 'tape' || this.lineStyle === 'stretchy'
+          ? null
+          : this.dashPattern.length > 0
+            ? this.dashPattern
+            : null,
+      lineStyle: this.lineStyle,
       selectable: true,
       evented: true,
       perPixelTargetFind: true,
@@ -490,9 +518,13 @@ export class CurveTool extends BaseTool {
     // Add to canvas
     this.canvas.add(curve);
 
-    // Add arrowheads if enabled
+    // Add arrowheads if enabled, matching straight-line defaults.
     if (window.app && window.app.arrowManager) {
       window.app.arrowManager.applyArrows(curve);
+      if (curve.arrowSettings) {
+        curve.arrowSettings.lineStyle = this.lineStyle;
+        curve.arrowSettings.tapeTickSpacing = this.tapeTickSpacing;
+      }
     }
 
     // Add metadata for labeling
@@ -540,12 +572,32 @@ export class CurveTool extends BaseTool {
 
     // Keep newly-created curve anchors hidden until user explicitly re-selects the curve.
     this.canvas.discardActiveObject();
+    curve.set({ hasControls: false, hasBorders: false });
     curve.setCoords();
     this.canvas.requestRenderAll();
 
     // Fire object:added event
     console.log('[CurveTool] Firing object:added event');
     this.canvas.fire('object:added', { target: curve });
+    requestAnimationFrame(() => {
+      if (this.canvas.getActiveObject?.() === curve) {
+        this.canvas.discardActiveObject();
+      }
+      curve.set({ hasControls: false, hasBorders: false });
+      curve.setCoords();
+      this.canvas.requestRenderAll();
+    });
+  }
+
+  cleanupDrawingMarkers() {
+    this.pointMarkers.forEach(marker => this.canvas.remove(marker));
+    this.pointMarkers = [];
+
+    const orphanMarkers = this.canvas
+      .getObjects()
+      .filter(obj => obj?.isCurveDrawingMarker || obj === this.snapIndicator);
+    orphanMarkers.forEach(marker => this.canvas.remove(marker));
+    this.snapIndicator = null;
   }
 
   cancelDrawing() {
@@ -554,8 +606,7 @@ export class CurveTool extends BaseTool {
       this.canvas.remove(this.previewPath);
       this.previewPath = null;
     }
-    this.pointMarkers.forEach(marker => this.canvas.remove(marker));
-    this.pointMarkers = [];
+    this.cleanupDrawingMarkers();
 
     // Reset state
     this.points = [];
@@ -581,8 +632,47 @@ export class CurveTool extends BaseTool {
     if (this.previewPath && this.points.length >= 2) {
       this.previewPath.set(
         'strokeDashArray',
-        this.dashPattern.length > 0 ? this.dashPattern : null
+        this.lineStyle === 'tape' || this.lineStyle === 'stretchy'
+          ? null
+          : this.dashPattern.length > 0
+            ? this.dashPattern
+            : null
       );
+      this.canvas.renderAll();
+    }
+  }
+
+  setLineStyle(style) {
+    this.lineStyle = style === 'tape' || style === 'stretchy' ? style : 'solid';
+    if (this.previewPath && this.points.length >= 2) {
+      this.previewPath.lineStyle = this.lineStyle;
+      this.previewPath.dashSettings = {
+        ...(this.previewPath.dashSettings || {}),
+        style,
+      };
+      this.previewPath.arrowSettings = this.previewPath.arrowSettings || {};
+      this.previewPath.arrowSettings.lineStyle = this.lineStyle;
+      this.previewPath.arrowSettings.tapeTickSpacing = this.tapeTickSpacing;
+      this.previewPath.set(
+        'strokeDashArray',
+        this.lineStyle === 'tape' || this.lineStyle === 'stretchy'
+          ? null
+          : this.dashPattern.length > 0
+            ? this.dashPattern
+            : null
+      );
+      this.previewPath.dirty = true;
+      this.canvas.renderAll();
+    }
+  }
+
+  setTapeTickSpacing(spacing) {
+    const numeric = Number(spacing);
+    this.tapeTickSpacing = Number.isFinite(numeric) ? Math.max(0.55, Math.min(2.25, numeric)) : 1;
+    if (this.previewPath && this.points.length >= 2) {
+      this.previewPath.arrowSettings = this.previewPath.arrowSettings || {};
+      this.previewPath.arrowSettings.tapeTickSpacing = this.tapeTickSpacing;
+      this.previewPath.dirty = true;
       this.canvas.renderAll();
     }
   }

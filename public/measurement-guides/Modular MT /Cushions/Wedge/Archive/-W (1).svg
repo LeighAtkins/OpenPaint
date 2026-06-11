@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 27.3.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 729 729" style="enable-background:new 0 0 729 729;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:none;stroke:#40DD8B;stroke-miterlimit:10;}
+	.st1{fill:none;stroke:#40DD8B;stroke-width:2;stroke-miterlimit:10;}
+	.st2{fill:#40DD8B;}
+	.st3{fill:none;stroke:#EB2027;stroke-miterlimit:10;}
+	.st4{fill:none;stroke:#EB2027;stroke-width:2;stroke-miterlimit:10;}
+	.st5{fill:#EB2027;}
+	.st6{fill:none;stroke:#231F20;stroke-width:4;stroke-linecap:round;stroke-miterlimit:10;}
+	.st7{fill:none;stroke:#231F20;stroke-width:2;stroke-miterlimit:10;}
+	.st8{fill:none;stroke:#231F20;stroke-width:2;stroke-miterlimit:10;stroke-dasharray:5;}
+	.st9{fill:#FFFFFF;stroke:#EB2127;stroke-miterlimit:10;}
+	.st10{fill:#010101;}
+	.st11{font-family:'SetupGrotesk-Medium';}
+	.st12{font-size:20px;}
+</style>
+<g id="bTcm">
+	<line class="st0" x1="205.2" y1="241" x2="205.2" y2="208.5"/>
+</g>
+<g id="mTcm">
+	<polyline class="st1" points="191,258 193.2,255.4 226.5,216.2 228.7,213.6 	"/>
+	<polygon class="st2" points="229.3,220.8 231.5,210.3 221.5,214.1 	"/>
+	<polygon class="st2" points="188.3,253 186.2,263.6 196.2,259.8 	"/>
+</g>
+<g id="bD1cm">
+	<line class="st0" x1="159" y1="403.2" x2="184.9" y2="403.2"/>
+</g>
+<g id="bW2cm">
+	<line class="st3" x1="352.9" y1="601.3" x2="352.9" y2="577"/>
+</g>
+<g id="bW1cm">
+	<line class="st3" x1="435.4" y1="202.8" x2="435.4" y2="176.6"/>
+</g>
+<g id="mW1cm">
+	<polyline class="st4" points="619.5,202.8 557.9,202.8 312.4,202.8 252.9,202.8 	"/>
+	<polygon class="st5" points="259.5,197.2 249.5,202.8 259.5,208.2 	"/>
+	<polygon class="st5" points="614.3,208.2 624.3,202.8 614.3,197.2 	"/>
+</g>
+<g id="mW2cm">
+	<polyline class="st4" points="494,576.2 376.1,576.2 265.5,576.2 207.2,576.2 	"/>
+	<polygon class="st5" points="213.9,570.5 203.9,576.2 213.9,581.8 	"/>
+	<polygon class="st5" points="489,581.7 499,576.2 489,570.6 	"/>
+</g>
+<g id="mD1cm">
+	<polyline class="st1" points="184.5,553 184.5,534.4 184.5,291.3 184.5,272.7 	"/>
+	<polygon class="st2" points="189.5,277.1 184.5,268.3 179.5,277.1 	"/>
+	<polygon class="st2" points="179.5,546.9 184.5,555.8 189.5,546.9 	"/>
+</g>
+<g>
+	<g>
+		<path class="st6" d="M582.3,261.9l41.6-43.3 M549.6,514.4l-44.2,45.4 M627.7,217.4l-78,297 M242.6,217.1h385.1 M202.7,262.8
+			l39.8-45.6 M202.7,560.3V262.8 M505,560.3H202.7 M582.3,261.9l-378.7,0.2 M505,560.3L582.7,261"/>
+	</g>
+	<path class="st7" d="M526.9,478.8l42.4-42.2 M525.6,485.4l42.4-42.2"/>
+	<line class="st8" x1="542.5" y1="471" x2="528" y2="532"/>
+	<line class="st8" x1="549.1" y1="463.6" x2="534.2" y2="526.1"/>
+</g>
+<g>
+	<g>
+		<rect x="414.9" y="149" class="st9" width="42.5" height="27.6"/>
+	</g>
+</g>
+<text transform="matrix(1 0 0 1 429.8891 168.8566)" class="st10 st11 st12">A</text>
+<g>
+	<g>
+		<rect x="332.6" y="592" class="st9" width="42.5" height="27.6"/>
+	</g>
+</g>
+<text transform="matrix(1 0 0 1 346.5604 612.905)" class="st10 st11 st12">B</text>
+<g>
+	<g>
+		<rect x="116.5" y="389.4" class="st0" width="42.5" height="27.6"/>
+	</g>
+</g>
+<text transform="matrix(1 0 0 1 129.4335 410.2479)" class="st10 st11 st12">C</text>
+<g>
+	<g>
+		<rect x="183.9" y="181.3" class="st0" width="42.5" height="27.6"/>
+	</g>
+</g>
+<text transform="matrix(1 0 0 1 197.8862 202.2003)" class="st10 st11 st12">D</text>
+</svg>

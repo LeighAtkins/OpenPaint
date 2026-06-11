@@ -18,6 +18,7 @@
 import { SUPABASE_CONFIG } from '@/config/supabase.config';
 import { Result } from '@/utils/result';
 import { AppError, ErrorCode } from '@/types/app.types';
+import { getStoredSupabaseAuth } from '@/services/auth/storedAuth';
 
 export interface CloudProjectSummary {
   id: string;
@@ -110,23 +111,7 @@ class CloudSaveService {
    * Read the stored auth session from localStorage.
    */
   private getStoredAuth(): { accessToken: string; userId: string } | null {
-    try {
-      const storageKey = Object.keys(localStorage).find(
-        k => k.startsWith('sb-') && k.endsWith('-auth-token')
-      );
-      if (!storageKey) return null;
-      const raw = localStorage.getItem(storageKey);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      const accessToken = parsed?.access_token;
-      const userId = parsed?.user?.id;
-      if (accessToken && userId) {
-        return { accessToken, userId };
-      }
-    } catch {
-      // ignore
-    }
-    return null;
+    return getStoredSupabaseAuth();
   }
 
   /**

@@ -115,6 +115,27 @@ export async function createPresignedUploadUrl({
   };
 }
 
+export async function uploadR2Object({ key, body, contentType, cacheControl }) {
+  const env = getR2Env();
+  const client = getR2Client();
+  const objectKey = normalizeKey(key);
+
+  await client.send(
+    new PutObjectCommand({
+      Bucket: env.bucket,
+      Key: objectKey,
+      Body: body,
+      ContentType: contentType || 'application/octet-stream',
+      ...(cacheControl ? { CacheControl: cacheControl } : {}),
+    })
+  );
+
+  return {
+    key: objectKey,
+    publicUrl: getR2PublicUrl(objectKey),
+  };
+}
+
 export async function createPresignedDownloadUrl({ key, expiresIn = 3600 }) {
   const env = getR2Env();
   const client = getR2Client();
