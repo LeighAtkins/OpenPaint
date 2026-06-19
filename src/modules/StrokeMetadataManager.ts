@@ -104,13 +104,20 @@ export class StrokeMetadataManager {
     }
 
     // Store metadata directly on Fabric object
+    const existingStrokeVisible = this.strokeVisibilityByImage[scopedLabel]?.[strokeLabel];
+    const existingLabelVisible = this.strokeLabelVisibility[scopedLabel]?.[strokeLabel];
+    const strokeVisible =
+      existingStrokeVisible !== undefined ? existingStrokeVisible !== false : true;
+    const labelVisible = existingLabelVisible !== undefined ? existingLabelVisible !== false : true;
+
     obj.strokeMetadata = {
       imageLabel: scopedLabel,
       strokeLabel: strokeLabel,
-      visible: true,
+      visible: strokeVisible,
       // Labels remain visible by default; measurement text stays empty until provided
-      labelVisible: true,
+      labelVisible,
     };
+    obj.visible = strokeVisible;
 
     if (obj.arrowSettings) {
       obj.strokeMetadata.arrowSettings = obj.arrowSettings;
@@ -124,8 +131,12 @@ export class StrokeMetadataManager {
       this.strokeLabelVisibility[scopedLabel] = {};
     }
 
-    this.strokeVisibilityByImage[scopedLabel][strokeLabel] = true;
-    this.strokeLabelVisibility[scopedLabel][strokeLabel] = true;
+    if (existingStrokeVisible === undefined) {
+      this.strokeVisibilityByImage[scopedLabel][strokeLabel] = true;
+    }
+    if (existingLabelVisible === undefined) {
+      this.strokeLabelVisibility[scopedLabel][strokeLabel] = true;
+    }
 
     // Update visibility controls when new stroke is added
     setTimeout(() => {

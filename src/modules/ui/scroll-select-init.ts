@@ -129,13 +129,15 @@ export function initScrollSelectSystem() {
     const measurementSplitActive = document.body?.classList.contains(
       'measurement-split-workspace-active'
     );
+    const multiviewActive = document.body.classList.contains('multiview-active');
     if (
       document.hidden ||
       (window.__suppressScrollSelectUntil && Date.now() < window.__suppressScrollSelectUntil) ||
       window.__isLoadingProject ||
       window.__deferredImageHydrationInProgress ||
       splitActive ||
-      measurementSplitActive
+      measurementSplitActive ||
+      multiviewActive
     ) {
       return false;
     }

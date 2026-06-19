@@ -159,3 +159,41 @@ describe('measurement edit cm preservation', () => {
     expect(metadataManager.strokeMeasurements.front.A1.cm).toBe(129);
   });
 });
+
+describe('stroke metadata visibility preservation', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    document.body.innerHTML = `
+      <div id="strokePanel" aria-expanded="true"></div>
+      <div id="elementsBody"></div>
+      <div id="strokeVisibilityControls"></div>
+    `;
+    (window as any).lineStrokesByImage = {};
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    document.body.innerHTML = '';
+    delete (window as any).lineStrokesByImage;
+  });
+
+  test('does not reset hidden stroke or hidden label state when metadata is reattached', () => {
+    const metadataManager = new StrokeMetadataManager();
+    const strokeObject = {
+      visible: true,
+      type: 'line',
+    };
+
+    metadataManager.strokeVisibilityByImage.front = { A1: false };
+    metadataManager.strokeLabelVisibility.front = { A1: false };
+
+    metadataManager.attachMetadata(strokeObject, 'front', 'A1');
+    vi.runOnlyPendingTimers();
+
+    expect(metadataManager.strokeVisibilityByImage.front.A1).toBe(false);
+    expect(metadataManager.strokeLabelVisibility.front.A1).toBe(false);
+    expect(strokeObject.visible).toBe(false);
+    expect(strokeObject.strokeMetadata.visible).toBe(false);
+    expect(strokeObject.strokeMetadata.labelVisible).toBe(false);
+  });
+});

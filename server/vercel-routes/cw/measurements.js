@@ -2227,10 +2227,8 @@ async function handleProductSearchDiscover({ req, res, body, startedAt }) {
   let attempts = [...fastPathAttempts, ...publicDiscovery.attempts];
   let totalMatchesSeen = Number(publicDiscovery.totalMatchesSeen || productNodes.length || 0);
 
-  const fallbackUsername = String(
-    req.query?.username || body?.username || body?.email || ''
-  ).trim();
-  const fallbackPassword = String(req.query?.password || body?.password || '').trim();
+  const fallbackUsername = String(body?.username || body?.email || '').trim();
+  const fallbackPassword = String(body?.password || '').trim();
 
   if (!productNodes.length && fallbackUsername && fallbackPassword) {
     const fallback = await discoverAuthenticatedProducts({
@@ -2605,8 +2603,8 @@ async function handleProductSearch({ req, res, body, startedAt }) {
 
   const override = {
     baseUrl: req.query?.baseUrl || body?.baseUrl,
-    username: req.query?.username || body?.username || body?.email,
-    password: req.query?.password || body?.password,
+    username: body?.username || body?.email,
+    password: body?.password,
   };
   const mtUsername = String(
     body?.mtUsername || body?.mtUser || body?.mtEmail || override.username || ''
@@ -4694,8 +4692,8 @@ export default async function handler(req, res) {
 
       const override = {
         baseUrl: req.query?.baseUrl || body?.baseUrl,
-        username: req.query?.username || body?.username || body?.email,
-        password: req.query?.password || body?.password,
+        username: body?.username || body?.email,
+        password: body?.password,
       };
 
       const session = await createCwSession(override);
@@ -4757,8 +4755,8 @@ export default async function handler(req, res) {
     const lang = String(req.query?.lang || body?.lang || 'en').trim() || 'en';
     const override = {
       baseUrl: req.query?.baseUrl || body?.baseUrl,
-      username: req.query?.username || body?.username,
-      password: req.query?.password || body?.password,
+      username: body?.username,
+      password: body?.password,
     };
 
     const result = await fetchCwMeasurementsTable({ formId, lang, override });

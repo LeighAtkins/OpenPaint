@@ -82,10 +82,12 @@ export class CanvasManager {
   panX: number;
   panY: number;
   rotateViewport: boolean;
+  isLoadingFromJSON: boolean;
   __activeCurveTransformTarget: FabricObject | null;
   clipboard: ClipboardState | null;
   clipboardPasteCount: number;
   resizeObserver: ResizeObserver | null;
+  suppressResizeRefitUntil: number;
   baseFrameState?: FrameState;
   manualZoomLevel: number | null;
   lastGuideSplitActive: boolean | null;
@@ -141,6 +143,7 @@ export class CanvasManager {
     this.resizeObserver = null;
     this.manualZoomLevel = null;
     this.lastGuideSplitActive = null;
+    this.suppressResizeRefitUntil = 0;
   }
 
   setInteractionGuard(guard: (() => boolean) | null): void {
@@ -1732,7 +1735,15 @@ export class CanvasManager {
       this.fabricCanvas.discardActiveObject();
     }
 
-    const customProps = ['strokeMetadata', 'isArrow', 'customPoints', 'tagOffset', 'arrowSettings'];
+    const customProps = [
+      'strokeMetadata',
+      'isArrow',
+      'customPoints',
+      'tagOffset',
+      'arrowSettings',
+      'dashSettings',
+      'lineStyle',
+    ];
     const serialized = exportable.map(obj => {
       const data = obj.toObject(customProps);
       // Preserve original stroke label so paste can reuse it when no conflict
@@ -2708,7 +2719,10 @@ export class CanvasManager {
     // During live resize, preserve the existing background world rect and zoom.
     // Only the explicit Scale to Page Size mode opts into viewport re-fit on resize.
     const shouldRefitBackgroundOnResize =
-      shouldScaleToPageSize && sizeChanged && !!this.fabricCanvas.backgroundImage;
+      shouldScaleToPageSize &&
+      sizeChanged &&
+      !!this.fabricCanvas.backgroundImage &&
+      Date.now() > this.suppressResizeRefitUntil;
     const hasAuthoritativeCaptureTabState =
       !currentSplitActive && this.hasAuthoritativeCaptureTabState();
     const backgroundWorldRectBeforeResize = shouldRefitBackgroundOnResize
@@ -3846,6 +3860,8 @@ export class CanvasManager {
       'tagOffset',
       'arrowSettings',
       'isPrivacyErase',
+      'dashSettings',
+      'lineStyle',
     ]);
     const exportableObjects = this.fabricCanvas.getObjects().filter(obj => !obj?.excludeFromExport);
     if (json?.objects && exportableObjects.length === json.objects.length) {
@@ -3867,9 +3883,11 @@ export class CanvasManager {
       callback?.();
       return;
     }
+    this.isLoadingFromJSON = true;
     this.fabricCanvas.loadFromJSON(
       json,
       () => {
+        this.isLoadingFromJSON = false;
         // After all objects are loaded, restore custom controls
         this.fabricCanvas.getObjects().forEach(object => {
           if (object?._arrowRenderingAttached) {

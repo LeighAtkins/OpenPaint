@@ -183,7 +183,6 @@ interface CwUiPersistedState {
   baseUrl?: string;
   formId?: string;
   username?: string;
-  password?: string;
   searchTerm?: string;
   probeTerms?: string;
   probeTermsPath?: string;
@@ -1380,7 +1379,6 @@ function createModal(): HTMLElement {
       baseUrl: (baseUrlEl?.value || '').trim(),
       formId: (formIdEl?.value || '').trim(),
       username: (usernameEl?.value || '').trim(),
-      password: passwordEl?.value || '',
       searchTerm: (searchTermEl?.value || '').trim(),
       probeTerms: probeTermsEl?.value || '',
       probeTermsPath: (probeTermsPathEl?.value || '').trim(),
@@ -1393,7 +1391,6 @@ function createModal(): HTMLElement {
   if (persisted.baseUrl && baseUrlEl) baseUrlEl.value = persisted.baseUrl;
   if (persisted.formId && formIdEl) formIdEl.value = persisted.formId;
   if (persisted.username && usernameEl) usernameEl.value = persisted.username;
-  if (persisted.password && passwordEl) passwordEl.value = persisted.password;
   if (persisted.searchTerm && searchTermEl) searchTermEl.value = persisted.searchTerm;
   if (persisted.probeTerms && probeTermsEl) probeTermsEl.value = persisted.probeTerms;
   if (persisted.probeTermsPath && probeTermsPathEl)
@@ -1404,9 +1401,9 @@ function createModal(): HTMLElement {
   if (persisted.lastProbeReport && typeof persisted.lastProbeReport === 'object') {
     lastProbeReport = persisted.lastProbeReport;
   }
-  // Auto-collapse login settings when credentials are already saved
+  // Auto-collapse login settings when username is already saved
   const loginDetails = body.querySelector<HTMLDetailsElement>('#cwLoginDetails');
-  if (loginDetails && persisted.username && persisted.password) {
+  if (loginDetails && persisted.username) {
     loginDetails.open = false;
   }
 

@@ -4,31 +4,31 @@
 /**
  * Image Gallery Management Module
  * Handles horizontal scrolling image gallery with thumbnails, navigation, and image transformations
+ * Single authoritative owner of the gallery + paint.js (addImageToSidebar) interop.
  */
-(function () {
+export function initImageGalleryModule() {
   'use strict';
 
-  // Gallery state
+  // Gallery state (local closure; synced to window.imageGalleryData for external readers)
   let currentImageIndex = 0;
-  window.imageGalleryData = window.imageGalleryData || [];
+  let imageGalleryData = window.imageGalleryData || [];
+  window.imageGalleryData = imageGalleryData;
   let intersectionObserver = null;
+  const compareSelectedLabels = new Set();
+  const compareStaticCanvases = [];
+  let compareDragActive = false;
+
+  function syncImageGalleryDataRef() {
+    window.imageGalleryData = imageGalleryData;
+  }
 
   /**
    * Initialize image gallery functionality
    */
   function initializeImageGallery() {
     const imageGallery = document.getElementById('imageGallery');
-    const imageDots = document.getElementById('imageDots');
-    const prevButton = document.getElementById('prevImage');
-    const nextButton = document.getElementById('nextImage');
-    const imagePosition = document.getElementById('imagePosition');
-    const imageCounter = document.getElementById('imageCounter');
 
     if (!imageGallery) return;
-
-    // Navigation button functionality
-    prevButton?.addEventListener('click', () => navigateToImage(currentImageIndex - 1));
-    nextButton?.addEventListener('click', () => navigateToImage(currentImageIndex + 1));
 
     // Intersection Observer for active image detection
     intersectionObserver = new IntersectionObserver(
@@ -76,46 +76,6 @@
         }
       }
     });
-
-    // Canvas Controls: wire rotate/flip buttons to current image
-    // MIGRATED TO TYPESCRIPT - Rotation controls now handled by @/features/transform/controls.ts
-    // and initialized in src/main.ts via initializeRotationControls()
-    /*
-        const rotateLeftCtrl = document.getElementById('rotateLeftCtrl');
-        const rotateRightCtrl = document.getElementById('rotateRightCtrl');
-        function getCurrentImageIndex() {
-            const label = window.paintApp?.state?.currentImageLabel;
-            if (!label) return currentImageIndex || 0;
-            const idx = imageGalleryData.findIndex(i => (i.label || i.original?.label) === label);
-            return idx >= 0 ? idx : (currentImageIndex || 0);
-        }
-        function rotateFallback(deg) {
-            const label = window.paintApp?.state?.currentImageLabel || 'blank_canvas';
-            const c = document.getElementById('canvas');
-            const w = c?.width || 800;
-            const h = c?.height || 600;
-            if (typeof window.transformImageData === 'function') {
-                window.transformImageData(label, 'rotate', deg, w, h);
-                if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
-            }
-        }
-        rotateLeftCtrl?.addEventListener('click', () => {
-            const idx = getCurrentImageIndex();
-            if (imageGalleryData[idx]) {
-                window.rotateImage?.(idx, -90);
-            } else {
-                rotateFallback(-90);
-            }
-        });
-        rotateRightCtrl?.addEventListener('click', () => {
-            const idx = getCurrentImageIndex();
-            if (imageGalleryData[idx]) {
-                window.rotateImage?.(idx, 90);
-            } else {
-                rotateFallback(90);
-            }
-        });
-        */
 
     // Name/type inputs wiring
     const nameInput = document.getElementById('imageNameInput');
@@ -298,7 +258,9 @@
 
     // Update gallery data
     imageGalleryData[index] = normalizedData;
-    updateGalleryControls();
+    syncImageGalleryDataRef();
+    syncCompareSelectionStyles();
+    updateMultiViewStage();
 
     // Persist order for save/load consistency
     try {
@@ -535,7 +497,8 @@
       }
     });
 
-    updateGalleryControls();
+    syncCompareSelectionStyles();
+    updateMultiViewStage();
   }
 
   /**
@@ -570,7 +533,13 @@
    */
   function addThumbnailEventListeners(thumbnail, index) {
     // Click handler - switch to the image using ProjectManager
-    thumbnail.addEventListener('click', () => {
+    thumbnail.addEventListener('click', event => {
+      if (event.shiftKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleCompareSelection(index);
+        return;
+      }
       const imageData = imageGalleryData[index];
       if (imageData && imageData.original && imageData.original.label) {
         const label = imageData.original.label;
@@ -589,8 +558,23 @@
       }
     });
 
+    thumbnail.addEventListener('mousedown', event => {
+      if (!event.shiftKey || event.button !== 0) return;
+      compareDragActive = true;
+      toggleCompareSelection(index, true);
+    });
+
+    thumbnail.addEventListener('mouseenter', event => {
+      if (!compareDragActive || !event.shiftKey) return;
+      toggleCompareSelection(index, true);
+    });
+
     // Drag and drop handlers
     thumbnail.addEventListener('dragstart', e => {
+      if (e.shiftKey) {
+        e.preventDefault();
+        return;
+      }
       e.dataTransfer.setData('text/plain', index);
       thumbnail.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
@@ -634,15 +618,464 @@
     });
   }
 
+  function getImageLabelAtIndex(index) {
+    const imageData = imageGalleryData[index];
+    return (
+      imageData?.original?.label || imageData?.label || imageData?.name || imageData?.filename || ''
+    );
+  }
+
+  function toggleCompareSelectionByLabel(label, forceSelected) {
+    if (!label) return;
+    const shouldSelect =
+      typeof forceSelected === 'boolean' ? forceSelected : !compareSelectedLabels.has(label);
+    if (shouldSelect) {
+      if (!compareSelectedLabels.has(label) && compareSelectedLabels.size >= 4) {
+        const oldest = compareSelectedLabels.values().next().value;
+        compareSelectedLabels.delete(oldest);
+      }
+      compareSelectedLabels.add(label);
+    } else {
+      compareSelectedLabels.delete(label);
+    }
+    syncCompareSelectionStyles();
+    updateMultiViewStage();
+  }
+
+  function toggleCompareSelection(index, forceSelected) {
+    const label = getImageLabelAtIndex(index);
+    if (!label) return;
+    toggleCompareSelectionByLabel(label, forceSelected);
+  }
+
+  function clearCompareSelection() {
+    compareSelectedLabels.clear();
+    syncCompareSelectionStyles();
+    updateMultiViewStage();
+  }
+
+  // Attach a compare toggle to a visible .image-container card in #imageList.
+  // (The app runs in vertical-list mode; #imageGallery/.image-thumbnail is hidden.)
+  function ensureContainerCompareToggle(container) {
+    if (!container) return;
+    const label = container.dataset.label;
+    if (!label) return;
+    let toggle = container.querySelector('.thumbnail-compare-toggle');
+    if (!toggle) {
+      toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'thumbnail-compare-toggle';
+      toggle.textContent = '+';
+      toggle.title = 'Add to comparison';
+      toggle.setAttribute('aria-label', `Compare image ${label}`);
+      toggle.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleCompareSelectionByLabel(label);
+      });
+      container.appendChild(toggle);
+    }
+    toggle.dataset.compareLabel = label;
+  }
+
+  // Visible thumbnails are created asynchronously by paint.js (addImageToSidebar),
+  // the hook fallback, and project loads. Watch #imageList so every .image-container
+  // gets a toggle regardless of who created it.
+  function watchImageListForCompareToggles() {
+    const imageList = document.getElementById('imageList');
+    if (!imageList || imageList.dataset.compareWatcher === '1') return;
+    imageList.dataset.compareWatcher = '1';
+    const ensureAll = () => {
+      imageList.querySelectorAll('.image-container').forEach(ensureContainerCompareToggle);
+      syncCompareSelectionStyles();
+    };
+    ensureAll();
+    const observer = new MutationObserver(ensureAll);
+    observer.observe(imageList, { childList: true, subtree: false });
+  }
+
+  function syncCompareSelectionStyles() {
+    document.querySelectorAll('.image-thumbnail, .image-container').forEach(thumb => {
+      const label = thumb.dataset.label || getImageLabelAtIndex(Number(thumb.dataset.imageIndex));
+      const selected = Boolean(label && compareSelectedLabels.has(label));
+      thumb.classList.toggle('compare-selected', selected);
+      const toggle = thumb.querySelector('.thumbnail-compare-toggle');
+      if (toggle) {
+        toggle.textContent = selected ? '✓' : '+';
+        toggle.title = selected ? 'Remove from comparison' : 'Add to comparison';
+        toggle.setAttribute('aria-pressed', String(selected));
+      }
+    });
+    const deselectBtn = document.getElementById('compareDeselectAll');
+    if (deselectBtn) {
+      const hasSelection = compareSelectedLabels.size > 0;
+      deselectBtn.style.display = hasSelection ? 'inline-flex' : 'none';
+    }
+  }
+
+  function wireCompareDeselectButton() {
+    const btn = document.getElementById('compareDeselectAll');
+    if (!btn || btn.dataset.wired === '1') return;
+    btn.dataset.wired = '1';
+    btn.addEventListener('click', () => {
+      clearCompareSelection();
+    });
+  }
+
+  function disposeCompareCanvases() {
+    while (compareStaticCanvases.length) {
+      const canvas = compareStaticCanvases.pop();
+      try {
+        canvas?.dispose?.();
+      } catch (error) {
+        console.warn('[MultiView] Failed to dispose compare canvas', error);
+      }
+    }
+  }
+
+  function getCompareStage() {
+    let stage = document.getElementById('multiViewStage');
+    const wrapper = document.getElementById('main-canvas-wrapper');
+    if (!stage && wrapper) {
+      stage = document.createElement('div');
+      stage.id = 'multiViewStage';
+      stage.setAttribute('aria-label', 'Image comparison view');
+      wrapper.appendChild(stage);
+    }
+    return stage;
+  }
+
+  // The stroke/image panels are position:fixed overlays; #main-canvas-wrapper
+  // spans the full width, so the stage must be inset to sit BETWEEN them.
+  function applyMultiViewStageInsets() {
+    const stage = document.getElementById('multiViewStage');
+    if (!stage) return;
+    const leftPanel = document.getElementById('strokePanel');
+    const rightPanel = document.getElementById('imagePanel');
+    const leftInset = leftPanel ? Math.max(0, leftPanel.offsetWidth) : 0;
+    const rightInset = rightPanel ? Math.max(0, rightPanel.offsetWidth) : 0;
+    stage.style.left = `${leftInset}px`;
+    stage.style.right = `${rightInset}px`;
+  }
+
+  function getViewForLabel(label) {
+    return (
+      window.projectManager?.views?.[label] || window.app?.projectManager?.views?.[label] || null
+    );
+  }
+
+  function cloneCanvasData(data) {
+    if (!data || typeof data !== 'object') return null;
+    try {
+      return JSON.parse(JSON.stringify(data));
+    } catch {
+      return null;
+    }
+  }
+
+  function fitStaticCanvasToContent(staticCanvas) {
+    const bounds = [];
+    const background = staticCanvas.backgroundImage;
+    if (background?.getBoundingRect) {
+      bounds.push(background.getBoundingRect(true, true));
+    }
+    staticCanvas.getObjects().forEach(obj => {
+      if (!obj?.visible || obj?.isCurveDrawingMarker || obj?.isMosCurveArrowDecorator) return;
+      if (obj.getBoundingRect) bounds.push(obj.getBoundingRect(true, true));
+    });
+    if (!bounds.length) return;
+
+    const left = Math.min(...bounds.map(rect => rect.left));
+    const top = Math.min(...bounds.map(rect => rect.top));
+    const right = Math.max(...bounds.map(rect => rect.left + rect.width));
+    const bottom = Math.max(...bounds.map(rect => rect.top + rect.height));
+    const width = Math.max(1, right - left);
+    const height = Math.max(1, bottom - top);
+    const canvasWidth = Math.max(1, Number(staticCanvas.width) || 1);
+    const canvasHeight = Math.max(1, Number(staticCanvas.height) || 1);
+    const padding = 4;
+    const scale = Math.min(
+      (canvasWidth - padding * 2) / width,
+      (canvasHeight - padding * 2) / height,
+      8
+    );
+    const zoom = Number.isFinite(scale) && scale > 0 ? scale : 1;
+    const panX = (canvasWidth - width * zoom) / 2 - left * zoom;
+    const panY = (canvasHeight - height * zoom) / 2 - top * zoom;
+    staticCanvas.setViewportTransform([zoom, 0, 0, zoom, panX, panY]);
+    staticCanvas.requestRenderAll();
+  }
+
+  function loadImageAsBackground(staticCanvas, src, savedPlacement) {
+    return new Promise(resolve => {
+      if (!src || !window.fabric?.Image?.fromURL) {
+        resolve();
+        return;
+      }
+      window.fabric.Image.fromURL(
+        src,
+        img => {
+          if (!img) {
+            resolve();
+            return;
+          }
+          if (
+            savedPlacement &&
+            Number.isFinite(savedPlacement.left) &&
+            Number.isFinite(savedPlacement.scaleX)
+          ) {
+            img.set({
+              left: savedPlacement.left,
+              top: savedPlacement.top,
+              originX: savedPlacement.originX || 'left',
+              originY: savedPlacement.originY || 'top',
+              scaleX: savedPlacement.scaleX,
+              scaleY: savedPlacement.scaleY,
+              angle: savedPlacement.angle || 0,
+              flipX: savedPlacement.flipX || false,
+              flipY: savedPlacement.flipY || false,
+            });
+          } else {
+            img.set({
+              originX: 'center',
+              originY: 'center',
+              left: staticCanvas.width / 2,
+              top: staticCanvas.height / 2,
+            });
+            const scale = Math.min(
+              staticCanvas.width / (img.width || 1),
+              staticCanvas.height / (img.height || 1)
+            );
+            img.scale(Number.isFinite(scale) && scale > 0 ? scale : 1);
+          }
+          staticCanvas.setBackgroundImage(img, () => {
+            staticCanvas.requestRenderAll();
+            resolve();
+          });
+        },
+        { crossOrigin: 'anonymous' }
+      );
+    });
+  }
+
+  async function renderComparePane(pane, label) {
+    const wrap = pane.querySelector('.multiview-canvas-wrap');
+    const canvasEl = pane.querySelector('canvas');
+    if (!wrap || !canvasEl || !window.fabric?.StaticCanvas) return;
+
+    const rect = wrap.getBoundingClientRect();
+    const width = Math.max(240, Math.floor(rect.width || 240));
+    const height = Math.max(180, Math.floor(rect.height || 180));
+    canvasEl.width = width;
+    canvasEl.height = height;
+
+    const staticCanvas = new window.fabric.StaticCanvas(canvasEl, {
+      width,
+      height,
+      selection: false,
+      backgroundColor: '#ffffff',
+      renderOnAddRemove: false,
+    });
+    compareStaticCanvases.push(staticCanvas);
+    pane.__staticCanvas = staticCanvas;
+
+    const view = getViewForLabel(label);
+    const canvasData = cloneCanvasData(view?.canvasData || view?.canvasJSON || null);
+    // Extract saved background placement before filtering — non-current views
+    // have their backgroundImage stripped during switchView, but the placement
+    // data (left/top/scaleX/scaleY) is needed to align the fallback image
+    // with the stroke objects.
+    const savedBg = canvasData?.backgroundImage;
+    // Keep strokes/measurements visible: only drop known pure-UI chrome that
+    // would never belong in a read-only comparison snapshot.
+    if (canvasData?.objects) {
+      canvasData.objects = canvasData.objects.filter(
+        obj => !obj?.isCurveDrawingMarker && !obj?.isMosCurveArrowDecorator
+      );
+    }
+
+    await new Promise(resolve => {
+      if (!canvasData) {
+        resolve();
+        return;
+      }
+      staticCanvas.loadFromJSON(canvasData, () => resolve());
+    });
+
+    if (!staticCanvas.backgroundImage && view?.image) {
+      await loadImageAsBackground(staticCanvas, view.image, savedBg);
+    }
+
+    staticCanvas.getObjects().forEach(obj => {
+      obj.set({
+        selectable: false,
+        evented: false,
+      });
+      if (obj.strokeMetadata?.visible === false) {
+        obj.visible = false;
+      }
+      // Re-attach arrow rendering — the custom _render override is lost
+      // during JSON serialization so arrows won't draw without this.
+      if (obj.arrowSettings && window.app?.arrowManager) {
+        try {
+          window.app.arrowManager.attachArrowRendering(obj);
+        } catch {
+          // Arrow rendering is best-effort for snapshots
+        }
+      }
+    });
+
+    fitStaticCanvasToContent(staticCanvas);
+    staticCanvas.renderOnAddRemove = true;
+    staticCanvas.requestRenderAll();
+  }
+
+  function updateMultiViewStage() {
+    const stage = getCompareStage();
+    if (!stage) return;
+    const labels = Array.from(compareSelectedLabels).filter(label =>
+      Boolean(getViewForLabel(label))
+    );
+    const active = labels.length >= 2;
+    document.body.classList.toggle('multiview-active', active);
+    disposeCompareCanvases();
+
+    if (!active) {
+      stage.innerHTML = '';
+      return;
+    }
+
+    // Place the stage between the fixed sidebars before measuring/rendering.
+    applyMultiViewStageInsets();
+
+    // Persist the current view so its latest strokes are in canvasData.
+    try {
+      window.app?.projectManager?.saveCurrentViewState?.();
+    } catch (error) {
+      console.warn('[MultiView] saveCurrentViewState failed', error);
+    }
+
+    const count = Math.min(labels.length, 4);
+    stage.innerHTML = `
+      <div class="multiview-actions">
+        <button type="button" class="mv-btn mv-close" title="Close comparison" aria-label="Close comparison">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="multiview-grid count-${count}">
+        ${labels
+          .slice(0, 4)
+          .map(
+            label => `
+              <section class="multiview-pane" data-compare-label="${label}">
+                <div class="multiview-canvas-wrap"><canvas></canvas></div>
+              </section>
+            `
+          )
+          .join('')}
+      </div>
+    `;
+
+    requestAnimationFrame(() => {
+      stage.querySelectorAll('.multiview-pane').forEach(pane => {
+        renderComparePane(pane, pane.dataset.compareLabel).catch(error => {
+          console.warn('[MultiView] Failed to render pane', error);
+        });
+      });
+      wireMultiViewActions(stage);
+    });
+  }
+
+  function wireMultiViewActions(stage) {
+    const closeBtn = stage.querySelector('.mv-close');
+    if (closeBtn && closeBtn.dataset.wired !== '1') {
+      closeBtn.dataset.wired = '1';
+      closeBtn.addEventListener('click', () => clearCompareSelection());
+    }
+  }
+
+  async function captureCompareGrid() {
+    const stage = document.getElementById('multiViewStage');
+    if (!stage) return;
+    const panes = Array.from(stage.querySelectorAll('.multiview-pane'));
+    if (!panes.length) return;
+
+    const stageRect = stage.getBoundingClientRect();
+
+    const out = document.createElement('canvas');
+    const dpr = window.devicePixelRatio || 1;
+    out.width = Math.max(1, Math.round(stageRect.width * dpr));
+    out.height = Math.max(1, Math.round(stageRect.height * dpr));
+    const ctx = out.getContext('2d');
+    if (!ctx) return;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, out.width, out.height);
+
+    for (const pane of panes) {
+      const paneRect = pane.getBoundingClientRect();
+      const source = pane.querySelector('canvas');
+      if (!source || source.width === 0 || source.height === 0) continue;
+
+      const dx = Math.round((paneRect.left - stageRect.left) * dpr);
+      const dy = Math.round((paneRect.top - stageRect.top) * dpr);
+      const dw = Math.round(paneRect.width * dpr);
+      const dh = Math.round(paneRect.height * dpr);
+      ctx.drawImage(source, 0, 0, source.width, source.height, dx, dy, dw, dh);
+    }
+
+    const blobPromise = new Promise(resolve => {
+      out.toBlob(b => resolve(b), 'image/png');
+    });
+
+    const ClipboardItemConstructor = window.ClipboardItem;
+    if (navigator.clipboard && ClipboardItemConstructor) {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItemConstructor({
+            'image/png': blobPromise,
+          }),
+        ]);
+        window.app?.projectManager?.showStatusMessage?.(
+          'Comparison copied to clipboard!',
+          'success'
+        );
+      } catch {
+        const blob = await blobPromise;
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.download = `comparison-${Date.now()}.png`;
+          link.href = url;
+          link.click();
+          URL.revokeObjectURL(url);
+        }
+      }
+    } else {
+      const blob = await blobPromise;
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `comparison-${Date.now()}.png`;
+        link.href = url;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    }
+  }
+
   /**
    * Delete image function
    */
   function deleteImage(index) {
     if (confirm(`Delete "${imageGalleryData[index]?.name}"?`)) {
       console.log(`[Gallery] Deleting image at index ${index}`);
+      const deletedLabel = getImageLabelAtIndex(index);
 
       // Remove from data array
       imageGalleryData.splice(index, 1);
+      if (deletedLabel) {
+        compareSelectedLabels.delete(deletedLabel);
+      }
 
       // Rebuild UI
       rebuildGalleryUI();
@@ -656,6 +1089,8 @@
       if (imageGalleryData.length > 0) {
         updateActiveImage(Math.min(currentImageIndex, imageGalleryData.length - 1));
       }
+      syncCompareSelectionStyles();
+      updateMultiViewStage();
     }
   }
 
@@ -669,6 +1104,7 @@
     document.querySelectorAll('.image-thumbnail').forEach((thumb, idx) => {
       thumb.classList.toggle('active', idx === index);
     });
+    syncCompareSelectionStyles();
 
     // Update navigation dots
     document.querySelectorAll('.nav-dot').forEach((dot, idx) => {
@@ -682,7 +1118,7 @@
     if (nameEl && data) nameEl.value = data.name || '';
     if (typeEl && data && data.original) typeEl.value = data.original.type || '';
 
-    updateGalleryControls();
+    updateMultiViewStage();
   }
 
   /**
@@ -718,31 +1154,6 @@
   }
 
   /**
-   * Update gallery controls and counters
-   */
-  function updateGalleryControls() {
-    const prevButton = document.getElementById('prevImage');
-    const nextButton = document.getElementById('nextImage');
-    const imagePosition = document.getElementById('imagePosition');
-    const imageCounter = document.getElementById('imageCounter');
-
-    const totalImages = imageGalleryData.length;
-
-    if (prevButton && nextButton) {
-      prevButton.disabled = currentImageIndex <= 0;
-      nextButton.disabled = currentImageIndex >= totalImages - 1;
-    }
-
-    if (imagePosition) {
-      imagePosition.textContent = `${currentImageIndex + 1} / ${totalImages}`;
-    }
-
-    if (imageCounter) {
-      imageCounter.textContent = totalImages > 0 ? `${totalImages} images` : '';
-    }
-  }
-
-  /**
    * Clear image gallery
    */
   function clearImageGallery() {
@@ -755,7 +1166,8 @@
     imageGalleryData = [];
     window.orderedImageLabels = [];
     currentImageIndex = 0;
-    updateGalleryControls();
+    clearCompareSelection();
+    syncImageGalleryDataRef();
   }
 
   /**
@@ -767,36 +1179,347 @@
     );
   }
 
-  // Expose public API
-  window.imageGallery = {
-    initialize: initializeImageGallery,
-    addImage: addImageToGallery,
-    navigateToImage: navigateToImage,
-    clearGallery: clearImageGallery,
-    syncToLabel: syncToLabel,
-    getData: () => imageGalleryData,
-    getCurrentIndex: () => currentImageIndex,
-  };
-
-  // Legacy compatibility
-  window.addImageToGallery = addImageToGallery;
-  window.addImageToGalleryCompat = function addImageToGalleryCompat(imageData) {
-    const label = imageData?.original?.label || imageData?.label || imageData?.name || '';
-    const existingIndex = imageGalleryData.findIndex(item => {
-      const existingLabel = item?.original?.label || item?.label || item?.name || '';
-      return Boolean(label) && existingLabel === label;
-    });
-    const index = existingIndex >= 0 ? existingIndex : imageGalleryData.length;
-    addImageToGallery(imageData, index);
-  };
-
-  // Auto-initialize on load
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeImageGallery);
-  } else {
-    initializeImageGallery();
+  function installImageGalleryGlobals() {
+    syncImageGalleryDataRef();
+    window.imageGallery = {
+      addImage: addImageToGallery,
+      clearGallery: clearImageGallery,
+      syncToLabel: syncToLabel,
+      getData: () => imageGalleryData,
+      syncLegacyImages: syncLegacyImagesToGallery,
+      captureCompareGrid,
+    };
+    window.addImageToGallery = addImageToGallery;
+    window.addImageToGalleryCompat = function addImageToGalleryCompat(imageData) {
+      const label = imageData?.original?.label || imageData?.label || imageData?.name || '';
+      const existingIndex = imageGalleryData.findIndex(item => {
+        const existingLabel = item?.original?.label || item?.label || item?.name || '';
+        return Boolean(label) && existingLabel === label;
+      });
+      const index = existingIndex >= 0 ? existingIndex : imageGalleryData.length;
+      addImageToGallery(imageData, index);
+    };
   }
 
-  // Reveal UI once initialization is complete
+  function ensureLegacyImageContainer(imageUrl, label) {
+    const imageList = document.getElementById('imageList');
+    if (!imageList) {
+      console.error('[COMPAT] imageList element not found!');
+      return false;
+    }
+    if (!imageUrl || !label) {
+      console.warn('[COMPAT] Missing imageUrl or label for legacy container');
+      return false;
+    }
+
+    const existing = imageList.querySelector(`[data-label="${label}"]`);
+    if (existing) return true;
+
+    const container = document.createElement('button');
+    container.type = 'button';
+    container.draggable = true;
+    container.className =
+      'image-container group w-full text-left relative flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors snap-center';
+    container.dataset.label = label;
+    container.dataset.originalImageUrl = imageUrl;
+
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.className = 'pasted-image w-full h-40 rounded-lg object-contain bg-slate-100 shadow-sm';
+    img.alt = `${label} view`;
+    container.appendChild(img);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'delete-image-btn opacity-0 group-hover:opacity-100 transition-opacity';
+    deleteBtn.title = 'Delete image';
+    deleteBtn.textContent = '×';
+    deleteBtn.style.cssText =
+      'position: absolute; top: 6px; right: 6px; cursor: pointer; background: rgba(255, 255, 255, 0.9); border: 1px solid rgb(204, 204, 204); border-radius: 50%; width: 20px; height: 20px; font-size: 12px; font-weight: bold; font-family: Arial, sans-serif; display: flex; align-items: center; justify-content: center; z-index: 10; color: rgb(102, 102, 102); line-height: 1; padding: 0px; margin: 0px; text-align: center;';
+    deleteBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (confirm('Delete this image?')) {
+        container.remove();
+        if (window.projectManager && typeof window.projectManager.deleteImage === 'function') {
+          window.projectManager.deleteImage(label);
+        }
+        if (typeof window.updatePills === 'function') window.updatePills();
+        if (typeof window.updateActivePill === 'function') window.updateActivePill();
+        if (typeof updateImageListPadding === 'function') updateImageListPadding();
+      }
+    });
+    container.appendChild(deleteBtn);
+
+    container.onclick = () => {
+      if (window.projectManager && typeof window.projectManager.switchView === 'function') {
+        window.projectManager.switchView(label);
+      }
+      container.setAttribute('aria-selected', 'true');
+      container.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+      if (!window.__scrollSelectDrivenSwitch) {
+        window.__imageListProgrammaticScrollUntil = Date.now() + 400;
+      }
+    };
+    imageList.appendChild(container);
+    console.log(`[COMPAT] Manually added legacy container for "${label}"`);
+
+    const knownRotation = Number(window.projectManager?.views?.[label]?.rotation);
+    if (window.projectManager?.updateThumbnailRotation) {
+      window.projectManager.updateThumbnailRotation(
+        label,
+        Number.isFinite(knownRotation) ? knownRotation : 0
+      );
+    }
+    if (typeof window.ensureImageListObserver === 'function') {
+      window.ensureImageListObserver();
+    } else {
+      window.__pendingImageListObserverInit = true;
+    }
+    if (typeof updateImageListPadding === 'function') updateImageListPadding();
+    if (typeof initImageListCenteringObserver === 'function') {
+      if (!window.__imageListCenteringObserver) initImageListCenteringObserver();
+      if (window.__imageListCenteringObserver) {
+        window.__imageListCenteringObserver.observe(container);
+      }
+    }
+
+    setTimeout(() => {
+      const allContainers = Array.from(imageList.querySelectorAll('.image-container'));
+      const isFirst = allContainers.length === 1 && allContainers[0] === container;
+      if (isFirst && !window.__isLoadingProject && !window.__deferredImageHydrationInProgress) {
+        console.log(`[COMPAT] First image "${label}" added, centering and switching to it`);
+        window.__suppressScrollSelectUntil = Date.now() + 400;
+        window.__imageListProgrammaticScrollUntil = Date.now() + 400;
+        container.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        if (
+          window.projectManager &&
+          typeof window.projectManager.switchView === 'function' &&
+          window.projectManager.currentViewId === label
+        ) {
+          window.projectManager.switchView(label);
+        }
+      }
+      if (typeof window.updatePills === 'function') window.updatePills();
+      if (typeof window.updateActivePill === 'function') window.updateActivePill();
+    }, 100);
+
+    return true;
+  }
+
+  // Compat addImageToSidebar: bridges paint.js/legacy callers into the gallery +
+  // #imageList. Replaced by the [HOOK] wrapper once paint.js defines its own.
+  function installCompatAddImageToSidebar() {
+    window.addImageToSidebar = function (imageUrl, label, filename) {
+      console.log('[COMPAT] addImageToSidebar called with:', {
+        imageUrl: imageUrl?.substring?.(0, 50) || imageUrl,
+        label,
+        filename,
+      });
+
+      ensureLegacyImageContainer(imageUrl, label);
+
+      if (label && imageUrl) {
+        window.originalImages = window.originalImages || {};
+        window.originalImages[label] = imageUrl;
+        if (!window.originalImageDimensions) window.originalImageDimensions = {};
+        if (!window.originalImageDimensions[label]) {
+          const dimImg = new Image();
+          dimImg.onload = () => {
+            window.originalImageDimensions[label] = { width: dimImg.width, height: dimImg.height };
+          };
+          dimImg.onerror = () => {
+            window.originalImageDimensions[label] = { width: 0, height: 0 };
+          };
+          dimImg.src = imageUrl;
+        }
+        if (window.projectManager?.views?.[label]) {
+          window.projectManager.views[label].image = imageUrl;
+        }
+        if (window.projectManager?.updateThumbnailRotation) {
+          const knownRotation = Number(window.projectManager?.views?.[label]?.rotation);
+          window.projectManager.updateThumbnailRotation(
+            label,
+            Number.isFinite(knownRotation) ? knownRotation : 0
+          );
+        }
+      }
+
+      if (imageUrl) {
+        const alreadyExists = imageGalleryData.some(
+          img =>
+            img &&
+            (img.original?.label === label ||
+              img.label === label ||
+              (img.src === imageUrl &&
+                (img.name === filename ||
+                  img.name === label ||
+                  img.original?.filename === filename)))
+        );
+        if (!alreadyExists) {
+          const index = imageGalleryData.length;
+          const imageData = {
+            src: imageUrl,
+            url: imageUrl,
+            name: filename || label || `Image ${index + 1}`,
+            label: label,
+            filename: filename,
+          };
+          addImageToGallery(imageData, index);
+          if (
+            label &&
+            window.projectManager &&
+            window.projectManager.currentViewId === label &&
+            typeof window.projectManager.setBackgroundImage === 'function' &&
+            !window.__isLoadingProject &&
+            !window.__deferredImageHydrationInProgress
+          ) {
+            requestAnimationFrame(() => {
+              window.projectManager.setBackgroundImage(imageUrl);
+            });
+          }
+          if (
+            imageGalleryData.length === 1 &&
+            label &&
+            window.projectManager &&
+            typeof window.projectManager.switchView === 'function' &&
+            !window.__isLoadingProject &&
+            !window.__deferredImageHydrationInProgress
+          ) {
+            setTimeout(() => {
+              if (window.projectManager.currentViewId === label) {
+                window.__suppressScrollSelectUntil = Date.now() + 1200;
+                window.projectManager.switchView(label, true);
+              }
+            }, 0);
+          }
+          return index;
+        }
+        return -1;
+      }
+      return -1;
+    };
+    window.addImageToSidebar.__isCompat = true;
+
+    window.switchToImage = function (imageIndexOrLabel) {
+      if (typeof imageIndexOrLabel === 'number') {
+        navigateToImage(imageIndexOrLabel);
+        return;
+      }
+      if (typeof imageIndexOrLabel === 'string') {
+        const trimmed = imageIndexOrLabel.trim();
+        const asNumber = Number(trimmed);
+        if (trimmed !== '' && Number.isFinite(asNumber)) {
+          navigateToImage(Math.trunc(asNumber));
+          return;
+        }
+        if (window.projectManager && typeof window.projectManager.switchView === 'function') {
+          window.projectManager.switchView(trimmed);
+        } else if (window.switchToImageLegacy && typeof window.switchToImageLegacy === 'function') {
+          window.switchToImageLegacy(trimmed);
+        }
+      }
+    };
+
+    window.updateImageList = function () {
+      console.log('[COMPAT] updateImageList called - handled by gallery system');
+    };
+
+    window.clearImageSidebar = function () {
+      clearImageGallery();
+    };
+  }
+
+  function installDebugHelpers() {
+    window.debugPaintState = function () {
+      console.log('=== PAINT.JS STATE DEBUG ===');
+      if (window.paintApp && window.paintApp.state) {
+        console.log('Current image label:', window.paintApp.state.currentImageLabel);
+      }
+      if (window.vectorStrokesByImage) {
+        const labels = Object.keys(window.vectorStrokesByImage);
+        console.log('vectorStrokesByImage labels:', labels);
+      }
+      console.log('imageGalleryData length:', imageGalleryData.length);
+      console.log('currentImageIndex:', currentImageIndex);
+    };
+
+    window.addTestTriangle = function () {
+      let targetLabel = 'blank_canvas';
+      if (imageGalleryData[currentImageIndex]?.original?.label) {
+        targetLabel = imageGalleryData[currentImageIndex].original.label;
+      }
+      const mockStroke = {
+        points: [
+          { x: 300, y: 200 },
+          { x: 200, y: 400 },
+          { x: 400, y: 400 },
+          { x: 300, y: 200 },
+        ],
+        color: '#ff0000',
+        thickness: 3,
+        type: 'freehand',
+      };
+      if (window.vectorStrokesByImage) {
+        if (!window.vectorStrokesByImage[targetLabel])
+          window.vectorStrokesByImage[targetLabel] = {};
+        window.vectorStrokesByImage[targetLabel]['test_triangle'] = mockStroke;
+      }
+      if (window.redrawCanvasWithVisibility) window.redrawCanvasWithVisibility();
+    };
+  }
+
+  function syncLegacyImagesToGallery() {
+    if (window.__isLoadingProject || window.__deferredImageHydrationInProgress) return;
+    const imageList = document.getElementById('imageList');
+    if (!imageList) return;
+    const imageContainers = imageList.querySelectorAll('.image-container');
+    imageContainers.forEach((container, index) => {
+      const img = container.querySelector('img');
+      const label = container.dataset.label;
+      if (img && img.src) {
+        const imageData = {
+          src: img.src,
+          url: img.src,
+          name:
+            container.querySelector('.image-label')?.textContent || label || `Image ${index + 1}`,
+          label: label,
+        };
+        const existingIndex = imageGalleryData.findIndex(item => {
+          const existingLabel = item?.original?.label || item?.label || item?.name;
+          return (label && existingLabel === label) || item?.src === img.src;
+        });
+        if (existingIndex === -1) {
+          addImageToGallery(imageData, imageGalleryData.length);
+        }
+      }
+    });
+    if (typeof updateImageListPadding === 'function') updateImageListPadding();
+  }
+
+  function clearDemoImages() {
+    imageGalleryData = imageGalleryData.filter(
+      item => !item.name?.includes('Demo Image') && !item.name?.includes('Blank Canvas')
+    );
+    syncImageGalleryDataRef();
+    const counter = document.getElementById('imageCounter');
+    if (counter) {
+      counter.textContent = imageGalleryData.length > 0 ? `${imageGalleryData.length} images` : '';
+    }
+  }
+
+  // ── Init sequence ──
+  initializeImageGallery();
+  installImageGalleryGlobals();
+  installCompatAddImageToSidebar();
+  installDebugHelpers();
+  setTimeout(() => {
+    syncLegacyImagesToGallery();
+    const imageList = document.getElementById('imageList');
+    if (imageList && imageList.querySelectorAll('.image-container').length > 0) {
+      if (typeof initImageListCenteringObserver === 'function') initImageListCenteringObserver();
+    }
+  }, 0);
+  setTimeout(watchImageListForCompareToggles, 0);
+  wireCompareDeselectButton();
   document.documentElement.classList.remove('app-loading');
-})();
+  console.log('[Gallery] image-gallery module initialized (single owner)');
+}

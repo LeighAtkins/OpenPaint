@@ -80,7 +80,9 @@ export class App {
     this.firstStrokeCommitInProgress = false;
     this.currentUnit = 'inch';
     this.currentInchDisplayMode = 'decimal';
-    this.captureFrameScale = 0.9;
+    const scaleFromW = typeof window !== 'undefined' ? (window.innerWidth * 0.8) / 800 : 0.9;
+    const scaleFromH = typeof window !== 'undefined' ? (window.innerHeight * 0.75) / 600 : 0.9;
+    this.captureFrameScale = Math.max(0.9, Math.min(3.0, Math.min(scaleFromW, scaleFromH)));
     this.currentDashSettings = {
       style: 'solid',
       pattern: [],
@@ -315,7 +317,11 @@ export class App {
       if (this.canvasManager.fabricCanvas) {
         this.canvasManager.fabricCanvas.on('object:added', (e: any) => {
           const obj = e.target;
-          if (this.isDashDrawableObject(obj)) {
+          if (
+            this.isDashDrawableObject(obj) &&
+            !this.canvasManager.isLoadingFromJSON &&
+            !obj.dashSettings
+          ) {
             this.applyDashSettingsToObject(obj, this.currentDashSettings);
           }
           if (obj && obj.evented !== false && !obj.isTag) {
@@ -1710,7 +1716,6 @@ export class App {
       const toggleBtn = wrapper.querySelector<HTMLElement>('.tbtn');
       if (toggleBtn) {
         toggleBtn.addEventListener('touchend', (e: TouchEvent) => {
-          // Only handle single-tap on the toggle button itself
           if (e.target !== toggleBtn && !toggleBtn.contains(e.target as Node)) return;
           if (wrapper.classList.contains('shape-open')) {
             wrapper.classList.remove('shape-open');
@@ -1728,6 +1733,114 @@ export class App {
     document
       .querySelectorAll('#eraserModeWrapper')
       .forEach(wrapper => bindShapeMenu(wrapper as HTMLElement, () => true));
+
+    // ── Scrollable toolbar menu escape ──
+    // When the toolbar has overflow-x:auto, absolutely-positioned flyout menus
+    // get clipped. We detect open menus inside scrollable toolbars and switch
+    // them to position:fixed so they escape the clip. On scroll, we close all
+    // menus (simpler and more reliable than tracking positions during scroll).
+
+    const isToolbarScrollable = (tw: Element): boolean => {
+      const style = getComputedStyle(tw);
+      return style.overflowX === 'auto' || style.overflowX === 'scroll';
+    };
+
+    const FIXED_MENU_ATTR = 'data-menu-escaped';
+
+    const repositionOpenMenus = () => {
+      document.querySelectorAll('.toolbar-wrap').forEach(tw => {
+        if (!isToolbarScrollable(tw)) return;
+
+        // Handle shape-toggle flyout menus
+        tw.querySelectorAll<HTMLElement>('.shape-toggle.shape-open').forEach(wrapper => {
+          const menu = wrapper.querySelector<HTMLElement>(':scope > .shape-menu');
+          if (!menu) return;
+          const trigger = wrapper.querySelector<HTMLElement>(':scope > button, :scope > .tbtn');
+          if (!trigger) return;
+          const rect = trigger.getBoundingClientRect();
+          menu.setAttribute(FIXED_MENU_ATTR, 'true');
+          menu.style.position = 'fixed';
+          menu.style.top = `${rect.bottom + 6}px`;
+          menu.style.left = `${rect.left}px`;
+          menu.style.zIndex = '10500';
+        });
+
+        // Handle toolbar-menu panels (Project menu, etc.)
+        tw.querySelectorAll<HTMLElement>('.toolbar-menu.open').forEach(wrapper => {
+          const panel = wrapper.querySelector<HTMLElement>(':scope > .toolbar-menu-panel');
+          if (!panel) return;
+          const trigger = wrapper.querySelector<HTMLElement>(':scope > button');
+          if (!trigger) return;
+          const rect = trigger.getBoundingClientRect();
+          panel.setAttribute(FIXED_MENU_ATTR, 'true');
+          panel.style.position = 'fixed';
+          panel.style.top = `${rect.bottom + 6}px`;
+          panel.style.right = '';
+          panel.style.left = `${rect.left}px`;
+          panel.style.zIndex = '10500';
+        });
+      });
+    };
+
+    const releaseEscapedMenus = () => {
+      document.querySelectorAll<HTMLElement>(`[${FIXED_MENU_ATTR}]`).forEach(menu => {
+        menu.removeAttribute(FIXED_MENU_ATTR);
+        menu.style.position = '';
+        menu.style.top = '';
+        menu.style.left = '';
+        menu.style.right = '';
+        menu.style.zIndex = '';
+      });
+    };
+
+    const closeAllOpenMenus = () => {
+      // Close shape-toggle flyouts
+      document.querySelectorAll('.shape-toggle.shape-open').forEach(el => {
+        el.classList.remove('shape-open');
+      });
+      // Close toolbar-menu panels
+      document.querySelectorAll('.toolbar-menu.open').forEach(el => {
+        el.classList.remove('open');
+        const toggle = el.querySelector('[aria-expanded]');
+        toggle?.setAttribute('aria-expanded', 'false');
+      });
+      // Clean up any escaped (fixed-position) menus
+      releaseEscapedMenus();
+    };
+
+    // Reposition menus when they open/close (class changes)
+    new MutationObserver(() => {
+      const hasOpen = document.querySelector('.shape-toggle.shape-open, .toolbar-menu.open');
+      if (hasOpen) {
+        repositionOpenMenus();
+      } else {
+        releaseEscapedMenus();
+      }
+    }).observe(document.body, {
+      attributes: true,
+      subtree: true,
+      attributeFilter: ['class'],
+    });
+
+    // Close menus on toolbar scroll
+    document.querySelectorAll('.toolbar-wrap').forEach(tw => {
+      tw.addEventListener(
+        'scroll',
+        () => {
+          closeAllOpenMenus();
+        },
+        { passive: true }
+      );
+    });
+
+    // Reposition on resize (menus might need to shift)
+    window.addEventListener(
+      'resize',
+      () => {
+        repositionOpenMenus();
+      },
+      { passive: true }
+    );
 
     if (this.toolManager.tools.shape) {
       updateShapeIcon(this.toolManager.tools.shape.shapeType);
@@ -1802,6 +1915,16 @@ export class App {
       });
     });
 
+    const updateEraserToggleState = () => {
+      const isEraser = this.toolManager.activeTool === this.toolManager.tools.privacy;
+      document.querySelectorAll('#eraserModeWrapper').forEach(wrapper => {
+        wrapper.classList.toggle('shape-active', isEraser);
+      });
+      document.querySelectorAll('#eraserModeToggle').forEach(toggle => {
+        toggle.setAttribute('aria-pressed', String(isEraser));
+      });
+    };
+
     // Eraser toggle selects eraser tool
     document.querySelectorAll('#eraserModeToggle').forEach(toggle => {
       toggle.addEventListener('click', () => {
@@ -1816,6 +1939,8 @@ export class App {
     });
 
     // Eraser mode selection (White / Match Color)
+    const activeEraserBtn = document.querySelector<HTMLElement>('[data-eraser-mode].active');
+    (window as any).eraserMode = activeEraserBtn?.getAttribute('data-eraser-mode') || 'white';
     document.querySelectorAll('[data-eraser-mode]').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
@@ -1826,6 +1951,21 @@ export class App {
         document
           .querySelectorAll(`[data-eraser-mode="${mode}"]`)
           .forEach(b => b.classList.add('active'));
+
+        // Immediately activate the eraser tool
+        const wasEraser = preEraserBrushSize > 0;
+        if (!wasEraser) enterEraserBrushSize();
+        const currentToolName = this.toolManager.activeToolName || 'line';
+        this.toolManager.previousToolName = currentToolName;
+        this.toolManager.selectTool('privacy');
+        updateDrawingToggleLabels('Eraser Tool');
+        drawingModeOptions.forEach(item => item.classList.remove('active'));
+        updateEraserToggleState();
+
+        // Close the flyout
+        document.querySelectorAll('#eraserModeWrapper').forEach(wrapper => {
+          wrapper.classList.remove('shape-active');
+        });
       });
     });
 
@@ -1891,10 +2031,12 @@ export class App {
       }
       syncTextCursor();
       updateTextToggleState();
+      updateEraserToggleState();
     });
 
     updateTextToggleState();
     updateDrawingModeState();
+    updateEraserToggleState();
 
     updateShapeAvailability();
 
@@ -2925,6 +3067,8 @@ export class App {
         console.log(`[ImageFit] Applying fit mode: ${fitMode}`);
         this.applyImageFitMode(fitMode);
       });
+      // Apply default fit mode on load
+      this.applyImageFitMode(fitModeSelect.value);
     }
 
     // Setup keyboard shortcuts and help system
@@ -2969,6 +3113,35 @@ export class App {
         () =>
           void (async () => {
             console.log('[Copy] Button clicked');
+
+            // If multiview is active, delegate to the comparison capture
+            if (document.body.classList.contains('multiview-active')) {
+              copyCanvasBtn.style.transform = 'scale(0.98)';
+              setTimeout(() => {
+                copyCanvasBtn.style.transform = '';
+              }, 100);
+              try {
+                await (window as any).imageGallery?.captureCompareGrid?.();
+                const copyIcon = copyCanvasBtn.querySelector('#copyIcon') as HTMLElement | null;
+                const checkIcon = copyCanvasBtn.querySelector('#checkIcon') as HTMLElement | null;
+                if (copyIcon && checkIcon) {
+                  copyIcon.classList.add('opacity-0', 'scale-50');
+                  copyIcon.classList.remove('opacity-90', 'scale-100');
+                  checkIcon.classList.remove('opacity-0', 'scale-50');
+                  checkIcon.classList.add('opacity-100', 'scale-100');
+                  setTimeout(() => {
+                    checkIcon.classList.add('opacity-0', 'scale-50');
+                    checkIcon.classList.remove('opacity-100', 'scale-100');
+                    copyIcon.classList.remove('opacity-0', 'scale-50');
+                    copyIcon.classList.add('opacity-90', 'scale-100');
+                  }, 1500);
+                }
+              } catch (error) {
+                console.error('[Copy] Multiview capture failed:', error);
+              }
+              return;
+            }
+
             let copyOutputCanvas: HTMLCanvasElement | null = null;
             try {
               const canvas = this.canvasManager?.fabricCanvas;
@@ -3128,6 +3301,37 @@ export class App {
           })()
       );
       console.log('[main.js] Copy canvas button event listener added');
+
+      // Update button appearance when multiview is toggled
+      const updateCopyBtnForMultiview = () => {
+        const active = document.body.classList.contains('multiview-active');
+        const labelLong = copyCanvasBtn.querySelector('.label-long');
+        const labelShort = copyCanvasBtn.querySelector('.label-short');
+        if (active) {
+          copyCanvasBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'active:bg-blue-800');
+          copyCanvasBtn.classList.add(
+            'bg-emerald-600',
+            'hover:bg-emerald-700',
+            'active:bg-emerald-800'
+          );
+          if (labelLong) labelLong.textContent = 'Copy Images';
+          if (labelShort) labelShort.textContent = 'Copy All';
+          copyCanvasBtn.title = 'Copy all comparison images to clipboard';
+        } else {
+          copyCanvasBtn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'active:bg-blue-800');
+          copyCanvasBtn.classList.remove(
+            'bg-emerald-600',
+            'hover:bg-emerald-700',
+            'active:bg-emerald-800'
+          );
+          if (labelLong) labelLong.textContent = 'Copy Image';
+          if (labelShort) labelShort.textContent = 'Copy';
+          copyCanvasBtn.title = 'Copy image to clipboard';
+        }
+      };
+      updateCopyBtnForMultiview();
+      const observer = new MutationObserver(updateCopyBtnForMultiview);
+      observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     } else {
       console.warn('[main.js] Copy canvas button not found');
     }

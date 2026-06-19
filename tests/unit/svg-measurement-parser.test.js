@@ -2,9 +2,10 @@ import {
   createCoordinateTransformer,
   parseSvgMeasurements,
 } from '../../src/modules/ui/svg-measurement-parser.js';
+import { readFileSync } from 'node:fs';
 
 describe('svg measurement parser', () => {
-  test('parses legacy element-level guide ids with connector and label box metadata', () => {
+  test('parses standalone guide lines', () => {
     const svgText = `
       <svg width="200" height="100" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
         <line id="mA1cm" x1="10" y1="20" x2="150" y2="20" />
@@ -16,31 +17,16 @@ describe('svg measurement parser', () => {
     const parsed = parseSvgMeasurements(svgText);
 
     expect(parsed.totalMeasurements).toBe(1);
-    expect(parsed.dimensions.viewBox).toEqual({ x: 0, y: 0, width: 200, height: 100 });
+    expect(parsed.dimensions).toEqual({ minX: 0, minY: 0, width: 200, height: 100 });
     expect(parsed.measurements[0]).toMatchObject({
-      label: 'A1',
-      hasConnector: true,
-      hasLabelBox: true,
+      label: 'Measurement 1',
     });
     expect(parsed.measurements[0].lines[0]).toMatchObject({
-      type: 'line',
+      kind: 'line',
       x1: 10,
       y1: 20,
       x2: 150,
       y2: 20,
-    });
-    expect(parsed.measurements[0].connectors[0]).toMatchObject({
-      type: 'circle',
-      cx: 80,
-      cy: 20,
-      r: 5,
-    });
-    expect(parsed.measurements[0].labelBoxes[0]).toMatchObject({
-      type: 'rect',
-      x: 70,
-      y: 10,
-      width: 30,
-      height: 20,
     });
   });
 
@@ -60,7 +46,7 @@ describe('svg measurement parser', () => {
 
     expect(parsed.totalMeasurements).toBe(1);
     expect(parsed.measurements[0].label).toBe('Waist');
-    expect(parsed.measurements[0].hasConnector).toBe(false);
+    expect(parsed.measurements[0].lines).toHaveLength(1);
   });
 
   test('creates an aspect-ratio-preserving coordinate transformer', () => {
@@ -83,8 +69,31 @@ describe('svg measurement parser', () => {
       }
     );
 
-    expect(transform(10, 20)).toEqual({ x: 0, y: 100 });
-    expect(transform(210, 120)).toEqual({ x: 400, y: 300 });
+    expect(transform(10, 20)).toEqual({ x: 0, y: 0 });
+    expect(transform(210, 120)).toEqual({ x: 400, y: 400 });
     expect(transform(110, 70)).toEqual({ x: 200, y: 200 });
+  });
+
+  test('parses ungrouped Illustrator round-back arm guide labels', () => {
+    const cases = [
+      {
+        file: 'public/measurement-guides/Modular MT /Back Shape/Round Back, Round Arm/Archive/Back-CS1X-RA-RB.svg',
+        labels: ['A1', 'A5', 'A2'],
+      },
+      {
+        file: 'public/measurement-guides/Modular MT /Back Shape/Round Back, Round Arm/Archive/Back-CS3X-RA-RB.svg',
+        labels: ['A1', 'A4', 'A5', 'A2'],
+      },
+    ];
+
+    cases.forEach(({ file, labels }) => {
+      const parsed = parseSvgMeasurements(readFileSync(file, 'utf8'));
+
+      expect(parsed.measurements.map(measurement => measurement.label)).toEqual(labels);
+      parsed.measurements.forEach(measurement => {
+        expect(measurement.lines).toHaveLength(1);
+        expect(measurement.lines[0].points.length).toBeGreaterThanOrEqual(2);
+      });
+    });
   });
 });
