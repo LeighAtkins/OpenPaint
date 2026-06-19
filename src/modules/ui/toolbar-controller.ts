@@ -2712,13 +2712,26 @@ export function initToolbarController() {
           const targetRect = storedWorldRect
             ? rect
             : buildCenteredRectFromSize(rect.width, rect.height);
-          const viewportSeed = storedWorldRect
-            ? baseViewport
-            : {
-                ...normalizeViewportRecord(null),
-                rotation: resolveViewportRotation(activeTab.viewport, resolved),
-              };
-          const nextViewport = fitViewportToWorldRect(targetWorldRect, viewportSeed, targetRect);
+
+          // If we already have a saved viewport (user zoomed/panned before),
+          // use it directly instead of re-fitting to the world rect.
+          const hasSavedViewport =
+            baseViewport &&
+            Number.isFinite(Number(baseViewport.zoom)) &&
+            Number(baseViewport.zoom) > 0;
+
+          const nextViewport = hasSavedViewport
+            ? normalizeViewportRecord(baseViewport)
+            : fitViewportToWorldRect(
+                targetWorldRect,
+                storedWorldRect
+                  ? baseViewport
+                  : {
+                      ...normalizeViewportRecord(null),
+                      rotation: resolveViewportRotation(activeTab.viewport, resolved),
+                    },
+                targetRect
+              );
           activeTab.viewport = normalizeViewportRecord(nextViewport);
           activeTab.captureFrame = {
             ...(stored || {}),
