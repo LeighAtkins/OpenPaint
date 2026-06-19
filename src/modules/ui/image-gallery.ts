@@ -968,6 +968,7 @@ export function initImageGalleryModule() {
     let cm = null;
     try {
       cm = new CanvasManager(`mvCanvas-${label}`, {
+        containerId: `mvWrap-${label}`,
         enableFloatingLayout: false,
         paneId: `mv-${label}`,
         interactionGuard: () => multiviewFocusedLabel === label,
@@ -1087,7 +1088,7 @@ export function initImageGalleryModule() {
           .map(
             label => `
               <section class="multiview-pane" data-compare-label="${label}">
-                <div class="multiview-canvas-wrap"><canvas></canvas></div>
+                <div class="multiview-canvas-wrap" id="mvWrap-${label}"><canvas></canvas></div>
               </section>
             `
           )
