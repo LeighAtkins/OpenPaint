@@ -458,7 +458,7 @@ function ensureStyles(): void {
       overflow: hidden;
       backdrop-filter: blur(6px);
       pointer-events: auto;
-      transition: width 160ms ease, height 160ms ease, left 140ms ease, top 140ms ease;
+      transition: opacity 150ms ease;
     }
     body.measurement-split-workspace-active .measurement-guide-indicator {
       display: none !important;

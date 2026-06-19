@@ -82,6 +82,10 @@ function stripViewSuffix(fileName) {
   if (match) {
     return { baseName: match[1], view: match[2].toLowerCase() };
   }
+  const prefixMatch = fileName.match(/^(Front|Back|Side)[-_](.+)$/i);
+  if (prefixMatch) {
+    return { baseName: prefixMatch[2], view: prefixMatch[1].toLowerCase() };
+  }
   return null;
 }
 
@@ -112,9 +116,9 @@ function findLocalGuide(manifest, code, view) {
         }
 
         // Also check Front_/Back_/Side_ prefix (takes priority over suffix)
-        if (/^Front_/i.test(fileName)) resolvedView = 'front';
-        else if (/^Back_/i.test(fileName)) resolvedView = 'back';
-        else if (/^Side_/i.test(fileName)) resolvedView = 'side';
+        if (/^Front[_-]/i.test(fileName)) resolvedView = 'front';
+        else if (/^Back[_-]/i.test(fileName)) resolvedView = 'back';
+        else if (/^Side[_-]/i.test(fileName)) resolvedView = 'side';
 
         const baseNorm = normalizeGuideCode(matchBase);
         const baseNormDash = baseNorm.replace(/\s+/g, '-');

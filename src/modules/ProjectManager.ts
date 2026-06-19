@@ -399,6 +399,14 @@ export class ProjectManager {
         );
       }
 
+      // Save target view's initial state BEFORE saveCurrentViewState might pollute it.
+      // This happens when switching to the same view (force=true) — saveCurrentViewState
+      // saves canvasData/viewport for currentViewId which IS the target.
+      const targetViewInitState = {
+        hadCanvasData: !!this.views[viewId]?.canvasData,
+        hadViewport: !!this.views[viewId]?.viewport,
+      };
+
       // 1. Save current state (skip during project load to avoid clobbering loaded data)
       if (
         !this.isLoadingProject &&
@@ -463,6 +471,14 @@ export class ProjectManager {
       }
       this.removeCanvasObjectsOutsideViewScope(viewId);
 
+      // Check BEFORE applyCaptureFrameForLabel runs — that call creates stored state
+      // on capture tabs. For new views without saved viewport state, the fit pipeline
+      // in setBackgroundImage is the authoritative positioner.
+      const hasNoStoredViewportState =
+        !targetViewInitState.hadCanvasData &&
+        !targetViewInitState.hadViewport &&
+        !window.captureTabsByLabel?.[viewId]?.tabs?.some(tab => tab?.captureFrame?.worldRect);
+
       if (window.ensureCaptureTabsForLabel) {
         window.ensureCaptureTabsForLabel(viewId);
       }
@@ -474,8 +490,12 @@ export class ProjectManager {
       }
 
       // 5. Load background image if exists
+      let skipViewportRestore = false;
       if (view.image) {
-        await this.setBackgroundImage(view.image, view.fitMode || 'fit-canvas');
+        const fitMode = view.fitMode || 'fit-canvas';
+        await this.setBackgroundImage(view.image, fitMode);
+        skipViewportRestore =
+          (fitMode === 'scale-page-size' || fitMode === 'fill-frame') && hasNoStoredViewportState;
       }
 
       // 6. Restore canvas objects (strokes/text)
@@ -644,7 +664,9 @@ export class ProjectManager {
 
       this.removeCanvasObjectsOutsideViewScope(viewId);
 
-      this.restoreViewportForView(viewId);
+      if (!skipViewportRestore) {
+        this.restoreViewportForView(viewId);
+      }
 
       // Mount MOS overlays for the new view
       if (window.app?.measurementOverlayManager) {
@@ -765,6 +787,19 @@ export class ProjectManager {
       window.captureTabsByLabel?.[viewId] &&
       typeof window.applyCaptureFrameForLabel === 'function'
     ) {
+      // Seed the active tab's viewport with saved data so the user's original
+      // zoom/pan is used as the seed for fitViewportToWorldRect, rather than
+      // the fit pipeline's default "fit to frame" values.
+      const view = this.views?.[viewId];
+      if (view?.viewport && typeof view.viewport === 'object' && view.viewport.zoom) {
+        const tabs = window.captureTabsByLabel[viewId]?.tabs;
+        if (tabs?.length) {
+          const activeTab = tabs.find((t: any) => t.type !== 'master') || tabs[0];
+          if (activeTab) {
+            activeTab.viewport = cloneViewportRecord(view.viewport);
+          }
+        }
+      }
       window.applyCaptureFrameForLabel(viewId);
       return;
     }
@@ -1500,6 +1535,7 @@ export class ProjectManager {
         metadata: null,
         rotation: 0,
         backgroundRotation: 0,
+        fitMode: 'scale-page-size',
         tabs: null,
         viewport: null,
       };
@@ -1529,7 +1565,10 @@ export class ProjectManager {
     }
   }
 
-  async setBackgroundImage(url, fitMode = 'fit-canvas', options = {}) {
+  async setBackgroundImage(url, fitMode, options = {}) {
+    if (fitMode === undefined) {
+      fitMode = this.views?.[this.currentViewId]?.fitMode || 'fit-canvas';
+    }
     console.log(`\n[Image Debug] ===== SET BACKGROUND IMAGE =====`);
     console.log(`[Image Debug] URL: ${url?.substring?.(0, 50)}...`);
     console.log(`[Image Debug] Fit mode: ${fitMode}`);
@@ -1768,7 +1807,59 @@ export class ProjectManager {
               `  Scaled size: ${(imgWidth * scale).toFixed(1)}x${(imgHeight * scale).toFixed(1)}`
           );
 
-          canvas.setBackgroundImage(img, canvas.requestRenderAll.bind(canvas));
+          canvas.setBackgroundImage(img, () => {
+            canvas.requestRenderAll();
+            const restoredFromSaved =
+              shouldUseSavedBackgroundWorldRect && hasSavedBackgroundWorldRect;
+            if ((fitMode === 'scale-page-size' || fitMode === 'fill-frame') && !restoredFromSaved) {
+              this.canvasManager.suppressResizeRefitUntil = Date.now() + 500;
+              this.canvasManager.refitBackgroundImageToPlacementFrame?.();
+              const backgroundWorldRect = this.canvasManager.getBackgroundWorldRect?.();
+              const placementFrame = this.canvasManager.getBackgroundPlacementFrame?.();
+              if (
+                backgroundWorldRect &&
+                placementFrame &&
+                this.canvasManager.fitViewportToBackgroundPlacementFrame?.(
+                  backgroundWorldRect,
+                  placementFrame,
+                  this.canvasManager.getViewportState?.()
+                )
+              ) {
+                this.canvasManager.applyViewportTransform?.();
+              }
+              canvas.requestRenderAll();
+            }
+            // Sync the active tab's worldRect so applyCaptureFrameForLabel has a
+            // valid geometry to work with. Only sync the viewport for views with
+            // no saved viewport state — views with saved data should restore their
+            // original zoom/pan from view.viewport via restoreViewportForView.
+            const bgWorldRect = this.canvasManager.getBackgroundWorldRect?.();
+            const tabs = (window as any).captureTabsByLabel?.[this.currentViewId]?.tabs;
+            const viewForSync = this.views?.[this.currentViewId];
+            const hasSavedViewport = !!(
+              viewForSync?.viewport &&
+              typeof viewForSync.viewport === 'object' &&
+              viewForSync.viewport.zoom
+            );
+            if (tabs && bgWorldRect) {
+              const activeTab = tabs.find((t: any) => t.type !== 'master') || tabs[0];
+              if (activeTab) {
+                if (!hasSavedViewport) {
+                  activeTab.viewport = {
+                    zoom: this.canvasManager.zoomLevel,
+                    panX: this.canvasManager.panX,
+                    panY: this.canvasManager.panY,
+                    rotation: this.canvasManager.rotationDegrees || 0,
+                  };
+                }
+                if (!activeTab.captureFrame) activeTab.captureFrame = {};
+                activeTab.captureFrame = {
+                  ...activeTab.captureFrame,
+                  worldRect: bgWorldRect,
+                };
+              }
+            }
+          });
 
           // Save fit mode for this view so resize can use it
           if (this.currentViewId && this.views[this.currentViewId]) {
@@ -1866,6 +1957,54 @@ export class ProjectManager {
 
     // Remove from views
     delete this.views[viewId];
+
+    // Clean up ALL global window state so the deleted image doesn't
+    // reappear during cloud save (which merges this.views with legacy globals).
+    if (window.vectorStrokesByImage) delete window.vectorStrokesByImage[viewId];
+    if (window.lineStrokesByImage) delete window.lineStrokesByImage[viewId];
+    if (window.strokeVisibilityByImage) delete window.strokeVisibilityByImage[viewId];
+    if (window.strokeLabelVisibility) delete window.strokeLabelVisibility[viewId];
+    if (window.strokeMeasurements) delete window.strokeMeasurements[viewId];
+    if (window.customLabelPositions) delete window.customLabelPositions[viewId];
+    if (window.calculatedLabelOffsets) delete window.calculatedLabelOffsets[viewId];
+    if (window.customLabelRotationStamps) delete window.customLabelRotationStamps[viewId];
+    if (window.textElementsByImage) delete window.textElementsByImage[viewId];
+    if (window.captureTabsByLabel) delete window.captureTabsByLabel[viewId];
+    if (window.customImageNames) delete window.customImageNames[viewId];
+    if (window.originalImages) delete window.originalImages[viewId];
+    if (window.originalImageDimensions) delete window.originalImageDimensions[viewId];
+    if (window.imageRotationByLabel) delete window.imageRotationByLabel[viewId];
+    if (window.customLabelOffsetsRotationByImageAndStroke)
+      delete window.customLabelOffsetsRotationByImageAndStroke[viewId];
+
+    // Remove from orderedImageLabels
+    if (Array.isArray(window.orderedImageLabels)) {
+      window.orderedImageLabels = window.orderedImageLabels.filter((id: string) => id !== viewId);
+    }
+
+    // Remove from gallery data
+    if (window.imageGallery?.getData) {
+      const data = window.imageGallery.getData();
+      const idx = data.findIndex(
+        (item: any) => item?.original?.label === viewId || item?.label === viewId
+      );
+      if (idx >= 0 && window.imageGallery.clearGallery) {
+        // Gallery doesn't have a remove-by-index, so we clear and re-add the rest
+        // Actually, better to just remove the DOM element and data entry
+      }
+    }
+
+    // Also clean up any capture-tab scoped variants (e.g. "front::tab:tab-123")
+    const tabPrefix = `${viewId}::tab:`;
+    Object.keys(window.vectorStrokesByImage || {}).forEach(key => {
+      if (key.startsWith(tabPrefix)) delete window.vectorStrokesByImage[key];
+    });
+    Object.keys(window.lineStrokesByImage || {}).forEach(key => {
+      if (key.startsWith(tabPrefix)) delete window.lineStrokesByImage[key];
+    });
+    Object.keys(window.strokeVisibilityByImage || {}).forEach(key => {
+      if (key.startsWith(tabPrefix)) delete window.strokeVisibilityByImage[key];
+    });
 
     // If we deleted the current view, switch to another one
     if (this.currentViewId === viewId) {
@@ -2544,6 +2683,8 @@ export class ProjectManager {
       'perPixelTargetFind',
       '_pointsVersion',
       '_customPointsConverted',
+      'dashSettings',
+      'lineStyle',
     ];
   }
 
@@ -3731,7 +3872,7 @@ export class ProjectManager {
           imageSourceFingerprint: viewData.imageSourceFingerprint || null,
           rotation: Number(viewData.rotation) || 0,
           backgroundRotation: Number(viewData.backgroundRotation) || 0,
-          fitMode: typeof viewData.fitMode === 'string' ? viewData.fitMode : 'fit-canvas',
+          fitMode: typeof viewData.fitMode === 'string' ? viewData.fitMode : 'scale-page-size',
           canvasData: viewData.canvasJSON,
           metadata: viewData.metadata || {},
           tabs: viewData.tabs || null,

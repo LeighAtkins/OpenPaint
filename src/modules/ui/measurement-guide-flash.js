@@ -357,7 +357,7 @@ function runGuideSplitLayoutSync() {
         });
       }
       if (frameEl) {
-        frameEl.style.visibility = 'hidden';
+        frameEl.style.visibility = '';
       }
     });
   });
@@ -379,7 +379,7 @@ function scheduleGuideSplitFrameSync() {
       syncGuideSplitFrameGhost();
       const frameEl = document.getElementById('captureFrame');
       if (frameEl) {
-        frameEl.style.visibility = 'hidden';
+        frameEl.style.visibility = '';
       }
     });
   });
@@ -1479,16 +1479,26 @@ function ensureStyles() {
       padding: 20px 148px 20px 24px;
       margin-bottom: 0;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-      position: relative;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      transition: padding-bottom 200ms ease;
     }
     .guide-gallery-header.compact {
       padding-bottom: 10px;
     }
+    .guide-gallery-header .guide-gallery-link-grid {
+      overflow: hidden;
+      transition: max-height 200ms ease, opacity 150ms ease;
+      max-height: 200px;
+    }
     .guide-gallery-header.compact .guide-gallery-link-grid {
-      display: none;
+      max-height: 0;
+      opacity: 0;
     }
     .guide-gallery-header.compact:hover .guide-gallery-link-grid {
-      display: grid;
+      max-height: 200px;
+      opacity: 1;
     }
     .guide-gallery-toolbar {
       margin-top: 12px;
@@ -1497,6 +1507,27 @@ function ensureStyles() {
       gap: 8px;
       align-items: center;
     }
+    .guide-gallery-view-filter {
+      display: inline-flex;
+      gap: 0;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .guide-gallery-view-btn {
+      border: none;
+      border-right: 1px solid #cbd5e1;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #334155;
+      background: #fff;
+      cursor: pointer;
+      transition: background 120ms, color 120ms;
+    }
+    .guide-gallery-view-btn:last-child { border-right: none; }
+    .guide-gallery-view-btn:hover { background: #f1f5f9; }
+    .guide-gallery-view-btn.active { background: #0f172a; color: #fff; }
     .guide-gallery-search-wrap {
       margin-top: 10px;
     }
@@ -2171,6 +2202,8 @@ function ensureStyles() {
       color: #0f172a;
       cursor: pointer;
       white-space: nowrap;
+      min-width: 92px;
+      text-align: center;
     }
     .capture-tab-guide-status.unbound {
       border-color: #fca5a5;
@@ -2263,6 +2296,7 @@ function ensureStyles() {
       height: auto;
       max-height: 280px;
       object-fit: contain;
+      aspect-ratio: 16 / 10;
     }
     .guide-gallery-item-actions {
       display: flex;
@@ -3083,7 +3117,7 @@ function setStatusMessage(message, kind = 'info') {
   }
 }
 
-async function waitForGuideImportReady(viewId, timeoutMs = 2200) {
+async function waitForGuideImportReady(viewId, timeoutMs = 5000) {
   const manager = window.app?.projectManager || window.projectManager;
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -3387,6 +3421,7 @@ async function importSvgMeasurements(code, view, imageLabel, options = {}) {
 
     // Import each measurement as a line stroke
     const imported = [];
+    const pendingTagCreations = [];
     const metadataManager = options.metadataManager || window.app?.metadataManager;
     const tagManager = options.tagManager || window.app?.tagManager || null;
     const curveMode = String(options.curveMode || 'straight')
@@ -3426,6 +3461,7 @@ async function importSvgMeasurements(code, view, imageLabel, options = {}) {
           curveMode === 'reference-path' && line?.kind === 'curve' && segmentPoints.length >= 2;
 
         let fabricLine = null;
+        const lineColor = line.color || '#ef4444';
         if (shouldImportAsPath) {
           const transformedPoints = segmentPoints.map(point => transform(point.x, point.y));
           const pathString = PathUtils.createSmoothPath(transformedPoints);
@@ -3433,7 +3469,7 @@ async function importSvgMeasurements(code, view, imageLabel, options = {}) {
             continue;
           }
           fabricLine = new fabric.Path(pathString, {
-            stroke: '#ef4444',
+            stroke: lineColor,
             strokeWidth: 2,
             fill: '',
             strokeDashArray: null,
@@ -3453,7 +3489,7 @@ async function importSvgMeasurements(code, view, imageLabel, options = {}) {
 
           // Create Fabric.js line object
           fabricLine = new fabric.Line([start.x, start.y, end.x, end.y], {
-            stroke: '#ef4444', // Red color for guide measurements
+            stroke: lineColor,
             strokeWidth: 2,
             strokeDashArray: null,
             selectable: !referenceOnly,
@@ -3507,20 +3543,11 @@ async function importSvgMeasurements(code, view, imageLabel, options = {}) {
 
         // Create tag using TagManager with connector color matching the line
         if (tagManager) {
-          setTimeout(() => {
-            // Set connector to match the line color and use square tags
-            tagManager.connectorColor = fabricLine.stroke || '#ef4444';
-            tagManager.connectorMatchesLine = true;
-            tagManager.tagShape = 'square';
-
-            // Also update paintApp state so button syncs correctly
-            if (options.syncUi !== false && window.paintApp?.state) {
-              window.paintApp.state.labelShape = 'square';
-            }
-
-            // Create the tag with these settings
-            tagManager.createTagForStroke(measurement.label, imageLabel, fabricLine);
-          }, 50);
+          pendingTagCreations.push({
+            label: measurement.label,
+            imageLabel,
+            fabricLine,
+          });
         }
 
         imported.push({
@@ -3534,6 +3561,22 @@ async function importSvgMeasurements(code, view, imageLabel, options = {}) {
 
     // Render canvas
     canvas.renderAll();
+
+    // Batch-create all tags in a single deferred pass. The deferral is needed
+    // so the canvas viewport/background settles before tags read line positions.
+    if (tagManager && pendingTagCreations.length) {
+      setTimeout(() => {
+        tagManager.connectorColor = pendingTagCreations[0].fabricLine.stroke || '#ef4444';
+        tagManager.connectorMatchesLine = true;
+        tagManager.tagShape = 'square';
+        if (options.syncUi !== false && window.paintApp?.state) {
+          window.paintApp.state.labelShape = 'square';
+        }
+        pendingTagCreations.forEach(({ label, imageLabel, fabricLine }) => {
+          tagManager.createTagForStroke(label, imageLabel, fabricLine);
+        });
+      }, 50);
+    }
 
     // Update UI buttons to reflect import settings
     if (options.syncUi !== false) {
@@ -3584,10 +3627,12 @@ async function addGuideAsNewImage(code, view, options = {}) {
   const label = createGuideViewId(`${code}-${view}`);
 
   let guideSvgText = '';
+  const importErrors = [];
   if (shouldImportGuideSvg) {
     try {
       guideSvgText = await fetchGuideSvgText(code, view);
     } catch (error) {
+      importErrors.push(`SVG fetch failed: ${error.message || error}`);
       console.warn('[Guide] Failed to fetch source SVG for overlay import:', error);
     }
   }
@@ -3624,6 +3669,7 @@ async function addGuideAsNewImage(code, view, options = {}) {
       const mosReadySvg = stripNonMeasurementElements(guideSvgText);
       await measurementOverlayManager.importSvg(mosReadySvg, label);
     } catch (error) {
+      importErrors.push(`MOS overlay failed: ${error.message || error}`);
       console.warn('[Guide] Failed to import guide SVG overlay:', error);
     } finally {
       if (
@@ -3663,11 +3709,17 @@ async function addGuideAsNewImage(code, view, options = {}) {
       const importResult = await importSvgMeasurements(code, view, label);
       console.log(`[addGuideAsNewImage] Import result:`, importResult);
       if (options.skipStatusMessage !== true && importResult.success && importResult.imported > 0) {
-        setStatusMessage(`Added guide with ${importResult.imported} measurements`, 'success');
+        const extra = importErrors.length ? ` (with ${importErrors.length} warning(s))` : '';
+        setStatusMessage(
+          `Added guide with ${importResult.imported} measurements${extra}`,
+          'success'
+        );
       } else if (options.skipStatusMessage !== true && !importResult.success) {
-        console.warn(`[addGuideAsNewImage] Import failed:`, importResult.error);
+        importErrors.push(`Measurement import failed: ${importResult.error || 'unknown'}`);
+        console.warn(`[addGuideAsNewImage] Import failed:`, importResult);
       }
     } catch (error) {
+      importErrors.push(`Import exception: ${error.message || error}`);
       console.error('[addGuideAsNewImage] Exception during import:', error);
     } finally {
       if (
@@ -3687,6 +3739,13 @@ async function addGuideAsNewImage(code, view, options = {}) {
     console.log(`[addGuideAsNewImage] Measurement import disabled by options`);
   }
 
+  if (importErrors.length && options.skipStatusMessage !== true) {
+    setStatusMessage(
+      `Import completed with ${importErrors.length} issue(s): ${importErrors.join('; ')}`,
+      'warning'
+    );
+  }
+
   return label;
 }
 
@@ -3698,13 +3757,38 @@ async function addGuideAsNewImage(code, view, options = {}) {
 function stripSvgLabels(svgText) {
   // 1. Strip <text> elements
   var result = svgText.replace(/<text[^>]*>[\s\S]*?<\/text>/gi, '');
-  // 2. Strip label background boxes: <g> groups containing only <rect>
-  //    (no lines/paths) that are not in measurement groups
+  // 2. Strip all measurement visual elements via DOM parsing
   try {
     var parser = new DOMParser();
     var doc = parser.parseFromString(result, 'image/svg+xml');
-    var allGroups = Array.from(doc.querySelectorAll('g'));
-    allGroups.forEach(function (g) {
+    var svgRoot = doc.querySelector('svg');
+
+    // Build a set of CSS classes that represent measurement elements
+    // (saturated stroke colors = measurement lines; saturated fill colors =
+    // arrowheads; stroke-dasharray = dashed measurement extensions).
+    var strippableClasses = new Set();
+    var styleEl = svgRoot?.querySelector('style');
+    if (styleEl) {
+      var cssText = styleEl.textContent || '';
+      var ruleRe = /\.([a-zA-Z0-9_-]+)\s*\{([^}]*)\}/g;
+      var ruleMatch;
+      while ((ruleMatch = ruleRe.exec(cssText)) !== null) {
+        var body = ruleMatch[2];
+        var hasDash = /stroke-dasharray/.test(body);
+        var strokeM = /stroke\s*:\s*(#[0-9A-Fa-f]{3,8})/.exec(body);
+        var fillM = /fill\s*:\s*(#[0-9A-Fa-f]{3,8})/.exec(body);
+        if (
+          hasDash ||
+          (strokeM && isHexSaturated(strokeM[1])) ||
+          (fillM && isHexSaturated(fillM[1]))
+        ) {
+          strippableClasses.add(ruleMatch[1]);
+        }
+      }
+    }
+
+    // Remove groups that contain only rects (label box groups)
+    Array.from(doc.querySelectorAll('g')).forEach(function (g) {
       var id = String(g.getAttribute('id') || '').trim();
       if (!id.match(/^[mbc]/i)) {
         var rects = g.querySelectorAll('rect');
@@ -3714,11 +3798,51 @@ function stripSvgLabels(svgText) {
         }
       }
     });
+
+    // Remove all elements whose class includes a strippable (measurement) class
+    if (strippableClasses.size > 0) {
+      Array.from(doc.querySelectorAll('line, polyline, path, polygon, rect')).forEach(
+        function (el) {
+          var cls = el.getAttribute('class') || '';
+          var classes = cls.split(/\s+/);
+          for (var i = 0; i < classes.length; i++) {
+            if (strippableClasses.has(classes[i])) {
+              el.parentNode?.removeChild(el);
+              break;
+            }
+          }
+        }
+      );
+    }
+
+    // Remove any remaining rects (tag boxes without measurement classes)
+    Array.from(doc.querySelectorAll('rect')).forEach(function (rect) {
+      rect.parentNode?.removeChild(rect);
+    });
+    // Remove any remaining short lines (connectors under 20px)
+    Array.from(doc.querySelectorAll('line')).forEach(function (line) {
+      var x1 = parseFloat(line.getAttribute('x1') || '0');
+      var y1 = parseFloat(line.getAttribute('y1') || '0');
+      var x2 = parseFloat(line.getAttribute('x2') || '0');
+      var y2 = parseFloat(line.getAttribute('y2') || '0');
+      if (Math.hypot(x2 - x1, y2 - y1) < 20) {
+        line.parentNode?.removeChild(line);
+      }
+    });
     result = new XMLSerializer().serializeToString(doc);
   } catch (e) {
     // Fallback: text-only stripping is better than nothing
   }
   return result;
+}
+
+function isHexSaturated(hex) {
+  var parts = /^#?([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})/.exec(String(hex || ''));
+  if (!parts) return false;
+  var r = parseInt(parts[1], 16);
+  var g = parseInt(parts[2], 16);
+  var b = parseInt(parts[3], 16);
+  return Math.max(r, g, b) - Math.min(r, g, b) > 40;
 }
 
 function stripNonMeasurementElements(svgText) {
@@ -6330,6 +6454,15 @@ function showGuideGallery(options = {}) {
   let collectionsByCode = {};
   let categoriesByCode = {};
 
+  let pendingGalleryRender = null;
+  const scheduleGalleryRender = () => {
+    if (pendingGalleryRender) clearTimeout(pendingGalleryRender);
+    pendingGalleryRender = setTimeout(() => {
+      pendingGalleryRender = null;
+      if (galleryOverlay) renderGallery();
+    }, 60);
+  };
+
   // Load local manifest codes (Modular MT, etc.)
   let libraryManifest = null;
   fetch('/measurement-guides/manifest.json')
@@ -6350,6 +6483,10 @@ function showGuideGallery(options = {}) {
             if (match) {
               return { baseName: match[1], view: match[2].toLowerCase() };
             }
+            const prefixMatch = fileName.match(/^(Front|Back|Side)[-_](.+)$/i);
+            if (prefixMatch) {
+              return { baseName: prefixMatch[2], view: prefixMatch[1].toLowerCase() };
+            }
             return null;
           }
           function extractCodes(node, parentCategory) {
@@ -6357,7 +6494,7 @@ function showGuideGallery(options = {}) {
               const svgs = node.files.filter(f => f.type === 'svg');
               for (const svg of svgs) {
                 const fileName = svg.name.replace(/\.[^/.]+$/, '');
-                let code = fileName.replace(/^(Front|Back|Side)_/i, '');
+                let code = fileName.replace(/^(Front|Back|Side)[-_]/i, '');
                 const viewSuffix = stripViewSuffix(code);
                 if (viewSuffix) {
                   code = viewSuffix.baseName;
@@ -6366,7 +6503,7 @@ function showGuideGallery(options = {}) {
                 if (!code) continue;
                 const nc = code.toUpperCase();
                 if (!allCodes.includes(nc)) allCodes.push(nc);
-                const viewMatch = fileName.match(/^(Front|Back|Side)_/i);
+                const viewMatch = fileName.match(/^(Front|Back|Side)[-_]/i);
                 const view = viewSuffix?.view || (viewMatch ? viewMatch[1].toLowerCase() : 'front');
                 if (!viewsByCode[nc]) viewsByCode[nc] = [];
                 if (!viewsByCode[nc].includes(view)) viewsByCode[nc].push(view);
@@ -6401,7 +6538,7 @@ function showGuideGallery(options = {}) {
         );
       }
       allCodes.sort((a, b) => a.localeCompare(b));
-      if (galleryOverlay) renderGallery();
+      scheduleGalleryRender();
     })
     .catch(() => {});
 
@@ -6609,7 +6746,10 @@ function showGuideGallery(options = {}) {
     </div>`;
   }
 
+  let galleryViewFilter = 'all';
+
   const renderGallery = () => {
+    const savedScrollTop = galleryOverlay ? galleryOverlay.scrollTop : 0;
     const runtimeCurrentViewId = getCurrentViewId();
     const bindTargets = getBindTargetOptions();
     const modelState = getGuideModelLinkState();
@@ -6654,7 +6794,14 @@ function showGuideGallery(options = {}) {
       : null;
     const bindPreviewImage = projectImages.find(image => image.id === bindPreviewImageId) || null;
 
-    const filteredCodes = allCodes.filter(code => code.includes(query.toUpperCase()));
+    const queryFiltered = allCodes.filter(code => code.includes(query.toUpperCase()));
+    const filteredCodes =
+      galleryViewFilter === 'all'
+        ? queryFiltered
+        : queryFiltered.filter(code => {
+            const views = viewsByCode[code] || [];
+            return views.includes(galleryViewFilter);
+          });
     if (selectedCode && !filteredCodes.includes(selectedCode)) {
       selectedCode = filteredCodes[0] || '';
     }
@@ -6664,9 +6811,11 @@ function showGuideGallery(options = {}) {
         const selectedClass = code === selectedCode ? ' selected' : '';
         const views = availableViewsForCode(code, viewsByCode);
         const activeView =
-          bindVariantByCode[code] && views.includes(bindVariantByCode[code])
-            ? bindVariantByCode[code]
-            : views[0];
+          galleryViewFilter !== 'all' && views.includes(galleryViewFilter)
+            ? galleryViewFilter
+            : bindVariantByCode[code] && views.includes(bindVariantByCode[code])
+              ? bindVariantByCode[code]
+              : views[0];
         const isCodeQueued = modelState.selections.some(item => item.code === code);
         const quickViews = ['front', 'back', 'side'].filter(view => views.includes(view));
         const fallbackViews = quickViews.length ? quickViews : views.slice(0, 3);
@@ -6830,6 +6979,12 @@ function showGuideGallery(options = {}) {
             <div class="guide-gallery-search-wrap ${searchVisible ? '' : 'hidden'}">
               <input type="text" class="guide-gallery-search" placeholder="Search..." value="${query}" />
             </div>
+            <div class="guide-gallery-view-filter">
+              <button type="button" class="guide-gallery-view-btn ${galleryViewFilter === 'all' ? 'active' : ''}" data-gallery-view-filter="all">All</button>
+              <button type="button" class="guide-gallery-view-btn ${galleryViewFilter === 'front' ? 'active' : ''}" data-gallery-view-filter="front">Front</button>
+              <button type="button" class="guide-gallery-view-btn ${galleryViewFilter === 'back' ? 'active' : ''}" data-gallery-view-filter="back">Back</button>
+              <button type="button" class="guide-gallery-view-btn ${galleryViewFilter === 'side' ? 'active' : ''}" data-gallery-view-filter="side">Side</button>
+            </div>
             <div class="guide-gallery-toolbar">
               <button type="button" class="guide-gallery-mode ${galleryMode === 'select' ? 'active' : ''}" data-gallery-mode="select">Browse</button>
               <button type="button" class="guide-gallery-mode ${galleryMode === 'bind' ? 'active' : ''}" data-gallery-mode="bind">Bind</button>
@@ -6892,6 +7047,13 @@ function showGuideGallery(options = {}) {
     const modeButtons = galleryOverlay.querySelectorAll('[data-gallery-mode]');
     const toggleSearchBtn = galleryOverlay.querySelector('.guide-gallery-toggle-search');
     const togglePanelBtn = galleryOverlay.querySelector('.guide-gallery-toggle-panel');
+    const viewFilterButtons = galleryOverlay.querySelectorAll('[data-gallery-view-filter]');
+    viewFilterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        galleryViewFilter = btn.getAttribute('data-gallery-view-filter') || 'all';
+        renderGallery();
+      });
+    });
     const loadCurrentBtn = galleryOverlay.querySelector('.guide-gallery-load-current');
     const addImageBtn = galleryOverlay.querySelector('.guide-gallery-add-image');
     const addAllBtn = galleryOverlay.querySelector('.guide-gallery-add-all');
@@ -7049,9 +7211,7 @@ function showGuideGallery(options = {}) {
           : '<span id="guideGalleryBindPreviewImageEmpty" style="font-size:12px;color:#64748b;">Select an image</span>';
         if (image) {
           const previewEl = imagePane.querySelector('#guideGalleryBindPreviewImageEl');
-          requestAnimationFrame(() => {
-            applyImagePreviewViewport(previewEl, image.id);
-          });
+          applyImagePreviewViewport(previewEl, image.id);
         }
       }
       if (imageMeta) {
@@ -7732,6 +7892,9 @@ function showGuideGallery(options = {}) {
       autoCompactHeader = galleryOverlay.scrollTop > 72;
       syncHeaderCompactMode();
     };
+    if (savedScrollTop > 0) {
+      galleryOverlay.scrollTop = savedScrollTop;
+    }
   };
 
   renderGallery();
@@ -7747,7 +7910,7 @@ function showGuideGallery(options = {}) {
         if (!selectedViews.includes(selectedView)) {
           selectedView = selectedViews[0] || 'front';
         }
-        renderGallery();
+        scheduleGalleryRender();
       }
     })
     .catch(() => {

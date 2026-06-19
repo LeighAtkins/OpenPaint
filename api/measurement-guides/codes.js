@@ -37,6 +37,10 @@ function stripViewSuffix(fileName) {
   if (match) {
     return { baseName: match[1], view: match[2].toLowerCase() };
   }
+  const prefixMatch = fileName.match(/^(Front|Back|Side)[-_](.+)$/i);
+  if (prefixMatch) {
+    return { baseName: prefixMatch[2], view: prefixMatch[1].toLowerCase() };
+  }
   return null;
 }
 
@@ -54,7 +58,7 @@ function flattenLocalCodes(manifest) {
         const fileName = f.name.replace(/\.[^/.]+$/, '');
         let code = fileName;
         // Strip Front_/Back_/Side_ prefix
-        code = code.replace(/^(Front|Back|Side)_/i, '');
+        code = code.replace(/^(Front|Back|Side)[-_]/i, '');
         // Strip view suffix (e.g. -Side, _Front)
         const viewSuffix = stripViewSuffix(code);
         if (viewSuffix) {
@@ -72,7 +76,7 @@ function flattenLocalCodes(manifest) {
         }
 
         // Determine views for this code
-        const viewMatch = fileName.match(/^(Front|Back|Side)_/i);
+        const viewMatch = fileName.match(/^(Front|Back|Side)[-_]/i);
         const view = viewSuffix?.view || (viewMatch ? viewMatch[1].toLowerCase() : 'front');
         const existing = viewsByCode[normalizedCode];
         if (existing) {
@@ -86,14 +90,14 @@ function flattenLocalCodes(manifest) {
             if (other === f || other.type !== 'svg') continue;
             const otherName = other.name.replace(/\.[^/.]+$/, '');
             let otherCode = otherName;
-            otherCode = otherCode.replace(/^(Front|Back|Side)_/i, '');
+            otherCode = otherCode.replace(/^(Front|Back|Side)[-_]/i, '');
             const otherViewSuffix = stripViewSuffix(otherCode);
             if (otherViewSuffix) {
               otherCode = otherViewSuffix.baseName;
             }
             otherCode = otherCode.replace(/^[^a-zA-Z0-9]+/, '').replace(/\s*\([^)]*\)\s*$/, '');
             if (otherCode.toUpperCase() === normalizedCode) {
-              const otherViewPrefix = otherName.match(/^(Front|Back|Side)_/i);
+              const otherViewPrefix = otherName.match(/^(Front|Back|Side)[-_]/i);
               const otherView =
                 otherViewSuffix?.view || (otherViewPrefix ? otherViewPrefix[1].toLowerCase() : '');
               if (otherView && !viewsByCode[normalizedCode].includes(otherView)) {

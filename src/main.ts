@@ -109,7 +109,7 @@ import { initCwImportUI } from './modules/ui/cw-import-ui';
 import './modules/ui/toolbar-init.js';
 import './modules/ui/smart-labels.js';
 import './modules/ui/panel-management.js';
-import './modules/ui/image-gallery.js';
+import { initImageGalleryModule } from './modules/ui/image-gallery.js';
 import './modules/utils/transform';
 import './modules/utils/geometry';
 import './modules/utils/migration';
@@ -161,6 +161,10 @@ async function bootstrap(): Promise<void> {
 
   // Initialize PDF export (uses pdf-lib npm package)
   initPdfExport();
+
+  // Initialize image gallery module (single owner of gallery + paint.js hook).
+  // Must run before initToolbarController so gallery globals exist for callers.
+  initImageGalleryModule();
 
   // Initialize toolbar controller (wires up arrow toggles, dash patterns, etc.)
   initToolbarController();

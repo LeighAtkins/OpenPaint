@@ -307,19 +307,17 @@
         white-space: nowrap;
       }
 
-      /* Mobile: Make toolbar horizontally scrollable by default */
+      /* Mobile: Make toolbar horizontally scrollable */
       @media (max-width: 768px) {
         .toolbar-wrap {
           overflow-x: auto;
-          overflow-y: hidden;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: thin;
           scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
           justify-content: flex-start;
           gap: 12px;
-          padding: 0 8px;
+          padding: 0 16px;
           position: relative;
-          cursor: pointer;
         }
 
         .toolbar-wrap::-webkit-scrollbar {
@@ -339,7 +337,6 @@
           background: rgba(148, 163, 184, 0.7);
         }
 
-        /* Prevent toolbar groups from wrapping in scrollable mode */
         .toolbar-wrap:not(.expanded) #tbLeft,
         .toolbar-wrap:not(.expanded) #tbCenter,
         .toolbar-wrap:not(.expanded) #tbRight {
@@ -458,6 +455,36 @@
         .toolbar-wrap.no-glow {
           box-shadow: none !important;
         }
+
+        /* Mobile welcome dialog — compact, no icons */
+        #welcomeOverlay > div {
+          padding: 24px 20px;
+          max-width: 92vw;
+          max-height: 80vh;
+          overflow-y: auto;
+        }
+        #welcomeOverlay > div > h1 {
+          font-size: 20px;
+        }
+        #welcomeOverlay > div > div:first-of-type > div > span:first-child {
+          display: none;
+        }
+        #welcomeOverlay > div > div:first-of-type > div {
+          gap: 6px;
+        }
+        #welcomeOverlay > div > div:first-of-type > div > span:last-child {
+          font-size: 13px;
+        }
+
+        /* Larger touch targets on mobile */
+        .toolbar-wrap .tbtn {
+          min-height: 36px;
+          padding: 0 12px;
+        }
+        .toolbar-wrap .color-swatches button {
+          width: 28px;
+          height: 28px;
+        }
       }
 
       .group-gap > * {
@@ -471,7 +498,6 @@
       /* Desktop compact: tighten spacing when toolbar overflows */
       [data-toolbar-mode='compact'] .toolbar-wrap {
         overflow-x: auto;
-        overflow-y: hidden;
         scrollbar-width: thin;
         scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
       }
@@ -835,7 +861,7 @@
         flex-direction: column;
         gap: var(--ob-sp-1);
         box-shadow: var(--ob-shadow-elevated);
-        z-index: var(--ob-z-dropdown);
+        z-index: 200;
         min-width: 120px;
       }
 
@@ -855,6 +881,11 @@
         border-color: var(--ob-border-color);
         color: var(--ob-text-secondary);
         background: var(--ob-paper);
+      }
+      #eraserModeWrapper.shape-active > #eraserModeToggle {
+        border-color: var(--ob-signal);
+        color: var(--ob-signal);
+        background: var(--ob-signal-soft);
       }
       #eraserModeWrapper::after {
         content: '';
@@ -1257,7 +1288,6 @@
         #canvasControls {
           max-width: calc(100vw - 2rem);
           overflow-x: auto;
-          overflow-y: hidden;
           -webkit-overflow-scrolling: touch;
         }
 
@@ -2222,6 +2252,84 @@
         transform: scale(1.05);
       }
 
+      .image-thumbnail.compare-selected {
+        border-color: #14b8a6;
+        box-shadow:
+          0 0 0 3px rgba(20, 184, 166, 0.35),
+          0 10px 25px -3px rgba(15, 118, 110, 0.22);
+      }
+
+      .image-thumbnail.compare-selected::after {
+        content: 'Compare';
+        position: absolute;
+        left: 8px;
+        bottom: 8px;
+        border-radius: 999px;
+        background: rgba(15, 118, 110, 0.92);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1;
+        padding: 4px 7px;
+        pointer-events: none;
+      }
+
+      .thumbnail-compare-toggle {
+        position: absolute;
+        top: 7px;
+        right: 7px;
+        z-index: 5;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(15, 23, 42, 0.2);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.9);
+        color: #64748b;
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 1;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+        transition:
+          background 120ms ease,
+          color 120ms ease,
+          transform 120ms ease,
+          border-color 120ms ease;
+      }
+
+      .thumbnail-compare-toggle:hover {
+        transform: scale(1.08);
+        border-color: #14b8a6;
+        color: #0f766e;
+      }
+
+      .image-thumbnail.compare-selected .thumbnail-compare-toggle {
+        background: #14b8a6;
+        border-color: #0f766e;
+        color: #fff;
+      }
+
+      /* Visible vertical-list thumbnails (.image-container in #imageList).
+         The × delete button sits at right:6px, so place the toggle just left of it. */
+      .image-container .thumbnail-compare-toggle {
+        top: 6px;
+        right: 32px;
+        z-index: 11;
+      }
+
+      .image-container.compare-selected {
+        outline: 2px solid #14b8a6;
+        outline-offset: 1px;
+      }
+
+      .image-container.compare-selected .thumbnail-compare-toggle {
+        background: #14b8a6;
+        border-color: #0f766e;
+        color: #fff;
+      }
+
       .image-thumbnail.dragging {
         opacity: 0.5;
         transform: rotate(5deg);
@@ -2232,6 +2340,103 @@
         border-color: #10b981;
         box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
         transform: translateY(-1px) scale(1.05);
+      }
+
+      #multiViewStage {
+        position: absolute;
+        inset: 0;
+        z-index: 120;
+        display: none;
+        padding: 2px;
+        background: #f8fafc;
+      }
+
+      body.multiview-active #multiViewStage {
+        display: grid;
+      }
+
+      body.multiview-active #main-canvas-wrapper > .canvas-container,
+      body.multiview-active #captureFrame,
+      body.multiview-active #captureTabBar,
+      body.multiview-active #captureMasterTargetBadge,
+      body.multiview-active #fineRotateGrid {
+        visibility: hidden !important;
+      }
+
+      .multiview-grid {
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        display: grid;
+        gap: 2px;
+      }
+
+      .multiview-grid.count-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .multiview-grid.count-3,
+      .multiview-grid.count-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(2, minmax(0, 1fr));
+      }
+
+      .multiview-pane {
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .multiview-canvas-wrap {
+        flex: 1 1 auto;
+        min-height: 0;
+        position: relative;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .multiview-canvas-wrap canvas {
+        position: absolute;
+        inset: 0;
+      }
+
+      .multiview-actions {
+        position: absolute;
+        top: 10px;
+        right: 16px;
+        z-index: 130;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .mv-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        background: rgba(255, 255, 255, 0.95);
+        color: #334155;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+        transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+      }
+
+      .mv-btn:hover {
+        background: #ffffff;
+        border-color: #14b8a6;
+        color: #0f766e;
+      }
+
+      .mv-close {
+        padding: 6px;
       }
 
       /* --- UI Layering System --- */
@@ -2951,6 +3156,7 @@
             max-height: none;
           "
         ></canvas>
+        <div id="multiViewStage" aria-label="Image comparison view"></div>
       </div>
 
       <!-- Right Sidebar: Images Panel -->
@@ -3646,6 +3852,18 @@
             >
           </label>
           <button
+            type="button"
+            id="compareDeselectAll"
+            class="hidden items-center gap-1 text-[11px] font-medium text-slate-600 hover:text-teal-700 bg-slate-100 hover:bg-teal-50 border border-slate-200 hover:border-teal-300 rounded-lg px-2 py-1 select-none transition-colors"
+            title="Clear comparison selection"
+            aria-label="Clear comparison selection"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <span>Deselect all</span>
+          </button>
+          <button
             id="toggleImagePanel"
             class="text-slate-500 hover:text-slate-700 rounded-lg p-1 transition-colors"
             title="Minimize/Expand Panel"
@@ -3891,7 +4109,6 @@
           title="Choose how images react when the page is resized"
         >
           <option value="scale-page-size" selected>Fit Frame</option>
-          <option value="fill-frame">Fill Frame</option>
           <option value="keep-size">Keep Size</option>
         </select>
         <button
@@ -4232,7 +4449,7 @@
 
     <!-- Welcome Overlay for First-Time Users -->
     <div id="welcomeOverlay" style="
-      display:none;position:fixed;inset:0;z-index:10000;
+      display:none;position:fixed;inset:0;z-index:10300;
       background:rgba(15,23,42,.55);backdrop-filter:blur(4px);
       cursor:pointer;
     ">

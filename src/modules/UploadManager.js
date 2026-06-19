@@ -334,7 +334,8 @@ export class UploadManager {
       }
     } else if (isCurrentView) {
       // If we're already on this view, just ensure the image is displayed
-      await this.projectManager.setBackgroundImage(objectUrl);
+      const storedFitMode = this.projectManager.views?.[this.projectManager.currentViewId]?.fitMode;
+      await this.projectManager.setBackgroundImage(objectUrl, storedFitMode);
     }
 
     if (canMark && performance.measure) {

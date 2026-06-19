@@ -10,6 +10,7 @@ export class TagManager {
   constructor(canvasManager, metadataManager) {
     this.canvasManager = canvasManager;
     this.metadataManager = metadataManager;
+    this._renderTargetCanvas = null; // Override target for off-canvas rendering (e.g. compare)
     this.tagObjects = new Map(); // Map<viewId::strokeLabel, fabricObject>
     this.tagSize = 34; // Default tag font size
     this.tagShape = 'square'; // 'square' or 'circle'
@@ -86,7 +87,20 @@ export class TagManager {
 
   // Get canvas reference dynamically (may not be available at construction time)
   get canvas() {
+    if (this._renderTargetCanvas) return this._renderTargetCanvas;
     return this.canvasManager?.fabricCanvas || null;
+  }
+
+  // Temporarily retarget tag/connector rendering onto another canvas (e.g. a
+  // read-only compare snapshot), running fn() with that canvas as `this.canvas`.
+  withRenderTarget(canvas, fn) {
+    const previous = this._renderTargetCanvas;
+    this._renderTargetCanvas = canvas || null;
+    try {
+      return fn();
+    } finally {
+      this._renderTargetCanvas = previous;
+    }
   }
 
   initTagPrediction() {
