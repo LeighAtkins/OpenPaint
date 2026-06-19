@@ -496,6 +496,43 @@ export class ProjectManager {
         await this.setBackgroundImage(view.image, fitMode);
         skipViewportRestore =
           (fitMode === 'scale-page-size' || fitMode === 'fill-frame') && hasNoStoredViewportState;
+
+        // Auto-fit the capture frame to the image bounds if no frame exists yet.
+        // We set the tab's captureFrame.worldRect so applyCaptureFrameForLabel
+        // uses it instead of falling back to the default 4:3 rect.
+        const tabsState = window.captureTabsByLabel?.[viewId];
+        const activeTab = tabsState?.tabs?.find((t: any) => t.id === tabsState?.activeTabId);
+        const hasFrame = activeTab?.captureFrame?.worldRect || view.backgroundWorldRect;
+        if (!hasFrame) {
+          const bg = this.canvasManager?.fabricCanvas?.backgroundImage;
+          if (bg) {
+            const bw =
+              (typeof bg.getScaledWidth === 'function'
+                ? bg.getScaledWidth()
+                : bg.width * bg.scaleX) || 0;
+            const bh =
+              (typeof bg.getScaledHeight === 'function'
+                ? bg.getScaledHeight()
+                : bg.height * bg.scaleY) || 0;
+            if (bw > 0 && bh > 0) {
+              const center =
+                typeof bg.getCenterPoint === 'function'
+                  ? bg.getCenterPoint()
+                  : { x: bg.left, y: bg.top };
+              const worldRect = {
+                left: center.x - bw / 2,
+                top: center.y - bh / 2,
+                width: bw,
+                height: bh,
+              };
+              // Seed the world rect on the active tab so applyCaptureFrameForLabel picks it up
+              if (activeTab) {
+                activeTab.captureFrame = activeTab.captureFrame || {};
+                activeTab.captureFrame.worldRect = worldRect;
+              }
+            }
+          }
+        }
       }
 
       // 6. Restore canvas objects (strokes/text)

@@ -1461,7 +1461,7 @@ export function initPdfExport() {
     if (includeMeasurementsLabel) {
       const rendererWrap = document.createElement('div');
       rendererWrap.style.marginBottom = '16px';
-      rendererWrap.innerHTML = `<label style="display:block;margin-bottom:6px;font-weight:600;color:#3E4752;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;">Renderer</label><select id="pdfRendererMode" style="width:100%;padding:10px 14px;border:1px solid #E7EAEE;border-radius:12px;font-size:14px;background:#fff;font-family:'Instrument Sans','Inter',sans-serif;outline:none;"><option value="classic" selected>Classic (Local)</option><option value="modern">Modern (Beta)</option></select>`;
+      rendererWrap.innerHTML = `<label style="display:block;margin-bottom:6px;font-weight:600;color:#3E4752;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;">Renderer</label><select id="pdfRendererMode" style="width:100%;padding:10px 14px;border:1px solid #E7EAEE;border-radius:12px;font-size:14px;background:#fff;font-family:'Instrument Sans','Inter',sans-serif;outline:none;"><option value="modern" selected>Modern (Recommended)</option><option value="classic">Classic fallback</option></select>`;
       rendererWrap.style.fontFamily = "'Instrument Sans','Inter',sans-serif";
       includeMeasurementsLabel.parentElement?.insertBefore(rendererWrap, includeMeasurementsLabel);
     }
@@ -1470,7 +1470,7 @@ export function initPdfExport() {
       const quality = document.getElementById('pdfQuality').value;
       const pageSize = document.getElementById('pdfPageSize')?.value || 'a4';
       const includeMeasurements = document.getElementById('includeMeasurements').checked;
-      const rendererMode = document.getElementById('pdfRendererMode')?.value || 'classic';
+      const rendererMode = document.getElementById('pdfRendererMode')?.value || 'modern';
       const exportSession = beginPdfExportSession();
       document.getElementById('pdfProgress').style.display = 'block';
       document.getElementById('generatePdfBtn').disabled = true;

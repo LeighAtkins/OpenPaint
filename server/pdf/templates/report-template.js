@@ -62,45 +62,57 @@ function renderStatusBadge(status) {
 function renderUnitToggle(unit) {
   const normalized = String(unit || 'inch').toLowerCase() === 'cm' ? 'cm' : 'inch';
   return `
-    <div class="unit-toggle" aria-label="Measurement units">
-      <span class="unit-pill ${normalized === 'inch' ? 'active' : ''}">inch</span>
-      <span class="unit-pill ${normalized === 'cm' ? 'active' : ''}">cm</span>
+    <div class="unit-block" aria-label="Measurement units">
+      <div class="unit-heading">Unit of Measurement:</div>
+      <div class="unit-toggle">
+        <span class="unit-pill ${normalized === 'cm' ? 'active' : ''}">cm</span>
+        <span class="unit-pill ${normalized === 'inch' ? 'active' : ''}">inch</span>
+      </div>
     </div>
   `;
 }
 
-function renderMeasurementsTable(rows, groupIndex) {
-  if (!rows?.length) {
-    return '<div class="card right"><p class="section-label">Main Measurements</p><p>No measurements</p></div>';
-  }
-
-  const body = rows
+function renderMeasurementRows(rows, fieldPrefix, groupIndex, maxRows = rows?.length || 0) {
+  const visibleRows = rows.slice(0, maxRows);
+  return visibleRows
     .map((row, rowIndex) => {
       const rowStatus = detectRowStatus(row.value);
       return `
-      <tr>
-        <td>${escapeHtml(row.label)}</td>
-        <td>
-          ${rowStatus ? `<div class="measure-cell-head">${renderStatusBadge(rowStatus)}</div>` : ''}
+        <div class="measurement-item">
+          <div class="measurement-label">
+            <span class="measurement-code">${escapeHtml(row.label)}</span>
+            ${renderStatusBadge(rowStatus)}
+          </div>
           <div
             class="input-box pdf-field-anchor ${rowStatus ? `input-${rowStatus}` : ''}"
-            data-field-name="${escapeHtml(fieldName('main', groupIndex + 1, row.label, rowIndex + 1))}"
+            data-field-name="${escapeHtml(fieldName(fieldPrefix, groupIndex + 1, row.label, rowIndex + 1))}"
             data-field-value="${escapeHtml(row.value || '')}"
           >${escapeHtml(row.value || '')}</div>
-        </td>
-      </tr>
-    `;
+        </div>
+      `;
     })
     .join('');
+}
+
+function renderMeasurementsTable(rows, groupIndex) {
+  if (!rows?.length) {
+    return `
+      <aside class="measure-panel">
+        <div class="form-heading">Measurements:</div>
+        <div class="empty-state">No measurements recorded</div>
+      </aside>
+    `;
+  }
+
+  const overflow = rows.length > 18 ? rows.length - 18 : 0;
+  const body = renderMeasurementRows(rows, 'main', groupIndex, 18);
 
   return `
-    <div class="card right">
-      <p class="section-label">Main Measurements</p>
-      <table class="table">
-        <thead><tr><th>Label</th><th>Measurement</th></tr></thead>
-        <tbody>${body}</tbody>
-      </table>
-    </div>
+    <aside class="measure-panel">
+      <div class="form-heading">Measurements:</div>
+      <div class="measurement-grid">${body}</div>
+      ${overflow ? `<div class="overflow-note">+${overflow} additional measurements not shown on this sheet</div>` : ''}
+    </aside>
   `;
 }
 
@@ -108,7 +120,7 @@ function renderRelatedFrames(frames) {
   if (!frames?.length) return '';
   return `
     <div>
-      <p class="section-label">Related Frames</p>
+      <div class="section-kicker section-spaced">Related Frames</div>
       <div class="related-grid">
         ${frames
           .map(
@@ -129,7 +141,7 @@ function renderRelatedMeasurementCards(cards, groupIndex) {
   if (!cards?.length) return '';
   return `
     <div>
-      <p class="section-label">Related Measurements</p>
+      <div class="section-kicker section-spaced">Related Measurements</div>
       <div class="cards-grid">
         ${cards
           .map((card, cardIndex) => {
@@ -138,18 +150,18 @@ function renderRelatedMeasurementCards(cards, groupIndex) {
               .map((row, rowIndex) => {
                 const rowStatus = detectRowStatus(row.value);
                 return `
-                <div class="measure-row">
-                  <div class="measure-label">${escapeHtml(row.label)}</div>
-                  <div class="measure-value-wrap">
-                    ${renderStatusBadge(rowStatus)}
+                  <div class="related-measure-row">
+                    <div class="measurement-label compact">
+                      <span class="measurement-code">${escapeHtml(row.label)}</span>
+                      ${renderStatusBadge(rowStatus)}
+                    </div>
                     <div
-                      class="input-box pdf-field-anchor ${rowStatus ? `input-${rowStatus}` : ''}"
+                      class="input-box pdf-field-anchor compact-input ${rowStatus ? `input-${rowStatus}` : ''}"
                       data-field-name="${escapeHtml(fieldName('rel', groupIndex + 1, card.title, row.label, cardIndex + 1, rowIndex + 1))}"
                       data-field-value="${escapeHtml(row.value || '')}"
                     >${escapeHtml(row.value || '')}</div>
                   </div>
-                </div>
-              `;
+                `;
               })
               .join('');
             return `
@@ -180,24 +192,33 @@ export function renderReportTemplate(report, options = {}) {
       <section class="page" data-page-index="${index}">
         <header class="header">
           <div class="header-top">
-            <h1 class="title">${escapeHtml(report.projectName)}</h1>
+            <div class="brand-lockup">
+              <div class="cw-logo" aria-label="Comfort Works">
+                <span class="cw-mark" aria-hidden="true"></span>
+                <span class="cw-word">Comfort<br />Works</span>
+              </div>
+              <h1 class="title">Custom Sofa Measuring Diagram</h1>
+            </div>
             <div class="header-right">
               <span class="sheet-tag">Sheet ${index + 1}</span>
-              ${renderUnitToggle(report.unit)}
             </div>
           </div>
-          <div class="meta meta-primary">${escapeHtml(report.namingLine || '')}</div>
+          <div class="header-rule"></div>
+          <div class="meta meta-primary">${escapeHtml(report.projectName)}</div>
+          <div class="meta meta-secondary">${escapeHtml(report.namingLine || '')}</div>
           <div class="meta meta-secondary">${escapeHtml(subtitle)}</div>
         </header>
 
-        <div class="split avoid-break">
-          <div class="card left">
-            <p class="section-label">Main Piece</p>
+        ${renderUnitToggle(report.unit)}
+
+        <div class="sheet-main avoid-break">
+          <figure class="figure-panel">
+            <div class="section-kicker">Main Piece</div>
             <img class="hero-image" src="${escapeHtml(group.mainImage.src)}" alt="${escapeHtml(
               group.mainImage.title || 'Main image'
             )}" />
-            <div class="figure-caption">${escapeHtml(group.mainImage.title || '')}</div>
-          </div>
+            <figcaption class="figure-caption">${escapeHtml(group.mainImage.title || '')}</figcaption>
+          </figure>
           ${renderMeasurementsTable(group.mainMeasurements || [], index)}
         </div>
 

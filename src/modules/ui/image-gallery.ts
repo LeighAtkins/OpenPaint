@@ -3,9 +3,11 @@
 // @ts-nocheck
 /**
  * Image Gallery Management Module
- * Handles horizontal scrolling image gallery with thumbnails, navigation, and image transformations
+ * Handles horizontal scrolling image gallery with thumbnails, navigation, and image transforms
  * Single authoritative owner of the gallery + paint.js (addImageToSidebar) interop.
  */
+import { CanvasManager } from '../CanvasManager';
+
 export function initImageGalleryModule() {
   'use strict';
 
@@ -17,6 +19,12 @@ export function initImageGalleryModule() {
   const compareSelectedLabels = new Set();
   const compareStaticCanvases = [];
   let compareDragActive = false;
+
+  // Multiview interactive pane state
+  const multiviewCanvasManagers = new Map();
+  let multiviewFocusedLabel = null;
+  let multiviewSavedToolName = null;
+  let multiviewSavedImageLabel = null;
 
   function syncImageGalleryDataRef() {
     window.imageGalleryData = imageGalleryData;
@@ -723,6 +731,20 @@ export function initImageGalleryModule() {
   }
 
   function disposeCompareCanvases() {
+    // Unfocus and restore original tool routing
+    unfocusMultiviewPane();
+
+    // Dispose interactive canvas managers
+    multiviewCanvasManagers.forEach((cm, label) => {
+      try {
+        cm?.dispose?.();
+      } catch (error) {
+        console.warn('[MultiView] Failed to dispose canvas manager for', label, error);
+      }
+    });
+    multiviewCanvasManagers.clear();
+
+    // Dispose any remaining static canvases
     while (compareStaticCanvases.length) {
       const canvas = compareStaticCanvases.pop();
       try {
@@ -731,6 +753,70 @@ export function initImageGalleryModule() {
         console.warn('[MultiView] Failed to dispose compare canvas', error);
       }
     }
+  }
+
+  function unfocusMultiviewPane() {
+    if (!multiviewFocusedLabel) return;
+
+    // Save the focused pane's canvas state back to the view
+    try {
+      window.app?.projectManager?.saveCurrentViewState?.();
+    } catch {
+      // best-effort
+    }
+
+    // Restore original tool routing
+    const app = window.app;
+    if (app?.toolManager && app?.canvasManager) {
+      app.toolManager.setCanvasManager(app.canvasManager);
+      if (multiviewSavedToolName) {
+        app.toolManager.selectTool(multiviewSavedToolName);
+      }
+    }
+
+    // Restore image label
+    if (multiviewSavedImageLabel) {
+      window.currentImageLabel = multiviewSavedImageLabel;
+    }
+
+    // Clear visual highlight
+    document.querySelectorAll('.multiview-pane').forEach(p => {
+      p.classList.remove('mv-focused');
+    });
+
+    multiviewFocusedLabel = null;
+    multiviewSavedToolName = null;
+    multiviewSavedImageLabel = null;
+  }
+
+  function focusMultiviewPane(label) {
+    if (multiviewFocusedLabel === label) return;
+
+    // If another pane was focused, unfocus it first
+    if (multiviewFocusedLabel) {
+      unfocusMultiviewPane();
+    }
+
+    const cm = multiviewCanvasManagers.get(label);
+    const app = window.app;
+    if (!cm || !app?.toolManager) return;
+
+    // Save current state for later restoration
+    multiviewFocusedLabel = label;
+    multiviewSavedToolName = app.toolManager.activeToolName || 'line';
+    multiviewSavedImageLabel = window.currentImageLabel || app.projectManager?.currentViewId;
+
+    // Redirect tools to the focused pane's canvas
+    app.toolManager.setCanvasManager(cm);
+    app.toolManager.selectTool(multiviewSavedToolName);
+
+    // Set the image label so strokes are stored under the correct image
+    window.currentImageLabel = label;
+
+    // Visual highlight
+    document.querySelectorAll('.multiview-pane').forEach(p => {
+      p.classList.toggle('mv-focused', p.dataset.compareLabel === label);
+    });
   }
 
   function getCompareStage() {
@@ -861,33 +947,54 @@ export function initImageGalleryModule() {
   async function renderComparePane(pane, label) {
     const wrap = pane.querySelector('.multiview-canvas-wrap');
     const canvasEl = pane.querySelector('canvas');
-    if (!wrap || !canvasEl || !window.fabric?.StaticCanvas) return;
+    if (!wrap || !canvasEl || !window.fabric) return;
+
+    // Give the canvas element a unique ID for CanvasManager
+    canvasEl.id = `mvCanvas-${label}`;
 
     const rect = wrap.getBoundingClientRect();
     const width = Math.max(240, Math.floor(rect.width || 240));
     const height = Math.max(180, Math.floor(rect.height || 180));
+
+    // Set canvas element dimensions BEFORE creating CanvasManager so
+    // Fabric reads the correct size instead of defaulting to 1920x912.
     canvasEl.width = width;
     canvasEl.height = height;
+    canvasEl.style.width = `${width}px`;
+    canvasEl.style.height = `${height}px`;
 
-    const staticCanvas = new window.fabric.StaticCanvas(canvasEl, {
-      width,
-      height,
-      selection: false,
-      backgroundColor: '#ffffff',
-      renderOnAddRemove: false,
-    });
-    compareStaticCanvases.push(staticCanvas);
-    pane.__staticCanvas = staticCanvas;
+    // Create an interactive Fabric canvas (not StaticCanvas) so the
+    // user can draw on focused panes.
+    let cm = null;
+    try {
+      cm = new CanvasManager(`mvCanvas-${label}`, {
+        enableFloatingLayout: false,
+        paneId: `mv-${label}`,
+        interactionGuard: () => multiviewFocusedLabel === label,
+      });
+      cm.init();
+      if (cm.fabricCanvas) {
+        // Constrain the Fabric canvas dimensions to the pane
+        cm.fabricCanvas.setDimensions({ width, height });
+        cm.fabricCanvas.selection = true;
+        cm.fabricCanvas.skipTargetFind = false;
+        cm.fabricCanvas.defaultCursor = 'crosshair';
+        cm.fabricCanvas.hoverCursor = 'move';
+        cm.fabricCanvas.backgroundColor = '#ffffff';
+      }
+      multiviewCanvasManagers.set(label, cm);
+    } catch (error) {
+      console.warn('[MultiView] Failed to create CanvasManager for', label, error);
+    }
+
+    const canvas = cm?.fabricCanvas;
+    if (!canvas) return;
+    compareStaticCanvases.push(canvas);
+    pane.__staticCanvas = canvas;
 
     const view = getViewForLabel(label);
     const canvasData = cloneCanvasData(view?.canvasData || view?.canvasJSON || null);
-    // Extract saved background placement before filtering — non-current views
-    // have their backgroundImage stripped during switchView, but the placement
-    // data (left/top/scaleX/scaleY) is needed to align the fallback image
-    // with the stroke objects.
     const savedBg = canvasData?.backgroundImage;
-    // Keep strokes/measurements visible: only drop known pure-UI chrome that
-    // would never belong in a read-only comparison snapshot.
     if (canvasData?.objects) {
       canvasData.objects = canvasData.objects.filter(
         obj => !obj?.isCurveDrawingMarker && !obj?.isMosCurveArrowDecorator
@@ -899,35 +1006,47 @@ export function initImageGalleryModule() {
         resolve();
         return;
       }
-      staticCanvas.loadFromJSON(canvasData, () => resolve());
+      canvas.loadFromJSON(canvasData, () => resolve());
     });
 
-    if (!staticCanvas.backgroundImage && view?.image) {
-      await loadImageAsBackground(staticCanvas, view.image, savedBg);
+    if (!canvas.backgroundImage && view?.image) {
+      await loadImageAsBackground(canvas, view.image, savedBg);
     }
 
-    staticCanvas.getObjects().forEach(obj => {
-      obj.set({
-        selectable: false,
-        evented: false,
-      });
+    canvas.getObjects().forEach(obj => {
       if (obj.strokeMetadata?.visible === false) {
         obj.visible = false;
       }
-      // Re-attach arrow rendering — the custom _render override is lost
-      // during JSON serialization so arrows won't draw without this.
       if (obj.arrowSettings && window.app?.arrowManager) {
         try {
           window.app.arrowManager.attachArrowRendering(obj);
         } catch {
-          // Arrow rendering is best-effort for snapshots
+          // best-effort
         }
       }
     });
 
-    fitStaticCanvasToContent(staticCanvas);
-    staticCanvas.renderOnAddRemove = true;
-    staticCanvas.requestRenderAll();
+    // Reconstruct tags onto the pane canvas
+    const tagManager = window.app?.tagManager;
+    if (tagManager?.withRenderTarget) {
+      try {
+        tagManager.withRenderTarget(canvas, () => {
+          tagManager.recreateTagsForImage(label);
+        });
+      } catch (error) {
+        console.warn('[MultiView] Tag reconstruction failed', error);
+      }
+    }
+
+    fitStaticCanvasToContent(canvas);
+    canvas.requestRenderAll();
+
+    // Click-to-focus: clicking a pane redirects drawing tools to it
+    pane.addEventListener('pointerdown', e => {
+      // Don't focus when clicking the close button
+      if (e.target.closest('.mv-close')) return;
+      focusMultiviewPane(label);
+    });
   }
 
   function updateMultiViewStage() {

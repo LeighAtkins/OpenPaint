@@ -618,8 +618,9 @@ export class TagManager {
   createTag(strokeLabel, imageLabel, strokeObject) {
     imageLabel = this.normalizeImageLabel(imageLabel);
     this.syncTagSizeFromMetadata(imageLabel);
-    // Ensure canvas is available
-    const canvas = this.canvas;
+    // Use render target canvas if set (for multiview snapshots), otherwise primary
+    const isRenderTarget = !!this._renderTargetCanvas;
+    const canvas = this._renderTargetCanvas || this.canvas;
     if (!canvas) {
       console.warn('TagManager: Canvas not available, cannot create tag');
       return null;
@@ -891,7 +892,10 @@ export class TagManager {
     tagGroup.strokeLabel = strokeLabel;
     tagGroup.imageLabel = baseImageLabel;
     tagGroup.scopedLabel = scopedLabel;
-    this.tagObjects.set(this.getTagKey(strokeLabel, imageLabel), tagGroup);
+    // Don't modify tagObjects map when rendering to a snapshot canvas
+    if (!isRenderTarget) {
+      this.tagObjects.set(this.getTagKey(strokeLabel, imageLabel), tagGroup);
+    }
 
     // Update tag text to include measurement if showMeasurements is enabled
     this.updateTagText(strokeLabel, scopedImageLabel);
@@ -1316,7 +1320,7 @@ export class TagManager {
 
   // Remove a tag
   removeTag(strokeLabel, imageLabel, options = {}) {
-    const canvas = this.canvas;
+    const canvas = this._renderTargetCanvas || this.canvas;
     if (!canvas) return;
 
     const key = this.resolveTagKey(strokeLabel, imageLabel);

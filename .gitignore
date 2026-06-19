@@ -98,3 +98,4 @@ __pycache__/
 # Local model weights and datasets
 *.pt
 arm_annotation_dataset/
+tmp/

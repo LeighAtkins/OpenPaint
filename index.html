@@ -2363,6 +2363,16 @@
         visibility: hidden !important;
       }
 
+      /* Keep floating panels (copy button, etc.) above the multiview stage */
+      body.multiview-active .floating-panel {
+        z-index: 10500 !important;
+      }
+
+      /* Hide mini-stepper during multiview — it overlaps the copy button */
+      body.multiview-active #navigation-container {
+        display: none !important;
+      }
+
       .multiview-grid {
         width: 100%;
         height: 100%;
@@ -2388,6 +2398,14 @@
         flex-direction: column;
         overflow: hidden;
         background: #fff;
+        cursor: pointer;
+        transition: box-shadow 150ms ease;
+        box-shadow: 0 0 0 0 transparent;
+      }
+
+      .multiview-pane.mv-focused {
+        box-shadow: 0 0 0 3px #14b8a6, 0 0 20px rgba(20, 184, 166, 0.3);
+        cursor: crosshair;
       }
 
       .multiview-canvas-wrap {
@@ -4067,7 +4085,7 @@
     <div
       id="canvasControls"
       class="floating-panel fixed rounded-2xl px-3 py-2 transition-all duration-300"
-      style="bottom: 8px; left: 50%; transform: translateX(-50%); z-index: 10000; display: block"
+      style="bottom: 4px; left: 50%; transform: translateX(-50%); z-index: 10000; display: block"
     >
       <div id="canvasControlsContent" class="flex items-center gap-2 text-sm smart-label-scope">
         <button
