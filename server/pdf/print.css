@@ -48,13 +48,14 @@ body {
 .page {
   position: relative;
   width: var(--content-width);
-  min-height: var(--content-height);
+  height: var(--content-height);
+  overflow: hidden;
   margin: 0 auto;
-  page-break-after: always;
+  break-after: page;
 }
 
 .page:last-child {
-  page-break-after: auto;
+  break-after: auto;
 }
 
 .header {
@@ -66,38 +67,32 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10mm;
+  gap: 5mm;
 }
 
 .brand-lockup {
   display: flex;
   align-items: center;
-  gap: 11mm;
+  gap: 6mm;
+  min-width: 0;
+  flex: 1;
 }
 
 .cw-logo {
   display: inline-flex;
   align-items: center;
   gap: 2.5mm;
-  min-width: 45mm;
+  min-width: 38mm;
+  flex-shrink: 0;
 }
 
-.cw-mark {
-  position: relative;
-  display: inline-block;
-  width: 15mm;
-  height: 13mm;
-}
-
-.cw-mark::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, var(--accent) 0 34%, transparent 34% 100%),
-    linear-gradient(0deg, transparent 0 37%, var(--accent-dark) 37% 63%, transparent 63% 100%),
-    linear-gradient(90deg, transparent 0 43%, var(--accent) 43% 66%, transparent 66% 100%);
-  border-radius: 50% 0 0 50%;
+.cw-logo-img {
+  display: block;
+  box-sizing: content-box;
+  width: 12mm;
+  height: 8.4mm;
+  padding: 0.8mm;
+  object-fit: contain;
 }
 
 .cw-word {
@@ -112,12 +107,12 @@ body {
 .title {
   margin: 0;
   color: var(--ink);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.05;
   letter-spacing: 0.01em;
   text-transform: uppercase;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .header-right {
@@ -188,8 +183,7 @@ body {
   border-right: 0;
 }
 
-.unit-pill::after {
-  content: '';
+.unit-checkbox {
   position: absolute;
   right: 2mm;
   top: 50%;
@@ -203,19 +197,6 @@ body {
 .unit-pill.active {
   background: #ffffff;
   color: var(--ink);
-}
-
-.unit-pill.active::before {
-  content: '';
-  position: absolute;
-  right: 3.4mm;
-  top: 50%;
-  width: 2.8mm;
-  height: 4.8mm;
-  transform: translateY(-63%) rotate(42deg);
-  border-right: 1.8px solid var(--ink);
-  border-bottom: 1.8px solid var(--ink);
-  z-index: 1;
 }
 
 .meta {
@@ -239,6 +220,31 @@ body {
 
 .sheet-main {
   margin-bottom: 8mm;
+}
+
+/* Portrait layout: image on left, measurements on right */
+.sheet-main.portrait {
+  display: flex;
+  gap: 6mm;
+  align-items: flex-start;
+}
+
+.sheet-main.portrait .figure-panel {
+  flex: 1 1 60%;
+  min-width: 0;
+}
+
+.sheet-main.portrait .hero-image {
+  width: 100%;
+  max-width: none;
+  height: auto;
+  max-height: 170mm;
+}
+
+.sheet-main.portrait .measure-panel {
+  flex: 0 0 78mm;
+  margin-top: 0;
+  width: 78mm;
 }
 
 .figure-panel {
@@ -288,6 +294,20 @@ body {
   gap: 0;
   border: 1.3px solid var(--ink);
   border-bottom: 0;
+}
+
+/* Two-column layout for when there are many measurements */
+.measurement-grid.two-col {
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.measurement-col {
+  break-inside: avoid;
+}
+
+.measurement-grid.two-col .measurement-col:first-child {
+  border-right: 1.3px solid var(--ink);
 }
 
 .measurement-item {
@@ -529,4 +549,72 @@ body {
 
 .avoid-break {
   break-inside: avoid;
+}
+
+.comparison-note {
+  margin: 0 auto 6mm;
+  max-width: 150mm;
+  color: var(--ink-soft);
+  font-size: 10px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.comparison-stack {
+  display: grid;
+  gap: 6mm;
+}
+
+.comparison-group {
+  break-inside: avoid;
+  padding: 0;
+}
+
+.comparison-title {
+  margin: 0 0 3mm;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4mm;
+}
+
+.comparison-grid.item-count-3,
+.comparison-grid.item-count-4 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.comparison-card {
+  break-inside: avoid;
+  margin: 0;
+  border: 1.2px solid var(--ink);
+  background: #ffffff;
+}
+
+.comparison-card img {
+  display: block;
+  width: 100%;
+  height: 68mm;
+  object-fit: contain;
+  background: #ffffff;
+  border-bottom: 1px solid var(--line);
+}
+
+.comparison-grid.item-count-3 .comparison-card img,
+.comparison-grid.item-count-4 .comparison-card img {
+  height: 52mm;
+}
+
+.comparison-card figcaption {
+  min-height: 7mm;
+  padding: 1.8mm 2.2mm;
+  color: var(--ink-soft);
+  font-size: 8.8px;
+  line-height: 1.25;
 }

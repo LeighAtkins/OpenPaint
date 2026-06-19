@@ -5,14 +5,28 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const cssPath = path.join(__dirname, '../print.css');
+const logoPath = path.join(__dirname, '../assets/comfort-works-logo.png');
 
 let cachedCss = null;
+let cachedLogoDataUrl = null;
 
 function getPrintCss() {
   if (!cachedCss) {
     cachedCss = fs.readFileSync(cssPath, 'utf8');
   }
   return cachedCss;
+}
+
+function getLogoDataUrl() {
+  if (cachedLogoDataUrl === null) {
+    try {
+      const logo = fs.readFileSync(logoPath);
+      cachedLogoDataUrl = `data:image/png;base64,${logo.toString('base64')}`;
+    } catch {
+      cachedLogoDataUrl = '';
+    }
+  }
+  return cachedLogoDataUrl;
 }
 
 function escapeHtml(value) {
@@ -65,16 +79,35 @@ function renderUnitToggle(unit) {
     <div class="unit-block" aria-label="Measurement units">
       <div class="unit-heading">Unit of Measurement:</div>
       <div class="unit-toggle">
-        <span class="unit-pill ${normalized === 'cm' ? 'active' : ''}">cm</span>
-        <span class="unit-pill ${normalized === 'inch' ? 'active' : ''}">inch</span>
+        <span class="unit-pill ${normalized === 'cm' ? 'active' : ''}">
+          <span>cm</span>
+          <span
+            class="unit-checkbox pdf-field-anchor"
+            data-field-type="radio"
+            data-field-name="unit_measurement"
+            data-field-option="cm"
+            data-field-value="${normalized === 'cm' ? 'checked' : ''}"
+            aria-hidden="true"
+          ></span>
+        </span>
+        <span class="unit-pill ${normalized === 'inch' ? 'active' : ''}">
+          <span>inch</span>
+          <span
+            class="unit-checkbox pdf-field-anchor"
+            data-field-type="radio"
+            data-field-name="unit_measurement"
+            data-field-option="inch"
+            data-field-value="${normalized === 'inch' ? 'checked' : ''}"
+            aria-hidden="true"
+          ></span>
+        </span>
       </div>
     </div>
   `;
 }
 
-function renderMeasurementRows(rows, fieldPrefix, groupIndex, maxRows = rows?.length || 0) {
-  const visibleRows = rows.slice(0, maxRows);
-  return visibleRows
+function renderMeasurementRows(rows, fieldPrefix, groupIndex) {
+  return rows
     .map((row, rowIndex) => {
       const rowStatus = detectRowStatus(row.value);
       return `
@@ -85,6 +118,7 @@ function renderMeasurementRows(rows, fieldPrefix, groupIndex, maxRows = rows?.le
           </div>
           <div
             class="input-box pdf-field-anchor ${rowStatus ? `input-${rowStatus}` : ''}"
+            data-field-type="text"
             data-field-name="${escapeHtml(fieldName(fieldPrefix, groupIndex + 1, row.label, rowIndex + 1))}"
             data-field-value="${escapeHtml(row.value || '')}"
           >${escapeHtml(row.value || '')}</div>
@@ -94,8 +128,20 @@ function renderMeasurementRows(rows, fieldPrefix, groupIndex, maxRows = rows?.le
     .join('');
 }
 
+// Filter out measurements that are letters-only (no numeric content in label or value)
+function filterMeaningfulMeasurements(rows) {
+  if (!Array.isArray(rows)) return [];
+  return rows.filter(row => {
+    const label = String(row?.label || '');
+    const value = String(row?.value || '');
+    // Keep if the value has any digit, or if the label has a digit
+    return /\d/.test(value) || /\d/.test(label);
+  });
+}
+
 function renderMeasurementsTable(rows, groupIndex) {
-  if (!rows?.length) {
+  const filtered = filterMeaningfulMeasurements(rows);
+  if (!filtered.length) {
     return `
       <aside class="measure-panel">
         <div class="form-heading">Measurements:</div>
@@ -104,14 +150,23 @@ function renderMeasurementsTable(rows, groupIndex) {
     `;
   }
 
-  const overflow = rows.length > 18 ? rows.length - 18 : 0;
-  const body = renderMeasurementRows(rows, 'main', groupIndex, 18);
+  // Split into two side-by-side columns if there are more than 12 rows
+  const useTwoColumns = filtered.length > 12;
+  const halfCount = Math.ceil(filtered.length / 2);
+  const col1 = useTwoColumns ? filtered.slice(0, halfCount) : filtered;
+  const col2 = useTwoColumns ? filtered.slice(halfCount) : [];
+
+  const tableHtml = useTwoColumns
+    ? `<div class="measurement-grid two-col">
+        <div class="measurement-col">${renderMeasurementRows(col1, 'main', groupIndex)}</div>
+        <div class="measurement-col">${renderMeasurementRows(col2, 'main2', groupIndex)}</div>
+      </div>`
+    : `<div class="measurement-grid">${renderMeasurementRows(col1, 'main', groupIndex)}</div>`;
 
   return `
     <aside class="measure-panel">
       <div class="form-heading">Measurements:</div>
-      <div class="measurement-grid">${body}</div>
-      ${overflow ? `<div class="overflow-note">+${overflow} additional measurements not shown on this sheet</div>` : ''}
+      ${tableHtml}
     </aside>
   `;
 }
@@ -145,7 +200,7 @@ function renderRelatedMeasurementCards(cards, groupIndex) {
       <div class="cards-grid">
         ${cards
           .map((card, cardIndex) => {
-            const rows = (card.rows || [])
+            const rows = filterMeaningfulMeasurements(card.rows || [])
               .slice(0, 8)
               .map((row, rowIndex) => {
                 const rowStatus = detectRowStatus(row.value);
@@ -157,6 +212,7 @@ function renderRelatedMeasurementCards(cards, groupIndex) {
                     </div>
                     <div
                       class="input-box pdf-field-anchor compact-input ${rowStatus ? `input-${rowStatus}` : ''}"
+                      data-field-type="text"
                       data-field-name="${escapeHtml(fieldName('rel', groupIndex + 1, card.title, row.label, cardIndex + 1, rowIndex + 1))}"
                       data-field-value="${escapeHtml(row.value || '')}"
                     >${escapeHtml(row.value || '')}</div>
@@ -177,6 +233,87 @@ function renderRelatedMeasurementCards(cards, groupIndex) {
   `;
 }
 
+function renderPageHeader(report, sheetIndex, subtitle = '') {
+  const logoDataUrl = getLogoDataUrl();
+  return `
+    <header class="header">
+      <div class="header-top">
+        <div class="brand-lockup">
+          <div class="cw-logo" aria-label="Comfort Works">
+            ${
+              logoDataUrl
+                ? `<img class="cw-logo-img" src="${logoDataUrl}" alt="" aria-hidden="true" />`
+                : ''
+            }
+            <span class="cw-word">Comfort<br />Works</span>
+          </div>
+          <h1 class="title">Custom Sofa Measuring Diagram</h1>
+        </div>
+        <div class="header-right">
+          <span class="sheet-tag">Sheet ${sheetIndex}</span>
+        </div>
+      </div>
+      <div class="header-rule"></div>
+      <div class="meta meta-primary">${escapeHtml(report.projectName)}</div>
+      <div class="meta meta-secondary">${escapeHtml(report.namingLine || '')}</div>
+      ${subtitle ? `<div class="meta meta-secondary">${escapeHtml(subtitle)}</div>` : ''}
+    </header>
+  `;
+}
+
+function renderPageFooter(pageIndex) {
+  return `
+    <footer class="footer">
+      <span>Generated by OpenPaint</span>
+      <span>Page ${pageIndex}</span>
+    </footer>
+  `;
+}
+
+function renderComparisonPages(report, startIndex) {
+  const groups = (report.comparisonGroups || []).filter(group => group?.items?.length >= 2);
+  if (!groups.length) return '';
+
+  return `
+    <section class="page comparison-page" data-page-index="${startIndex}">
+      ${renderPageHeader(report, startIndex + 1, 'Repeated Label Comparison')}
+      ${renderUnitToggle(report.unit)}
+
+      <div class="comparison-note">
+        Repeated labels are isolated here for side-by-side checking. Other measurement marks are hidden in these captures only.
+      </div>
+
+      <div class="comparison-stack">
+        ${groups
+          .map(
+            group => `
+              <section class="comparison-group">
+                <h2 class="comparison-title">Label ${escapeHtml(group.label)}</h2>
+                <div class="comparison-grid item-count-${group.items.length}">
+                  ${group.items
+                    .map(
+                      item => `
+                        <figure class="comparison-card">
+                          <img src="${escapeHtml(item.src)}" alt="${escapeHtml(
+                            `${group.label} - ${item.title || 'comparison frame'}`
+                          )}" />
+                          <figcaption>${escapeHtml(item.title || '')}</figcaption>
+                        </figure>
+                      `
+                    )
+                    .join('')}
+                </div>
+              </section>
+            `
+          )
+          .join('')}
+      </div>
+
+      ${renderPageFooter(startIndex + 1)}
+    </section>
+  `;
+}
+
 export function renderReportTemplate(report, options = {}) {
   const pageSize = String(options.pageSize || 'letter').toLowerCase();
   const pageFormat = pageSize === 'a4' ? 'A4' : 'Letter';
@@ -185,29 +322,12 @@ export function renderReportTemplate(report, options = {}) {
       ? '--content-width: 182mm; --content-height: 269mm;'
       : '--content-width: 188mm; --content-height: 251mm;';
   const groups = report.groups || [];
-  const pages = groups
+  const groupPages = groups
     .map((group, index) => {
       const subtitle = [group.title, group.subtitle].filter(Boolean).join(' - ');
       return `
       <section class="page" data-page-index="${index}">
-        <header class="header">
-          <div class="header-top">
-            <div class="brand-lockup">
-              <div class="cw-logo" aria-label="Comfort Works">
-                <span class="cw-mark" aria-hidden="true"></span>
-                <span class="cw-word">Comfort<br />Works</span>
-              </div>
-              <h1 class="title">Custom Sofa Measuring Diagram</h1>
-            </div>
-            <div class="header-right">
-              <span class="sheet-tag">Sheet ${index + 1}</span>
-            </div>
-          </div>
-          <div class="header-rule"></div>
-          <div class="meta meta-primary">${escapeHtml(report.projectName)}</div>
-          <div class="meta meta-secondary">${escapeHtml(report.namingLine || '')}</div>
-          <div class="meta meta-secondary">${escapeHtml(subtitle)}</div>
-        </header>
+        ${renderPageHeader(report, index + 1, subtitle)}
 
         ${renderUnitToggle(report.unit)}
 
@@ -216,7 +336,7 @@ export function renderReportTemplate(report, options = {}) {
             <div class="section-kicker">Main Piece</div>
             <img class="hero-image" src="${escapeHtml(group.mainImage.src)}" alt="${escapeHtml(
               group.mainImage.title || 'Main image'
-            )}" />
+            )}" onload="if(this.naturalHeight>this.naturalWidth){this.closest('.sheet-main').classList.add('portrait')}" />
             <figcaption class="figure-caption">${escapeHtml(group.mainImage.title || '')}</figcaption>
           </figure>
           ${renderMeasurementsTable(group.mainMeasurements || [], index)}
@@ -225,14 +345,12 @@ export function renderReportTemplate(report, options = {}) {
         ${renderRelatedFrames(group.relatedFrames || [])}
         ${renderRelatedMeasurementCards(group.relatedMeasurementCards || [], index)}
 
-        <footer class="footer">
-          <span>Generated by OpenPaint</span>
-          <span>Page ${index + 1}</span>
-        </footer>
+        ${renderPageFooter(index + 1)}
       </section>
       `;
     })
     .join('');
+  const pages = `${groupPages}${renderComparisonPages(report, groups.length)}`;
 
   return `
   <!doctype html>
