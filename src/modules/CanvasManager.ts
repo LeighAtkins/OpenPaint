@@ -29,6 +29,7 @@ interface CaptureFrameRatios {
   heightRatio: number;
   leftRatio: number;
   topRatio: number;
+  aspectRatio?: number;
 }
 interface ClipboardState {
   objects: unknown[];
@@ -46,6 +47,11 @@ declare global {
     app?: any;
     manualFrameRatios?: Record<string, CaptureFrameRatios>;
     currentImageLabel?: string;
+    multiviewEditContext?: {
+      baseViewId: string;
+      scopedImageLabel: string;
+      canvasManager: any;
+    } | null;
     getCaptureTabScopedLabel?: (label: string) => string;
     updateNextTagDisplay?: () => void;
     __openpaintSuppressMeasurementFocus?: boolean;
@@ -87,6 +93,7 @@ export class CanvasManager {
   clipboard: ClipboardState | null;
   clipboardPasteCount: number;
   resizeObserver: ResizeObserver | null;
+  isDisposed: boolean;
   suppressResizeRefitUntil: number;
   baseFrameState?: FrameState;
   manualZoomLevel: number | null;
@@ -141,6 +148,7 @@ export class CanvasManager {
     this.clipboardPasteCount = 0;
 
     this.resizeObserver = null;
+    this.isDisposed = false;
     this.manualZoomLevel = null;
     this.lastGuideSplitActive = null;
     this.suppressResizeRefitUntil = 0;
@@ -1559,9 +1567,13 @@ export class CanvasManager {
           }
         }
 
-        // Force resize to update canvas dimensions
+        // The primary workspace has a capture-frame-aware resize coordinator.
+        // Route panel layout changes through it so this does not race the window
+        // resize handler with a second viewport correction.
         setTimeout(() => {
-          this.resize();
+          if (!this.requestPrimaryLayoutResize('panel-layout')) {
+            this.resize();
+          }
         }, 0);
 
         console.log('[CanvasManager] Panels moved to body and forced to top layer');
@@ -1578,10 +1590,12 @@ export class CanvasManager {
   }
 
   setupResizeObserver(): void {
+    if (this.isDisposed) return;
     const wrapper = this.getContainerElement();
     if (!wrapper) return;
 
     this.resizeObserver = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+      if (this.isDisposed || !this.fabricCanvas?.lowerCanvasEl) return;
       for (const entry of entries) {
         if (entry.target === wrapper) {
           // When guide-split is active, the split layout sync pipeline manages canvas
@@ -1589,6 +1603,9 @@ export class CanvasManager {
           // Letting the ResizeObserver also trigger resize() creates a feedback loop
           // where dimensions and viewport oscillate between split and full-width values.
           if (this.isGuideSplitActive()) {
+            continue;
+          }
+          if (this.requestPrimaryLayoutResize('wrapper-observer')) {
             continue;
           }
           const windowResizeSuppressUntil = Number(
@@ -1603,6 +1620,24 @@ export class CanvasManager {
     });
 
     this.resizeObserver.observe(wrapper);
+  }
+
+  /**
+   * The floating primary canvas needs its frame and viewport restored together.
+   * Temporary canvases (multiview) and guide-split use their own geometry owners.
+   */
+  private requestPrimaryLayoutResize(reason: string): boolean {
+    if (
+      !this.enableFloatingLayoutMode ||
+      this.containerId !== 'main-canvas-wrapper' ||
+      this.isGuideSplitActive()
+    ) {
+      return false;
+    }
+    const request = (window as any).__openpaintRequestPrimaryResize;
+    if (typeof request !== 'function') return false;
+    request(reason);
+    return true;
   }
 
   initKeyboardShortcuts(): void {
@@ -2243,26 +2278,75 @@ export class CanvasManager {
    */
   calculateTargetFrameSize(canvasWidth: number, canvasHeight: number): FrameState {
     const currentImageLabel = window.app?.projectManager?.currentViewId || 'default';
-    const savedRatios = window.manualFrameRatios && window.manualFrameRatios[currentImageLabel];
+    const scopedImageLabel = window.currentImageLabel || '';
+    const savedRatios =
+      window.manualFrameRatios?.[currentImageLabel] ||
+      (scopedImageLabel ? window.manualFrameRatios?.[scopedImageLabel] : null);
+    const tabState = window.captureTabsByLabel?.[currentImageLabel];
+    const activeTab = tabState?.tabs?.find?.(tab => tab.id === tabState.activeTabId) || null;
+    const storedFrame = activeTab?.captureFrame || null;
+    const storedWidth = Number(storedFrame?.width);
+    const storedHeight = Number(storedFrame?.height);
+    const storedAspectRatio =
+      storedWidth > 0 && storedHeight > 0 ? storedWidth / storedHeight : null;
+    const hasStoredAspect = Number.isFinite(storedAspectRatio) && Number(storedAspectRatio) > 0;
+    const storedWindowWidth = Math.max(1, Number(storedFrame?.windowWidth) || canvasWidth);
+    const storedWindowHeight = Math.max(1, Number(storedFrame?.windowHeight) || canvasHeight);
 
     if (savedRatios) {
-      // Frame was manually resized - apply saved ratios
-      const frameWidth = canvasWidth * savedRatios.widthRatio;
-      const frameHeight = canvasHeight * savedRatios.heightRatio;
-      const frameLeft = canvasWidth * savedRatios.leftRatio;
-      const frameTop = canvasHeight * savedRatios.topRatio;
-
-      // Ensure frame stays within canvas bounds
-      const maxLeft = Math.max(0, canvasWidth - frameWidth);
-      const maxTop = Math.max(0, canvasHeight - frameHeight);
-      const boundedLeft = Math.max(0, Math.min(maxLeft, frameLeft));
-      const boundedTop = Math.max(0, Math.min(maxTop, frameTop));
+      // manualFrameRatios are user-intended, always use them directly
+      const widthLimit = Math.max(1, canvasWidth * savedRatios.widthRatio);
+      const heightLimit = Math.max(1, canvasHeight * savedRatios.heightRatio);
+      const aspectRatio =
+        Number(savedRatios.aspectRatio) > 0
+          ? Number(savedRatios.aspectRatio)
+          : hasStoredAspect
+            ? Number(storedAspectRatio)
+            : widthLimit / heightLimit;
+      let frameWidth = Math.min(widthLimit, heightLimit * aspectRatio);
+      let frameHeight = frameWidth / aspectRatio;
+      const fitScale = Math.min(
+        1,
+        canvasWidth / Math.max(frameWidth, 1),
+        canvasHeight / Math.max(frameHeight, 1)
+      );
+      frameWidth *= fitScale;
+      frameHeight *= fitScale;
 
       return {
         width: frameWidth,
         height: frameHeight,
-        left: boundedLeft,
-        top: boundedTop,
+        left: Math.max(0, (canvasWidth - frameWidth) / 2),
+        top: Math.max(0, (canvasHeight - frameHeight) / 2),
+      };
+    } else if (hasStoredAspect) {
+      // Use stable base dimensions (set on frame creation / manual adjustment)
+      // instead of storedWidth/storedWindowWidth (which gets overwritten by
+      // replayCaptureFrameForCurrentResize with shrunken values on resize).
+      // This ensures the frame grows back when the window gets larger.
+      const baseWidth = Number(storedFrame?.baseWidth) || 0;
+      const baseHeight = Number(storedFrame?.baseHeight) || 0;
+      const baseWindowWidth = Math.max(1, Number(storedFrame?.baseWindowWidth) || canvasWidth);
+      const baseWindowHeight = Math.max(1, Number(storedFrame?.baseWindowHeight) || canvasHeight);
+      const hasBaseDimensions =
+        baseWidth > 0 && baseHeight > 0 && baseWindowWidth > 0 && baseWindowHeight > 0;
+
+      const widthRatio = hasBaseDimensions
+        ? baseWidth / baseWindowWidth
+        : storedWidth / storedWindowWidth;
+      const heightRatio = hasBaseDimensions
+        ? baseHeight / baseWindowHeight
+        : storedHeight / storedWindowHeight;
+      const widthLimit = Math.max(1, canvasWidth * widthRatio);
+      const heightLimit = Math.max(1, canvasHeight * heightRatio);
+      let frameWidth = Math.min(widthLimit, heightLimit * storedAspectRatio);
+      let frameHeight = frameWidth / storedAspectRatio;
+
+      return {
+        width: frameWidth,
+        height: frameHeight,
+        left: Math.max(0, (canvasWidth - frameWidth) / 2),
+        top: Math.max(0, (canvasHeight - frameHeight) / 2),
       };
     } else {
       // Default: Frame is 85% of canvas size, capped at 800x600, with a minimum of 400x300
@@ -2317,10 +2401,11 @@ export class CanvasManager {
     if (
       this.enableFloatingLayoutMode &&
       this.containerId === 'main-canvas-wrapper' &&
-      this.hasAuthoritativeCaptureTabState() &&
-      this.getStoredBackgroundFitMode() !== 'scale-page-size' &&
-      this.getStoredBackgroundFitMode() !== 'fill-frame'
+      this.hasAuthoritativeCaptureTabState()
     ) {
+      // The capture-frame coordinator owns frame geometry for every fit mode.
+      // Updating it here as well creates a delayed second center based on the
+      // raw canvas box rather than the usable area between the panels.
       return;
     }
 
@@ -2377,7 +2462,12 @@ export class CanvasManager {
     targetHeight: number,
     viewportTransform?: ViewportTransform
   ): void {
-    if (!this.fabricCanvas || !Number.isFinite(targetWidth) || !Number.isFinite(targetHeight)) {
+    if (
+      this.isDisposed ||
+      !this.fabricCanvas?.lowerCanvasEl ||
+      !Number.isFinite(targetWidth) ||
+      !Number.isFinite(targetHeight)
+    ) {
       return;
     }
 
@@ -2406,6 +2496,28 @@ export class CanvasManager {
     syncElement(this.fabricCanvas.upperCanvasEl);
     syncElement(document.getElementById(this.canvasId));
     this.fabricCanvas.calcOffset?.();
+  }
+
+  /**
+   * Resize the Fabric backing store without changing the active viewport.
+   * The capture-frame coordinator owns the viewport in the primary workspace.
+   */
+  resizeCanvasDimensionsPreservingViewport(targetWidth: number, targetHeight: number): boolean {
+    if (
+      this.isDisposed ||
+      !this.fabricCanvas?.lowerCanvasEl ||
+      !Number.isFinite(targetWidth) ||
+      !Number.isFinite(targetHeight)
+    ) {
+      return false;
+    }
+    const viewport = [
+      ...(this.fabricCanvas.viewportTransform || [1, 0, 0, 1, 0, 0]),
+    ] as ViewportTransform;
+    this.syncCanvasElementDimensions(targetWidth, targetHeight, viewport);
+    this.lastCanvasSize = { width: targetWidth, height: targetHeight };
+    this.fabricCanvas.requestRenderAll?.();
+    return true;
   }
 
   getStoredBackgroundFitMode(): string {
@@ -2446,12 +2558,17 @@ export class CanvasManager {
 
     const centerX = Number(backgroundImage.left);
     const centerY = Number(backgroundImage.top);
-    const width =
+    const unrotatedWidth =
       (Number(backgroundImage.width) || Number(backgroundImage?._element?.naturalWidth) || 0) *
       (Number(backgroundImage.scaleX) || 1);
-    const height =
+    const unrotatedHeight =
       (Number(backgroundImage.height) || Number(backgroundImage?._element?.naturalHeight) || 0) *
       (Number(backgroundImage.scaleY) || 1);
+    const radians = ((Number(backgroundImage.angle) || 0) * Math.PI) / 180;
+    const cos = Math.abs(Math.cos(radians));
+    const sin = Math.abs(Math.sin(radians));
+    const width = unrotatedWidth * cos + unrotatedHeight * sin;
+    const height = unrotatedWidth * sin + unrotatedHeight * cos;
 
     if (!Number.isFinite(centerX) || !Number.isFinite(centerY) || !width || !height) {
       return null;
@@ -2546,14 +2663,44 @@ export class CanvasManager {
       return false;
     }
 
-    this.zoomLevel = Number.isFinite(nextViewport.zoom) ? nextViewport.zoom : zoomLevel;
+    this.zoomLevel = Number.isFinite(nextViewport.zoom) ? nextViewport.zoom : this.zoomLevel;
     this.panX = Number.isFinite(nextViewport.panX) ? nextViewport.panX : 0;
     this.panY = Number.isFinite(nextViewport.panY) ? nextViewport.panY : 0;
     return true;
   }
 
+  hasSavedBackgroundPlacement(): boolean {
+    const backgroundImage = this.fabricCanvas?.backgroundImage as any;
+    return (
+      backgroundImage?.openpaintPlacementMode === 'saved-placement' ||
+      backgroundImage?.customData?.openpaintPlacementMode === 'saved-placement'
+    );
+  }
+
   refitBackgroundImageToPlacementFrame(): boolean {
     if (!this.fabricCanvas?.backgroundImage) {
+      return false;
+    }
+
+    if (this.hasSavedBackgroundPlacement()) {
+      return false;
+    }
+
+    // On the primary editor canvas, annotations and the background share world
+    // coordinates. Moving only the background after drawing guarantees drift.
+    // Pane/guide canvases use their own container IDs and may still fit freely.
+    const hasMainCanvasAnnotations =
+      this.containerId === 'main-canvas-wrapper' &&
+      this.fabricCanvas
+        .getObjects?.()
+        .some(
+          obj =>
+            obj?.excludeFromExport !== true &&
+            obj?.isTag !== true &&
+            obj?.isConnectorLine !== true &&
+            Boolean(obj?.strokeMetadata)
+        );
+    if (hasMainCanvasAnnotations) {
       return false;
     }
 
@@ -2728,10 +2875,20 @@ export class CanvasManager {
     const backgroundWorldRectBeforeResize = shouldRefitBackgroundOnResize
       ? this.getBackgroundWorldRect()
       : null;
+    const preserveAuthoritativeFrameDuringSuppressedRefit =
+      sizeChanged &&
+      hasAuthoritativeCaptureTabState &&
+      shouldScaleToPageSize &&
+      !shouldRefitBackgroundOnResize;
 
     this.syncCanvasElementDimensions(targetWidth, targetHeight, oldVpt);
 
-    this.updateCaptureFrameOnResize(targetWidth, targetHeight);
+    // Scale-to-page is a coupled frame + viewport operation. During project
+    // restore the refit is deliberately suppressed; resizing only the frame in
+    // that interval leaves annotations and the image centered on its old box.
+    if (!preserveAuthoritativeFrameDuringSuppressedRefit) {
+      this.updateCaptureFrameOnResize(targetWidth, targetHeight);
+    }
     const nextAnchorFrame = this.getBackgroundPlacementFrame();
     const nextResizeAnchor = {
       x: nextAnchorFrame.left + nextAnchorFrame.width / 2,
@@ -2828,7 +2985,9 @@ export class CanvasManager {
             // existing world rect intact so vectors stay locked to the image.
             this.panX = 0;
             this.panY = 0;
-          } else if (centerWorldPoint) {
+          } else if (centerWorldPoint && !hasAuthoritativeCaptureTabState) {
+            // Skip this correction when the capture-frame pipeline owns the viewport —
+            // replayCaptureFrameForCurrentResize has already set the correct pan.
             const angleRadians = this.rotateViewport ? (this.rotationDegrees * Math.PI) / 180 : 0;
             const cos = Math.cos(angleRadians);
             const sin = Math.sin(angleRadians);
@@ -2846,7 +3005,11 @@ export class CanvasManager {
         }
 
         this.applyViewportTransform();
-        if (backgroundFrameOffset && backgroundWorldRectForResize) {
+        if (
+          backgroundFrameOffset &&
+          backgroundWorldRectForResize &&
+          !hasAuthoritativeCaptureTabState
+        ) {
           const backgroundRectAfterResize = mapWorldRectToCanvasRect(
             backgroundWorldRectForResize,
             this.fabricCanvas.viewportTransform as ViewportTransform
@@ -2897,7 +3060,7 @@ export class CanvasManager {
    * Debounced resize method - queues resize with setTimeout
    */
   resize(): void {
-    if (!this.fabricCanvas) {
+    if (this.isDisposed || !this.fabricCanvas?.lowerCanvasEl) {
       return;
     }
 
@@ -2918,13 +3081,45 @@ export class CanvasManager {
     // toolbar/sidebar geometry. Snap after the layout settles instead of
     // applying every intermediate size, which makes the image visibly jiggle.
     this.resizeTimeout = setTimeout(() => {
+      if (this.isDisposed || !this.fabricCanvas?.lowerCanvasEl) return;
       this.resizeTimeout = null;
       const { width, height } = this.getAvailableCanvasSize();
       this.pendingResizeFrame = requestAnimationFrame(() => {
         this.pendingResizeFrame = null;
+        if (this.isDisposed || !this.fabricCanvas?.lowerCanvasEl) return;
         this.applyResize(width, height);
       });
     }, 140);
+  }
+
+  /** Release observer/timer work before a transient comparison canvas is removed. */
+  dispose(): void {
+    if (this.isDisposed) return;
+    this.isDisposed = true;
+
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
+    if (this.pendingResizeFrame !== null) cancelAnimationFrame(this.pendingResizeFrame);
+    if (this.resizeOverlayCleanupId !== null) cancelAnimationFrame(this.resizeOverlayCleanupId);
+    if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
+    if (this.strokeScalingTimeout) clearTimeout(this.strokeScalingTimeout);
+    if (this._updateTimeout) clearTimeout(this._updateTimeout);
+    this.pendingResizeFrame = null;
+    this.resizeOverlayCleanupId = null;
+    this.resizeTimeout = null;
+    this.strokeScalingTimeout = null;
+    this._updateTimeout = undefined;
+
+    this.resizeOverlayCanvas?.remove();
+    this.resizeOverlayCanvas = null;
+
+    const canvas = this.fabricCanvas;
+    this.fabricCanvas = null;
+    try {
+      canvas?.dispose?.();
+    } catch {
+      // The comparison pane may already have been removed from the DOM.
+    }
   }
 
   initZoomPan(): void {
@@ -2949,6 +3144,9 @@ export class CanvasManager {
 
       this.fabricCanvas.zoomToPoint(pendingWheelPoint, zoom);
       this.zoomLevel = zoom;
+      // Pointer zoom changes the composition, not the user's resize policy.
+      // Keep scale-page-size active when selected so the zoomed crop grows and
+      // shrinks proportionally with the frame on later window resizes.
       // Compute panX/panY so that applyViewportTransform would reproduce this same transform
       // applyViewportTransform adds centerX*(1-zoom) to panX, so we subtract it here
       if (this.fabricCanvas.viewportTransform) {
@@ -3656,11 +3854,50 @@ export class CanvasManager {
     this.applyViewportTransform();
   }
 
-  getViewportState(): { zoom: number; panX: number; panY: number } {
+  /**
+   * Apply a Fabric viewport matrix without reconstructing it from zoom/pan.
+   * This keeps pointer-centred zoom stable while the canvas backing store changes.
+   */
+  setViewportTransformExact(transform: ViewportTransform | number[]): boolean {
+    if (!this.fabricCanvas || !Array.isArray(transform) || transform.length < 6) {
+      return false;
+    }
+    const next = transform.slice(0, 6).map(Number) as ViewportTransform;
+    if (!next.every(Number.isFinite)) return false;
+
+    const [a, b, c, d, e, f] = next;
+    const zoom = Math.sqrt(a * a + b * b);
+    if (!Number.isFinite(zoom) || zoom <= 0) return false;
+
+    const center = this.getRotationCenter();
+    const baseTranslateX = center.x - a * center.x - c * center.y;
+    const baseTranslateY = center.y - b * center.x - d * center.y;
+    this.zoomLevel = zoom;
+    this.panX = e - baseTranslateX;
+    this.panY = f - baseTranslateY;
+    if (this.rotateViewport) {
+      this.rotationDegrees = ((Math.atan2(b, a) * 180) / Math.PI + 360) % 360;
+    }
+
+    this.fabricCanvas.setViewportTransform(next);
+    this.fabricCanvas.calcOffset?.();
+    this.fabricCanvas.requestRenderAll?.();
+    return true;
+  }
+
+  getViewportState(): {
+    zoom: number;
+    panX: number;
+    panY: number;
+    savedCanvasWidth: number;
+    savedCanvasHeight: number;
+  } {
     return {
       zoom: this.zoomLevel,
       panX: this.panX,
       panY: this.panY,
+      savedCanvasWidth: this.fabricCanvas?.width || 0,
+      savedCanvasHeight: this.fabricCanvas?.height || 0,
     };
   }
 
