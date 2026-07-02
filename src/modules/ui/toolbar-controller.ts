@@ -256,14 +256,14 @@ export function initToolbarController() {
           }
         };
         const brush = document.getElementById('brushSize');
-        const size = parseInt(brush?.value || '5') || 5;
+        const size = parseFloat(brush?.value || '5') || 5;
         ds.pattern = computePattern(ds.style, ds.dashLength, ds.gapLength, size);
         // If editing a stroke, also update it live
         const edited = window.selectedStrokeInEditMode;
         const img = window.currentImageLabel;
         if (edited && img && window.vectorStrokesByImage?.[img]?.[edited]) {
           const v = window.vectorStrokesByImage[img][edited];
-          const lw = parseInt(v.width || size) || size;
+          const lw = parseFloat(v.width || size) || size;
           v.dashSettings = {
             ...ds,
             pattern: computePattern(ds.style, ds.dashLength, ds.gapLength, lw),
@@ -298,7 +298,7 @@ export function initToolbarController() {
     // CENTER/BOTTOM: canvas view controls moved to bottom
     reparent('fitModeSelect', bottom);
     reparent('rotateFineWrap', bottom);
-    reparent('scaleButton', bottom);
+    reparent('frameScaleControls', bottom);
     syncFromState();
 
     // RIGHT: project settings are now pre-populated, just need to wire up functionality
@@ -342,7 +342,8 @@ export function initToolbarController() {
         labelShapeToggleBtn.dataset.shapeToggleBound = 'true';
         labelShapeToggleBtn.style.transition = 'transform 0.12s ease';
         labelShapeToggleBtn.addEventListener('click', () => {
-          const currentViewId = window.app?.projectManager?.currentViewId;
+          const currentViewId =
+            window.currentImageLabel || window.app?.projectManager?.currentViewId;
           const shape = window.app?.tagManager?.tagShape || 'square';
           window.app?.tagManager?.setTagShape(
             shape === 'circle' ? 'square' : 'circle',
@@ -881,9 +882,11 @@ export function initToolbarController() {
       const getCurrentScopedViewId = () => {
         const activeViewId = window.app?.projectManager?.currentViewId || 'front';
         const metadataManager = window.app?.metadataManager;
-        return metadataManager?.normalizeImageLabel
-          ? metadataManager.normalizeImageLabel(activeViewId)
-          : activeViewId;
+        return metadataManager?.resolveActiveImageLabel
+          ? metadataManager.resolveActiveImageLabel(activeViewId)
+          : metadataManager?.normalizeImageLabel
+            ? metadataManager.normalizeImageLabel(activeViewId)
+            : activeViewId;
       };
 
       const getSelectedLineLabels = () => {
@@ -1254,11 +1257,11 @@ export function initToolbarController() {
 
         if (next.value === CONNECTOR_SAME_AS_LINE) {
           // Set connector to match the stroke color
-          tagManager.connectorMatchesLine = true;
+          tagManager.setConnectorMatchesLine?.(true);
           const strokeColor = tagManager.strokeColor || '#3b82f6';
           tagManager.setConnectorColor(strokeColor);
         } else {
-          tagManager.connectorMatchesLine = false;
+          tagManager.setConnectorMatchesLine?.(false);
           tagManager.setConnectorColor(next.value);
         }
         syncConnectorToneBtn();
@@ -1328,6 +1331,11 @@ export function initToolbarController() {
     const positionCanvasControls = () => {
       const el = document.getElementById('canvasControls');
       if (!el || el.style.display === 'none') return;
+      // During multiview the capture frame has visibility:hidden and its
+      // bounding rect may report stale/zero dimensions, which would push
+      // the controls to the wrong vertical position. Keep the default
+      // bottom offset instead.
+      if (document.body.classList.contains('multiview-active')) return;
       const frame = document.getElementById('captureFrame');
       const viewH = window.innerHeight;
       let bottomPx = 8;
@@ -1361,6 +1369,12 @@ export function initToolbarController() {
 
     // Skip toolbar containers - they're handled by data-toolbar-mode
     if (container.closest('#topToolbar')) {
+      return;
+    }
+
+    // Don't toggle compact during multiview (see smart-labels.ts for rationale)
+    if (document.body.classList.contains('multiview-active')) {
+      container.classList.remove('compact');
       return;
     }
 
@@ -1959,17 +1973,23 @@ export function initToolbarController() {
     function buildCaptureFrameRecord(rect) {
       const winW = Math.max(window.innerWidth, 1);
       const winH = Math.max(window.innerHeight, 1);
+      const width = Math.round(rect.width);
+      const height = Math.round(rect.height);
       return {
         left: Math.round(rect.left),
         top: Math.round(rect.top),
-        width: Math.round(rect.width),
-        height: Math.round(rect.height),
+        width,
+        height,
         windowWidth: winW,
         windowHeight: winH,
         relativeLeft: rect.left / winW,
         relativeTop: rect.top / winH,
-        relativeWidth: rect.width / winW,
-        relativeHeight: rect.height / winH,
+        relativeWidth: width / winW,
+        relativeHeight: height / winH,
+        baseWidth: width,
+        baseHeight: height,
+        baseWindowWidth: winW,
+        baseWindowHeight: winH,
       };
     }
     function getCaptureFrameRectPixels() {
@@ -1988,34 +2008,27 @@ export function initToolbarController() {
     function normalizeWorldRect(worldRect) {
       return normalizeSharedWorldRect(worldRect);
     }
-    function computeRectIntersectionArea(a, b) {
-      const rectA = normalizeWorldRect(a);
-      const rectB = normalizeWorldRect(b);
-      if (!rectA || !rectB) return 0;
-      const left = Math.max(rectA.left, rectB.left);
-      const top = Math.max(rectA.top, rectB.top);
-      const right = Math.min(rectA.left + rectA.width, rectB.left + rectB.width);
-      const bottom = Math.min(rectA.top + rectA.height, rectB.top + rectB.height);
-      const width = Math.max(0, right - left);
-      const height = Math.max(0, bottom - top);
-      return width * height;
-    }
     function selectUsableWorldRect(candidate, fallback) {
       const normalizedCandidate = normalizeWorldRect(candidate);
       const normalizedFallback = normalizeWorldRect(fallback);
-      if (!normalizedCandidate) {
-        return normalizedFallback;
-      }
-      if (!normalizedFallback) {
-        return normalizedCandidate;
-      }
-      const candidateArea = Math.max(1, normalizedCandidate.width * normalizedCandidate.height);
-      const overlapRatio =
-        computeRectIntersectionArea(normalizedCandidate, normalizedFallback) / candidateArea;
-      return overlapRatio >= 0.72 ? normalizedCandidate : normalizedFallback;
+      // A frame world rect is the authored crop. The background rect is only a
+      // fallback when that crop is absent or malformed; overlap is not a valid
+      // reason to replace it because zoomed and rotated crops routinely cover a
+      // different region from the full image. Replacing it during restore makes
+      // every visit silently rewrite the frame and zoom.
+      return normalizedCandidate || normalizedFallback;
     }
     function fitViewportToWorldRect(worldRect, viewport, targetRect) {
-      return fitSharedViewportToWorldRect(worldRect, viewport, targetRect, getViewportGeometry());
+      const canvasManager = window.app?.canvasManager;
+      return fitSharedViewportToWorldRect(
+        worldRect,
+        {
+          ...(viewport || {}),
+          rotation: canvasManager?.rotateViewport ? resolveViewportRotation(viewport) : 0,
+        },
+        targetRect,
+        getViewportGeometry()
+      );
     }
     function updateTabWorldRectFromLiveFrame(tab, viewportOverride = null) {
       if (!tab) return;
@@ -2046,6 +2059,17 @@ export function initToolbarController() {
         panY: typeof viewport.panY === 'number' ? viewport.panY : 0,
         rotation: typeof liveRotation === 'number' ? liveRotation : 0,
       };
+    }
+    function getExactViewportTransform() {
+      const transform = window.app?.canvasManager?.fabricCanvas?.viewportTransform;
+      if (!Array.isArray(transform) || transform.length < 6) return null;
+      const next = transform.slice(0, 6).map(Number);
+      return next.every(Number.isFinite) ? next : null;
+    }
+    function cloneViewportTransform(transform) {
+      if (!Array.isArray(transform) || transform.length < 6) return null;
+      const next = transform.slice(0, 6).map(Number);
+      return next.every(Number.isFinite) ? next : null;
     }
     function resolveViewportRotation(viewport, label = null) {
       const resolvedLabel =
@@ -2079,7 +2103,12 @@ export function initToolbarController() {
       // In split mode, skip canvas viewport writes — the split layout sync
       // (fitGuideSplitPrimaryBackgroundToFrame) is the sole viewport authority.
       // But still update metadata (rotation storage, thumbnail, record mutation).
-      if (!splitActive && canvasManager?.setRotationDegrees) {
+      const currentRotation = Number(canvasManager?.getRotationDegrees?.());
+      const rotationChanged =
+        !Number.isFinite(currentRotation) ||
+        Math.abs((((currentRotation - targetRotation) % 360) + 360) % 360) > 0.001;
+
+      if (!splitActive && canvasManager?.setRotationDegrees && rotationChanged) {
         canvasManager.setRotationDegrees(targetRotation);
       } else if (splitActive && canvasManager) {
         // Store rotation without triggering applyViewportTransform
@@ -2104,6 +2133,90 @@ export function initToolbarController() {
         });
       }
     }
+    function correctViewportToLiveFrameCenter(record) {
+      const canvasManager = window.app?.canvasManager;
+      const canvas = canvasManager?.fabricCanvas;
+      const background = canvas?.backgroundImage;
+      const canvasElement = canvas?.lowerCanvasEl || canvas?.upperCanvasEl;
+      if (!record || !canvas || !background || !canvasElement || !captureFrame) {
+        return record;
+      }
+
+      const center = background.getCenterPoint?.() || {
+        x: Number(background.left) || 0,
+        y: Number(background.top) || 0,
+      };
+      const transform = canvas.viewportTransform || [1, 0, 0, 1, 0, 0];
+      const mappedCenter = fabric?.util?.transformPoint
+        ? fabric.util.transformPoint(new fabric.Point(center.x, center.y), transform)
+        : {
+            x: transform[0] * center.x + transform[2] * center.y + transform[4],
+            y: transform[1] * center.x + transform[3] * center.y + transform[5],
+          };
+      const canvasRect = canvasElement.getBoundingClientRect();
+      const frameRect = captureFrame.getBoundingClientRect();
+      const residualX = frameRect.left + frameRect.width / 2 - (mappedCenter.x + canvasRect.left);
+      const residualY = frameRect.top + frameRect.height / 2 - (mappedCenter.y + canvasRect.top);
+      if (Math.abs(residualX) <= 0.25 && Math.abs(residualY) <= 0.25) {
+        return record;
+      }
+
+      const corrected = normalizeViewportRecord({
+        ...record,
+        panX: (record.panX || 0) + residualX,
+        panY: (record.panY || 0) + residualY,
+      });
+      applyViewportRecord(corrected);
+      return corrected;
+    }
+    function correctViewportToLiveFrameAnchor(record, worldPoint) {
+      const canvasManager = window.app?.canvasManager;
+      const canvas = canvasManager?.fabricCanvas;
+      const canvasElement = canvas?.lowerCanvasEl || canvas?.upperCanvasEl;
+      if (
+        !record ||
+        !canvas ||
+        !canvasElement ||
+        !captureFrame ||
+        !worldPoint ||
+        !Number.isFinite(Number(worldPoint.x)) ||
+        !Number.isFinite(Number(worldPoint.y))
+      ) {
+        return record;
+      }
+
+      const transform = canvas.viewportTransform || [1, 0, 0, 1, 0, 0];
+      const mapped = fabric?.util?.transformPoint
+        ? fabric.util.transformPoint(
+            new fabric.Point(Number(worldPoint.x), Number(worldPoint.y)),
+            transform
+          )
+        : {
+            x:
+              transform[0] * Number(worldPoint.x) +
+              transform[2] * Number(worldPoint.y) +
+              transform[4],
+            y:
+              transform[1] * Number(worldPoint.x) +
+              transform[3] * Number(worldPoint.y) +
+              transform[5],
+          };
+      const canvasRect = canvasElement.getBoundingClientRect();
+      const frameRect = captureFrame.getBoundingClientRect();
+      const residualX = frameRect.left + frameRect.width / 2 - (mapped.x + canvasRect.left);
+      const residualY = frameRect.top + frameRect.height / 2 - (mapped.y + canvasRect.top);
+      if (Math.abs(residualX) <= 0.25 && Math.abs(residualY) <= 0.25) {
+        return record;
+      }
+
+      const corrected = normalizeViewportRecord({
+        ...record,
+        panX: (record.panX || 0) + residualX,
+        panY: (record.panY || 0) + residualY,
+      });
+      applyViewportRecord(corrected);
+      return corrected;
+    }
     function writeCaptureFrameFromViewportRect(rect, borderColor = null) {
       if (!rect) return null;
       const overlayRect = getCaptureOverlayRect();
@@ -2114,9 +2227,13 @@ export function initToolbarController() {
       if (typeof borderColor === 'string' && borderColor) {
         captureFrame.style.borderColor = borderColor;
       }
+      // CSS positioning is relative to the capture overlay, but every stored
+      // capture-frame record is page-space. Returning overlay-local values here
+      // feeds a shifted rectangle into the next restore and makes recentering
+      // oscillate each time a project, tab, or window layout is restored.
       return {
-        left: Math.round(rect.left - overlayRect.left),
-        top: Math.round(rect.top - overlayRect.top),
+        left: Math.round(rect.left),
+        top: Math.round(rect.top),
         width: Math.round(rect.width),
         height: Math.round(rect.height),
       };
@@ -2174,9 +2291,14 @@ export function initToolbarController() {
 
       const writtenRect = writeCaptureFrameFromViewportRect(mappedRect, borderColor);
       if (writtenRect) {
+        const rec = buildCaptureFrameRecord(writtenRect);
         activeTab.captureFrame = {
           ...(activeTab.captureFrame || {}),
-          ...buildCaptureFrameRecord(writtenRect),
+          ...rec,
+          baseWidth: activeTab.captureFrame?.baseWidth || rec.width,
+          baseHeight: activeTab.captureFrame?.baseHeight || rec.height,
+          baseWindowWidth: activeTab.captureFrame?.baseWindowWidth || rec.windowWidth,
+          baseWindowHeight: activeTab.captureFrame?.baseWindowHeight || rec.windowHeight,
           worldRect,
         };
       }
@@ -2250,6 +2372,7 @@ export function initToolbarController() {
           color,
           captureFrame: tab.captureFrame || null,
           viewport: normalizeViewportRecord(tab.viewport),
+          viewportTransform: cloneViewportTransform(tab.viewportTransform),
           linkedTarget: tab.linkedTarget || null,
         });
       });
@@ -2336,7 +2459,7 @@ export function initToolbarController() {
       if (isGuideSplitWorkspaceActive()) return;
       const state = ensureCaptureTabsForLabel(label);
       const activeTab = state.tabs.find(tab => tab.id === state.activeTabId);
-      if (!activeTab || activeTab.type === 'master') return;
+      if (!activeTab) return;
       const frameRecord = getCaptureFrameRectPixels();
       const viewport = buildViewportRecord();
       const previousRotation = Number(activeTab.viewport?.rotation);
@@ -2348,6 +2471,7 @@ export function initToolbarController() {
         rotation: shouldSyncRotation ? viewport.rotation : previousRotation,
       };
       activeTab.viewport = nextViewport;
+      activeTab.viewportTransform = getExactViewportTransform();
       const worldRect = computeWorldRectFromViewportRect(
         {
           left: frameRecord.left,
@@ -2363,9 +2487,15 @@ export function initToolbarController() {
           : null;
       activeTab.captureFrame = {
         ...frameRecord,
+        baseWidth: activeTab.captureFrame?.baseWidth || frameRecord.width,
+        baseHeight: activeTab.captureFrame?.baseHeight || frameRecord.height,
+        baseWindowWidth: activeTab.captureFrame?.baseWindowWidth || frameRecord.windowWidth,
+        baseWindowHeight: activeTab.captureFrame?.baseWindowHeight || frameRecord.windowHeight,
         worldRect: preservedWorldRect || normalizeWorldRect(worldRect),
       };
-      state.lastNonMasterId = activeTab.id;
+      if (activeTab.type !== 'master') {
+        state.lastNonMasterId = activeTab.id;
+      }
     }
     function saveCurrentCaptureFrameForLabel(label) {
       const resolved = label || getActiveLabel();
@@ -2389,9 +2519,19 @@ export function initToolbarController() {
       const top = toolbarWrapEl
         ? Math.round(toolbarWrapEl.getBoundingClientRect().bottom + verticalGap)
         : verticalGap;
-      const bottom = canvasControlsEl
-        ? Math.round(canvasControlsEl.getBoundingClientRect().top - verticalGap)
-        : winH - verticalGap;
+      // Canvas controls are positioned from the frame bottom, so using their
+      // current top to position the frame creates a circular layout dependency:
+      // frame -> controls -> frame. Reserve their fixed height from the viewport
+      // instead; this remains stable throughout a window-edge drag.
+      const canvasControlsHeight = canvasControlsEl
+        ? Math.max(
+            0,
+            canvasControlsEl.getBoundingClientRect().height || canvasControlsEl.offsetHeight
+          )
+        : 0;
+      const bottom = Math.round(
+        winH - Math.max(verticalGap, canvasControlsHeight + verticalGap * 2)
+      );
 
       const left = strokePanelEl
         ? Math.round(strokePanelEl.getBoundingClientRect().right + horizontalGap)
@@ -2471,7 +2611,7 @@ export function initToolbarController() {
 
       const baseW = stored.windowWidth || winW;
       const baseH = stored.windowHeight || winH;
-      let width = Math.max(
+      const widthLimit = Math.max(
         1,
         Math.round(
           typeof stored.relativeWidth === 'number'
@@ -2479,7 +2619,7 @@ export function initToolbarController() {
             : (stored.width ?? fallback.width)
         )
       );
-      let height = Math.max(
+      const heightLimit = Math.max(
         1,
         Math.round(
           typeof stored.relativeHeight === 'number'
@@ -2487,6 +2627,12 @@ export function initToolbarController() {
             : (stored.height ?? fallback.height)
         )
       );
+      const storedWidth = Number(stored.width);
+      const storedHeight = Number(stored.height);
+      const storedAspect =
+        storedWidth > 0 && storedHeight > 0 ? storedWidth / storedHeight : widthLimit / heightLimit;
+      let width = Math.min(widthLimit, heightLimit * storedAspect);
+      let height = width / storedAspect;
 
       if (width < minWidth || height < minHeight) {
         return fallback;
@@ -2515,6 +2661,10 @@ export function initToolbarController() {
         height = Math.max(1, Math.round(height * growScale));
       }
 
+      const minLeft = preferredArea.left;
+      const minTop = preferredArea.top;
+      const maxLeft = Math.max(minLeft, preferredArea.left + preferredArea.width - width);
+      const maxTop = Math.max(minTop, preferredArea.top + preferredArea.height - height);
       const leftRatio =
         typeof stored.relativeLeft === 'number'
           ? stored.relativeLeft
@@ -2523,11 +2673,6 @@ export function initToolbarController() {
         typeof stored.relativeTop === 'number'
           ? stored.relativeTop
           : (stored.top ?? fallback.top) / baseH;
-
-      const minLeft = preferredArea.left;
-      const minTop = preferredArea.top;
-      const maxLeft = Math.max(minLeft, preferredArea.left + preferredArea.width - width);
-      const maxTop = Math.max(minTop, preferredArea.top + preferredArea.height - height);
 
       return {
         left: Math.min(maxLeft, Math.max(minLeft, Math.round(leftRatio * winW))),
@@ -2689,15 +2834,48 @@ export function initToolbarController() {
       const applyCenteredFrameAndViewport = (stored, borderColor) => {
         const rect = resolveCaptureFrameRect(stored);
         const fallbackWorldRect = resolveViewRestoreWorldRect(resolved);
-        const storedWorldRect = selectUsableWorldRect(stored?.worldRect, fallbackWorldRect);
+        const savedBackgroundWorldRect = normalizeWorldRect(
+          (window.projectManager || window.app?.projectManager)?.views?.[toBaseLabel(resolved)]
+            ?.backgroundWorldRect
+        );
+        const rawStoredWorldRect = normalizeWorldRect(stored?.worldRect);
+        // Some earlier saves calculated frame world coordinates through a CSS-
+        // scaled canvas, producing a crop larger than the saved image itself.
+        // A frame crop may be smaller than the image, but it cannot legitimately
+        // exceed the authoritative saved background bounds on either axis.
+        const storedWorldRectExceedsImage = Boolean(
+          rawStoredWorldRect &&
+            savedBackgroundWorldRect &&
+            (rawStoredWorldRect.width > savedBackgroundWorldRect.width * 1.05 ||
+              rawStoredWorldRect.height > savedBackgroundWorldRect.height * 1.05)
+        );
+        const storedWorldRect = storedWorldRectExceedsImage
+          ? savedBackgroundWorldRect
+          : selectUsableWorldRect(rawStoredWorldRect, fallbackWorldRect);
         const targetWorldRect = storedWorldRect || fallbackWorldRect;
         const baseViewport = normalizeViewportRecord(activeTab.viewport || buildViewportRecord());
         let nextViewport = baseViewport;
-        let centerDeltaX = rect.left + rect.width / 2 - (rect.left + rect.width / 2);
-        let centerDeltaY = rect.top + rect.height / 2 - (rect.top + rect.height / 2);
 
-        if (Math.abs(centerDeltaX) < 1) centerDeltaX = 0;
-        if (Math.abs(centerDeltaY) < 1) centerDeltaY = 0;
+        // Detect cross-resolution scenario: if the viewport or frame was saved
+        // on a different monitor size, the panX/panY values are stale and would
+        // shift the image off-center. Force a re-fit from the world rect.
+        const savedCanvasWidth = Number(baseViewport?.savedCanvasWidth) || 0;
+        const savedCanvasHeight = Number(baseViewport?.savedCanvasHeight) || 0;
+        const currentCanvasWidth = Number(window.app?.canvasManager?.fabricCanvas?.width) || 0;
+        const currentCanvasHeight = Number(window.app?.canvasManager?.fabricCanvas?.height) || 0;
+        const savedWindowWidth = Number(stored?.windowWidth) || 0;
+        const savedWindowHeight = Number(stored?.windowHeight) || 0;
+        const dimensionsDiffer =
+          (savedWindowWidth > 0 &&
+            savedWindowHeight > 0 &&
+            (Math.abs(savedWindowWidth - window.innerWidth) > 2 ||
+              Math.abs(savedWindowHeight - window.innerHeight) > 2)) ||
+          (savedCanvasWidth > 0 &&
+            savedCanvasHeight > 0 &&
+            currentCanvasWidth > 0 &&
+            currentCanvasHeight > 0 &&
+            (Math.abs(savedCanvasWidth - currentCanvasWidth) > 2 ||
+              Math.abs(savedCanvasHeight - currentCanvasHeight) > 2));
 
         console.log('[Restore Debug] applyCaptureFrameForLabel:target', {
           label: resolved,
@@ -2712,26 +2890,54 @@ export function initToolbarController() {
           const targetRect = storedWorldRect
             ? rect
             : buildCenteredRectFromSize(rect.width, rect.height);
+          const liveFrameRect = getLiveCaptureFrameRectForViewport();
+          const frameSizeDiffers =
+            Math.abs(liveFrameRect.width - targetRect.width) > 2 ||
+            Math.abs(liveFrameRect.height - targetRect.height) > 2;
+          const framePositionDiffers =
+            Math.abs(liveFrameRect.left - targetRect.left) > 2 ||
+            Math.abs(liveFrameRect.top - targetRect.top) > 2;
+          const frameGeometryDiffers = frameSizeDiffers || framePositionDiffers;
 
           // If we already have a saved viewport (user zoomed/panned before),
           // use it directly instead of re-fitting to the world rect.
+          // BUT: if the canvas/window dimensions changed (cross-monitor load,
+          // window resize), the pan values are stale — re-center using the
+          // background image's current world position.
           const hasSavedViewport =
             baseViewport &&
-            Number.isFinite(Number(baseViewport.zoom)) &&
-            Number(baseViewport.zoom) > 0;
+            Number.isFinite(baseViewport.zoom) &&
+            baseViewport.zoom > 0 &&
+            !dimensionsDiffer &&
+            !frameGeometryDiffers;
 
-          const nextViewport = hasSavedViewport
-            ? normalizeViewportRecord(baseViewport)
-            : fitViewportToWorldRect(
-                targetWorldRect,
-                storedWorldRect
-                  ? baseViewport
-                  : {
-                      ...normalizeViewportRecord(null),
-                      rotation: resolveViewportRotation(activeTab.viewport, resolved),
-                    },
-                targetRect
-              );
+          let nextViewport;
+          if (hasSavedViewport) {
+            nextViewport = normalizeViewportRecord(baseViewport);
+          } else if (frameSizeDiffers && !dimensionsDiffer) {
+            // A later layout stabilization can clamp the frame after the
+            // monitor metadata has already been updated. Refit the viewport in
+            // the same transaction so the frame cannot move independently of
+            // the image and annotations.
+            nextViewport = fitViewportToWorldRect(targetWorldRect, baseViewport, targetRect);
+          } else if (dimensionsDiffer) {
+            // A changed canvas/window size needs a changed zoom, not merely a
+            // recentered copy of the old numeric viewport. The world rect is
+            // the authoritative crop (full image or user-zoomed subsection),
+            // so fit that exact crop into the newly sized frame in one step.
+            nextViewport = fitViewportToWorldRect(targetWorldRect, baseViewport, targetRect);
+          } else {
+            nextViewport = fitViewportToWorldRect(
+              targetWorldRect,
+              storedWorldRect
+                ? baseViewport
+                : {
+                    ...normalizeViewportRecord(null),
+                    rotation: resolveViewportRotation(activeTab.viewport, resolved),
+                  },
+              targetRect
+            );
+          }
           activeTab.viewport = normalizeViewportRecord(nextViewport);
           activeTab.captureFrame = {
             ...(stored || {}),
@@ -2743,13 +2949,10 @@ export function initToolbarController() {
 
           suspendCaptureTabViewportTracking();
           applyViewportRecord(activeTab.viewport);
+          if (dimensionsDiffer || frameGeometryDiffers) {
+            activeTab.viewport = correctViewportToLiveFrameCenter(activeTab.viewport);
+          }
           return;
-        } else if (centerDeltaX !== 0 || centerDeltaY !== 0) {
-          nextViewport = {
-            ...baseViewport,
-            panX: (baseViewport.panX || 0) + centerDeltaX,
-            panY: (baseViewport.panY || 0) + centerDeltaY,
-          };
         }
 
         const derivedWorldRect = normalizeWorldRect(
@@ -3000,10 +3203,14 @@ export function initToolbarController() {
       };
     }
     function buildViewportTransform(viewport) {
+      const canvasManager = window.app?.canvasManager;
       return buildSharedViewportTransform(
         {
           ...(viewport || {}),
-          rotation: resolveViewportRotation(viewport),
+          // OpenPaint currently rotates the Fabric objects themselves. Only
+          // include rotation here if the canvas is explicitly configured to
+          // rotate its viewport matrix, otherwise frame conversion rotates twice.
+          rotation: canvasManager?.rotateViewport ? resolveViewportRotation(viewport) : 0,
         },
         getViewportGeometry(viewport).center
       );
@@ -3038,22 +3245,24 @@ export function initToolbarController() {
     }
     function mapWorldRectToViewport(worldRect, viewport) {
       if (!worldRect || !viewport) return null;
+      const canvasManager = window.app?.canvasManager;
       return mapSharedWorldRectToViewport(
         worldRect,
         {
           ...(viewport || {}),
-          rotation: resolveViewportRotation(viewport),
+          rotation: canvasManager?.rotateViewport ? resolveViewportRotation(viewport) : 0,
         },
         getViewportGeometry(viewport)
       );
     }
     function computeWorldRectFromViewportRect(rect, viewport) {
       if (!rect || !viewport) return null;
+      const canvasManager = window.app?.canvasManager;
       return computeSharedWorldRectFromViewportRect(
         rect,
         {
           ...(viewport || {}),
-          rotation: resolveViewportRotation(viewport),
+          rotation: canvasManager?.rotateViewport ? resolveViewportRotation(viewport) : 0,
         },
         getViewportGeometry(viewport)
       );
@@ -3383,7 +3592,9 @@ export function initToolbarController() {
       const _tabCanvas = window.app?.canvasManager?.fabricCanvas;
       if (_tabCanvas) _tabCanvas.discardActiveObject();
       if (!options.skipSave) {
-        saveActiveTabState(baseLabel);
+        // Selecting another tab is navigation, not a frame edit. Preserve the
+        // authored crop instead of deriving a fresh AABB from the rendered DOM.
+        saveActiveTabState(baseLabel, { preserveWorldRect: true });
       }
       const nextState = {
         ...state,
@@ -3433,6 +3644,7 @@ export function initToolbarController() {
         viewport: activeTab?.viewport
           ? JSON.parse(JSON.stringify(activeTab.viewport))
           : buildViewportRecord(),
+        viewportTransform: cloneViewportTransform(activeTab?.viewportTransform),
       };
       const nextTabs = [...workingState.tabs];
       const masterIndex = nextTabs.findIndex(tab => tab.type === 'master');
@@ -3555,6 +3767,7 @@ export function initToolbarController() {
             ...viewport,
             rotation: shouldSyncMasterRotation ? viewport.rotation : previousMasterRotation,
           };
+          masterTab.viewportTransform = getExactViewportTransform();
           if (
             previousMaster.zoom === nextMasterViewport.zoom &&
             previousMaster.panX === nextMasterViewport.panX &&
@@ -3583,6 +3796,7 @@ export function initToolbarController() {
           ...viewport,
           rotation: shouldSyncRotation ? viewport.rotation : previousRotation,
         };
+        activeTab.viewportTransform = getExactViewportTransform();
         if (
           previous.zoom === nextViewport.zoom &&
           previous.panX === nextViewport.panX &&
@@ -3682,6 +3896,7 @@ export function initToolbarController() {
       replayCaptureFrameForLabelFromWorldRect(label, options);
 
     let captureFrameResizeSettleTimer = null;
+    let captureFrameResizeSettleRaf = null;
     let captureFrameResizeInProgress = false;
     let captureFrameResizeAnchor = null;
     const resizePrimaryCanvasForCurrentLayout = () => {
@@ -3692,26 +3907,28 @@ export function initToolbarController() {
         typeof canvasManager.applyResize === 'function'
       ) {
         const { width, height } = canvasManager.getAvailableCanvasSize();
+        // Scale-to-page-size intentionally refits the background. Normal capture
+        // frames keep their viewport stable until replayCaptureFrameForCurrentResize
+        // applies the one authoritative correction below.
+        if (
+          !isScalePageSizeMode() &&
+          typeof canvasManager.resizeCanvasDimensionsPreservingViewport === 'function'
+        ) {
+          canvasManager.resizeCanvasDimensionsPreservingViewport(width, height);
+          // Always resize the frame proportionally, regardless of fit mode.
+          // This ensures the zoom adjusts correctly for all images (including
+          // rotated) on both shrink and grow.
+          if (typeof canvasManager.updateCaptureFrameOnResize === 'function') {
+            canvasManager.updateCaptureFrameOnResize(width, height);
+          }
+          return;
+        }
         canvasManager.applyResize(width, height);
         return;
       }
       if (typeof canvasManager?.resize === 'function') {
         canvasManager.resize();
       }
-    };
-    const syncPrimaryCanvasElementForCurrentLayout = () => {
-      const canvasManager = window.app?.canvasManager;
-      if (
-        canvasManager &&
-        typeof canvasManager.getAvailableCanvasSize === 'function' &&
-        typeof canvasManager.syncCanvasElementDimensions === 'function'
-      ) {
-        const { width, height } = canvasManager.getAvailableCanvasSize();
-        canvasManager.syncCanvasElementDimensions(width, height);
-        canvasManager.fabricCanvas?.requestRenderAll?.();
-        return true;
-      }
-      return false;
     };
     const isScalePageSizeMode = () => {
       const projectManager = window.app?.projectManager || window.projectManager;
@@ -3731,10 +3948,42 @@ export function initToolbarController() {
     const captureResizeAnchorMetrics = () => {
       const frameRect = getLiveCaptureFrameRectForViewport();
       const mappedBackground = getRenderedBackgroundViewportRect();
-      if (!mappedBackground) return null;
+      const backgroundWorldRect = getCurrentBackgroundWorldRect();
+      const canvas = window.app?.canvasManager?.fabricCanvas;
+      const canvasRect = getCanvasClientRect();
+      const viewportTransform = Array.isArray(canvas?.viewportTransform)
+        ? [...canvas.viewportTransform]
+        : null;
+      const frameCenter = {
+        x: frameRect.left + frameRect.width / 2 - (canvasRect.left || 0),
+        y: frameRect.top + frameRect.height / 2 - (canvasRect.top || 0),
+      };
+      let anchorWorldPoint = null;
+      if (viewportTransform && fabric?.util?.invertTransform && fabric?.util?.transformPoint) {
+        try {
+          const inverse = fabric.util.invertTransform(viewportTransform);
+          anchorWorldPoint = fabric.util.transformPoint(
+            new fabric.Point(frameCenter.x, frameCenter.y),
+            inverse
+          );
+        } catch {
+          // The regular capture-frame replay remains as a conservative fallback.
+        }
+      }
+      if (!mappedBackground && !anchorWorldPoint) return null;
       return {
-        offsetLeftRatio: (mappedBackground.left - frameRect.left) / frameRect.width,
-        offsetTopRatio: (mappedBackground.top - frameRect.top) / frameRect.height,
+        offsetLeftRatio: mappedBackground
+          ? (mappedBackground.left - frameRect.left) / frameRect.width
+          : 0,
+        offsetTopRatio: mappedBackground
+          ? (mappedBackground.top - frameRect.top) / frameRect.height
+          : 0,
+        backgroundWorldRect,
+        frameWidth: frameRect.width,
+        frameHeight: frameRect.height,
+        viewport: buildViewportRecord(),
+        viewportTransform,
+        anchorWorldPoint,
       };
     };
     const replayCaptureFrameForCurrentResize = ({ renderOverlay = false } = {}) => {
@@ -3750,68 +3999,128 @@ export function initToolbarController() {
       const activeLabel = getActiveLabel();
       const activeTab = getActiveTab(activeLabel);
       const liveRect = getLiveCaptureFrameRectForViewport();
+      const canvasManager = window.app?.canvasManager;
+      const targetFrameSize =
+        typeof canvasManager?.calculateTargetFrameSize === 'function'
+          ? canvasManager.calculateTargetFrameSize(
+              Number(canvasManager.fabricCanvas?.width) || window.innerWidth,
+              Number(canvasManager.fabricCanvas?.height) || window.innerHeight
+            )
+          : liveRect;
       const targetRect =
-        liveRect.width > 0 && liveRect.height > 0
-          ? buildCenteredRectPreservingSize(liveRect.width, liveRect.height)
+        targetFrameSize.width > 0 && targetFrameSize.height > 0
+          ? buildCenteredRectFromSize(targetFrameSize.width, targetFrameSize.height)
           : null;
 
       if (activeTab && targetRect) {
-        const currentViewport = normalizeViewportRecord(
-          activeTab.viewport || buildViewportRecord()
+        // Re-center the background image in the recentered frame.
+        // Preserves the current zoom level — only adjusts pan so the
+        // background center aligns with the frame center.
+        // Same principle as +/- keys: frame moves, content follows.
+        const bgWorldRect =
+          normalizeWorldRect(captureFrameResizeAnchor?.backgroundWorldRect) ||
+          normalizeWorldRect(getCurrentBackgroundWorldRect()) ||
+          normalizeWorldRect(activeTab.captureFrame?.worldRect);
+
+        const anchorViewport = normalizeViewportRecord(
+          captureFrameResizeAnchor?.viewport || activeTab.viewport || buildViewportRecord()
         );
-        const centerDeltaX =
-          targetRect.left + targetRect.width / 2 - (liveRect.left + liveRect.width / 2);
-        const centerDeltaY =
-          targetRect.top + targetRect.height / 2 - (liveRect.top + liveRect.height / 2);
-        const nextViewport = normalizeViewportRecord({
-          ...currentViewport,
-          panX: (currentViewport.panX || 0) + centerDeltaX,
-          panY: (currentViewport.panY || 0) + centerDeltaY,
+        const frameScale =
+          captureFrameResizeAnchor?.frameWidth > 0 && captureFrameResizeAnchor?.frameHeight > 0
+            ? Math.min(
+                targetRect.width / captureFrameResizeAnchor.frameWidth,
+                targetRect.height / captureFrameResizeAnchor.frameHeight
+              )
+            : 1;
+        const seedViewport = normalizeViewportRecord({
+          ...anchorViewport,
+          zoom: Math.max(0.01, (anchorViewport.zoom || 1) * frameScale),
         });
-        if (captureFrameResizeAnchor?.backgroundWorldRect) {
-          const anchoredBackground = mapBackgroundWorldRectToViewportRect(
-            captureFrameResizeAnchor.backgroundWorldRect,
-            nextViewport
+
+        let nextViewport;
+        const anchorWorldPoint = captureFrameResizeAnchor?.anchorWorldPoint || null;
+        if (anchorWorldPoint && fabric?.util?.transformPoint) {
+          const seedMatrix = buildViewportTransform(seedViewport);
+          const canvasRect = getCanvasClientRect();
+          const mappedAnchor = fabric.util.transformPoint(
+            new fabric.Point(anchorWorldPoint.x, anchorWorldPoint.y),
+            seedMatrix
           );
-          if (anchoredBackground) {
-            const targetBackgroundLeft =
-              targetRect.left + targetRect.width * captureFrameResizeAnchor.offsetLeftRatio;
-            const targetBackgroundTop =
-              targetRect.top + targetRect.height * captureFrameResizeAnchor.offsetTopRatio;
-            nextViewport.panX += targetBackgroundLeft - anchoredBackground.left;
-            nextViewport.panY += targetBackgroundTop - anchoredBackground.top;
+          const targetCenterX = targetRect.left + targetRect.width / 2;
+          const targetCenterY = targetRect.top + targetRect.height / 2;
+          nextViewport = normalizeViewportRecord({
+            ...seedViewport,
+            panX:
+              (seedViewport.panX || 0) +
+              (targetCenterX - (mappedAnchor.x + (canvasRect.left || 0))),
+            panY:
+              (seedViewport.panY || 0) + (targetCenterY - (mappedAnchor.y + (canvasRect.top || 0))),
+          });
+        } else if (bgWorldRect) {
+          // Map the background center through the current viewport to get
+          // its screen position, then adjust pan to center it in the frame.
+          const mappedBg = mapWorldRectToViewport(bgWorldRect, seedViewport);
+          if (mappedBg && mappedBg.width > 0 && mappedBg.height > 0) {
+            const mappedCenterX = mappedBg.left + mappedBg.width / 2;
+            const mappedCenterY = mappedBg.top + mappedBg.height / 2;
+            const targetCenterX = targetRect.left + targetRect.width / 2;
+            const targetCenterY = targetRect.top + targetRect.height / 2;
+            nextViewport = normalizeViewportRecord({
+              ...seedViewport,
+              panX: (seedViewport.panX || 0) + (targetCenterX - mappedCenterX),
+              panY: (seedViewport.panY || 0) + (targetCenterY - mappedCenterY),
+            });
+          } else {
+            // Mapping failed — fall back to fit
+            nextViewport = fitViewportToWorldRect(bgWorldRect, seedViewport, targetRect);
           }
+        } else {
+          // No world rect (stroke-only canvas) — just re-center pan
+          const centerDeltaX =
+            targetRect.left + targetRect.width / 2 - (liveRect.left + liveRect.width / 2);
+          const centerDeltaY =
+            targetRect.top + targetRect.height / 2 - (liveRect.top + liveRect.height / 2);
+          nextViewport = normalizeViewportRecord({
+            ...seedViewport,
+            panX: (seedViewport.panX || 0) + centerDeltaX,
+            panY: (seedViewport.panY || 0) + centerDeltaY,
+          });
         }
+
         suspendCaptureTabViewportTracking(700);
         activeTab.viewport = nextViewport;
         applyViewportRecord(nextViewport);
 
-        if (captureFrameResizeAnchor) {
-          const renderedBackground = getRenderedBackgroundViewportRect();
-          if (renderedBackground) {
-            const targetBackgroundLeft =
-              targetRect.left + targetRect.width * captureFrameResizeAnchor.offsetLeftRatio;
-            const targetBackgroundTop =
-              targetRect.top + targetRect.height * captureFrameResizeAnchor.offsetTopRatio;
-            nextViewport.panX += targetBackgroundLeft - renderedBackground.left;
-            nextViewport.panY += targetBackgroundTop - renderedBackground.top;
-            activeTab.viewport = nextViewport;
-            suspendCaptureTabViewportTracking(700);
-            applyViewportRecord(nextViewport);
-          }
-        }
-
         const borderColor = activeTab.type === 'master' ? '#0f172a' : activeTab.color || '#22c55e';
         const writtenRect = writeCaptureFrameFromViewportRect(targetRect, borderColor);
+        // Viewport records are normalized metadata; browser layout and Fabric's
+        // exact matrix can differ by a residual translation after the backing
+        // store changes size. Measure the rendered result against the written
+        // frame before saving so that metadata never records an intermediate
+        // (visibly shifted) state.
+        nextViewport = anchorWorldPoint
+          ? correctViewportToLiveFrameAnchor(nextViewport, anchorWorldPoint)
+          : correctViewportToLiveFrameCenter(nextViewport);
+        activeTab.viewport = nextViewport;
         const worldRect =
           normalizeWorldRect(computeWorldRectFromViewportRect(targetRect, nextViewport)) ||
           normalizeWorldRect(activeTab.captureFrame?.worldRect) ||
           normalizeWorldRect(getCurrentBackgroundWorldRect());
 
         if (writtenRect) {
+          const existing = activeTab.captureFrame || {};
+          const record = buildCaptureFrameRecord(writtenRect);
+          // Preserve stable base dimensions across passive resizes so the
+          // baseWidth/baseWindowWidth ratio used by calculateTargetFrameSize
+          // is not ratcheted down to a smaller value every time the window shrinks.
+          // Manual resizes (+/- keys) update base dimensions before saving.
           activeTab.captureFrame = {
-            ...(activeTab.captureFrame || {}),
-            ...buildCaptureFrameRecord(writtenRect),
+            ...existing,
+            ...record,
+            baseWidth: existing.baseWidth || record.baseWidth,
+            baseHeight: existing.baseHeight || record.baseHeight,
+            baseWindowWidth: existing.baseWindowWidth || record.baseWindowWidth,
+            baseWindowHeight: existing.baseWindowHeight || record.baseWindowHeight,
             worldRect,
           };
         }
@@ -3827,26 +4136,156 @@ export function initToolbarController() {
         window.applyCaptureFrameForLabel(activeLabel);
       }
     };
-    window.addEventListener('resize', () => {
+    const requestPrimaryResize = (reason = 'window') => {
+      if (isGuideSplitWorkspaceActive()) return;
+      // A wrapper resize caused by this transaction is expected. It must not
+      // restart the settle timer or create a second viewport correction.
+      if (captureFrameResizeInProgress && reason === 'wrapper-observer') return;
       if (!captureFrameResizeInProgress) {
         captureFrameResizeAnchor = captureResizeAnchorMetrics();
       }
       captureFrameResizeInProgress = true;
-      (window as any).__openpaintWindowResizeSuppressCanvasResizeUntil = Date.now() + 260;
-      syncPrimaryCanvasElementForCurrentLayout();
+      window.__openpaintCaptureResizeInProgress = true;
+      (window as any).__openpaintWindowResizeSuppressCanvasResizeUntil = Date.now() + 420;
       if (captureFrameResizeSettleTimer !== null) {
         clearTimeout(captureFrameResizeSettleTimer);
       }
       captureFrameResizeSettleTimer = setTimeout(() => {
         captureFrameResizeSettleTimer = null;
-        resizePrimaryCanvasForCurrentLayout();
-        if (!isScalePageSizeMode()) {
-          replayCaptureFrameForCurrentResize({ renderOverlay: true });
+        if (captureFrameResizeSettleRaf !== null) {
+          cancelAnimationFrame(captureFrameResizeSettleRaf);
         }
-        captureFrameResizeInProgress = false;
-        captureFrameResizeAnchor = null;
+        captureFrameResizeSettleRaf = requestAnimationFrame(() => {
+          captureFrameResizeSettleRaf = null;
+          try {
+            resizePrimaryCanvasForCurrentLayout();
+            // CanvasManager owns backing-store dimensions and scale-to-page fit;
+            // this coordinator always performs the final frame centering and
+            // persists the matching viewport as one atomic state.
+            replayCaptureFrameForCurrentResize({ renderOverlay: true });
+          } finally {
+            captureFrameResizeInProgress = false;
+            window.__openpaintCaptureResizeInProgress = false;
+            captureFrameResizeAnchor = null;
+          }
+        });
       }, 180);
-    });
+    };
+    window.__openpaintRequestPrimaryResize = requestPrimaryResize;
+
+    // Expose a centering helper for post-switchView re-centering.
+    // This is needed when switching to a view that was saved at a different
+    // window/canvas size — the stale pan values shift the image off-center.
+    window.__recenterCaptureFrame = label => {
+      const resolvedLabel = label || getActiveLabel();
+      const tab = getActiveTab(resolvedLabel);
+      if (!tab) return;
+
+      const canvas = window.app?.canvasManager?.fabricCanvas;
+      const bg = canvas?.backgroundImage;
+      const captureFrameEl = document.getElementById('captureFrame');
+      if (!canvas || !bg || !captureFrameEl) return;
+
+      // Compute the TARGET frame rect (centered in preferred area) up front.
+      // All centering math should reference this, not the live frame position,
+      // because the frame may be at a stale position from relative-ratio restore.
+      const liveRect = getLiveCaptureFrameRectForViewport();
+      const proportionalRect = isScalePageSizeMode()
+        ? resolveCaptureFrameRect(tab.captureFrame)
+        : liveRect;
+      const targetRect =
+        proportionalRect.width > 0 && proportionalRect.height > 0
+          ? buildCenteredRectPreservingSize(proportionalRect.width, proportionalRect.height)
+          : null;
+      if (!targetRect) return;
+
+      // Read the ACTUAL canvas viewport transform (not stored state).
+      const canvasEl = canvas.lowerCanvasEl || canvas.upperCanvasEl;
+      if (!canvasEl) return;
+      const cm = window.app?.canvasManager;
+      if (!cm) return;
+
+      const bgWorldRect = normalizeWorldRect(getCurrentBackgroundWorldRect());
+
+      // --- Zoom adjustment: preserve the current zoom level ---
+      // The viewport was already set correctly by applyCaptureFrameForLabel
+      // before this function runs. Only recenter (adjust pan), don't recalculate
+      // zoom from the saved world rect, which can drift due to rounding.
+      const savedWorldRect = normalizeWorldRect(tab.captureFrame?.worldRect);
+      const previousZoom = Number(cm.zoomLevel) || 1;
+      const adjustedZoom = previousZoom;
+
+      // Compute the final pan against the intended zoom before touching Fabric.
+      // Applying a zoom-only viewport here creates a visible intermediate flash.
+      const seedViewport = normalizeViewportRecord({
+        ...(tab.viewport || buildViewportRecord()),
+        zoom: adjustedZoom,
+        panX: Number(cm.panX) || 0,
+        panY: Number(cm.panY) || 0,
+        rotation: resolveViewportRotation(tab.viewport, resolvedLabel),
+      });
+      const centerWorldRect = bgWorldRect || savedWorldRect;
+      const mappedBackground = mapWorldRectToViewport(centerWorldRect, seedViewport);
+      if (!mappedBackground || mappedBackground.width <= 0 || mappedBackground.height <= 0) {
+        return;
+      }
+      const backgroundCenter = {
+        x: mappedBackground.left + mappedBackground.width / 2,
+        y: mappedBackground.top + mappedBackground.height / 2,
+      };
+
+      const targetCx = targetRect.left + targetRect.width / 2;
+      const targetCy = targetRect.top + targetRect.height / 2;
+      const dx = targetCx - backgroundCenter.x;
+      const dy = targetCy - backgroundCenter.y;
+      const zoomChanged = Math.abs(adjustedZoom - previousZoom) > 0.001;
+
+      let nextViewport = normalizeViewportRecord({
+        ...seedViewport,
+        panX: (seedViewport.panX || 0) + dx,
+        panY: (seedViewport.panY || 0) + dy,
+      });
+      suspendCaptureTabViewportTracking(700);
+      tab.viewport = nextViewport;
+      applyViewportRecord(nextViewport);
+
+      // Write the frame to the target position
+      const borderColor = tab.type === 'master' ? '#0f172a' : tab.color || '#22c55e';
+      const writtenRect = writeCaptureFrameFromViewportRect(targetRect, borderColor);
+      if (writtenRect) {
+        const rec = buildCaptureFrameRecord(writtenRect);
+        tab.captureFrame = {
+          ...(tab.captureFrame || {}),
+          ...rec,
+          worldRect: savedWorldRect || undefined,
+        };
+      }
+      // Writing the frame can change its final page position when the side
+      // panels or overlay finish laying out. Correct against the actual DOM
+      // frame rather than the earlier preferred-area estimate.
+      const finalFrameRect = captureFrameEl.getBoundingClientRect();
+      const finalBackground = mapWorldRectToViewport(centerWorldRect, nextViewport);
+      if (!finalBackground || finalBackground.width <= 0 || finalBackground.height <= 0) {
+        return;
+      }
+      const finalBackgroundCenter = {
+        x: finalBackground.left + finalBackground.width / 2,
+        y: finalBackground.top + finalBackground.height / 2,
+      };
+      const residualDx = finalFrameRect.left + finalFrameRect.width / 2 - finalBackgroundCenter.x;
+      const residualDy = finalFrameRect.top + finalFrameRect.height / 2 - finalBackgroundCenter.y;
+      if (zoomChanged || Math.abs(residualDx) > 0.25 || Math.abs(residualDy) > 0.25) {
+        nextViewport = normalizeViewportRecord({
+          ...nextViewport,
+          panX: (nextViewport.panX || 0) + residualDx,
+          panY: (nextViewport.panY || 0) + residualDy,
+        });
+        tab.viewport = nextViewport;
+        applyViewportRecord(nextViewport);
+      }
+    };
+
+    window.addEventListener('resize', () => requestPrimaryResize('window'));
 
     window.addEventListener('openpaint:guide-binding-changed', () => {
       renderGuideSplitControl(getActiveLabel());
@@ -4139,9 +4578,11 @@ export function initToolbarController() {
       selectAllStrokesBtn.addEventListener('click', () => {
         const metadataManager = window.app?.metadataManager;
         const currentViewId = window.app?.projectManager?.currentViewId || 'front';
-        const scopedLabel = metadataManager?.normalizeImageLabel
-          ? metadataManager.normalizeImageLabel(currentViewId)
-          : currentViewId;
+        const scopedLabel = metadataManager?.resolveActiveImageLabel
+          ? metadataManager.resolveActiveImageLabel(currentViewId)
+          : metadataManager?.normalizeImageLabel
+            ? metadataManager.normalizeImageLabel(currentViewId)
+            : currentViewId;
         const strokes = metadataManager?.vectorStrokesByImage?.[scopedLabel] || {};
         const strokeLabels = Object.keys(strokes || {});
 
@@ -4893,24 +5334,12 @@ export function initToolbarController() {
     }
 
     function showLockPopup() {
-      const popup = document.getElementById('lockPopup');
-      const icon = document.getElementById('lockPopupIcon');
-      const text = document.getElementById('lockPopupText');
-
-      if (isCaptureLocked) {
-        text.textContent = 'Locked';
-        icon.innerHTML =
-          '<path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"></path>';
-      } else {
-        text.textContent = 'Unlocked';
-        icon.innerHTML =
-          '<path d="M10 2a5 5 0 00-5 5v2a2 2 0 00-2 2v5a2 2 0 002 2h10a2 2 0 002-2v-5a2 2 0 00-2-2H7V7a3 3 0 015.905-.75 1 1 0 001.937-.5A5.002 5.002 0 0010 2z"></path>';
-      }
-
-      popup.classList.add('show');
-      setTimeout(() => {
-        popup.classList.remove('show');
-      }, 1500);
+      (window as any).notifyOpenPaint?.({
+        message: isCaptureLocked ? 'Frame locked' : 'Frame unlocked',
+        kind: 'lock',
+        icon: isCaptureLocked ? 'L' : 'U',
+        durationMs: 1500,
+      });
     }
 
     function updateCaptureFrameLockState() {
@@ -5106,6 +5535,7 @@ export function initToolbarController() {
           heightRatio: frameRect.height / canvas.clientHeight,
           leftRatio: frameRect.left / canvas.clientWidth,
           topRatio: frameRect.top / canvas.clientHeight,
+          aspectRatio: frameRect.width / Math.max(frameRect.height, 1),
         };
 
         console.log(
@@ -5366,62 +5796,57 @@ export function initToolbarController() {
     }
 
     // Setup container-level drag auto-scroll
+    // Singleton rAF approach: a single loop reads a global direction flag.
+    // Prevents orphaned multiple-loop accumulation that caused runaway scrolling.
     const imageListContainer = document.getElementById('imageList');
     if (imageListContainer) {
+      const stopDragAutoScroll = () => {
+        window.__dragAutoScrollDir = null;
+        if (window.__dragAutoScrollFrame) {
+          cancelAnimationFrame(window.__dragAutoScrollFrame);
+          window.__dragAutoScrollFrame = null;
+        }
+      };
+      const startDragAutoScroll = dir => {
+        if (dir !== 'up' && dir !== 'down') return;
+        window.__dragAutoScrollDir = dir;
+        if (window.__dragAutoScrollFrame) return;
+        const scrollSpeed = 10;
+        const tick = () => {
+          if (window.__dragAutoScrollDir === 'up') {
+            imageListContainer.scrollBy(0, -scrollSpeed);
+            window.__dragAutoScrollFrame = requestAnimationFrame(tick);
+          } else if (window.__dragAutoScrollDir === 'down') {
+            imageListContainer.scrollBy(0, scrollSpeed);
+            window.__dragAutoScrollFrame = requestAnimationFrame(tick);
+          } else {
+            window.__dragAutoScrollFrame = null;
+          }
+        };
+        window.__dragAutoScrollFrame = requestAnimationFrame(tick);
+      };
+
       imageListContainer.addEventListener('dragover', e => {
         const rect = imageListContainer.getBoundingClientRect();
-        const scrollThreshold = 80; // Distance from edge to trigger scroll
-        const scrollSpeed = 10; // Pixels per scroll
+        const scrollThreshold = 80;
         const mouseY = e.clientY;
-
-        // Clear any existing scroll interval
-        if (window.dragScrollInterval) {
-          clearInterval(window.dragScrollInterval);
-          window.dragScrollInterval = null;
-        }
-
-        // Check if near top edge
-        if (mouseY - rect.top < scrollThreshold && mouseY > rect.top) {
-          let scrolling = true;
-          const scroll = () => {
-            if (!scrolling) return;
-            imageListContainer.scrollBy(0, -scrollSpeed);
-            window.dragScrollFrame = requestAnimationFrame(scroll);
-          };
-          scrolling = true;
-          window.dragScrollFrame = requestAnimationFrame(scroll);
-        }
-        // Check if near bottom edge
-        else if (rect.bottom - mouseY < scrollThreshold && mouseY < rect.bottom) {
-          let scrolling = true;
-          const scroll = () => {
-            if (!scrolling) return;
-            imageListContainer.scrollBy(0, scrollSpeed);
-            window.dragScrollFrame = requestAnimationFrame(scroll);
-          };
-          scrolling = true;
-          window.dragScrollFrame = requestAnimationFrame(scroll);
+        const nearTop = mouseY - rect.top < scrollThreshold && mouseY > rect.top;
+        const nearBottom = rect.bottom - mouseY < scrollThreshold && mouseY < rect.bottom;
+        if (nearTop) {
+          startDragAutoScroll('up');
+        } else if (nearBottom) {
+          startDragAutoScroll('down');
+        } else {
+          stopDragAutoScroll();
         }
       });
 
-      // Clear scroll animation when drag ends anywhere
-      const stopScrolling = () => {
-        if (window.dragScrollInterval) {
-          clearInterval(window.dragScrollInterval);
-          window.dragScrollInterval = null;
-        }
-        if (window.dragScrollFrame) {
-          cancelAnimationFrame(window.dragScrollFrame);
-          window.dragScrollFrame = null;
-        }
-      };
-
-      imageListContainer.addEventListener('drop', stopScrolling);
+      imageListContainer.addEventListener('drop', stopDragAutoScroll);
+      imageListContainer.addEventListener('dragend', stopDragAutoScroll);
 
       imageListContainer.addEventListener('dragleave', e => {
-        // Only clear if leaving the container entirely
         if (e.target === imageListContainer) {
-          stopScrolling();
+          stopDragAutoScroll();
         }
       });
     }
