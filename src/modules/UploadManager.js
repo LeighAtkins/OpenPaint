@@ -205,6 +205,7 @@ export class UploadManager {
 
     const objectUrl = URL.createObjectURL(workingFile);
     const viewId = this.getViewIdFromFilename(workingFile.name);
+    this.projectManager?.registerViewImageFile?.(viewId, workingFile);
     const hadExistingImage = !!this.projectManager.views?.[viewId]?.image;
     const isCurrentView = this.projectManager.currentViewId === viewId;
 

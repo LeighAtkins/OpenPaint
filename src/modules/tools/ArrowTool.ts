@@ -4,6 +4,7 @@
 // @ts-nocheck
 import { BaseTool } from './BaseTool.js';
 import { FabricControls } from '../utils/FabricControls.js';
+import { resolveDrawingImageLabel } from '../ui/scoped-image-label.js';
 
 export class ArrowTool extends BaseTool {
   constructor(canvasManager) {
@@ -200,13 +201,11 @@ export class ArrowTool extends BaseTool {
 
     // Attach metadata (label) to the arrow
     if (window.app && window.app.metadataManager && window.app.projectManager) {
-      const imageLabel = window.app.projectManager.currentViewId || 'front';
-
-      // Set currentImageLabel for tag prediction system
-      window.currentImageLabel =
-        (typeof window.getCaptureTabScopedLabel === 'function' &&
-          window.getCaptureTabScopedLabel(imageLabel)) ||
-        imageLabel;
+      const imageLabel = resolveDrawingImageLabel(
+        this.canvasManager,
+        window.app.projectManager.currentViewId || 'front'
+      );
+      window.currentImageLabel = imageLabel;
 
       const strokeLabel = window.app.metadataManager.getNextLabel(imageLabel);
       window.app.metadataManager.attachMetadata(group, imageLabel, strokeLabel);

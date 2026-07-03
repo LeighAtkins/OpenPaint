@@ -572,6 +572,7 @@ app.post('/api/pdf/render', async (req, res) => {
     return res.status(200).send(pdfBuffer);
   } catch (error) {
     const code = error?.code || 'PDF_RENDER_FAILED';
+    const detail = error?.details || error?.message || String(error);
     console.error('[PDF] Render failed:', {
       requestId,
       code,
@@ -579,15 +580,14 @@ app.post('/api/pdf/render', async (req, res) => {
       error,
     });
     if (code === 'PDF_RENDERER_UNSUPPORTED' || code === 'PDF_RENDERER_MISSING_DEPENDENCY') {
-      return res
-        .status(501)
-        .json({ success: false, code, requestId, message: error.details || error.message });
+      return res.status(501).json({ success: false, code, requestId, message: detail });
     }
     return res.status(500).json({
       success: false,
       code,
       requestId,
       message: 'Failed to render PDF',
+      detail,
     });
   }
 });
@@ -3567,7 +3567,9 @@ app.post('/ai/enhance-placement', async (req, res) => {
 app.post('/ai/analyze-and-dimension', async (req, res) => {
   try {
     console.log('[AI Relay] analyze req keys:', Object.keys(req.body || {}));
-  } catch (_) {}
+  } catch (_) {
+    // Logging only; continue with the relay request.
+  }
   try {
     const r = await fetch(
       joinUrl((process.env.AI_WORKER_URL || '').trim(), '/analyze-and-dimension'),
@@ -3828,13 +3830,17 @@ if __name__ == "__main__":
       failed = true;
       try {
         fs.unlinkSync(tempScriptPath);
-      } catch (_) {}
+      } catch (_) {
+        // Temporary cleanup best effort.
+      }
       reject(err);
     });
     py.on('close', code => {
       try {
         fs.unlinkSync(tempScriptPath);
-      } catch (_) {}
+      } catch (_) {
+        // Temporary cleanup best effort.
+      }
       if (!failed && code === 0) return resolve();
       reject(new Error(`Python process exited with code ${code}`));
     });

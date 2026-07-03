@@ -114,6 +114,31 @@ describe('ProjectManager cloud image persistence', () => {
     );
   });
 
+  test('uploads an original file directly without fetching its blob URL', async () => {
+    const manager = makeManager();
+    const originalFile = makePngBlob('image/png');
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          success: true,
+          uploadUrl: 'https://r2.example/upload',
+          key: 'projects/views/front/generated.png',
+        }),
+      })
+      .mockResolvedValueOnce({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(manager.uploadViewImageToR2('front', originalFile)).resolves.toBe(
+      'projects/views/front/generated.png'
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/storage/r2/presign-upload');
+    expect(fetchMock.mock.calls[1][0]).toBe('https://r2.example/upload');
+  });
+
   test('resolves restore rect from the target view, not the stale live background', () => {
     const manager = makeManager();
     manager.currentViewId = 'front';

@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 import { BaseTool } from './BaseTool.js';
+import { resolveDrawingImageLabel } from '../ui/scoped-image-label.js';
 
 // Frame Tool for drawing PDF export frames (marquee rectangles)
 // Each frame defines a zoomed-in portion of the image that becomes a separate PDF page
@@ -135,8 +136,10 @@ export class FrameTool extends BaseTool {
     }
 
     // Get current image label
-    const imageLabel =
-      window.app?.projectManager?.currentViewId || window.currentImageLabel || 'front';
+    const imageLabel = resolveDrawingImageLabel(
+      this.canvasManager,
+      window.app?.projectManager?.currentViewId || 'front'
+    );
 
     // Initialize frames array for this image if needed
     if (!window.pdfFramesByImage[imageLabel]) {
@@ -183,8 +186,10 @@ export class FrameTool extends BaseTool {
     // First remove existing frame objects
     this.removeFrameObjects();
 
-    const imageLabel =
-      window.app?.projectManager?.currentViewId || window.currentImageLabel || 'front';
+    const imageLabel = resolveDrawingImageLabel(
+      this.canvasManager,
+      window.app?.projectManager?.currentViewId || 'front'
+    );
     const frames = window.pdfFramesByImage?.[imageLabel] || [];
 
     frames.forEach((frame, index) => {
@@ -271,8 +276,10 @@ export class FrameTool extends BaseTool {
 
   // Update frame bounds after moving/resizing
   updateFrameBounds(frameId, group) {
-    const imageLabel =
-      window.app?.projectManager?.currentViewId || window.currentImageLabel || 'front';
+    const imageLabel = resolveDrawingImageLabel(
+      this.canvasManager,
+      window.app?.projectManager?.currentViewId || 'front'
+    );
     const frames = window.pdfFramesByImage?.[imageLabel] || [];
 
     const frame = frames.find(f => f.id === frameId);
@@ -309,8 +316,10 @@ export class FrameTool extends BaseTool {
 
   // Delete a specific frame by ID
   deleteFrame(frameId) {
-    const imageLabel =
-      window.app?.projectManager?.currentViewId || window.currentImageLabel || 'front';
+    const imageLabel = resolveDrawingImageLabel(
+      this.canvasManager,
+      window.app?.projectManager?.currentViewId || 'front'
+    );
     const frames = window.pdfFramesByImage?.[imageLabel];
 
     if (!frames) return;

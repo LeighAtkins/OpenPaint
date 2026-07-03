@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 import { BaseTool } from './BaseTool.js';
+import { resolveDrawingImageLabel } from '../ui/scoped-image-label.js';
 
 const MIN_SHAPE_SIZE = 10;
 const STAR_BASE_SIZE = 100;
@@ -354,11 +355,11 @@ export class ShapeTool extends BaseTool {
 
   attachMetadata(shape) {
     if (window.app && window.app.metadataManager && window.app.projectManager) {
-      const imageLabel = window.app.projectManager.currentViewId || 'front';
-      window.currentImageLabel =
-        (typeof window.getCaptureTabScopedLabel === 'function' &&
-          window.getCaptureTabScopedLabel(imageLabel)) ||
-        imageLabel;
+      const imageLabel = resolveDrawingImageLabel(
+        this.canvasManager,
+        window.app.projectManager.currentViewId || 'front'
+      );
+      window.currentImageLabel = imageLabel;
 
       window.app.metadataManager.attachShapeMetadata(shape, imageLabel, this.shapeType);
     }

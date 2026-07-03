@@ -6,12 +6,7 @@ function resolveImageRegistryEnabled() {
   if (typeof window.__IMAGE_REGISTRY_ENABLED__ === 'boolean') {
     return window.__IMAGE_REGISTRY_ENABLED__;
   }
-  return window.location?.hostname === 'localhost';
-}
-
-function isLocalDevHost() {
-  if (typeof window === 'undefined') return false;
-  return window.location?.hostname === 'localhost';
+  return true;
 }
 
 class ImageRegistry {
@@ -74,6 +69,18 @@ class ImageRegistry {
     const existing = this.registered.get(viewId);
     const isSameUrl = existing && existing.url === imageUrl;
     if (isSameUrl) {
+      // Registration is idempotent, but the surrounding stores may have been
+      // rebuilt independently (project load, gallery reset, legacy import).
+      // Repair those stores before reporting a dedupe.
+      if (!this.projectManager?.views?.[viewId]?.image && this.projectManager?.addImage) {
+        await this.projectManager.addImage(viewId, imageUrl, {
+          refreshBackground: Boolean(normalizedOptions.refreshBackground),
+        });
+      }
+      if (!this._galleryHasView(viewId)) {
+        this._ensureGalleryEntry(viewId, imageUrl, filename, normalizedOptions);
+      }
+      this._assertRegistration(viewId, imageUrl);
       console.log('[ImageRegistry] registerImage deduped', { viewId, source });
       return { status: 'deduped' };
     }
@@ -116,6 +123,11 @@ class ImageRegistry {
     return { status: isUpdate ? 'updated' : 'registered' };
   }
 
+  unregisterImage(viewId) {
+    if (!viewId) return false;
+    return this.registered.delete(viewId);
+  }
+
   _startReadyWatcher() {
     const startedAt = Date.now();
     const poll = () => {
@@ -136,7 +148,7 @@ class ImageRegistry {
       const elapsed = Date.now() - startedAt;
       if (elapsed > DEFAULT_READY_TIMEOUT_MS) {
         console.error('[ImageRegistry] Ready timeout: gallery hook not detected.');
-        if (isLocalDevHost() || window.__DEBUG__) {
+        if (window.__DEBUG__) {
           console.trace('[ImageRegistry] Ready timeout stack');
         }
         this._markReady('timeout');

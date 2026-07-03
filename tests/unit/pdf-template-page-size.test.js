@@ -31,7 +31,104 @@ describe('report template page size', () => {
 
   test('renders unit toggle with active cm state', () => {
     const html = renderReportTemplate({ ...sampleReport, unit: 'cm' }, { pageSize: 'a4' });
-    expect(html).toContain('<span class="unit-pill active">cm</span>');
-    expect(html).toContain('<span class="unit-pill ">inch</span>');
+    expect(html).toContain('class="unit-pill active"');
+    expect(html).toContain('data-field-type="unit-radio"');
+    expect(html).toContain('data-field-name="unit_measurement"');
+    expect(html).toContain('data-field-option="cm"');
+    expect(html).toContain('class="unit-checkbox pdf-field-anchor active"');
+    expect(html).toContain('class="unit-checkbox pdf-field-anchor "');
+    expect(html).toContain('data-field-option="inch"');
+    expect(html).toContain('data-field-value="checked"');
+  });
+
+  test('renders repeated-label comparison page when comparison groups are present', () => {
+    const html = renderReportTemplate(
+      {
+        ...sampleReport,
+        comparisonGroups: [
+          {
+            label: 'J1',
+            items: [
+              { title: 'Front', src: 'data:image/png;base64,AAAA' },
+              { title: 'Side', src: 'data:image/png;base64,BBBB' },
+            ],
+          },
+        ],
+      },
+      { pageSize: 'a4' }
+    );
+    expect(html).toContain('Repeated Label Comparison');
+    expect(html).toContain('Label J1');
+    expect(html).toContain('Repeated labels are isolated here');
+  });
+
+  test('paginates comparison groups across multiple pages when there are more than 2 groups', () => {
+    const groups = Array.from({ length: 5 }, (_, i) => ({
+      label: `J${i + 1}`,
+      items: [
+        { title: 'Front', src: 'data:image/png;base64,AAAA' },
+        { title: 'Side', src: 'data:image/png;base64,BBBB' },
+      ],
+    }));
+    const html = renderReportTemplate(
+      { ...sampleReport, comparisonGroups: groups },
+      { pageSize: 'a4' }
+    );
+    // 5 groups at 2 per page => 3 pages
+    const pageMatches = html.match(/class="page comparison-page"/g);
+    expect(pageMatches).toHaveLength(3);
+    // Each page should carry its own header
+    const headerMatches = html.match(/Repeated Label Comparison/g);
+    expect(headerMatches).toHaveLength(3);
+    // All 5 group labels present
+    expect(html).toContain('Label J1');
+    expect(html).toContain('Label J5');
+  });
+
+  test('uses two-column measurement table for dense measurement lists', () => {
+    const rows = Array.from({ length: 10 }, (_, index) => ({
+      label: `A${index + 1}`,
+      value: `${index + 10} cm`,
+    }));
+    const html = renderReportTemplate(
+      {
+        ...sampleReport,
+        groups: [
+          {
+            ...sampleReport.groups[0],
+            mainMeasurements: rows,
+          },
+        ],
+      },
+      { pageSize: 'a4' }
+    );
+    expect(html).toContain('sheet-main-dense');
+    expect(html).toContain('measure-panel-wide');
+    expect(html).toContain('measurement-grid two-col');
+  });
+
+  test('keeps letter-only measurement labels in the editable table', () => {
+    const html = renderReportTemplate(
+      {
+        ...sampleReport,
+        groups: [
+          {
+            ...sampleReport.groups[0],
+            mainMeasurements: [
+              { label: 'A', value: '' },
+              { label: 'B', value: '12 cm' },
+              { label: 'C', value: '' },
+              { label: 'D', value: 'pending' },
+            ],
+          },
+        ],
+      },
+      { pageSize: 'a4' }
+    );
+    expect(html).toContain('<span class="measurement-code">A</span>');
+    expect(html).toContain('<span class="measurement-code">B</span>');
+    expect(html).toContain('<span class="measurement-code">C</span>');
+    expect(html).toContain('<span class="measurement-code">D</span>');
+    expect(html).not.toContain('No measurements recorded');
   });
 });

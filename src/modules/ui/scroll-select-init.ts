@@ -135,6 +135,7 @@ export function initScrollSelectSystem() {
       (window.__suppressScrollSelectUntil && Date.now() < window.__suppressScrollSelectUntil) ||
       window.__isLoadingProject ||
       window.__deferredImageHydrationInProgress ||
+      window.__imageListReorderInProgress ||
       splitActive ||
       measurementSplitActive ||
       multiviewActive
@@ -439,10 +440,21 @@ export function initScrollSelectSystem() {
 
       // Debounce to avoid rapid switching
       let switchTimeout = null;
+      let scrollSelectionGeneration = 0;
+      window.__cancelPendingScrollSelect = () => {
+        scrollSelectionGeneration += 1;
+        if (switchTimeout) {
+          clearTimeout(switchTimeout);
+          switchTimeout = null;
+        }
+      };
       const debouncedSwitch = (label, reason = 'unknown') => {
         if (!isScrollSelectEnabled()) return;
         if (switchTimeout) clearTimeout(switchTimeout);
+        const requestedGeneration = scrollSelectionGeneration;
         switchTimeout = setTimeout(() => {
+          switchTimeout = null;
+          if (requestedGeneration !== scrollSelectionGeneration) return;
           if (!isScrollSelectEnabled()) return;
           // Skip if this is a programmatic scroll
           if (
@@ -530,6 +542,7 @@ export function initScrollSelectSystem() {
       let scrollEndTimeout = null;
 
       const handleScrollEnd = () => {
+        if (window.__imageListReorderInProgress) return;
         // Skip if this is a programmatic scroll
         if (
           window.__imageListProgrammaticScrollUntil &&
@@ -555,6 +568,7 @@ export function initScrollSelectSystem() {
       imageList.addEventListener(
         'scroll',
         () => {
+          if (window.__imageListReorderInProgress) return;
           // Skip if this is a programmatic scroll
           if (
             window.__imageListProgrammaticScrollUntil &&

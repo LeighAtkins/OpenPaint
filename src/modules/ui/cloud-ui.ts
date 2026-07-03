@@ -223,6 +223,24 @@ let unsubscribe: (() => void) | null = null;
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 let cloudProjectsCache: Array<{ id: string; name: string; updated_at: string }> = [];
 
+const cloudSaveButtonMarkup = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span class="label-long">Cloud Save</span>`;
+
+function getCloudSaveButtons(): HTMLButtonElement[] {
+  return Array.from(
+    document.querySelectorAll<HTMLButtonElement>('[data-cloud-save-trigger], #authCloudSaveBtn')
+  );
+}
+
+function bindCloudSaveTriggers(): void {
+  getCloudSaveButtons().forEach(button => {
+    if (button.dataset.cloudSaveBound === 'true') return;
+    button.dataset.cloudSaveBound = 'true';
+    button.addEventListener('click', () => {
+      void handleCloudSave();
+    });
+  });
+}
+
 function refreshToolbarLayout(): void {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -233,14 +251,15 @@ function refreshToolbarLayout(): void {
 }
 
 function showCloudFeatures(show: boolean): void {
-  if (!cloudToolbarGroup) return;
-  const btns = cloudToolbarGroup.querySelectorAll<HTMLElement>(
-    '.cloud-save-btn, .cloud-projects-btn'
-  );
-  btns.forEach(btn => {
+  getCloudSaveButtons().forEach(btn => {
     btn.style.display = show ? 'inline-flex' : 'none';
   });
-  cloudToolbarGroup.style.display = show ? 'flex' : 'none';
+  if (cloudToolbarGroup) {
+    cloudToolbarGroup.querySelectorAll<HTMLElement>('.cloud-projects-btn').forEach(btn => {
+      btn.style.display = show ? 'inline-flex' : 'none';
+    });
+    cloudToolbarGroup.style.display = show ? 'flex' : 'none';
+  }
   refreshToolbarLayout();
 }
 
@@ -446,11 +465,10 @@ async function handleDeleteProject(projectId: string): Promise<void> {
 }
 
 function resetSaveBtn(): void {
-  const saveBtn = document.getElementById('authCloudSaveBtn') as HTMLButtonElement | null;
-  if (saveBtn) {
+  getCloudSaveButtons().forEach(saveBtn => {
     saveBtn.disabled = false;
-    saveBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span class="label-long">Cloud Save</span>`;
-  }
+    saveBtn.innerHTML = cloudSaveButtonMarkup;
+  });
 }
 
 async function handleCloudSave(): Promise<void> {
@@ -476,14 +494,14 @@ async function handleCloudSave(): Promise<void> {
     return;
   }
 
-  const saveBtn = document.getElementById('authCloudSaveBtn') as HTMLButtonElement | null;
-  if (saveBtn) {
+  getCloudSaveButtons().forEach(saveBtn => {
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving...';
-  }
+  });
 
   try {
     console.warn('[Cloud] Preparing project data for cloud save...');
+    await projectManager.whenIdle?.({ timeoutMs: 5000 });
     const useR2Storage =
       (import.meta.env.VITE_STORAGE_PROVIDER || 'supabase').toLowerCase() === 'r2';
 
@@ -675,12 +693,10 @@ function createCloudToolbarGroup(): HTMLElement {
   cloudSaveBtn.type = 'button';
   cloudSaveBtn.className = 'tbtn cloud-save-btn';
   cloudSaveBtn.id = 'authCloudSaveBtn';
+  cloudSaveBtn.dataset.cloudSaveTrigger = '';
   cloudSaveBtn.title = 'Save to cloud';
   cloudSaveBtn.setAttribute('aria-label', 'Cloud save');
-  cloudSaveBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span class="label-long">Cloud Save</span>`;
-  cloudSaveBtn.addEventListener('click', () => {
-    void handleCloudSave();
-  });
+  cloudSaveBtn.innerHTML = cloudSaveButtonMarkup;
   cloudSaveBtn.style.display = 'none';
 
   const myProjectsBtn = document.createElement('button');
@@ -695,6 +711,7 @@ function createCloudToolbarGroup(): HTMLElement {
 
   group.appendChild(cloudSaveBtn);
   group.appendChild(myProjectsBtn);
+  bindCloudSaveTriggers();
 
   return group;
 }
@@ -706,6 +723,8 @@ function updateCloudUI(user: AuthUser | null): void {
 
 export function initCloudUI(): void {
   if (!isAuthEnabled() || !isSupabaseConfigured()) return;
+
+  bindCloudSaveTriggers();
 
   const style = document.createElement('style');
   style.textContent = CLOUD_UI_STYLES;

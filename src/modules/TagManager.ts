@@ -44,6 +44,9 @@ export class TagManager {
     const baseLabel = imageLabel || window.app?.projectManager?.currentViewId || 'front';
     if (typeof baseLabel !== 'string') return baseLabel;
     if (baseLabel.includes('::tab:')) return baseLabel;
+    if (typeof this.metadataManager?.resolveActiveImageLabel === 'function') {
+      return this.metadataManager.resolveActiveImageLabel(baseLabel);
+    }
     if (typeof this.metadataManager?.normalizeImageLabel === 'function') {
       return this.metadataManager.normalizeImageLabel(baseLabel);
     }
@@ -152,11 +155,20 @@ export class TagManager {
     return scopes.length ? scopes : [base];
   }
 
+  getCurrentTagScopeKey() {
+    return this.normalizeImageLabel(
+      window.currentImageLabel || window.app?.projectManager?.currentViewId || 'front'
+    );
+  }
+
   setTagShape(shape, imageLabel) {
     const next = shape === 'circle' ? 'circle' : 'square';
-    if (this.tagShape === next) return;
+    const currentViewId = this.normalizeImageLabel(imageLabel || this.getCurrentTagScopeKey());
+    const currentShape = this.getResolvedTagStyle('', currentViewId, null).tagShape || 'square';
     this.tagShape = next;
-    this.updateAllTags(imageLabel);
+    this.persistTagScopeStyle(currentViewId, { tagShape: next });
+    if (currentShape === next) return;
+    this.updateAllTags(currentViewId);
   }
 
   // Get next tag from prediction system
@@ -558,6 +570,93 @@ export class TagManager {
     };
   }
 
+  getBaseScopeKey(scopeKey) {
+    const raw = String(scopeKey || '').trim();
+    if (!raw) return '';
+    return raw.includes('::tab:') ? raw.split('::tab:')[0] || raw : raw;
+  }
+
+  getTagStyleScopeCandidates(imageLabel) {
+    const exact = this.normalizeImageLabel(
+      imageLabel || window.currentImageLabel || window.app?.projectManager?.currentViewId || 'front'
+    );
+    const base = this.getBaseScopeKey(exact);
+    return Array.from(new Set([exact, base].filter(Boolean)));
+  }
+
+  normalizeStyleNumber(value, fallback, min, max) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return fallback;
+    return Math.max(min, Math.min(max, parsed));
+  }
+
+  getTagScopeStyle(imageLabel) {
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const map =
+      metadata?.tagStyleByScope && typeof metadata.tagStyleByScope === 'object'
+        ? metadata.tagStyleByScope
+        : {};
+    for (const key of this.getTagStyleScopeCandidates(imageLabel)) {
+      const style = map[key];
+      if (style && typeof style === 'object') return style;
+    }
+    return {};
+  }
+
+  persistTagScopeStyle(imageLabel, patch = {}) {
+    const scopeKey = this.normalizeImageLabel(
+      imageLabel || window.currentImageLabel || window.app?.projectManager?.currentViewId || 'front'
+    );
+    if (!scopeKey) return;
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const currentMap =
+      metadata?.tagStyleByScope && typeof metadata.tagStyleByScope === 'object'
+        ? { ...metadata.tagStyleByScope }
+        : {};
+    currentMap[scopeKey] = {
+      ...(currentMap[scopeKey] || {}),
+      ...patch,
+    };
+    if (window.app?.projectManager?.setProjectMetadata) {
+      window.app.projectManager.setProjectMetadata({ tagStyleByScope: currentMap });
+      return;
+    }
+    window.projectMetadata = {
+      ...(window.projectMetadata || {}),
+      tagStyleByScope: currentMap,
+    };
+  }
+
+  getResolvedTagStyle(strokeLabel, imageLabel, strokeObject) {
+    const scopeStyle = this.getTagScopeStyle(imageLabel);
+    const orientation = this.getStrokeOrientation(strokeObject);
+    const palette = this.getTagPalette(strokeLabel, orientation, imageLabel);
+    const backgroundStyle = String(scopeStyle.backgroundStyle || 'solid');
+    const tagShape = scopeStyle.tagShape === 'circle' ? 'circle' : 'square';
+    const connectorColorMode = scopeStyle.connectorColorMode || 'same-as-line';
+    const connectorDash = Array.isArray(scopeStyle.connectorDash)
+      ? scopeStyle.connectorDash
+      : [5, 4];
+    return {
+      tagSize: this.getTagSizeFromMetadata(imageLabel),
+      tagShape,
+      backgroundStyle,
+      palette: {
+        bg: scopeStyle.fillColor || palette.bg,
+        stroke: scopeStyle.outlineColor || palette.stroke,
+        text: scopeStyle.textColor || palette.text,
+      },
+      outlineWidth: this.normalizeStyleNumber(scopeStyle.outlineWidth, 1.5, 0, 8),
+      connectorWidth: this.normalizeStyleNumber(scopeStyle.connectorWidth, 1.25, 0.25, 12),
+      connectorDash,
+      connectorAvoidsTag: scopeStyle.connectorAvoidsTag !== false,
+      connectorColorMode,
+      connectorColor: scopeStyle.connectorColor || '#ffffff',
+    };
+  }
+
   getStrokeOrientation(strokeObject) {
     if (!strokeObject) return 'horizontal';
 
@@ -633,9 +732,17 @@ export class TagManager {
       });
       return null;
     }
+    const resolvedStyle = this.getResolvedTagStyle(strokeLabel, imageLabel, strokeObject);
+    const tagSize = resolvedStyle.tagSize;
+    const tagShape = resolvedStyle.tagShape || 'square';
+    this.tagSize = tagSize;
 
-    // Remove existing tag if any, but keep style state when rebuilding the tag.
-    this.removeTag(strokeLabel, imageLabel, { preserveStyleState: true });
+    // Snapshot canvases deliberately do not own the primary tag registry. They
+    // render cloned tags only, so never remove the corresponding live-canvas
+    // tag while preparing a multiview pane.
+    if (!isRenderTarget) {
+      this.removeTag(strokeLabel, imageLabel, { preserveStyleState: true });
+    }
 
     // Get tag position in canvas/world coordinates. Avoid viewport-sensitive
     // bounding boxes here; tags are rebuilt during view switches before the
@@ -658,7 +765,7 @@ export class TagManager {
       tagText = new fabric.IText(strokeLabel, {
         left: 0,
         top: 0,
-        fontSize: this.tagSize,
+        fontSize: tagSize,
         fill: '#000000',
         fontFamily: 'Arial',
         textAlign: 'center',
@@ -677,7 +784,7 @@ export class TagManager {
       console.error('TagManager: Error creating text object', e);
       // Fallback to the same centered baseline used by the primary tag text.
       tagText = new fabric.Text(strokeLabel, {
-        fontSize: this.tagSize,
+        fontSize: tagSize,
         textBaseline: 'middle',
       });
     }
@@ -705,8 +812,8 @@ export class TagManager {
     // Create background shape
     // Wait for text to measure properly
     const padding = 4;
-    const textWidth = Math.max(tagText.width || 30, strokeLabel.length * (this.tagSize * 0.6));
-    const textHeight = tagText.height || this.tagSize;
+    const textWidth = Math.max(tagText.width || 30, strokeLabel.length * (tagSize * 0.6));
+    const textHeight = tagText.height || tagSize;
 
     let background;
     let width = textWidth + padding * 2;
@@ -714,44 +821,42 @@ export class TagManager {
 
     // Square mode keeps a rounded-rectangle profile.
     // Circle mode uses full rounding.
-    if (this.tagShape === 'square') {
+    if (tagShape === 'square') {
       width = Math.max(width, height);
     }
 
     let radius;
-    if (this.tagShape === 'circle') {
+    if (tagShape === 'circle') {
       radius = height / 2;
     } else {
       radius = 4;
     }
 
     // Determine background style properties
-    const orientation = this.getStrokeOrientation(strokeObject);
-    const palette = this.getTagPalette(strokeLabel, orientation, imageLabel);
-    let bgFill = palette.bg;
-    let bgStroke = palette.stroke;
-    let bgStrokeWidth = 2;
-    let textFill = palette.text;
+    let bgFill = resolvedStyle.palette.bg;
+    let bgStroke = resolvedStyle.palette.stroke;
+    let bgStrokeWidth = resolvedStyle.outlineWidth;
+    let textFill = resolvedStyle.palette.text;
 
-    if (this.tagBackgroundStyle === 'no-fill') {
+    if (resolvedStyle.backgroundStyle === 'no-fill') {
       bgFill = 'transparent';
       bgStroke = 'transparent';
       bgStrokeWidth = 0;
       textFill = this.strokeColor || '#3b82f6';
-    } else if (this.tagBackgroundStyle === 'clear-black') {
+    } else if (resolvedStyle.backgroundStyle === 'clear-black') {
       bgFill = 'transparent';
       bgStroke = '#000000';
-      bgStrokeWidth = 2;
+      bgStrokeWidth = resolvedStyle.outlineWidth;
       textFill = '#000000';
-    } else if (this.tagBackgroundStyle === 'clear-color') {
+    } else if (resolvedStyle.backgroundStyle === 'clear-color') {
       bgFill = 'transparent';
       bgStroke = this.strokeColor || '#3b82f6';
-      bgStrokeWidth = 2;
+      bgStrokeWidth = resolvedStyle.outlineWidth;
       textFill = this.strokeColor || '#3b82f6';
-    } else if (this.tagBackgroundStyle === 'clear-white') {
+    } else if (resolvedStyle.backgroundStyle === 'clear-white') {
       bgFill = 'transparent';
       bgStroke = '#ffffff';
-      bgStrokeWidth = 2;
+      bgStrokeWidth = resolvedStyle.outlineWidth;
       textFill = '#ffffff';
     }
     // 'solid' style uses defaults
@@ -808,6 +913,7 @@ export class TagManager {
       scopedLabel: scopedLabel, // Full scope including tab (e.g., "cushion::tab:abc123")
       connectedStroke: strokeObject,
       tagOffset: { x: initialOffset.x, y: initialOffset.y }, // Default offset
+      resolvedTagStyle: resolvedStyle,
     });
 
     if (strokeObject) {
@@ -898,7 +1004,9 @@ export class TagManager {
     }
 
     // Update tag text to include measurement if showMeasurements is enabled
-    this.updateTagText(strokeLabel, scopedImageLabel);
+    // Snapshot canvases intentionally do not register temporary tags in the live
+    // tag map. Update the group we just created directly in that case.
+    this.updateTagText(strokeLabel, scopedImageLabel, tagGroup);
 
     // Register global click handler for tags (fallback if object events don't fire)
     // This ensures clicks work even when drawing tools are active
@@ -1098,17 +1206,24 @@ export class TagManager {
     return PathUtils.calculateDistance(p1, p2);
   }
 
-  getConnectorStrokeColor(strokeObj) {
-    if (this.connectorMatchesLine) {
+  getConnectorStrokeColor(strokeObj, tagObj = null) {
+    const style =
+      tagObj?.resolvedTagStyle ||
+      this.getResolvedTagStyle(
+        tagObj?.strokeLabel,
+        tagObj?.scopedLabel || tagObj?.imageLabel,
+        strokeObj
+      );
+    if (style.connectorColorMode === 'same-as-line') {
       const derivedLineColor = this.getStrokeColorFromObject(strokeObj);
       if (derivedLineColor) return derivedLineColor;
       return (
         String(
-          strokeObj?.stroke || strokeObj?.fill || this.strokeColor || this.connectorColor
+          strokeObj?.stroke || strokeObj?.fill || this.strokeColor || style.connectorColor
         ).trim() || '#3b82f6'
       );
     }
-    return String(this.connectorColor || '#ffffff').trim() || '#ffffff';
+    return String(style.connectorColor || '#ffffff').trim() || '#ffffff';
   }
 
   getStrokeColorFromObject(strokeObj) {
@@ -1137,7 +1252,10 @@ export class TagManager {
 
   // Create a manipulatable connector line
   createConnectorObject(x1, y1, x2, y2, tagObj, strokeObj, strokeLabel) {
-    const strokeWidth = 2;
+    const resolvedStyle =
+      tagObj?.resolvedTagStyle ||
+      this.getResolvedTagStyle(strokeLabel, tagObj?.scopedLabel || tagObj?.imageLabel, strokeObj);
+    const strokeWidth = resolvedStyle.connectorWidth;
     const snap = (value: number) => Math.round(value || 0);
     const scopedLabel =
       tagObj?.scopedLabel ||
@@ -1154,9 +1272,9 @@ export class TagManager {
       y1: snap(y1),
       x2: snap(x2),
       y2: snap(y2),
-      stroke: this.getConnectorStrokeColor(strokeObj),
+      stroke: this.getConnectorStrokeColor(strokeObj, tagObj),
       strokeWidth,
-      strokeDashArray: [6, 4],
+      strokeDashArray: resolvedStyle.connectorDash,
       opacity: 1,
       objectCaching: false,
       strokeLineCap: 'butt',
@@ -1187,10 +1305,11 @@ export class TagManager {
 
     // Get closest stroke endpoint
     const strokeEndpoint = this.getClosestStrokeEndpoint(strokeObj, tagCenter);
+    const tagAnchor = this.getTagConnectorAnchor(tagObj, strokeEndpoint);
 
     const connector = this.createConnectorObject(
-      tagCenter.x,
-      tagCenter.y,
+      tagAnchor.x,
+      tagAnchor.y,
       strokeEndpoint.x,
       strokeEndpoint.y,
       tagObj,
@@ -1199,6 +1318,38 @@ export class TagManager {
     );
 
     return connector;
+  }
+
+  getTagConnectorAnchor(tagObj, targetPoint) {
+    const center = this.getCanvasObjectCenter(tagObj);
+    if (!center || !targetPoint) return center || { x: 0, y: 0 };
+    const style = tagObj?.resolvedTagStyle || {};
+    if (style.connectorAvoidsTag === false) return center;
+
+    try {
+      const bounds =
+        typeof tagObj.getBoundingRect === 'function' ? tagObj.getBoundingRect(true, true) : null;
+      if (!bounds || !Number.isFinite(bounds.width) || !Number.isFinite(bounds.height)) {
+        return center;
+      }
+      const halfW = Math.max(1, bounds.width / 2 + 1);
+      const halfH = Math.max(1, bounds.height / 2 + 1);
+      const dx = targetPoint.x - center.x;
+      const dy = targetPoint.y - center.y;
+      if (!dx && !dy) return center;
+      const scale = Math.min(
+        1,
+        Math.abs(dx) > 0 ? halfW / Math.abs(dx) : Number.POSITIVE_INFINITY,
+        Math.abs(dy) > 0 ? halfH / Math.abs(dy) : Number.POSITIVE_INFINITY
+      );
+      if (!Number.isFinite(scale)) return center;
+      return {
+        x: center.x + dx * scale,
+        y: center.y + dy * scale,
+      };
+    } catch {
+      return center;
+    }
   }
 
   // Update connector line between tag and stroke
@@ -1229,6 +1380,15 @@ export class TagManager {
     }
 
     if (!connectedStrokeObj) return;
+
+    const scopedImageLabel =
+      tagObj.scopedLabel ||
+      this.normalizeImageLabel(imageLabel || tagObj.imageLabel || window.currentImageLabel);
+    tagObj.resolvedTagStyle = this.getResolvedTagStyle(
+      displayLabel,
+      scopedImageLabel,
+      connectedStrokeObj
+    );
 
     // Only move the tag when the connected stroke itself moved. Measurement edits,
     // tag drags, and style refreshes should only redraw the connector line.
@@ -1264,6 +1424,7 @@ export class TagManager {
 
     // Get closest stroke endpoint
     const strokeEndpoint = this.getClosestStrokeEndpoint(connectedStrokeObj, tagCenter);
+    const tagAnchor = this.getTagConnectorAnchor(tagObj, strokeEndpoint);
 
     // console.log(`[ConnectorDebug] ${strokeLabel} Tag: (${tagCenter.x.toFixed(0)}, ${tagCenter.y.toFixed(0)}) Stroke: (${strokeEndpoint.x.toFixed(0)}, ${strokeEndpoint.y.toFixed(0)})`);
 
@@ -1279,8 +1440,8 @@ export class TagManager {
 
       // Create new connector with updated endpoints
       connector = this.createConnectorObject(
-        tagCenter.x,
-        tagCenter.y,
+        tagAnchor.x,
+        tagAnchor.y,
         strokeEndpoint.x,
         strokeEndpoint.y,
         tagObj,
@@ -1453,9 +1614,11 @@ export class TagManager {
   }
 
   // Update tag text when measurement changes
-  updateTagText(strokeLabel, imageLabel) {
-    const found = this.getTagObject(strokeLabel, imageLabel);
-    if (!found) {
+  updateTagText(strokeLabel, imageLabel, tagOverride = null) {
+    const found = tagOverride
+      ? { tagObj: tagOverride }
+      : this.getTagObject(strokeLabel, imageLabel);
+    if (!found?.tagObj) {
       console.warn(`[TagManager] No tag found for ${strokeLabel}`);
       return;
     }
@@ -1498,10 +1661,18 @@ export class TagManager {
       const textHeight = textObj.height || this.tagSize;
       let width = textWidth + padding * 2;
       const height = textHeight + padding * 2;
-      if (this.tagShape === 'square') width = Math.max(width, height);
+      const resolvedStyle =
+        tagObj?.resolvedTagStyle ||
+        this.getResolvedTagStyle(
+          tagObj?.strokeLabel,
+          tagObj?.scopedLabel || tagObj?.imageLabel,
+          null
+        );
+      const tagShape = resolvedStyle.tagShape || 'square';
+      if (tagShape === 'square') width = Math.max(width, height);
 
       let radius;
-      if (this.tagShape === 'circle') {
+      if (tagShape === 'circle') {
         radius = height / 2;
       } else {
         radius = 4;
@@ -1570,9 +1741,8 @@ export class TagManager {
     const canvas = this.canvas;
     if (!canvas) return;
 
-    const currentViewId = this.normalizeImageLabel(
-      window.app?.projectManager?.currentViewId || 'front'
-    );
+    const currentViewId = this.getCurrentTagScopeKey();
+    const requestedSize = this.tagSize;
     const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
 
     Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
@@ -1587,22 +1757,33 @@ export class TagManager {
 
         if (textObj && bgObj) {
           // Update font size
-          textObj.set('fontSize', this.tagSize);
+          textObj.set('fontSize', requestedSize);
 
           // Recalculate text dimensions (Fabric.js needs a render cycle to measure text)
           setTimeout(() => {
+            if (!canvas.contains?.(tagObj) || this.getTagScopeLabel(tagObj) !== currentViewId) {
+              return;
+            }
             const padding = 4;
             const textWidth = Math.max(
               textObj.width || 30,
-              textObj.text.length * (this.tagSize * 0.6)
+              textObj.text.length * (requestedSize * 0.6)
             );
-            const textHeight = textObj.height || this.tagSize;
+            const textHeight = textObj.height || requestedSize;
             let width = textWidth + padding * 2;
             const height = textHeight + padding * 2;
-            if (this.tagShape === 'square') width = Math.max(width, height);
+            const resolvedStyle =
+              tagObj?.resolvedTagStyle ||
+              this.getResolvedTagStyle(
+                tagObj?.strokeLabel,
+                tagObj?.scopedLabel || tagObj?.imageLabel,
+                strokeObj
+              );
+            const tagShape = resolvedStyle.tagShape || 'square';
+            if (tagShape === 'square') width = Math.max(width, height);
 
             let radius;
-            if (this.tagShape === 'circle') {
+            if (tagShape === 'circle') {
               radius = height / 2;
             } else {
               radius = 4;
@@ -1628,10 +1809,10 @@ export class TagManager {
     // Update UI display
     const currentTagSizeEl = document.getElementById('currentTagSize');
     if (currentTagSizeEl) {
-      currentTagSizeEl.textContent = this.tagSize;
+      currentTagSizeEl.textContent = requestedSize;
     }
 
-    this.persistTagSizeToMetadata(this.tagSize, currentViewId);
+    this.persistTagSizeToMetadata(requestedSize, currentViewId);
 
     canvas.renderAll();
   }
@@ -1643,11 +1824,9 @@ export class TagManager {
   }
 
   getTagSizeScopeKey(imageLabel) {
-    const currentViewId = window.app?.projectManager?.currentViewId || 'front';
+    const currentViewId =
+      window.currentImageLabel || window.app?.projectManager?.currentViewId || 'front';
     const normalized = this.normalizeImageLabel(imageLabel || currentViewId || 'front');
-    if (typeof normalized === 'string' && normalized.includes('::')) {
-      return normalized.split('::')[0] || normalized;
-    }
     return normalized || 'front';
   }
 
@@ -1659,15 +1838,33 @@ export class TagManager {
       metadata?.tagSizeByView && typeof metadata.tagSizeByView === 'object'
         ? metadata.tagSizeByView
         : {};
+    const exactSize = scopedMap?.[scopedKey];
+    if (Number.isFinite(Number(exactSize))) {
+      return this.normalizeTagSize(exactSize);
+    }
+    const baseKey = this.getBaseScopeKey(scopedKey);
+    const baseSize = baseKey && baseKey !== scopedKey ? scopedMap?.[baseKey] : null;
+    if (Number.isFinite(Number(baseSize))) {
+      return this.normalizeTagSize(baseSize);
+    }
     const scopedSize = scopedMap?.[scopedKey];
     if (Number.isFinite(Number(scopedSize))) {
       return this.normalizeTagSize(scopedSize);
     }
-    return this.normalizeTagSize(metadata?.tagSize ?? this.tagSize);
+    return this.normalizeTagSize(metadata?.tagSize ?? 20);
   }
 
   syncTagSizeFromMetadata(imageLabel) {
     this.tagSize = this.getTagSizeFromMetadata(imageLabel);
+    const scopeStyle = this.getTagScopeStyle(imageLabel);
+    this.tagShape = scopeStyle.tagShape === 'circle' ? 'circle' : 'square';
+    this.tagBackgroundStyle =
+      typeof scopeStyle.backgroundStyle === 'string' ? scopeStyle.backgroundStyle : 'solid';
+    this.connectorMatchesLine = (scopeStyle.connectorColorMode || 'same-as-line') !== 'custom';
+    this.connectorColor =
+      typeof scopeStyle.connectorColor === 'string' && scopeStyle.connectorColor.trim()
+        ? scopeStyle.connectorColor.trim()
+        : '#ffffff';
     const currentTagSizeEl = document.getElementById('currentTagSize');
     if (currentTagSizeEl) {
       currentTagSizeEl.textContent = this.tagSize;
@@ -1686,17 +1883,16 @@ export class TagManager {
     if (scopedKey) {
       scopedMap[scopedKey] = normalized;
     }
+    this.persistTagScopeStyle(imageLabel, { tagSize: normalized });
 
     if (window.app?.projectManager?.setProjectMetadata) {
       window.app.projectManager.setProjectMetadata({
-        tagSize: normalized,
         tagSizeByView: scopedMap,
       });
       return;
     }
     window.projectMetadata = {
       ...(window.projectMetadata || {}),
-      tagSize: normalized,
       tagSizeByView: scopedMap,
     };
   }
@@ -1705,9 +1901,8 @@ export class TagManager {
   setBackgroundStyle(style) {
     this.tagBackgroundStyle = style; // 'solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'
 
-    const currentViewId = this.normalizeImageLabel(
-      window.app?.projectManager?.currentViewId || 'front'
-    );
+    const currentViewId = this.getCurrentTagScopeKey();
+    this.persistTagScopeStyle(currentViewId, { backgroundStyle: style, connectorAvoidsTag: true });
     const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
 
     Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
@@ -1730,9 +1925,7 @@ export class TagManager {
 
     // If using clear-color style, update all tags
     if (this.tagBackgroundStyle === 'clear-color') {
-      const currentViewId = this.normalizeImageLabel(
-        window.app?.projectManager?.currentViewId || 'front'
-      );
+      const currentViewId = this.getCurrentTagScopeKey();
       const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
 
       Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
@@ -1873,7 +2066,22 @@ export class TagManager {
   setConnectorColor(color) {
     if (!color) return;
     this.connectorColor = String(color).trim().toLowerCase();
+    const currentViewId = this.getCurrentTagScopeKey();
+    this.persistTagScopeStyle(currentViewId, {
+      connectorColor: this.connectorColor,
+      connectorColorMode: this.connectorMatchesLine ? 'same-as-line' : 'custom',
+    });
     this.refreshAllConnectors();
+  }
+
+  setConnectorMatchesLine(matches) {
+    this.connectorMatchesLine = matches !== false;
+    const currentViewId = this.getCurrentTagScopeKey();
+    this.persistTagScopeStyle(currentViewId, {
+      connectorColorMode: this.connectorMatchesLine ? 'same-as-line' : 'custom',
+      connectorColor: this.connectorColor,
+    });
+    this.refreshAllConnectors(currentViewId);
   }
 
   normalizeThemeColor(value) {

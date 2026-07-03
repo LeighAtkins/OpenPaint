@@ -62,6 +62,69 @@ function normalizeTagStyleConfig(input) {
   };
 }
 
+function normalizeTagScopeStyle(input) {
+  if (!input || typeof input !== 'object') return null;
+  const style = {};
+  const numberFields = {
+    tagSize: [8, 72],
+    outlineWidth: [0, 8],
+    connectorWidth: [0.25, 12],
+  };
+  Object.entries(numberFields).forEach(([field, [min, max]]) => {
+    const parsed = Number(input[field]);
+    if (Number.isFinite(parsed)) {
+      style[field] = Math.max(min, Math.min(max, parsed));
+    }
+  });
+
+  if (typeof input.backgroundStyle === 'string') {
+    const value = input.backgroundStyle.trim();
+    if (['solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'].includes(value)) {
+      style.backgroundStyle = value;
+    }
+  }
+  if (typeof input.tagShape === 'string') {
+    const value = input.tagShape.trim();
+    if (['square', 'circle'].includes(value)) {
+      style.tagShape = value;
+    }
+  }
+  if (typeof input.connectorColorMode === 'string') {
+    const value = input.connectorColorMode.trim();
+    if (['same-as-line', 'custom'].includes(value)) {
+      style.connectorColorMode = value;
+    }
+  }
+  ['connectorColor', 'fillColor', 'outlineColor', 'textColor'].forEach(field => {
+    if (typeof input[field] === 'string' && input[field].trim()) {
+      style[field] = input[field].trim();
+    }
+  });
+  if (Array.isArray(input.connectorDash)) {
+    const dash = input.connectorDash
+      .map(value => Number(value))
+      .filter(value => Number.isFinite(value) && value >= 0)
+      .slice(0, 4);
+    if (dash.length) style.connectorDash = dash;
+  }
+  if (typeof input.connectorAvoidsTag === 'boolean') {
+    style.connectorAvoidsTag = input.connectorAvoidsTag;
+  }
+  return Object.keys(style).length ? style : null;
+}
+
+function normalizeTagStyleByScope(input) {
+  if (!input || typeof input !== 'object') return {};
+  return Object.entries(input).reduce((acc, [scopeKey, value]) => {
+    const normalizedKey = String(scopeKey || '').trim();
+    const normalizedStyle = normalizeTagScopeStyle(value);
+    if (normalizedKey && normalizedStyle) {
+      acc[normalizedKey] = normalizedStyle;
+    }
+    return acc;
+  }, {});
+}
+
 export function createDefaultSofaMetadata() {
   return {
     version: 1,
@@ -90,10 +153,12 @@ export function createDefaultSofaMetadata() {
     measurementGuideModelSelections: [],
     measurementGuideModelLinksByImage: {},
     measurementGuideModelLinksByScope: {},
+    measurementGuideLabelsByImage: {},
     tagSize: 20,
     tagSizeByView: {},
     tagColorTheme: null,
     tagStyleConfig: createDefaultTagStyleConfig(),
+    tagStyleByScope: {},
     pieceGroups: [],
     imagePartLabels: {},
     photos: [],
@@ -212,6 +277,14 @@ export function normalizeSofaMetadata(input) {
             selectionId,
           ])
         );
+  const measurementGuideLabelsByImage =
+    source.measurementGuideLabelsByImage && typeof source.measurementGuideLabelsByImage === 'object'
+      ? Object.fromEntries(
+          Object.entries(source.measurementGuideLabelsByImage)
+            .map(([imageId, label]) => [String(imageId || '').trim(), String(label || '').trim()])
+            .filter(([imageId, label]) => imageId && label)
+        )
+      : {};
   const tagSizeRaw = Number(source.tagSize);
   const tagSize = Number.isFinite(tagSizeRaw)
     ? Math.max(8, Math.min(72, Math.round(tagSizeRaw)))
@@ -247,6 +320,7 @@ export function normalizeSofaMetadata(input) {
             highlightedTagKeys: [],
           }
         : safeClone(defaults.tagStyleConfig, createDefaultTagStyleConfig());
+  const tagStyleByScope = normalizeTagStyleByScope(source.tagStyleByScope);
   const pieceGroups = Array.isArray(source.pieceGroups) ? safeClone(source.pieceGroups, []) : [];
   const photos = Array.isArray(source.photos) ? safeClone(source.photos, []) : [];
   const imagePartLabels =
@@ -287,10 +361,12 @@ export function normalizeSofaMetadata(input) {
     measurementGuideModelSelections,
     measurementGuideModelLinksByImage,
     measurementGuideModelLinksByScope,
+    measurementGuideLabelsByImage,
     tagSize,
     tagSizeByView,
     tagColorTheme,
     tagStyleConfig,
+    tagStyleByScope,
     pieceGroups,
     imagePartLabels,
     naming,

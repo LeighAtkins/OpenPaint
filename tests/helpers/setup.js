@@ -1,5 +1,48 @@
 import { vi } from 'vitest';
 
+// Node 24 may expose an undefined experimental storage global unless it was
+// started with --localstorage-file. Keep tests independent of that process flag.
+const storageValues = new Map();
+const memoryStorage = {
+  get length() {
+    return storageValues.size;
+  },
+  clear() {
+    storageValues.clear();
+    Object.keys(memoryStorage).forEach(key => {
+      if (!['clear', 'getItem', 'key', 'removeItem', 'setItem'].includes(key)) {
+        delete memoryStorage[key];
+      }
+    });
+  },
+  getItem(key) {
+    const normalizedKey = String(key);
+    return storageValues.has(normalizedKey) ? storageValues.get(normalizedKey) : null;
+  },
+  key(index) {
+    return Array.from(storageValues.keys())[index] ?? null;
+  },
+  removeItem(key) {
+    const normalizedKey = String(key);
+    storageValues.delete(normalizedKey);
+    delete memoryStorage[normalizedKey];
+  },
+  setItem(key, value) {
+    const normalizedKey = String(key);
+    const normalizedValue = String(value);
+    storageValues.set(normalizedKey, normalizedValue);
+    memoryStorage[normalizedKey] = normalizedValue;
+  },
+};
+Object.defineProperty(globalThis, 'localStorage', {
+  configurable: true,
+  value: memoryStorage,
+});
+Object.defineProperty(globalThis, 'sessionStorage', {
+  configurable: true,
+  value: memoryStorage,
+});
+
 // Mock canvas getContext to return a stub 2d context
 const mockContext = {
   clearRect: vi.fn(),

@@ -82,8 +82,8 @@ function renderUnitToggle(unit) {
         <span class="unit-pill ${normalized === 'cm' ? 'active' : ''}">
           <span>cm</span>
           <span
-            class="unit-checkbox pdf-field-anchor"
-            data-field-type="radio"
+            class="unit-checkbox pdf-field-anchor ${normalized === 'cm' ? 'active' : ''}"
+            data-field-type="unit-radio"
             data-field-name="unit_measurement"
             data-field-option="cm"
             data-field-value="${normalized === 'cm' ? 'checked' : ''}"
@@ -93,8 +93,8 @@ function renderUnitToggle(unit) {
         <span class="unit-pill ${normalized === 'inch' ? 'active' : ''}">
           <span>inch</span>
           <span
-            class="unit-checkbox pdf-field-anchor"
-            data-field-type="radio"
+            class="unit-checkbox pdf-field-anchor ${normalized === 'inch' ? 'active' : ''}"
+            data-field-type="unit-radio"
             data-field-name="unit_measurement"
             data-field-option="inch"
             data-field-value="${normalized === 'inch' ? 'checked' : ''}"
@@ -128,14 +128,12 @@ function renderMeasurementRows(rows, fieldPrefix, groupIndex) {
     .join('');
 }
 
-// Filter out measurements that are letters-only (no numeric content in label or value)
 function filterMeaningfulMeasurements(rows) {
   if (!Array.isArray(rows)) return [];
   return rows.filter(row => {
     const label = String(row?.label || '');
     const value = String(row?.value || '');
-    // Keep if the value has any digit, or if the label has a digit
-    return /\d/.test(value) || /\d/.test(label);
+    return label.trim() || value.trim();
   });
 }
 
@@ -150,21 +148,17 @@ function renderMeasurementsTable(rows, groupIndex) {
     `;
   }
 
-  // Split into two side-by-side columns if there are more than 12 rows
-  const useTwoColumns = filtered.length > 12;
-  const halfCount = Math.ceil(filtered.length / 2);
-  const col1 = useTwoColumns ? filtered.slice(0, halfCount) : filtered;
-  const col2 = useTwoColumns ? filtered.slice(halfCount) : [];
+  // Split before the table gets tall enough to collide with the page footer.
+  const useTwoColumns = filtered.length > 6;
 
+  // Flat 2-column grid: items flow left-to-right, top-to-bottom. With an odd
+  // count the last row's right cell is simply absent (no phantom border).
   const tableHtml = useTwoColumns
-    ? `<div class="measurement-grid two-col">
-        <div class="measurement-col">${renderMeasurementRows(col1, 'main', groupIndex)}</div>
-        <div class="measurement-col">${renderMeasurementRows(col2, 'main2', groupIndex)}</div>
-      </div>`
-    : `<div class="measurement-grid">${renderMeasurementRows(col1, 'main', groupIndex)}</div>`;
+    ? `<div class="measurement-grid two-col">${renderMeasurementRows(filtered, 'main', groupIndex)}</div>`
+    : `<div class="measurement-grid">${renderMeasurementRows(filtered, 'main', groupIndex)}</div>`;
 
   return `
-    <aside class="measure-panel">
+    <aside class="measure-panel ${useTwoColumns ? 'measure-panel-wide' : ''}">
       <div class="form-heading">Measurements:</div>
       ${tableHtml}
     </aside>
@@ -274,44 +268,55 @@ function renderComparisonPages(report, startIndex) {
   const groups = (report.comparisonGroups || []).filter(group => group?.items?.length >= 2);
   if (!groups.length) return '';
 
-  return `
-    <section class="page comparison-page" data-page-index="${startIndex}">
-      ${renderPageHeader(report, startIndex + 1, 'Repeated Label Comparison')}
-      ${renderUnitToggle(report.unit)}
+  // Render at most 2 groups per page so content stays within the page height.
+  // Each group contains title + an image grid (~68mm for 2 items, ~52mm for 3–4).
+  const GROUPS_PER_PAGE = 2;
+  const result = [];
+  for (let pageOffset = 0; pageOffset < groups.length; pageOffset += GROUPS_PER_PAGE) {
+    const pageGroups = groups.slice(pageOffset, pageOffset + GROUPS_PER_PAGE);
+    const pageIndex = startIndex + result.length;
+    const pageNumber = startIndex + result.length + 1;
 
-      <div class="comparison-note">
-        Repeated labels are isolated here for side-by-side checking. Other measurement marks are hidden in these captures only.
-      </div>
+    result.push(`
+      <section class="page comparison-page" data-page-index="${pageIndex}">
+        ${renderPageHeader(report, pageNumber, 'Repeated Label Comparison')}
+        ${renderUnitToggle(report.unit)}
 
-      <div class="comparison-stack">
-        ${groups
-          .map(
-            group => `
-              <section class="comparison-group">
-                <h2 class="comparison-title">Label ${escapeHtml(group.label)}</h2>
-                <div class="comparison-grid item-count-${group.items.length}">
-                  ${group.items
-                    .map(
-                      item => `
-                        <figure class="comparison-card">
-                          <img src="${escapeHtml(item.src)}" alt="${escapeHtml(
-                            `${group.label} - ${item.title || 'comparison frame'}`
-                          )}" />
-                          <figcaption>${escapeHtml(item.title || '')}</figcaption>
-                        </figure>
-                      `
-                    )
-                    .join('')}
-                </div>
-              </section>
-            `
-          )
-          .join('')}
-      </div>
+        <div class="comparison-note">
+          Repeated labels are isolated here for side-by-side checking. Other measurement marks are hidden in these captures only.
+        </div>
 
-      ${renderPageFooter(startIndex + 1)}
-    </section>
-  `;
+        <div class="comparison-stack">
+          ${pageGroups
+            .map(
+              group => `
+                <section class="comparison-group">
+                  <h2 class="comparison-title">Label ${escapeHtml(group.label)}</h2>
+                  <div class="comparison-grid item-count-${group.items.length}">
+                    ${group.items
+                      .map(
+                        item => `
+                          <figure class="comparison-card">
+                            <img src="${escapeHtml(item.src)}" alt="${escapeHtml(
+                              `${group.label} - ${item.title || 'comparison frame'}`
+                            )}" />
+                            <figcaption>${escapeHtml(item.title || '')}</figcaption>
+                          </figure>
+                        `
+                      )
+                      .join('')}
+                  </div>
+                </section>
+              `
+            )
+            .join('')}
+        </div>
+
+        ${renderPageFooter(pageNumber)}
+      </section>
+    `);
+  }
+  return result.join('');
 }
 
 export function renderReportTemplate(report, options = {}) {
@@ -325,13 +330,21 @@ export function renderReportTemplate(report, options = {}) {
   const groupPages = groups
     .map((group, index) => {
       const subtitle = [group.title, group.subtitle].filter(Boolean).join(' - ');
+      const measurementCount = filterMeaningfulMeasurements(group.mainMeasurements || []).length;
+      const sheetMainClass = [
+        'sheet-main',
+        'avoid-break',
+        measurementCount > 6 ? 'sheet-main-dense' : '',
+      ]
+        .filter(Boolean)
+        .join(' ');
       return `
       <section class="page" data-page-index="${index}">
         ${renderPageHeader(report, index + 1, subtitle)}
 
         ${renderUnitToggle(report.unit)}
 
-        <div class="sheet-main avoid-break">
+        <div class="${sheetMainClass}">
           <figure class="figure-panel">
             <div class="section-kicker">Main Piece</div>
             <img class="hero-image" src="${escapeHtml(group.mainImage.src)}" alt="${escapeHtml(

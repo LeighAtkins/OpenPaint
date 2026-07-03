@@ -17,6 +17,14 @@
       return;
     }
 
+    // Never toggle compact class during multiview — the CSS handles label
+    // visibility with !important rules, and layout shifts during multiview
+    // can cause the overflow detection to misclassify the container width.
+    if (document.body.classList.contains('multiview-active')) {
+      container.classList.remove('compact');
+      return;
+    }
+
     // Check if we're on desktop - never add compact class on desktop
     const isMobile = window.innerWidth <= 768;
 

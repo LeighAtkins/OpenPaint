@@ -15,6 +15,7 @@ import { sanitizeFilenamePart } from './utils/naming-utils.js';
 import { normalizeCloudError } from './cloud/error-normalizer.js';
 import { CLOUD_COPY } from './cloud/messages.js';
 import { decideFinalSaveMessageKey, formatSaveOutcomeLines } from './cloud/result-factory.js';
+import { fitViewportToWorldRect, getCenteredBoxWorldRect } from './utils/viewportRestore.ts';
 import JSZip from 'jszip';
 
 export class ProjectManager {
@@ -29,6 +30,12 @@ export class ProjectManager {
     this.pendingSwitchViewId = null;
     this.loadedProjectObjectUrls = [];
     this.remoteImageObjectUrlCache = new Map();
+    this.remoteImageObjectKeyByUrl = new Map();
+    this.backgroundLoadGenerationByCanvas = new WeakMap();
+    // Original upload files are the most reliable cloud-save source. Blob URLs
+    // are document-scoped and Safari can no longer fetch them after a gallery
+    // or image element has released the underlying resource.
+    this.viewImageFiles = new Map();
     this.projectLoadOverlayEl = null;
     this.activeArchiveZip = null;
     this.projectMetadata = createDefaultSofaMetadata();
@@ -90,6 +97,20 @@ export class ProjectManager {
         viewport: null,
       },
     };
+  }
+
+  getR2ObjectKeyForViewData(viewData) {
+    if (!viewData || typeof viewData !== 'object') return null;
+    const candidates = [
+      viewData.imageUrl,
+      viewData.imageAssetPath,
+      viewData.canvasJSON?.backgroundImage?.src,
+    ];
+    for (const candidate of candidates) {
+      const key = this.extractR2ObjectKeyFromUrl(candidate);
+      if (key) return key;
+    }
+    return null;
   }
 
   init() {
@@ -166,7 +187,10 @@ export class ProjectManager {
     const previousCanvasManager = this.canvasManager;
     this.canvasManager = canvasManager;
     try {
-      this.restoreViewportForView(viewId);
+      // Comparison and guide canvases have their own dimensions. Their view is
+      // intentionally fitted to the pane instead of replaying the main canvas's
+      // pixel-exact viewport transform.
+      this.restoreViewportForView(viewId, { useExactTransform: false });
     } finally {
       this.canvasManager = previousCanvasManager;
     }
@@ -265,7 +289,10 @@ export class ProjectManager {
 
     if (window.app?.tagManager && window.app?.metadataManager) {
       window.app.tagManager.clearAllTags?.();
-      const activeScope = window.app.metadataManager.normalizeImageLabel?.(viewId) || viewId;
+      const activeScope =
+        window.getCaptureTabScopedLabel?.(viewId) ||
+        window.app.metadataManager.resolveActiveImageLabel?.(viewId) ||
+        viewId;
       const strokes = window.app.metadataManager.vectorStrokesByImage[activeScope] || {};
       const labelVisibility = window.app.metadataManager.strokeLabelVisibility[activeScope] || {};
       Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
@@ -321,6 +348,16 @@ export class ProjectManager {
         return;
       }
 
+      // During archive/cloud hydration the canvas still holds whichever view was
+      // visible before the project was opened. `loadFromJSON()` replaces it with
+      // already scope-filtered saved data, so removing "out-of-scope" live
+      // objects here can delete transitional objects and flood the console.
+      const shouldCleanLiveScope =
+        !this.isLoadingProject &&
+        !window.__isLoadingProject &&
+        !this.isHydratingDeferredViews &&
+        !window.__deferredImageHydrationInProgress;
+
       // During project hydration the archive data is authoritative. Avoid pulling stale sidebar
       // DOM state back into the freshly restored view map before the load completes.
       if (
@@ -336,7 +373,17 @@ export class ProjectManager {
       if (this.currentViewId === viewId && !force) {
         console.log(`Already on view: ${viewId}, refreshing image only`);
         const view = this.views[viewId];
-        if (view.image) {
+        const backgroundImage = this.canvasManager?.fabricCanvas?.backgroundImage;
+        const currentImageSource = String(
+          backgroundImage?.getSrc?.() ||
+            backgroundImage?._element?.currentSrc ||
+            backgroundImage?._element?.src ||
+            backgroundImage?.src ||
+            ''
+        ).trim();
+        // Gallery/scroll synchronisation can ask for the current view again.
+        // Recreating the background here resets a correctly restored zoom.
+        if (view.image && (!backgroundImage || currentImageSource !== view.image)) {
           await this.setBackgroundImage(view.image);
         }
         if (typeof view.rotation === 'number') {
@@ -363,6 +410,7 @@ export class ProjectManager {
         if (window.applyCaptureFrameForLabel) {
           window.applyCaptureFrameForLabel(viewId);
         }
+        this.restoreViewportForView(viewId);
         if (window.renderCaptureTabUI) {
           window.renderCaptureTabUI(viewId);
         }
@@ -387,6 +435,16 @@ export class ProjectManager {
       }
 
       console.log(`Switching to view: ${viewId}`);
+
+      // Fabric's loadFromJSON clears the lower canvas before the target image
+      // and objects are ready. Keep the last fully rendered frame above it so
+      // users never see that destructive intermediate paint.
+      const liveCanvas = this.canvasManager?.fabricCanvas;
+      const liveCanvasWidth = Number(liveCanvas?.width) || 0;
+      const liveCanvasHeight = Number(liveCanvas?.height) || 0;
+      if (liveCanvasWidth > 0 && liveCanvasHeight > 0) {
+        this.canvasManager.showResizeOverlay?.(liveCanvasWidth, liveCanvasHeight);
+      }
 
       if (
         document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
@@ -469,7 +527,9 @@ export class ProjectManager {
       if (!view.canvasData) {
         this.canvasManager.clear();
       }
-      this.removeCanvasObjectsOutsideViewScope(viewId);
+      if (shouldCleanLiveScope && !view.canvasData) {
+        this.removeCanvasObjectsOutsideViewScope(viewId);
+      }
 
       // Check BEFORE applyCaptureFrameForLabel runs — that call creates stored state
       // on capture tabs. For new views without saved viewport state, the fit pipeline
@@ -647,18 +707,29 @@ export class ProjectManager {
               // in a different order than the drawn stroke scopes.
               this.repairActiveCaptureTabForLoadedObjects(viewId);
 
+              const scopedKeys = Object.keys(
+                window.app.metadataManager.vectorStrokesByImage || {}
+              ).filter(scopeKey => this.isScopeLabelForView(scopeKey, viewId));
               const activeScope =
-                window.app.metadataManager.normalizeImageLabel?.(viewId) || viewId;
-              const strokes = window.app.metadataManager.vectorStrokesByImage[activeScope] || {};
-              const labelVisibility =
+                (typeof window.getCaptureTabScopedLabel === 'function' &&
+                  window.getCaptureTabScopedLabel(viewId)) ||
+                window.app.metadataManager.resolveActiveImageLabel?.(viewId) ||
+                viewId;
+
+              const activeStrokes =
+                window.app.metadataManager.vectorStrokesByImage[activeScope] || {};
+              const activeLabelVisibility =
                 window.app.metadataManager.strokeLabelVisibility[activeScope] || {};
 
-              console.log(`[Load] Recreating tags for ${Object.keys(strokes).length} strokes`);
+              console.log(
+                `[Load] Recreating tags for ${Object.keys(activeStrokes).length} active strokes`,
+                { viewId, activeScope, scopedKeys }
+              );
 
-              Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
+              Object.entries(activeStrokes).forEach(([strokeLabel, strokeObj]) => {
                 // Skip guide-scoped strokes that shouldn't appear on the primary canvas
                 if (typeof strokeLabel === 'string' && strokeLabel.startsWith('__guide__:')) return;
-                const isLabelVisible = labelVisibility[strokeLabel] !== false;
+                const isLabelVisible = activeLabelVisibility[strokeLabel] !== false;
                 if (isLabelVisible) {
                   window.app.tagManager.createTag(strokeLabel, activeScope, strokeObj);
                 }
@@ -699,11 +770,28 @@ export class ProjectManager {
         this.historyManager.saveState();
       }
 
-      this.removeCanvasObjectsOutsideViewScope(viewId);
+      if (shouldCleanLiveScope) {
+        this.removeCanvasObjectsOutsideViewScope(viewId);
+      }
 
       if (!skipViewportRestore) {
         this.restoreViewportForView(viewId);
       }
+
+      // If the saved viewport was from a different window/canvas size, the pan
+      // values are stale and the image will be off-center. Schedule a SINGLE
+      // re-centering pass after geometry settles. Multiple passes cause visible
+      // flashing as the image jumps between intermediate positions.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (
+            this.currentViewId === viewId &&
+            typeof window.__recenterCaptureFrame === 'function'
+          ) {
+            window.__recenterCaptureFrame(viewId);
+          }
+        });
+      });
 
       // Mount MOS overlays for the new view
       if (window.app?.measurementOverlayManager) {
@@ -727,6 +815,22 @@ export class ProjectManager {
           detail: { viewId, previousViewId, source: 'switch-view' },
         })
       );
+
+      // Gallery and guide listeners can run after the first restore. Reapply only
+      // the exact saved matrix once their layout work has settled; unlike the
+      // compatibility restore this does not fit, recenter, or mutate the frame.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (this.currentViewId === viewId) {
+            this.restoreExactViewportForView(viewId);
+          }
+        });
+      });
+      setTimeout(() => {
+        if (this.currentViewId === viewId) {
+          this.restoreExactViewportForView(viewId);
+        }
+      }, 260);
 
       // After all event handlers have fired, sweep for stale tags from other views
       // that may have been created by async listeners during the switch.
@@ -760,11 +864,29 @@ export class ProjectManager {
       console.error('[ProjectManager] switchView error:', err);
     } finally {
       this.isSwitchingView = false;
+      this.canvasManager?.hideResizeOverlay?.();
       if (this.pendingSwitchViewId) {
         const nextView = this.pendingSwitchViewId;
         this.pendingSwitchViewId = null;
         this.switchView(nextView, true);
       }
+    }
+  }
+
+  async whenIdle({ timeoutMs = 5000 } = {}) {
+    const startedAt = Date.now();
+    while (
+      this.isSwitchingView ||
+      this.pendingSwitchViewId ||
+      this.isLoadingProject ||
+      this.isHydratingDeferredViews ||
+      window.__deferredImageHydrationInProgress ||
+      window.__openpaintCaptureResizeInProgress
+    ) {
+      if (Date.now() - startedAt > timeoutMs) {
+        throw new Error('OpenPaint did not become idle before saving');
+      }
+      await new Promise(resolve => setTimeout(resolve, 25));
     }
   }
 
@@ -792,7 +914,7 @@ export class ProjectManager {
     }
   }
 
-  restoreViewportForView(viewId) {
+  restoreViewportForView(viewId, options = {}) {
     if (!viewId) return;
 
     // When guide-split is active, skip direct viewport restore — the split layout
@@ -824,17 +946,33 @@ export class ProjectManager {
       window.captureTabsByLabel?.[viewId] &&
       typeof window.applyCaptureFrameForLabel === 'function'
     ) {
+      const tabs = window.captureTabsByLabel[viewId]?.tabs || [];
+      const activeTabId = window.captureTabsByLabel[viewId]?.activeTabId;
+      const activeTab =
+        tabs.find((tab: any) => tab?.id === activeTabId) ||
+        tabs.find((tab: any) => tab?.type !== 'master') ||
+        tabs[0] ||
+        null;
+      const view = this.views?.[viewId];
+
+      // The capture-frame routine restores the frame DOM and compatibility
+      // zoom/pan values. The exact Fabric matrix then restores pointer-centred
+      // zoom without reconstructing it from the lossy compatibility record.
+      // Exact transforms are only valid at their saved canvas/window size;
+      // restoreExactViewportForView performs that guard in one place.
+      if (options?.useExactTransform !== false) {
+        window.applyCaptureFrameForLabel(viewId);
+        if (this.restoreExactViewportForView(viewId)) {
+          return;
+        }
+      }
+
       // Seed the active tab's viewport with saved data so the user's original
       // zoom/pan is used as the seed for fitViewportToWorldRect, rather than
       // the fit pipeline's default "fit to frame" values.
-      const view = this.views?.[viewId];
       if (view?.viewport && typeof view.viewport === 'object' && view.viewport.zoom) {
-        const tabs = window.captureTabsByLabel[viewId]?.tabs;
-        if (tabs?.length) {
-          const activeTab = tabs.find((t: any) => t.type !== 'master') || tabs[0];
-          if (activeTab) {
-            activeTab.viewport = cloneViewportRecord(view.viewport);
-          }
+        if (activeTab) {
+          activeTab.viewport = cloneViewportRecord(view.viewport);
         }
       }
       window.applyCaptureFrameForLabel(viewId);
@@ -844,6 +982,35 @@ export class ProjectManager {
     // No-capture-tab fallback: check for resolution mismatch
     const view = this.views?.[viewId];
     if (view?.viewport) {
+      const restoreWorldRect =
+        this.resolveRestoreWorldRectForView(viewId) ||
+        view.restoreWorldRect ||
+        view.backgroundWorldRect;
+      const placementFrame = this.canvasManager.getBackgroundPlacementFrame?.();
+      if (restoreWorldRect && placementFrame) {
+        const canvasEl = this.canvasManager.fabricCanvas?.lowerCanvasEl;
+        const canvasRect = canvasEl?.getBoundingClientRect?.() || { left: 0, top: 0 };
+        const targetFrame = {
+          ...placementFrame,
+          left: (Number(canvasRect.left) || 0) + (Number(placementFrame.left) || 0),
+          top: (Number(canvasRect.top) || 0) + (Number(placementFrame.top) || 0),
+        };
+        const center = this.canvasManager.getRotationCenter?.() || {
+          x: (Number(this.canvasManager.fabricCanvas?.width) || 0) / 2,
+          y: (Number(this.canvasManager.fabricCanvas?.height) || 0) / 2,
+        };
+        const restoredViewport = fitViewportToWorldRect(
+          restoreWorldRect,
+          view.viewport,
+          targetFrame,
+          { canvasRect, center }
+        );
+        if (restoredViewport) {
+          this.canvasManager.setViewportState(restoredViewport);
+          return;
+        }
+      }
+
       const savedW = Number(view.viewport.savedCanvasWidth) || 0;
       const savedH = Number(view.viewport.savedCanvasHeight) || 0;
       const currentW = Number(this.canvasManager.fabricCanvas?.width) || 0;
@@ -869,6 +1036,52 @@ export class ProjectManager {
 
       this.canvasManager.setViewportState(view.viewport);
     }
+  }
+
+  restoreExactViewportForView(viewId) {
+    const savedViewport = this.views?.[viewId]?.viewport;
+    const savedTabsState = this.views?.[viewId]?.tabs;
+    const savedTabs = Array.isArray(savedTabsState?.tabs) ? savedTabsState.tabs : [];
+    const savedActiveTab =
+      savedTabs.find(tab => tab?.id === savedTabsState?.activeTabId) ||
+      savedTabs.find(tab => tab?.type !== 'master') ||
+      savedTabs[0] ||
+      null;
+    const savedCanvasWidth = Number(savedViewport?.savedCanvasWidth) || 0;
+    const savedCanvasHeight = Number(savedViewport?.savedCanvasHeight) || 0;
+    const currentCanvasWidth = Number(this.canvasManager?.fabricCanvas?.width) || 0;
+    const currentCanvasHeight = Number(this.canvasManager?.fabricCanvas?.height) || 0;
+    if (
+      savedCanvasWidth > 0 &&
+      savedCanvasHeight > 0 &&
+      currentCanvasWidth > 0 &&
+      currentCanvasHeight > 0 &&
+      (Math.abs(savedCanvasWidth - currentCanvasWidth) > 2 ||
+        Math.abs(savedCanvasHeight - currentCanvasHeight) > 2)
+    ) {
+      return false;
+    }
+    const savedWindowWidth = Number(savedActiveTab?.captureFrame?.windowWidth) || 0;
+    const savedWindowHeight = Number(savedActiveTab?.captureFrame?.windowHeight) || 0;
+    if (
+      savedWindowWidth > 0 &&
+      savedWindowHeight > 0 &&
+      (Math.abs(savedWindowWidth - window.innerWidth) > 2 ||
+        Math.abs(savedWindowHeight - window.innerHeight) > 2)
+    ) {
+      return false;
+    }
+
+    const transform = this.views?.[viewId]?.viewportTransform;
+    const exactTransform = Array.isArray(transform) ? transform.slice(0, 6).map(Number) : null;
+    if (
+      exactTransform?.length !== 6 ||
+      !exactTransform.every(Number.isFinite) ||
+      typeof this.canvasManager?.setViewportTransformExact !== 'function'
+    ) {
+      return false;
+    }
+    return this.canvasManager.setViewportTransformExact(exactTransform);
   }
 
   async reconcileBackgroundPlacementForView(viewId, options = {}) {
@@ -956,12 +1169,17 @@ export class ProjectManager {
 
     const left = Number(backgroundImageData.left);
     const top = Number(backgroundImageData.top);
-    const width =
+    const unrotatedWidth =
       (Number(backgroundImageData.width) || Number(backgroundImageData.naturalWidth) || 0) *
       (Number(backgroundImageData.scaleX) || 1);
-    const height =
+    const unrotatedHeight =
       (Number(backgroundImageData.height) || Number(backgroundImageData.naturalHeight) || 0) *
       (Number(backgroundImageData.scaleY) || 1);
+    const radians = ((Number(backgroundImageData.angle) || 0) * Math.PI) / 180;
+    const cos = Math.abs(Math.cos(radians));
+    const sin = Math.abs(Math.sin(radians));
+    const width = unrotatedWidth * cos + unrotatedHeight * sin;
+    const height = unrotatedWidth * sin + unrotatedHeight * cos;
 
     if (
       !Number.isFinite(left) ||
@@ -979,6 +1197,38 @@ export class ProjectManager {
       top: top - height / 2,
       width,
       height,
+    };
+  }
+
+  extractBackgroundPlacementFromCanvasData(canvasData) {
+    const backgroundImage = canvasData?.backgroundImage;
+    if (!backgroundImage || typeof backgroundImage !== 'object') return null;
+    const placement = {
+      left: Number(backgroundImage.left),
+      top: Number(backgroundImage.top),
+      scaleX: Number(backgroundImage.scaleX),
+      scaleY: Number(backgroundImage.scaleY),
+      angle: Number(backgroundImage.angle) || 0,
+      originX: backgroundImage.originX || 'center',
+      originY: backgroundImage.originY || 'center',
+    };
+    if (
+      !Number.isFinite(placement.left) ||
+      !Number.isFinite(placement.top) ||
+      !Number.isFinite(placement.scaleX) ||
+      !Number.isFinite(placement.scaleY)
+    ) {
+      return null;
+    }
+    return placement;
+  }
+
+  getBackgroundRestoreOptionsForView(viewId) {
+    const view = this.views?.[viewId];
+    if (!view) return null;
+    return {
+      fitMode: view.fitMode || 'fit-canvas',
+      savedPlacement: this.extractBackgroundPlacementFromCanvasData(view.canvasData),
     };
   }
 
@@ -1009,6 +1259,7 @@ export class ProjectManager {
     const view = this.views?.[baseViewId] || null;
     const savedRect =
       normalizeRect(view?.backgroundWorldRect) ||
+      normalizeRect(view?.restoreWorldRect) ||
       normalizeRect(
         this.inferBackgroundWorldRectFromSerializedBackground(view?.canvasData?.backgroundImage)
       );
@@ -1036,24 +1287,27 @@ export class ProjectManager {
     return normalizeRect(this.canvasManager?.getBackgroundWorldRect?.());
   }
 
-  saveCurrentViewState(options?: { skipViewport?: boolean }) {
-    const json = this.canvasManager.toJSON();
+  saveCurrentViewState(options?: { skipViewport?: boolean; viewId?: string; canvasManager?: any }) {
+    const targetViewId = options?.viewId || this.currentViewId;
+    const targetCanvasManager = options?.canvasManager || this.canvasManager;
+    const json = targetCanvasManager.toJSON();
     console.log(
-      `[saveCurrentViewState] Saving ${this.currentViewId} with ${json?.objects?.length || 0} objects`
+      `[saveCurrentViewState] Saving ${targetViewId} with ${json?.objects?.length || 0} objects`
     );
     this.stripMosOverlayObjects(json);
-    if (this.views[this.currentViewId]) {
-      this.filterCanvasJsonObjectsForView(json, this.currentViewId);
+    if (this.views[targetViewId]) {
+      this.filterCanvasJsonObjectsForView(json, targetViewId);
       const skipViewport = options?.skipViewport === true;
       const isGuideSplitActive =
         skipViewport ||
         document.getElementById('main-canvas-wrapper')?.classList.contains('guide-split-active') ===
           true;
-      const previousCanvasData = this.views[this.currentViewId].canvasData;
-      if (isGuideSplitActive) {
-        // Split mode mutates Fabric's serialized viewport/canvas size for the
-        // half-width pane. Preserve object data, but never persist that transient
-        // transform back into the view JSON we restore after closing split mode.
+      const isMultiViewActive = document.body.classList.contains('multiview-active');
+      const isTransientCanvasLayout = isGuideSplitActive || isMultiViewActive;
+      const previousCanvasData = this.views[targetViewId].canvasData;
+      if (isTransientCanvasLayout) {
+        // Split and comparison panes use transient canvas/viewports. Preserve
+        // object data, but never persist their geometry as the main view state.
         delete json.viewportTransform;
         delete json.width;
         delete json.height;
@@ -1061,30 +1315,70 @@ export class ProjectManager {
           json.backgroundImage = JSON.parse(JSON.stringify(previousCanvasData.backgroundImage));
         }
       }
-      this.views[this.currentViewId].canvasData = json;
-      this.views[this.currentViewId].rotation = this.canvasManager.getRotationDegrees();
-      this.views[this.currentViewId].backgroundRotation =
-        Number(this.views[this.currentViewId].backgroundRotation) || 0;
-      if (!isGuideSplitActive) {
+      this.views[targetViewId].canvasData = json;
+      this.views[targetViewId].rotation = targetCanvasManager.getRotationDegrees();
+      this.views[targetViewId].backgroundRotation =
+        Number(this.views[targetViewId].backgroundRotation) || 0;
+      if (!isTransientCanvasLayout) {
         // Save backgroundWorldRect so setBackgroundImage can restore the exact
         // position on the next visit. Split mode preserves the previous rect
         // because the live canvas is temporarily fitted to a half-width pane.
-        const backgroundWorldRect = this.canvasManager.getBackgroundWorldRect?.() || null;
+        const activeTabState = window.captureTabsByLabel?.[targetViewId];
+        const activeTab = activeTabState?.tabs?.find?.(
+          tab => tab?.id === activeTabState?.activeTabId
+        );
+        const tabWorldRect = activeTab?.captureFrame?.worldRect || null;
+        const liveBackgroundWorldRect = targetCanvasManager.getBackgroundWorldRect?.() || null;
+        const backgroundImage = targetCanvasManager.fabricCanvas?.backgroundImage || null;
+        const inferredBackgroundWorldRect = backgroundImage
+          ? getCenteredBoxWorldRect({
+              center:
+                typeof backgroundImage.getCenterPoint === 'function'
+                  ? backgroundImage.getCenterPoint()
+                  : { x: backgroundImage.left, y: backgroundImage.top },
+              width:
+                typeof backgroundImage.getScaledWidth === 'function'
+                  ? backgroundImage.getScaledWidth()
+                  : Number(backgroundImage.width) * (Number(backgroundImage.scaleX) || 1),
+              height:
+                typeof backgroundImage.getScaledHeight === 'function'
+                  ? backgroundImage.getScaledHeight()
+                  : Number(backgroundImage.height) * (Number(backgroundImage.scaleY) || 1),
+              angle: Number(backgroundImage.angle) || 0,
+            })
+          : null;
+        // A capture frame describes the viewport window, not the image itself.
+        // Persisting it as the background rectangle makes a returning image adopt
+        // the frame's size before its saved viewport is restored, which silently
+        // turns a manual zoom back into a fit-to-frame view.
+        const backgroundWorldRect =
+          liveBackgroundWorldRect || inferredBackgroundWorldRect || tabWorldRect || null;
         if (backgroundWorldRect) {
-          this.views[this.currentViewId].backgroundWorldRect = JSON.parse(
+          this.views[targetViewId].backgroundWorldRect = JSON.parse(
+            JSON.stringify(backgroundWorldRect)
+          );
+          this.views[targetViewId].restoreWorldRect = JSON.parse(
             JSON.stringify(backgroundWorldRect)
           );
         } else {
-          delete this.views[this.currentViewId].backgroundWorldRect;
+          delete this.views[targetViewId].backgroundWorldRect;
+          delete this.views[targetViewId].restoreWorldRect;
         }
       }
-      if (!isGuideSplitActive) {
-        this.views[this.currentViewId].viewport = this.canvasManager.getViewportState();
+      if (!isTransientCanvasLayout) {
+        this.views[targetViewId].viewport = targetCanvasManager.getViewportState();
+        const viewportTransform = targetCanvasManager.fabricCanvas?.viewportTransform;
+        if (Array.isArray(viewportTransform) && viewportTransform.length >= 6) {
+          const exactTransform = viewportTransform.slice(0, 6).map(Number);
+          if (exactTransform.every(Number.isFinite)) {
+            this.views[targetViewId].viewportTransform = exactTransform;
+          }
+        }
       }
-      if (!isGuideSplitActive && window.captureTabsByLabel?.[this.currentViewId]) {
+      if (!isTransientCanvasLayout && window.captureTabsByLabel?.[targetViewId]) {
         try {
-          this.views[this.currentViewId].tabs = JSON.parse(
-            JSON.stringify(window.captureTabsByLabel[this.currentViewId])
+          this.views[targetViewId].tabs = JSON.parse(
+            JSON.stringify(window.captureTabsByLabel[targetViewId])
           );
         } catch (err) {
           console.warn('[Save] Failed to clone capture tabs for view:', err);
@@ -1093,20 +1387,20 @@ export class ProjectManager {
 
       // Also save metadata for this view
       if (window.app?.metadataManager) {
-        this.views[this.currentViewId].metadata = {
+        this.views[targetViewId].metadata = {
           vectorStrokesByImage: this.collectScopedMetadataBuckets(
             window.app.metadataManager.vectorStrokesByImage,
-            this.currentViewId
+            targetViewId
           ),
           strokeVisibilityByImage: this.collectScopedMetadataBuckets(
             window.app.metadataManager.strokeVisibilityByImage,
-            this.currentViewId
+            targetViewId
           ),
           strokeLabelVisibility: this.collectScopedMetadataBuckets(
             window.app.metadataManager.strokeLabelVisibility,
-            this.currentViewId
+            targetViewId
           ),
-          strokeMeasurements: this.serializeMeasurements(this.currentViewId),
+          strokeMeasurements: this.serializeMeasurements(targetViewId),
         };
       }
     }
@@ -1606,6 +1900,15 @@ export class ProjectManager {
     if (fitMode === undefined) {
       fitMode = this.views?.[this.currentViewId]?.fitMode || 'fit-canvas';
     }
+    const requestedCanvas = this.canvasManager?.fabricCanvas;
+    const requestedViewId = this.currentViewId;
+    if (!requestedCanvas) return;
+    const loadGeneration = (this.backgroundLoadGenerationByCanvas.get(requestedCanvas) || 0) + 1;
+    this.backgroundLoadGenerationByCanvas.set(requestedCanvas, loadGeneration);
+    const isCurrentLoad = () =>
+      this.backgroundLoadGenerationByCanvas.get(requestedCanvas) === loadGeneration &&
+      this.currentViewId === requestedViewId &&
+      this.canvasManager?.fabricCanvas === requestedCanvas;
     console.log(`\n[Image Debug] ===== SET BACKGROUND IMAGE =====`);
     console.log(`[Image Debug] URL: ${url?.substring?.(0, 50)}...`);
     console.log(`[Image Debug] Fit mode: ${fitMode}`);
@@ -1613,6 +1916,9 @@ export class ProjectManager {
     return new Promise(resolve => {
       const timeout = setTimeout(() => {
         console.error('[Image Debug] setBackgroundImage timed out for:', url?.substring?.(0, 80));
+        if (this.backgroundLoadGenerationByCanvas.get(requestedCanvas) === loadGeneration) {
+          this.backgroundLoadGenerationByCanvas.set(requestedCanvas, loadGeneration + 1);
+        }
         resolve();
       }, 10000);
 
@@ -1621,6 +1927,13 @@ export class ProjectManager {
         url,
         (img, isError) => {
           clearTimeout(timeout);
+          if (!isCurrentLoad()) {
+            console.log('[Image Debug] Ignoring stale background image load', {
+              viewId: requestedViewId,
+              url: url?.substring?.(0, 80),
+            });
+            return resolve();
+          }
           if (isError || !img) {
             console.error('[Image Debug] Failed to load image:', url?.substring?.(0, 80));
             return resolve();
@@ -1706,7 +2019,24 @@ export class ProjectManager {
           const rotatedWidthBasis = imgWidth * rotationCos + imgHeight * rotationSin;
           const rotatedHeightBasis = imgWidth * rotationSin + imgHeight * rotationCos;
           const savedBackgroundWorldRect = normalizeWorldRect(viewState?.backgroundWorldRect);
-          const preferredRestoreWorldRect = savedBackgroundWorldRect;
+          // Older saves could contain a capture-frame rectangle here. A frame is
+          // commonly 4:3 while the source image is not, so do not use a rectangle
+          // that cannot possibly describe the full, un-cropped image.
+          const isCompatibleImageWorldRect = rect => {
+            if (!rect || !rotatedWidthBasis || !rotatedHeightBasis) return false;
+            const expectedAspect = rotatedWidthBasis / rotatedHeightBasis;
+            const actualAspect = rect.width / rect.height;
+            return (
+              Number.isFinite(expectedAspect) &&
+              Number.isFinite(actualAspect) &&
+              expectedAspect > 0 &&
+              actualAspect > 0 &&
+              Math.abs(actualAspect - expectedAspect) / expectedAspect < 0.015
+            );
+          };
+          const preferredRestoreWorldRect = isCompatibleImageWorldRect(savedBackgroundWorldRect)
+            ? savedBackgroundWorldRect
+            : null;
           const liveTabState = window.captureTabsByLabel?.[this.currentViewId] || null;
           const savedTabState = viewState?.tabs || null;
           const tabState =
@@ -1845,6 +2175,7 @@ export class ProjectManager {
           );
 
           canvas.setBackgroundImage(img, () => {
+            if (!isCurrentLoad()) return;
             canvas.requestRenderAll();
             const restoredFromSaved =
               shouldUseSavedBackgroundWorldRect && hasSavedBackgroundWorldRect;
@@ -1889,11 +2220,16 @@ export class ProjectManager {
                     rotation: this.canvasManager.rotationDegrees || 0,
                   };
                 }
+                // The tab frame and background placement are independent pieces
+                // of state. Seed a missing frame once, but never replace a user's
+                // saved frame whenever this view's image is reloaded.
                 if (!activeTab.captureFrame) activeTab.captureFrame = {};
-                activeTab.captureFrame = {
-                  ...activeTab.captureFrame,
-                  worldRect: bgWorldRect,
-                };
+                if (!activeTab.captureFrame.worldRect) {
+                  activeTab.captureFrame = {
+                    ...activeTab.captureFrame,
+                    worldRect: bgWorldRect,
+                  };
+                }
               }
             }
           });
@@ -1986,68 +2322,86 @@ export class ProjectManager {
     });
   }
 
-  deleteImage(viewId) {
+  async deleteImage(viewId) {
     if (!this.views[viewId]) {
       console.warn(`View ${viewId} does not exist.`);
       return;
     }
 
-    // Remove from views
-    delete this.views[viewId];
-
-    // Clean up ALL global window state so the deleted image doesn't
-    // reappear during cloud save (which merges this.views with legacy globals).
-    if (window.vectorStrokesByImage) delete window.vectorStrokesByImage[viewId];
-    if (window.lineStrokesByImage) delete window.lineStrokesByImage[viewId];
-    if (window.strokeVisibilityByImage) delete window.strokeVisibilityByImage[viewId];
-    if (window.strokeLabelVisibility) delete window.strokeLabelVisibility[viewId];
-    if (window.strokeMeasurements) delete window.strokeMeasurements[viewId];
-    if (window.customLabelPositions) delete window.customLabelPositions[viewId];
-    if (window.calculatedLabelOffsets) delete window.calculatedLabelOffsets[viewId];
-    if (window.customLabelRotationStamps) delete window.customLabelRotationStamps[viewId];
-    if (window.textElementsByImage) delete window.textElementsByImage[viewId];
-    if (window.captureTabsByLabel) delete window.captureTabsByLabel[viewId];
-    if (window.customImageNames) delete window.customImageNames[viewId];
-    if (window.originalImages) delete window.originalImages[viewId];
-    if (window.originalImageDimensions) delete window.originalImageDimensions[viewId];
-    if (window.imageRotationByLabel) delete window.imageRotationByLabel[viewId];
-    if (window.customLabelOffsetsRotationByImageAndStroke)
-      delete window.customLabelOffsetsRotationByImageAndStroke[viewId];
-
-    // Remove from orderedImageLabels
-    if (Array.isArray(window.orderedImageLabels)) {
-      window.orderedImageLabels = window.orderedImageLabels.filter((id: string) => id !== viewId);
-    }
-
-    // Remove from gallery data
-    if (window.imageGallery?.getData) {
-      const data = window.imageGallery.getData();
-      const idx = data.findIndex(
-        (item: any) => item?.original?.label === viewId || item?.label === viewId
-      );
-      if (idx >= 0 && window.imageGallery.clearGallery) {
-        // Gallery doesn't have a remove-by-index, so we clear and re-add the rest
-        // Actually, better to just remove the DOM element and data entry
-      }
-    }
-
-    // Also clean up any capture-tab scoped variants (e.g. "front::tab:tab-123")
     const tabPrefix = `${viewId}::tab:`;
-    Object.keys(window.vectorStrokesByImage || {}).forEach(key => {
-      if (key.startsWith(tabPrefix)) delete window.vectorStrokesByImage[key];
+    const orderedBeforeDelete = Array.isArray(window.orderedImageLabels)
+      ? [...window.orderedImageLabels]
+      : Object.keys(this.views);
+    const deletedIndex = orderedBeforeDelete.indexOf(viewId);
+    const remainingOrder = orderedBeforeDelete.filter(id => id !== viewId && this.views[id]);
+    const nextViewId =
+      remainingOrder[Math.min(Math.max(deletedIndex, 0), remainingOrder.length - 1)] ||
+      remainingOrder[0] ||
+      Object.keys(this.views).find(id => id !== viewId) ||
+      null;
+
+    const deleteScopedEntries = store => {
+      if (!store || typeof store !== 'object') return;
+      Object.keys(store).forEach(key => {
+        if (key === viewId || key.startsWith(tabPrefix)) delete store[key];
+      });
+    };
+    [
+      window.vectorStrokesByImage,
+      window.lineStrokesByImage,
+      window.strokeVisibilityByImage,
+      window.strokeLabelVisibility,
+      window.strokeMeasurements,
+      window.customLabelPositions,
+      window.calculatedLabelOffsets,
+      window.customLabelRotationStamps,
+      window.textElementsByImage,
+      window.shapeElementsByImage,
+      window.customLabelOffsetsRotationByImageAndStroke,
+    ].forEach(deleteScopedEntries);
+
+    const metadataManager = window.app?.metadataManager;
+    metadataManager?.clearScopedBucketsForView?.(viewId);
+    metadataManager?.clearImageMetadata?.(viewId);
+
+    [
+      window.captureTabsByLabel,
+      window.customImageNames,
+      window.originalImages,
+      window.originalImageDimensions,
+      window.imageRotationByLabel,
+    ].forEach(store => {
+      if (store) delete store[viewId];
     });
-    Object.keys(window.lineStrokesByImage || {}).forEach(key => {
-      if (key.startsWith(tabPrefix)) delete window.lineStrokesByImage[key];
+
+    const metadata = this.projectMetadata || window.projectMetadata || {};
+    [
+      'measurementGuideModelLinksByImage',
+      'measurementGuideLabelsByImage',
+      'measurementGuideCodesByView',
+      'measurementGuideLockByView',
+      'imagePartLabels',
+      'tagSizeByView',
+    ].forEach(name => {
+      if (metadata[name]) delete metadata[name][viewId];
     });
-    Object.keys(window.strokeVisibilityByImage || {}).forEach(key => {
-      if (key.startsWith(tabPrefix)) delete window.strokeVisibilityByImage[key];
-    });
+    [
+      'measurementGuideModelLinksByScope',
+      'measurementGuideBindingsByScope',
+      'tagStyleByScope',
+      'tagSizeByView',
+    ].forEach(name => deleteScopedEntries(metadata[name]));
+
+    delete this.views[viewId];
+    this.viewImageFiles?.delete?.(viewId);
+    imageRegistry.unregisterImage?.(viewId);
+    window.orderedImageLabels = remainingOrder;
+    window.imageGallery?.removeByLabel?.(viewId);
 
     // If we deleted the current view, switch to another one
     if (this.currentViewId === viewId) {
-      const remainingViews = Object.keys(this.views);
-      if (remainingViews.length > 0) {
-        this.switchView(remainingViews[0]);
+      if (nextViewId) {
+        await this.switchView(nextViewId);
       } else {
         // No views left, clear canvas
         this.currentViewId = null;
@@ -2569,36 +2923,17 @@ export class ProjectManager {
   }
 
   showStatusMessage(message, type = 'info') {
-    // Simple toast implementation if not available elsewhere
-    const toast = document.createElement('div');
-    toast.textContent = message;
-    toast.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#22c55e' : '#3b82f6'};
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            z-index: 10000;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            font-family: system-ui, -apple-system, sans-serif;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        `;
-    document.body.appendChild(toast);
-
-    // Animate in
-    requestAnimationFrame(() => {
-      toast.style.opacity = '1';
-    });
-
-    // Remove after 3 seconds
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      setTimeout(() => document.body.removeChild(toast), 300);
-    }, 3000);
+    const notify = (window as any)?.notifyOpenPaint;
+    const showStatus = (window as any)?.showStatusMessage;
+    if (typeof notify === 'function') {
+      notify({ message, kind: type });
+      return;
+    }
+    if (typeof showStatus === 'function') {
+      showStatus(message, type);
+      return;
+    }
+    console[type === 'error' ? 'error' : 'log']('[Status]', message);
   }
 
   ensureProjectLoadOverlay() {
@@ -2912,6 +3247,7 @@ export class ProjectManager {
         fitMode: typeof view.fitMode === 'string' ? view.fitMode : 'fit-canvas',
         metadata: {},
         tabs: null,
+        viewportTransform: null,
         backgroundWorldRect: null,
       };
 
@@ -2939,17 +3275,28 @@ export class ProjectManager {
         viewId === this.currentViewId && fabricCanvas
           ? getCanvasBackgroundImageSource(fabricCanvas)
           : '';
+      const cachedR2Key =
+        this.remoteImageObjectKeyByUrl.get(view.image) ||
+        this.remoteImageObjectKeyByUrl.get(legacyEntry.imageUrl) ||
+        this.remoteImageObjectKeyByUrl.get(liveCanvasBackgroundSource) ||
+        null;
       const imagePersistenceSource = firstNonEmptyString(
+        view.imageR2Key ? `r2://${view.imageR2Key}` : '',
+        cachedR2Key ? `r2://${cachedR2Key}` : '',
         view.image,
         legacyEntry.imageUrl,
         liveCanvasBackgroundSource,
         getRuntimeImageSourceForView(viewId),
         backgroundImageSrc
       );
+      const originalUploadFile = this.viewImageFiles.get(viewId) || null;
 
-      if (uploadImagesToR2 && imagePersistenceSource) {
+      if (uploadImagesToR2 && (originalUploadFile || imagePersistenceSource)) {
         try {
-          const r2Key = await this.uploadViewImageToR2(viewId, imagePersistenceSource);
+          const r2Key = await this.uploadViewImageToR2(
+            viewId,
+            originalUploadFile || imagePersistenceSource
+          );
           if (r2Key) {
             entry.imageDataURL = null;
             entry.imageUrl =
@@ -2960,6 +3307,14 @@ export class ProjectManager {
             entry.imageAssetHash = null;
             entry.imageContentType = null;
             entry.imageSourceFingerprint = null;
+            if (this.views[viewId]) {
+              this.views[viewId].imageR2Key =
+                typeof r2Key === 'string' &&
+                !r2Key.startsWith('http://') &&
+                !r2Key.startsWith('https://')
+                  ? r2Key
+                  : this.views[viewId].imageR2Key || null;
+            }
 
             if (entry.canvasJSON?.backgroundImage) {
               entry.canvasJSON.backgroundImage.src = '';
@@ -3087,6 +3442,18 @@ export class ProjectManager {
             };
       } else if (view.viewport) {
         entry.viewport = deepClone(view.viewport);
+      }
+
+      const liveViewportTransform =
+        viewId === this.currentViewId && !isGuideSplitActive
+          ? this.canvasManager?.fabricCanvas?.viewportTransform
+          : view.viewportTransform;
+      if (
+        Array.isArray(liveViewportTransform) &&
+        liveViewportTransform.length >= 6 &&
+        liveViewportTransform.slice(0, 6).every(value => Number.isFinite(Number(value)))
+      ) {
+        entry.viewportTransform = liveViewportTransform.slice(0, 6).map(Number);
       }
 
       // Persist backgroundWorldRect so the background image is placed at the
@@ -3285,17 +3652,38 @@ export class ProjectManager {
     }
   }
 
-  async uploadViewImageToR2(viewId, sourceUrl) {
-    if (!sourceUrl || typeof sourceUrl !== 'string') return null;
-    if (sourceUrl.startsWith('r2://')) return sourceUrl.slice(5);
-    if (sourceUrl.startsWith('http://') || sourceUrl.startsWith('https://')) return sourceUrl;
+  async uploadViewImageToR2(viewId, source) {
+    if (!source) return null;
 
-    const fetchResponse = await fetch(sourceUrl);
-    if (!fetchResponse.ok) {
-      throw new Error(`Image fetch failed for ${viewId}: ${fetchResponse.status}`);
+    let blob;
+    if (typeof source === 'string') {
+      if (source.startsWith('r2://')) return source.slice(5);
+      if (source.startsWith('http://') || source.startsWith('https://')) return source;
+
+      try {
+        const fetchResponse = await fetch(source);
+        if (!fetchResponse.ok) {
+          throw new Error(`Image fetch failed for ${viewId}: ${fetchResponse.status}`);
+        }
+        blob = await fetchResponse.blob();
+      } catch (error) {
+        // Safari can retain a decoded image after its blob URL has stopped
+        // being fetchable. Re-encode that live image so the current session
+        // remains cloud-saveable rather than silently losing every photo.
+        blob = await this.recoverRenderedImageBlob(viewId);
+        if (!blob) {
+          const reason = error instanceof Error ? error.message : String(error);
+          throw new Error(`Image source is no longer available for ${viewId}: ${reason}`);
+        }
+        console.warn('[Save] Recovered image bytes from rendered image after source fetch failed', {
+          viewId,
+        });
+      }
+    } else if (typeof Blob !== 'undefined' && source instanceof Blob) {
+      blob = source;
+    } else {
+      throw new Error(`No uploadable image source available for ${viewId}`);
     }
-
-    let blob = await fetchResponse.blob();
 
     // Detect actual image type from magic bytes if blob.type is missing/wrong
     const contentType = await this.detectImageMimeType(blob);
@@ -3385,6 +3773,54 @@ export class ProjectManager {
     return presignBody.key || objectKey;
   }
 
+  async recoverRenderedImageBlob(viewId) {
+    if (typeof document === 'undefined') return null;
+
+    const escapeViewId =
+      typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+        ? CSS.escape(viewId)
+        : String(viewId).replace(/"/g, '\\"');
+    const liveBackground =
+      viewId === this.currentViewId
+        ? this.canvasManager?.fabricCanvas?.backgroundImage?._element || null
+        : null;
+    const thumbnailImage = document.querySelector(
+      `.image-container[data-label="${escapeViewId}"] img`
+    );
+    const candidates = [liveBackground, thumbnailImage].filter(Boolean);
+
+    for (const image of candidates) {
+      const width = Number(image.naturalWidth || image.videoWidth || image.width);
+      const height = Number(image.naturalHeight || image.videoHeight || image.height);
+      if (!(width > 0 && height > 0)) continue;
+
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+        if (!context) continue;
+        context.drawImage(image, 0, 0, width, height);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        if (blob) return blob;
+      } catch (error) {
+        // Cross-origin images can be intentionally unreadable. Try the next
+        // rendered candidate before reporting that the source has expired.
+        console.warn('[Save] Could not recover image bytes from rendered candidate', {
+          viewId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    return null;
+  }
+
+  registerViewImageFile(viewId, file) {
+    if (!viewId || typeof Blob === 'undefined' || !(file instanceof Blob)) return;
+    this.viewImageFiles.set(viewId, file);
+  }
+
   extractR2ObjectKeyFromUrl(sourceUrl) {
     const raw = String(sourceUrl || '').trim();
     if (!raw) return null;
@@ -3449,6 +3885,7 @@ export class ProjectManager {
         blob.type === imageContentType ? blob : new Blob([blob], { type: imageContentType });
       const objectUrl = URL.createObjectURL(imageBlob);
       this.remoteImageObjectUrlCache.set(objectKey, objectUrl);
+      this.remoteImageObjectKeyByUrl.set(objectUrl, objectKey);
       this.loadedProjectObjectUrls.push(objectUrl);
       return objectUrl;
     } catch (error) {
@@ -3516,6 +3953,7 @@ export class ProjectManager {
     });
     this.loadedProjectObjectUrls = [];
     this.remoteImageObjectUrlCache.clear();
+    this.remoteImageObjectKeyByUrl.clear();
     this.activeArchiveZip = null;
   }
 
@@ -3801,6 +4239,7 @@ export class ProjectManager {
 
       // Clear existing views and recreate from saved data
       this.views = {};
+      this.viewImageFiles.clear();
 
       // Clear image gallery to prevent duplicate detection issues
       if (window.imageGallery?.clearGallery) {
@@ -3900,10 +4339,36 @@ export class ProjectManager {
         const inferredBackgroundWorldRect = this.inferBackgroundWorldRectFromSerializedBackground(
           viewData?.canvasJSON?.backgroundImage
         );
+        const savedBackgroundWorldRect = viewData.backgroundWorldRect || null;
+        const savedAspect =
+          Number(savedBackgroundWorldRect?.width) > 0 &&
+          Number(savedBackgroundWorldRect?.height) > 0
+            ? Number(savedBackgroundWorldRect.width) / Number(savedBackgroundWorldRect.height)
+            : 0;
+        const inferredAspect =
+          Number(inferredBackgroundWorldRect?.width) > 0 &&
+          Number(inferredBackgroundWorldRect?.height) > 0
+            ? inferredBackgroundWorldRect.width / inferredBackgroundWorldRect.height
+            : 0;
+        const savedRectHasImpossibleRotationAspect =
+          savedAspect > 0 &&
+          inferredAspect > 0 &&
+          Math.abs(savedAspect - inferredAspect) / inferredAspect > 0.015;
+        const restoredBackgroundWorldRect = savedRectHasImpossibleRotationAspect
+          ? inferredBackgroundWorldRect
+          : savedBackgroundWorldRect || inferredBackgroundWorldRect;
+        if (savedRectHasImpossibleRotationAspect) {
+          console.warn('[Load] Repaired rotated background geometry', {
+            viewId,
+            savedBackgroundWorldRect,
+            inferredBackgroundWorldRect,
+          });
+        }
 
         this.views[viewId] = {
           id: viewId,
           image: null,
+          imageR2Key: this.getR2ObjectKeyForViewData(viewData),
           imageAssetHash: viewData.imageAssetHash || null,
           imageContentType: viewData.imageContentType || null,
           imageSourceFingerprint: viewData.imageSourceFingerprint || null,
@@ -3914,7 +4379,12 @@ export class ProjectManager {
           metadata: viewData.metadata || {},
           tabs: viewData.tabs || null,
           viewport: viewData.viewport || null,
-          backgroundWorldRect: viewData.backgroundWorldRect || inferredBackgroundWorldRect || null,
+          viewportTransform:
+            (Array.isArray(viewData.viewportTransform) && viewData.viewportTransform) ||
+            (Array.isArray(viewData.canvasJSON?.viewportTransform) &&
+              viewData.canvasJSON.viewportTransform) ||
+            null,
+          backgroundWorldRect: restoredBackgroundWorldRect || null,
         };
 
         const hasImageReference = Boolean(
@@ -3931,9 +4401,12 @@ export class ProjectManager {
         });
       }
 
+      // Keep the saved target pinned while images are registered in their
+      // authored order. Image priority and gallery order are separate concerns.
       for (const item of deferredImageRegistrations) {
         const imageUrl = await this.resolveViewImageUrl(item.viewData);
         this.views[item.viewId].image = imageUrl;
+        this.views[item.viewId].imageR2Key = this.getR2ObjectKeyForViewData(item.viewData);
         if (imageUrl) {
           console.log(`[Load] Restored image for view ${item.viewId}`);
         }
@@ -4026,29 +4499,6 @@ export class ProjectManager {
 
       await reconcileInitialTargetViewLayout('before-complete-reconcile');
 
-      const hydrateDeferredImages = async () => {
-        try {
-          for (const item of deferredImageRegistrations) {
-            try {
-              const imageUrl = await this.resolveViewImageUrl(item.viewData);
-              this.views[item.viewId].image = imageUrl;
-              await registerImageForView(item.viewId, imageUrl);
-            } catch (error) {
-              console.warn('[Load] Deferred image registration failed', item.viewId, error);
-            }
-            await new Promise(resolve => setTimeout(resolve, 0));
-          }
-        } finally {
-          window.__deferredImageHydrationInProgress = false;
-          window.__suppressScrollSelectUntil = 0;
-          if (this.pendingSwitchViewId && this.pendingSwitchViewId !== this.currentViewId) {
-            const nextView = this.pendingSwitchViewId;
-            this.pendingSwitchViewId = null;
-            await this.switchView(nextView, true);
-          }
-        }
-      };
-
       // Restore MOS overlays if present
       if (projectData.mosOverlays && window.app?.measurementOverlayManager) {
         try {
@@ -4072,12 +4522,15 @@ export class ProjectManager {
       this.hydrationPinnedViewId = null;
       this.hideProjectLoadOverlay();
 
-      if (deferredImageRegistrations.length > 0) {
-        void hydrateDeferredImages();
-      } else {
-        window.__deferredImageHydrationInProgress = false;
-        window.__suppressScrollSelectUntil = 0;
-      }
+      window.__deferredImageHydrationInProgress = false;
+      const postLoadSuppressUntil = Date.now() + 1200;
+      // Replace the long hydration sentinel. Keeping the maximum here leaves
+      // scroll-select disabled for five minutes after a successful load.
+      window.__suppressScrollSelectUntil = postLoadSuppressUntil;
+      window.__imageListProgrammaticScrollUntil = Math.max(
+        Number(window.__imageListProgrammaticScrollUntil) || 0,
+        postLoadSuppressUntil
+      );
 
       if (this.pendingSwitchViewId && this.pendingSwitchViewId !== this.currentViewId) {
         if (!window.__deferredImageHydrationInProgress) {

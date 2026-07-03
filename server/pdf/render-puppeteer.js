@@ -84,15 +84,28 @@ export async function renderPdfWithPuppeteer({ html, options }) {
             const x = marginPointsValue + relX * contentWidthPointsValue;
             const yTop = marginPointsValue + relYTop * contentHeightPointsValue;
             const y = pageHeightPointsValue - yTop - height;
+            const styles = window.getComputedStyle(el);
+            const pxToPointX = rect.width ? width / rect.width : 0;
+            const pxToPointY = rect.height ? height / rect.height : 0;
+            const paddingLeft = Number.parseFloat(styles.paddingLeft || '0') * pxToPointX;
+            const paddingRight = Number.parseFloat(styles.paddingRight || '0') * pxToPointX;
+            const paddingTop = Number.parseFloat(styles.paddingTop || '0') * pxToPointY;
+            const paddingBottom = Number.parseFloat(styles.paddingBottom || '0') * pxToPointY;
 
             return {
               pageIndex: Math.max(0, Number(pageInfo?.index || 0)),
+              fieldType: el.getAttribute('data-field-type') || 'text',
               fieldName: el.getAttribute('data-field-name') || `field_${idx + 1}`,
+              fieldOption: el.getAttribute('data-field-option') || '',
               value: el.getAttribute('data-field-value') || '',
               x,
               y,
               width,
               height,
+              paddingLeft,
+              paddingRight,
+              paddingTop,
+              paddingBottom,
             };
           });
         },
