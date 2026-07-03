@@ -2832,7 +2832,14 @@ export function initToolbarController() {
       }
 
       const applyCenteredFrameAndViewport = (stored, borderColor) => {
-        const rect = resolveCaptureFrameRect(stored);
+        const canvasManager = window.app?.canvasManager;
+        const rect =
+          typeof canvasManager?.calculateTargetFrameSize === 'function'
+            ? canvasManager.calculateTargetFrameSize(
+                Number(canvasManager.fabricCanvas?.width) || window.innerWidth,
+                Number(canvasManager.fabricCanvas?.height) || window.innerHeight
+              )
+            : resolveCaptureFrameRect(stored);
         const fallbackWorldRect = resolveViewRestoreWorldRect(resolved);
         const savedBackgroundWorldRect = normalizeWorldRect(
           (window.projectManager || window.app?.projectManager)?.views?.[toBaseLabel(resolved)]
@@ -4190,9 +4197,14 @@ export function initToolbarController() {
       // All centering math should reference this, not the live frame position,
       // because the frame may be at a stale position from relative-ratio restore.
       const liveRect = getLiveCaptureFrameRectForViewport();
-      const proportionalRect = isScalePageSizeMode()
-        ? resolveCaptureFrameRect(tab.captureFrame)
-        : liveRect;
+      const canvasManager = window.app?.canvasManager;
+      const proportionalRect =
+        typeof canvasManager?.calculateTargetFrameSize === 'function'
+          ? canvasManager.calculateTargetFrameSize(
+              Number(canvasManager.fabricCanvas?.width) || window.innerWidth,
+              Number(canvasManager.fabricCanvas?.height) || window.innerHeight
+            )
+          : resolveCaptureFrameRect(tab.captureFrame);
       const targetRect =
         proportionalRect.width > 0 && proportionalRect.height > 0
           ? buildCenteredRectPreservingSize(proportionalRect.width, proportionalRect.height)
