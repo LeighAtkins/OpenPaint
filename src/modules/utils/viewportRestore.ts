@@ -92,6 +92,31 @@ export function normalizeWorldRect(worldRect: RectLike | null | undefined) {
   return { left, top, width, height };
 }
 
+export function getCenteredBoxWorldRect(options: {
+  center?: PointLike | null;
+  width?: number;
+  height?: number;
+  angle?: number;
+}) {
+  const centerX = toFiniteNumber(options?.center?.x, toFiniteNumber(options?.center?.left, 0));
+  const centerY = toFiniteNumber(options?.center?.y, toFiniteNumber(options?.center?.top, 0));
+  const width = Math.max(0, toFiniteNumber(options?.width, 0));
+  const height = Math.max(0, toFiniteNumber(options?.height, 0));
+  if (width <= 0 || height <= 0) return null;
+
+  const angleRadians = (toFiniteNumber(options?.angle, 0) * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(angleRadians));
+  const sin = Math.abs(Math.sin(angleRadians));
+  const rotatedWidth = width * cos + height * sin;
+  const rotatedHeight = width * sin + height * cos;
+  return normalizeWorldRect({
+    left: centerX - rotatedWidth / 2,
+    top: centerY - rotatedHeight / 2,
+    width: rotatedWidth,
+    height: rotatedHeight,
+  });
+}
+
 export function normalizeViewportRecord(viewport: ViewportLike | null | undefined) {
   if (!viewport || typeof viewport !== 'object') {
     return {
@@ -131,9 +156,10 @@ export function buildViewportTransform(
   const translateToOrigin = [1, 0, 0, 1, -centerX, -centerY];
   const translateBack = [1, 0, 0, 1, centerX, centerY];
 
+  const fabricApi = typeof fabric !== 'undefined' ? fabric : null;
   let transform =
-    typeof fabric?.util?.multiplyTransformMatrices === 'function'
-      ? fabric.util.multiplyTransformMatrices(base, translateToOrigin)
+    typeof fabricApi?.util?.multiplyTransformMatrices === 'function'
+      ? fabricApi.util.multiplyTransformMatrices(base, translateToOrigin)
       : [
           base[0],
           base[1],
@@ -144,8 +170,8 @@ export function buildViewportTransform(
         ];
 
   transform =
-    typeof fabric?.util?.multiplyTransformMatrices === 'function'
-      ? fabric.util.multiplyTransformMatrices(translateBack, transform)
+    typeof fabricApi?.util?.multiplyTransformMatrices === 'function'
+      ? fabricApi.util.multiplyTransformMatrices(translateBack, transform)
       : [
           transform[0],
           transform[1],
@@ -168,8 +194,9 @@ function transformPoint(matrix: number[], point: { x: number; y: number }) {
 }
 
 function invertTransform(matrix: number[]) {
-  if (typeof fabric?.util?.invertTransform === 'function') {
-    return fabric.util.invertTransform(matrix);
+  const fabricApi = typeof fabric !== 'undefined' ? fabric : null;
+  if (typeof fabricApi?.util?.invertTransform === 'function') {
+    return fabricApi.util.invertTransform(matrix);
   }
   const [a, b, c, d, e, f] = matrix;
   const det = a * d - b * c;
@@ -180,8 +207,12 @@ function invertTransform(matrix: number[]) {
 }
 
 function transformViewportPoint(matrix: number[], x: number, y: number) {
-  if (typeof fabric?.util?.transformPoint === 'function' && typeof fabric?.Point === 'function') {
-    const point = fabric.util.transformPoint(new fabric.Point(x, y), matrix);
+  const fabricApi = typeof fabric !== 'undefined' ? fabric : null;
+  if (
+    typeof fabricApi?.util?.transformPoint === 'function' &&
+    typeof fabricApi?.Point === 'function'
+  ) {
+    const point = fabricApi.util.transformPoint(new fabricApi.Point(x, y), matrix);
     return { x: point.x, y: point.y };
   }
   return transformPoint(matrix, { x, y });
@@ -269,6 +300,16 @@ export function fitViewportToWorldRect(
 export function getFabricObjectWorldRect(object: any) {
   if (!object) return null;
 
+  // Fabric background images can report viewport-transformed points from
+  // getCoords(). getBoundingRect(true, true) is the explicit absolute/world
+  // rectangle and must win, otherwise restore code transforms screen-space
+  // coordinates a second time and oscillates on every recenter pass.
+  const absoluteRect = object.getBoundingRect?.(true, true) || null;
+  const normalizedAbsoluteRect = normalizeWorldRect(absoluteRect);
+  if (normalizedAbsoluteRect) {
+    return normalizedAbsoluteRect;
+  }
+
   const cornerSource =
     (Array.isArray(object.getCoords?.()) && object.getCoords()) ||
     (object.aCoords ? Object.values(object.aCoords) : null);
@@ -284,6 +325,6 @@ export function getFabricObjectWorldRect(object: any) {
     }
   }
 
-  const rect = object.getBoundingRect?.(true, true) || object.getBoundingRect?.() || null;
+  const rect = object.getBoundingRect?.() || null;
   return normalizeWorldRect(rect);
 }

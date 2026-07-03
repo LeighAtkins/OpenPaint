@@ -34,6 +34,11 @@ async function waitForApp(page: Page, timeout = 15_000): Promise<void> {
       ),
     { timeout }
   );
+  const welcomeDismiss = page.locator('#welcomeDismiss');
+  if (await welcomeDismiss.isVisible().catch(() => false)) {
+    await welcomeDismiss.click();
+    await page.locator('#welcomeOverlay').waitFor({ state: 'hidden' });
+  }
   // Give the layout and first canvas render a moment to settle.
   await page.waitForTimeout(500);
   await waitForCanvasLayoutSettle(page);
@@ -106,16 +111,30 @@ async function selectTool(page: Page, toolName: string): Promise<void> {
   await page.waitForTimeout(100);
 }
 
-/** Draw a line from (x1,y1) to (x2,y2) on the canvas using mouse events. */
+/** Draw a line using coordinates local to the active capture frame. */
 async function drawLine(page: Page, x1: number, y1: number, x2: number, y2: number): Promise<void> {
   const canvas = getCanvas(page);
   const box = await canvas.boundingBox();
   if (!box) throw new Error('Canvas not visible');
 
-  const absX1 = box.x + x1;
-  const absY1 = box.y + y1;
-  const absX2 = box.x + x2;
-  const absY2 = box.y + y2;
+  const frame = await page.evaluate(() => {
+    const placement = window.app?.canvasManager?.getBackgroundPlacementFrame?.();
+    return placement
+      ? {
+          left: placement.left,
+          top: placement.top,
+          width: placement.width,
+          height: placement.height,
+        }
+      : null;
+  });
+  if (!frame?.width || !frame?.height) throw new Error('Capture frame not visible');
+
+  const clamp = (value: number, maximum: number) => Math.max(2, Math.min(maximum - 2, value));
+  const absX1 = box.x + frame.left + clamp(x1, frame.width);
+  const absY1 = box.y + frame.top + clamp(y1, frame.height);
+  const absX2 = box.x + frame.left + clamp(x2, frame.width);
+  const absY2 = box.y + frame.top + clamp(y2, frame.height);
 
   await page.mouse.move(absX1, absY1);
   await page.mouse.down();
@@ -166,17 +185,9 @@ async function uploadTestImage(
         const dataURL = offscreen.toDataURL('image/png');
 
         const pm = window.app!.projectManager;
-        const cm = window.app!.canvasManager;
-
-        // Set the image as the background for the current view
-        const img = new Image();
-        img.onload = () => {
-          cm.fabricCanvas.setBackgroundImage(new (window as any).fabric.Image(img), () => {
-            cm.fabricCanvas.renderAll();
-            resolve();
-          });
-        };
-        img.src = dataURL;
+        Promise.resolve(
+          pm.addImage(pm.currentViewId || 'front', dataURL, { refreshBackground: true })
+        ).then(() => resolve());
       });
     },
     { w: width, h: height, c: color }

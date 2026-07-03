@@ -24,11 +24,17 @@ const groupedSectionSchema = z.object({
   relatedMeasurementCards: z.array(measurementCardSchema).max(30).default([]),
 });
 
+const comparisonGroupSchema = z.object({
+  label: z.string().min(1).max(120),
+  items: z.array(imageItemSchema).min(2).max(4),
+});
+
 const reportSchema = z.object({
   projectName: z.string().min(1).max(160),
   namingLine: z.string().max(220).optional().default(''),
   unit: z.enum(['inch', 'cm']).optional().default('inch'),
   groups: z.array(groupedSectionSchema).max(100).default([]),
+  comparisonGroups: z.array(comparisonGroupSchema).max(24).default([]),
 });
 
 export const pdfRenderRequestSchema = z

@@ -613,6 +613,202 @@ function getGroupedPdfPageTargets(pageTargets, pieceGroups, partLabels) {
   return grouped;
 }
 
+function getRepeatedLabelComparisonTargets(pageTargets, maxGroups = 12) {
+  const byLabel = new Map();
+  (pageTargets || []).forEach(target => {
+    if (!target?.scopeKey) return;
+    const labels = getScopedStrokeLabels(target.scopeKey, {
+      scopeKey: target.scopeKey,
+      includeBase: target.includeBase,
+    });
+    labels.forEach(label => {
+      const cleanLabel = typeof label === 'string' ? label.trim() : '';
+      if (!cleanLabel) return;
+      if (!byLabel.has(cleanLabel)) {
+        byLabel.set(cleanLabel, []);
+      }
+      byLabel.get(cleanLabel).push(target);
+    });
+  });
+
+  return Array.from(byLabel.entries())
+    .map(([label, targets]) => {
+      const seenKeys = new Set();
+      const uniqueTargets = targets.filter(target => {
+        const key = `${target.viewId || ''}::${target.tabId || ''}::${target.scopeKey || ''}`;
+        if (seenKeys.has(key)) return false;
+        seenKeys.add(key);
+        return true;
+      });
+      return { label, targets: uniqueTargets };
+    })
+    .filter(group => {
+      const distinctViews = new Set(group.targets.map(target => target.viewId).filter(Boolean));
+      return group.targets.length >= 2 && distinctViews.size >= 2;
+    })
+    .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }))
+    .slice(0, maxGroups)
+    .map(group => ({
+      label: group.label,
+      targets: group.targets.slice(0, 4),
+    }));
+}
+
+function showRepeatedComparisonApprovalDialog(comparisonGroups) {
+  const groups = Array.isArray(comparisonGroups) ? comparisonGroups : [];
+  if (!groups.length) return Promise.resolve([]);
+
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText =
+      'position:fixed;inset:0;z-index:10020;background:rgba(11,13,16,0.58);display:flex;align-items:center;justify-content:center;padding:18px;';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(11,13,16,0.28);width:min(980px,100%);max-height:min(860px,92vh);display:flex;flex-direction:column;font-family:'Instrument Sans','Inter',sans-serif;color:#0B0D10;overflow:hidden;">
+        <div style="padding:22px 24px 16px;border-bottom:1px solid #E7EAEE;display:flex;gap:16px;align-items:flex-start;justify-content:space-between;">
+          <div>
+            <h2 style="margin:0 0 6px;font-size:22px;font-weight:750;">Approve Repeated-Label Comparisons</h2>
+            <p style="margin:0;color:#667085;font-size:13px;line-height:1.4;">Uncheck any comparison groups that are not useful. Only approved groups will be added to the PDF.</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0;">
+            <button id="pdfComparisonSelectAll" type="button" style="padding:8px 10px;border:1px solid #D0D5DD;background:#fff;border-radius:10px;font-size:12px;font-weight:650;cursor:pointer;">All</button>
+            <button id="pdfComparisonSelectNone" type="button" style="padding:8px 10px;border:1px solid #D0D5DD;background:#fff;border-radius:10px;font-size:12px;font-weight:650;cursor:pointer;">None</button>
+          </div>
+        </div>
+        <div id="pdfComparisonApprovalList" style="padding:18px 24px;overflow:auto;display:grid;gap:14px;">
+          ${groups
+            .map(
+              (group, index) => `
+                <label style="display:block;border:1px solid #E7EAEE;border-radius:16px;padding:14px;background:#F8FAFC;cursor:pointer;">
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                    <input type="checkbox" class="pdfComparisonApprovalCheckbox" data-index="${index}" checked style="transform:scale(1.25);accent-color:#0B0D10;">
+                    <strong style="font-size:15px;">Label ${escapeHtml(group.label)}</strong>
+                    <span style="color:#667085;font-size:12px;">${group.items.length} views</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">
+                    ${group.items
+                      .map(
+                        item => `
+                          <figure style="margin:0;background:#fff;border:1px solid #E7EAEE;border-radius:12px;overflow:hidden;">
+                            <img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.title || '')}" style="display:block;width:100%;height:110px;object-fit:contain;background:#F1F5F9;">
+                            <figcaption style="padding:7px 9px;color:#344054;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.title || '')}</figcaption>
+                          </figure>
+                        `
+                      )
+                      .join('')}
+                  </div>
+                </label>
+              `
+            )
+            .join('')}
+        </div>
+        <div style="padding:16px 24px;border-top:1px solid #E7EAEE;display:flex;gap:10px;justify-content:flex-end;background:#fff;">
+          <button id="pdfComparisonSkip" type="button" style="padding:11px 14px;border:1px solid #D0D5DD;background:#fff;border-radius:12px;font-weight:650;cursor:pointer;">Skip comparisons</button>
+          <button id="pdfComparisonContinue" type="button" style="padding:11px 16px;border:0;background:#0B0D10;color:#fff;border-radius:12px;font-weight:700;cursor:pointer;">Continue with selected</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const getSelectedGroups = () => {
+      const checked = Array.from(
+        overlay.querySelectorAll('.pdfComparisonApprovalCheckbox:checked')
+      );
+      return checked
+        .map(input => groups[Number((input as HTMLInputElement).dataset.index)])
+        .filter(Boolean);
+    };
+
+    overlay.querySelector('#pdfComparisonSelectAll')?.addEventListener('click', () => {
+      overlay.querySelectorAll('.pdfComparisonApprovalCheckbox').forEach(input => {
+        (input as HTMLInputElement).checked = true;
+      });
+    });
+    overlay.querySelector('#pdfComparisonSelectNone')?.addEventListener('click', () => {
+      overlay.querySelectorAll('.pdfComparisonApprovalCheckbox').forEach(input => {
+        (input as HTMLInputElement).checked = false;
+      });
+    });
+    overlay.querySelector('#pdfComparisonSkip')?.addEventListener('click', () => {
+      overlay.remove();
+      resolve([]);
+    });
+    overlay.querySelector('#pdfComparisonContinue')?.addEventListener('click', () => {
+      const selected = getSelectedGroups();
+      overlay.remove();
+      resolve(selected);
+    });
+  });
+}
+
+function getPdfObjectStrokeLabel(obj) {
+  const sources = [
+    obj?.strokeMetadata?.strokeLabel,
+    obj?.strokeMetadata?.label,
+    obj?.customData?.strokeLabel,
+    obj?.customData?.label,
+    obj?.strokeLabel,
+    obj?.label,
+    obj?.connectedStroke?.strokeMetadata?.strokeLabel,
+    obj?.connectedStroke?.strokeMetadata?.label,
+    obj?.connectedStroke?.customData?.strokeLabel,
+    obj?.connectedStroke?.customData?.label,
+    obj?.connectorLine?.strokeLabel,
+    obj?.connectorLine?.strokeMetadata?.strokeLabel,
+  ];
+  const value = sources.find(source => String(source || '').trim());
+  return value ? String(value).trim() : '';
+}
+
+function isPdfLabeledMeasurementObject(obj) {
+  if (!obj) return false;
+  if (getPdfObjectStrokeLabel(obj)) return true;
+  return (
+    obj.isTag === true ||
+    obj.isTagText === true ||
+    obj.isTagBackground === true ||
+    obj.isTagGroup === true ||
+    obj.isConnectorLine === true ||
+    obj.connectorLine ||
+    obj.connectedStroke
+  );
+}
+
+async function withOnlyPdfLabelVisible(canvas, strokeLabel, callback) {
+  if (!canvas?.getObjects || !strokeLabel) {
+    return callback();
+  }
+
+  const objects = canvas.getObjects();
+  const states = new Map(objects.map(obj => [obj, obj.visible !== false]));
+  try {
+    objects.forEach(obj => {
+      if (!isPdfLabeledMeasurementObject(obj)) return;
+      const label = getPdfObjectStrokeLabel(obj);
+      const shouldShow = label === strokeLabel;
+      if (typeof obj.set === 'function') {
+        obj.set('visible', shouldShow);
+      } else {
+        obj.visible = shouldShow;
+      }
+    });
+    canvas.requestRenderAll?.();
+    await waitForCanvasRenderStability(canvas);
+    return await callback();
+  } finally {
+    objects.forEach(obj => {
+      const visible = states.get(obj);
+      if (typeof visible !== 'boolean') return;
+      if (typeof obj.set === 'function') {
+        obj.set('visible', visible);
+      } else {
+        obj.visible = visible;
+      }
+    });
+    canvas.requestRenderAll?.();
+    await waitForCanvasRenderStability(canvas);
+  }
+}
+
 function sanitizePdfFieldPart(value, fallback) {
   const cleaned = String(value || '')
     .trim()
@@ -957,6 +1153,18 @@ function beginPdfExportSession() {
     projectManager.suspendSave = true;
   }
   window.__isPdfExporting = true;
+
+  // Suppress openpaint:view-switched handlers during export to prevent
+  // event-driven code from triggering concurrent view switches that steal
+  // the canvas out from under the capture pipeline.
+  const suppressViewSwitch = event => {
+    if (window.__isPdfExporting) {
+      event.stopImmediatePropagation();
+    }
+  };
+  window.addEventListener('openpaint:view-switched', suppressViewSwitch, true);
+  state._suppressViewSwitchHandler = suppressViewSwitch;
+
   return state;
 }
 
@@ -967,6 +1175,12 @@ async function restorePdfExportSession(state) {
 
   try {
     logVectorDebugSnapshot('restorePdfExportSession:start');
+    // Remove the view-switch suppression handler first so the final restore
+    // switchView can dispatch events normally.
+    if (state?._suppressViewSwitchHandler) {
+      window.removeEventListener('openpaint:view-switched', state._suppressViewSwitchHandler, true);
+    }
+    window.__isPdfExporting = false;
     if (state?.previousCaptureTabsByLabel) {
       window.captureTabsByLabel = cloneSerializable(state.previousCaptureTabsByLabel, {});
     }
@@ -1136,6 +1350,16 @@ async function withTemporaryCaptureTarget(viewId, tabId, callback) {
         throw new Error(`Target view is missing: ${viewId}`);
       }
       await projectManager.switchView(viewId);
+      // Discard any switchView that was queued by event handlers during the
+      // awaited switch — it would fire un-awaited and steal the canvas.
+      projectManager.pendingSwitchViewId = null;
+    }
+    // Verify we actually landed on the target view; retry once if not.
+    if (projectManager && projectManager.currentViewId !== viewId) {
+      projectManager.pendingSwitchViewId = null;
+      projectManager.isSwitchingView = false;
+      await projectManager.switchView(viewId);
+      projectManager.pendingSwitchViewId = null;
     }
     if (tabId && typeof window.setActiveCaptureTab === 'function') {
       try {
@@ -1150,6 +1374,18 @@ async function withTemporaryCaptureTarget(viewId, tabId, callback) {
       }
     }
     await settleCaptureContext(viewId, tabId);
+
+    // Final guard: verify the correct view is still active before capturing.
+    // Event handlers can trigger a concurrent switchView that lands after
+    // our awaited one, swapping the canvas content out from under us.
+    if (projectManager && projectManager.currentViewId !== viewId) {
+      projectManager.pendingSwitchViewId = null;
+      projectManager.isSwitchingView = false;
+      await projectManager.switchView(viewId);
+      projectManager.pendingSwitchViewId = null;
+      await settleCaptureContext(viewId, tabId);
+    }
+
     logVectorDebugSnapshot('withTemporaryCaptureTarget:after-switch', {
       targetViewId: viewId,
       targetTabId: tabId || null,
@@ -1255,6 +1491,23 @@ async function requestServerRenderedPdf(payload) {
     new Error('Server PDF render endpoint is unavailable. Check API deployment configuration.');
   unavailableError.name = 'PdfRenderEndpointUnavailableError';
   throw unavailableError;
+}
+
+function triggerPdfDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.rel = 'noopener';
+  a.style.position = 'fixed';
+  a.style.left = '-9999px';
+  a.style.top = '0';
+  document.body.appendChild(a);
+  a.click();
+  window.setTimeout(() => {
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, 30000);
 }
 
 export function initPdfExport() {
@@ -1445,8 +1698,14 @@ export function initPdfExport() {
     const overlay = document.createElement('div');
     overlay.style.cssText =
       'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(11,13,16,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;';
-    overlay.innerHTML = `<div style="background:#fff;border-radius:16px;padding:30px;max-width:520px;width:min(100%,520px);box-shadow:0 24px 48px rgba(11,13,16,0.18),0 8px 16px rgba(11,13,16,0.08);font-family:'Instrument Sans','Inter',sans-serif;color:#0B0D10;"><h2 style="margin:0 0 8px 0;color:#151A20;font-size:24px;font-weight:700;font-family:'Instrument Sans','Inter',sans-serif;">Export PDF - ${projectName}</h2><p style="color:#3E4752;margin:0 0 20px 0;font-size:13px;">Creating PDF with ${viewIds.length} page(s) and editable form fields.</p><div style="margin-bottom:16px;"><label style="display:block;margin-bottom:6px;font-weight:600;color:#3E4752;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;">Image Quality</label><select id="pdfQuality" style="width:100%;padding:10px 14px;border:1px solid #E7EAEE;border-radius:12px;font-size:14px;background:#fff;font-family:'Instrument Sans','Inter',sans-serif;outline:none;"><option value="high">High Quality</option><option value="medium" selected>Medium Quality</option><option value="low">Low Quality</option></select></div><div style="margin-bottom:16px;"><label style="display:block;margin-bottom:6px;font-weight:600;color:#3E4752;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;">Page Size</label><select id="pdfPageSize" style="width:100%;padding:10px 14px;border:1px solid #E7EAEE;border-radius:12px;font-size:14px;background:#fff;font-family:'Instrument Sans','Inter',sans-serif;outline:none;"><option value="letter" selected>Letter (8.5" × 11")</option><option value="a4">A4</option></select></div><label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:20px;padding:12px 14px;border:1px solid #E7EAEE;border-radius:12px;background:#F6F7F9;"><input type="checkbox" id="includeMeasurements" checked style="transform:scale(1.3);accent-color:#0B0D10;"><span style="color:#0B0D10;font-size:14px;">Include editable measurement fields</span></label><div style="display:flex;gap:10px;"><button id="generatePdfBtn" style="flex:1;padding:12px;background:#0B0D10;color:#fff;border:none;border-radius:12px;font-weight:600;cursor:pointer;font-family:'Instrument Sans','Inter',sans-serif;font-size:14px;">Generate PDF</button><button id="cancelPdfBtn" style="flex:1;padding:12px;background:#F6F7F9;color:#0B0D10;border:1px solid #E7EAEE;border-radius:12px;font-weight:600;cursor:pointer;font-family:'Instrument Sans','Inter',sans-serif;font-size:14px;">Cancel</button></div><div id="pdfProgress" style="display:none;margin-top:20px;text-align:center;"><div style="width:100%;height:8px;background:#E7EAEE;border-radius:999px;overflow:hidden;margin-bottom:10px;"><div id="pdfProgressBar" style="width:0%;height:100%;background:#0B0D10;transition:width 0.3s;border-radius:999px;"></div></div><p id="pdfProgressText" style="color:#3E4752;font-size:14px;font-family:'Instrument Sans','Inter',sans-serif;">Preparing PDF...</p></div></div>`;
+    overlay.innerHTML = `<div style="background:#fff;border-radius:16px;padding:30px;max-width:520px;width:min(100%,520px);box-shadow:0 24px 48px rgba(11,13,16,0.18),0 8px 16px rgba(11,13,16,0.08);font-family:'Instrument Sans','Inter',sans-serif;color:#0B0D10;"><h2 style="margin:0 0 8px 0;color:#151A20;font-size:24px;font-weight:700;font-family:'Instrument Sans','Inter',sans-serif;">Export PDF - ${projectName}</h2><p style="color:#3E4752;margin:0 0 20px 0;font-size:13px;">Creating PDF with ${viewIds.length} page(s) and editable form fields.</p><div style="margin-bottom:16px;"><label style="display:block;margin-bottom:6px;font-weight:600;color:#3E4752;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;">Image Quality</label><select id="pdfQuality" style="width:100%;padding:10px 14px;border:1px solid #E7EAEE;border-radius:12px;font-size:14px;background:#fff;font-family:'Instrument Sans','Inter',sans-serif;outline:none;"><option value="high">High Quality</option><option value="medium" selected>Medium Quality</option><option value="low">Low Quality</option></select></div><div style="margin-bottom:16px;"><label style="display:block;margin-bottom:6px;font-weight:600;color:#3E4752;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;">Page Size</label><select id="pdfPageSize" style="width:100%;padding:10px 14px;border:1px solid #E7EAEE;border-radius:12px;font-size:14px;background:#fff;font-family:'Instrument Sans','Inter',sans-serif;outline:none;"><option value="letter" selected>Letter (8.5" × 11")</option><option value="a4">A4</option></select></div><label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;padding:12px 14px;border:1px solid #E7EAEE;border-radius:12px;background:#F6F7F9;"><input type="checkbox" id="includeMeasurements" checked style="transform:scale(1.3);accent-color:#0B0D10;"><span style="color:#0B0D10;font-size:14px;">Include editable measurement fields</span></label><label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:20px;padding:12px 14px;border:1px solid #E7EAEE;border-radius:12px;background:#F6F7F9;"><input type="checkbox" id="includeRepeatedComparisons" checked style="margin-top:2px;transform:scale(1.3);accent-color:#0B0D10;"><span style="color:#0B0D10;font-size:14px;line-height:1.35;">Add repeated-label comparison page<br><span style="color:#667085;font-size:12px;">If a tag appears on multiple images, show only that tag side by side.</span></span></label><div style="display:flex;gap:10px;"><button id="generatePdfBtn" style="flex:1;padding:12px;background:#0B0D10;color:#fff;border:none;border-radius:12px;font-weight:600;cursor:pointer;font-family:'Instrument Sans','Inter',sans-serif;font-size:14px;">Generate PDF</button><button id="cancelPdfBtn" style="flex:1;padding:12px;background:#F6F7F9;color:#0B0D10;border:1px solid #E7EAEE;border-radius:12px;font-weight:600;cursor:pointer;font-family:'Instrument Sans','Inter',sans-serif;font-size:14px;">Cancel</button></div><div id="pdfProgress" style="display:none;margin-top:20px;text-align:center;"><div style="width:100%;height:8px;background:#E7EAEE;border-radius:999px;overflow:hidden;margin-bottom:10px;"><div id="pdfProgressBar" style="width:0%;height:100%;background:#0B0D10;transition:width 0.3s;border-radius:999px;"></div></div><p id="pdfProgressText" style="color:#3E4752;font-size:14px;font-family:'Instrument Sans','Inter',sans-serif;">Preparing PDF...</p></div></div>`;
     document.body.appendChild(overlay);
+    const repeatedComparisonsInput = document.getElementById(
+      'includeRepeatedComparisons'
+    ) as HTMLInputElement | null;
+    if (repeatedComparisonsInput) {
+      repeatedComparisonsInput.checked = false;
+    }
 
     const pageSizeSelect = document.getElementById('pdfPageSize');
     if (pageSizeSelect) {
@@ -1470,6 +1729,9 @@ export function initPdfExport() {
       const quality = document.getElementById('pdfQuality').value;
       const pageSize = document.getElementById('pdfPageSize')?.value || 'a4';
       const includeMeasurements = document.getElementById('includeMeasurements').checked;
+      const includeRepeatedComparisons =
+        (document.getElementById('includeRepeatedComparisons') as HTMLInputElement | null)
+          ?.checked === true;
       const rendererMode = document.getElementById('pdfRendererMode')?.value || 'modern';
       const exportSession = beginPdfExportSession();
       document.getElementById('pdfProgress').style.display = 'block';
@@ -1483,7 +1745,8 @@ export function initPdfExport() {
             pageTargets,
             quality,
             pageSize,
-            includeMeasurements
+            includeMeasurements,
+            includeRepeatedComparisons
           );
         } else {
           await generatePDFWithPDFLib(
@@ -1491,28 +1754,37 @@ export function initPdfExport() {
             pageTargets,
             quality,
             pageSize,
-            includeMeasurements
+            includeMeasurements,
+            includeRepeatedComparisons
           );
         }
       } catch (error) {
         console.error('[PDF] Export failed:', error);
         const progressTextEl = document.getElementById('pdfProgressText');
+        const modernFailure = rendererMode === 'modern';
         if (progressTextEl) {
-          progressTextEl.textContent =
-            rendererMode === 'modern'
-              ? 'Modern renderer unavailable. Falling back to classic export...'
-              : 'Export failed. Retrying with classic export...';
-        }
-        if (rendererMode !== 'modern') {
-          alert('PDF export failed. Falling back to classic renderer.');
+          progressTextEl.textContent = modernFailure
+            ? 'Modern renderer failed. Generating a clearly marked classic fallback...'
+            : 'Export failed. Retrying with classic export...';
         }
         await generatePDFWithPDFLib(
           projectName,
           pageTargets,
           quality,
           pageSize,
-          includeMeasurements
+          includeMeasurements,
+          includeRepeatedComparisons
         );
+        if (modernFailure) {
+          const reason = String(error?.message || 'Unknown modern renderer failure')
+            .replace(/\s+/g, ' ')
+            .slice(0, 220);
+          alert(
+            `The modern branded PDF could not be rendered, so OpenPaint generated the classic fallback instead.\n\nReason: ${reason}`
+          );
+        } else {
+          alert('PDF export failed. OpenPaint generated the classic fallback instead.');
+        }
       } finally {
         await restorePdfExportSession(exportSession);
       }
@@ -1526,7 +1798,8 @@ export function initPdfExport() {
     pageTargets,
     quality,
     pageSize,
-    includeMeasurements
+    includeMeasurements,
+    includeRepeatedComparisons = false
   ) {
     const progressBar = document.getElementById('pdfProgressBar');
     const progressText = document.getElementById('pdfProgressText');
@@ -1596,32 +1869,79 @@ export function initPdfExport() {
       });
     };
 
+    const captureCurrentFrameDataUrl = async () => {
+      const canvas = window.app.canvasManager.fabricCanvas;
+      const captureFrame = document.getElementById('captureFrame');
+      if (!canvas || !captureFrame) return '';
+      // Use a longer settle for captures to ensure background images are
+      // fully decoded and rendered, especially in large multi-image exports.
+      await waitForCanvasRenderStability(canvas, {
+        visiblePasses: 3,
+        timeoutVisibleMs: 200,
+      });
+      const qualityScales = { high: 1.25, medium: 1.0, low: 0.85 };
+      const scale = qualityScales[quality] || 1.0;
+      const frameRect = captureFrame.getBoundingClientRect();
+      const canvasEl = canvas.lowerCanvasEl;
+      const scaleX = canvasEl.width / canvasEl.offsetWidth;
+      const scaleY = canvasEl.height / canvasEl.offsetHeight;
+      const canvasRect = canvasEl.getBoundingClientRect();
+      const left = (frameRect.left - canvasRect.left) * scaleX;
+      const top = (frameRect.top - canvasRect.top) * scaleY;
+      const width = frameRect.width * scaleX;
+      const height = frameRect.height * scaleY;
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = width * scale;
+      tempCanvas.height = height * scale;
+      const ctx = tempCanvas.getContext('2d');
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.scale(scale, scale);
+      ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
+      return tempCanvas.toDataURL('image/jpeg', 0.78);
+    };
+
     const captureViewImageDataUrl = async target => {
+      return withTemporaryCaptureTarget(target.viewId, target.tabId, captureCurrentFrameDataUrl);
+    };
+
+    const captureViewImageForRepeatedLabel = async (target, strokeLabel) => {
       return withTemporaryCaptureTarget(target.viewId, target.tabId, async () => {
         const canvas = window.app.canvasManager.fabricCanvas;
-        const captureFrame = document.getElementById('captureFrame');
-        if (!canvas || !captureFrame) return '';
-        const qualityScales = { high: 1.25, medium: 1.0, low: 0.85 };
-        const scale = qualityScales[quality] || 1.0;
-        const frameRect = captureFrame.getBoundingClientRect();
-        const canvasEl = canvas.lowerCanvasEl;
-        const scaleX = canvasEl.width / canvasEl.offsetWidth;
-        const scaleY = canvasEl.height / canvasEl.offsetHeight;
-        const canvasRect = canvasEl.getBoundingClientRect();
-        const left = (frameRect.left - canvasRect.left) * scaleX;
-        const top = (frameRect.top - canvasRect.top) * scaleY;
-        const width = frameRect.width * scaleX;
-        const height = frameRect.height * scaleY;
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = width * scale;
-        tempCanvas.height = height * scale;
-        const ctx = tempCanvas.getContext('2d');
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.scale(scale, scale);
-        ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
-        return tempCanvas.toDataURL('image/jpeg', 0.78);
+        return withOnlyPdfLabelVisible(canvas, strokeLabel, captureCurrentFrameDataUrl);
       });
+    };
+
+    const buildComparisonGroups = async () => {
+      if (!includeRepeatedComparisons) return [];
+      const repeatedGroups = getRepeatedLabelComparisonTargets(pageTargets);
+      if (!repeatedGroups.length) return [];
+
+      const comparisonGroups = [];
+      for (let groupIndex = 0; groupIndex < repeatedGroups.length; groupIndex += 1) {
+        const group = repeatedGroups[groupIndex];
+        progressText.textContent = `Preparing repeated-label comparison (${groupIndex + 1}/${repeatedGroups.length})\u2026`;
+        progressBar.style.width = `${Math.min(88, 68 + groupIndex * 2)}%`;
+        const items = [];
+        for (const target of group.targets) {
+          const src = await captureViewImageForRepeatedLabel(target, group.label);
+          if (!src) continue;
+          items.push({
+            title: formatTargetDisplayName(target),
+            src,
+          });
+        }
+        if (items.length >= 2) {
+          comparisonGroups.push({
+            label: group.label,
+            items,
+          });
+        }
+      }
+      if (!comparisonGroups.length) return [];
+      progressText.textContent = 'Review repeated-label comparisons…';
+      progressBar.style.width = '88%';
+      return showRepeatedComparisonApprovalDialog(comparisonGroups);
     };
 
     const guideState = getGuideModelLinkStateForExport(metadata);
@@ -1709,6 +2029,8 @@ export function initPdfExport() {
       });
     }
 
+    const comparisonGroups = await buildComparisonGroups();
+
     // Cross-image connections / measurement validation summary page removed —
     // the fail/pass statuses were not actionable in the PDF output.
 
@@ -1721,6 +2043,7 @@ export function initPdfExport() {
         namingLine,
         unit: currentUnit,
         groups,
+        comparisonGroups,
       },
       options: {
         renderer: 'hybrid',
@@ -1731,12 +2054,7 @@ export function initPdfExport() {
     });
 
     const blob = await response.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
+    triggerPdfDownload(blob, `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`);
     await rewardPdfExport(projectName);
     progressBar.style.width = '100%';
     progressText.textContent = 'Done';
@@ -1747,9 +2065,22 @@ export function initPdfExport() {
     pageTargets,
     quality,
     pageSize,
-    includeMeasurements
+    includeMeasurements,
+    includeRepeatedComparisons
   ) {
     // PDFDocument, StandardFonts, rgb imported from pdf-lib above
+    if (includeRepeatedComparisons) {
+      // pdf-lib (classic renderer) does not support repeated-label comparison pages.
+      // This is a known limitation — comparison rendering requires the modern (Puppeteer) path.
+      const warnings = document.getElementById('pdfWarnings');
+      if (warnings) {
+        const note = document.createElement('div');
+        note.className = 'pdf-warning-note';
+        note.textContent =
+          'Repeated-label comparison pages were requested but are only available with the modern PDF renderer.';
+        warnings.appendChild(note);
+      }
+    }
     const progressBar = document.getElementById('pdfProgressBar');
     const progressText = document.getElementById('pdfProgressText');
     const pdfDoc = await PDFDocument.create();
@@ -1760,12 +2091,6 @@ export function initPdfExport() {
     const metadata =
       window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
     const partLabels = metadata.imagePartLabels || {};
-    // Pre-check whether checks/connections/pieceGroups exist (for page count).
-    // Full evaluation is deferred until after the image loop so all views are loaded.
-    const metaChecks = Array.isArray(metadata.measurementChecks) ? metadata.measurementChecks : [];
-    const metaConnections = Array.isArray(metadata.measurementConnections)
-      ? metadata.measurementConnections
-      : [];
     const metaPieceGroups = Array.isArray(metadata.pieceGroups) ? metadata.pieceGroups : [];
     const pageSizes = { letter: { width: 612, height: 792 }, a4: { width: 595, height: 842 } };
     const { width: pageWidth, height: pageHeight } = pageSizes[pageSize] || pageSizes.letter;
@@ -2261,7 +2586,7 @@ export function initPdfExport() {
 
     // ── Build grouped targets ─────────────────────────────────────────
     const groupedTargets = getGroupedPdfPageTargets(pageTargets, metaPieceGroups, partLabels);
-    const hasRelationshipPage = metaChecks.length > 0 || metaConnections.length > 0;
+    const hasRelationshipPage = false;
     totalPages = groupedTargets.length + (hasRelationshipPage ? 1 : 0);
 
     // ── Image Pages ──────────────────────────────────────────────────
@@ -2786,12 +3111,7 @@ export function initPdfExport() {
     progressText.textContent = 'Saving PDF\u2026';
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
+    triggerPdfDownload(blob, `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`);
     await rewardPdfExport(projectName);
     console.log('[PDF] Generated with editable form fields using pdf-lib');
   }

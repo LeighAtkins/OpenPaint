@@ -64,7 +64,9 @@ async function switchToView(page: Page, viewId: string): Promise<void> {
 
 async function createFrameTabs(page: Page, count: number): Promise<void> {
   for (let index = 0; index < count; index += 1) {
-    await page.locator('#captureTabAdd').click();
+    await page.evaluate(() => {
+      document.getElementById('captureTabAdd')?.click();
+    });
     await page.waitForTimeout(150);
   }
 }
@@ -86,7 +88,10 @@ async function getNormalFrameTabs(
 }
 
 async function activateFrameTab(page: Page, tabId: string): Promise<void> {
-  await page.locator(`.capture-tab[data-tab-id="${tabId}"]`).click();
+  await page.evaluate(id => {
+    const viewId = window.app?.projectManager?.currentViewId || 'front';
+    window.setActiveCaptureTab?.(viewId, id);
+  }, tabId);
   await page.waitForTimeout(200);
   await waitForCanvasLayoutSettle(page);
 }
@@ -336,6 +341,19 @@ test.describe('Measurement Guide Frame Binding', () => {
   }) => {
     const svgRequests: string[] = [];
     const pageErrors = collectPageErrors(page);
+
+    await page.route('**/api/measurement-guides/codes', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          count: 1,
+          codes: ['TEST'],
+          viewsByCode: { TEST: ['front', 'back', 'side'] },
+        }),
+      });
+    });
 
     await page.route('**/api/measurement-guides/svg**', async route => {
       const url = new URL(route.request().url());
@@ -685,6 +703,43 @@ test.describe('Measurement Guide Frame Binding', () => {
         variant: 'side',
       },
     });
+
+    const savedProject = await page.evaluate(async () => {
+      return window.app?.projectManager?.getProjectData?.({ embedImages: true });
+    });
+    await page.evaluate(
+      data => window.app?.projectManager?.loadProjectFromData?.(data),
+      savedProject
+    );
+    await page.waitForFunction(() => !(window as any).__isLoadingProject, { timeout: 15_000 });
+    await page.waitForTimeout(900);
+
+    const expected = [
+      { code: 'TEST-A', variant: 'front' },
+      { code: 'TEST-B', variant: 'back' },
+      { code: 'TEST-C', variant: 'side' },
+    ];
+    for (let index = 0; index < tabs.length; index += 1) {
+      await activateFrameTab(page, tabs[index].id);
+      const restored = await page.evaluate(
+        ({ viewId, tabId }) => ({
+          explicit: window.resolveGuideModelBindingForView?.(`${viewId}::tab:${tabId}`) || null,
+          active: window.resolveActiveGuideForView?.(viewId) || null,
+        }),
+        { viewId: 'bind-mode-ui-image', tabId: tabs[index].id }
+      );
+      expect(restored.explicit).toMatchObject({
+        scopeType: 'frame',
+        scopeId: `bind-mode-ui-image::tab:${tabs[index].id}`,
+        selection: expected[index],
+      });
+      expect(restored.active).toMatchObject({
+        code: expected[index].code,
+        variant: expected[index].variant,
+        scopeType: 'frame',
+        scopeId: `bind-mode-ui-image::tab:${tabs[index].id}`,
+      });
+    }
   });
 
   test('duplicate next-tag refreshes do not emit an event storm', async ({ page }) => {

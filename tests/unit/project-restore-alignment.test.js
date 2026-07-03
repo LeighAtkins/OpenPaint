@@ -4,6 +4,7 @@ import { CanvasManager } from '../../src/modules/CanvasManager.ts';
 import { ProjectManager } from '../../src/modules/ProjectManager.ts';
 import {
   getCenteredBoxWorldRect,
+  getFabricObjectWorldRect,
   mapWorldRectToViewport,
   fitViewportToWorldRect,
 } from '../../src/modules/utils/viewportRestore.ts';
@@ -70,6 +71,28 @@ describe('project restore alignment helpers', () => {
         center: { x: 0, y: 0 },
       })
     ).toEqual(targetB);
+  });
+
+  it('uses Fabric absolute bounds instead of viewport-transformed corner coordinates', () => {
+    const background = {
+      getCoords: () => [
+        { x: -4, y: 24 },
+        { x: 759, y: 24 },
+        { x: 759, y: 597 },
+        { x: -4, y: 597 },
+      ],
+      getBoundingRect: (absolute, calculate) =>
+        absolute === true && calculate === true
+          ? { left: 535, top: 66, width: 811, height: 608 }
+          : { left: -4, top: 24, width: 763, height: 573 },
+    };
+
+    expect(getFabricObjectWorldRect(background)).toEqual({
+      left: 535,
+      top: 66,
+      width: 811,
+      height: 608,
+    });
   });
 
   it('extracts saved background placement from serialized canvas data', () => {

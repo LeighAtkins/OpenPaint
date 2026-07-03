@@ -190,8 +190,32 @@ body {
   width: 5.5mm;
   height: 5.5mm;
   transform: translateY(-50%);
-  border: 1.4px solid var(--ink);
+  border: 0;
   background: #ffffff;
+  box-shadow: inset 0 0 0 1.4px var(--ink);
+  overflow: hidden;
+}
+
+.unit-checkbox::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  box-shadow: inset 0 0 0 1.4px var(--ink);
+  pointer-events: none;
+}
+
+.unit-checkbox.active::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 50%;
+  width: 2.4mm;
+  height: 2.4mm;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background: #000000;
 }
 
 .unit-pill.active {
@@ -220,6 +244,10 @@ body {
 
 .sheet-main {
   margin-bottom: 8mm;
+}
+
+.sheet-main-dense {
+  margin-bottom: 5mm;
 }
 
 /* Portrait layout: image on left, measurements on right */
@@ -259,6 +287,10 @@ body {
   padding: 0;
 }
 
+.measure-panel-wide {
+  width: min(100%, 156mm);
+}
+
 .section-kicker {
   margin: 0 0 3mm;
   color: var(--ink-soft);
@@ -281,6 +313,14 @@ body {
   background: #ffffff;
 }
 
+.sheet-main-dense .hero-image {
+  height: 78mm;
+}
+
+.sheet-main-dense .figure-caption {
+  margin-top: 1.6mm;
+}
+
 .figure-caption {
   margin-top: 2.5mm;
   color: var(--ink-soft);
@@ -296,17 +336,33 @@ body {
   border-bottom: 0;
 }
 
-/* Two-column layout for when there are many measurements */
+/* Two-column layout for when there are many measurements.
+   The frame is built entirely from item-level borders (no container border)
+   so an odd count ends cleanly at the last full row instead of drawing a
+   phantom line down the empty side. */
 .measurement-grid.two-col {
   grid-template-columns: 1fr 1fr;
   gap: 0;
+  border: 0;
 }
 
-.measurement-col {
-  break-inside: avoid;
+.measurement-grid.two-col .measurement-item {
+  grid-template-columns: 20mm minmax(0, 1fr);
 }
 
-.measurement-grid.two-col .measurement-col:first-child {
+/* Top edge on the first row */
+.measurement-grid.two-col .measurement-item:nth-child(-n+2) {
+  border-top: 1.3px solid var(--ink);
+}
+
+/* Left column (odd): outer-left edge + internal divider */
+.measurement-grid.two-col .measurement-item:nth-child(odd) {
+  border-left: 1.3px solid var(--ink);
+  border-right: 1.3px solid var(--ink);
+}
+
+/* Right column (even): outer-right edge */
+.measurement-grid.two-col .measurement-item:nth-child(even) {
   border-right: 1.3px solid var(--ink);
 }
 

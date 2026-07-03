@@ -173,10 +173,6 @@ function toBaseViewId(viewId: string): string {
 function getCurrentViewId(): string {
   const input = document.getElementById('currentImageNameBox');
   if (input instanceof HTMLInputElement) {
-    const typed = input.value.trim().toLowerCase();
-    if (typed === 'front' || typed === 'back' || typed === 'side') {
-      return typed;
-    }
     const activeViewId = (input.dataset.activeViewId || '').trim();
     if (activeViewId) return activeViewId;
   }
@@ -292,8 +288,13 @@ function getMetadata(): any {
 }
 
 function getViewCandidates(viewId: string): string[] {
+  const explicit = viewId.trim();
   const base = toBaseViewId(viewId);
-  return Array.from(new Set([viewId.trim(), base].filter(Boolean)));
+  const scoped = getCwScopedViewKey(viewId);
+  const frame = scoped.includes('::tab:') ? scoped : '';
+  return Array.from(
+    new Set([explicit.includes('::tab:') ? explicit : '', frame, base].filter(Boolean))
+  );
 }
 
 function getGuideBinding(viewId: string): {
@@ -320,8 +321,7 @@ function getGuideBinding(viewId: string): {
     const activeCode = normalizeCode((binding as any).activeCode || codes[0] || '');
     const locked = (binding as any).locked === true;
     if (codes.length || activeCode || locked) {
-      const base = toBaseViewId(viewId);
-      const scopeType = candidate === viewId ? 'frame' : candidate === base ? 'view' : 'frame';
+      const scopeType = candidate.includes('::tab:') ? 'frame' : 'view';
       return { codes, activeCode, locked, scopeId: candidate, scopeType };
     }
   }
@@ -1033,7 +1033,7 @@ async function renderIndicator(): Promise<void> {
     <div class="measurement-guide-indicator-head">
       <span>Mini Guide</span>
       <div class="measurement-guide-indicator-controls">
-        <button type="button" class="measurement-guide-indicator-ctl" data-guide-bind aria-label="Guide binding">Unbind</button>
+        <button type="button" class="measurement-guide-indicator-ctl" data-guide-bind aria-label="Guide binding">Bind</button>
       </div>
     </div>
     <p class="measurement-guide-indicator-meta">${breadcrumb}</p>

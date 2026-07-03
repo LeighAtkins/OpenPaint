@@ -1,6 +1,7 @@
 // Text Tool
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-misused-promises, @typescript-eslint/prefer-regexp-exec, @typescript-eslint/unbound-method, prefer-rest-params */
 import { BaseTool } from './BaseTool.js';
+import { resolveDrawingImageLabel } from '../ui/scoped-image-label.js';
 
 declare const fabric: any;
 
@@ -137,6 +138,10 @@ export class TextTool extends BaseTool {
       strokeWidth: 0,
       backgroundColor: backgroundEnabled ? '#ffffff' : 'transparent',
       hoverCursor: 'text',
+      // IText changes dimensions on every keystroke. Rendering it directly avoids
+      // Safari reusing a stale Fabric cache that can clip the canvas beneath it.
+      objectCaching: false,
+      noScaleCache: false,
     });
 
     this.canvas.add(text);
@@ -147,7 +152,11 @@ export class TextTool extends BaseTool {
 
     // Attach metadata for visibility tracking (has 50ms delay, runs in background)
     if (window.app && window.app.metadataManager && window.app.projectManager) {
-      const currentViewId = window.app.projectManager.currentViewId || 'front';
+      const currentViewId = resolveDrawingImageLabel(
+        this.canvasManager,
+        window.app.projectManager.currentViewId || 'front'
+      );
+      window.currentImageLabel = currentViewId;
       window.app.metadataManager.attachTextMetadata(text, currentViewId);
     }
 
@@ -160,6 +169,7 @@ export class TextTool extends BaseTool {
   }
 
   editExistingText(textObj: any) {
+    this.prepareTextForEditing(textObj);
     this.activeTextObject = textObj;
     void this.enterEditingWithSyncedFont(textObj);
 
@@ -225,7 +235,11 @@ export class TextTool extends BaseTool {
   setFontSize(size: number | string) {
     this.fontSize = typeof size === 'number' ? size : parseInt(size, 10);
     const activeObj = this.canvas.getActiveObject();
-    if (activeObj && (activeObj.type === 'i-text' || activeObj.type === 'text')) {
+    if (
+      activeObj === this.activeTextObject &&
+      activeObj?.isEditing &&
+      (activeObj.type === 'i-text' || activeObj.type === 'text')
+    ) {
       activeObj.set('fontSize', this.fontSize);
       this.syncTextMetrics(activeObj);
       this.canvas.requestRenderAll();
@@ -288,8 +302,33 @@ export class TextTool extends BaseTool {
       });
   }
 
+  prepareTextForEditing(textObj: any) {
+    if (!textObj) return;
+
+    // Text annotations are deliberately independent from line-style rendering.
+    // Older projects may contain inherited dash settings or a wrapped renderer.
+    if (textObj._mixedDashRendererAttached) {
+      const textPrototype =
+        textObj.type === 'i-text' ? fabric.IText?.prototype : fabric.Text?.prototype;
+      if (typeof textPrototype?._render === 'function') {
+        textObj._render = textPrototype._render;
+      }
+      delete textObj._mixedDashRendererAttached;
+    }
+    textObj.set({
+      strokeDashArray: null,
+      objectCaching: false,
+      noScaleCache: false,
+    });
+    delete textObj.dashSettings;
+    delete textObj.lineStyle;
+    textObj.dirty = true;
+  }
+
   async enterEditingWithSyncedFont(textObj: any) {
     if (!textObj) return;
+
+    this.prepareTextForEditing(textObj);
 
     await this.ensureFontReady(
       textObj.fontFamily || this.fontFamily,

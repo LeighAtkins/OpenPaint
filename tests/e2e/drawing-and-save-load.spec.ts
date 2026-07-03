@@ -210,6 +210,48 @@ test.describe('Project save/load and resolution resilience', () => {
 // 4. View switching and stroke isolation
 // ---------------------------------------------------------------------------
 test.describe('View switching', () => {
+  test('should preserve a manual zoom when returning to an image', async ({ appPage: page }) => {
+    const restoredTransform = await page.evaluate(async () => {
+      const pm = window.app!.projectManager;
+      const cm = window.app!.canvasManager;
+      const makeImage = (color: string, label: string) => {
+        const imageCanvas = document.createElement('canvas');
+        imageCanvas.width = 800;
+        imageCanvas.height = 600;
+        const context = imageCanvas.getContext('2d')!;
+        context.fillStyle = color;
+        context.fillRect(0, 0, imageCanvas.width, imageCanvas.height);
+        context.fillStyle = '#ffffff';
+        context.font = 'bold 72px sans-serif';
+        context.fillText(label, 80, 160);
+        return imageCanvas.toDataURL('image/png');
+      };
+
+      const frontImage = makeImage('#c2410c', 'FRONT');
+      const sideImage = makeImage('#1d4ed8', 'SIDE');
+      pm.views.front.image = frontImage;
+      pm.views.front.fitMode = 'keep-size';
+      pm.views.side.image = sideImage;
+      pm.views.side.fitMode = 'keep-size';
+
+      await pm.setBackgroundImage(frontImage, 'keep-size');
+      const originalTransform = [1.65, 0, 0, 1.65, -180, -120];
+      cm.setViewportTransformExact(originalTransform);
+
+      await pm.switchView('side', true);
+      await pm.switchView('front', true);
+      await new Promise(resolve => setTimeout(resolve, 350));
+
+      return cm.fabricCanvas.viewportTransform?.slice(0, 6);
+    });
+
+    expect(restoredTransform).toHaveLength(6);
+    expect(restoredTransform![0]).toBeCloseTo(1.65, 5);
+    expect(restoredTransform![3]).toBeCloseTo(1.65, 5);
+    expect(restoredTransform![4]).toBeCloseTo(-180, 5);
+    expect(restoredTransform![5]).toBeCloseTo(-120, 5);
+  });
+
   test('should keep strokes isolated per view', async ({ appPage: page }) => {
     await uploadTestImage(page);
     await selectTool(page, 'line');

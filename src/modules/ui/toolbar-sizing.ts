@@ -15,6 +15,13 @@ export function initToolbarSizing(): void {
     if (isCalculating) return;
     isCalculating = true;
 
+    // Skip during multiview — layout shifts can produce unreliable measurements,
+    // and the CSS already handles label visibility via !important rules.
+    if (document.body.classList.contains('multiview-active')) {
+      isCalculating = false;
+      return;
+    }
+
     const toolbarWrap =
       document.getElementById('toolbarWrap') || document.querySelector('.toolbar-wrap');
     if (!toolbarWrap) {

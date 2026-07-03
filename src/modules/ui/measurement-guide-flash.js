@@ -4,6 +4,7 @@ import { TagManager } from '../TagManager';
 import { PathUtils } from '../utils/PathUtils.js';
 import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
 import { resolveScopedImageLabel } from './scoped-image-label.js';
+import { imageRegistry } from '../ImageRegistry.js';
 
 const HOTKEY = 'Backslash';
 const VIEWS = ['front', 'back', 'side'];
@@ -19,7 +20,6 @@ let flashOverlay = null;
 let galleryOverlay = null;
 let hideTimer = null;
 let activeIndex = 0;
-let hintToastTimer = null;
 let isGuidePinnedVisible = false;
 let pinnedSourceViewId = null;
 let pinnedLockToImage = false;
@@ -784,13 +784,6 @@ function getMetadata() {
 function getCurrentViewId() {
   const input = document.getElementById('currentImageNameBox');
   if (input instanceof HTMLInputElement) {
-    const typed = String(input.value || '')
-      .trim()
-      .toLowerCase();
-    if (typed === 'front' || typed === 'back' || typed === 'side') {
-      return typed;
-    }
-
     const activeViewId = String(input.dataset.activeViewId || '').trim();
     if (activeViewId) return activeViewId;
   }
@@ -900,8 +893,12 @@ function resolveModelBindingForView(viewId = getCurrentViewId()) {
 }
 
 function getViewCandidates(viewId) {
+  const explicit = String(viewId || '').trim();
   const base = toBaseViewId(viewId);
-  return Array.from(new Set([String(viewId || '').trim(), base].filter(Boolean)));
+  const frame = getFrameScopeIdForView(viewId);
+  return Array.from(
+    new Set([explicit.includes('::tab:') ? explicit : '', frame, base].filter(Boolean))
+  );
 }
 
 function getGuideBinding(viewId) {
@@ -921,7 +918,7 @@ function getGuideBinding(viewId) {
     const activeCode = normalizeCode(entry.activeCode || codes[0] || '');
     const locked = entry.locked === true;
     if (codes.length || activeCode || locked) {
-      const scopeType = candidate === String(viewId || '').trim() ? 'frame' : 'view';
+      const scopeType = candidate.includes('::tab:') ? 'frame' : 'view';
       return {
         codes,
         activeCode,
@@ -2575,26 +2572,18 @@ function markHintToastShown() {
 
 function showShortcutToast() {
   if (!shouldShowHintToast()) return;
-  ensureStyles();
-
-  let toast = document.getElementById('guideFlashShortcutToast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'guideFlashShortcutToast';
-    toast.className = 'guide-flash-toast';
-    document.body.appendChild(toast);
-  }
-
-  toast.textContent =
+  const message =
     'Hint: \\ shows guides/gallery. Alt+\\ gallery. Ctrl+\\ add codes. Shift+\\ next.';
-  requestAnimationFrame(() => toast.classList.add('visible'));
-
-  if (hintToastTimer) {
-    clearTimeout(hintToastTimer);
+  if (typeof window.notifyOpenPaint === 'function') {
+    window.notifyOpenPaint({
+      message,
+      kind: 'info',
+      title: 'Shortcut',
+      durationMs: 3600,
+    });
+  } else if (typeof window.showStatusMessage === 'function') {
+    window.showStatusMessage(message, 'info');
   }
-  hintToastTimer = setTimeout(() => {
-    toast?.classList.remove('visible');
-  }, 2800);
 
   markHintToastShown();
 }
@@ -3107,6 +3096,35 @@ function createGuideViewId(baseId) {
     index += 1;
   }
   return `${normalized}-${index}`;
+}
+
+async function registerProjectImage(viewId, imageUrl, filename, source) {
+  const manager = window.app?.projectManager || window.projectManager;
+  if (!manager || typeof manager.addImage !== 'function') {
+    throw new Error('Project manager not ready to add images');
+  }
+
+  const registry = imageRegistry;
+  const registryEnabled =
+    Boolean(registry?.registerImage) &&
+    (typeof registry?.isEnabled !== 'function' || registry.isEnabled());
+
+  if (registryEnabled) {
+    await registry.registerImage(viewId, imageUrl, filename, {
+      source,
+      refreshBackground: false,
+    });
+  } else {
+    await manager.addImage(viewId, imageUrl, { refreshBackground: false });
+    if (typeof window.addImageToSidebar === 'function') {
+      window.addImageToSidebar(imageUrl, viewId, filename);
+    }
+  }
+
+  if (!manager.views?.[viewId]) {
+    throw new Error(`Image registration did not create view ${viewId}`);
+  }
+  return viewId;
 }
 
 function setStatusMessage(message, kind = 'info') {
@@ -3637,11 +3655,19 @@ async function addGuideAsNewImage(code, view, options = {}) {
     }
   }
 
-  // Always ensure ProjectManager has a concrete view/image first.
-  await manager.addImage(label, imageUrl, { refreshBackground: false });
+  // Register the immutable image id once. ImageRegistry owns the bridge between
+  // ProjectManager, the gallery, and the legacy sidebar so those stores cannot
+  // drift apart during an import.
+  await registerProjectImage(label, imageUrl, `${label}.png`, 'measurement-guide');
 
-  if (typeof window.addImageToSidebar === 'function') {
-    window.addImageToSidebar(imageUrl, label, `${label}.png`);
+  // Attach identity before any temporary canvas switches/imports. Every later
+  // step can then resolve the same image/model pair even if the active view
+  // changes while SVG and MOS objects are being created.
+  saveGuideCodes([code], label);
+  tagGuideOnView(label, code, view);
+  const selection = upsertModelSelection(code, view);
+  if (selection) {
+    linkSelectionToImage(selection.id, label);
   }
 
   if (options.switchToNew === true && typeof manager.switchView === 'function') {
@@ -3686,13 +3712,6 @@ async function addGuideAsNewImage(code, view, options = {}) {
       }
     }
   }
-  saveGuideCodes([code], label);
-  tagGuideOnView(label, code, view);
-  const selection = upsertModelSelection(code, view);
-  if (selection) {
-    linkSelectionToImage(selection.id, label);
-  }
-
   // Switch view if requested
   if (options.switchToNew === true && typeof manager.switchView === 'function') {
     await manager.switchView(label, true);
@@ -3955,10 +3974,7 @@ async function importSvgFromText(svgText, svgPath, manager) {
   }
 
   // Add the raster background as a new project image/view
-  await manager.addImage(label, imageUrl, { refreshBackground: false });
-  if (typeof window.addImageToSidebar === 'function') {
-    window.addImageToSidebar(imageUrl, label, `${label}.png`);
-  }
+  await registerProjectImage(label, imageUrl, `${label}.png`, 'measurement-guide-svg');
 
   // Switch to the new view before placing objects
   if (typeof manager.switchView === 'function') {
@@ -4126,9 +4142,15 @@ function normalizeGuideVariant(value, fallback = 'front') {
 
 function resolveActiveGuideForView(viewId = getCurrentViewId()) {
   const modelBinding = resolveModelBindingForView(viewId);
+  const guideBinding = getGuideBinding(viewId);
   const boundCode = normalizeCode(modelBinding?.selection?.code || '');
   const boundVariant = normalizeGuideVariant(modelBinding?.selection?.variant, 'front');
-  if (boundCode) {
+  const fallbackCode = normalizeCode(guideBinding.activeCode || guideBinding.codes[0] || '');
+  const fallbackVariant = normalizeGuideVariant(guideBinding.activeVariant, 'front');
+  const frameGuideOverridesImageModel =
+    guideBinding.scopeType === 'frame' && modelBinding.scopeType !== 'frame' && fallbackCode;
+
+  if (boundCode && !frameGuideOverridesImageModel) {
     return {
       code: boundCode,
       variant: boundVariant,
@@ -4139,13 +4161,10 @@ function resolveActiveGuideForView(viewId = getCurrentViewId()) {
     };
   }
 
-  const guideBinding = getGuideBinding(viewId);
-  const fallbackCode = normalizeCode(guideBinding.activeCode || guideBinding.codes[0] || '');
-  const fallbackVariant = normalizeGuideVariant(guideBinding.activeVariant, 'front');
   return {
     code: fallbackCode,
     variant: fallbackVariant,
-    bound: false,
+    bound: ['frame', 'view', 'project'].includes(guideBinding.scopeType),
     selectionId: '',
     scopeType: guideBinding.scopeType || 'default',
     scopeId: guideBinding.scopeId || '',
@@ -7605,10 +7624,7 @@ function showGuideGallery(options = {}) {
             const manager = window.app?.projectManager || window.projectManager;
             if (manager && typeof manager.addImage === 'function') {
               const label = name.replace(/[^a-zA-Z0-9-_]/g, '-').toLowerCase();
-              await manager.addImage(label, url, { refreshBackground: false });
-              if (typeof window.addImageToSidebar === 'function') {
-                window.addImageToSidebar(url, label, name);
-              }
+              await registerProjectImage(label, url, name, 'measurement-guide-reference');
               if (typeof manager.switchView === 'function') {
                 await manager.switchView(label, true);
               }

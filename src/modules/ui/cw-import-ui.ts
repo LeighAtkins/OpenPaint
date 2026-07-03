@@ -2,6 +2,7 @@ import {
   openMeasurementSplitWorkspace,
   shouldAllowMeasurementSplitEdit,
 } from './measurement-split-workspace';
+import { imageRegistry } from '../ImageRegistry.js';
 
 interface ImportedRow {
   id: string;
@@ -1658,7 +1659,7 @@ function createModal(): HTMLElement {
   };
 
   const setActiveLoadedItem = (selectionKey: string, options: { resetSection?: boolean } = {}) => {
-    state.activeItemKey = String(selectionKey || '').trim();
+    state.activeItemKey = (selectionKey || '').trim();
     if (options.resetSection !== false) {
       state.activeSection = '';
     }
@@ -2169,7 +2170,7 @@ function createModal(): HTMLElement {
       const canonicalScope =
         typeof metadata?.normalizeImageLabel === 'function'
           ? String(metadata.normalizeImageLabel(siblingScope) || siblingScope).trim()
-          : String(siblingScope || '').trim();
+          : (siblingScope || '').trim();
 
       Object.keys(metadata?.vectorStrokesByImage?.[canonicalScope] || {}).forEach(label => {
         const normalized = normalizeGuideLabel(label);
@@ -3184,7 +3185,7 @@ function createModal(): HTMLElement {
         : [];
       if (qcAttempts.length > 0) {
         const attemptByRef = new Map(
-          qcAttempts.map(a => [String(a.productReference || '').trim(), Boolean(a.ok)])
+          qcAttempts.map(a => [(a.productReference || '').trim(), Boolean(a.ok)])
         );
         state.searchResults.forEach(item => {
           item.versionOptions.forEach(opt => {
@@ -3963,7 +3964,6 @@ function createModal(): HTMLElement {
         return;
       }
 
-      const imageRegistry = (window as any).imageRegistry;
       const projectManager = (window as any).app?.projectManager;
       if (!projectManager) {
         setStatus('Project manager not available.', 'bad');
@@ -4006,11 +4006,7 @@ function createModal(): HTMLElement {
           const fileName = `${viewId}.jpg`;
           const addImageToSidebarFn = (window as any).addImageToSidebar;
           const addImageToGalleryCompatFn = (window as any).addImageToGalleryCompat;
-          const registryEnabled =
-            Boolean(imageRegistry?.registerImage) &&
-            (typeof imageRegistry?.isEnabled === 'function'
-              ? Boolean(imageRegistry.isEnabled())
-              : true);
+          const registryEnabled = imageRegistry.isEnabled();
 
           if (registryEnabled && imageRegistry?.registerImage) {
             console.log('[CW Import] register via imageRegistry', { viewId, fileName });

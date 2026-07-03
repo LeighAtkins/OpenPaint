@@ -6,6 +6,7 @@ import { BaseTool } from './BaseTool.js';
 import { PathUtils } from '../utils/PathUtils.js';
 import { FabricControls } from '../utils/FabricControls.js';
 import { addAutoMeasurementConnections } from '../utils/measurement-connections.js';
+import { resolveDrawingImageLabel } from '../ui/scoped-image-label.js';
 
 export class CurveTool extends BaseTool {
   constructor(canvasManager) {
@@ -529,9 +530,11 @@ export class CurveTool extends BaseTool {
 
     // Add metadata for labeling
     if (window.app && window.app.metadataManager) {
-      // Get current view ID - must match what StrokeMetadataManager uses for consistency
-      const imageLabel =
-        window.app.projectManager?.currentViewId || window.currentImageLabel || 'front';
+      const imageLabel = resolveDrawingImageLabel(
+        this.canvasManager,
+        window.app.projectManager?.currentViewId || 'front'
+      );
+      window.currentImageLabel = imageLabel;
       const strokeLabel = window.app.metadataManager.getNextLabel(imageLabel);
 
       console.log(`[CurveTool] Attaching metadata: label=${strokeLabel}, image=${imageLabel}`);

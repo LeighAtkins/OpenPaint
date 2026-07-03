@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<handoff>
+  <project>OpenPaint</project>
+  <date>2026-07-01</date>
+  <status>GREEN</status>
+  <summary>
+    Frame, resize, rotation, Gallery binding, and thumbnail ordering now use immutable
+    image/frame identity and world-space crop geometry. The focused regression batch
+    passes 33/33, the unit/integration suite passes 190/190, and the production build passes.
+  </summary>
+
+  <ownership>
+    <rule name="image-id">ProjectManager view id is immutable and owns image state.</rule>
+    <rule name="frame-id">Frame state is keyed by imageId::tab:tabId.</rule>
+    <rule name="crop">captureFrame.worldRect is the authored crop.</rule>
+    <rule name="rotation">
+      View rotation is applied to Fabric background/objects. CanvasManager.rotateViewport is
+      false, therefore viewport geometry functions must receive rotation 0.
+    </rule>
+    <rule name="order">orderedImageLabels owns display order only; it never renames a view.</rule>
+    <rule name="guide-binding">
+      measurementGuideModelLinksByScope owns frame bindings and
+      measurementGuideModelLinksByImage owns image fallbacks.
+    </rule>
+  </ownership>
+
+  <pipelines>
+    <pipeline name="tab-or-image-switch">
+      <step>Save outgoing Fabric objects and exact viewport.</step>
+      <step>Preserve the outgoing authored frame worldRect; navigation never recalculates it.</step>
+      <step>Switch immutable image id and load that image's canvas data.</step>
+      <step>Restore Fabric object/background rotation.</step>
+      <step>Restore the active frame's worldRect.</step>
+      <step>Derive the DOM frame and viewport once from the worldRect.</step>
+      <step>Apply visibility for only the active image/frame scope.</step>
+    </pipeline>
+
+    <pipeline name="window-or-monitor-resize">
+      <step>Resize the Fabric backing canvas.</step>
+      <step>Resolve the responsive DOM frame from stored relative frame dimensions.</step>
+      <step>Keep the frame's authored worldRect unchanged.</step>
+      <step>Fit that exact worldRect into the newly sized DOM frame.</step>
+      <step>Write zoom and pan together; never resize the frame independently of the viewport.</step>
+      <step>Persist updated screen dimensions without rewriting the crop.</step>
+    </pipeline>
+
+    <pipeline name="legacy-geometry-migration">
+      <step>Load saved backgroundWorldRect as the authoritative full-image bounds.</step>
+      <step>Load frame worldRect as the preferred crop.</step>
+      <step>
+        If an old frame worldRect exceeds the saved image bounds by more than 5%, classify it
+        as CSS-scaled-coordinate corruption and recover from backgroundWorldRect.
+      </step>
+      <step>Do not use overlap heuristics; valid rotated crops can have low AABB overlap.</step>
+    </pipeline>
+
+    <pipeline name="gallery-import-and-binding">
+      <step>Create one immutable guide image id from code and variant.</step>
+      <step>Register through ImageRegistry, which updates ProjectManager, Gallery, and sidebar.</step>
+      <step>Persist guide label, selection id, and image binding before temporary canvas switches.</step>
+      <step>Import SVG/MOS/measurement objects only inside the new image/frame scope.</step>
+      <step>Restore the previous active image when requested.</step>
+      <step>Serialize and reload the same image ids and scope links.</step>
+    </pipeline>
+
+    <pipeline name="thumbnail-reorder">
+      <step>Drag source and target communicate immutable image labels, never captured indices.</step>
+      <step>Move the matching Gallery data entry.</step>
+      <step>Rebuild modern cards with current indices and stable card/caption structure.</step>
+      <step>Reorder visible sidebar nodes to the same label order.</step>
+      <step>Update orderedImageLabels and mini-stepper.</step>
+      <step>Keep currentViewId and every image/frame binding unchanged.</step>
+    </pipeline>
+  </pipelines>
+
+  <regression-tests>
+    <file>tests/e2e/resize-centering.spec.ts</file>
+    <file>tests/e2e/resize-drag-stress.spec.ts</file>
+    <file>tests/e2e/rotated-frame-stability.spec.ts</file>
+    <file>tests/e2e/measurement-guide-frame-binding.spec.ts</file>
+    <file>tests/e2e/measurement-guide-gallery-import.spec.ts</file>
+    <file>tests/e2e/thumbnail-reorder.spec.ts</file>
+    <file>tests/e2e/project-archive-pipeline.spec.ts</file>
+  </regression-tests>
+</handoff>

@@ -7,6 +7,11 @@ const nodeBin = fs.existsSync(localNodeBin) ? localNodeBin : process.execPath;
 const nodeBinDir = path.dirname(nodeBin);
 const webServerScript = path.resolve(process.cwd(), 'scripts/playwright-dev-server.mjs');
 const webServerCommand = `PATH="${nodeBinDir}:$PATH" "${nodeBin}" "${webServerScript}"`;
+const macChromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const localChromeLaunchOptions =
+  process.platform === 'darwin' && fs.existsSync(macChromePath)
+    ? { executablePath: macChromePath }
+    : undefined;
 
 export default defineConfig({
   testMatch: '**/*.spec.ts',
@@ -27,6 +32,7 @@ export default defineConfig({
       testDir: './tests/visual',
       use: {
         browserName: 'chromium',
+        launchOptions: localChromeLaunchOptions,
         viewport: { width: 800, height: 600 },
       },
     },
@@ -35,6 +41,7 @@ export default defineConfig({
       testDir: './tests/e2e',
       use: {
         browserName: 'chromium',
+        launchOptions: localChromeLaunchOptions,
         baseURL: 'http://127.0.0.1:5173',
         viewport: { width: 1280, height: 800 },
         screenshot: 'only-on-failure',

@@ -15,14 +15,16 @@ describe('resolveScopedImageLabel', () => {
     global.window = originalWindow;
   });
 
-  test('prefers metadataManager.normalizeImageLabel when available', () => {
+  test('prefers metadataManager.resolveActiveImageLabel when available', () => {
     global.window.app.metadataManager = {
+      resolveActiveImageLabel: vi.fn().mockReturnValue('front::tab:A'),
       normalizeImageLabel: vi.fn().mockReturnValue('front::tab:A'),
     };
     global.window.getCaptureTabScopedLabel = vi.fn().mockReturnValue('front::tab:B');
 
     expect(resolveScopedImageLabel('front')).toBe('front::tab:A');
-    expect(global.window.app.metadataManager.normalizeImageLabel).toHaveBeenCalledWith('front');
+    expect(global.window.app.metadataManager.resolveActiveImageLabel).toHaveBeenCalledWith('front');
+    expect(global.window.app.metadataManager.normalizeImageLabel).not.toHaveBeenCalled();
     expect(global.window.getCaptureTabScopedLabel).not.toHaveBeenCalled();
   });
 

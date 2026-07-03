@@ -17,7 +17,6 @@ export function initImageGalleryModule() {
   window.imageGalleryData = imageGalleryData;
   let intersectionObserver = null;
   const compareSelectedLabels = new Set();
-  const compareStaticCanvases = [];
   let compareDragActive = false;
 
   // Multiview interactive pane state
@@ -25,6 +24,167 @@ export function initImageGalleryModule() {
   let multiviewFocusedLabel = null;
   let multiviewSavedToolName = null;
   let multiviewSavedImageLabel = null;
+  let multiviewSavedTagRenderTarget = null;
+  let multiviewSession = null;
+  let multiviewResizeObserver = null;
+  let multiviewMutationObserver = null;
+  let multiviewLayoutRaf = null;
+
+  function cloneTransform(transform) {
+    if (!Array.isArray(transform) || transform.length < 6) return null;
+    const next = transform.slice(0, 6).map(Number);
+    return next.every(Number.isFinite) ? next : null;
+  }
+
+  function getCanvasCamera(canvas) {
+    const transform = cloneTransform(canvas?.viewportTransform);
+    const width = Number(canvas?.width) || 0;
+    const height = Number(canvas?.height) || 0;
+    if (!transform || width <= 0 || height <= 0 || !window.fabric?.util?.invertTransform)
+      return null;
+    const inverse = window.fabric.util.invertTransform(transform);
+    const worldFocus = window.fabric.util.transformPoint(
+      new window.fabric.Point(width / 2, height / 2),
+      inverse
+    );
+    if (!Number.isFinite(worldFocus?.x) || !Number.isFinite(worldFocus?.y)) return null;
+    return {
+      linear: transform.slice(0, 4),
+      worldFocus: { x: worldFocus.x, y: worldFocus.y },
+    };
+  }
+
+  function applyCanvasCamera(canvas, camera) {
+    if (!canvas || !camera?.linear || !camera?.worldFocus) return false;
+    const [a, b, c, d] = camera.linear.map(Number);
+    const focusX = Number(camera.worldFocus.x);
+    const focusY = Number(camera.worldFocus.y);
+    const width = Number(canvas.width) || 0;
+    const height = Number(canvas.height) || 0;
+    if (
+      ![a, b, c, d, focusX, focusY, width, height].every(Number.isFinite) ||
+      width <= 0 ||
+      height <= 0
+    ) {
+      return false;
+    }
+    const transform = [
+      a,
+      b,
+      c,
+      d,
+      width / 2 - a * focusX - c * focusY,
+      height / 2 - b * focusX - d * focusY,
+    ];
+    canvas.setViewportTransform(transform);
+    canvas.requestRenderAll();
+    return true;
+  }
+
+  function getStoredViewCamera(label, canvasData) {
+    const view = getViewForLabel(label);
+    const transform =
+      cloneTransform(view?.viewportTransform) || cloneTransform(canvasData?.viewportTransform);
+    if (!transform || !window.fabric?.util?.invertTransform) return null;
+    const sourceWidth =
+      Number(view?.viewport?.savedCanvasWidth) ||
+      Number(canvasData?.width) ||
+      Number(window.app?.canvasManager?.fabricCanvas?.width) ||
+      0;
+    const sourceHeight =
+      Number(view?.viewport?.savedCanvasHeight) ||
+      Number(canvasData?.height) ||
+      Number(window.app?.canvasManager?.fabricCanvas?.height) ||
+      0;
+    if (!(sourceWidth > 0 && sourceHeight > 0)) return null;
+    const inverse = window.fabric.util.invertTransform(transform);
+    const worldFocus = window.fabric.util.transformPoint(
+      new window.fabric.Point(sourceWidth / 2, sourceHeight / 2),
+      inverse
+    );
+    if (!Number.isFinite(worldFocus?.x) || !Number.isFinite(worldFocus?.y)) return null;
+    return {
+      linear: transform.slice(0, 4),
+      worldFocus: { x: worldFocus.x, y: worldFocus.y },
+    };
+  }
+
+  function snapshotLiveMultiviewState() {
+    const projectManager = window.app?.projectManager || window.projectManager;
+    const canvasManager = projectManager?.canvasManager || window.app?.canvasManager;
+    const canvas = canvasManager?.fabricCanvas;
+    const captureFrame = document.getElementById('captureFrame');
+    const overlay = document.getElementById('captureOverlay');
+    const frameRect = captureFrame?.getBoundingClientRect?.();
+    const overlayRect = overlay?.getBoundingClientRect?.();
+    if (!projectManager || !canvas || !captureFrame || !frameRect || !overlayRect) return null;
+
+    window.captureTabsSyncActive?.(projectManager.currentViewId, { preserveWorldRect: true });
+    projectManager.saveCurrentViewState?.();
+    return {
+      viewId: projectManager.currentViewId,
+      imageLabel: window.currentImageLabel,
+      frame: {
+        left: frameRect.left - overlayRect.left,
+        top: frameRect.top - overlayRect.top,
+        width: frameRect.width,
+        height: frameRect.height,
+        borderColor: captureFrame.style.borderColor || '',
+      },
+      viewportTransform: cloneTransform(canvas.viewportTransform),
+    };
+  }
+
+  function restoreLiveMultiviewState(snapshot) {
+    if (!snapshot) return;
+    const restore = () => {
+      if (document.body.classList.contains('multiview-active')) return;
+      const projectManager = window.app?.projectManager || window.projectManager;
+      const canvasManager = projectManager?.canvasManager || window.app?.canvasManager;
+      const captureFrame = document.getElementById('captureFrame');
+      if (!canvasManager?.fabricCanvas || !captureFrame) return;
+
+      captureFrame.style.left = `${Math.round(snapshot.frame.left)}px`;
+      captureFrame.style.top = `${Math.round(snapshot.frame.top)}px`;
+      captureFrame.style.width = `${Math.round(snapshot.frame.width)}px`;
+      captureFrame.style.height = `${Math.round(snapshot.frame.height)}px`;
+      if (snapshot.frame.borderColor) captureFrame.style.borderColor = snapshot.frame.borderColor;
+      if (snapshot.imageLabel) window.currentImageLabel = snapshot.imageLabel;
+      if (snapshot.viewportTransform) {
+        canvasManager.setViewportTransformExact?.(snapshot.viewportTransform);
+      }
+      canvasManager.fabricCanvas.requestRenderAll?.();
+    };
+
+    // Revealing the primary canvas can trigger a layout resize. Restore after
+    // that work has settled rather than replaying the frame-fit pipeline.
+    requestAnimationFrame(() => requestAnimationFrame(restore));
+    setTimeout(restore, 220);
+  }
+
+  function captureComparePaneCameras() {
+    if (!multiviewSession) return;
+    multiviewCanvasManagers.forEach((cm, label) => {
+      const camera = getCanvasCamera(cm?.fabricCanvas);
+      if (camera) multiviewSession.paneCameras.set(label, camera);
+    });
+  }
+
+  function persistMultiviewPane(label) {
+    const app = window.app;
+    const projectManager = app?.projectManager;
+    const paneCM = multiviewCanvasManagers.get(label);
+    if (!projectManager || !paneCM || !projectManager.views?.[label]) return;
+    // Replace serialized references with the pane's live objects, then commit
+    // explicitly to that view. Never mutate the primary editor's current view
+    // or canvas manager as part of a comparison-pane save.
+    app.metadataManager?.rebuildMetadataFromCanvas?.(label, paneCM.fabricCanvas);
+    projectManager.saveCurrentViewState({
+      skipViewport: true,
+      viewId: label,
+      canvasManager: paneCM,
+    });
+  }
 
   function syncImageGalleryDataRef() {
     window.imageGalleryData = imageGalleryData;
@@ -423,7 +583,32 @@ export function initImageGalleryModule() {
    * Reorder images in the gallery
    */
   function reorderImages(fromIndex, toIndex) {
+    if (
+      !Number.isInteger(fromIndex) ||
+      !Number.isInteger(toIndex) ||
+      fromIndex < 0 ||
+      toIndex < 0 ||
+      fromIndex >= imageGalleryData.length ||
+      toIndex >= imageGalleryData.length ||
+      fromIndex === toIndex
+    ) {
+      return;
+    }
     console.log(`[Gallery] Reordering image from ${fromIndex} to ${toIndex}`);
+
+    const imageList = document.getElementById('imageList');
+    const activeLabel = window.app?.projectManager?.currentViewId || '';
+    const suppressionUntil = Date.now() + 700;
+    window.__imageListReorderInProgress = true;
+    window.__cancelPendingScrollSelect?.();
+    window.__suppressScrollSelectUntil = Math.max(
+      Number(window.__suppressScrollSelectUntil) || 0,
+      suppressionUntil
+    );
+    window.__imageListProgrammaticScrollUntil = Math.max(
+      Number(window.__imageListProgrammaticScrollUntil) || 0,
+      suppressionUntil
+    );
 
     // Reorder the data array
     const movedImage = imageGalleryData.splice(fromIndex, 1)[0];
@@ -451,6 +636,44 @@ export function initImageGalleryModule() {
     } catch (e) {
       console.warn('[Gallery] Failed to update orderedImageLabels after reorder:', e);
     }
+    syncLegacyImageListOrder();
+    const activeContainer = activeLabel
+      ? imageList?.querySelector(`[data-label="${CSS.escape(activeLabel)}"]`)
+      : null;
+    if (activeContainer && imageList) {
+      const listRect = imageList.getBoundingClientRect();
+      const activeRect = activeContainer.getBoundingClientRect();
+      imageList.scrollTop +=
+        activeRect.top + activeRect.height / 2 - (listRect.top + listRect.height / 2);
+    }
+    if (typeof window.updatePills === 'function') window.updatePills();
+    if (typeof window.updateActivePill === 'function') window.updateActivePill();
+    setTimeout(() => {
+      window.__imageListReorderInProgress = false;
+    }, 220);
+  }
+
+  function reorderImagesByLabel(fromLabel, toLabel) {
+    const fromIndex = imageGalleryData.findIndex(
+      (_, index) => getImageLabelAtIndex(index) === fromLabel
+    );
+    const toIndex = imageGalleryData.findIndex(
+      (_, index) => getImageLabelAtIndex(index) === toLabel
+    );
+    reorderImages(fromIndex, toIndex);
+  }
+
+  function syncLegacyImageListOrder() {
+    const imageList = document.getElementById('imageList');
+    if (!imageList) return;
+    imageGalleryData.forEach((_, index) => {
+      const label = getImageLabelAtIndex(index);
+      if (!label) return;
+      const container = Array.from(imageList.querySelectorAll('.image-container')).find(
+        element => element.getAttribute('data-label') === label
+      );
+      if (container) imageList.appendChild(container);
+    });
   }
 
   /**
@@ -462,7 +685,11 @@ export function initImageGalleryModule() {
 
     if (!imageGallery || !imageDots) return;
 
-    // Clear existing thumbnails and dots
+    // Clear existing thumbnails and dots. Rebuilding is intentional here: all
+    // click/drag closures receive their new immutable index in one pass.
+    imageGallery.querySelectorAll('.image-thumbnail').forEach(thumbnail => {
+      intersectionObserver?.unobserve?.(thumbnail);
+    });
     imageGallery.innerHTML = '';
     imageDots.innerHTML = '';
 
@@ -490,7 +717,16 @@ export function initImageGalleryModule() {
       // Add all event listeners (click, drag, etc.)
       addThumbnailEventListeners(thumbnail, index);
 
-      imageGallery.appendChild(thumbnail);
+      const card = document.createElement('div');
+      card.className = 'flex flex-col items-center gap-1';
+      card.dataset.imageIndex = String(index);
+      card.appendChild(thumbnail);
+      const caption = document.createElement('div');
+      caption.className =
+        'thumb-caption text-[11px] text-slate-500 font-medium truncate max-w-[120px]';
+      caption.textContent = imageData.name || '';
+      card.appendChild(caption);
+      imageGallery.appendChild(card);
 
       // Create dot
       const dot = document.createElement('div');
@@ -583,7 +819,7 @@ export function initImageGalleryModule() {
         e.preventDefault();
         return;
       }
-      e.dataTransfer.setData('text/plain', index);
+      e.dataTransfer.setData('text/plain', getImageLabelAtIndex(index));
       thumbnail.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
     });
@@ -617,12 +853,9 @@ export function initImageGalleryModule() {
         window.dragScrollInterval = null;
       }
 
-      const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'));
-      const targetIndex = index;
-
-      if (draggedIndex !== targetIndex) {
-        reorderImages(draggedIndex, targetIndex);
-      }
+      const draggedLabel = e.dataTransfer.getData('text/plain');
+      const targetLabel = getImageLabelAtIndex(index);
+      reorderImagesByLabel(draggedLabel, targetLabel);
     });
   }
 
@@ -731,6 +964,8 @@ export function initImageGalleryModule() {
   }
 
   function disposeCompareCanvases() {
+    captureComparePaneCameras();
+
     // Unfocus and restore original tool routing
     unfocusMultiviewPane();
 
@@ -743,24 +978,17 @@ export function initImageGalleryModule() {
       }
     });
     multiviewCanvasManagers.clear();
-
-    // Dispose any remaining static canvases
-    while (compareStaticCanvases.length) {
-      const canvas = compareStaticCanvases.pop();
-      try {
-        canvas?.dispose?.();
-      } catch (error) {
-        console.warn('[MultiView] Failed to dispose compare canvas', error);
-      }
-    }
   }
 
   function unfocusMultiviewPane() {
     if (!multiviewFocusedLabel) return;
 
-    // Save the focused pane's canvas state back to the view
+    // Save the focused pane's canvas state back to the correct view.
+    // The pane has its own CanvasManager; saveCurrentViewState normally
+    // serializes the main canvas. Swap ProjectManager's reference to the
+    // pane's CanvasManager so its objects and metadata are persisted.
     try {
-      window.app?.projectManager?.saveCurrentViewState?.();
+      persistMultiviewPane(multiviewFocusedLabel);
     } catch {
       // best-effort
     }
@@ -773,11 +1001,15 @@ export function initImageGalleryModule() {
         app.toolManager.selectTool(multiviewSavedToolName);
       }
     }
+    if (app?.tagManager) {
+      app.tagManager._renderTargetCanvas = multiviewSavedTagRenderTarget;
+    }
 
     // Restore image label
     if (multiviewSavedImageLabel) {
       window.currentImageLabel = multiviewSavedImageLabel;
     }
+    window.multiviewEditContext = null;
 
     // Clear visual highlight
     document.querySelectorAll('.multiview-pane').forEach(p => {
@@ -787,6 +1019,7 @@ export function initImageGalleryModule() {
     multiviewFocusedLabel = null;
     multiviewSavedToolName = null;
     multiviewSavedImageLabel = null;
+    multiviewSavedTagRenderTarget = null;
   }
 
   function focusMultiviewPane(label) {
@@ -805,17 +1038,35 @@ export function initImageGalleryModule() {
     multiviewFocusedLabel = label;
     multiviewSavedToolName = app.toolManager.activeToolName || 'line';
     multiviewSavedImageLabel = window.currentImageLabel || app.projectManager?.currentViewId;
+    multiviewSavedTagRenderTarget = app.tagManager?._renderTargetCanvas || null;
 
     // Redirect tools to the focused pane's canvas
     app.toolManager.setCanvasManager(cm);
     app.toolManager.selectTool(multiviewSavedToolName);
+    if (app.tagManager) {
+      app.tagManager._renderTargetCanvas = cm.fabricCanvas;
+    }
 
-    // Set the image label so strokes are stored under the correct image
-    window.currentImageLabel = label;
+    // Preserve the target image's active frame scope. Using only the base
+    // image label here stores pane drawings outside the frame-specific bucket,
+    // so they can disappear when the regular canvas reapplies tab visibility.
+    const scopedImageLabel = window.getCaptureTabScopedLabel?.(label) || label;
+    window.currentImageLabel = scopedImageLabel;
+    window.multiviewEditContext = {
+      baseViewId: label,
+      scopedImageLabel,
+      canvasManager: cm,
+    };
 
     // Visual highlight
     document.querySelectorAll('.multiview-pane').forEach(p => {
       p.classList.toggle('mv-focused', p.dataset.compareLabel === label);
+      p.classList.toggle(
+        'mv-origin',
+        p.dataset.compareLabel === app?.projectManager?.currentViewId
+      );
+      const status = p.querySelector('.multiview-pane-status');
+      if (status) status.textContent = p.dataset.compareLabel === label ? 'Editing' : '';
     });
   }
 
@@ -838,10 +1089,74 @@ export function initImageGalleryModule() {
     if (!stage) return;
     const leftPanel = document.getElementById('strokePanel');
     const rightPanel = document.getElementById('imagePanel');
-    const leftInset = leftPanel ? Math.max(0, leftPanel.offsetWidth) : 0;
-    const rightInset = rightPanel ? Math.max(0, rightPanel.offsetWidth) : 0;
+    const panelInset = panel => {
+      if (!panel) return 0;
+      const styles = window.getComputedStyle(panel);
+      const rect = panel.getBoundingClientRect();
+      return styles.display === 'none' || styles.visibility === 'hidden'
+        ? 0
+        : Math.max(0, rect.width);
+    };
+    const leftInset = panelInset(leftPanel);
+    const rightInset = panelInset(rightPanel);
     stage.style.left = `${leftInset}px`;
     stage.style.right = `${rightInset}px`;
+  }
+
+  function resizeComparePanesForLayout() {
+    if (!document.body.classList.contains('multiview-active')) return;
+    applyMultiViewStageInsets();
+    multiviewCanvasManagers.forEach((cm, label) => {
+      const wrap = document.getElementById(`mvWrap-${label}`);
+      const rect = wrap?.getBoundingClientRect?.();
+      if (!cm?.fabricCanvas || !rect?.width || !rect?.height) return;
+      const width = Math.max(1, Math.floor(rect.width));
+      const height = Math.max(1, Math.floor(rect.height));
+      if (cm.fabricCanvas.width !== width || cm.fabricCanvas.height !== height) {
+        cm.resizeCanvasDimensionsPreservingViewport?.(width, height);
+      }
+      const camera = multiviewSession?.paneCameras?.get(label) || getCanvasCamera(cm.fabricCanvas);
+      if (camera) applyCanvasCamera(cm.fabricCanvas, camera);
+    });
+  }
+
+  function scheduleMultiViewLayout() {
+    if (multiviewLayoutRaf !== null) return;
+    multiviewLayoutRaf = requestAnimationFrame(() => {
+      multiviewLayoutRaf = null;
+      resizeComparePanesForLayout();
+    });
+  }
+
+  function startMultiViewLayoutObservers() {
+    if (multiviewResizeObserver || typeof ResizeObserver === 'undefined') return;
+    multiviewResizeObserver = new ResizeObserver(scheduleMultiViewLayout);
+    ['main-canvas-wrapper', 'strokePanel', 'imagePanel', 'canvasControls'].forEach(id => {
+      const element = document.getElementById(id);
+      if (element) multiviewResizeObserver.observe(element);
+    });
+    multiviewMutationObserver = new MutationObserver(scheduleMultiViewLayout);
+    ['strokePanel', 'imagePanel', 'canvasControls'].forEach(id => {
+      const element = document.getElementById(id);
+      if (element)
+        multiviewMutationObserver.observe(element, {
+          attributes: true,
+          attributeFilter: ['class', 'style'],
+        });
+    });
+    window.addEventListener('resize', scheduleMultiViewLayout);
+  }
+
+  function stopMultiViewLayoutObservers() {
+    multiviewResizeObserver?.disconnect?.();
+    multiviewResizeObserver = null;
+    multiviewMutationObserver?.disconnect?.();
+    multiviewMutationObserver = null;
+    window.removeEventListener('resize', scheduleMultiViewLayout);
+    if (multiviewLayoutRaf !== null) {
+      cancelAnimationFrame(multiviewLayoutRaf);
+      multiviewLayoutRaf = null;
+    }
   }
 
   function getViewForLabel(label) {
@@ -857,6 +1172,68 @@ export function initImageGalleryModule() {
     } catch {
       return null;
     }
+  }
+
+  function hasUsableBackgroundImage(canvas) {
+    const background = canvas?.backgroundImage;
+    if (!background) return false;
+    const source =
+      (typeof background.getSrc === 'function' && background.getSrc()) ||
+      background?._element?.currentSrc ||
+      background?._element?.src ||
+      background?.src ||
+      '';
+    return typeof source === 'string' && source.trim().length > 0;
+  }
+
+  function getGalleryImageSource(label) {
+    const galleryEntry = imageGalleryData.find(item => {
+      const entryLabel = item?.original?.label || item?.label || item?.name || '';
+      return entryLabel === label;
+    });
+    if (typeof galleryEntry?.src === 'string' && galleryEntry.src) return galleryEntry.src;
+
+    const escapeLabel = window.CSS?.escape ? window.CSS.escape(label) : label.replace(/"/g, '\\"');
+    const thumbnail = document.querySelector(`.image-thumbnail[data-label="${escapeLabel}"]`);
+    if (typeof thumbnail?.dataset?.imageSrc === 'string' && thumbnail.dataset.imageSrc) {
+      return thumbnail.dataset.imageSrc;
+    }
+    const legacyImage = document.querySelector(`.image-container[data-label="${escapeLabel}"]`);
+    return (
+      legacyImage?.dataset?.originalImageUrl ||
+      legacyImage?.querySelector('img')?.currentSrc ||
+      null
+    );
+  }
+
+  async function resolveCompareImageSource(label, view, canvasData) {
+    const candidates = [
+      view?.image,
+      view?.imageDataURL,
+      view?.imageUrl,
+      canvasData?.backgroundImage?.src,
+      getGalleryImageSource(label),
+    ];
+    const directSource = candidates.find(source => typeof source === 'string' && source.trim());
+    if (directSource) return directSource;
+
+    // Saved cloud projects deliberately omit the source from the Fabric JSON.
+    // Resolve its persisted reference through the same path used by ProjectManager.
+    const projectManager = window.projectManager || window.app?.projectManager;
+    if (projectManager?.resolveViewImageUrl && view) {
+      try {
+        return await projectManager.resolveViewImageUrl({
+          imageDataURL: view.imageDataURL,
+          imageUrl: view.imageUrl,
+          imageAssetPath: view.imageAssetPath,
+          imageAssetHash: view.imageAssetHash,
+          canvasJSON: canvasData,
+        });
+      } catch (error) {
+        console.warn('[MultiView] Failed to resolve saved image source', label, error);
+      }
+    }
+    return null;
   }
 
   function fitStaticCanvasToContent(staticCanvas) {
@@ -895,14 +1272,15 @@ export function initImageGalleryModule() {
   function loadImageAsBackground(staticCanvas, src, savedPlacement) {
     return new Promise(resolve => {
       if (!src || !window.fabric?.Image?.fromURL) {
-        resolve();
+        resolve(false);
         return;
       }
       window.fabric.Image.fromURL(
         src,
-        img => {
+        (img, error) => {
+          if (error) console.warn('[MultiView] Failed to load image background', error);
           if (!img) {
-            resolve();
+            resolve(false);
             return;
           }
           if (
@@ -936,11 +1314,60 @@ export function initImageGalleryModule() {
           }
           staticCanvas.setBackgroundImage(img, () => {
             staticCanvas.requestRenderAll();
-            resolve();
+            resolve(true);
           });
         },
-        { crossOrigin: 'anonymous' }
+        src.startsWith('blob:') ? {} : { crossOrigin: 'anonymous' }
       );
+    });
+  }
+
+  function getPaneStrokeScope(object, fallbackLabel) {
+    return (
+      object?.strokeMetadata?.imageLabel ||
+      object?.scopedLabel ||
+      window.getCaptureTabScopedLabel?.(fallbackLabel) ||
+      fallbackLabel
+    );
+  }
+
+  function getPaneStrokeLabel(object) {
+    const label =
+      object?.strokeMetadata?.strokeLabel ||
+      object?.strokeLabel ||
+      object?.customData?.strokeLabel ||
+      object?.customData?.label ||
+      null;
+    return typeof label === 'string' && label.trim() ? label.trim() : null;
+  }
+
+  function recreatePaneTags(canvas, fallbackLabel) {
+    const tagManager = window.app?.tagManager;
+    if (!tagManager?.withRenderTarget || !canvas) return;
+    tagManager.withRenderTarget(canvas, () => {
+      canvas.getObjects().forEach(object => {
+        if (
+          !object ||
+          object.isTagGroup ||
+          object.isTagText ||
+          object.isTagBackground ||
+          object.isConnectorLine ||
+          object.isCurveDrawingMarker ||
+          object.isMosCurveArrowDecorator
+        ) {
+          return;
+        }
+        const strokeLabel = getPaneStrokeLabel(object);
+        if (!strokeLabel || typeof object.getBoundingRect !== 'function') return;
+        const scope = getPaneStrokeScope(object, fallbackLabel);
+        if (
+          object.strokeMetadata?.labelVisible === false ||
+          object.strokeMetadata?.visible === false
+        ) {
+          return;
+        }
+        tagManager.createTag(strokeLabel, scope, object);
+      });
     });
   }
 
@@ -990,7 +1417,6 @@ export function initImageGalleryModule() {
 
     const canvas = cm?.fabricCanvas;
     if (!canvas) return;
-    compareStaticCanvases.push(canvas);
     pane.__staticCanvas = canvas;
 
     const view = getViewForLabel(label);
@@ -1010,8 +1436,15 @@ export function initImageGalleryModule() {
       canvas.loadFromJSON(canvasData, () => resolve());
     });
 
-    if (!canvas.backgroundImage && view?.image) {
-      await loadImageAsBackground(canvas, view.image, savedBg);
+    if (!hasUsableBackgroundImage(canvas)) {
+      const imageSource = await resolveCompareImageSource(label, view, canvasData);
+      if (imageSource) {
+        canvas.setBackgroundImage(null, canvas.requestRenderAll.bind(canvas));
+        const loaded = await loadImageAsBackground(canvas, imageSource, savedBg);
+        if (!loaded) console.warn('[MultiView] Background could not be rendered for', label);
+      } else {
+        console.warn('[MultiView] No image source available for', label);
+      }
     }
 
     canvas.getObjects().forEach(obj => {
@@ -1027,20 +1460,35 @@ export function initImageGalleryModule() {
       }
     });
 
-    // Reconstruct tags onto the pane canvas
-    const tagManager = window.app?.tagManager;
-    if (tagManager?.withRenderTarget) {
-      try {
-        tagManager.withRenderTarget(canvas, () => {
-          tagManager.recreateTagsForImage(label);
-        });
-      } catch (error) {
-        console.warn('[MultiView] Tag reconstruction failed', error);
-      }
+    // Build tags from this pane's cloned Fabric objects. The metadata registry
+    // intentionally owns live-canvas references, so using it here produces
+    // non-renderable-object warnings and missing comparison tags.
+    try {
+      recreatePaneTags(canvas, label);
+    } catch (error) {
+      console.warn('[MultiView] Tag reconstruction failed', error);
     }
 
-    fitStaticCanvasToContent(canvas);
+    const paneCamera =
+      multiviewSession?.paneCameras?.get(label) || getStoredViewCamera(label, canvasData);
+    if (paneCamera) {
+      applyCanvasCamera(canvas, paneCamera);
+      multiviewSession?.paneCameras?.set(label, paneCamera);
+    } else {
+      // A brand-new image has no camera state yet, so fitting is still a
+      // sensible first view. Existing images always use their saved camera.
+      fitStaticCanvasToContent(canvas);
+      const fittedCamera = getCanvasCamera(canvas);
+      if (fittedCamera) multiviewSession?.paneCameras?.set(label, fittedCamera);
+    }
     canvas.requestRenderAll();
+
+    const syncPaneCamera = () => {
+      const camera = getCanvasCamera(canvas);
+      if (camera) multiviewSession?.paneCameras?.set(label, camera);
+    };
+    canvas.on('mouse:wheel', syncPaneCamera);
+    canvas.on('mouse:up', syncPaneCamera);
 
     // Click-to-focus: clicking a pane redirects drawing tools to it
     pane.addEventListener('pointerdown', e => {
@@ -1050,6 +1498,28 @@ export function initImageGalleryModule() {
     });
   }
 
+  function scaleComparePaneCamera(label, factor) {
+    const cm = multiviewCanvasManagers.get(label);
+    const canvas = cm?.fabricCanvas;
+    const camera = multiviewSession?.paneCameras?.get(label) || getCanvasCamera(canvas);
+    if (!canvas || !camera || !Number.isFinite(factor) || factor <= 0) return;
+    const nextCamera = {
+      ...camera,
+      linear: camera.linear.map(value => Number(value) * factor),
+    };
+    if (applyCanvasCamera(canvas, nextCamera)) {
+      multiviewSession?.paneCameras?.set(label, nextCamera);
+    }
+  }
+
+  function resetComparePaneCamera(label) {
+    const cm = multiviewCanvasManagers.get(label);
+    if (!cm?.fabricCanvas) return;
+    fitStaticCanvasToContent(cm.fabricCanvas);
+    const camera = getCanvasCamera(cm.fabricCanvas);
+    if (camera) multiviewSession?.paneCameras?.set(label, camera);
+  }
+
   function updateMultiViewStage() {
     const stage = getCompareStage();
     if (!stage) return;
@@ -1057,23 +1527,46 @@ export function initImageGalleryModule() {
       Boolean(getViewForLabel(label))
     );
     const active = labels.length >= 2;
-    document.body.classList.toggle('multiview-active', active);
+    const wasActive = document.body.classList.contains('multiview-active');
+    const selectionKey = labels.slice(0, 4).join('|');
+
+    if (active && wasActive && multiviewSession?.selectionKey === selectionKey) {
+      scheduleMultiViewLayout();
+      return;
+    }
+
+    if (active && !wasActive) {
+      const snapshot = snapshotLiveMultiviewState();
+      multiviewSession = {
+        selectionKey,
+        liveSnapshot: snapshot,
+        paneCameras: new Map(),
+      };
+    } else if (active && multiviewSession) {
+      multiviewSession.selectionKey = selectionKey;
+    }
+
+    // Release a focused comparison pane while the layout is still marked as
+    // transient. Otherwise its viewport/background geometry can be saved as
+    // the live view while the main canvas is hidden.
     disposeCompareCanvases();
+    document.body.classList.toggle('multiview-active', active);
 
     if (!active) {
       stage.innerHTML = '';
+      stopMultiViewLayoutObservers();
+      if (wasActive) {
+        const session = multiviewSession;
+        multiviewSession = null;
+        restoreLiveMultiviewState(session?.liveSnapshot);
+      }
       return;
     }
 
     // Place the stage between the fixed sidebars before measuring/rendering.
     applyMultiViewStageInsets();
 
-    // Persist the current view so its latest strokes are in canvasData.
-    try {
-      window.app?.projectManager?.saveCurrentViewState?.();
-    } catch (error) {
-      console.warn('[MultiView] saveCurrentViewState failed', error);
-    }
+    startMultiViewLayoutObservers();
 
     const count = Math.min(labels.length, 4);
     stage.innerHTML = `
@@ -1087,7 +1580,15 @@ export function initImageGalleryModule() {
           .slice(0, 4)
           .map(
             label => `
-              <section class="multiview-pane" data-compare-label="${label}">
+              <section class="multiview-pane ${label === window.app?.projectManager?.currentViewId ? 'mv-origin' : ''}" data-compare-label="${label}">
+                <div class="multiview-pane-actions" aria-label="${label} comparison controls">
+                  <span class="multiview-pane-label">${label}<span class="multiview-pane-status"></span></span>
+                  <div class="multiview-pane-tools">
+                    <button type="button" class="mv-pane-btn" data-mv-action="zoom-out" title="Zoom out ${label}" aria-label="Zoom out ${label}">−</button>
+                    <button type="button" class="mv-pane-btn" data-mv-action="zoom-in" title="Zoom in ${label}" aria-label="Zoom in ${label}">+</button>
+                    <button type="button" class="mv-pane-btn mv-pane-fit" data-mv-action="fit" title="Fit ${label}" aria-label="Fit ${label}">Fit</button>
+                  </div>
+                </div>
                 <div class="multiview-canvas-wrap" id="mvWrap-${label}"><canvas></canvas></div>
               </section>
             `
@@ -1103,6 +1604,7 @@ export function initImageGalleryModule() {
         });
       });
       wireMultiViewActions(stage);
+      scheduleMultiViewLayout();
     });
   }
 
@@ -1112,6 +1614,21 @@ export function initImageGalleryModule() {
       closeBtn.dataset.wired = '1';
       closeBtn.addEventListener('click', () => clearCompareSelection());
     }
+    stage.querySelectorAll('.mv-pane-btn').forEach(button => {
+      if (button.dataset.wired === '1') return;
+      button.dataset.wired = '1';
+      button.addEventListener('pointerdown', event => event.stopPropagation());
+      button.addEventListener('click', event => {
+        event.stopPropagation();
+        const pane = button.closest('.multiview-pane');
+        const label = pane?.dataset?.compareLabel;
+        if (!label) return;
+        focusMultiviewPane(label);
+        if (button.dataset.mvAction === 'zoom-in') scaleComparePaneCamera(label, 1.12);
+        if (button.dataset.mvAction === 'zoom-out') scaleComparePaneCamera(label, 1 / 1.12);
+        if (button.dataset.mvAction === 'fit') resetComparePaneCamera(label);
+      });
+    });
   }
 
   async function captureCompareGrid() {
@@ -1186,31 +1703,42 @@ export function initImageGalleryModule() {
   /**
    * Delete image function
    */
+  function removeImageByLabel(label) {
+    const labelOf = item => item?.original?.label || item?.label || item?.name || '';
+    const index = imageGalleryData.findIndex(item => labelOf(item) === label);
+    if (index < 0) return false;
+
+    imageGalleryData.splice(index, 1);
+    compareSelectedLabels.delete(label);
+    document
+      .querySelectorAll(`#imageList [data-label="${CSS.escape(label)}"]`)
+      .forEach(node => node.remove());
+    syncImageGalleryDataRef();
+    window.orderedImageLabels = imageGalleryData.map(item => labelOf(item)).filter(Boolean);
+    rebuildGalleryUI();
+
+    const activeLabel = window.app?.projectManager?.currentViewId;
+    const activeIndex = imageGalleryData.findIndex(item => labelOf(item) === activeLabel);
+    currentImageIndex =
+      activeIndex >= 0 ? activeIndex : Math.min(index, imageGalleryData.length - 1);
+    if (currentImageIndex >= 0) updateActiveImage(currentImageIndex);
+    syncCompareSelectionStyles();
+    updateMultiViewStage();
+    window.updatePills?.();
+    window.updateActivePill?.();
+    updateImageListPadding();
+    return true;
+  }
+
   function deleteImage(index) {
     if (confirm(`Delete "${imageGalleryData[index]?.name}"?`)) {
       console.log(`[Gallery] Deleting image at index ${index}`);
       const deletedLabel = getImageLabelAtIndex(index);
-
-      // Remove from data array
-      imageGalleryData.splice(index, 1);
-      if (deletedLabel) {
-        compareSelectedLabels.delete(deletedLabel);
+      if (deletedLabel && window.projectManager?.deleteImage) {
+        void window.projectManager.deleteImage(deletedLabel);
+      } else if (deletedLabel) {
+        removeImageByLabel(deletedLabel);
       }
-
-      // Rebuild UI
-      rebuildGalleryUI();
-
-      // Adjust current index if needed
-      if (currentImageIndex >= index) {
-        currentImageIndex = Math.max(0, currentImageIndex - 1);
-      }
-
-      // Update active image
-      if (imageGalleryData.length > 0) {
-        updateActiveImage(Math.min(currentImageIndex, imageGalleryData.length - 1));
-      }
-      syncCompareSelectionStyles();
-      updateMultiViewStage();
     }
   }
 
@@ -1259,8 +1787,15 @@ export function initImageGalleryModule() {
       // Suppress scroll-select while we realign the list to avoid auto-switch oscillation.
       // Use short suppression for instant scrolls to allow rapid sequential switching.
       const suppressMs = options.smooth === true ? 400 : 80;
-      window.__suppressScrollSelectUntil = Date.now() + suppressMs;
-      window.__imageListProgrammaticScrollUntil = Date.now() + suppressMs;
+      const suppressUntil = Date.now() + suppressMs;
+      window.__suppressScrollSelectUntil = Math.max(
+        Number(window.__suppressScrollSelectUntil) || 0,
+        suppressUntil
+      );
+      window.__imageListProgrammaticScrollUntil = Math.max(
+        Number(window.__imageListProgrammaticScrollUntil) || 0,
+        suppressUntil
+      );
       const targetThumbnail = imageGallery.querySelector(`[data-image-index="${index}"]`);
       if (targetThumbnail) {
         targetThumbnail.scrollIntoView({
@@ -1306,6 +1841,7 @@ export function initImageGalleryModule() {
       clearGallery: clearImageGallery,
       syncToLabel: syncToLabel,
       getData: () => imageGalleryData,
+      removeByLabel: removeImageByLabel,
       syncLegacyImages: syncLegacyImagesToGallery,
       captureCompareGrid,
     };
@@ -1358,18 +1894,17 @@ export function initImageGalleryModule() {
     deleteBtn.addEventListener('click', e => {
       e.stopPropagation();
       if (confirm('Delete this image?')) {
-        container.remove();
         if (window.projectManager && typeof window.projectManager.deleteImage === 'function') {
-          window.projectManager.deleteImage(label);
+          void window.projectManager.deleteImage(label);
+        } else {
+          removeImageByLabel(label);
         }
-        if (typeof window.updatePills === 'function') window.updatePills();
-        if (typeof window.updateActivePill === 'function') window.updateActivePill();
-        if (typeof updateImageListPadding === 'function') updateImageListPadding();
       }
     });
     container.appendChild(deleteBtn);
 
     container.onclick = () => {
+      if (window.__imageListReorderInProgress) return;
       if (window.projectManager && typeof window.projectManager.switchView === 'function') {
         window.projectManager.switchView(label);
       }
@@ -1379,6 +1914,48 @@ export function initImageGalleryModule() {
         window.__imageListProgrammaticScrollUntil = Date.now() + 400;
       }
     };
+    container.addEventListener('dragstart', event => {
+      window.__imageListReorderInProgress = true;
+      window.__cancelPendingScrollSelect?.();
+      window.__suppressScrollSelectUntil = Date.now() + 1200;
+      window.__imageListProgrammaticScrollUntil = Date.now() + 1200;
+      container.dataset.dragSourceLabel = label;
+      imageList.dataset.previousScrollSnapType = imageList.style.scrollSnapType || '';
+      imageList.style.scrollSnapType = 'none';
+      event.dataTransfer?.setData('text/plain', label);
+      if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+      container.classList.add('dragging');
+    });
+    container.addEventListener('dragend', () => {
+      container.classList.remove('dragging');
+      window.__dragAutoScrollDir = null;
+      if (window.__dragAutoScrollFrame) {
+        cancelAnimationFrame(window.__dragAutoScrollFrame);
+        window.__dragAutoScrollFrame = null;
+      }
+      imageList.style.scrollSnapType = imageList.dataset.previousScrollSnapType || '';
+      delete imageList.dataset.previousScrollSnapType;
+      imageList
+        .querySelectorAll('.drag-over')
+        .forEach(element => element.classList.remove('drag-over'));
+      setTimeout(() => {
+        window.__imageListReorderInProgress = false;
+      }, 220);
+    });
+    container.addEventListener('dragover', event => {
+      event.preventDefault();
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+      container.classList.add('drag-over');
+    });
+    container.addEventListener('dragleave', () => container.classList.remove('drag-over'));
+    container.addEventListener('drop', event => {
+      event.preventDefault();
+      container.classList.remove('drag-over');
+      const draggedLabel = event.dataTransfer?.getData('text/plain') || '';
+      // Defer to let dragend fire first; DOM manipulation during drop confuses
+      // the browser's native DnD session and can cancel the entire drag.
+      setTimeout(() => reorderImagesByLabel(draggedLabel, label), 0);
+    });
     imageList.appendChild(container);
     console.log(`[COMPAT] Manually added legacy container for "${label}"`);
 

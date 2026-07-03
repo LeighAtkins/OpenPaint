@@ -211,14 +211,14 @@
           }
         };
         const brush = document.getElementById('brushSize');
-        const size = parseInt(brush?.value || '5') || 5;
+        const size = parseFloat(brush?.value || '5') || 5;
         ds.pattern = computePattern(ds.style, ds.dashLength, ds.gapLength, size);
         // If editing a stroke, also update it live
         const edited = window.selectedStrokeInEditMode;
         const img = window.currentImageLabel;
         if (edited && img && window.vectorStrokesByImage?.[img]?.[edited]) {
           const v = window.vectorStrokesByImage[img][edited];
-          const lw = parseInt(v.width || size) || size;
+          const lw = parseFloat(v.width || size) || size;
           v.dashSettings = {
             ...ds,
             pattern: computePattern(ds.style, ds.dashLength, ds.gapLength, lw),
@@ -253,94 +253,16 @@
     // CENTER/BOTTOM: canvas view controls moved to bottom
     reparent('fitModeSelect', bottom);
     reparent('rotateFineWrap', bottom);
-    // CLEANUP: Remove any existing menu or wrapper from previous runs
+    // The old percentage menu adjusted only the canvas viewport. Frame scaling
+    // is now a paired frame-and-viewport operation, exposed as +/- controls.
     const existingMenu = document.getElementById('zoomMenuDropdown');
     if (existingMenu) existingMenu.remove();
 
     const existingWrapper = document.getElementById('scaleButtonWrapper');
     if (existingWrapper) {
-      // If wrapper exists, the button might be inside it.
-      // We don't want to lose the button, but we want to rebuild the wrapper to be safe.
-      // However, if the button is inside, we can just move it out first.
-      const btn = existingWrapper.querySelector('#scaleButton');
-      if (btn) {
-        document.body.appendChild(btn); // Move to body temporarily
-      }
       existingWrapper.remove();
     }
-
-    // Create wrapper for scale button to handle relative positioning
-    const scaleWrapper = document.createElement('div');
-    scaleWrapper.id = 'scaleButtonWrapper'; // ID for future cleanup
-    scaleWrapper.className = 'relative inline-block';
-
-    // Find the scale button (it might be in bottom or center depending on layout)
-    // We need to move it into our wrapper AND move the wrapper to the bottom toolbar
-    const scaleBtn = document.getElementById('scaleButton');
-    if (scaleBtn) {
-      // Move button into wrapper
-      scaleWrapper.appendChild(scaleBtn);
-
-      // Append wrapper to the bottom toolbar (target)
-      // This ensures it sits with the other controls
-      bottom.appendChild(scaleWrapper);
-
-      // Ensure uniform styling
-      scaleBtn.classList.add('tbtn');
-
-      // Create the menu immediately (no lazy loading needed for this simple structure)
-      const menu = document.createElement('div');
-      menu.id = 'zoomMenuDropdown';
-      menu.className =
-        'absolute bottom-full left-1/2 mb-2 hidden bg-white rounded-lg shadow-lg border border-gray-200 py-1';
-      menu.style.transform = 'translateX(-50%)';
-      menu.style.minWidth = '120px';
-      menu.style.zIndex = '10001'; // Higher than toolbar (10000)
-
-      menu.innerHTML = `
-                <button class="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm" data-zoom="0.5">50%</button>
-                <button class="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm" data-zoom="0.75">75%</button>
-                <button class="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm" data-zoom="1.0">100%</button>
-                <button class="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm" data-zoom="1.5">150%</button>
-                <button class="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm" data-zoom="2.0">200%</button>
-                <div class="border-t border-gray-100 my-1"></div>
-                <button class="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm font-medium" data-zoom="fit">Fit Canvas</button>
-            `;
-
-      scaleWrapper.appendChild(menu);
-
-      // Toggle menu on button click
-      scaleBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        menu.classList.toggle('hidden');
-        console.log('[Toolbar] Toggled zoom menu');
-      });
-
-      // Handle menu options
-      menu.addEventListener('click', e => {
-        const btn = e.target.closest('button');
-        if (!btn) return;
-
-        const zoom = btn.dataset.zoom;
-        console.log(`[Toolbar] Zoom option clicked: ${zoom}`);
-
-        if (window.app && window.app.canvasManager) {
-          window.app.canvasManager.setManualZoom(zoom);
-
-          // Button text will be updated by setManualZoom via updateZoomButtonText
-        }
-        menu.classList.add('hidden');
-      });
-
-      // Close on click outside
-      document.addEventListener('click', e => {
-        if (!scaleWrapper.contains(e.target)) {
-          menu.classList.add('hidden');
-        }
-      });
-    } else {
-      console.error('[Toolbar] scaleButton not found for wrapping');
-    }
+    reparent('frameScaleControls', bottom);
     syncFromState();
 
     // RIGHT: project settings are now pre-populated, just need to wire up functionality
@@ -408,7 +330,8 @@
         labelShapeToggleBtn.dataset.shapeToggleBound = 'true';
         labelShapeToggleBtn.style.transition = 'transform 0.12s ease';
         labelShapeToggleBtn.addEventListener('click', () => {
-          const currentViewId = window.app?.projectManager?.currentViewId;
+          const currentViewId =
+            window.currentImageLabel || window.app?.projectManager?.currentViewId;
           const shape = window.app?.tagManager?.tagShape || 'square';
           window.app?.tagManager?.setTagShape(
             shape === 'circle' ? 'square' : 'circle',
@@ -644,23 +567,6 @@
       quickSaveMenu.classList.add('hidden');
     });
   }
-
-  // Update zoom button text to show current zoom level
-  window.updateZoomButtonText = function (zoomLevel) {
-    const scaleBtn = document.getElementById('scaleButton');
-    if (scaleBtn) {
-      const textNode = scaleBtn.firstChild;
-      if (textNode) {
-        if (zoomLevel === 'fit' || zoomLevel === null) {
-          textNode.textContent = 'Fit ';
-        } else {
-          // Show zoom with 1 decimal place (e.g., 125.5%)
-          const percentage = (parseFloat(zoomLevel) * 100).toFixed(1);
-          textNode.textContent = `${percentage}% `;
-        }
-      }
-    }
-  };
 
   // Expose functions globally
   window.initializeTopToolbar = initializeTopToolbar;

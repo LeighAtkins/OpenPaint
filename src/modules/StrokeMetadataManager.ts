@@ -20,9 +20,28 @@ export class StrokeMetadataManager {
   }
 
   normalizeImageLabel(imageLabel) {
-    const baseLabel = imageLabel || window.app?.projectManager?.currentViewId || 'front';
+    const explicitLabel = typeof imageLabel === 'string' ? imageLabel.trim() : '';
+    if (explicitLabel) return explicitLabel;
+
+    const liveLabel =
+      typeof window.currentImageLabel === 'string' ? window.currentImageLabel.trim() : '';
+    if (liveLabel) return liveLabel;
+
+    const baseLabel = window.app?.projectManager?.currentViewId || 'front';
     if (typeof baseLabel !== 'string') return baseLabel;
     if (baseLabel.includes('::tab:')) return baseLabel;
+    if (typeof window.getCaptureTabScopedLabel === 'function') {
+      return window.getCaptureTabScopedLabel(baseLabel) || baseLabel;
+    }
+    return baseLabel;
+  }
+
+  resolveActiveImageLabel(imageLabel) {
+    const baseLabel =
+      (typeof imageLabel === 'string' && imageLabel.trim()) ||
+      window.app?.projectManager?.currentViewId ||
+      'front';
+    if (typeof baseLabel !== 'string' || baseLabel.includes('::tab:')) return baseLabel;
     if (typeof window.getCaptureTabScopedLabel === 'function') {
       return window.getCaptureTabScopedLabel(baseLabel) || baseLabel;
     }
@@ -891,7 +910,7 @@ export class StrokeMetadataManager {
       this.controlsObserver.observe(controlsContainer, { childList: true, subtree: true });
     }
 
-    const currentViewId = this.normalizeImageLabel(
+    const currentViewId = this.resolveActiveImageLabel(
       window.app?.projectManager?.currentViewId || 'front'
     );
     const strokes = this.vectorStrokesByImage[currentViewId] || {};
@@ -1740,7 +1759,7 @@ export class StrokeMetadataManager {
       if (typeof window.app.tagManager.updateAllTagTexts === 'function') {
         window.app.tagManager.updateAllTagTexts();
       } else {
-        const currentViewId = this.normalizeImageLabel(
+        const currentViewId = this.resolveActiveImageLabel(
           window.app?.projectManager?.currentViewId || 'front'
         );
         const strokes = this.vectorStrokesByImage[currentViewId] || {};

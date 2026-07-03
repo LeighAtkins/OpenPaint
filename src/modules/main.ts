@@ -83,6 +83,9 @@ export class App {
     const scaleFromW = typeof window !== 'undefined' ? (window.innerWidth * 0.8) / 800 : 0.9;
     const scaleFromH = typeof window !== 'undefined' ? (window.innerHeight * 0.75) / 600 : 0.9;
     this.captureFrameScale = Math.max(0.9, Math.min(3.0, Math.min(scaleFromW, scaleFromH)));
+    if (typeof window !== 'undefined') {
+      window.captureFrameDefaultScale = this.captureFrameScale;
+    }
     this.currentDashSettings = {
       style: 'solid',
       pattern: [],
@@ -306,9 +309,6 @@ export class App {
       }
 
       this.initializeToolbarColorPalette();
-
-      // Expose capture frame scale for cross-image frame sizing
-      window.captureFrameDefaultScale = this.captureFrameScale;
 
       // Apply default capture frame scale
       this.resizeCaptureFrameProportionally(0);
@@ -636,7 +636,6 @@ export class App {
     if (!obj) return false;
     if (obj.isTag || obj.isConnectorLine) return false;
     if (obj.type === 'line' || obj.type === 'path') return true;
-    if (obj.type === 'i-text' || obj.type === 'text') return true;
     return obj.strokeMetadata?.type === 'shape';
   }
 
@@ -751,28 +750,6 @@ export class App {
     if (!this.isDashDrawableObject(obj)) return;
     if (obj.isPrivacyErase || obj.customData?.isPrivacyErase) return;
     if (window.app?.toolManager?.activeToolName === 'privacy') return;
-
-    if (obj.type === 'i-text' || obj.type === 'text') {
-      if (style === 'solid') {
-        obj.set('strokeDashArray', null);
-        obj.dashSettings = {
-          style,
-          splitRatio,
-          mixedEnabled,
-          dashFirst,
-          pattern: pattern || [],
-        };
-        obj.dirty = true;
-        return;
-      }
-      const strokeColor =
-        obj.stroke && obj.stroke !== 'transparent' ? obj.stroke : obj.fill || '#111827';
-      const currentWidth = Number(obj.strokeWidth || 0);
-      obj.set({
-        stroke: strokeColor,
-        strokeWidth: Math.max(1, currentWidth || 1),
-      });
-    }
 
     const customLineStyle =
       (style === 'tape' || style === 'stretchy') && (obj.type === 'line' || obj.type === 'path')
@@ -1403,43 +1380,6 @@ export class App {
       });
     }
 
-    // Fine rotate controls (hover bar)
-    const rotateFineSlider = document.getElementById('rotateFineSlider') as HTMLInputElement | null;
-    const rotateFineValue = document.getElementById('rotateFineValue');
-    let lastFineValue = 0;
-
-    const updateFineReadout = (value: number) => {
-      if (rotateFineValue) {
-        rotateFineValue.textContent = `${value}°`;
-      }
-    };
-
-    const applyFineRotateDelta = (deltaDegrees: number) => {
-      if (!deltaDegrees) return;
-      this.projectManager.rotateCurrentView(deltaDegrees);
-    };
-
-    if (rotateFineSlider) {
-      const setFineRotateActive = (active: boolean) => {
-        document.body.classList.toggle('fine-rotate-active', active);
-      };
-
-      rotateFineSlider.addEventListener('pointerdown', (e: PointerEvent) => {
-        rotateFineSlider.setPointerCapture(e.pointerId);
-        setFineRotateActive(true);
-      });
-      rotateFineSlider.addEventListener('input', () => {
-        const value = Number(rotateFineSlider.value);
-        const delta = value - lastFineValue;
-        lastFineValue = value;
-        updateFineReadout(value);
-        applyFineRotateDelta(delta);
-      });
-      rotateFineSlider.addEventListener('pointerup', () => {
-        setFineRotateActive(false);
-      });
-    }
-
     // Tools
     const drawingModeToggles = document.querySelectorAll<HTMLElement>('#drawingModeToggle');
     const drawingModeWrappers = document.querySelectorAll<HTMLElement>('#drawingModeWrapper');
@@ -1455,13 +1395,6 @@ export class App {
       rounded: 'Nunito',
       mono: 'Space Mono',
       classic: 'Georgia',
-    };
-
-    const getCurrentTextSize = () => {
-      const viewId = window.app?.projectManager?.currentViewId;
-      const base = viewId ? window.originalImageDimensions?.[viewId] : null;
-      const baseWidth = base?.width || 1200;
-      return Math.max(24, Math.round((baseWidth / 1200) * 24));
     };
 
     const syncTextCursor = () => {
@@ -1582,13 +1515,10 @@ export class App {
         }
         void (async () => {
           leaveEraserBrushSize();
-          const fontSize = getCurrentTextSize();
-          const tool = await this.toolManager.ensureTool('text');
-          if (tool?.setFontSize) {
-            tool.setFontSize(fontSize);
-          }
-          this.toolManager.updateSettings({ fontSize });
-          this.updateSelectedTextAndShapes({ fontSize });
+          await this.toolManager.ensureTool('text');
+          // Activating the tool must never restyle the selected annotation.
+          // Source-image-scaled font sizes could turn a selected white-backed
+          // text object into a large block that obscured the canvas below it.
           this.toolManager.previousToolName = this.toolManager.activeToolName || 'line';
           this.toolManager.selectTool('text');
           updateDrawingToggleLabels('Text');
@@ -2117,12 +2047,14 @@ export class App {
     const arrowEndBtn = document.getElementById('arrowEndBtn') as HTMLButtonElement | null;
     const dottedBtn = document.getElementById('dottedBtn') as HTMLButtonElement | null;
     let lineStyleScope: 'selection' | 'image' | 'project' = 'selection';
+    const MIN_BRUSH_WIDTH = 0.25;
+    const MAX_BRUSH_WIDTH = 300;
     const parseBrushWidth = (value: string): number => {
-      const parsed = parseInt((value || '').replace(/[^\d]/g, ''), 10);
-      if (!Number.isFinite(parsed)) return 1;
-      return Math.max(1, Math.min(300, parsed));
+      const parsed = Number.parseFloat((value || '').replace(/[^\d.]/g, ''));
+      if (!Number.isFinite(parsed)) return MIN_BRUSH_WIDTH;
+      return Math.max(MIN_BRUSH_WIDTH, Math.min(MAX_BRUSH_WIDTH, parsed));
     };
-    const formatBrushWidth = (value: number): string => String(value);
+    const formatBrushWidth = (value: number): string => String(Math.round(value * 100) / 100);
     const normalizeTapeTickSpacing = (value: string | number | null | undefined): number => {
       const numeric = Number(value);
       if (!Number.isFinite(numeric)) return 1;
@@ -2312,9 +2244,12 @@ export class App {
       const target = document.getElementById('brushSize') as HTMLInputElement | null;
       if (!target) return false;
 
-      const min = Math.max(1, parseInt(target.min || '1', 10) || 1);
-      const max = Math.max(min, parseInt(target.max || '300', 10) || 300);
-      const step = Math.max(1, parseInt(target.step || '1', 10) || 1);
+      const min = Math.max(
+        MIN_BRUSH_WIDTH,
+        Number.parseFloat(target.min || '0.25') || MIN_BRUSH_WIDTH
+      );
+      const max = Math.max(min, Number.parseFloat(target.max || '300') || MAX_BRUSH_WIDTH);
+      const step = Math.max(0.01, Number.parseFloat(target.step || '0.25') || 0.25);
       const current = parseBrushWidth(target.value);
       const direction = wheelEvent.deltaY < 0 ? 1 : -1;
       const next = Math.max(min, Math.min(max, current + direction * step));
@@ -2946,7 +2881,7 @@ export class App {
           typeof uiArrowSettings?.endArrow === 'boolean'
             ? uiArrowSettings.endArrow
             : previewArrowState.endArrow;
-        const width = Math.max(1, parseBrushWidth(brushSizeSelect.value));
+        const width = Math.max(MIN_BRUSH_WIDTH, parseBrushWidth(brushSizeSelect.value));
         const arrowStyle = lineStyleArrowStyle?.value || arrowStyleTop?.value || 'triangular';
         const arrowSize = updateArrowSizeProxy({ dispatch: false });
         const style = this.currentDashSettings.style || 'solid';
@@ -3308,22 +3243,12 @@ export class App {
         const labelLong = copyCanvasBtn.querySelector('.label-long');
         const labelShort = copyCanvasBtn.querySelector('.label-short');
         if (active) {
-          copyCanvasBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'active:bg-blue-800');
-          copyCanvasBtn.classList.add(
-            'bg-emerald-600',
-            'hover:bg-emerald-700',
-            'active:bg-emerald-800'
-          );
+          copyCanvasBtn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'active:bg-blue-800');
           if (labelLong) labelLong.textContent = 'Copy Images';
           if (labelShort) labelShort.textContent = 'Copy All';
           copyCanvasBtn.title = 'Copy all comparison images to clipboard';
         } else {
           copyCanvasBtn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'active:bg-blue-800');
-          copyCanvasBtn.classList.remove(
-            'bg-emerald-600',
-            'hover:bg-emerald-700',
-            'active:bg-emerald-800'
-          );
           if (labelLong) labelLong.textContent = 'Copy Image';
           if (labelShort) labelShort.textContent = 'Copy';
           copyCanvasBtn.title = 'Copy image to clipboard';
@@ -3731,8 +3656,14 @@ export class App {
   }
 
   setupKeyboardControls(): void {
-    // Create +/- buttons for resizing capture frame
-    this.captureFrameScale = 0.9;
+    const bindFrameScaleButton = (id: string, scaleChange: number) => {
+      const button = document.getElementById(id);
+      if (!button || button.dataset.frameScaleBound === 'true') return;
+      button.dataset.frameScaleBound = 'true';
+      button.addEventListener('click', () => this.resizeCaptureFrameProportionally(scaleChange));
+    };
+    bindFrameScaleButton('frameScaleDecrease', -0.05);
+    bindFrameScaleButton('frameScaleIncrease', 0.05);
 
     document.addEventListener('keydown', (e: KeyboardEvent) => {
       // Don't interfere if typing in input fields
@@ -3809,43 +3740,91 @@ export class App {
     const captureFrame = document.getElementById('captureFrame');
     if (!captureFrame) return;
 
-    this.captureFrameScale = Math.max(0.2, Math.min(3.0, this.captureFrameScale + scaleChange));
-
-    const baseWidth = 800;
-    const baseHeight = 600;
-    const aspectRatio = 4 / 3;
-
-    const newWidth = baseWidth * this.captureFrameScale;
-    const newHeight = baseHeight * this.captureFrameScale;
-
-    // Ensure frame fits within viewport
-    const maxWidth = window.innerWidth * 0.9;
-    const maxHeight = window.innerHeight * 0.9;
-
-    let frameWidth = newWidth;
-    let frameHeight = newHeight;
-
-    if (frameWidth > maxWidth) {
-      frameWidth = maxWidth;
-      frameHeight = frameWidth / aspectRatio;
-      this.captureFrameScale = frameWidth / baseWidth;
+    const frameRect = captureFrame.getBoundingClientRect();
+    const overlay = document.getElementById('captureOverlay');
+    const overlayRect = overlay?.getBoundingClientRect() || {
+      left: 0,
+      top: 0,
+      width: window.innerWidth,
+      height: window.innerHeight,
+    };
+    if (
+      !(
+        frameRect.width > 0 &&
+        frameRect.height > 0 &&
+        overlayRect.width > 0 &&
+        overlayRect.height > 0
+      )
+    ) {
+      return;
     }
 
-    if (frameHeight > maxHeight) {
-      frameHeight = maxHeight;
-      frameWidth = frameHeight * aspectRatio;
-      this.captureFrameScale = frameHeight / baseHeight;
+    // Scale the active frame from its own centre. The old implementation used
+    // a global 800x600 baseline and the browser window centre, which allowed a
+    // resize on one image to disturb the stored placement of another image.
+    const requestedFactor = 1 + scaleChange;
+    const minWidth = 100;
+    const minHeight = 80;
+    const maxWidth = overlayRect.width * 0.96;
+    const maxHeight = overlayRect.height * 0.96;
+    const actualFactor = Math.max(
+      minWidth / frameRect.width,
+      minHeight / frameRect.height,
+      Math.min(requestedFactor, maxWidth / frameRect.width, maxHeight / frameRect.height)
+    );
+    if (!Number.isFinite(actualFactor) || actualFactor <= 0 || Math.abs(actualFactor - 1) < 0.001) {
+      return;
     }
 
-    // Center the frame
-    const left = (window.innerWidth - frameWidth) / 2;
-    const top = (window.innerHeight - frameHeight) / 2;
+    const frameWidth = frameRect.width * actualFactor;
+    const frameHeight = frameRect.height * actualFactor;
+    const centerX = frameRect.left + frameRect.width / 2;
+    const centerY = frameRect.top + frameRect.height / 2;
+    const left = centerX - frameWidth / 2 - overlayRect.left;
+    const top = centerY - frameHeight / 2 - overlayRect.top;
 
-    // Apply the new size and position
-    captureFrame.style.left = `${left}px`;
-    captureFrame.style.top = `${top}px`;
-    captureFrame.style.width = `${frameWidth}px`;
-    captureFrame.style.height = `${frameHeight}px`;
+    captureFrame.style.left = `${Math.round(left)}px`;
+    captureFrame.style.top = `${Math.round(top)}px`;
+    captureFrame.style.width = `${Math.round(frameWidth)}px`;
+    captureFrame.style.height = `${Math.round(frameHeight)}px`;
+
+    // Keep the image and annotations proportional to the frame. Scaling the
+    // exact Fabric matrix around the frame centre preserves the visual anchor
+    // without reconstructing pan from a lossy zoom record.
+    const canvasManager = this.canvasManager;
+    const fabricCanvas = canvasManager?.fabricCanvas;
+    const canvasRect = fabricCanvas?.lowerCanvasEl?.getBoundingClientRect?.();
+    const transform = fabricCanvas?.viewportTransform;
+    if (canvasRect && Array.isArray(transform) && transform.length >= 6) {
+      const pivotX = centerX - canvasRect.left;
+      const pivotY = centerY - canvasRect.top;
+      const [a, b, c, d, e, f] = transform.map(Number);
+      const scaledTransform = [
+        a * actualFactor,
+        b * actualFactor,
+        c * actualFactor,
+        d * actualFactor,
+        pivotX + (e - pivotX) * actualFactor,
+        pivotY + (f - pivotY) * actualFactor,
+      ];
+      canvasManager.setViewportTransformExact?.(scaledTransform);
+    }
+
+    this.captureFrameScale = frameWidth / 800;
+
+    // Update base dimensions on the live tab so saveActiveTabState picks up the
+    // new values instead of preserving the original (fixed) baseWidth.
+    // Without this, a +/- resize is lost on tab switch because
+    // resolveCaptureFrameRect uses baseWidth/baseWindowWidth ratio.
+    const label_ = this.projectManager.currentViewId;
+    const ts_ = window.captureTabsByLabel?.[label_];
+    const tab_ = ts_?.tabs?.find(t => t.id === ts_?.activeTabId);
+    if (tab_?.captureFrame) {
+      tab_.captureFrame.baseWidth = Math.round(frameWidth);
+      tab_.captureFrame.baseHeight = Math.round(frameHeight);
+      tab_.captureFrame.baseWindowWidth = window.innerWidth;
+      tab_.captureFrame.baseWindowHeight = window.innerHeight;
+    }
 
     // Save the new capture frame position for the current image
     if (window.saveCurrentCaptureFrameForLabel) {
@@ -3853,7 +3832,7 @@ export class App {
     }
 
     console.log(
-      `[CaptureFrame] Proportional resize: ${(this.captureFrameScale * 100).toFixed(0)}% (${frameWidth.toFixed(0)}x${frameHeight.toFixed(0)})`
+      `[CaptureFrame] Proportional resize: ${(actualFactor * 100).toFixed(0)}% (${frameWidth.toFixed(0)}x${frameHeight.toFixed(0)})`
     );
   }
 

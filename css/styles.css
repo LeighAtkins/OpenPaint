@@ -657,47 +657,20 @@
 /* ── Rotate controls ─────────────────────────────────────────── */
 #rotateLeftCtrl,
 #rotateRightCtrl {
-  position: relative;
-  overflow: hidden;
-  transform-origin: 50% 60%;
-  transition: all var(--ob-duration-base) var(--ob-ease-standard);
-}
-
-#rotateLeftCtrl::after,
-#rotateRightCtrl::after {
-  content: '';
-  position: absolute;
-  inset: -40%;
-  background: radial-gradient(circle at 30% 30%, rgba(45, 107, 255, 0.15), transparent 60%);
-  opacity: 0;
-  transition: opacity var(--ob-duration-base) var(--ob-ease-standard);
-  pointer-events: none;
+  transition:
+    background var(--ob-duration-base) var(--ob-ease-standard),
+    border-color var(--ob-duration-base) var(--ob-ease-standard);
 }
 
 #rotateLeftCtrl:hover,
 #rotateRightCtrl:hover {
   background: var(--ob-paper);
   border-color: var(--ob-signal);
-  box-shadow: var(--ob-shadow-soft);
-  color: var(--ob-ink);
-}
-
-#rotateLeftCtrl:hover {
-  transform: rotate(-8deg) scale(1.04);
-}
-#rotateRightCtrl:hover {
-  transform: rotate(8deg) scale(1.04);
-}
-
-#rotateLeftCtrl:hover::after,
-#rotateRightCtrl:hover::after {
-  opacity: 1;
 }
 
 #rotateLeftCtrl:active,
 #rotateRightCtrl:active {
-  transform: scale(0.96);
-  box-shadow: var(--ob-shadow-soft);
+  background: var(--ob-bg-surface);
 }
 
 #rotateLeftCtrl:focus-visible,
@@ -1911,8 +1884,6 @@ textarea:focus-visible,
 }
 
 /* ── Tabular numerals ────────────────────────────────────────── */
-.rotate-fine-value,
-#rotateFineValue,
 #brushSize,
 #scaleButton,
 .step,
