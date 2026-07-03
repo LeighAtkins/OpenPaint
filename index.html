@@ -251,7 +251,7 @@
         margin: 0;
         padding: 0;
         display: flex;
-        align-items: flex-start;
+        align-items: center;
         justify-content: flex-start;
         min-height: 48px;
         flex-wrap: nowrap;
@@ -579,196 +579,29 @@
         padding: 0;
       }
 
-      /* Rotate controls: big swing hover state */
+      /* Rotate controls */
       #rotateLeftCtrl,
       #rotateRightCtrl {
-        position: relative;
-        overflow: hidden;
-        transform-origin: 50% 60%;
         transition:
-          transform 0.18s ease,
-          box-shadow 0.18s ease,
-          border-color 0.18s ease,
-          background 0.18s ease,
-          color 0.18s ease;
-      }
-
-      #rotateLeftCtrl::after,
-      #rotateRightCtrl::after {
-        content: '';
-        position: absolute;
-        inset: -40%;
-        background: radial-gradient(
-          circle at 30% 30%,
-          rgba(59, 130, 246, 0.25),
-          rgba(14, 116, 144, 0.0) 60%
-        );
-        opacity: 0;
-        transition: opacity 0.18s ease;
-        pointer-events: none;
+          background 0.12s ease,
+          border-color 0.12s ease;
       }
 
       #rotateLeftCtrl:hover,
       #rotateRightCtrl:hover {
-        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        border-color: rgba(59, 130, 246, 0.6);
-        box-shadow:
-          0 10px 24px rgba(15, 23, 42, 0.18),
-          0 0 0 2px rgba(59, 130, 246, 0.15);
-        color: #0f172a;
-      }
-
-      #rotateLeftCtrl:hover {
-        transform: rotate(-12deg) scale(1.08);
-      }
-
-      #rotateRightCtrl:hover {
-        transform: rotate(12deg) scale(1.08);
-      }
-
-      #rotateLeftCtrl:hover::after,
-      #rotateRightCtrl:hover::after {
-        opacity: 1;
+        background: #f8fafc;
+        border-color: rgba(59, 130, 246, 0.4);
       }
 
       #rotateLeftCtrl:active,
       #rotateRightCtrl:active {
-        transform: scale(0.96);
-        box-shadow:
-          0 6px 14px rgba(15, 23, 42, 0.12),
-          0 0 0 2px rgba(59, 130, 246, 0.12);
+        background: #f1f5f9;
       }
 
       #rotateLeftCtrl:focus-visible,
       #rotateRightCtrl:focus-visible {
         outline: 2px solid rgba(59, 130, 246, 0.65);
         outline-offset: 2px;
-      }
-
-      .rotate-fine-wrap {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-      }
-
-      .rotate-fine-panel {
-        position: absolute;
-        bottom: calc(100% + 4px);
-        left: 50%;
-        transform: translate(-50%, 8px);
-        opacity: 0;
-        pointer-events: none;
-        background: rgba(255, 255, 255, 0.98);
-        border: var(--ob-border-width) solid var(--ob-border-color);
-        box-shadow: var(--ob-shadow-elevated);
-        border-radius: var(--ob-radius-card);
-        padding: var(--ob-sp-2) var(--ob-sp-3) var(--ob-sp-4);
-        min-width: 220px;
-        transition: opacity var(--ob-duration-base) var(--ob-ease-standard), transform var(--ob-duration-base) var(--ob-ease-standard);
-      }
-
-      .rotate-fine-wrap:hover .rotate-fine-panel,
-      .rotate-fine-wrap:focus-within .rotate-fine-panel,
-      .rotate-fine-panel:hover,
-      body.fine-rotate-active .rotate-fine-panel {
-        opacity: 1;
-        pointer-events: auto;
-        transform: translate(-50%, 0);
-      }
-
-      .rotate-fine-wrap::after {
-        content: '';
-        position: absolute;
-        left: -6px;
-        right: -6px;
-        bottom: 100%;
-        height: 30px;
-      }
-
-      .rotate-fine-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .rotate-fine-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #0f172a;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-      }
-
-      #rotateFineSlider {
-        appearance: none;
-        height: 32px;
-        border-radius: 999px;
-        background: transparent;
-        outline: none;
-        flex: 1;
-        cursor: pointer;
-      }
-
-      #rotateFineSlider::-webkit-slider-runnable-track {
-        height: 6px;
-        border-radius: 999px;
-        background: linear-gradient(90deg, #0ea5e9 0%, #6366f1 100%);
-      }
-
-      #rotateFineSlider::-webkit-slider-thumb {
-        appearance: none;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: #0f172a;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
-        border: 2px solid #fff;
-        cursor: pointer;
-        margin-top: -5px;
-      }
-
-      #rotateFineSlider::-moz-range-track {
-        height: 6px;
-        border-radius: 999px;
-        background: linear-gradient(90deg, #0ea5e9 0%, #6366f1 100%);
-        border: none;
-      }
-
-      #rotateFineSlider::-moz-range-thumb {
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        background: #0f172a;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
-        border: 2px solid #fff;
-        cursor: pointer;
-      }
-
-      #fineRotateGrid {
-        position: fixed;
-        inset: 0;
-        pointer-events: none;
-        opacity: 0;
-        background-image:
-          linear-gradient(rgba(148, 163, 184, 0.18) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(148, 163, 184, 0.18) 1px, transparent 1px);
-        background-size: 40px 40px;
-        transition: opacity 0.18s ease;
-        z-index: 12;
-      }
-
-      body.fine-rotate-active #fineRotateGrid,
-      body.capture-unlocked #fineRotateGrid {
-        opacity: 1;
-      }
-
-      .rotate-fine-value {
-        font-variant-numeric: tabular-nums;
-        font-size: 12px;
-        font-weight: 600;
-        color: #0f172a;
-        min-width: 36px;
-        text-align: right;
       }
 
 
@@ -1355,10 +1188,8 @@
       }
 
       /* Tabular nums for measurement displays */
-      .rotate-fine-value,
-      #rotateFineValue,
       #brushSize,
-      #scaleButton,
+      #frameScaleControls,
       .step {
         font-variant-numeric: tabular-nums;
       }
@@ -1893,6 +1724,32 @@
         margin: 0;
       }
 
+      #tagModeToggle {
+        min-width: 118px;
+      }
+
+      #currentTagSize {
+        min-width: 3ch;
+        text-align: center;
+      }
+
+      #unitToggleBtnSecondary,
+      #inchDisplayToggleBtnSecondary,
+      #labelShapeToggleBtn {
+        min-width: 42px;
+        text-align: center;
+      }
+
+      #labelBackgroundToggleBtn {
+        min-width: 92px;
+        text-align: center;
+      }
+
+      #connectorToneBtn {
+        min-width: 154px;
+        text-align: center;
+      }
+
       #imagePanel > .image-name-container {
         margin: 0;
         border-top: 0;
@@ -2358,8 +2215,7 @@
       body.multiview-active #main-canvas-wrapper > .canvas-container,
       body.multiview-active #captureFrame,
       body.multiview-active #captureTabBar,
-      body.multiview-active #captureMasterTargetBadge,
-      body.multiview-active #fineRotateGrid {
+      body.multiview-active #captureMasterTargetBadge {
         visibility: hidden !important;
       }
 
@@ -2370,6 +2226,16 @@
 
       /* Hide mini-stepper during multiview — it overlaps the copy button */
       body.multiview-active #navigation-container {
+        display: none !important;
+      }
+
+      /* Ensure canvas controls labels are always visible during multiview —
+         the smart-label system may hide both label variants when compact mode
+         misclassifies the container width during layout shifts. */
+      body.multiview-active #canvasControls .label-long {
+        display: inline-block !important;
+      }
+      body.multiview-active #canvasControls .label-short {
         display: none !important;
       }
 
@@ -2392,6 +2258,7 @@
       }
 
       .multiview-pane {
+        position: relative;
         min-width: 0;
         min-height: 0;
         display: flex;
@@ -2403,9 +2270,92 @@
         box-shadow: 0 0 0 0 transparent;
       }
 
+      .multiview-pane-actions {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        right: 8px;
+        z-index: 3;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        pointer-events: none;
+      }
+
+      .multiview-pane-label,
+      .multiview-pane-tools {
+        pointer-events: auto;
+      }
+
+      .multiview-pane-label {
+        max-width: min(50%, 200px);
+        overflow: hidden;
+        padding: 4px 7px;
+        border: 1px solid rgba(148, 163, 184, 0.55);
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.92);
+        color: #334155;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .multiview-pane.mv-focused .multiview-pane-label {
+        border-color: #0284c7;
+        background: #e0f2fe;
+        color: #075985;
+      }
+
+      .multiview-pane-status {
+        margin-left: 5px;
+        color: #0369a1;
+        font-size: 10px;
+      }
+
+      .multiview-pane-tools {
+        display: inline-flex;
+        overflow: hidden;
+        border: 1px solid rgba(148, 163, 184, 0.55);
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.94);
+      }
+
+      .mv-pane-btn {
+        min-width: 25px;
+        height: 25px;
+        padding: 0 6px;
+        border: 0;
+        border-right: 1px solid rgba(148, 163, 184, 0.4);
+        background: transparent;
+        color: #334155;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .mv-pane-btn:last-child {
+        border-right: 0;
+      }
+
+      .mv-pane-btn:hover {
+        background: #eff6ff;
+        color: #1d4ed8;
+      }
+
+      .mv-pane-fit {
+        font-size: 10px;
+      }
+
       .multiview-pane.mv-focused {
-        box-shadow: 0 0 0 3px #14b8a6, 0 0 20px rgba(20, 184, 166, 0.3);
+        box-shadow: inset 0 0 0 3px #0ea5e9, 0 0 0 3px rgba(14, 165, 233, 0.7), 0 0 20px rgba(14, 165, 233, 0.3);
         cursor: crosshair;
+      }
+
+      .multiview-pane.mv-origin:not(.mv-focused) {
+        box-shadow: inset 0 0 0 2px #64748b;
       }
 
       .multiview-canvas-wrap {
@@ -2445,6 +2395,17 @@
         cursor: pointer;
         box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
         transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+      }
+
+      .mv-btn.is-active {
+        border-color: #0ea5e9;
+        background: #0ea5e9;
+        color: #ffffff;
+      }
+
+      .mv-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
       }
 
       .mv-btn:hover {
@@ -2875,6 +2836,10 @@
           <button id="paste" class="tbtn" title="Upload Images — or paste with Ctrl+V / Cmd+V" aria-label="Upload Images">
             <span class="label-long">Upload Images</span><span class="label-short">Upload</span>
           </button>
+          <button type="button" class="tbtn cloud-save-btn" data-cloud-save-trigger="" title="Save to cloud" aria-label="Cloud save" style="display: inline-flex;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            <span class="label-long">Cloud Save</span>
+          </button>
           <button id="clear" class="tbtn">Clear</button>
           <div id="drawingModeWrapper" class="shape-toggle shape-active">
             <button
@@ -3012,14 +2977,14 @@
           <input
             id="brushSize"
             type="number"
-            min="1"
+            min="0.25"
             max="300"
-            step="1"
+            step="0.25"
             value="2"
             class="border border-gray-300 rounded text-sm"
             style="height: 34px; margin: 0; cursor: text; width: 72px; padding: 2px 6px"
-            title="Brush size in pixels (Alt + Mouse Wheel over brush size input)"
-            aria-label="Brush size"
+            title="Line width in pixels (Alt + Mouse Wheel adjusts by 0.25px)"
+            aria-label="Line width"
           />
           <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow" aria-label="Start arrow">
             <svg
@@ -3162,7 +3127,6 @@
         class="flex-1 relative bg-white shadow-inner"
         style="overflow: hidden; z-index: 0"
       >
-        <div id="fineRotateGrid" aria-hidden="true"></div>
         <canvas
           id="canvas"
           style="
@@ -4129,24 +4093,27 @@
           <option value="scale-page-size" selected>Fit Frame</option>
           <option value="keep-size">Keep Size</option>
         </select>
-        <button
-          id="scaleButton"
-          class="px-2 py-1 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50"
-          aria-haspopup="listbox"
-          aria-expanded="false"
-          type="button"
-        >
-          100%
-          <svg
-            class="inline w-3 h-3 -mt-0.5"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
+        <div id="frameScaleControls" class="inline-flex overflow-hidden rounded-lg border border-gray-300 bg-white">
+          <button
+            id="frameScaleDecrease"
+            class="h-8 w-8 border-r border-gray-300 text-lg font-medium leading-none hover:bg-gray-50"
+            type="button"
+            title="Scale frame and image down"
+            aria-label="Scale frame and image down"
           >
-            <path d="M5.25 7.5l4.5 4.5 4.5-4.5H5.25z" />
-          </svg>
-        </button>
-        <div id="rotateFineWrap" class="rotate-fine-wrap ml-2" data-skip-uniform="true">
+            −
+          </button>
+          <button
+            id="frameScaleIncrease"
+            class="h-8 w-8 text-lg font-medium leading-none hover:bg-gray-50"
+            type="button"
+            title="Scale frame and image up"
+            aria-label="Scale frame and image up"
+          >
+            +
+          </button>
+        </div>
+        <div id="rotateFineWrap" class="ml-2" data-skip-uniform="true">
           <div class="flex items-center gap-1">
             <button
             id="rotateLeftCtrl"
@@ -4163,30 +4130,20 @@
             ↷
           </button>
           </div>
-          <div id="rotateFinePanel" class="rotate-fine-panel">
-            <div class="rotate-fine-row">
-              <span class="rotate-fine-label">Fine</span>
-              <input
-                id="rotateFineSlider"
-                type="range"
-                min="-45"
-                max="45"
-                step="1"
-                value="0"
-                aria-label="Fine rotate"
-              />
-              <span id="rotateFineValue" class="rotate-fine-value">0°</span>
-            </div>
-          </div>
         </div>
 
-        <!-- Share/Update next to Copy/Save -->
+        <!-- Cloud save next to Copy/Save -->
         <button
-          id="shareProjectBtn"
-          class="px-3 py-1 bg-white border border-gray-300 text-slate-700 text-xs rounded-lg shadow-sm hover:shadow-md hover:bg-slate-50 transition-all duration-200 transform hover:scale-[1.02] active:scale-95"
-          title="Create shareable URL for customer measurements"
+          id="canvasCloudSaveBtn"
+          type="button"
+          data-cloud-save-trigger
+          class="tbtn cloud-save-btn"
+          title="Save to cloud"
+          aria-label="Cloud save"
+          style="display: none"
         >
-          Share
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          <span class="label-long">Cloud Save</span>
         </button>
 
         <!-- Quick Save with hover menu -->
