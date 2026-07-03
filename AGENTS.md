@@ -87,6 +87,10 @@ Five stroke data structures that MUST be preserved during image operations (repl
 - `strokeLabelVisibility` — label show/hide state
 - `strokeMeasurements` — measurement values per stroke
 
+### Capture Frame / Tab State
+
+Per-view tab state stored in `window.captureTabsByLabel` — each view has tabs with `captureFrame` (width/height/baseWidth/baseWindowWidth/worldRect) and `viewport` (zoom/pan/rotation). See [`docs/CAPTURE_FRAME_RESIZE_SYSTEM.md`](docs/CAPTURE_FRAME_RESIZE_SYSTEM.md) for the full binding pipeline and proportional resize algorithm.
+
 ### Measurement Label Positioning
 
 Labels use a **normalized offset format** for resolution-independent positioning:
@@ -117,6 +121,7 @@ Related storage maps: `customLabelPositions`, `calculatedLabelOffsets`, `customL
 - **Measurements**: Line measurements with customizable labels and drag-to-reposition
 - **Project Persistence**: Save/load as ZIP; share via URL; PDF export (planned)
 - **Canvas Operations**: Zoom, pan, viewport management per image
+- **Capture Frame Resize System**: Proportional frame sizing that grows back on window resize, with stable `baseWidth/baseWindowWidth` ratio — see [`docs/CAPTURE_FRAME_RESIZE_SYSTEM.md`](docs/CAPTURE_FRAME_RESIZE_SYSTEM.md) for full documentation
 - **AI Integration**: Cloudflare Worker for SVG generation, measurement assistance, label placement
 - **HEIC Support**: Client-side conversion via `heic2any` library
 
