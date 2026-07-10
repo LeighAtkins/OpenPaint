@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import fs from 'node:fs';
 import { renderReportTemplate } from '../../server/pdf/templates/report-template.js';
 
 const sampleReport = {
@@ -17,6 +18,19 @@ const sampleReport = {
 };
 
 describe('report template page size', () => {
+  test('uses matching type sizes for measurement labels and values', () => {
+    const css = fs.readFileSync('server/pdf/print.css', 'utf8');
+    expect(css).toMatch(/\.measurement-code\s*\{[\s\S]*?font-size:\s*15px/);
+    expect(css).toMatch(/\.input-box\s*\{[\s\S]*?font-size:\s*15px/);
+  });
+
+  test('uses one project title in the header without repeated metadata', () => {
+    const html = renderReportTemplate(sampleReport, { pageSize: 'a4' });
+    expect(html).toContain('<h1 class="title">Test Project</h1>');
+    expect(html).not.toContain('Custom Sofa Measuring Diagram');
+    expect(html).not.toContain('Customer | Sofa | 2026-02-10');
+  });
+
   test('renders letter @page size when letter option selected', () => {
     const html = renderReportTemplate(sampleReport, { pageSize: 'letter' });
     expect(html).toContain('@page { size: Letter; margin: 14mm; }');
@@ -57,7 +71,6 @@ describe('report template page size', () => {
       },
       { pageSize: 'a4' }
     );
-    expect(html).toContain('Repeated Label Comparison');
     expect(html).toContain('Label J1');
     expect(html).toContain('Repeated labels are isolated here');
   });
@@ -77,9 +90,9 @@ describe('report template page size', () => {
     // 5 groups at 2 per page => 3 pages
     const pageMatches = html.match(/class="page comparison-page"/g);
     expect(pageMatches).toHaveLength(3);
-    // Each page should carry its own header
-    const headerMatches = html.match(/Repeated Label Comparison/g);
-    expect(headerMatches).toHaveLength(3);
+    // Main page plus 3 comparison pages all use the same compact project header.
+    const headerMatches = html.match(/<h1 class="title">Test Project<\/h1>/g);
+    expect(headerMatches).toHaveLength(4);
     // All 5 group labels present
     expect(html).toContain('Label J1');
     expect(html).toContain('Label J5');

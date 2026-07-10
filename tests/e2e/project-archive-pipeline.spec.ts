@@ -161,7 +161,67 @@ async function createArchive(): Promise<string> {
   return output;
 }
 
-async function loadArchive(page: Page, archivePath: string): Promise<void> {
+async function createLegacyGuideArchive(): Promise<string> {
+  const zip = new JSZip();
+  const viewId = 'cs5b-ra-sb-back';
+  const line = makeLine(viewId, 'J1');
+  delete (line.strokeMetadata as any).type;
+  const manifest = {
+    archiveFormat: 'openpaint-zip-v1',
+    version: '2.0-fabric',
+    name: 'Legacy Guide Fixture',
+    projectName: 'Legacy Guide Fixture',
+    currentViewId: viewId,
+    viewOrder: [viewId],
+    views: {
+      [viewId]: {
+        imageUrl: `images/${viewId}.png`,
+        imageAssetPath: `images/${viewId}.png`,
+        fitMode: 'keep-size',
+        rotation: 0,
+        backgroundRotation: 0,
+        viewport: { zoom: 1, panX: 0, panY: 0, savedCanvasWidth: 960, savedCanvasHeight: 720 },
+        backgroundWorldRect: { left: 120, top: 90, width: 720, height: 540 },
+        canvasJSON: {
+          version: '5.5.2',
+          objects: [line],
+          background: '#ffffff',
+          backgroundImage: null,
+        },
+        metadata: {
+          vectorStrokesByImage: { [viewId]: {} },
+          strokeMeasurements: {},
+          strokeVisibilityByImage: { [viewId]: {} },
+          strokeLabelVisibility: { [viewId]: {} },
+        },
+      },
+    },
+    metadata: {
+      version: 1,
+      measurementGuideModelSelections: [
+        { id: 'CS5B-RA-SB::back', code: 'CS5B-RA-SB', variant: 'back' },
+      ],
+      measurementGuideModelLinksByScope: {
+        [viewId]: 'CS5B-RA-SB::back',
+      },
+    },
+  };
+
+  zip.file(`images/${viewId}.png`, PNG_1X1);
+  zip.file('project.json', JSON.stringify(manifest));
+  const output = path.join(
+    await fs.mkdtemp(path.join(os.tmpdir(), 'openpaint-legacy-guide-')),
+    'legacy-guide.opaint'
+  );
+  await fs.writeFile(output, await zip.generateAsync({ type: 'nodebuffer' }));
+  return output;
+}
+
+async function loadArchive(
+  page: Page,
+  archivePath: string,
+  expectedViewCount = VIEW_IDS.length
+): Promise<void> {
   await page.evaluate(() => {
     (window as any).__archivePostLoadSwitches = [];
     window.addEventListener('openpaint:project-loaded', () => {
@@ -185,7 +245,7 @@ async function loadArchive(page: Page, archivePath: string): Promise<void> {
     expected =>
       !(window as any).__isLoadingProject &&
       Object.keys(window.app?.projectManager?.views || {}).length === expected,
-    VIEW_IDS.length,
+    expectedViewCount,
     { timeout: 30_000 }
   );
   await page.waitForTimeout(1_500);
@@ -343,5 +403,38 @@ test.describe('Project archive identity pipeline', () => {
       scopeType: 'frame',
       scopeId: 'detail-b::tab:frame-6',
     });
+  });
+
+  test('recovers legacy guide strokes with missing metadata type into Elements after archive load', async ({
+    appPage: page,
+  }) => {
+    const archivePath = await createLegacyGuideArchive();
+    await loadArchive(page, archivePath, 1);
+
+    const state = await page.evaluate(() => {
+      const viewId = 'cs5b-ra-sb-back';
+      const vectorMap = window.app?.metadataManager?.vectorStrokesByImage?.[viewId] || {};
+      const object = window.app?.canvasManager?.fabricCanvas
+        ?.getObjects?.()
+        ?.find((candidate: any) => candidate?.strokeMetadata?.strokeLabel === 'J1');
+      return {
+        currentViewId: window.app?.projectManager?.currentViewId,
+        vectorLabels: Object.keys(vectorMap),
+        objectMetadata: object?.strokeMetadata || null,
+        elementsText: document.getElementById('strokesList')?.textContent || '',
+      };
+    });
+
+    expect(state.currentViewId).toBe('cs5b-ra-sb-back');
+    expect(state.vectorLabels).toContain('J1');
+    expect(state.objectMetadata).toMatchObject({
+      imageLabel: 'cs5b-ra-sb-back',
+      strokeLabel: 'J1',
+      type: 'line',
+      isVector: true,
+    });
+    await expect
+      .poll(() => page.evaluate(() => document.getElementById('strokesList')?.textContent || ''))
+      .toContain('J1');
   });
 });

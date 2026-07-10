@@ -6,6 +6,8 @@ import {
   popGraphicsState,
   pushGraphicsState,
   rgb,
+  StandardFonts,
+  TextAlignment,
 } from 'pdf-lib';
 
 function safeFieldName(name, fallback) {
@@ -63,6 +65,7 @@ export async function injectPdfFormFields(pdfBuffer, anchors = []) {
 
   const pdfDoc = await PDFDocument.load(pdfBuffer);
   const form = pdfDoc.getForm();
+  const formFont = await pdfDoc.embedFont(StandardFonts.Courier);
   const pages = pdfDoc.getPages();
   const used = new Set();
   const radioGroups = new Map();
@@ -114,7 +117,8 @@ export async function injectPdfFormFields(pdfBuffer, anchors = []) {
         y: anchor.y,
         width: Math.max(8, anchor.width),
         height: Math.max(8, anchor.height),
-        borderWidth: 0,
+        borderWidth: 1,
+        borderColor: rgb(0.06, 0.09, 0.16),
       });
       if (String(anchor.value || '').toLowerCase() === 'checked') {
         checkBox.check();
@@ -132,6 +136,15 @@ export async function injectPdfFormFields(pdfBuffer, anchors = []) {
 
     const textField = form.createTextField(finalName);
     textField.setText(String(anchor.value || ''));
+    if (Number(anchor.maxLength) > 0) {
+      textField.setMaxLength(Math.min(120, Math.max(1, Number(anchor.maxLength))));
+    }
+    if (String(anchor.textAlign || '').toLowerCase() === 'center') {
+      textField.setAlignment(TextAlignment.Center);
+    }
+    if (anchor.multiline) {
+      textField.enableMultiline();
+    }
     const insetX = Math.max(0, Number(anchor.paddingLeft || 0));
     const insetRight = Math.max(0, Number(anchor.paddingRight || 0));
     const insetTop = Math.max(0, Number(anchor.paddingTop || 0));
@@ -141,9 +154,14 @@ export async function injectPdfFormFields(pdfBuffer, anchors = []) {
       y: anchor.y + insetBottom,
       width: Math.max(20, anchor.width - insetX - insetRight),
       height: Math.max(10, anchor.height - insetTop - insetBottom),
-      borderWidth: 0,
+      borderWidth: Math.max(0, Number(anchor.borderWidth || 0)),
+      ...(Number(anchor.borderWidth || 0) > 0 ? { borderColor: rgb(0.06, 0.09, 0.16) } : {}),
     });
-    textField.setFontSize(10);
+    const requestedFontSize = Number(anchor.fontSize);
+    textField.setFontSize(
+      Number.isFinite(requestedFontSize) ? Math.min(24, Math.max(6, requestedFontSize)) : 10
+    );
+    textField.updateAppearances(formFont);
   });
 
   return Buffer.from(await pdfDoc.save());

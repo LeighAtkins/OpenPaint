@@ -28,6 +28,38 @@ const MOS_RANGE = 1000;
 const DEFAULT_STROKE_COLOR = '#DF6868';
 const CURVE_CONTROL_POINTS_MAX = 8;
 
+// CSS class → declarations map, populated from the <style> block at the start
+// of each import. Measurement guides express stroke colors via CSS classes
+// (e.g. .st2{stroke:#52CFBD}) rather than inline attributes, so extractStyle
+// must resolve classes or every measurement falls back to DEFAULT_STROKE_COLOR
+// and loses its source color (green/teal measurements turn pink).
+let classStyleMap: Map<string, Record<string, string>> = new Map();
+
+function parseStyleBlock(svgRoot: Element): Map<string, Record<string, string>> {
+  const map = new Map<string, Record<string, string>>();
+  const styleEls = Array.from(svgRoot.querySelectorAll('style'));
+  const cssText = styleEls.map(s => s.textContent || '').join('\n');
+  const ruleRe = /\.([a-zA-Z0-9_-]+)\s*\{([^}]*)\}/g;
+  let match;
+  while ((match = ruleRe.exec(cssText)) !== null) {
+    const className = match[1];
+    const body = match[2];
+    const declarations: Record<string, string> = {};
+    body.split(';').forEach(part => {
+      const sep = part.indexOf(':');
+      if (sep < 0) return;
+      const prop = part.slice(0, sep).trim().toLowerCase();
+      const value = part.slice(sep + 1).trim();
+      if (prop && value) declarations[prop] = value;
+    });
+    if (Object.keys(declarations).length) {
+      // Merge so multiple rules for the same class combine.
+      map.set(className, { ...(map.get(className) || {}), ...declarations });
+    }
+  }
+  return map;
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -54,6 +86,10 @@ export function importMosSvg(
   if (!svgRoot) {
     throw new Error('[MOS Importer] No <svg> root in sanitised text');
   }
+
+  // Build the CSS class → declarations map so extractStyle can resolve
+  // class-based stroke colors (measurement guides use classes, not inline).
+  classStyleMap = parseStyleBlock(svgRoot);
 
   // Determine source viewBox for coordinate mapping
   const vb = parseViewBox(svgRoot);
@@ -814,10 +850,20 @@ function extractStyle(el: Element): { strokeColor?: string; strokeWidth?: number
 }
 
 function getStyleProp(el: Element, prop: string): string | null {
+  // 1. Inline style attribute.
   const style = el.getAttribute('style');
-  if (!style) return null;
-  const match = new RegExp(`${prop}\\s*:\\s*([^;]+)`).exec(style);
-  return match ? match[1].trim() : null;
+  if (style) {
+    const match = new RegExp(`${prop}\\s*:\\s*([^;]+)`).exec(style);
+    if (match) return match[1].trim();
+  }
+  // 2. CSS class declarations from the <style> block (built in importMosSvg).
+  // Measurement guides encode stroke color here, not inline.
+  const classAttr = el.getAttribute('class') || '';
+  for (const cls of classAttr.split(/\s+/).filter(Boolean)) {
+    const declarations = classStyleMap.get(cls);
+    if (declarations && declarations[prop]) return declarations[prop];
+  }
+  return null;
 }
 
 function extractRoleTokenFromId(id: string): string | undefined {

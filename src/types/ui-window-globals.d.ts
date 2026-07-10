@@ -34,10 +34,23 @@ declare global {
     updateImageListPadding?: () => void;
     syncSelectionToCenteredThumbnail?: () => void;
     updateActivePill?: (options?: { animate?: boolean }) => void;
+    updatePills?: () => HTMLButtonElement[];
     updateActiveImageInSidebar?: () => void;
     projectManager?: ProjectManagerLike;
     paintApp?: PaintAppLike | any;
     currentImageLabel?: string;
+    switchToImage?: (label: string | number) => void;
+    captureTabsByLabel?: Record<string, any>;
+    ensureCaptureTabsForLabel?: (label: string) => any;
+    setActiveCaptureTab?: (label: string, tabId: string, options?: { skipSave?: boolean }) => void;
+    initializeCaptureFrameForImageAspect?: (
+      label: string,
+      imageWidth: number,
+      imageHeight: number
+    ) => boolean;
+    __openpaintResetCaptureResizeAnchor?: () => void;
+    createCaptureTabForLabel?: (label?: string) => void;
+    deleteCaptureTabForLabel?: (label: string, tabId: string) => void;
     originalImages?: Record<string, string | Blob | undefined>;
     __suppressScrollSelectUntil?: number;
     __imageListProgrammaticScrollUntil?: number;

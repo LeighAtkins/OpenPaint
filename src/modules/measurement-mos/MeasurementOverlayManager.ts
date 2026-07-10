@@ -230,6 +230,80 @@ export class MeasurementOverlayManager {
     console.log(`[MOS] Removed overlay ${overlayId}`);
   }
 
+  /**
+   * Remove one logical measurement from an imported overlay. A measurement can
+   * be represented by several MOS elements (line, label, and leader), so the
+   * Elements panel must update the overlay model as well as the live Fabric
+   * object or mountView() will recreate it on the next image switch.
+   */
+  removeMeasurement(viewId: string, strokeLabel: string): boolean {
+    const normalizedViewId = String(viewId || '').split('::tab:')[0];
+    const normalizedLabel = String(strokeLabel || '')
+      .trim()
+      .toUpperCase();
+    if (!normalizedViewId || !normalizedLabel) return false;
+
+    const canvas = this.canvasManager.fabricCanvas;
+    const metadataManager = window.app?.metadataManager;
+    const tagManager = window.app?.tagManager;
+    let removed = false;
+
+    for (const overlayId of this.store.order) {
+      const overlay = this.store.byId.get(overlayId);
+      if (!overlay || overlay.viewId !== normalizedViewId) continue;
+
+      const elementIds = new Set<string>();
+      for (const [elementId, element] of overlay.elements.entries()) {
+        if (
+          String(element.roleToken || '')
+            .trim()
+            .toUpperCase() !== normalizedLabel
+        )
+          continue;
+        elementIds.add(elementId);
+      }
+      if (!elementIds.size) continue;
+
+      if (canvas) {
+        const objects = canvas.getObjects().filter((obj: any) => {
+          const customData = obj?.customData as MosFabricCustomData | undefined;
+          return (
+            customData?.layerType === 'mos-overlay' &&
+            customData.overlayId === overlayId &&
+            (elementIds.has(customData.elementId) ||
+              String(customData.roleToken || '')
+                .trim()
+                .toUpperCase() === normalizedLabel)
+          );
+        });
+        objects.forEach((obj: any) => canvas.remove(obj));
+      }
+
+      elementIds.forEach(elementId => overlay.elements.delete(elementId));
+      overlay.dirty = true;
+      removed = true;
+
+      const tagKeys = this._overlayTagKeys.get(overlayId) || [];
+      this._overlayTagKeys.set(
+        overlayId,
+        tagKeys.filter(label => String(label).trim().toUpperCase() !== normalizedLabel)
+      );
+    }
+
+    if (!removed) return false;
+
+    tagManager?.removeTag?.(normalizedLabel, normalizedViewId);
+    if (metadataManager) {
+      delete metadataManager.vectorStrokesByImage?.[normalizedViewId]?.[normalizedLabel];
+      delete metadataManager.strokeVisibilityByImage?.[normalizedViewId]?.[normalizedLabel];
+      delete metadataManager.strokeLabelVisibility?.[normalizedViewId]?.[normalizedLabel];
+      delete metadataManager.strokeMeasurements?.[normalizedViewId]?.[normalizedLabel];
+      metadataManager.updateStrokeVisibilityControls?.();
+    }
+    canvas?.requestRenderAll?.();
+    return true;
+  }
+
   // -----------------------------------------------------------------------
   // Reposition on image/viewport change
   // -----------------------------------------------------------------------
@@ -272,7 +346,11 @@ export class MeasurementOverlayManager {
           const worldPoints = element.curvePoints.map(point => mosToCanvas(point, imageRect));
           if (worldPoints.length >= 2) {
             const pathData = this._buildSmoothPathFromPoints(worldPoints);
-            lineObj.set({ path: fabric.Path.parsePath(pathData) });
+            // fabric v5 exposes path parsing as fabric.util.parsePath, not
+            // fabric.Path.parsePath (the latter does not exist and throws
+            // "fabric.Path.parsePath is not a function"). Matches the pattern
+            // used in CanvasManager and FabricControls.
+            lineObj.set({ path: fabric.util.parsePath(pathData) });
             lineObj.customPoints = worldPoints.map(point => ({ x: point.x, y: point.y }));
             if (typeof FabricControls?.canonicalizeCurveFromWorldPoints === 'function') {
               FabricControls.canonicalizeCurveFromWorldPoints(lineObj);
@@ -699,7 +777,24 @@ export class MeasurementOverlayManager {
       for (const candidate of candidates) {
         const isPrimary = candidate === primary;
         if (!isPrimary) {
-          if (candidate.lineObj) {
+          // Remove the line/path AND any associated arrowhead triangles.
+          // Curve-path measurements create separate triangle objects
+          // (`<id>_curve_start_arrow` / `<id>_curve_end_arrow`); removing only
+          // the lineObj leaves them as orphan "stray arrowhead" triangles on
+          // the canvas. The element's fabricObjectIds enumerates all of them.
+          const idsToRemove = new Set(
+            Array.isArray(candidate.element?.fabricObjectIds)
+              ? candidate.element.fabricObjectIds
+              : []
+          );
+          if (candidate.lineObj) idsToRemove.add(candidate.lineObj.__mosId);
+          if (idsToRemove.size) {
+            const orphans = canvas.getObjects().filter((obj: any) => {
+              const mosId = String(obj.__mosId || '');
+              return Boolean(mosId) && idsToRemove.has(mosId);
+            });
+            orphans.forEach((obj: any) => canvas.remove(obj));
+          } else if (candidate.lineObj) {
             canvas.remove(candidate.lineObj);
           }
           if (candidate.element?.id) {
@@ -739,8 +834,17 @@ export class MeasurementOverlayManager {
 
       this._seedMosTagOffset(lineObj);
       this._applyRoleAnchorOffset(lineObj, roleAnchors.get(roleToken));
+      // Resolve the stroke color so the tag border matches the measurement's
+      // actual color (green/teal/red). For arrow groups the color lives on the
+      // child line; for curve paths it's on the path itself.
+      const strokeChild =
+        lineObj?.type === 'group' && typeof lineObj.getObjects === 'function'
+          ? lineObj.getObjects().find((c: any) => c.type === 'line' || c.type === 'path')
+          : lineObj;
+      const tagStrokeColor = String(strokeChild?.stroke || lineObj?.stroke || '#DF6868');
       tagThemeConfigChanged =
-        this._ensureMosTagTheme(tagManager, roleToken, overlay.viewId) || tagThemeConfigChanged;
+        this._ensureMosTagTheme(tagManager, roleToken, overlay.viewId, tagStrokeColor) ||
+        tagThemeConfigChanged;
 
       tagManager.createTag(roleToken, overlay.viewId, lineObj);
       createdKeys.push(roleToken);
@@ -1071,13 +1175,34 @@ export class MeasurementOverlayManager {
       return;
     }
 
+    // Clamp the anchor-derived offset. The label anchor nudges the tag toward
+    // where the label text sat in the source SVG, but for arrow-group line
+    // objects (whose center can differ from the underlying line geometry) the
+    // raw offset can be hundreds of pixels, landing the tag far from the
+    // measurement. Bound it so the tag stays near the line while still
+    // respecting the anchor's direction.
+    const MAX_TAG_OFFSET = 60;
+    let dx = anchorCanvas.x - lineCenter.x;
+    let dy = anchorCanvas.y - lineCenter.y;
+    const mag = Math.hypot(dx, dy);
+    if (Number.isFinite(mag) && mag > MAX_TAG_OFFSET) {
+      const scale = MAX_TAG_OFFSET / mag;
+      dx *= scale;
+      dy *= scale;
+    }
+
     lineObj.tagOffset = {
-      x: anchorCanvas.x - lineCenter.x,
-      y: anchorCanvas.y - lineCenter.y,
+      x: dx,
+      y: dy,
     };
   }
 
-  private _ensureMosTagTheme(tagManager: any, roleToken: string, viewId: string): boolean {
+  private _ensureMosTagTheme(
+    tagManager: any,
+    roleToken: string,
+    viewId: string,
+    strokeColor = '#DF6868'
+  ): boolean {
     if (!tagManager || !roleToken || !viewId) return false;
 
     if (!tagManager.tagStyleConfig || typeof tagManager.tagStyleConfig !== 'object') {
@@ -1099,13 +1224,18 @@ export class MeasurementOverlayManager {
         ? tagManager.getTagKey(roleToken, viewId)
         : `${viewId}::${roleToken}`;
 
-    if (tagManager.tagStyleConfig.perTagThemes[tagKey]) {
+    // The tag border should match the measurement's actual stroke color
+    // (green/teal/red), not a hardcoded pink. A previously-set theme whose
+    // border differs from the current line color is overwritten so recolors
+    // and re-imports keep the tag in sync with the line.
+    const existing = tagManager.tagStyleConfig.perTagThemes[tagKey];
+    if (existing && existing.border === strokeColor) {
       return false;
     }
 
     tagManager.tagStyleConfig.perTagThemes[tagKey] = {
       background: '#FFFFFF',
-      border: '#DF6868',
+      border: strokeColor,
       text: '#000000',
     };
     return true;

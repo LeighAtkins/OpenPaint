@@ -34,7 +34,7 @@ const guideSvgCache = new Map();
 let guideCodeListCache = null;
 let guideViewsByCodeCache = null;
 let guideCodeListPromise = null;
-const GUIDE_RASTER_CACHE_VERSION = 'v4';
+const GUIDE_RASTER_CACHE_VERSION = 'v5';
 const GUIDE_RASTER_MIN_EDGE = 2200;
 const GUIDE_RASTER_MAX_EDGE = 4096;
 const GUIDE_SPLIT_ENABLED_PREF_KEY = 'guideSplitEnabled';
@@ -2280,6 +2280,23 @@ function ensureStyles() {
       cursor: pointer;
       vertical-align: middle;
     }
+    .guide-gallery-code {
+      user-select: text;
+      cursor: text;
+      font: inherit;
+      color: inherit;
+    }
+    .guide-gallery-copy-code {
+      margin-left: 6px;
+      padding: 2px 6px;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      background: #ffffff;
+      color: #475569;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 600;
+    }
     .guide-gallery-item-body {
       padding: 12px;
       background: #ffffff;
@@ -2713,6 +2730,7 @@ function canonicalRoleToken(value) {
 function roleTokenFromElementId(id) {
   const normalized = String(id || '')
     .replace(/^mos\d+_/, '')
+    .replace(/_[0-9A-Fa-f]{8,}_?$/i, '')
     .trim();
   if (!normalized || normalized.length < 2) return '';
 
@@ -2840,6 +2858,145 @@ function getGroupRoleInfo(group) {
   };
 }
 
+function collectGuideMeasurementGroups(root) {
+  const entries = Array.from(root?.querySelectorAll?.('g') || [])
+    .map(group => ({ group, info: getGroupRoleInfo(group) }))
+    .filter(entry => entry.info?.canonicalToken && ['m', 'b', 'c'].includes(entry.info.prefix));
+  const prefixesByToken = new Map();
+  entries.forEach(({ info }) => {
+    if (!prefixesByToken.has(info.canonicalToken)) {
+      prefixesByToken.set(info.canonicalToken, new Set());
+    }
+    prefixesByToken.get(info.canonicalToken).add(info.prefix);
+  });
+  return new Set(
+    entries
+      .filter(({ info }) => {
+        const prefixes = prefixesByToken.get(info.canonicalToken) || new Set();
+        return prefixes.has('m') && (prefixes.has('b') || prefixes.has('c'));
+      })
+      .map(({ group }) => group)
+  );
+}
+
+function parseSvgStyleDeclarations(svgRoot) {
+  const stylesByClass = new Map();
+  const styleText = Array.from(svgRoot?.querySelectorAll?.('style') || [])
+    .map(styleEl => styleEl.textContent || '')
+    .join('\n');
+  const classRulePattern = /\.([a-zA-Z0-9_-]+)\s*\{([^}]*)\}/g;
+  let match;
+  while ((match = classRulePattern.exec(styleText)) !== null) {
+    const declarations = {};
+    String(match[2] || '')
+      .split(';')
+      .forEach(part => {
+        const separator = part.indexOf(':');
+        if (separator < 0) return;
+        const prop = part.slice(0, separator).trim().toLowerCase();
+        const value = part.slice(separator + 1).trim();
+        if (prop && value) {
+          declarations[prop] = value;
+        }
+      });
+    if (Object.keys(declarations).length) {
+      stylesByClass.set(match[1], declarations);
+    }
+  }
+  return stylesByClass;
+}
+
+function resolveSvgStyleValue(node, property, stylesByClass) {
+  const prop = String(property || '').toLowerCase();
+  if (!node || !prop) return '';
+  const styleAttr = String(node.getAttribute?.('style') || '');
+  if (styleAttr) {
+    const declarations = {};
+    styleAttr.split(';').forEach(part => {
+      const separator = part.indexOf(':');
+      if (separator < 0) return;
+      declarations[part.slice(0, separator).trim().toLowerCase()] = part
+        .slice(separator + 1)
+        .trim();
+    });
+    if (declarations[prop]) return declarations[prop];
+  }
+  const attrValue = node.getAttribute?.(prop);
+  if (attrValue) return attrValue;
+  const classes = String(node.getAttribute?.('class') || '')
+    .split(/\s+/)
+    .filter(Boolean);
+  for (const className of classes) {
+    const value = stylesByClass.get(className)?.[prop];
+    if (value) return value;
+  }
+  return '';
+}
+
+function colorToRgb(value) {
+  const source = String(value || '').trim();
+  if (!source || source === 'none' || source === 'transparent') return null;
+  const hex = source.match(/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/)?.[1];
+  if (!hex) return null;
+  const normalized =
+    hex.length === 3
+      ? hex
+          .split('')
+          .map(char => `${char}${char}`)
+          .join('')
+      : hex.slice(0, 6);
+  const valueInt = Number.parseInt(normalized, 16);
+  if (!Number.isFinite(valueInt)) return null;
+  return {
+    r: (valueInt >> 16) & 255,
+    g: (valueInt >> 8) & 255,
+    b: valueInt & 255,
+  };
+}
+
+function isGuideArtifactColor(value) {
+  const rgb = colorToRgb(value);
+  if (!rgb) return false;
+  const max = Math.max(rgb.r, rgb.g, rgb.b);
+  const min = Math.min(rgb.r, rgb.g, rgb.b);
+  const saturation = max === 0 ? 0 : (max - min) / max;
+  // Measurement marks use saturated colors (red, teal, green, orange, ...).
+  // Two gates exclude non-measurement content:
+  //   - saturation >= 0.25 drops near-gray/neutral furniture fills.
+  //   - max >= 90 drops dark-but-saturated outline colors (e.g. #0f172a navy)
+  //     that are commonly used for furniture strokes; real measurement colors
+  //     are all bright (max channel >= ~190).
+  // Previously this was gated to only red and teal hues, which left
+  // green/other-colored arrowhead polygons in the background raster; those
+  // then got a second Fabric arrowhead drawn on top during SVG import
+  // (startArrow/endArrow), producing the double-arrowhead rendering bug.
+  return saturation >= 0.25 && max >= 90;
+}
+
+function isDashedSvgStroke(node, stylesByClass) {
+  const dash = resolveSvgStyleValue(node, 'stroke-dasharray', stylesByClass);
+  return Boolean(dash && dash !== 'none' && dash !== '0');
+}
+
+function removeGuideRasterArtifacts(svgRoot) {
+  const stylesByClass = parseSvgStyleDeclarations(svgRoot);
+  const selector = 'line,path,polyline,polygon,circle,ellipse,rect';
+  Array.from(svgRoot.querySelectorAll(selector)).forEach(node => {
+    const tagName = String(node.tagName || '').toLowerCase();
+    const stroke = resolveSvgStyleValue(node, 'stroke', stylesByClass);
+    const fill = resolveSvgStyleValue(node, 'fill', stylesByClass);
+    const hasGuideStroke = isGuideArtifactColor(stroke);
+    const hasGuideFill = isGuideArtifactColor(fill);
+    const shouldRemove =
+      isDashedSvgStroke(node, stylesByClass) ||
+      hasGuideStroke ||
+      (tagName === 'polygon' && hasGuideFill);
+    if (shouldRemove) {
+      node.parentNode?.removeChild(node);
+    }
+  });
+}
+
 function styleGuideGroupForHighlight(group, prefix) {
   if (!group?.querySelectorAll) return;
   if (prefix === 'm') {
@@ -2899,10 +3056,10 @@ function prepareSvgForRaster(svgText, options = {}) {
   }
 
   const allGroups = Array.from(root.querySelectorAll('g'));
+  const measurementGroups = collectGuideMeasurementGroups(root);
   allGroups.forEach(group => {
     const info = getGroupRoleInfo(group);
-    const isMeasurementGroup =
-      info && (info.prefix === 'm' || info.prefix === 'b' || info.prefix === 'c');
+    const isMeasurementGroup = measurementGroups.has(group);
     if (!isMeasurementGroup) return;
 
     const matchesActiveRole =
@@ -3142,7 +3299,30 @@ async function waitForGuideImportReady(viewId, timeoutMs = 5000) {
     const currentViewId = String(manager?.currentViewId || '').trim();
     const canvas = window.app?.canvasManager?.fabricCanvas;
     const bgImage = canvas?.backgroundImage || null;
-    if (currentViewId === viewId && canvas && bgImage) {
+    const expectedSource = String(manager?.views?.[viewId]?.image || '').trim();
+    const actualSource = String(
+      bgImage?.getSrc?.() ||
+        bgImage?._element?.currentSrc ||
+        bgImage?._element?.src ||
+        bgImage?.src ||
+        ''
+    ).trim();
+    const sourcesMatch =
+      !expectedSource ||
+      actualSource === expectedSource ||
+      (() => {
+        try {
+          return (
+            new URL(actualSource, window.location.href).href ===
+            new URL(expectedSource, window.location.href).href
+          );
+        } catch {
+          return false;
+        }
+      })();
+    const imageElement = bgImage?._element || null;
+    const imageDecoded = !imageElement || imageElement.complete !== false;
+    if (currentViewId === viewId && canvas && bgImage && sourcesMatch && imageDecoded) {
       return true;
     }
     // eslint-disable-next-line no-await-in-loop
@@ -3478,6 +3658,29 @@ async function importSvgMeasurements(code, view, imageLabel, options = {}) {
         const shouldImportAsPath =
           curveMode === 'reference-path' && line?.kind === 'curve' && segmentPoints.length >= 2;
 
+        // Degenerate-line guard: skip segments shorter than the arrowhead
+        // scale (~15px). Such segments are almost always arrowhead/connector
+        // stubs that slipped past the parser's fallbacks. Importing them
+        // produces a near-zero-length Fabric line whose center sits on the
+        // stub — and the tag then anchors there (the "tag resets to a corner"
+        // symptom), far from the actual measurement.
+        const sourceLength = segmentPoints.length
+          ? segmentPoints.reduce((total, point, index) => {
+              if (index === 0) return 0;
+              const prev = segmentPoints[index - 1];
+              return total + Math.hypot(point.x - prev.x, point.y - prev.y);
+            }, 0)
+          : Math.hypot(
+              Number(line?.x2 || 0) - Number(line?.x1 || 0),
+              Number(line?.y2 || 0) - Number(line?.y1 || 0)
+            );
+        if (sourceLength > 0 && sourceLength < 15) {
+          console.warn(
+            `[SVG Import] Skipping degenerate "${measurement.label}" segment (length ${sourceLength.toFixed(1)}px)`
+          );
+          continue;
+        }
+
         let fabricLine = null;
         const lineColor = line.color || '#ef4444';
         if (shouldImportAsPath) {
@@ -3583,17 +3786,19 @@ async function importSvgMeasurements(code, view, imageLabel, options = {}) {
     // Batch-create all tags in a single deferred pass. The deferral is needed
     // so the canvas viewport/background settles before tags read line positions.
     if (tagManager && pendingTagCreations.length) {
-      setTimeout(() => {
-        tagManager.connectorColor = pendingTagCreations[0].fabricLine.stroke || '#ef4444';
-        tagManager.connectorMatchesLine = true;
-        tagManager.tagShape = 'square';
-        if (options.syncUi !== false && window.paintApp?.state) {
-          window.paintApp.state.labelShape = 'square';
-        }
-        pendingTagCreations.forEach(({ label, imageLabel, fabricLine }) => {
-          tagManager.createTagForStroke(label, imageLabel, fabricLine);
-        });
-      }, 50);
+      await new Promise(resolve => {
+        requestAnimationFrame(() => requestAnimationFrame(resolve));
+      });
+      tagManager.connectorColor = pendingTagCreations[0].fabricLine.stroke || '#ef4444';
+      tagManager.connectorMatchesLine = true;
+      tagManager.tagShape = 'square';
+      if (options.syncUi !== false && window.paintApp?.state) {
+        window.paintApp.state.labelShape = 'square';
+      }
+      pendingTagCreations.forEach(({ label, imageLabel, fabricLine }) => {
+        tagManager.createTagForStroke(label, imageLabel, fabricLine);
+      });
+      canvas.requestRenderAll?.();
     }
 
     // Update UI buttons to reflect import settings
@@ -3725,7 +3930,23 @@ async function addGuideAsNewImage(code, view, options = {}) {
         await manager.switchView(label, true);
       }
       await waitForGuideImportReady(label);
-      const importResult = await importSvgMeasurements(code, view, label);
+      // Skip the legacy editable Fabric-line import when the MOS overlay already
+      // created the measurements for this view. Both systems run during a guide
+      // Add; running both produces duplicate stroke objects for each label,
+      // which causes (a) double arrowheads — the overlay's polygon arrows stack
+      // on the Fabric line's arrows — and (b) misplaced tags, because the tag
+      // manager connects the tag to whichever stroke object it resolves last
+      // (often the overlay group), landing the tag far from the real line.
+      // The MOS overlay is the canonical measurement system when present.
+      const mosAlreadyImported = Boolean(
+        measurementOverlayManager &&
+          Object.keys((window.app?.metadataManager?.vectorStrokesByImage || {})[label] || {})
+            .length > 0
+      );
+      let importResult = { success: true, imported: 0, skipped: mosAlreadyImported };
+      if (!mosAlreadyImported) {
+        importResult = await importSvgMeasurements(code, view, label);
+      }
       console.log(`[addGuideAsNewImage] Import result:`, importResult);
       if (options.skipStatusMessage !== true && importResult.success && importResult.imported > 0) {
         const extra = importErrors.length ? ` (with ${importErrors.length} warning(s))` : '';
@@ -3773,95 +3994,38 @@ async function addGuideAsNewImage(code, view, options = {}) {
  * Removes <text> elements and orphaned <rect> label backgrounds
  * that are not part of measurement groups (no m/b/c ID prefix).
  */
-function stripSvgLabels(svgText) {
-  // 1. Strip <text> elements
-  var result = svgText.replace(/<text[^>]*>[\s\S]*?<\/text>/gi, '');
-  // 2. Strip all measurement visual elements via DOM parsing
+export function stripSvgLabels(svgText) {
   try {
     var parser = new DOMParser();
-    var doc = parser.parseFromString(result, 'image/svg+xml');
+    var doc = parser.parseFromString(svgText, 'image/svg+xml');
     var svgRoot = doc.querySelector('svg');
+    if (!svgRoot) return svgText;
 
-    // Build a set of CSS classes that represent measurement elements
-    // (saturated stroke colors = measurement lines; saturated fill colors =
-    // arrowheads; stroke-dasharray = dashed measurement extensions).
-    var strippableClasses = new Set();
-    var styleEl = svgRoot?.querySelector('style');
-    if (styleEl) {
-      var cssText = styleEl.textContent || '';
-      var ruleRe = /\.([a-zA-Z0-9_-]+)\s*\{([^}]*)\}/g;
-      var ruleMatch;
-      while ((ruleMatch = ruleRe.exec(cssText)) !== null) {
-        var body = ruleMatch[2];
-        var hasDash = /stroke-dasharray/.test(body);
-        var strokeM = /stroke\s*:\s*(#[0-9A-Fa-f]{3,8})/.exec(body);
-        var fillM = /fill\s*:\s*(#[0-9A-Fa-f]{3,8})/.exec(body);
-        if (
-          hasDash ||
-          (strokeM && isHexSaturated(strokeM[1])) ||
-          (fillM && isHexSaturated(fillM[1]))
-        ) {
-          strippableClasses.add(ruleMatch[1]);
-        }
-      }
-    }
-
-    // Remove groups that contain only rects (label box groups)
-    Array.from(doc.querySelectorAll('g')).forEach(function (g) {
-      var id = String(g.getAttribute('id') || '').trim();
-      if (!id.match(/^[mbc]/i)) {
-        var rects = g.querySelectorAll('rect');
-        var paths = g.querySelectorAll('line, path, polyline, polygon');
-        if (rects.length > 0 && paths.length === 0) {
-          g.parentNode?.removeChild(g);
-        }
+    // The background must remain a faithful rendering of the source furniture.
+    // Only remove known measurement groups and free-standing text; never infer
+    // furniture geometry from color, element type, or segment length.
+    var measurementGroups = collectGuideMeasurementGroups(svgRoot);
+    Array.from(measurementGroups).forEach(function (group) {
+      if (group.parentNode) {
+        group.parentNode?.removeChild(group);
       }
     });
-
-    // Remove all elements whose class includes a strippable (measurement) class
-    if (strippableClasses.size > 0) {
-      Array.from(doc.querySelectorAll('line, polyline, path, polygon, rect')).forEach(
-        function (el) {
-          var cls = el.getAttribute('class') || '';
-          var classes = cls.split(/\s+/);
-          for (var i = 0; i < classes.length; i++) {
-            if (strippableClasses.has(classes[i])) {
-              el.parentNode?.removeChild(el);
-              break;
-            }
-          }
+    Array.from(svgRoot.querySelectorAll('line[id], path[id], polyline[id]')).forEach(
+      function (node) {
+        var id = String(node.getAttribute('id') || '').replace(/^mos\d+_/i, '');
+        if (/^m.+(?:cm|mm|in)\d*$/i.test(id)) {
+          node.parentNode?.removeChild(node);
         }
-      );
-    }
-
-    // Remove any remaining rects (tag boxes without measurement classes)
-    Array.from(doc.querySelectorAll('rect')).forEach(function (rect) {
-      rect.parentNode?.removeChild(rect);
-    });
-    // Remove any remaining short lines (connectors under 20px)
-    Array.from(doc.querySelectorAll('line')).forEach(function (line) {
-      var x1 = parseFloat(line.getAttribute('x1') || '0');
-      var y1 = parseFloat(line.getAttribute('y1') || '0');
-      var x2 = parseFloat(line.getAttribute('x2') || '0');
-      var y2 = parseFloat(line.getAttribute('y2') || '0');
-      if (Math.hypot(x2 - x1, y2 - y1) < 20) {
-        line.parentNode?.removeChild(line);
       }
+    );
+    removeGuideRasterArtifacts(svgRoot);
+    Array.from(svgRoot.querySelectorAll('text')).forEach(function (textNode) {
+      textNode.parentNode?.removeChild(textNode);
     });
-    result = new XMLSerializer().serializeToString(doc);
+    return new XMLSerializer().serializeToString(doc);
   } catch (e) {
-    // Fallback: text-only stripping is better than nothing
+    return svgText.replace(/<text[^>]*>[\s\S]*?<\/text>/gi, '');
   }
-  return result;
-}
-
-function isHexSaturated(hex) {
-  var parts = /^#?([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})([0-9A-Fa-f]{2})/.exec(String(hex || ''));
-  if (!parts) return false;
-  var r = parseInt(parts[1], 16);
-  var g = parseInt(parts[2], 16);
-  var b = parseInt(parts[3], 16);
-  return Math.max(r, g, b) - Math.min(r, g, b) > 40;
 }
 
 function stripNonMeasurementElements(svgText) {
@@ -4731,6 +4895,104 @@ function hideGuideFlash() {
   lastRenderedViewId = null;
 }
 
+function normalizeGuideProjectImageSource(value) {
+  const source = String(value || '').trim();
+  if (!source || source === 'null' || source === 'undefined') return '';
+  return source;
+}
+
+function readBackgroundImageUrlFromStyle(value) {
+  const source = String(value || '').trim();
+  if (!source || source === 'none') return '';
+  const match = source.match(/^url\((['"]?)(.*)\1\)$/);
+  return normalizeGuideProjectImageSource(match?.[2] || '');
+}
+
+function escapeGuideProjectImageSelector(value) {
+  const source = String(value || '');
+  if (window.CSS?.escape) return window.CSS.escape(source);
+  return source.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+function getGuideGalleryEntries() {
+  const directGallery =
+    window.imageGallery && typeof window.imageGallery.getData === 'function'
+      ? window.imageGallery.getData()
+      : null;
+  const galleryData = Array.isArray(directGallery)
+    ? directGallery
+    : Array.isArray(window.imageGalleryData)
+      ? window.imageGalleryData
+      : [];
+  return galleryData.filter(Boolean);
+}
+
+function getGuideGalleryEntryLabel(entry) {
+  return String(entry?.original?.label || entry?.label || entry?.viewId || entry?.id || '').trim();
+}
+
+function resolveProjectImageDisplayName(id, entry, labelMap, galleryEntry, fallbackIndex) {
+  const customLabel = String(labelMap?.[id] || '').trim();
+  if (customLabel) return customLabel;
+  const galleryName = String(
+    galleryEntry?.name || galleryEntry?.displayName || galleryEntry?.filename || ''
+  ).trim();
+  if (galleryName) return galleryName;
+  const entryName = String(entry?.name || entry?.displayName || entry?.filename || '').trim();
+  if (entryName) return entryName;
+  return `Image ${fallbackIndex + 1}`;
+}
+
+function resolveProjectImageSource(id, entry, galleryEntry) {
+  const directCandidates = [
+    entry?.image,
+    entry?.imageUrl,
+    entry?.imageDataURL,
+    entry?.imageAssetUrl,
+    entry?.resolvedImageUrl,
+    window.originalImages?.[id],
+    galleryEntry?.src,
+    galleryEntry?.url,
+    galleryEntry?.imageUrl,
+    galleryEntry?.imageDataURL,
+    galleryEntry?.original?.src,
+    galleryEntry?.original?.url,
+    galleryEntry?.original?.imageUrl,
+  ];
+  for (const candidate of directCandidates) {
+    const source = normalizeGuideProjectImageSource(candidate);
+    if (source) return source;
+  }
+
+  const selector = escapeGuideProjectImageSelector(id);
+  const domCandidates = [
+    document.querySelector(`.image-thumbnail[data-label="${selector}"]`),
+    document.querySelector(`.image-container[data-label="${selector}"]`),
+    document.querySelector(`#imageList [data-label="${selector}"]`),
+    document.querySelector(`#imageGallery [data-label="${selector}"]`),
+  ].filter(Boolean);
+
+  for (const element of domCandidates) {
+    const datasetSource = normalizeGuideProjectImageSource(
+      element.dataset?.imageSrc ||
+        element.dataset?.src ||
+        element.dataset?.originalImageUrl ||
+        element.dataset?.imageUrl
+    );
+    if (datasetSource) return datasetSource;
+
+    const imageSource = normalizeGuideProjectImageSource(
+      element.querySelector?.('img')?.currentSrc || element.querySelector?.('img')?.src
+    );
+    if (imageSource) return imageSource;
+
+    const styleSource = readBackgroundImageUrlFromStyle(element.style?.backgroundImage);
+    if (styleSource) return styleSource;
+  }
+
+  return '';
+}
+
 function getProjectImageRows() {
   const manager = window.app?.projectManager || window.projectManager;
   const views = manager?.views && typeof manager.views === 'object' ? manager.views : {};
@@ -4739,17 +5001,36 @@ function getProjectImageRows() {
     metadata?.imagePartLabels && typeof metadata.imagePartLabels === 'object'
       ? metadata.imagePartLabels
       : {};
-  return Object.entries(views)
-    .filter(([, entry]) => Boolean(entry?.image))
-    .map(([id, entry], index) => {
-      const customLabel = String(labelMap[id] || '').trim();
-      const displayName = customLabel || `Image ${index + 1}`;
+  const galleryEntries = getGuideGalleryEntries();
+  const galleryByLabel = new Map();
+  galleryEntries.forEach(entry => {
+    const label = getGuideGalleryEntryLabel(entry);
+    if (label && !galleryByLabel.has(label)) {
+      galleryByLabel.set(label, entry);
+    }
+  });
+
+  const ids = new Set();
+  Object.keys(views || {}).forEach(id => ids.add(id));
+  Object.keys(window.originalImages || {}).forEach(id => ids.add(id));
+  galleryEntries.forEach(entry => {
+    const label = getGuideGalleryEntryLabel(entry);
+    if (label) ids.add(label);
+  });
+
+  return Array.from(ids)
+    .map((id, index) => {
+      const entry = views[id] || {};
+      const galleryEntry = galleryByLabel.get(id) || null;
+      const imageUrl = resolveProjectImageSource(id, entry, galleryEntry);
+      if (!imageUrl) return null;
       return {
         id,
-        displayName,
-        imageUrl: entry?.image || '',
+        displayName: resolveProjectImageDisplayName(id, entry, labelMap, galleryEntry, index),
+        imageUrl,
       };
-    });
+    })
+    .filter(Boolean);
 }
 
 function getViewportForImagePreview(viewId) {
@@ -6853,7 +7134,8 @@ function showGuideGallery(options = {}) {
             <div class="guide-gallery-item-label">
               <span>
                 <input type="checkbox" class="guide-gallery-item-select" data-select-code="${code}" ${isCodeQueued ? 'checked' : ''} />
-                ${code}
+                <code class="guide-gallery-code">${code}</code>
+                <button type="button" class="guide-gallery-copy-code" data-copy-guide-code="${code}" aria-label="Copy ${code}" title="Copy code">Copy</button>
               </span>
             </div>
             <div class="guide-gallery-item-body">
@@ -7581,6 +7863,23 @@ function showGuideGallery(options = {}) {
     });
 
     galleryOverlay.onclick = async event => {
+      const copyCodeBtn = event.target?.closest?.('[data-copy-guide-code]');
+      if (copyCodeBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        const code = String(copyCodeBtn.getAttribute('data-copy-guide-code') || '').trim();
+        if (!code) return;
+        try {
+          await navigator.clipboard.writeText(code);
+          copyCodeBtn.textContent = 'Copied';
+          setStatusMessage(`Copied ${code}`, 'success');
+        } catch (error) {
+          setStatusMessage('Could not copy code.', 'warning');
+          console.warn('[Guide] Copy code failed:', error);
+        }
+        return;
+      }
+
       // Tree file actions
       const treeActionBtn = event.target?.closest?.('[data-tree-action]');
       if (treeActionBtn) {
@@ -7664,6 +7963,7 @@ function showGuideGallery(options = {}) {
           return;
         }
         selectedView = views[0];
+        bindVariantByCode[code] = selectedView;
         quickAddBtn.disabled = true;
         const originalText = quickAddBtn.textContent;
         quickAddBtn.textContent = requestedView === 'all' ? 'Adding All...' : 'Adding...';

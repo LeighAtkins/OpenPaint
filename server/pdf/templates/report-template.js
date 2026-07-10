@@ -73,7 +73,32 @@ function renderStatusBadge(status) {
   return `<span class="status-badge status-${status}">${icon}${label}</span>`;
 }
 
-function renderUnitToggle(unit) {
+function renderCushionTypes(group, groupIndex) {
+  if (!Object.prototype.hasOwnProperty.call(group || {}, 'cushionQuantity')) return '';
+  return `
+    <div class="cushion-types" aria-label="Cushion type">
+      ${['Seat', 'Back', 'Accent']
+        .map(type => {
+          const key = type.toLowerCase();
+          return `
+            <span class="cushion-type-option">
+              <span>${type}</span>
+              <span
+                class="cushion-type-checkbox pdf-field-anchor"
+                data-field-type="checkbox"
+                data-field-name="${escapeHtml(fieldName('cushion_type', groupIndex + 1, key))}"
+                data-field-value=""
+                aria-hidden="true"
+              ></span>
+            </span>
+          `;
+        })
+        .join('')}
+    </div>
+  `;
+}
+
+function renderUnitToggle(unit, group = null, groupIndex = 0) {
   const normalized = String(unit || 'inch').toLowerCase() === 'cm' ? 'cm' : 'inch';
   return `
     <div class="unit-block" aria-label="Measurement units">
@@ -102,6 +127,7 @@ function renderUnitToggle(unit) {
           ></span>
         </span>
       </div>
+      ${renderCushionTypes(group, groupIndex)}
     </div>
   `;
 }
@@ -110,6 +136,9 @@ function renderMeasurementRows(rows, fieldPrefix, groupIndex) {
   return rows
     .map((row, rowIndex) => {
       const rowStatus = detectRowStatus(row.value);
+      const customFieldName = row.fieldName || '';
+      const maxLength = Number(row.maxLength) > 0 ? Number(row.maxLength) : 0;
+      const textAlign = row.textAlign || '';
       return `
         <div class="measurement-item">
           <div class="measurement-label">
@@ -119,8 +148,12 @@ function renderMeasurementRows(rows, fieldPrefix, groupIndex) {
           <div
             class="input-box pdf-field-anchor ${rowStatus ? `input-${rowStatus}` : ''}"
             data-field-type="text"
-            data-field-name="${escapeHtml(fieldName(fieldPrefix, groupIndex + 1, row.label, rowIndex + 1))}"
+            data-field-name="${escapeHtml(
+              customFieldName || fieldName(fieldPrefix, groupIndex + 1, row.label, rowIndex + 1)
+            )}"
             data-field-value="${escapeHtml(row.value || '')}"
+            ${maxLength ? `data-field-max-length="${maxLength}"` : ''}
+            ${textAlign ? `data-field-align="${escapeHtml(textAlign)}"` : ''}
           >${escapeHtml(row.value || '')}</div>
         </div>
       `;
@@ -137,8 +170,19 @@ function filterMeaningfulMeasurements(rows) {
   });
 }
 
-function renderMeasurementsTable(rows, groupIndex) {
+function renderMeasurementsTable(rows, group, groupIndex) {
   const filtered = filterMeaningfulMeasurements(rows);
+  if (Object.prototype.hasOwnProperty.call(group || {}, 'cushionQuantity')) {
+    filtered.unshift({
+      label: 'QTY',
+      value: String(group.cushionQuantity || '')
+        .replace(/\D+/g, '')
+        .slice(0, 2),
+      fieldName: fieldName('cushion_qty', groupIndex + 1),
+      maxLength: 2,
+      textAlign: 'center',
+    });
+  }
   if (!filtered.length) {
     return `
       <aside class="measure-panel">
@@ -153,15 +197,34 @@ function renderMeasurementsTable(rows, groupIndex) {
 
   // Flat 2-column grid: items flow left-to-right, top-to-bottom. With an odd
   // count the last row's right cell is simply absent (no phantom border).
-  const tableHtml = useTwoColumns
-    ? `<div class="measurement-grid two-col">${renderMeasurementRows(filtered, 'main', groupIndex)}</div>`
-    : `<div class="measurement-grid">${renderMeasurementRows(filtered, 'main', groupIndex)}</div>`;
-
+  const tableHtml = filtered.length
+    ? useTwoColumns
+      ? `<div class="measurement-grid two-col">${renderMeasurementRows(filtered, 'main', groupIndex)}</div>`
+      : `<div class="measurement-grid">${renderMeasurementRows(filtered, 'main', groupIndex)}</div>`
+    : '';
   return `
     <aside class="measure-panel ${useTwoColumns ? 'measure-panel-wide' : ''}">
       <div class="form-heading">Measurements:</div>
       ${tableHtml}
     </aside>
+  `;
+}
+
+function renderCustomerNoteTop(group, groupIndex) {
+  if (!Object.prototype.hasOwnProperty.call(group || {}, 'customerNote')) return '';
+  const note = String(group.customerNote || '')
+    .replace(/[\r\n]+/g, ' ')
+    .trim()
+    .slice(0, 90);
+  return `
+    <div
+      class="customer-note-top pdf-field-anchor"
+      data-field-type="text"
+      data-field-name="${escapeHtml(fieldName('note', groupIndex + 1))}"
+      data-field-value="${escapeHtml(note)}"
+      data-field-max-length="90"
+      data-field-align="center"
+    >${escapeHtml(note)}</div>
   `;
 }
 
@@ -227,7 +290,7 @@ function renderRelatedMeasurementCards(cards, groupIndex) {
   `;
 }
 
-function renderPageHeader(report, sheetIndex, subtitle = '') {
+function renderPageHeader(report, sheetIndex) {
   const logoDataUrl = getLogoDataUrl();
   return `
     <header class="header">
@@ -241,16 +304,13 @@ function renderPageHeader(report, sheetIndex, subtitle = '') {
             }
             <span class="cw-word">Comfort<br />Works</span>
           </div>
-          <h1 class="title">Custom Sofa Measuring Diagram</h1>
+          <h1 class="title">${escapeHtml(report.projectName)}</h1>
         </div>
         <div class="header-right">
           <span class="sheet-tag">Sheet ${sheetIndex}</span>
         </div>
       </div>
       <div class="header-rule"></div>
-      <div class="meta meta-primary">${escapeHtml(report.projectName)}</div>
-      <div class="meta meta-secondary">${escapeHtml(report.namingLine || '')}</div>
-      ${subtitle ? `<div class="meta meta-secondary">${escapeHtml(subtitle)}</div>` : ''}
     </header>
   `;
 }
@@ -330,7 +390,10 @@ export function renderReportTemplate(report, options = {}) {
   const groupPages = groups
     .map((group, index) => {
       const subtitle = [group.title, group.subtitle].filter(Boolean).join(' - ');
-      const measurementCount = filterMeaningfulMeasurements(group.mainMeasurements || []).length;
+      const measurementCount =
+        filterMeaningfulMeasurements(group.mainMeasurements || []).length +
+        (Object.prototype.hasOwnProperty.call(group || {}, 'cushionQuantity') ? 1 : 0) +
+        (Object.prototype.hasOwnProperty.call(group || {}, 'customerNote') ? 1 : 0);
       const sheetMainClass = [
         'sheet-main',
         'avoid-break',
@@ -342,7 +405,9 @@ export function renderReportTemplate(report, options = {}) {
       <section class="page" data-page-index="${index}">
         ${renderPageHeader(report, index + 1, subtitle)}
 
-        ${renderUnitToggle(report.unit)}
+        ${renderCustomerNoteTop(group, index)}
+
+        ${renderUnitToggle(report.unit, group, index)}
 
         <div class="${sheetMainClass}">
           <figure class="figure-panel">
@@ -352,7 +417,7 @@ export function renderReportTemplate(report, options = {}) {
             )}" onload="if(this.naturalHeight>this.naturalWidth){this.closest('.sheet-main').classList.add('portrait')}" />
             <figcaption class="figure-caption">${escapeHtml(group.mainImage.title || '')}</figcaption>
           </figure>
-          ${renderMeasurementsTable(group.mainMeasurements || [], index)}
+          ${renderMeasurementsTable(group.mainMeasurements || [], group, index)}
         </div>
 
         ${renderRelatedFrames(group.relatedFrames || [])}
@@ -374,8 +439,8 @@ export function renderReportTemplate(report, options = {}) {
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
       <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-      <style>:root { ${pageCssVars} }</style>
       <style>${getPrintCss()}</style>
+      <style>:root { ${pageCssVars} }</style>
       <style>@page { size: ${pageFormat}; margin: 14mm; }</style>
     </head>
     <body>

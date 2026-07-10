@@ -22,6 +22,8 @@ const groupedSectionSchema = z.object({
   mainMeasurements: z.array(measurementRowSchema).max(60).default([]),
   relatedFrames: z.array(imageItemSchema).max(60).default([]),
   relatedMeasurementCards: z.array(measurementCardSchema).max(30).default([]),
+  cushionQuantity: z.string().max(2).optional(),
+  customerNote: z.string().max(90).optional(),
 });
 
 const comparisonGroupSchema = z.object({

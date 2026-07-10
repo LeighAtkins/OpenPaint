@@ -212,19 +212,23 @@ export class UploadManager {
     const displayName = this.formatDisplayName(workingFile.name, viewId);
 
     const useRegistry = typeof imageRegistry?.isEnabled === 'function' && imageRegistry.isEnabled();
+    let backgroundRefreshedByRegistry = false;
 
     if (useRegistry) {
       if (canMark) {
         performance.mark(`upload-register-start:${perfId}`);
       }
 
-      await imageRegistry.registerImage(viewId, objectUrl, displayName, {
+      const registration = await imageRegistry.registerImage(viewId, objectUrl, displayName, {
         source: 'upload',
         refreshBackground: isCurrentView,
         mimeType: workingFile.type,
         originalFilename: workingFile.name,
         uploadedAt: new Date().toISOString(),
       });
+      backgroundRefreshedByRegistry = Boolean(
+        isCurrentView && registration?.status !== 'deduped' && registration?.status !== 'invalid'
+      );
 
       if (canMark && performance.measure) {
         try {
@@ -333,7 +337,7 @@ export class UploadManager {
       if (!hasAnyImages) {
         await this.projectManager.switchView(viewId);
       }
-    } else if (isCurrentView) {
+    } else if (isCurrentView && !backgroundRefreshedByRegistry) {
       // If we're already on this view, just ensure the image is displayed
       const storedFitMode = this.projectManager.views?.[this.projectManager.currentViewId]?.fitMode;
       await this.projectManager.setBackgroundImage(objectUrl, storedFitMode);

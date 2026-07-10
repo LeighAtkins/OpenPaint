@@ -107,12 +107,13 @@ body {
 .title {
   margin: 0;
   color: var(--ink);
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: 0.01em;
-  text-transform: uppercase;
-  white-space: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .header-right {
@@ -162,6 +163,35 @@ body {
   grid-template-columns: 1fr 1fr;
   height: 10mm;
   border: 1.4px solid var(--ink);
+  background: #ffffff;
+}
+
+.cushion-types {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8mm;
+  min-height: 8mm;
+  border: 1.3px solid var(--ink);
+  border-top: 0;
+  background: #ffffff;
+}
+
+.cushion-type-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 2mm;
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.cushion-type-checkbox {
+  display: inline-block;
+  width: 5mm;
+  height: 5mm;
+  border: 1.2px solid var(--ink);
   background: #ffffff;
 }
 
@@ -336,6 +366,23 @@ body {
   border-bottom: 0;
 }
 
+.customer-note-top {
+  box-sizing: border-box;
+  width: min(100%, 170mm);
+  min-height: 11mm;
+  margin: -3mm auto 5mm;
+  padding: 2mm 4mm;
+  border: 0;
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
 /* Two-column layout for when there are many measurements.
    The frame is built entirely from item-level borders (no container border)
    so an odd count ends cleanly at the last full row instead of drawing a
@@ -408,8 +455,8 @@ body {
   background: #ffffff;
   color: var(--ink);
   font-family: 'Courier New', Courier, monospace;
-  font-size: 10.5px;
-  line-height: 1.2;
+  font-size: 15px;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
 

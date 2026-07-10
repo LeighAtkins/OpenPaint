@@ -2139,6 +2139,11 @@ export class TagManager {
     this.customTagColors =
       this.cloneTagTheme(this.tagStyleConfig.presets.lettersNumbers) ||
       this.cloneTagTheme(this.tagStyleConfig.presets.lettersOnly);
+    // Clear per-tag theme overrides for tags that now match this preset target,
+    // so an explicit preset wins over the import-time per-tag themes that were
+    // set to make tag borders match line colors. Without this, the per-tag
+    // overrides (which take priority in getTagPalette) block every preset.
+    this._clearPerTagThemesForTarget(normalizedTarget);
     this.persistTagStyleConfigToMetadata();
     this.tagBackgroundStyle = 'solid';
     this.refreshAllTagStyles();
@@ -2156,6 +2161,31 @@ export class TagManager {
       this.cloneTagTheme(this.tagStyleConfig.presets.lettersOnly);
     this.persistTagStyleConfigToMetadata();
     this.refreshAllTagStyles();
+  }
+
+  /**
+   * Remove per-tag theme overrides whose label matches the given style target
+   * (lettersOnly / lettersNumbers). Used when a user applies a preset so the
+   * preset isn't blocked by import-time per-tag themes (which exist to make tag
+   * borders match line colors). "selected" is handled separately.
+   */
+  _clearPerTagThemesForTarget(target) {
+    if (!this.tagStyleConfig?.perTagThemes) return;
+    const keys = Object.keys(this.tagStyleConfig.perTagThemes);
+    if (!keys.length) return;
+    let cleared = false;
+    for (const tagKey of keys) {
+      // tagKey format: "<imageLabel>::<strokeLabel>"
+      const strokeLabel = String(tagKey.split('::').pop() || '');
+      const matches =
+        (target === 'lettersOnly' && this.isLettersOnlyTag(strokeLabel)) ||
+        (target === 'lettersNumbers' && this.isLettersNumbersTag(strokeLabel));
+      if (matches) {
+        delete this.tagStyleConfig.perTagThemes[tagKey];
+        cleared = true;
+      }
+    }
+    if (cleared) this.emitTagStyleStateChanged();
   }
 
   getSelectedTagKeys() {

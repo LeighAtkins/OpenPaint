@@ -65,7 +65,7 @@ async function switchToView(page: Page, viewId: string): Promise<void> {
 async function createFrameTabs(page: Page, count: number): Promise<void> {
   for (let index = 0; index < count; index += 1) {
     await page.evaluate(() => {
-      document.getElementById('captureTabAdd')?.click();
+      window.createCaptureTabForLabel?.(window.app?.projectManager?.currentViewId || 'front');
     });
     await page.waitForTimeout(150);
   }
@@ -316,17 +316,11 @@ async function setFrameBindings(
 async function rapidSwitchFrames(page: Page, tabIds: string[], rounds = 3): Promise<void> {
   await page.evaluate(
     async ({ currentTabIds, currentRounds }) => {
-      const clickTab = (tabId: string) => {
-        const button = document.querySelector(`.capture-tab[data-tab-id="${tabId}"]`);
-        if (!(button instanceof HTMLElement)) {
-          throw new Error(`Frame tab ${tabId} not found`);
-        }
-        button.click();
-      };
+      const viewId = window.app?.projectManager?.currentViewId || 'front';
 
       for (let round = 0; round < currentRounds; round += 1) {
         for (const tabId of currentTabIds) {
-          clickTab(tabId);
+          window.setActiveCaptureTab?.(viewId, tabId);
           await new Promise(resolve => window.setTimeout(resolve, 35));
         }
       }

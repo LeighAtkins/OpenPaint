@@ -691,13 +691,19 @@ async function openMeasurementRelationsEditor() {
 
 function installLauncher() {
   if (document.getElementById('openMeasurementRelationsBtn')) return;
+  const appearanceBody = document.querySelector('#elementsAppearance .elements-appearance-body');
   const controls = document.getElementById('elementsControls');
-  if (!controls) return;
+  if (!appearanceBody && !controls) return;
   const wrap = document.createElement('div');
-  wrap.style.marginTop = '8px';
-  wrap.innerHTML =
-    '<button id="openMeasurementRelationsBtn" type="button" class="w-full px-2 py-1 text-xs bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">Checks + Links</button>';
-  controls.appendChild(wrap);
+  wrap.className = appearanceBody ? 'elements-setting-row elements-setting-row-stacked' : '';
+  if (!appearanceBody) wrap.style.marginTop = '8px';
+  if (appearanceBody) {
+    const label = document.createElement('span');
+    label.textContent = 'Checks + links';
+    wrap.appendChild(label);
+  }
+  wrap.innerHTML = `${wrap.innerHTML}<button id="openMeasurementRelationsBtn" type="button" class="${appearanceBody ? 'elements-setting-button elements-setting-button-wide' : 'w-full px-2 py-1 text-xs bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors'}">${appearanceBody ? 'Open checks' : 'Checks + Links'}</button>`;
+  (appearanceBody || controls).appendChild(wrap);
   wrap
     .querySelector('#openMeasurementRelationsBtn')
     ?.addEventListener('click', openMeasurementRelationsEditor);

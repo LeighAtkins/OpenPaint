@@ -613,6 +613,39 @@ function getGroupedPdfPageTargets(pageTargets, pieceGroups, partLabels) {
   return grouped;
 }
 
+function isCushionDescriptor(...values) {
+  return values.some(value => /\bcushion(?:s)?\b/i.test(String(value || '')));
+}
+
+export function getPdfQuantityOptions(groupedTargets, partLabels) {
+  const options = (groupedTargets || [])
+    .map((entry, optionIndex) => {
+      const mainTarget = entry.type === 'grouped' ? entry.mainTarget : entry.target;
+      if (!mainTarget?.viewId) return null;
+
+      const relatedTargets = entry.type === 'grouped' ? entry.relatedTargets || [] : [];
+      const labels = [
+        entry.note,
+        partLabels[mainTarget.viewId],
+        mainTarget.viewId,
+        ...relatedTargets.flatMap(target => [partLabels[target.viewId], target.viewId]),
+      ];
+
+      const explicitLabel = String(entry.note || partLabels[mainTarget.viewId] || '').trim();
+      const viewIndex = Number(mainTarget.viewIndex);
+      const displayIndex =
+        Number.isInteger(viewIndex) && viewIndex >= 0 ? viewIndex + 1 : optionIndex + 1;
+
+      return {
+        key: mainTarget.viewId,
+        label: explicitLabel || `Image ${displayIndex}`,
+        checked: isCushionDescriptor(...labels),
+      };
+    })
+    .filter(Boolean);
+  return Array.from(new Map(options.map(option => [option.key, option])).values());
+}
+
 function getRepeatedLabelComparisonTargets(pageTargets, maxGroups = 12) {
   const byLabel = new Map();
   (pageTargets || []).forEach(target => {
@@ -708,6 +741,11 @@ function showRepeatedComparisonApprovalDialog(comparisonGroups) {
       </div>
     `;
     document.body.appendChild(overlay);
+    const dialog = overlay.firstElementChild;
+    if (dialog instanceof HTMLElement) {
+      dialog.style.maxHeight = 'calc(100vh - 32px)';
+      dialog.style.overflowY = 'auto';
+    }
 
     const getSelectedGroups = () => {
       const checked = Array.from(
@@ -1198,7 +1236,7 @@ async function restorePdfExportSession(state) {
       projectManager?.switchView &&
       projectManager.currentViewId !== restoreViewId
     ) {
-      await projectManager.switchView(restoreViewId, true);
+      await switchPdfCaptureView(projectManager, restoreViewId, { force: true });
     }
 
     const scopedTabId = getTabIdFromScopedLabel(state?.previousScopedLabel || '');
@@ -1311,6 +1349,73 @@ async function restorePdfExportSession(state) {
   }
 }
 
+export async function waitForPdfProjectIdle(projectManager, timeoutMs = 20000) {
+  if (!projectManager) return;
+  if (typeof projectManager.whenIdle === 'function') {
+    await projectManager.whenIdle({ timeoutMs });
+    return;
+  }
+
+  const startedAt = Date.now();
+  while (projectManager.isSwitchingView || projectManager.pendingSwitchViewId) {
+    if (Date.now() - startedAt > timeoutMs) {
+      throw new Error('PDF export timed out waiting for the active image switch');
+    }
+    await sleep(25);
+  }
+}
+
+export async function switchPdfCaptureView(projectManager, viewId, { force = false } = {}) {
+  if (!projectManager?.switchView || !viewId) return;
+  if (!projectManager.views?.[viewId]) {
+    throw new Error(`Target view is missing: ${viewId}`);
+  }
+
+  await waitForPdfProjectIdle(projectManager);
+  if (projectManager.currentViewId !== viewId || force) {
+    await projectManager.switchView(viewId, force);
+    await waitForPdfProjectIdle(projectManager);
+  }
+
+  if (projectManager.currentViewId !== viewId) {
+    throw new Error(
+      `PDF export could not activate ${viewId}; active view is ${projectManager.currentViewId || 'unknown'}`
+    );
+  }
+}
+
+function normalizeCaptureSource(value) {
+  const source = String(value || '').trim();
+  if (!source) return '';
+  try {
+    return new URL(source, window.location.href).href;
+  } catch {
+    return source;
+  }
+}
+
+export async function ensurePdfCaptureBackground(projectManager, viewId) {
+  const expected = normalizeCaptureSource(projectManager?.views?.[viewId]?.image);
+  if (!expected) return;
+
+  const readActual = () => {
+    const background = projectManager?.canvasManager?.fabricCanvas?.backgroundImage;
+    return normalizeCaptureSource(
+      background?.getSrc?.() ||
+        background?._element?.currentSrc ||
+        background?._element?.src ||
+        background?.src
+    );
+  };
+
+  if (readActual() === expected) return;
+  await switchPdfCaptureView(projectManager, viewId, { force: true });
+  await waitForCanvasRenderStability(projectManager?.canvasManager?.fabricCanvas);
+  if (readActual() !== expected) {
+    throw new Error(`PDF export image mismatch for ${viewId}`);
+  }
+}
+
 async function withTemporaryCaptureTarget(viewId, tabId, callback) {
   const projectManager = window.app?.projectManager;
   const canvas = window.app?.canvasManager?.fabricCanvas;
@@ -1345,22 +1450,7 @@ async function withTemporaryCaptureTarget(viewId, tabId, callback) {
     });
     safelyDiscardActiveObject(canvas);
     canvas?.requestRenderAll?.();
-    if (projectManager?.switchView && viewId && projectManager.currentViewId !== viewId) {
-      if (!projectManager?.views?.[viewId]) {
-        throw new Error(`Target view is missing: ${viewId}`);
-      }
-      await projectManager.switchView(viewId);
-      // Discard any switchView that was queued by event handlers during the
-      // awaited switch — it would fire un-awaited and steal the canvas.
-      projectManager.pendingSwitchViewId = null;
-    }
-    // Verify we actually landed on the target view; retry once if not.
-    if (projectManager && projectManager.currentViewId !== viewId) {
-      projectManager.pendingSwitchViewId = null;
-      projectManager.isSwitchingView = false;
-      await projectManager.switchView(viewId);
-      projectManager.pendingSwitchViewId = null;
-    }
+    await switchPdfCaptureView(projectManager, viewId);
     if (tabId && typeof window.setActiveCaptureTab === 'function') {
       try {
         // Export should not mutate persisted tab/frame state while switching tabs.
@@ -1379,12 +1469,10 @@ async function withTemporaryCaptureTarget(viewId, tabId, callback) {
     // Event handlers can trigger a concurrent switchView that lands after
     // our awaited one, swapping the canvas content out from under us.
     if (projectManager && projectManager.currentViewId !== viewId) {
-      projectManager.pendingSwitchViewId = null;
-      projectManager.isSwitchingView = false;
-      await projectManager.switchView(viewId);
-      projectManager.pendingSwitchViewId = null;
+      await switchPdfCaptureView(projectManager, viewId, { force: true });
       await settleCaptureContext(viewId, tabId);
     }
+    await ensurePdfCaptureBackground(projectManager, viewId);
 
     logVectorDebugSnapshot('withTemporaryCaptureTarget:after-switch', {
       targetViewId: viewId,
@@ -1393,53 +1481,63 @@ async function withTemporaryCaptureTarget(viewId, tabId, callback) {
     return await callback();
   } finally {
     try {
-      if (
-        projectManager?.switchView &&
-        restoreTargetViewId &&
-        projectManager?.views?.[restoreTargetViewId] &&
-        projectManager.currentViewId !== restoreTargetViewId
-      ) {
-        await projectManager.switchView(restoreTargetViewId);
-      }
-      if (
-        restoreTargetViewId &&
-        restoreTabId &&
-        window.captureTabsByLabel?.[restoreTargetViewId] &&
-        typeof window.setActiveCaptureTab === 'function'
-      ) {
-        try {
-          window.setActiveCaptureTab(restoreTargetViewId, restoreTabId, { skipSave: true });
-        } catch (restoreTabError) {
-          logVectorDebugSnapshot('withTemporaryCaptureTarget:restore-tab-error', {
-            restoredViewId: restoreTargetViewId,
-            restoredTabId: restoreTabId,
-            error: String(restoreTabError?.message || restoreTabError),
-          });
+      if (window.__isPdfExporting) {
+        // The export session owns the final editor restore. Staying on the
+        // current capture target avoids a second switch for every PDF page.
+        safelyDiscardActiveObject(canvas);
+        logVectorDebugSnapshot('withTemporaryCaptureTarget:capture-complete', {
+          capturedViewId: viewId,
+          capturedTabId: tabId || null,
+        });
+      } else {
+        if (
+          projectManager?.switchView &&
+          restoreTargetViewId &&
+          projectManager?.views?.[restoreTargetViewId] &&
+          projectManager.currentViewId !== restoreTargetViewId
+        ) {
+          await switchPdfCaptureView(projectManager, restoreTargetViewId);
         }
+        if (
+          restoreTargetViewId &&
+          restoreTabId &&
+          window.captureTabsByLabel?.[restoreTargetViewId] &&
+          typeof window.setActiveCaptureTab === 'function'
+        ) {
+          try {
+            window.setActiveCaptureTab(restoreTargetViewId, restoreTabId, { skipSave: true });
+          } catch (restoreTabError) {
+            logVectorDebugSnapshot('withTemporaryCaptureTarget:restore-tab-error', {
+              restoredViewId: restoreTargetViewId,
+              restoredTabId: restoreTabId,
+              error: String(restoreTabError?.message || restoreTabError),
+            });
+          }
+        }
+        if (captureFrame && frameStyle) {
+          captureFrame.style.left = frameStyle.left;
+          captureFrame.style.top = frameStyle.top;
+          captureFrame.style.width = frameStyle.width;
+          captureFrame.style.height = frameStyle.height;
+          captureFrame.style.borderColor = frameStyle.borderColor;
+        }
+        if (previousScopedLabel) {
+          window.currentImageLabel = previousScopedLabel;
+        }
+        if (
+          Array.isArray(previousViewportTransform) &&
+          previousViewportTransform.length === 6 &&
+          canvas?.setViewportTransform
+        ) {
+          canvas.setViewportTransform(previousViewportTransform);
+        }
+        safelyDiscardActiveObject(canvas);
+        await waitForCanvasRenderStability(window.app?.canvasManager?.fabricCanvas);
+        logVectorDebugSnapshot('withTemporaryCaptureTarget:after-restore', {
+          restoredViewId: restoreTargetViewId,
+          restoredTabId: restoreTabId,
+        });
       }
-      if (captureFrame && frameStyle) {
-        captureFrame.style.left = frameStyle.left;
-        captureFrame.style.top = frameStyle.top;
-        captureFrame.style.width = frameStyle.width;
-        captureFrame.style.height = frameStyle.height;
-        captureFrame.style.borderColor = frameStyle.borderColor;
-      }
-      if (previousScopedLabel) {
-        window.currentImageLabel = previousScopedLabel;
-      }
-      if (
-        Array.isArray(previousViewportTransform) &&
-        previousViewportTransform.length === 6 &&
-        canvas?.setViewportTransform
-      ) {
-        canvas.setViewportTransform(previousViewportTransform);
-      }
-      safelyDiscardActiveObject(canvas);
-      await waitForCanvasRenderStability(window.app?.canvasManager?.fabricCanvas);
-      logVectorDebugSnapshot('withTemporaryCaptureTarget:after-restore', {
-        restoredViewId: restoreTargetViewId,
-        restoredTabId: restoreTabId,
-      });
     } catch (restoreError) {
       console.warn(
         '[PDF] Failed to fully restore capture target state after export step:',
@@ -1697,9 +1795,82 @@ export function initPdfExport() {
     }
     const overlay = document.createElement('div');
     overlay.style.cssText =
-      'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(11,13,16,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;';
+      'position:fixed;inset:0;width:100%;height:100%;background:rgba(11,13,16,0.5);z-index:30000;display:flex;align-items:center;justify-content:center;padding:16px;';
     overlay.innerHTML = `<div style="background:#fff;border-radius:16px;padding:30px;max-width:520px;width:min(100%,520px);box-shadow:0 24px 48px rgba(11,13,16,0.18),0 8px 16px rgba(11,13,16,0.08);font-family:'Instrument Sans','Inter',sans-serif;color:#0B0D10;"><h2 style="margin:0 0 8px 0;color:#151A20;font-size:24px;font-weight:700;font-family:'Instrument Sans','Inter',sans-serif;">Export PDF - ${projectName}</h2><p style="color:#3E4752;margin:0 0 20px 0;font-size:13px;">Creating PDF with ${viewIds.length} page(s) and editable form fields.</p><div style="margin-bottom:16px;"><label style="display:block;margin-bottom:6px;font-weight:600;color:#3E4752;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;">Image Quality</label><select id="pdfQuality" style="width:100%;padding:10px 14px;border:1px solid #E7EAEE;border-radius:12px;font-size:14px;background:#fff;font-family:'Instrument Sans','Inter',sans-serif;outline:none;"><option value="high">High Quality</option><option value="medium" selected>Medium Quality</option><option value="low">Low Quality</option></select></div><div style="margin-bottom:16px;"><label style="display:block;margin-bottom:6px;font-weight:600;color:#3E4752;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;">Page Size</label><select id="pdfPageSize" style="width:100%;padding:10px 14px;border:1px solid #E7EAEE;border-radius:12px;font-size:14px;background:#fff;font-family:'Instrument Sans','Inter',sans-serif;outline:none;"><option value="letter" selected>Letter (8.5" × 11")</option><option value="a4">A4</option></select></div><label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:10px;padding:12px 14px;border:1px solid #E7EAEE;border-radius:12px;background:#F6F7F9;"><input type="checkbox" id="includeMeasurements" checked style="transform:scale(1.3);accent-color:#0B0D10;"><span style="color:#0B0D10;font-size:14px;">Include editable measurement fields</span></label><label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:20px;padding:12px 14px;border:1px solid #E7EAEE;border-radius:12px;background:#F6F7F9;"><input type="checkbox" id="includeRepeatedComparisons" checked style="margin-top:2px;transform:scale(1.3);accent-color:#0B0D10;"><span style="color:#0B0D10;font-size:14px;line-height:1.35;">Add repeated-label comparison page<br><span style="color:#667085;font-size:12px;">If a tag appears on multiple images, show only that tag side by side.</span></span></label><div style="display:flex;gap:10px;"><button id="generatePdfBtn" style="flex:1;padding:12px;background:#0B0D10;color:#fff;border:none;border-radius:12px;font-weight:600;cursor:pointer;font-family:'Instrument Sans','Inter',sans-serif;font-size:14px;">Generate PDF</button><button id="cancelPdfBtn" style="flex:1;padding:12px;background:#F6F7F9;color:#0B0D10;border:1px solid #E7EAEE;border-radius:12px;font-weight:600;cursor:pointer;font-family:'Instrument Sans','Inter',sans-serif;font-size:14px;">Cancel</button></div><div id="pdfProgress" style="display:none;margin-top:20px;text-align:center;"><div style="width:100%;height:8px;background:#E7EAEE;border-radius:999px;overflow:hidden;margin-bottom:10px;"><div id="pdfProgressBar" style="width:0%;height:100%;background:#0B0D10;transition:width 0.3s;border-radius:999px;"></div></div><p id="pdfProgressText" style="color:#3E4752;font-size:14px;font-family:'Instrument Sans','Inter',sans-serif;">Preparing PDF...</p></div></div>`;
     document.body.appendChild(overlay);
+    const exportDialog = overlay.firstElementChild;
+    if (exportDialog instanceof HTMLElement) {
+      exportDialog.id = 'pdfExportDialog';
+      exportDialog.setAttribute('role', 'dialog');
+      exportDialog.setAttribute('aria-label', 'Export PDF');
+      exportDialog.style.maxHeight = 'calc(100vh - 32px)';
+      exportDialog.style.overflowY = 'auto';
+      exportDialog.style.overscrollBehavior = 'contain';
+    }
+
+    const metadata =
+      window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
+    const partLabels = metadata.imagePartLabels || {};
+    const pieceGroups = Array.isArray(metadata.pieceGroups) ? metadata.pieceGroups : [];
+    const groupedTargets = getGroupedPdfPageTargets(pageTargets, pieceGroups, partLabels);
+    const quantityOptions = getPdfQuantityOptions(groupedTargets, partLabels);
+    if (quantityOptions.length) {
+      const cushionSection = document.createElement('details');
+      cushionSection.style.cssText =
+        'margin-bottom:16px;padding:12px 14px;border:1px solid #E7EAEE;border-radius:12px;background:#F6F7F9;';
+      const heading = document.createElement('summary');
+      heading.textContent = 'Cushion QTY (optional)';
+      heading.style.cssText =
+        'font-weight:600;color:#3E4752;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;user-select:none;';
+      cushionSection.appendChild(heading);
+      const help = document.createElement('p');
+      help.textContent = 'Check the images that need a blank, fillable QTY box in the PDF.';
+      help.style.cssText = 'margin:10px 0 8px;color:#667085;font-size:12px;';
+      cushionSection.appendChild(help);
+
+      quantityOptions.forEach(option => {
+        const row = document.createElement('label');
+        row.style.cssText =
+          'display:flex;align-items:center;gap:10px;margin-top:8px;color:#0B0D10;font-size:13px;cursor:pointer;';
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.checked = option.checked;
+        input.dataset.cushionQuantityKey = option.key;
+        input.setAttribute('aria-label', `Add cushion quantity box to ${option.label}`);
+        input.style.cssText = 'width:16px;height:16px;accent-color:#0B0D10;';
+        const label = document.createElement('span');
+        label.textContent = option.label;
+        row.append(input, label);
+        cushionSection.appendChild(row);
+      });
+
+      document.getElementById('includeMeasurements')?.parentElement?.before(cushionSection);
+
+      const noteSection = document.createElement('details');
+      noteSection.style.cssText =
+        'margin-bottom:16px;padding:12px 14px;border:1px solid #E7EAEE;border-radius:12px;background:#F6F7F9;';
+      const noteHeading = document.createElement('summary');
+      noteHeading.textContent = 'Notes (optional)';
+      noteHeading.style.cssText =
+        'font-weight:600;color:#3E4752;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;user-select:none;';
+      noteSection.appendChild(noteHeading);
+      quantityOptions.forEach(option => {
+        const label = document.createElement('label');
+        label.style.cssText =
+          'display:block;margin-top:10px;color:#0B0D10;font-size:12px;font-weight:600;';
+        label.textContent = option.label;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.maxLength = 90;
+        input.dataset.pdfNoteKey = option.key;
+        input.setAttribute('aria-label', `PDF note for ${option.label}`);
+        input.style.cssText =
+          'display:block;box-sizing:border-box;width:100%;margin-top:5px;padding:8px 10px;border:1px solid #D0D5DD;border-radius:8px;background:#fff;color:#0B0D10;font:13px/1.35 Instrument Sans,Inter,sans-serif;';
+        label.appendChild(input);
+        noteSection.appendChild(label);
+      });
+      cushionSection.after(noteSection);
+    }
     const repeatedComparisonsInput = document.getElementById(
       'includeRepeatedComparisons'
     ) as HTMLInputElement | null;
@@ -1733,6 +1904,20 @@ export function initPdfExport() {
         (document.getElementById('includeRepeatedComparisons') as HTMLInputElement | null)
           ?.checked === true;
       const rendererMode = document.getElementById('pdfRendererMode')?.value || 'modern';
+      const cushionQuantityViews = {};
+      overlay.querySelectorAll('[data-cushion-quantity-key]').forEach(input => {
+        if (input.checked) {
+          cushionQuantityViews[input.dataset.cushionQuantityKey] = true;
+        }
+      });
+      const customerNotes = {};
+      overlay.querySelectorAll('[data-pdf-note-key]').forEach(input => {
+        const note = input.value
+          .replace(/[\r\n]+/g, ' ')
+          .trim()
+          .slice(0, 90);
+        if (note) customerNotes[input.dataset.pdfNoteKey] = note;
+      });
       const exportSession = beginPdfExportSession();
       document.getElementById('pdfProgress').style.display = 'block';
       document.getElementById('generatePdfBtn').disabled = true;
@@ -1746,7 +1931,9 @@ export function initPdfExport() {
             quality,
             pageSize,
             includeMeasurements,
-            includeRepeatedComparisons
+            includeRepeatedComparisons,
+            cushionQuantityViews,
+            customerNotes
           );
         } else {
           await generatePDFWithPDFLib(
@@ -1799,7 +1986,9 @@ export function initPdfExport() {
     quality,
     pageSize,
     includeMeasurements,
-    includeRepeatedComparisons = false
+    includeRepeatedComparisons = false,
+    cushionQuantityViews = {},
+    customerNotes = {}
   ) {
     const progressBar = document.getElementById('pdfProgressBar');
     const progressText = document.getElementById('pdfProgressText');
@@ -2026,6 +2215,10 @@ export function initPdfExport() {
         mainMeasurements: getTargetMeasurementRows(mainTarget),
         relatedFrames,
         relatedMeasurementCards,
+        ...(cushionQuantityViews[mainTarget.viewId] ? { cushionQuantity: '' } : {}),
+        ...(customerNotes[mainTarget.viewId]
+          ? { customerNote: customerNotes[mainTarget.viewId] }
+          : {}),
       });
     }
 
