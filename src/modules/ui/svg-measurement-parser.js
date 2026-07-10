@@ -58,6 +58,51 @@ function extractPathStartPoint(pathData) {
   };
 }
 
+function extractSimplePathPoints(pathData) {
+  const source = String(pathData || '').trim();
+  if (!source) return [];
+  const commandPattern = /([MmLlHhVv])([^MmLlHhVvZz]*)/g;
+  const points = [];
+  let current = { x: 0, y: 0 };
+  let match;
+  while ((match = commandPattern.exec(source)) !== null) {
+    const command = match[1];
+    const values = String(match[2] || '')
+      .trim()
+      .split(/[\s,]+/)
+      .map(Number)
+      .filter(Number.isFinite);
+    if (!values.length) continue;
+
+    if (command === 'M' || command === 'm' || command === 'L' || command === 'l') {
+      for (let index = 0; index + 1 < values.length; index += 2) {
+        current =
+          command === 'm' || command === 'l'
+            ? { x: current.x + values[index], y: current.y + values[index + 1] }
+            : { x: values[index], y: values[index + 1] };
+        points.push({ ...current });
+      }
+      continue;
+    }
+
+    if (command === 'H' || command === 'h') {
+      values.forEach(value => {
+        current = { x: command === 'h' ? current.x + value : value, y: current.y };
+        points.push({ ...current });
+      });
+      continue;
+    }
+
+    if (command === 'V' || command === 'v') {
+      values.forEach(value => {
+        current = { x: current.x, y: command === 'v' ? current.y + value : value };
+        points.push({ ...current });
+      });
+    }
+  }
+  return points.length >= 2 ? points : [];
+}
+
 function extractPathPoints(pathData) {
   if (!pathData || typeof document === 'undefined') return [];
   try {
@@ -65,8 +110,7 @@ function extractPathPoints(pathData) {
     path.setAttribute('d', pathData);
     const totalLength = path.getTotalLength?.();
     if (!Number.isFinite(totalLength) || totalLength <= 0) {
-      const start = extractPathStartPoint(pathData);
-      return start ? [start] : [];
+      return extractSimplePathPoints(pathData);
     }
     const sampleCount = Math.max(8, Math.min(32, Math.ceil(totalLength / 24)));
     const points = [];
@@ -76,8 +120,7 @@ function extractPathPoints(pathData) {
     }
     return points;
   } catch {
-    const start = extractPathStartPoint(pathData);
-    return start ? [start] : [];
+    return extractSimplePathPoints(pathData);
   }
 }
 
@@ -192,9 +235,9 @@ function isInternalMeasurementToken(label) {
 function extractGuideToken(rawValue) {
   const raw = String(rawValue || '').trim();
   if (!raw) return '';
-  if (/_[0-9]{10,}/.test(raw)) return '';
   const stripped = raw
     .replace(/^mos\d+_/i, '')
+    .replace(/_[0-9A-Fa-f]{8,}_?$/i, '')
     .replace(/^(?:m|b|c)/i, '')
     .replace(/(?:cm|mm|in)\d*$/i, '')
     .replace(/_(label|text)$/i, '')
@@ -224,6 +267,19 @@ function getElementLabel(el) {
 function collectTokenizedMeasurements(svgRoot, classColorMap) {
   const labelByToken = new Map();
   const linesByToken = new Map();
+  const auxiliaryLinesByToken = new Map();
+
+  // Global pool of every measurement-colored segment in the document. Used as a
+  // last resort when a token's own m-group yields only a tiny arrowhead stub AND
+  // no b/c companion group supplied a usable leader line. Without this, the
+  // token imports as a stub near a corner and its tag anchors there — the
+  // "C2 resets to top-left" symptom. Cloud-exported guides sometimes omit the
+  // b/c companion groups, so the per-token fallback alone is not enough.
+  const globalSegments = Array.from(svgRoot.querySelectorAll('line, polyline, path'))
+    .map(el => segmentFromElement(el, classColorMap))
+    .filter(Boolean)
+    .map(segment => ({ segment, length: getSegmentLength(segment) }))
+    .filter(entry => entry.length >= 20);
 
   Array.from(svgRoot.querySelectorAll('g[id]')).forEach(groupEl => {
     const groupId = String(groupEl.getAttribute('id') || '').trim();
@@ -236,6 +292,22 @@ function collectTokenizedMeasurements(svgRoot, classColorMap) {
       const label = getElementLabel(groupEl) || token;
       if (label) {
         labelByToken.set(token, label);
+      }
+      const lines = Array.from(groupEl.querySelectorAll('line, polyline, path'))
+        .map(el => segmentFromElement(el, classColorMap))
+        .filter(Boolean);
+      if (lines.length) {
+        auxiliaryLinesByToken.set(token, [...(auxiliaryLinesByToken.get(token) || []), ...lines]);
+      }
+      return;
+    }
+
+    if (prefix === 'b') {
+      const lines = Array.from(groupEl.querySelectorAll('line, polyline, path'))
+        .map(el => segmentFromElement(el, classColorMap))
+        .filter(Boolean);
+      if (lines.length) {
+        auxiliaryLinesByToken.set(token, [...(auxiliaryLinesByToken.get(token) || []), ...lines]);
       }
       return;
     }
@@ -256,8 +328,14 @@ function collectTokenizedMeasurements(svgRoot, classColorMap) {
     );
 
     const lines = directLines.length ? directLines : innerGroupLines.length ? innerGroupLines : [];
-    if (lines.length && !linesByToken.has(token)) {
-      linesByToken.set(token, lines);
+    if (lines.length) {
+      const resolvedLines = resolveMeasurementLines(token, lines, {
+        auxiliaryLinesByToken,
+        globalSegments,
+      });
+      if (!linesByToken.has(token)) {
+        linesByToken.set(token, resolvedLines);
+      }
     }
   });
 
@@ -265,6 +343,48 @@ function collectTokenizedMeasurements(svgRoot, classColorMap) {
     label: labelByToken.get(token) || token,
     lines,
   }));
+}
+
+/**
+ * Given the m-group's own line(s), pick the best segment to represent the
+ * measurement. Preference order:
+ *   1. The m-group line if it is a real measurement (>= 18px).
+ *   2. The longest leader/connector from the matching b/c companion group,
+ *      when it is meaningfully longer than the stub.
+ *   3. The longest same-colored segment found anywhere in the document
+ *      (last-resort global fallback for guides missing companion groups).
+ * The tiny-stub threshold is 18px because an arrowhead drawn at 15px scale is
+ * ~10-15px long and must never be mistaken for the measurement itself.
+ */
+function resolveMeasurementLines(token, lines, options) {
+  const { auxiliaryLinesByToken, globalSegments } = options || {};
+  const bestLineLength = Math.max(...lines.map(getSegmentLength));
+
+  if (bestLineLength >= 18) return lines;
+
+  const auxiliaryLines = auxiliaryLinesByToken.get(token) || [];
+  const bestAuxiliary = auxiliaryLines
+    .map(segment => ({ segment, length: getSegmentLength(segment) }))
+    .sort((a, b) => b.length - a.length)[0];
+  if (bestAuxiliary && bestAuxiliary.length > bestLineLength * 1.4) {
+    return [bestAuxiliary.segment];
+  }
+
+  // Global fallback: prefer a segment whose color matches one of the m-group
+  // lines (measurements share a stroke color across their leader/stub). If no
+  // color match, fall back to the longest segment overall.
+  const candidateColors = new Set(lines.map(line => line.color).filter(Boolean));
+  const eligible = globalSegments.filter(entry => {
+    const segmentColor = entry.segment?.color;
+    return candidateColors.size === 0 || !segmentColor || candidateColors.has(segmentColor);
+  });
+  const pool = eligible.length ? eligible : globalSegments;
+  const bestGlobal = pool.slice().sort((a, b) => b.length - a.length)[0];
+  if (bestGlobal && bestGlobal.length > bestLineLength * 1.4) {
+    return [bestGlobal.segment];
+  }
+
+  return lines;
 }
 
 function isSaturatedColor(hex) {

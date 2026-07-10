@@ -1047,8 +1047,11 @@ export class ProjectManager {
       savedTabs.find(tab => tab?.type !== 'master') ||
       savedTabs[0] ||
       null;
-    const savedCanvasWidth = Number(savedViewport?.savedCanvasWidth) || 0;
-    const savedCanvasHeight = Number(savedViewport?.savedCanvasHeight) || 0;
+    const exactSource = this.views?.[viewId]?.exactViewportSourceDimensions || null;
+    const savedCanvasWidth =
+      Number(exactSource?.canvasWidth) || Number(savedViewport?.savedCanvasWidth) || 0;
+    const savedCanvasHeight =
+      Number(exactSource?.canvasHeight) || Number(savedViewport?.savedCanvasHeight) || 0;
     const currentCanvasWidth = Number(this.canvasManager?.fabricCanvas?.width) || 0;
     const currentCanvasHeight = Number(this.canvasManager?.fabricCanvas?.height) || 0;
     if (
@@ -1061,8 +1064,10 @@ export class ProjectManager {
     ) {
       return false;
     }
-    const savedWindowWidth = Number(savedActiveTab?.captureFrame?.windowWidth) || 0;
-    const savedWindowHeight = Number(savedActiveTab?.captureFrame?.windowHeight) || 0;
+    const savedWindowWidth =
+      Number(exactSource?.windowWidth) || Number(savedActiveTab?.captureFrame?.windowWidth) || 0;
+    const savedWindowHeight =
+      Number(exactSource?.windowHeight) || Number(savedActiveTab?.captureFrame?.windowHeight) || 0;
     if (
       savedWindowWidth > 0 &&
       savedWindowHeight > 0 &&
@@ -1702,6 +1707,8 @@ export class ProjectManager {
         clone.strokeMetadata = clone.strokeMetadata || {};
         clone.strokeMetadata.strokeLabel = clone.strokeMetadata.strokeLabel || strokeLabel.trim();
         clone.strokeMetadata.imageLabel = clone.strokeMetadata.imageLabel || scopeKey;
+        clone.strokeMetadata.type = clone.strokeMetadata.type || 'line';
+        clone.strokeMetadata.isVector = true;
         if (!clone.imageLabel) {
           clone.imageLabel = scopeKey;
         }
@@ -1718,6 +1725,8 @@ export class ProjectManager {
         clone.strokeMetadata = clone.strokeMetadata || {};
         clone.strokeMetadata.strokeLabel = clone.strokeMetadata.strokeLabel || strokeLabel.trim();
         clone.strokeMetadata.imageLabel = clone.strokeMetadata.imageLabel || scopeKey;
+        clone.strokeMetadata.type = clone.strokeMetadata.type || 'line';
+        clone.strokeMetadata.isVector = true;
         if (!clone.imageLabel) {
           clone.imageLabel = scopeKey;
         }
@@ -1944,6 +1953,71 @@ export class ProjectManager {
             return resolve();
           }
 
+          const imgWidth = img.width;
+          const imgHeight = img.height;
+
+          if (!imgWidth || !imgHeight) {
+            console.warn(
+              '[Image Debug] Failed to load image dimensions; skipping background update',
+              { url }
+            );
+            return resolve();
+          }
+
+          const viewState = this.views?.[this.currentViewId] || null;
+          const hasPersistedLayout = Boolean(
+            viewState?.canvasData ||
+              viewState?.viewport ||
+              viewState?.tabs ||
+              viewState?.backgroundWorldRect
+          );
+          // Size the capture frame to the uploaded image's aspect ratio on the
+          // FIRST upload (no persisted layout). Previously this only ran for
+          // portrait images; landscape/square images kept the default 4:3 frame
+          // and the image was fit inside it, leaving empty gaps on the shorter
+          // dimension — the "image smaller than frame" symptom.
+          const shouldInitializeFrameForImage = Boolean(
+            !hasPersistedLayout && viewState?.initialImageFrameApplied !== true
+          );
+          let initialFrameApplied = false;
+          if (shouldInitializeFrameForImage) {
+            initialFrameApplied = Boolean(
+              window.initializeCaptureFrameForImageAspect?.(this.currentViewId, imgWidth, imgHeight)
+            );
+            if (initialFrameApplied && viewState) {
+              viewState.initialImageFrameApplied = true;
+            }
+          }
+
+          if (initialFrameApplied) {
+            // An empty canvas can inherit a proportional zoom from a browser
+            // resize before the first upload. Image fitting below works in
+            // world units, so carrying that transient zoom into placement
+            // multiplies the fitted image a second time (for example 1.19x on
+            // a wide screen). A new image/frame pair starts from a neutral
+            // viewport; subsequent user zooms and saved layouts remain intact.
+            this.canvasManager.setViewportState?.({ zoom: 1, panX: 0, panY: 0 });
+            this.canvasManager.applyViewportTransform?.();
+            const tabState = window.captureTabsByLabel?.[this.currentViewId];
+            const activeFrame = tabState?.tabs?.find(
+              tab => tab.id === tabState.activeTabId && tab.type !== 'master'
+            );
+            if (activeFrame) {
+              activeFrame.viewport = {
+                ...activeFrame.viewport,
+                zoom: 1,
+                panX: 0,
+                panY: 0,
+                rotation: this.canvasManager.getRotationDegrees?.() || 0,
+              };
+              activeFrame.viewportTransform = [1, 0, 0, 1, 0, 0];
+            }
+            window.__openpaintResetCaptureResizeAnchor?.();
+          }
+
+          // Frame initialization updates the live capture frame, so read
+          // placement afterwards. Reading it earlier fits the first render to
+          // the stale default frame.
           const placementFrame = this.canvasManager.getBackgroundPlacementFrame?.() || {
             width: canvas.width,
             height: canvas.height,
@@ -1961,17 +2035,6 @@ export class ProjectManager {
             frameHeight = canvas.height;
             frameLeft = 0;
             frameTop = 0;
-          }
-
-          const imgWidth = img.width;
-          const imgHeight = img.height;
-
-          if (!imgWidth || !imgHeight) {
-            console.warn(
-              '[Image Debug] Failed to load image dimensions; skipping background update',
-              { url }
-            );
-            return resolve();
           }
 
           console.log(
@@ -2007,7 +2070,6 @@ export class ProjectManager {
               Math.abs(a.height - b.height) > epsilon
             );
           };
-          const viewState = this.views?.[this.currentViewId] || null;
           const restoreSavedPlacement = options?.restoreSavedPlacement !== false;
           const viewRotation = Number(viewState?.rotation) || 0;
           const backgroundRotation = Number(viewState?.backgroundRotation) || 0;
@@ -2196,6 +2258,120 @@ export class ProjectManager {
                 this.canvasManager.applyViewportTransform?.();
               }
               canvas.requestRenderAll();
+            } else if (
+              !restoredFromSaved &&
+              (fitMode === 'fit-canvas' || fitMode === 'fit-width' || fitMode === 'fit-height') &&
+              !(viewState?.viewport && viewState.viewport.zoom)
+            ) {
+              // No-op placeholder: the unified first-upload re-fit below handles
+              // these modes (and portrait, where portraitFrameApplied is set).
+            }
+            if (
+              initialFrameApplied ||
+              ((fitMode === 'fit-canvas' || fitMode === 'fit-width' || fitMode === 'fit-height') &&
+                !restoredFromSaved &&
+                !(viewState?.viewport && viewState.viewport.zoom))
+            ) {
+              // FIRST UPLOAD re-fit (any aspect ratio / orientation).
+              //
+              // The background is placed at the frame center in world coords, but
+              // two downstream passes overwrite that centered viewport:
+              //   1. The CanvasManager resize coordinator (~immediate).
+              //   2. The capture-frame replay (replayCaptureFrameForCurrentResize,
+              //      ~100ms later) which reads the active tab's viewport, not the
+              //      just-fit canvasManager pan, and recomputes panY from a stale
+              //      anchor — leaving the image offset by tens of px.
+              // Layout settling is timing-dependent and varies by machine. A single
+              // fixed timeout races the settle. Poll the re-fit across a wider
+              // window, persisting the corrected viewport onto the active capture
+              // tab each pass so subsequent replays stay centered, and stopping
+              // early once a pass makes no further change (converged). The
+              // background itself is NOT re-scaled here — fit-canvas already
+              // scaled it correctly during placement.
+              this.canvasManager.suppressResizeRefitUntil = Date.now() + 500;
+              const performFirstUploadFit = () => {
+                if (!isCurrentLoad()) return false;
+                const liveBg = canvas.backgroundImage;
+                if (!liveBg) return false;
+
+                // Align the background center onto the frame center via the
+                // viewport. The frame itself is positioned by the capture-frame
+                // system (getPreferredCaptureArea / buildCenteredRectFromSize);
+                // this corrects any viewport drift after layout settles.
+                const placement = this.canvasManager.getBackgroundPlacementFrame?.();
+                const liveTransform = canvas.viewportTransform;
+                const backgroundCenter = liveBg.getCenterPoint?.();
+                if (!placement || !backgroundCenter || !Array.isArray(liveTransform)) {
+                  return false;
+                }
+
+                const mappedCenter = fabric.util.transformPoint(
+                  new fabric.Point(backgroundCenter.x, backgroundCenter.y),
+                  liveTransform
+                );
+                const targetCenter = {
+                  x: placement.left + placement.width / 2,
+                  y: placement.top + placement.height / 2,
+                };
+                const dx = targetCenter.x - mappedCenter.x;
+                const dy = targetCenter.y - mappedCenter.y;
+                if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return false;
+
+                // Apply the correction via setViewportState with the EXACT
+                // numeric pan (liveTransform[4]/[5] + delta), not via
+                // setViewportTransformExact's matrix decomposition. The
+                // decomposition recomputes pan from getRotationCenter and can
+                // land on a different value than intended, so the capture-frame
+                // replay (which reads the numeric viewport) re-diverges on the
+                // next tick — the source of the first-upload four-corners
+                // flakiness.
+                const currentViewport = this.canvasManager.getViewportState?.() || {};
+                const correctedPanX = (Number(currentViewport.panX) || 0) + dx;
+                const correctedPanY = (Number(currentViewport.panY) || 0) + dy;
+                this.canvasManager.setViewportState?.({
+                  zoom: Number(currentViewport.zoom) || this.canvasManager.zoomLevel,
+                  panX: correctedPanX,
+                  panY: correctedPanY,
+                });
+
+                const tabState = window.captureTabsByLabel?.[requestedViewId];
+                const activeFrame = tabState?.tabs?.find(
+                  tab => tab.id === tabState.activeTabId && tab.type !== 'master'
+                );
+                if (activeFrame) {
+                  activeFrame.viewport = {
+                    ...activeFrame.viewport,
+                    zoom: Number(currentViewport.zoom) || this.canvasManager.zoomLevel,
+                    panX: correctedPanX,
+                    panY: correctedPanY,
+                    rotation: this.canvasManager.getRotationDegrees?.() || 0,
+                  };
+                  const newTransform = canvas.viewportTransform;
+                  if (Array.isArray(newTransform)) {
+                    activeFrame.viewportTransform = [...newTransform];
+                  }
+                }
+                return true;
+              };
+              let remainingPasses = 10;
+              const pollFit = () => {
+                if (!isCurrentLoad() || remainingPasses <= 0) return;
+                remainingPasses -= 1;
+                // Always run the fit — don't stop early when one pass happens to
+                // be aligned. The capture-frame replay (replayCaptureFrameForCurrentResize)
+                // shifts the frame AFTER layout settles, and a single aligned pass
+                // doesn't guarantee the frame won't move again on the next tick.
+                // Running all passes (covering ~1.2s) outlasts the replay.
+                performFirstUploadFit();
+                if (remainingPasses > 0) {
+                  window.setTimeout(pollFit, 120);
+                } else {
+                  // Final pass: one last correction after the replay has fully
+                  // settled, so the converged state is the displayed state.
+                  performFirstUploadFit();
+                }
+              };
+              window.setTimeout(pollFit, 100);
             }
             // Sync the active tab's worldRect so applyCaptureFrameForLabel has a
             // valid geometry to work with. Only sync the viewport for views with
@@ -4336,6 +4512,12 @@ export class ProjectManager {
       for (const viewId of orderedViewIds) {
         this.updateProjectLoadOverlay(`Restoring view ${viewId}...`);
         const viewData = projectData.views[viewId];
+        const savedTabs = Array.isArray(viewData?.tabs?.tabs) ? viewData.tabs.tabs : [];
+        const savedActiveTab =
+          savedTabs.find(tab => tab?.id === viewData?.tabs?.activeTabId) ||
+          savedTabs.find(tab => tab?.type !== 'master') ||
+          savedTabs[0] ||
+          null;
         const inferredBackgroundWorldRect = this.inferBackgroundWorldRectFromSerializedBackground(
           viewData?.canvasJSON?.backgroundImage
         );
@@ -4384,6 +4566,16 @@ export class ProjectManager {
             (Array.isArray(viewData.canvasJSON?.viewportTransform) &&
               viewData.canvasJSON.viewportTransform) ||
             null,
+          // Keep the source geometry attached to the exact Fabric matrix.
+          // Live tab and viewport records are intentionally rewritten during
+          // cross-monitor restoration; using those mutable values later can
+          // make an old matrix appear compatible and reintroduce stale pan.
+          exactViewportSourceDimensions: {
+            canvasWidth: Number(viewData.viewport?.savedCanvasWidth) || 0,
+            canvasHeight: Number(viewData.viewport?.savedCanvasHeight) || 0,
+            windowWidth: Number(savedActiveTab?.captureFrame?.windowWidth) || 0,
+            windowHeight: Number(savedActiveTab?.captureFrame?.windowHeight) || 0,
+          },
           backgroundWorldRect: restoredBackgroundWorldRect || null,
         };
 

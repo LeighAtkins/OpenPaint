@@ -13,6 +13,7 @@
     />
     <link rel="stylesheet" href="/css/obscura-tokens.css" />
     <link rel="stylesheet" href="/css/tailwind.build.css" />
+    <link rel="stylesheet" href="/css/elements-panel.css" />
     <style>
       /* Obscura Editorial-Generative — Font aliases */
       :root {
@@ -1535,6 +1536,30 @@
         flex-shrink: 0;
       }
 
+      #canvasControlsContent {
+        align-items: center;
+      }
+
+      #canvasControlsContent > button,
+      #canvasControlsContent > select,
+      #canvasControlsContent .cloud-save-menu > button,
+      #quickSaveBtn,
+      #rotateFineWrap button {
+        min-height: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      #frameScaleControls {
+        height: 32px;
+        align-items: stretch;
+      }
+
+      #frameScaleControls button {
+        height: 30px;
+      }
+
       /* Note: overflow-x: auto takes precedence for horizontal scrolling */
       /* Vertical overflow remains visible for dropdown menus */
 
@@ -1791,6 +1816,13 @@
         flex: 0 0 auto !important;
       }
 
+      .stroke-visibility-item > .delete-image-btn {
+        position: absolute !important;
+        top: 4px !important;
+        right: 4px !important;
+        z-index: 3 !important;
+      }
+
       /* Ensure the strokes list flows vertically and doesn't overlap */
       #strokesList {
         display: block !important;
@@ -1837,11 +1869,16 @@
 
       .stroke-name {
         font-weight: 600 !important;
-        font-size: 14px !important;
+        font-size: 18px !important;
+        line-height: 28px !important;
         padding: 2px 6px !important;
         border-radius: 4px !important;
         border: 1px solid currentColor !important;
         min-width: auto !important;
+        height: 34px !important;
+        box-sizing: border-box !important;
+        display: inline-flex !important;
+        align-items: center !important;
       }
 
       .stroke-label-toggle-btn {
@@ -1859,22 +1896,37 @@
       }
 
       .stroke-measurement {
-        font-size: 13px !important;
-        color: #6b7280 !important;
-        font-weight: 500 !important;
+        font-size: 18px !important;
+        line-height: 30px !important;
+        color: #111827 !important;
+        font-weight: 700 !important;
         font-family: var(--font-mono) !important;
         user-select: text !important;
-        cursor: pointer !important;
-        padding: 1px 4px !important;
-        border-radius: 3px !important;
+        cursor: text !important;
+        padding: 1px 8px !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 6px !important;
         transition: background-color 0.2s !important;
-        min-width: 30px !important;
-        display: inline-block !important;
+        min-width: 72px !important;
+        width: auto !important;
+        max-width: none !important;
+        display: block !important;
         text-align: center !important;
-        min-height: 20px !important;
+        min-height: 34px !important;
+        height: 34px !important;
+        box-sizing: border-box !important;
         vertical-align: middle !important;
         margin-left: auto !important;
-        flex-shrink: 0 !important;
+        flex: 1 1 96px !important;
+        white-space: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scrollbar-width: none !important;
+        background: #ffffff !important;
+      }
+
+      .stroke-measurement::-webkit-scrollbar {
+        display: none !important;
       }
 
       .stroke-measurement.empty-measurement {
@@ -1888,7 +1940,7 @@
         border: 1px solid #3b82f6 !important;
         /* Blue outline */
         box-shadow: 0 0 0 1px #3b82f6 !important;
-        background-color: white !important;
+        background-color: #eff6ff !important;
       }
 
       .stroke-measurement:hover {
@@ -2688,20 +2740,6 @@
         overflow: visible;
       }
 
-      .capture-tab-frame-label {
-        color: #ffffff;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
-        pointer-events: none;
-      }
-
-      .capture-tab-frame-label.selectable {
-        pointer-events: auto;
-        cursor: pointer;
-        background: rgba(71, 85, 105, 0.7);
-        border-radius: 999px;
-        padding: 2px 7px;
-      }
-
       .capture-tab-frame:hover {
         background: rgba(34, 197, 94, 0.28);
       }
@@ -2835,10 +2873,6 @@
           <!-- Pre-populated toolbar content to prevent flash -->
           <button id="paste" class="tbtn" title="Upload Images — or paste with Ctrl+V / Cmd+V" aria-label="Upload Images">
             <span class="label-long">Upload Images</span><span class="label-short">Upload</span>
-          </button>
-          <button type="button" class="tbtn cloud-save-btn" data-cloud-save-trigger="" title="Save to cloud" aria-label="Cloud save" style="display: inline-flex;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-            <span class="label-long">Cloud Save</span>
           </button>
           <button id="clear" class="tbtn">Clear</button>
           <div id="drawingModeWrapper" class="shape-toggle shape-active">
@@ -3098,17 +3132,6 @@
                   Save
                 </button>
               </div>
-              <div id="projectCloudActions" class="toolbar-menu-cloud-actions"></div>
-              <button
-                id="frameToggleBtn"
-                class="tbtn frame-toggle-btn"
-                title="Show frame controls"
-                aria-label="Show frame controls"
-                aria-pressed="false"
-                type="button"
-              >
-                Frames
-              </button>
             </div>
           </div>
         </div>
@@ -3608,7 +3631,8 @@
     <!-- Vectors and Tags Panel (Left Sidebar) -->
     <div
       id="strokePanel"
-      class="floating-panel flex-shrink-0 w-64 transition-all duration-300 overflow-hidden bg-white border-r border-gray-200 shadow-xl z-10 flex flex-col"
+      class="floating-panel elements-panel flex-shrink-0 transition-all duration-300 overflow-hidden bg-white border-r border-gray-200 z-10 flex flex-col"
+      data-elements-view="measurements"
       style="
         position: fixed !important;
         top: var(--toolbar-height, 48px) !important;
@@ -3618,39 +3642,34 @@
     >
       <div
         id="elementsHeader"
-        class="flex items-center justify-between p-3 border-b border-gray-200/50 bg-white"
+        class="elements-panel-header flex items-center justify-between bg-white"
       >
-        <div class="flex items-center gap-2">
-          <h3 class="text-sm font-semibold text-slate-800">Elements</h3>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <h3 class="elements-panel-title">Elements</h3>
+            <span id="elementsVisibleSummary" class="elements-panel-count">0</span>
+          </div>
+          <p id="elementsScopeSummary" class="elements-panel-subtitle">Current image</p>
+        </div>
+        <div class="elements-header-actions">
+          <label class="elements-icon-toggle" title="Show or hide all measurement labels">
+            <input id="toggleShowMeasurements" type="checkbox" checked />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+              <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+              <circle cx="12" cy="12" r="2.5"></circle>
+            </svg>
+          </label>
           <button
-            id="viewMeasurementsToggle"
-            title="Toggle measurement labels display"
-            class="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-all font-medium"
+            id="toggleStrokePanel"
+            class="elements-icon-button"
+            title="Collapse elements panel"
+            aria-label="Collapse elements panel"
           >
-            Show Labels
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+              <path d="m9 18 6-6-6-6"></path>
+            </svg>
           </button>
         </div>
-        <button
-          id="toggleStrokePanel"
-          class="text-slate-500 hover:text-slate-700 rounded-lg p-1 transition-colors"
-          title="Minimize/Expand Panel"
-          aria-label="Toggle elements panel"
-        >
-          <svg
-            class="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            style="isolation: isolate; transform: translateZ(0)"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 9l-7 7-7-7"
-            ></path>
-          </svg>
-        </button>
       </div>
       <!-- Panel Body (collapsible) -->
       <div
@@ -3660,113 +3679,127 @@
         class="flex-1 flex flex-col min-h-0"
         style="position: relative; z-index: 100"
       >
-        <div id="elementsControls" class="px-3 py-2 border-b border-gray-100">
-          <div class="flex gap-2 mb-2">
-            <button
-              id="selectAllStrokesBtn"
-              title="Select/Deselect all elements"
-              class="flex-1 px-2 py-1 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-all font-medium"
-            >
-              Deselect All
-            </button>
-            <button
-              id="showAllMeasurementsBtn"
-              title="Show all measurements in a list"
-              class="flex-1 px-2 py-1 text-xs bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-all font-medium"
-            >
-              Show List
-            </button>
-            <button
-              id="viewSubmittedMeasurementsBtn"
-              title="View submitted measurements from shared projects"
-              class="flex-1 px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-all font-medium"
-            >
-              View Submitted
-            </button>
-          </div>
-          <div class="flex gap-2 mb-2">
-            <div class="flex-1 px-2 py-1 text-xs bg-gray-50 border border-gray-200 rounded-lg">
-              <div class="text-gray-500 text-xs mb-1">Next Tag:</div>
+        <div id="elementsControls" class="elements-controls">
+          <div class="elements-next-tag-control">
+            <div class="elements-field-copy">
+              <span class="elements-kicker">Next tag</span>
               <div
                 id="nextTagDisplay"
                 contenteditable="true"
                 spellcheck="false"
-                class="font-semibold text-blue-600 cursor-text hover:bg-blue-50 px-1 py-0.5 rounded outline-none focus:ring-2 focus:ring-blue-300"
-                title="Type to set next tag"
+                class="elements-next-tag-value"
+                title="Type to set the next tag"
               >
                 A
               </div>
             </div>
-          </div>
-          <div class="flex gap-2 flex-wrap items-center">
             <button
               id="tagModeToggle"
-              title="Toggle between letters only and letters with numbers"
-              class="px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-all font-medium"
+              title="Change tag sequence"
+              class="elements-mode-button"
             >
               Letters + Numbers
             </button>
-            <label
-              class="flex items-center gap-1 text-xs bg-slate-50 border border-slate-200 px-2 py-1 rounded-lg"
-            >
-              <input id="toggleShowMeasurements" type="checkbox" class="accent-blue-600" checked />
-              Show measurements
-            </label>
-            <button
-              id="toggleReviewOnly"
-              title="Show only measurements under review"
-              class="px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
-            >
-              Review only
-            </button>
-            <div
-              class="flex items-center gap-1 text-xs bg-slate-50 border border-slate-200 px-2 py-1 rounded-lg"
-            >
-              <span class="text-slate-600">Tag Size:</span>
-              <button
-                id="decreaseAllTagSize"
-                title="Decrease tag size for all tags on this image"
-                class="w-5 h-5 bg-white border border-slate-300 rounded hover:bg-slate-50 flex items-center justify-center text-slate-600 hover:text-slate-800 transition-colors"
-              >
-                −
-              </button>
-              <span id="currentTagSize" class="text-slate-700 font-medium min-w-[2ch] text-center"
-                >20</span
-              >
-              <button
-                id="increaseAllTagSize"
-                title="Increase tag size for all tags on this image"
-                class="w-5 h-5 bg-white border border-slate-300 rounded hover:bg-slate-50 flex items-center justify-center text-slate-600 hover:text-slate-800 transition-colors"
-              >
-                +
-              </button>
-              <button
-                id="tagColorEditorBtn"
-                title="Edit tag colors"
-                class="ml-1 px-2 h-5 bg-white border border-slate-300 rounded hover:bg-slate-50 flex items-center justify-center text-[10px] text-slate-600 hover:text-slate-800 transition-colors"
-              >
-                Colors
-              </button>
-            </div>
+          </div>
 
+          <div class="elements-quick-actions">
+            <button
+              id="selectAllStrokesBtn"
+              title="Select or deselect every measurement"
+              class="elements-quiet-button"
+            >
+              Hide all
+            </button>
             <button
               id="unitToggleBtnSecondary"
-              class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-              title="Toggle units"
+              class="elements-quiet-button elements-unit-button"
+              title="Toggle measurement units"
             >
               inches
             </button>
             <button
               id="inchDisplayToggleBtnSecondary"
-              class="hidden px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              class="elements-quiet-button elements-decimal-button hidden"
               title="Display inches as decimals"
               aria-pressed="false"
             >
               dec
             </button>
             <button
+              id="elementsFrameToggleBtn"
+              type="button"
+              title="Show frame views"
+              class="elements-quiet-button frame-toggle-step"
+              data-frame-toggle
+              aria-pressed="false"
+            >
+              Frames
+            </button>
+          </div>
+
+          <div class="elements-view-tabs" role="tablist" aria-label="Element type">
+            <button type="button" class="elements-view-tab active" data-elements-view="measurements" role="tab" aria-selected="true">
+              Measure <span id="elementsMeasurementCount">0</span>
+            </button>
+            <button type="button" class="elements-view-tab" data-elements-view="text" role="tab" aria-selected="false">
+              Text <span id="elementsTextCount">0</span>
+            </button>
+            <button type="button" class="elements-view-tab" data-elements-view="shapes" role="tab" aria-selected="false">
+              Shapes <span id="elementsShapeCount">0</span>
+            </button>
+          </div>
+
+          <label class="elements-search-field">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+              <circle cx="11" cy="11" r="6"></circle>
+              <path d="m16 16 4 4"></path>
+            </svg>
+            <input id="elementsSearchInput" type="search" placeholder="Find label or value" autocomplete="off" />
+          </label>
+
+          <details id="elementsAppearance" class="elements-appearance">
+            <summary>
+              <span>
+                <span class="elements-kicker">Appearance</span>
+                <strong id="elementsAppearanceScope">Image defaults</strong>
+              </span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
+            </summary>
+            <div class="elements-appearance-body">
+              <div class="elements-setting-row">
+                <span>Tag size</span>
+                <div class="elements-stepper">
+              <button
+                id="decreaseAllTagSize"
+                title="Decrease tag size for all tags on this image"
+              >
+                −
+              </button>
+              <span id="currentTagSize">20</span>
+              <button
+                id="increaseAllTagSize"
+                title="Increase tag size for all tags on this image"
+              >
+                +
+              </button>
+                </div>
+              </div>
+              <div class="elements-setting-row">
+                <span>Colors</span>
+              <button
+                id="tagColorEditorBtn"
+                title="Edit tag colors"
+                class="elements-setting-button"
+              >
+                Edit palette
+              </button>
+              </div>
+              <div class="elements-setting-row">
+                <span>Label</span>
+                <div class="elements-setting-buttons">
+            <button
               id="labelShapeToggleBtn"
-              class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              class="elements-setting-button elements-icon-value"
               title="Toggle tag shape"
               aria-pressed="true"
             >
@@ -3774,21 +3807,29 @@
             </button>
             <button
               id="labelBackgroundToggleBtn"
-              class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              class="elements-setting-button"
               title="Toggle label background"
               aria-pressed="false"
             >
               Solid
             </button>
+                </div>
+              </div>
+              <div class="elements-setting-row elements-setting-row-stacked">
+                <span>Connector</span>
             <button
               id="connectorToneBtn"
-              class="px-2 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              class="elements-setting-button elements-setting-button-wide"
               title="Cycle connector color"
               aria-pressed="false"
             >
               Connector: White
             </button>
-          </div>
+              </div>
+            </div>
+          </details>
+
+          <button id="showAllMeasurementsBtn" class="hidden" type="button" tabindex="-1" aria-hidden="true">Show list</button>
         </div>
         <div
           id="strokeVisibilityControls"
@@ -4010,10 +4051,6 @@
         </div>
       </div>
     </div>
-    <div id="captureTabBar" class="capture-tab-bar">
-      <div id="captureTabList" class="capture-tab-list"></div>
-      <button id="captureTabAdd" class="capture-tab-add" type="button">New Tab</button>
-    </div>
     <div id="captureMasterTargetBadge" class="capture-master-target-badge"></div>
 
     <!-- Instruction Text for Unlocked Mode -->
@@ -4085,14 +4122,6 @@
           <span class="label-long">Copy Image</span>
           <span class="label-short">Copy</span>
         </button>
-        <select
-          id="fitModeSelect"
-          class="px-2 py-1 border border-gray-300 rounded-lg bg-white focus:outline-none hover:bg-gray-50"
-          title="Choose how images react when the page is resized"
-        >
-          <option value="scale-page-size" selected>Fit Frame</option>
-          <option value="keep-size">Keep Size</option>
-        </select>
         <div id="frameScaleControls" class="inline-flex overflow-hidden rounded-lg border border-gray-300 bg-white">
           <button
             id="frameScaleDecrease"
@@ -4133,18 +4162,25 @@
         </div>
 
         <!-- Cloud save next to Copy/Save -->
-        <button
-          id="canvasCloudSaveBtn"
-          type="button"
-          data-cloud-save-trigger
-          class="tbtn cloud-save-btn"
-          title="Save to cloud"
-          aria-label="Cloud save"
-          style="display: none"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-          <span class="label-long">Cloud Save</span>
-        </button>
+        <div id="canvasCloudMenu" class="cloud-save-menu" style="display: none">
+          <button
+            id="canvasCloudSaveBtn"
+            type="button"
+            data-cloud-save-trigger
+            class="tbtn cloud-save-btn"
+            title="Save to cloud"
+            aria-label="Cloud save"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            <span class="label-long">Cloud Save</span>
+          </button>
+          <div class="cloud-save-menu-panel" role="menu" aria-label="Cloud project actions">
+            <button id="canvasMyProjectsBtn" type="button" role="menuitem">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+              My Projects
+            </button>
+          </div>
+        </div>
 
         <!-- Quick Save with hover menu -->
         <div id="quickSave" class="relative ml-2">

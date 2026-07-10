@@ -360,8 +360,23 @@ export function initScrollSelectSystem() {
       if (!currentLabel) return;
 
       const stepper = document.getElementById('mini-stepper');
-      const stepButtons = Array.from(stepper?.querySelectorAll('button[data-target]') || []);
-      const activeButton = stepButtons.find(btn => btn.dataset.target === currentLabel) || null;
+      const stepButtons = Array.from(
+        stepper?.querySelectorAll<HTMLButtonElement>('button[data-target]') || []
+      );
+      const framesVisible = document.body.classList.contains('frames-visible');
+      const tabState = window.captureTabsByLabel?.[currentLabel];
+      const activeTabId = String(tabState?.activeTabId || tabState?.masterTabId || 'master');
+      const activeButton =
+        stepButtons.find(
+          btn => btn.dataset.target === currentLabel && btn.dataset.tabId === activeTabId
+        ) ||
+        (!framesVisible
+          ? stepButtons.find(
+              btn => btn.dataset.target === currentLabel && btn.dataset.stepKind === 'image'
+            )
+          : null) ||
+        stepButtons.find(btn => btn.dataset.target === currentLabel) ||
+        null;
 
       // During view switches, current label can be temporarily out of sync with
       // rendered pills. Keep previous active styling instead of flashing to all-white.
@@ -370,7 +385,7 @@ export function initScrollSelectSystem() {
       }
 
       stepButtons.forEach(btn => {
-        const isActive = btn.dataset.target === currentLabel;
+        const isActive = btn === activeButton;
         if (isActive) {
           btn.classList.remove(...cfg.inactiveClasses.split(' '));
           btn.classList.add(...cfg.activeClasses.split(' '));
@@ -381,7 +396,7 @@ export function initScrollSelectSystem() {
           btn.removeAttribute('aria-current');
         }
       });
-      applyMiniStepperGuideBadges(stepButtons as Array<HTMLButtonElement>);
+      applyMiniStepperGuideBadges(stepButtons.filter(btn => btn.dataset.stepKind === 'image'));
 
       const panelCollapsed = isImagePanelCollapsed();
       positionStepperIndicator(activeButton, { animate: panelCollapsed ? false : animate });
@@ -390,7 +405,7 @@ export function initScrollSelectSystem() {
       if (activeButton && stepper && !panelCollapsed) {
         const pillsList = stepper.querySelector('ol');
         const scrollEl = pillsList || stepper;
-        const activeLabel = activeButton.dataset.target || '';
+        const activeLabel = `${activeButton.dataset.target || ''}:${activeButton.dataset.tabId || ''}`;
         const lastAutoScrollLabel = window.__miniStepperLastAutoScrollLabel || '';
         const stepperRect = stepper.getBoundingClientRect();
         const btnRect = activeButton.getBoundingClientRect();
@@ -412,6 +427,60 @@ export function initScrollSelectSystem() {
           window.__miniStepperLastAutoScrollLabel = activeLabel;
         }
       }
+    }
+
+    function exitImplicitMasterView(label?: string | null) {
+      const currentLabel =
+        label ||
+        window.projectManager?.currentViewId ||
+        window.currentImageLabel ||
+        window.paintApp?.state?.currentImageLabel;
+      if (!currentLabel) return;
+      const state = window.captureTabsByLabel?.[currentLabel];
+      const normalTabs = Array.isArray(state?.tabs)
+        ? state.tabs.filter(tab => tab?.type !== 'master')
+        : [];
+      if (normalTabs.length < 1) return;
+      const activeTabId = String(state?.activeTabId || '');
+      const masterTabId = String(state?.masterTabId || 'master');
+      if (activeTabId !== masterTabId && activeTabId !== 'master') return;
+      const primaryTabId = String(
+        normalTabs.find(tab => tab?.id === state?.lastNonMasterId)?.id || normalTabs[0]?.id || ''
+      );
+      if (!primaryTabId || typeof window.setActiveCaptureTab !== 'function') return;
+      window.setActiveCaptureTab(currentLabel, primaryTabId);
+    }
+
+    function syncFrameToggleButtons() {
+      const framesVisible = document.body.classList.contains('frames-visible');
+      document.querySelectorAll<HTMLButtonElement>('[data-frame-toggle]').forEach(button => {
+        button.classList.toggle('active', framesVisible);
+        button.classList.toggle('bg-blue-100', !framesVisible);
+        button.classList.toggle('hover:bg-blue-200', !framesVisible);
+        button.classList.toggle('text-blue-700', !framesVisible);
+        button.classList.toggle('bg-blue-600', framesVisible);
+        button.classList.toggle('hover:bg-blue-700', framesVisible);
+        button.classList.toggle('text-white', framesVisible);
+        button.setAttribute('aria-pressed', framesVisible ? 'true' : 'false');
+        button.setAttribute('title', framesVisible ? 'Hide frame views' : 'Show frame views');
+      });
+    }
+
+    function toggleFrameViews() {
+      document.body.classList.toggle('frames-visible');
+      exitImplicitMasterView();
+      syncFrameToggleButtons();
+      updatePills();
+      updateActivePill({ animate: false, forceCenter: true });
+    }
+
+    function bindFrameToggleButtons(root: ParentNode = document) {
+      root.querySelectorAll<HTMLButtonElement>('[data-frame-toggle]').forEach(button => {
+        if (button.dataset.frameToggleBound === 'true') return;
+        button.dataset.frameToggleBound = 'true';
+        button.addEventListener('click', toggleFrameViews);
+      });
+      syncFrameToggleButtons();
     }
 
     window.updatePills = updatePills;
@@ -1099,7 +1168,26 @@ export function initScrollSelectSystem() {
       });
     }
 
+    function frameSuffix(index: number): string {
+      let value = Math.max(0, index);
+      let suffix = '';
+      do {
+        suffix = String.fromCharCode(97 + (value % 26)) + suffix;
+        value = Math.floor(value / 26) - 1;
+      } while (value >= 0);
+      return suffix;
+    }
+
+    function escapeStepperAttribute(value: string): string {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
     function updatePills() {
+      (window as Window & { syncCloudPrimaryAction?: () => void }).syncCloudPrimaryAction?.();
       const stepper = document.getElementById('mini-stepper');
 
       if (!stepper) {
@@ -1189,6 +1277,7 @@ export function initScrollSelectSystem() {
         pillsList.innerHTML = '<li class="px-2 py-1 text-slate-500 text-xs">No images yet</li>';
         pillsList.className =
           'flex gap-2 px-2 py-1 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[40px]';
+        syncFrameToggleButtons();
         return [];
       }
 
@@ -1196,46 +1285,91 @@ export function initScrollSelectSystem() {
       pillsList.className =
         'flex gap-2 px-2 py-1 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[40px]';
 
+      const framesVisible = document.body.classList.contains('frames-visible');
+      const currentViewId = window.projectManager?.currentViewId || '';
+      const baseButtonClass =
+        'step relative w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-200 bg-white text-slate-600 border border-slate-300 hover:scale-[1.03] hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500';
       const pillsHTML = imageLabels
         .map((label, idx) => {
-          const n = idx + 1;
-          return `
-                          <li class="snap-center">
-                              <button
-                                  type="button"
-                                  class="step relative w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-200 bg-white text-slate-600 border border-slate-300 hover:scale-[1.03] hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500"
-                                  aria-label="Go to ${label}"
-                                  data-target="${label}"
-                                  data-index="${idx}">
-                                  ${n}
-                              </button>
-                          </li>`;
+          const imageNumber = idx + 1;
+          const safeLabel = escapeStepperAttribute(label);
+          const state =
+            window.ensureCaptureTabsForLabel?.(label) || window.captureTabsByLabel?.[label];
+          const masterTabId = state?.masterTabId || 'master';
+          const normalTabs = Array.isArray(state?.tabs)
+            ? state.tabs.filter(tab => tab?.type !== 'master')
+            : [];
+          const hasMultipleFrames = normalTabs.length > 1;
+          const primaryTabId = normalTabs[0]?.id || masterTabId;
+          const imageButtonTabId = hasMultipleFrames ? masterTabId : primaryTabId;
+          const imageButtonLabel = hasMultipleFrames
+            ? `Go to image ${imageNumber}, master view`
+            : `Go to image ${imageNumber}`;
+          const frameButtons = hasMultipleFrames
+            ? normalTabs
+                .map(
+                  (tab, frameIndex) => `
+                    <li class="snap-center">
+                      <button type="button"
+                        class="${baseButtonClass} frame-step"
+                        aria-label="Go to image ${imageNumber}, frame ${frameIndex + 1}"
+                        data-target="${safeLabel}"
+                        data-tab-id="${escapeStepperAttribute(String(tab.id || ''))}"
+                        data-step-kind="frame"
+                        data-index="${idx}">${imageNumber}${frameSuffix(frameIndex)}</button>
+                    </li>`
+                )
+                .join('')
+            : '';
+          const imageButton =
+            framesVisible || !hasMultipleFrames
+              ? `<li class="snap-center">
+                  <button type="button" class="${baseButtonClass}"
+                    aria-label="${imageButtonLabel}"
+                    data-target="${safeLabel}"
+                    data-tab-id="${escapeStepperAttribute(String(imageButtonTabId))}"
+                    data-step-kind="image"
+                    data-index="${idx}">${imageNumber}</button>
+                </li>`
+              : '';
+          const addFrameButton =
+            framesVisible && label === currentViewId
+              ? `<li class="snap-center">
+                <button type="button" class="frame-add-step" data-frame-add="${safeLabel}"
+                  aria-label="Add frame to image ${imageNumber}" title="Add frame">${imageNumber}+</button>
+              </li>`
+              : '';
+          return `${imageButton}${frameButtons}${addFrameButton}`;
         })
         .join('');
 
       pillsList.innerHTML = pillsHTML;
 
-      const stepButtons = Array.from(stepper.querySelectorAll('button[data-target]'));
+      const stepButtons = Array.from(
+        stepper.querySelectorAll<HTMLButtonElement>('button[data-target]')
+      );
+      const imageButtons = stepButtons.filter(btn => btn.dataset.stepKind === 'image');
 
       // Initialise states - all start as inactive
       stepButtons.forEach(btn => {
         btn.classList.add(...cfg.inactiveClasses.split(' '));
       });
-      applyMiniStepperGuideBadges(stepButtons as Array<HTMLButtonElement>);
+      applyMiniStepperGuideBadges(imageButtons);
 
       // Update active state immediately after creating pills
       setTimeout(() => updateActivePill({ animate: false }), 100);
 
       // Initialize pill centering observer to track which pill is centered
-      initPillCenteringObserver(stepButtons);
+      initPillCenteringObserver(imageButtons);
 
       // Click to switch to image and center the pill
       stepButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
           const label = btn.dataset.target;
+          const tabId = btn.dataset.tabId;
           const stepper = document.getElementById('mini-stepper');
 
-          if (!stepper) return;
+          if (!stepper || !label) return;
 
           const pillsList = stepper.querySelector('ol');
           const scrollEl = pillsList || stepper;
@@ -1245,9 +1379,18 @@ export function initScrollSelectSystem() {
           scrollEl.scrollBy({ left: delta, behavior: 'smooth' });
 
           // Then switch to the image
-          if (window.switchToImage && typeof window.switchToImage === 'function') {
+          if (window.projectManager?.switchView || window.switchToImage) {
             try {
-              window.switchToImage(label);
+              if (window.projectManager?.currentViewId !== label) {
+                if (typeof window.projectManager?.switchView === 'function') {
+                  await window.projectManager.switchView(label);
+                } else {
+                  window.switchToImage?.(label);
+                }
+              }
+              if (tabId && typeof window.setActiveCaptureTab === 'function') {
+                window.setActiveCaptureTab(label, tabId);
+              }
 
               // Also scroll the sidebar to center the corresponding thumbnail
               const list = document.getElementById('imageList');
@@ -1264,7 +1407,7 @@ export function initScrollSelectSystem() {
               }
 
               // Update active state immediately
-              setTimeout(() => updateActivePill(), 50);
+              updateActivePill({ animate: false, forceCenter: true });
               // Dispatch event
               window.dispatchEvent(
                 new CustomEvent('mini-step-click', {
@@ -1276,7 +1419,7 @@ export function initScrollSelectSystem() {
               console.error('[MiniStepper] Error switching to image:', label, error);
             }
           } else {
-            console.error('[MiniStepper] switchToImage function not available');
+            console.error('[MiniStepper] image navigation is not available');
           }
         });
 
@@ -1298,7 +1441,16 @@ export function initScrollSelectSystem() {
         });
       });
 
-      return stepButtons;
+      bindFrameToggleButtons(stepper);
+
+      stepper.querySelectorAll<HTMLButtonElement>('[data-frame-add]').forEach(button => {
+        button.addEventListener('click', () => {
+          const label = button.dataset.frameAdd || currentViewId;
+          window.createCaptureTabForLabel?.(label);
+        });
+      });
+
+      return imageButtons;
     }
 
     function initIntersectionObserver(stepButtons) {
@@ -1419,6 +1571,7 @@ export function initScrollSelectSystem() {
     function initialize() {
       ensureGuideBadgeStyles();
       positionNavigationContainer();
+      bindFrameToggleButtons(document);
 
       // Initial update
       const stepButtons = updatePills();
@@ -1449,11 +1602,16 @@ export function initScrollSelectSystem() {
 
       window.addEventListener('openpaint:guide-binding-changed', () => {
         const currentButtons = Array.from(
-          document.querySelectorAll('#mini-stepper button[data-target]')
+          document.querySelectorAll('#mini-stepper button[data-step-kind="image"]')
         ) as Array<HTMLButtonElement>;
         if (currentButtons.length > 0) {
           applyMiniStepperGuideBadges(currentButtons);
         }
+      });
+
+      window.addEventListener('openpaint:frame-tabs-updated', () => {
+        updatePills();
+        updateActivePill({ animate: false, forceCenter: true });
       });
 
       // Set up mutation-driven updates to handle dynamically added images
@@ -1465,7 +1623,7 @@ export function initScrollSelectSystem() {
           const stepper = document.getElementById('mini-stepper');
           positionNavigationContainer();
           const currentButtons = Array.from(
-            document.querySelectorAll('#mini-stepper button[data-target]')
+            document.querySelectorAll('#mini-stepper button[data-step-kind="image"]')
           );
           const currentContainers = getImageContainers();
           const hasNoImagesPlaceholder =

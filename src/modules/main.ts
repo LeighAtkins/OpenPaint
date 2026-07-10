@@ -598,12 +598,67 @@ export class App {
 
     let updatedCount = 0;
     activeObjects.forEach((obj: any) => {
-      // Only update drawable strokes (lines, paths, and curves)
-      if (obj && (obj.type === 'line' || obj.type === 'path')) {
+      // MOS arrow groups bundle a child line + arrowhead triangles; recolor
+      // the child line (the group itself has no stroke). Bare lines/paths are
+      // recolored directly.
+      const isArrowGroup = obj?.type === 'group' && obj.isArrow;
+      if (obj && (obj.type === 'line' || obj.type === 'path' || isArrowGroup)) {
         if (property === 'color') {
-          obj.set('stroke', value);
+          // For arrow groups, recolor the child line; for bare lines/paths,
+          // recolor the object itself.
+          if (isArrowGroup && typeof obj.getObjects === 'function') {
+            obj.getObjects().forEach((child: any) => {
+              if (child?.type === 'line' || child?.type === 'path') {
+                child.set('stroke', value);
+                child.dirty = true;
+              }
+            });
+          } else {
+            obj.set('stroke', value);
+          }
+          // Propagate the new color to MOS overlay arrowhead triangles so they
+          // track the line color instead of staying fixed at the import color.
+          // Curve-path measurements keep their arrowheads as separate triangle
+          // objects (linked by __mosId prefix); line measurements bundle them
+          // as group children. Both must be recolored or the arrowheads keep
+          // the original color while the line changes — the "arrowheads don't
+          // match the line color" symptom.
+          this.updateMosArrowColor(obj, String(value));
+          const strokeLabel =
+            obj.strokeLabel ||
+            obj.strokeMetadata?.strokeLabel ||
+            obj.strokeMetadata?.label ||
+            obj.customData?.strokeLabel ||
+            obj.customData?.label;
+          const imageLabel =
+            obj.strokeMetadata?.imageLabel ||
+            obj.customData?.imageLabel ||
+            window.currentImageLabel ||
+            this.projectManager?.currentViewId;
+          if (strokeLabel && imageLabel && this.tagManager?.setTagTheme) {
+            const currentStyle = this.tagManager.getResolvedTagStyle?.(
+              strokeLabel,
+              imageLabel,
+              obj
+            );
+            const nextTheme = {
+              background: currentStyle?.palette?.bg || '#ffffff',
+              border: String(value),
+              text: currentStyle?.palette?.text || '#000000',
+            };
+            this.tagManager.setTagTheme(strokeLabel, imageLabel, nextTheme);
+          }
         } else if (property === 'strokeWidth') {
-          obj.set('strokeWidth', value);
+          if (isArrowGroup && typeof obj.getObjects === 'function') {
+            obj.getObjects().forEach((child: any) => {
+              if (child?.type === 'line' || child?.type === 'path') {
+                child.set('strokeWidth', value);
+                child.dirty = true;
+              }
+            });
+          } else {
+            obj.set('strokeWidth', value);
+          }
         }
         obj.dirty = true;
         updatedCount++;
@@ -614,6 +669,49 @@ export class App {
       this.canvasManager.fabricCanvas.requestRenderAll();
       console.log(`Updated ${property} for ${updatedCount} selected strokes`);
     }
+  }
+
+  /**
+   * Propagate a stroke-color change to the arrowhead triangle(s) belonging to
+   * an MOS overlay measurement. MOS arrowheads are created at import time with
+   * a fixed fill/stroke (mos-importer.ts); without this they keep the original
+   * color when the user recolors the line. Two shapes are handled:
+   *   - Curve paths: arrowheads are separate canvas triangle objects whose
+   *     __mosId shares the path's element prefix (`<id>_curve_start_arrow` /
+   *     `<id>_curve_end_arrow`).
+   *   - Line measurements: arrowheads are children of the arrow group, found
+   *     via group.getObjects() filtered to type === 'triangle'.
+   */
+  updateMosArrowColor(strokeObj: any, color: string): void {
+    if (!strokeObj || !color) return;
+    const canvas = this.canvasManager?.fabricCanvas;
+    if (!canvas) return;
+    const apply = (triangle: any) => {
+      if (!triangle || triangle.type !== 'triangle') return;
+      triangle.set({ fill: color, stroke: color });
+      triangle.dirty = true;
+    };
+
+    // Line measurements: triangles are children of the arrow group.
+    if (strokeObj.type === 'group' && typeof strokeObj.getObjects === 'function') {
+      strokeObj.getObjects().forEach(apply);
+      return;
+    }
+
+    // Curve paths: triangles are sibling objects linked by __mosId prefix.
+    // The path's __mosId looks like `mos0_auto_15_line`; its arrowheads are
+    // `mos0_auto_15_curve_start_arrow` / `mos0_auto_15_curve_end_arrow`.
+    const ownId = String(strokeObj.__mosId || '');
+    if (!ownId) return;
+    const elementPrefix = ownId.replace(/_line$/i, '');
+    if (!elementPrefix) return;
+    const arrowSuffixes = ['_curve_start_arrow', '_curve_end_arrow'];
+    canvas.getObjects().forEach(obj => {
+      const mosId = String(obj.__mosId || '');
+      if (arrowSuffixes.some(suffix => mosId === `${elementPrefix}${suffix}`)) {
+        apply(obj);
+      }
+    });
   }
 
   getDashPatternForStyle(style: string): number[] {
@@ -636,6 +734,8 @@ export class App {
     if (!obj) return false;
     if (obj.isTag || obj.isConnectorLine) return false;
     if (obj.type === 'line' || obj.type === 'path') return true;
+    // MOS arrow groups bundle a child line/path that carries the dash pattern.
+    if (obj.type === 'group' && obj.isArrow) return true;
     return obj.strokeMetadata?.type === 'shape';
   }
 
@@ -751,14 +851,22 @@ export class App {
     if (obj.isPrivacyErase || obj.customData?.isPrivacyErase) return;
     if (window.app?.toolManager?.activeToolName === 'privacy') return;
 
+    // For MOS arrow groups the dash lives on the child line/path, not the group.
+    const isArrowGroup = obj.type === 'group' && obj.isArrow;
+    const target =
+      isArrowGroup && typeof obj.getObjects === 'function'
+        ? obj.getObjects().find((c: any) => c.type === 'line' || c.type === 'path') || obj
+        : obj;
+
     const customLineStyle =
-      (style === 'tape' || style === 'stretchy') && (obj.type === 'line' || obj.type === 'path')
+      (style === 'tape' || style === 'stretchy') &&
+      (target.type === 'line' || target.type === 'path')
         ? style
         : 'solid';
     const isCustomLineStyle = customLineStyle !== 'solid';
     const nextPattern = isCustomLineStyle ? null : pattern?.length ? pattern : null;
-    obj.set('strokeDashArray', nextPattern);
-    obj.dashSettings = {
+    target.set('strokeDashArray', nextPattern);
+    target.dashSettings = {
       style,
       splitRatio,
       mixedEnabled,
@@ -766,28 +874,35 @@ export class App {
       tapeTickSpacing: tapeTickSpacing ?? 1,
       pattern: pattern || [],
     };
-    obj.lineStyle = customLineStyle;
+    target.lineStyle = customLineStyle;
 
-    if (obj.type === 'line' || obj.type === 'path') {
-      obj.arrowSettings = obj.arrowSettings || {
+    // Skip the arrow-settings/arrow-rendering block for MOS overlay objects:
+    // they manage their own arrows via explicit triangle objects (created in
+    // mos-importer). Applying arrowSettings + attachArrowRendering here makes
+    // the path render a SECOND set of arrowheads on top of those triangles.
+    // The dash/line-style settings above still apply.
+    const isMosOverlay = obj.customData?.layerType === 'mos-overlay';
+    if (!isMosOverlay && (target.type === 'line' || target.type === 'path')) {
+      target.arrowSettings = target.arrowSettings || {
         ...(window.app?.arrowManager?.defaultSettings || {}),
       };
-      obj.arrowSettings.lineStyle = customLineStyle;
-      obj.arrowSettings.tapeTickSpacing = tapeTickSpacing ?? 1;
-      if (obj.type === 'path') {
-        obj.arrowSettings.curveArrows = true;
+      target.arrowSettings.lineStyle = customLineStyle;
+      target.arrowSettings.tapeTickSpacing = tapeTickSpacing ?? 1;
+      if (target.type === 'path') {
+        target.arrowSettings.curveArrows = true;
       }
       if (window.app?.arrowManager?.attachArrowRendering) {
-        window.app.arrowManager.attachArrowRendering(obj);
-        window.app.arrowManager.syncArrowMetadata?.(obj);
+        window.app.arrowManager.attachArrowRendering(target);
+        window.app.arrowManager.syncArrowMetadata?.(target);
       }
     }
 
     if (mixedEnabled && !isCustomLineStyle) {
-      this.attachMixedDashRenderer(obj);
+      this.attachMixedDashRenderer(target);
     }
 
     obj.dirty = true;
+    target.dirty = true;
   }
 
   applyDashSettingsToTools(pattern: number[], style = 'solid'): void {
@@ -1333,24 +1448,6 @@ export class App {
       document.addEventListener('keydown', event => {
         if (event.key === 'Escape') closeMenus();
       });
-    }
-
-    const frameToggleBtn = document.getElementById('frameToggleBtn') as HTMLButtonElement | null;
-    if (frameToggleBtn && frameToggleBtn.dataset.bound !== 'true') {
-      frameToggleBtn.dataset.bound = 'true';
-      const syncFrameToggle = () => {
-        const active = document.body.classList.contains('frames-visible');
-        frameToggleBtn.classList.toggle('active', active);
-        frameToggleBtn.setAttribute('aria-pressed', active ? 'true' : 'false');
-        frameToggleBtn.textContent = active ? 'Hide Frames' : 'Frames';
-        frameToggleBtn.title = active ? 'Hide frame controls' : 'Show frame controls';
-      };
-      frameToggleBtn.addEventListener('click', event => {
-        event.preventDefault();
-        document.body.classList.toggle('frames-visible');
-        syncFrameToggle();
-      });
-      syncFrameToggle();
     }
   }
 
@@ -2176,6 +2273,9 @@ export class App {
     };
     const applyTapeSpacingToObject = (obj: any, spacing: number): void => {
       if (!obj || (obj.type !== 'line' && obj.type !== 'path')) return;
+      // MOS overlay paths own their arrow rendering (explicit triangles); skip
+      // to avoid stacking a second arrowhead on curve measurements.
+      if (obj.customData?.layerType === 'mos-overlay') return;
       obj.arrowSettings = obj.arrowSettings || {
         ...(window.app?.arrowManager?.defaultSettings || {}),
       };
@@ -2225,7 +2325,10 @@ export class App {
     };
 
     const handleBrushSizeWheelShortcut = (wheelEvent: WheelEvent): boolean => {
-      if (!wheelEvent.ctrlKey && !wheelEvent.metaKey && !wheelEvent.altKey) return false;
+      // Trackpad pinch gestures are exposed as Ctrl+wheel events on macOS.
+      // Claiming Ctrl/Meta here prevents the canvas zoom handler from seeing
+      // the pinch and changes line width instead. Keep this shortcut explicit.
+      if (!wheelEvent.altKey) return false;
 
       const activeTool = this.toolManager?.activeToolName;
       if (!activeTool || !resizableTools.has(activeTool)) {
@@ -3112,17 +3215,18 @@ export class App {
                   frameRect.bottom > canvasRect.top
                 ) {
                   // Calculate crop area in canvas pixel coordinates
-                  const scalePx = sourceCanvas.width / canvasRect.width;
+                  const scaleX = sourceCanvas.width / canvasRect.width;
+                  const scaleY = sourceCanvas.height / canvasRect.height;
                   const left = Math.max(frameRect.left, canvasRect.left);
                   const top = Math.max(frameRect.top, canvasRect.top);
                   const right = Math.min(frameRect.right, canvasRect.right);
                   const bottom = Math.min(frameRect.bottom, canvasRect.bottom);
 
                   cropData = {
-                    x: Math.round((left - canvasRect.left) * scalePx),
-                    y: Math.round((top - canvasRect.top) * scalePx),
-                    width: Math.round((right - left) * scalePx),
-                    height: Math.round((bottom - top) * scalePx),
+                    x: Math.round((left - canvasRect.left) * scaleX),
+                    y: Math.round((top - canvasRect.top) * scaleY),
+                    width: Math.round((right - left) * scaleX),
+                    height: Math.round((bottom - top) * scaleY),
                   };
                   console.log('[Copy] Cropping to frame:', cropData);
                 }

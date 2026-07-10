@@ -6,20 +6,6 @@ import { getNoRewardMessage, showRewardAchievement } from './reward-achievement'
 import { ensureCloudSaveDetails } from './project-naming.js';
 
 const CLOUD_UI_STYLES = /* css */ `
-  .cloud-toolbar-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-left: 8px;
-    flex: 0 0 auto;
-    flex-wrap: nowrap;
-  }
-
-  #projectCloudActions .cloud-toolbar-group {
-    margin-left: 0;
-    width: 100%;
-  }
-
   .cloud-save-btn {
     display: inline-flex;
     align-items: center;
@@ -27,11 +13,66 @@ const CLOUD_UI_STYLES = /* css */ `
     flex-shrink: 0;
   }
 
-  .cloud-projects-btn {
-    display: inline-flex;
+  .cloud-save-menu {
+    position: relative;
+    flex: 0 0 auto;
+  }
+
+  .cloud-save-menu-panel {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 7px);
+    min-width: 142px;
+    padding: 5px;
+    border: 1px solid rgba(15, 23, 42, 0.14);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(-50%, 4px);
+    transition: opacity 120ms ease, transform 120ms ease, visibility 120ms ease;
+    z-index: 5200;
+  }
+
+  .cloud-save-menu-panel::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    height: 8px;
+  }
+
+  .cloud-save-menu:hover .cloud-save-menu-panel,
+  .cloud-save-menu:focus-within .cloud-save-menu-panel {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translate(-50%, 0);
+  }
+
+  .cloud-save-menu-panel button {
+    width: 100%;
+    display: flex;
     align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
+    gap: 7px;
+    padding: 7px 9px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #0f172a;
+    font-size: 12px;
+    font-weight: 650;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .cloud-save-menu-panel button:hover,
+  .cloud-save-menu-panel button:focus-visible {
+    background: #f1f5f9;
+    outline: none;
   }
 
   /* Cloud modal */
@@ -218,17 +259,42 @@ const CLOUD_UI_STYLES = /* css */ `
 `;
 
 let cloudModalOverlay: HTMLElement | null = null;
-let cloudToolbarGroup: HTMLElement | null = null;
 let unsubscribe: (() => void) | null = null;
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 let cloudProjectsCache: Array<{ id: string; name: string; updated_at: string }> = [];
+let cloudMenuEmptyProjectMode = false;
 
 const cloudSaveButtonMarkup = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span class="label-long">Cloud Save</span>`;
+const myProjectsButtonMarkup = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg><span class="label-long">My Projects</span>`;
+
+function hasLoadedProjectImages(): boolean {
+  const win = window as Window & {
+    originalImages?: Record<string, unknown>;
+    imageGalleryData?: Array<unknown>;
+    app?: { projectManager?: { views?: Record<string, { image?: unknown; imageUrl?: unknown }> } };
+    projectManager?: { views?: Record<string, { image?: unknown; imageUrl?: unknown }> };
+  };
+
+  const originalImages = win.originalImages || {};
+  if (Object.values(originalImages).some(Boolean)) return true;
+
+  const galleryData = Array.isArray(win.imageGalleryData) ? win.imageGalleryData : [];
+  if (
+    galleryData.some(item => {
+      const entry = item as { src?: unknown; image?: unknown; original?: { src?: unknown } };
+      return Boolean(entry?.src || entry?.image || entry?.original?.src);
+    })
+  ) {
+    return true;
+  }
+
+  const views: Record<string, { image?: unknown; imageUrl?: unknown }> =
+    win.app?.projectManager?.views || win.projectManager?.views || {};
+  return Object.values(views).some(view => Boolean(view?.image || view?.imageUrl));
+}
 
 function getCloudSaveButtons(): HTMLButtonElement[] {
-  return Array.from(
-    document.querySelectorAll<HTMLButtonElement>('[data-cloud-save-trigger], #authCloudSaveBtn')
-  );
+  return Array.from(document.querySelectorAll<HTMLButtonElement>('[data-cloud-save-trigger]'));
 }
 
 function bindCloudSaveTriggers(): void {
@@ -236,9 +302,39 @@ function bindCloudSaveTriggers(): void {
     if (button.dataset.cloudSaveBound === 'true') return;
     button.dataset.cloudSaveBound = 'true';
     button.addEventListener('click', () => {
+      if (cloudMenuEmptyProjectMode) {
+        openCloudModal();
+        return;
+      }
       void handleCloudSave();
     });
   });
+}
+
+function syncCloudPrimaryAction(): void {
+  const emptyProjectMode = !hasLoadedProjectImages();
+  cloudMenuEmptyProjectMode = emptyProjectMode;
+
+  const primaryButton = document.getElementById('canvasCloudSaveBtn') as HTMLButtonElement | null;
+  const secondaryButton = document.getElementById(
+    'canvasMyProjectsBtn'
+  ) as HTMLButtonElement | null;
+
+  if (primaryButton) {
+    primaryButton.innerHTML = emptyProjectMode ? myProjectsButtonMarkup : cloudSaveButtonMarkup;
+    primaryButton.title = emptyProjectMode ? 'Open my projects' : 'Save to cloud';
+    primaryButton.setAttribute('aria-label', emptyProjectMode ? 'My Projects' : 'Cloud save');
+  }
+
+  if (secondaryButton) {
+    secondaryButton.innerHTML = emptyProjectMode ? cloudSaveButtonMarkup : myProjectsButtonMarkup;
+    secondaryButton.title = emptyProjectMode ? 'Save to cloud' : 'My Projects';
+    secondaryButton.setAttribute('aria-label', emptyProjectMode ? 'Cloud save' : 'My Projects');
+  }
+}
+
+function scheduleCloudPrimaryActionSync(): void {
+  requestAnimationFrame(() => syncCloudPrimaryAction());
 }
 
 function refreshToolbarLayout(): void {
@@ -251,15 +347,8 @@ function refreshToolbarLayout(): void {
 }
 
 function showCloudFeatures(show: boolean): void {
-  getCloudSaveButtons().forEach(btn => {
-    btn.style.display = show ? 'inline-flex' : 'none';
-  });
-  if (cloudToolbarGroup) {
-    cloudToolbarGroup.querySelectorAll<HTMLElement>('.cloud-projects-btn').forEach(btn => {
-      btn.style.display = show ? 'inline-flex' : 'none';
-    });
-    cloudToolbarGroup.style.display = show ? 'flex' : 'none';
-  }
+  const cloudMenu = document.getElementById('canvasCloudMenu');
+  if (cloudMenu) cloudMenu.style.display = show ? 'block' : 'none';
   refreshToolbarLayout();
 }
 
@@ -684,41 +773,10 @@ function createCloudModal(): HTMLElement {
   return overlay;
 }
 
-function createCloudToolbarGroup(): HTMLElement {
-  const group = document.createElement('div');
-  group.className = 'cloud-toolbar-group';
-  group.id = 'cloudToolbarGroup';
-
-  const cloudSaveBtn = document.createElement('button');
-  cloudSaveBtn.type = 'button';
-  cloudSaveBtn.className = 'tbtn cloud-save-btn';
-  cloudSaveBtn.id = 'authCloudSaveBtn';
-  cloudSaveBtn.dataset.cloudSaveTrigger = '';
-  cloudSaveBtn.title = 'Save to cloud';
-  cloudSaveBtn.setAttribute('aria-label', 'Cloud save');
-  cloudSaveBtn.innerHTML = cloudSaveButtonMarkup;
-  cloudSaveBtn.style.display = 'none';
-
-  const myProjectsBtn = document.createElement('button');
-  myProjectsBtn.type = 'button';
-  myProjectsBtn.className = 'tbtn cloud-projects-btn';
-  myProjectsBtn.id = 'authMyProjectsBtn';
-  myProjectsBtn.title = 'My Projects';
-  myProjectsBtn.setAttribute('aria-label', 'My Projects');
-  myProjectsBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg><span class="label-long">My Projects</span>`;
-  myProjectsBtn.addEventListener('click', openCloudModal);
-  myProjectsBtn.style.display = 'none';
-
-  group.appendChild(cloudSaveBtn);
-  group.appendChild(myProjectsBtn);
-  bindCloudSaveTriggers();
-
-  return group;
-}
-
 function updateCloudUI(user: AuthUser | null): void {
   const hasUser = user !== null;
   showCloudFeatures(hasUser);
+  syncCloudPrimaryAction();
 }
 
 export function initCloudUI(): void {
@@ -730,22 +788,13 @@ export function initCloudUI(): void {
   style.textContent = CLOUD_UI_STYLES;
   document.head.appendChild(style);
 
-  const projectCloudActions = document.getElementById('projectCloudActions');
-  const tbRight = document.getElementById('tbRight');
-  const authToolbarGroup = document.getElementById('authToolbarGroup');
-  if (projectCloudActions) {
-    cloudToolbarGroup = createCloudToolbarGroup();
-    cloudToolbarGroup.style.display = 'none';
-    projectCloudActions.appendChild(cloudToolbarGroup);
-  } else if (tbRight) {
-    cloudToolbarGroup = createCloudToolbarGroup();
-    cloudToolbarGroup.style.display = 'none';
-    if (authToolbarGroup?.nextSibling) {
-      tbRight.insertBefore(cloudToolbarGroup, authToolbarGroup.nextSibling);
-    } else {
-      tbRight.appendChild(cloudToolbarGroup);
+  document.getElementById('canvasMyProjectsBtn')?.addEventListener('click', () => {
+    if (cloudMenuEmptyProjectMode) {
+      void handleCloudSave();
+      return;
     }
-  }
+    openCloudModal();
+  });
 
   cloudModalOverlay = createCloudModal();
   document.body.appendChild(cloudModalOverlay);
@@ -754,16 +803,30 @@ export function initCloudUI(): void {
 
   const currentUser = authService.getCurrentUser();
   updateCloudUI(currentUser);
+
+  (window as Window & { syncCloudPrimaryAction?: () => void }).syncCloudPrimaryAction =
+    syncCloudPrimaryAction;
+  [
+    'openpaint:view-switched',
+    'openpaint:frame-tabs-updated',
+    'openpaint:image-gallery-changed',
+  ].forEach(eventName => window.addEventListener(eventName, scheduleCloudPrimaryActionSync));
+  const imageList = document.getElementById('imageList');
+  if (imageList) {
+    new MutationObserver(scheduleCloudPrimaryActionSync).observe(imageList, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['data-label', 'src', 'style'],
+    });
+  }
+  scheduleCloudPrimaryActionSync();
 }
 
 export function destroyCloudUI(): void {
   if (unsubscribe) {
     unsubscribe();
     unsubscribe = null;
-  }
-  if (cloudToolbarGroup) {
-    cloudToolbarGroup.remove();
-    cloudToolbarGroup = null;
   }
   if (cloudModalOverlay) {
     cloudModalOverlay.remove();

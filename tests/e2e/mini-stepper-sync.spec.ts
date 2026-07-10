@@ -675,4 +675,114 @@ test.describe('Complex multi-frame drift guards', () => {
     await page.waitForTimeout(400);
     expect((await getStepperState(page)).activePillLabel).toBe('side');
   });
+
+  test('frame navigation expands into image, lettered frames, and add control', async ({
+    appPage: page,
+  }) => {
+    const labels = await loadMultiImageProject(page);
+    const activeLabel = labels[0];
+
+    await expect(page.locator('#captureTabBar')).toHaveCount(0);
+    await expect(page.locator('#frameToggleBtn')).toHaveCount(0);
+    await expect(page.locator('#mini-stepper [data-frame-toggle]')).toHaveCount(0);
+    await page.evaluate(() => {
+      const strokePanel = document.getElementById('strokePanel');
+      const elementsBody = document.getElementById('elementsBody');
+      strokePanel?.classList.remove('minimized', 'collapsed');
+      strokePanel?.setAttribute('aria-expanded', 'true');
+      elementsBody?.classList.remove('hidden');
+      if (elementsBody) elementsBody.style.display = 'flex';
+    });
+    await expect(page.locator('#elementsFrameToggleBtn[data-frame-toggle]')).toHaveText('Frames');
+
+    await page.locator('#elementsFrameToggleBtn').click();
+
+    const imageButton = page.locator(
+      `#mini-stepper button[data-target="${activeLabel}"][data-step-kind="image"]`
+    );
+    const firstFrame = page.locator(
+      `#mini-stepper button[data-target="${activeLabel}"][data-step-kind="frame"]`
+    );
+    await expect(imageButton).toHaveText('1');
+    await expect(firstFrame).toHaveCount(0);
+    await expect(page.locator('#mini-stepper [data-frame-add]')).toHaveText('1+');
+    const initialImageTabId = await imageButton.getAttribute('data-tab-id');
+    await expect
+      .poll(() =>
+        page.evaluate(label => window.captureTabsByLabel?.[label]?.activeTabId || null, activeLabel)
+      )
+      .toBe(initialImageTabId);
+    await expect
+      .poll(() =>
+        page.evaluate(label => {
+          const state = window.captureTabsByLabel?.[label];
+          const activeTab = state?.tabs?.find((tab: any) => tab.id === state.activeTabId);
+          return activeTab?.type || null;
+        }, activeLabel)
+      )
+      .toBe('normal');
+
+    await page.locator('#mini-stepper [data-frame-add]').click();
+    await expect
+      .poll(() =>
+        page
+          .locator(`#mini-stepper button[data-target="${activeLabel}"][data-step-kind="frame"]`)
+          .count()
+      )
+      .toBe(2);
+
+    await expect(firstFrame.nth(0)).toHaveText('1a');
+    const secondFrame = firstFrame.nth(1);
+    await expect(secondFrame).toHaveText('1b');
+    const secondFrameId = await secondFrame.getAttribute('data-tab-id');
+    await secondFrame.click();
+    await expect(secondFrame).toHaveAttribute('aria-current', 'true');
+    await expect
+      .poll(() =>
+        page.evaluate(label => window.captureTabsByLabel?.[label]?.activeTabId || null, activeLabel)
+      )
+      .toBe(secondFrameId);
+
+    await imageButton.click();
+    await expect(imageButton).toHaveAttribute('aria-current', 'true');
+    await expect(page.locator('.capture-tab-frame')).toHaveCount(2);
+    await expect(page.locator('.capture-tab-frame-label')).toHaveCount(0);
+    await expect
+      .poll(() =>
+        page.evaluate(label => window.captureTabsByLabel?.[label]?.activeTabId || null, activeLabel)
+      )
+      .toBe('master');
+
+    await page.locator('#elementsFrameToggleBtn').click();
+    await expect(imageButton).toHaveCount(0);
+    await expect(firstFrame).toHaveCount(2);
+    await expect(firstFrame.nth(0)).toHaveText('1a');
+    await expect(firstFrame.nth(1)).toHaveText('1b');
+    await expect
+      .poll(() =>
+        page.evaluate(label => {
+          const state = window.captureTabsByLabel?.[label];
+          const activeTab = state?.tabs?.find((tab: any) => tab.id === state.activeTabId);
+          return activeTab?.type || null;
+        }, activeLabel)
+      )
+      .toBe('normal');
+  });
+
+  test('cloud actions have one save trigger and one projects menu entry', async ({
+    appPage: page,
+  }) => {
+    await expect(page.locator('[data-cloud-save-trigger]')).toHaveCount(1);
+    await expect(page.locator('#canvasCloudSaveBtn')).toHaveCount(1);
+    await expect(page.locator('#canvasMyProjectsBtn')).toHaveCount(1);
+    await expect(
+      page.locator('#authCloudSaveBtn, #authMyProjectsBtn, #cloudToolbarGroup')
+    ).toHaveCount(0);
+    await expect(page.locator('#canvasCloudSaveBtn')).toContainText('My Projects');
+    await expect(page.locator('#canvasMyProjectsBtn')).toContainText('Cloud Save');
+
+    await loadMultiImageProject(page);
+    await expect(page.locator('#canvasCloudSaveBtn')).toContainText('Cloud Save');
+    await expect(page.locator('#canvasMyProjectsBtn')).toContainText('My Projects');
+  });
 });

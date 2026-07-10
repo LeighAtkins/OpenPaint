@@ -96,7 +96,9 @@ test.describe('Rotated frame stability', () => {
 
     await page.evaluate(() => window.app?.projectManager?.rotateCurrentView?.(90));
     await page.waitForTimeout(150);
-    await page.evaluate(() => document.getElementById('captureTabAdd')?.click());
+    await page.evaluate(() =>
+      window.createCaptureTabForLabel?.(window.app?.projectManager?.currentViewId || 'front')
+    );
     await page.waitForTimeout(150);
 
     const tabs = await normalTabIds(page, viewId);

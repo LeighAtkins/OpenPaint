@@ -36,6 +36,25 @@ export async function renderPdfWithPuppeteer({ html, options }) {
 
       await page.setContent(html, { waitUntil: 'networkidle0' });
       await page.emulateMediaType('print');
+      await page.evaluate(async () => {
+        if (document.fonts?.ready) {
+          await document.fonts.ready;
+        }
+        await Promise.all(
+          Array.from(document.images).map(async image => {
+            if (!image.complete) {
+              await new Promise(resolve => {
+                image.addEventListener('load', resolve, { once: true });
+                image.addEventListener('error', resolve, { once: true });
+              });
+            }
+            if (typeof image.decode === 'function') {
+              await image.decode().catch(() => {});
+            }
+          })
+        );
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      });
 
       const normalizedSize = String(options.pageSize || 'letter').toLowerCase();
       const pagePoints = PAGE_POINTS[normalizedSize] || PAGE_POINTS.letter;
@@ -91,6 +110,7 @@ export async function renderPdfWithPuppeteer({ html, options }) {
             const paddingRight = Number.parseFloat(styles.paddingRight || '0') * pxToPointX;
             const paddingTop = Number.parseFloat(styles.paddingTop || '0') * pxToPointY;
             const paddingBottom = Number.parseFloat(styles.paddingBottom || '0') * pxToPointY;
+            const fontSize = Number.parseFloat(styles.fontSize || '0') * pxToPointY;
 
             return {
               pageIndex: Math.max(0, Number(pageInfo?.index || 0)),
@@ -98,6 +118,10 @@ export async function renderPdfWithPuppeteer({ html, options }) {
               fieldName: el.getAttribute('data-field-name') || `field_${idx + 1}`,
               fieldOption: el.getAttribute('data-field-option') || '',
               value: el.getAttribute('data-field-value') || '',
+              maxLength: Number.parseInt(el.getAttribute('data-field-max-length') || '', 10) || 0,
+              textAlign: el.getAttribute('data-field-align') || '',
+              multiline: el.getAttribute('data-field-multiline') === 'true',
+              borderWidth: Number.parseFloat(el.getAttribute('data-field-border-width') || '') || 0,
               x,
               y,
               width,
@@ -106,6 +130,7 @@ export async function renderPdfWithPuppeteer({ html, options }) {
               paddingRight,
               paddingTop,
               paddingBottom,
+              fontSize,
             };
           });
         },

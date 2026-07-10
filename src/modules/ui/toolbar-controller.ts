@@ -896,8 +896,15 @@ export function initToolbarController() {
 
       const getAvailableLineLabels = () => {
         const scopedViewId = getCurrentScopedViewId();
-        const strokes = window.app?.metadataManager?.vectorStrokesByImage?.[scopedViewId] || {};
-        return Object.keys(strokes).sort((left, right) =>
+        const baseViewId = String(scopedViewId || '').includes('::tab:')
+          ? String(scopedViewId).split('::tab:')[0]
+          : scopedViewId;
+        const strokesByImage = window.app?.metadataManager?.vectorStrokesByImage || {};
+        const labels = new Set([
+          ...Object.keys(strokesByImage[baseViewId] || {}),
+          ...Object.keys(strokesByImage[scopedViewId] || {}),
+        ]);
+        return Array.from(labels).sort((left, right) =>
           left.localeCompare(right, undefined, {
             numeric: true,
             sensitivity: 'base',
@@ -1016,7 +1023,7 @@ export function initToolbarController() {
             : targetMeta.help;
         }
 
-        tagColorEditorBtn.textContent = manager?.hasCustomTagStyles?.() ? 'Styles*' : 'Styles';
+        tagColorEditorBtn.textContent = manager?.hasCustomTagStyles?.() ? 'Palette*' : 'Palette';
         syncLineList();
       };
 
@@ -1715,7 +1722,6 @@ export function initToolbarController() {
     const captureFrame = document.getElementById('captureFrame');
     const tabBar = document.getElementById('captureTabBar');
     const tabList = document.getElementById('captureTabList');
-    const tabAddButton = document.getElementById('captureTabAdd');
     let tabGuideButton = document.getElementById('captureTabGuideStatus');
     const masterOverlay = document.getElementById('captureTabMasterOverlay');
     const masterTargetBadge = document.getElementById('captureMasterTargetBadge');
@@ -1757,7 +1763,15 @@ export function initToolbarController() {
     }
     function isLabelInViewScope(objectLabel, viewLabel) {
       if (!objectLabel || !viewLabel) return false;
-      return objectLabel === viewLabel || objectLabel.startsWith(`${viewLabel}::tab:`);
+      return (
+        objectLabel === viewLabel ||
+        objectLabel.startsWith(`${viewLabel}::tab:`) ||
+        // A base-label object (e.g. "front") belongs to any frame-scoped view
+        // derived from it (e.g. "front::tab:..."). Gallery-imported strokes are
+        // stored under the base label; without this match, switching images
+        // hides them because the active view label is scoped.
+        viewLabel.startsWith(`${objectLabel}::tab:`)
+      );
     }
     function getMasterDrawTargetTabId(label, state) {
       const resolvedState = state || ensureCaptureTabsForLabel(label);
@@ -1795,11 +1809,7 @@ export function initToolbarController() {
           window.toggleGuideSplitEnabled();
         }
       });
-      if (tabAddButton?.parentElement === tabBar) {
-        tabBar.insertBefore(button, tabAddButton);
-      } else {
-        tabBar.appendChild(button);
-      }
+      tabBar.appendChild(button);
       tabGuideButton = button;
       return button;
     }
@@ -1828,7 +1838,11 @@ export function initToolbarController() {
       if (isActive) button.classList.add('active');
     }
     function syncCanvasVisibilityForActiveTab(label) {
-      const resolved = label || getActiveLabel();
+      // Callers may pass either a base view id or the active frame-scoped id.
+      // Visibility gating is view-relative: comparing a base-owned gallery
+      // stroke against `view::tab:id` classifies every imported object as
+      // out-of-view and hides the whole guide after any visibility edit.
+      const resolved = toBaseLabel(label || getActiveLabel());
       const state = ensureCaptureTabsForLabel(resolved);
       const activeTab = getActiveTab(resolved);
       const canvas = window.app?.canvasManager?.fabricCanvas;
@@ -1837,10 +1851,15 @@ export function initToolbarController() {
       const getObjectScopeLabel = obj => {
         const connectedStroke = obj?.connectedStroke;
         return (
-          obj?.scopedLabel ||
-          obj?.connectedTag?.scopedLabel ||
-          connectedStroke?.scopedLabel ||
+          // Tags are rendered in the active frame, but their visibility belongs
+          // to the stroke they annotate. Gallery strokes live in the base
+          // bucket, so preferring the tag's frame scope makes hidden labels
+          // appear visible again on the next canvas sync.
           connectedStroke?.strokeMetadata?.imageLabel ||
+          connectedStroke?.scopedLabel ||
+          obj?.connectedTag?.connectedStroke?.strokeMetadata?.imageLabel ||
+          obj?.connectedTag?.scopedLabel ||
+          obj?.scopedLabel ||
           obj?.strokeMetadata?.imageLabel ||
           obj?.imageLabel ||
           null
@@ -2845,6 +2864,8 @@ export function initToolbarController() {
           (window.projectManager || window.app?.projectManager)?.views?.[toBaseLabel(resolved)]
             ?.backgroundWorldRect
         );
+        const authoritativeBackgroundWorldRect =
+          savedBackgroundWorldRect || normalizeWorldRect(fallbackWorldRect);
         const rawStoredWorldRect = normalizeWorldRect(stored?.worldRect);
         // Some earlier saves calculated frame world coordinates through a CSS-
         // scaled canvas, producing a crop larger than the saved image itself.
@@ -2852,12 +2873,12 @@ export function initToolbarController() {
         // exceed the authoritative saved background bounds on either axis.
         const storedWorldRectExceedsImage = Boolean(
           rawStoredWorldRect &&
-            savedBackgroundWorldRect &&
-            (rawStoredWorldRect.width > savedBackgroundWorldRect.width * 1.05 ||
-              rawStoredWorldRect.height > savedBackgroundWorldRect.height * 1.05)
+            authoritativeBackgroundWorldRect &&
+            (rawStoredWorldRect.width > authoritativeBackgroundWorldRect.width * 1.05 ||
+              rawStoredWorldRect.height > authoritativeBackgroundWorldRect.height * 1.05)
         );
         const storedWorldRect = storedWorldRectExceedsImage
-          ? savedBackgroundWorldRect
+          ? authoritativeBackgroundWorldRect
           : selectUsableWorldRect(rawStoredWorldRect, fallbackWorldRect);
         const targetWorldRect = storedWorldRect || fallbackWorldRect;
         const baseViewport = normalizeViewportRecord(activeTab.viewport || buildViewportRecord());
@@ -2905,6 +2926,20 @@ export function initToolbarController() {
             Math.abs(liveFrameRect.left - targetRect.left) > 2 ||
             Math.abs(liveFrameRect.top - targetRect.top) > 2;
           const frameGeometryDiffers = frameSizeDiffers || framePositionDiffers;
+          const viewportWorldRect = normalizeWorldRect(
+            computeWorldRectFromViewportRect(targetRect, baseViewport)
+          );
+          const worldRectTolerance = targetWorldRect
+            ? Math.max(0.5, Math.min(targetWorldRect.width, targetWorldRect.height) * 0.002)
+            : 0.5;
+          const viewportCropDiffers = Boolean(
+            targetWorldRect &&
+              (!viewportWorldRect ||
+                Math.abs(viewportWorldRect.left - targetWorldRect.left) > worldRectTolerance ||
+                Math.abs(viewportWorldRect.top - targetWorldRect.top) > worldRectTolerance ||
+                Math.abs(viewportWorldRect.width - targetWorldRect.width) > worldRectTolerance ||
+                Math.abs(viewportWorldRect.height - targetWorldRect.height) > worldRectTolerance)
+          );
 
           // If we already have a saved viewport (user zoomed/panned before),
           // use it directly instead of re-fitting to the world rect.
@@ -2916,7 +2951,8 @@ export function initToolbarController() {
             Number.isFinite(baseViewport.zoom) &&
             baseViewport.zoom > 0 &&
             !dimensionsDiffer &&
-            !frameGeometryDiffers;
+            !frameGeometryDiffers &&
+            !viewportCropDiffers;
 
           let nextViewport;
           if (hasSavedViewport) {
@@ -2927,11 +2963,14 @@ export function initToolbarController() {
             // the same transaction so the frame cannot move independently of
             // the image and annotations.
             nextViewport = fitViewportToWorldRect(targetWorldRect, baseViewport, targetRect);
-          } else if (dimensionsDiffer) {
+          } else if (dimensionsDiffer || viewportCropDiffers) {
             // A changed canvas/window size needs a changed zoom, not merely a
-            // recentered copy of the old numeric viewport. The world rect is
-            // the authoritative crop (full image or user-zoomed subsection),
-            // so fit that exact crop into the newly sized frame in one step.
+            // recentered copy of the old numeric viewport. The same applies
+            // when monitor metadata was already rewritten before the image was
+            // hydrated: validate the viewport against the authored world crop
+            // instead of trusting those dimensions alone. The world rect is the
+            // authoritative crop (full image or user-zoomed subsection), so fit
+            // that exact crop into the newly sized frame in one step.
             nextViewport = fitViewportToWorldRect(targetWorldRect, baseViewport, targetRect);
           } else {
             nextViewport = fitViewportToWorldRect(
@@ -2946,9 +2985,20 @@ export function initToolbarController() {
             );
           }
           activeTab.viewport = normalizeViewportRecord(nextViewport);
+          const existingCaptureFrame = stored || activeTab.captureFrame || {};
+          const nextCaptureFrame = buildCaptureFrameRecord(targetRect);
           activeTab.captureFrame = {
-            ...(stored || {}),
-            ...buildCaptureFrameRecord(targetRect),
+            ...existingCaptureFrame,
+            ...nextCaptureFrame,
+            // View restoration is passive layout. Keep the authored base ratio
+            // so revisiting an image cannot promote a constrained frame size
+            // into the next resize baseline and ratchet the frame smaller.
+            baseWidth: existingCaptureFrame.baseWidth || nextCaptureFrame.baseWidth,
+            baseHeight: existingCaptureFrame.baseHeight || nextCaptureFrame.baseHeight,
+            baseWindowWidth:
+              existingCaptureFrame.baseWindowWidth || nextCaptureFrame.baseWindowWidth,
+            baseWindowHeight:
+              existingCaptureFrame.baseWindowHeight || nextCaptureFrame.baseWindowHeight,
             worldRect: targetWorldRect,
           };
 
@@ -2956,8 +3006,13 @@ export function initToolbarController() {
 
           suspendCaptureTabViewportTracking();
           applyViewportRecord(activeTab.viewport);
-          if (dimensionsDiffer || frameGeometryDiffers) {
-            activeTab.viewport = correctViewportToLiveFrameCenter(activeTab.viewport);
+          if (dimensionsDiffer || frameGeometryDiffers || viewportCropDiffers) {
+            activeTab.viewport = targetWorldRect
+              ? correctViewportToLiveFrameAnchor(activeTab.viewport, {
+                  x: targetWorldRect.left + targetWorldRect.width / 2,
+                  y: targetWorldRect.top + targetWorldRect.height / 2,
+                })
+              : correctViewportToLiveFrameCenter(activeTab.viewport);
           }
           return;
         }
@@ -3321,6 +3376,67 @@ export function initToolbarController() {
         height: Math.round(nextHeight),
       };
     }
+    function initializeCaptureFrameForImageAspect(label, imageWidth, imageHeight) {
+      const resolvedLabel = toBaseLabel(label || getActiveLabel());
+      const width = Number(imageWidth);
+      const height = Number(imageHeight);
+      if (
+        !resolvedLabel ||
+        resolvedLabel !== toBaseLabel(getActiveLabel()) ||
+        !Number.isFinite(width) ||
+        !Number.isFinite(height) ||
+        width <= 0 ||
+        height <= 0
+      ) {
+        return false;
+      }
+
+      const preferredArea = getPreferredCaptureArea();
+      const insetScale = 0.94;
+      const fitScale = Math.min(
+        (preferredArea.width * insetScale) / width,
+        (preferredArea.height * insetScale) / height
+      );
+      const targetWidth = Math.min(
+        preferredArea.width,
+        Math.max(100, Math.round(width * fitScale))
+      );
+      const targetHeight = Math.min(
+        preferredArea.height,
+        Math.max(100, Math.round(height * fitScale))
+      );
+      const centeredRect = {
+        left: Math.round(preferredArea.left + (preferredArea.width - targetWidth) / 2),
+        top: Math.round(preferredArea.top + (preferredArea.height - targetHeight) / 2),
+        width: targetWidth,
+        height: targetHeight,
+      };
+      const writtenRect = writeCaptureFrameFromViewportRect(centeredRect);
+      if (!writtenRect) return false;
+
+      const state = ensureCaptureTabsForLabel(resolvedLabel);
+      const activeTab =
+        state.tabs.find(tab => tab.id === state.activeTabId && tab.type !== 'master') ||
+        state.tabs.find(tab => tab.id === state.lastNonMasterId && tab.type !== 'master') ||
+        state.tabs.find(tab => tab.type !== 'master');
+      if (!activeTab) return false;
+
+      const frameRecord = buildCaptureFrameRecord(writtenRect);
+      activeTab.captureFrame = {
+        ...frameRecord,
+        baseWidth: frameRecord.width,
+        baseHeight: frameRecord.height,
+        baseWindowWidth: frameRecord.windowWidth,
+        baseWindowHeight: frameRecord.windowHeight,
+        worldRect: null,
+      };
+      activeTab.viewport = normalizeViewportRecord(buildViewportRecord());
+      activeTab.viewportTransform = getExactViewportTransform();
+      state.activeTabId = activeTab.id;
+      state.lastNonMasterId = activeTab.id;
+      renderTabBar(resolvedLabel);
+      return true;
+    }
     function buildCenteredRectPreservingSize(width, height) {
       const preferredArea = getPreferredCaptureArea();
       const sourceWidth = Math.max(1, Math.round(Number(width) || 800));
@@ -3371,8 +3487,11 @@ export function initToolbarController() {
       }
     }
     function renderTabBar(label) {
-      if (!tabList) return;
       const state = ensureCaptureTabsForLabel(label);
+      window.dispatchEvent(
+        new CustomEvent('openpaint:frame-tabs-updated', { detail: { viewId: label } })
+      );
+      if (!tabList) return;
       tabList.innerHTML = '';
       state.tabs.forEach(tab => {
         const button = document.createElement('button');
@@ -3557,36 +3676,6 @@ export function initToolbarController() {
             setActiveTab(label, tab.id);
           });
           masterOverlay.appendChild(frame);
-          const selector = document.createElement('button');
-          selector.type = 'button';
-          selector.className = 'capture-tab-frame-label selectable';
-          selector.textContent = tab.name || 'Frame';
-          selector.setAttribute('aria-label', `Select frame ${tab.name || 'Frame'}`);
-          selector.style.position = 'absolute';
-          selector.style.left = `${localRect.left + 8}px`;
-          selector.style.top = `${localRect.top + 8}px`;
-          selector.style.zIndex = '4';
-          selector.addEventListener('click', clickEvent => {
-            clickEvent.preventDefault();
-            clickEvent.stopPropagation();
-            state.lastNonMasterId = tab.id;
-            window.captureMasterDrawTargetByLabel[label] = tab.id;
-            window.currentImageLabel = buildScopedLabel(label, tab.id);
-            syncCanvasVisibilityForActiveTab(label);
-            window.app?.metadataManager?.updateStrokeVisibilityControls?.();
-            renderMasterOverlay(label);
-          });
-          selector.addEventListener('dblclick', dblClickEvent => {
-            dblClickEvent.preventDefault();
-            dblClickEvent.stopPropagation();
-            const nextName = window.prompt('Rename frame', tab.name || 'Frame');
-            if (typeof nextName === 'string' && nextName.trim()) {
-              tab.name = nextName.trim();
-              renderTabBar(label);
-              renderMasterOverlay(label);
-            }
-          });
-          masterOverlay.appendChild(selector);
         });
       renderMasterTargetBadge(label);
     }
@@ -3708,12 +3797,6 @@ export function initToolbarController() {
       return preferred;
     }
 
-    if (tabAddButton) {
-      tabAddButton.addEventListener('click', () => {
-        const label = getActiveLabel();
-        createNewTab(label);
-      });
-    }
     if (tabList) {
       tabList.addEventListener('dblclick', e => {
         const button = e.target.closest('button');
@@ -3871,6 +3954,9 @@ export function initToolbarController() {
     window.applyCaptureFrameForLabel = applyCaptureFrameForLabel;
     window.ensureCaptureTabsForLabel = ensureCaptureTabsForLabel;
     window.setActiveCaptureTab = setActiveTab;
+    window.initializeCaptureFrameForImageAspect = initializeCaptureFrameForImageAspect;
+    window.createCaptureTabForLabel = label => createNewTab(label || getActiveLabel());
+    window.deleteCaptureTabForLabel = (label, tabId) => deleteTab(label, tabId);
     window.renderCaptureTabUI = label => {
       const resolved = toBaseLabel(label || getActiveLabel());
       renderTabBar(resolved);
@@ -4179,6 +4265,12 @@ export function initToolbarController() {
       }, 180);
     };
     window.__openpaintRequestPrimaryResize = requestPrimaryResize;
+    window.__openpaintResetCaptureResizeAnchor = () => {
+      // A first image can arrive while a panel-triggered resize transaction is
+      // already waiting to settle. Replace the empty-canvas viewport anchor so
+      // delayed replay cannot apply its old zoom to the new image/frame.
+      captureFrameResizeAnchor = captureResizeAnchorMetrics();
+    };
 
     // Expose a centering helper for post-switchView re-centering.
     // This is needed when switching to a view that was saved at a different
@@ -4266,9 +4358,16 @@ export function initToolbarController() {
       const writtenRect = writeCaptureFrameFromViewportRect(targetRect, borderColor);
       if (writtenRect) {
         const rec = buildCaptureFrameRecord(writtenRect);
+        const existingCaptureFrame = tab.captureFrame || {};
         tab.captureFrame = {
-          ...(tab.captureFrame || {}),
+          ...existingCaptureFrame,
           ...rec,
+          // Recentring moves the current presentation only. It must not reset
+          // the stable base dimensions used by passive window resizes.
+          baseWidth: existingCaptureFrame.baseWidth || rec.baseWidth,
+          baseHeight: existingCaptureFrame.baseHeight || rec.baseHeight,
+          baseWindowWidth: existingCaptureFrame.baseWindowWidth || rec.baseWindowWidth,
+          baseWindowHeight: existingCaptureFrame.baseWindowHeight || rec.baseWindowHeight,
           worldRect: savedWorldRect || undefined,
         };
       }
@@ -4583,48 +4682,21 @@ export function initToolbarController() {
       const refreshSelectAllButtonState = () => {
         const checkboxes = getStrokeVisibilityCheckboxes();
         const allSelected = checkboxes.length > 0 && checkboxes.every(checkbox => checkbox.checked);
-        selectAllStrokesBtn.textContent = allSelected ? 'Deselect All' : 'Select All';
-        selectAllStrokesBtn.title = allSelected ? 'Deselect all elements' : 'Select all elements';
+        selectAllStrokesBtn.textContent = allSelected ? 'Hide all' : 'Show all';
+        selectAllStrokesBtn.title = allSelected ? 'Hide all measurements' : 'Show all measurements';
       };
 
       selectAllStrokesBtn.addEventListener('click', () => {
-        const metadataManager = window.app?.metadataManager;
-        const currentViewId = window.app?.projectManager?.currentViewId || 'front';
-        const scopedLabel = metadataManager?.resolveActiveImageLabel
-          ? metadataManager.resolveActiveImageLabel(currentViewId)
-          : metadataManager?.normalizeImageLabel
-            ? metadataManager.normalizeImageLabel(currentViewId)
-            : currentViewId;
-        const strokes = metadataManager?.vectorStrokesByImage?.[scopedLabel] || {};
-        const strokeLabels = Object.keys(strokes || {});
-
-        if (metadataManager && strokeLabels.length > 0) {
-          const allSelected = strokeLabels.every(
-            strokeLabel =>
-              metadataManager.strokeVisibilityByImage?.[scopedLabel]?.[strokeLabel] !== false
-          );
-          const nextState = !allSelected;
-
-          strokeLabels.forEach(strokeLabel => {
-            metadataManager.setStrokeVisibility(scopedLabel, strokeLabel, nextState);
-            if (window.app?.tagManager?.updateTagVisibility) {
-              window.app.tagManager.updateTagVisibility(strokeLabel, scopedLabel, nextState);
-            }
-          });
-
-          metadataManager.updateStrokeVisibilityControls?.();
-          window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
-        } else {
-          const checkboxes = getStrokeVisibilityCheckboxes();
-          const allSelected =
-            checkboxes.length > 0 && checkboxes.every(checkbox => checkbox.checked);
-          const nextState = !allSelected;
-          checkboxes.forEach(checkbox => {
-            if (checkbox.checked !== nextState) {
-              checkbox.click();
-            }
-          });
-        }
+        // The rendered rows are the canonical merged list for the active image:
+        // imported measurements may live in the base bucket while newly drawn
+        // measurements live in the active frame bucket. Let each row's own
+        // handler update its correct owner instead of bulk-writing one scope.
+        const checkboxes = getStrokeVisibilityCheckboxes();
+        const allSelected = checkboxes.length > 0 && checkboxes.every(checkbox => checkbox.checked);
+        const nextState = !allSelected;
+        checkboxes.forEach(checkbox => {
+          if (checkbox.checked !== nextState) checkbox.click();
+        });
 
         refreshSelectAllButtonState();
       });
