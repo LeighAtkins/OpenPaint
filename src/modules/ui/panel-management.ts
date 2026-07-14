@@ -512,7 +512,7 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
 
       if (isCollapsed) {
         // Expand
-        panel.classList.remove('collapsed');
+        panel.classList.remove('collapsed', 'minimized');
         if (icon) icon.style.transform = 'rotate(0deg)';
         panel.setAttribute('aria-expanded', 'true');
 

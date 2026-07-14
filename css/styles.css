@@ -1757,11 +1757,16 @@ body:has(#imagePanel:has(#imagePanelContent.hidden)) #mini-stepper {
   gap: 4px;
 }
 
+.elements-header-actions {
+  flex-direction: column;
+  justify-content: center;
+}
+
 .elements-icon-button,
 .elements-icon-toggle {
   display: inline-flex;
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   align-items: center;
   justify-content: center;
   border: 1px solid transparent;
@@ -1780,8 +1785,8 @@ body:has(#imagePanel:has(#imagePanelContent.hidden)) #mini-stepper {
 
 .elements-icon-button svg,
 .elements-icon-toggle svg {
-  width: 17px;
-  height: 17px;
+  width: 15px;
+  height: 15px;
   stroke-width: 1.8;
 }
 
@@ -2150,7 +2155,7 @@ body:has(#imagePanel:has(#imagePanelContent.hidden)) #mini-stepper {
 
 #strokesList .stroke-label-container {
   display: grid !important;
-  grid-template-columns: auto 18px minmax(46px, 1fr);
+  grid-template-columns: auto 18px minmax(0, 1fr);
   min-width: 0;
   align-items: center !important;
   gap: 4px !important;

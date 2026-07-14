@@ -30,6 +30,19 @@ export function initImageGalleryModule() {
   let multiviewMutationObserver = null;
   let multiviewLayoutRaf = null;
 
+  function syncImagesVisibleSummary() {
+    const summary = document.getElementById('imagesVisibleSummary');
+    if (!summary) return;
+    const renderedCount = document.querySelectorAll('#imageList .image-container').length;
+    const projectViews = window.app?.projectManager?.views || window.projectManager?.views || {};
+    const projectImageCount = Object.values(projectViews).filter(view =>
+      Boolean(view?.image)
+    ).length;
+    summary.textContent = String(
+      renderedCount || imageGalleryData.length || projectImageCount || 0
+    );
+  }
+
   function cloneTransform(transform) {
     if (!Array.isArray(transform) || transform.length < 6) return null;
     const next = transform.slice(0, 6).map(Number);
@@ -1905,14 +1918,21 @@ export function initImageGalleryModule() {
 
     container.onclick = () => {
       if (window.__imageListReorderInProgress) return;
+      const suppressUntil = window.__beginExplicitImageNavigation?.(800) || Date.now() + 800;
+      window.__cancelPendingScrollSelect?.();
+      window.__suppressScrollSelectUntil = Math.max(
+        Number(window.__suppressScrollSelectUntil) || 0,
+        suppressUntil
+      );
+      window.__imageListProgrammaticScrollUntil = Math.max(
+        Number(window.__imageListProgrammaticScrollUntil) || 0,
+        suppressUntil
+      );
       if (window.projectManager && typeof window.projectManager.switchView === 'function') {
         window.projectManager.switchView(label);
       }
       container.setAttribute('aria-selected', 'true');
       container.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-      if (!window.__scrollSelectDrivenSwitch) {
-        window.__imageListProgrammaticScrollUntil = Date.now() + 400;
-      }
     };
     container.addEventListener('dragstart', event => {
       window.__imageListReorderInProgress = true;
@@ -2208,6 +2228,14 @@ export function initImageGalleryModule() {
   installImageGalleryGlobals();
   installCompatAddImageToSidebar();
   installDebugHelpers();
+  const imageListForSummary = document.getElementById('imageList');
+  if (imageListForSummary) {
+    new MutationObserver(syncImagesVisibleSummary).observe(imageListForSummary, {
+      childList: true,
+    });
+  }
+  syncImagesVisibleSummary();
+  window.addEventListener('openpaint:image-collection-change', syncImagesVisibleSummary);
   setTimeout(() => {
     syncLegacyImagesToGallery();
     const imageList = document.getElementById('imageList');

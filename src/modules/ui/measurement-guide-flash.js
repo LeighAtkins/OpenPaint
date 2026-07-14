@@ -5,6 +5,7 @@ import { PathUtils } from '../utils/PathUtils.js';
 import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
 import { resolveScopedImageLabel } from './scoped-image-label.js';
 import { imageRegistry } from '../ImageRegistry.js';
+import { getNextTagValue } from './next-tag-control.js';
 
 const HOTKEY = 'Backslash';
 const VIEWS = ['front', 'back', 'side'];
@@ -1497,6 +1498,13 @@ function ensureStyles() {
       max-height: 200px;
       opacity: 1;
     }
+    .guide-gallery-header .guide-gallery-link-grid.bind-mode,
+    .guide-gallery-header.compact .guide-gallery-link-grid.bind-mode,
+    .guide-gallery-header.compact:hover .guide-gallery-link-grid.bind-mode {
+      max-height: none;
+      opacity: 1;
+      overflow: visible;
+    }
     .guide-gallery-toolbar {
       margin-top: 12px;
       display: flex;
@@ -1634,6 +1642,36 @@ function ensureStyles() {
       display: grid;
       gap: 8px;
       justify-items: center;
+    }
+    .guide-gallery-bind-preview-actions [data-link-action="bind-preview"] {
+      min-width: 92px;
+      min-height: 38px;
+      border-color: #0f172a;
+      background: #0f172a;
+      color: #fff;
+      font-size: 12px;
+    }
+    .guide-gallery-bind-preview-actions [data-link-action="bind-preview"]:disabled {
+      border-color: #cbd5e1;
+      background: #e2e8f0;
+      color: #64748b;
+      cursor: not-allowed;
+    }
+    .guide-gallery-bind-view-select {
+      flex: 1;
+      min-height: 36px;
+      padding: 6px 9px;
+      border: 2px solid #94a3b8;
+      border-radius: 8px;
+      background: #fff;
+      color: #0f172a;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .guide-gallery-bind-view-select:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
     }
     .guide-gallery-bind-preview-strip {
       display: grid;
@@ -2750,7 +2788,13 @@ function extractRoleTokensFromSvg(svgText) {
   const doc = parser.parseFromString(svgText, 'image/svg+xml');
   const byCanonical = new Map();
 
+  // Only text inside a recognized measurement/value/tag group is a role.
+  // Model titles and furniture annotations are ordinary SVG text and used to
+  // leak into the mini-guide sequence.
   doc.querySelectorAll('text').forEach(node => {
+    const owner = node.closest('g[id]');
+    const ownerInfo = owner ? getGroupRoleInfo(owner) : null;
+    if (!ownerInfo || !['m', 'b', 'c'].includes(ownerInfo.prefix)) return;
     const token = normalizeRoleToken(node.textContent || '');
     if (!token) return;
     const canonical = canonicalRoleToken(token);
@@ -2773,7 +2817,7 @@ function extractRoleTokensFromSvg(svgText) {
   return Array.from(byCanonical.values()).sort((a, b) => a.localeCompare(b));
 }
 
-async function fetchGuideRoleTokens(code, view) {
+export async function fetchGuideRoleTokens(code, view) {
   const key = `${code}::${view}`;
   if (guideRoleTokenCache.has(key)) {
     return guideRoleTokenCache.get(key) || [];
@@ -3189,11 +3233,8 @@ export function resolveGuideActiveRole(viewId, roles = []) {
   const matchedNextTag = normalizeCandidate(nextTag);
   if (matchedNextTag) return matchedNextTag;
 
-  const nextTagDisplay = document.getElementById('nextTagDisplay');
-  if (nextTagDisplay) {
-    const matchedDisplay = normalizeCandidate(nextTagDisplay.textContent || '');
-    if (matchedDisplay) return matchedDisplay;
-  }
+  const matchedDisplay = normalizeCandidate(getNextTagValue());
+  if (matchedDisplay) return matchedDisplay;
 
   return '';
 }
@@ -5666,7 +5707,9 @@ async function updateGuideSplitHighlightOverlay(
     mode: 'preview',
     activeRole,
     dimInactive: true,
-    stripText: true,
+    // The highlight pass needs the measurement groups. stripSvgLabels removes
+    // those groups, leaving a valid but visually blank highlight raster.
+    stripText: false,
   });
   await replaceGuideSplitCompareBackgroundImage(backgroundUrl, compareCanvas);
   guideSplitCompareBackgroundVisualKey = visualKey;
@@ -5681,6 +5724,7 @@ function createGuideSplitCompareTagManager(compareCanvasManager) {
   const primaryTagManager = window.app?.tagManager || null;
   if (primaryTagManager) {
     tagManager.showMeasurements = primaryTagManager.showMeasurements !== false;
+    tagManager.tagDisplayMode = primaryTagManager.tagDisplayMode || 'contextual';
     tagManager.tagSize = primaryTagManager.tagSize || tagManager.tagSize;
     tagManager.tagShape = primaryTagManager.tagShape || tagManager.tagShape;
     tagManager.tagBackgroundStyle =
@@ -6858,6 +6902,7 @@ function showGuideGallery(options = {}) {
   let bindScopeMode = 'frame';
   let bindPreviewFrameTarget = 'active';
   const bindVariantByCode = {};
+  const bindVariantConfirmedByCode = {};
 
   const getBindTargetOptions = () => {
     const manager = window.app?.projectManager || window.projectManager;
@@ -7086,6 +7131,10 @@ function showGuideGallery(options = {}) {
     if (bindPreviewModelCode && !bindVariantByCode[bindPreviewModelCode]) {
       bindVariantByCode[bindPreviewModelCode] = getDefaultVariantForCode(bindPreviewModelCode);
     }
+    if (linkedSelectionModel?.code && bindPreviewModelCode === linkedSelectionModel.code) {
+      bindVariantByCode[linkedSelectionModel.code] = linkedSelectionModel.variant;
+      bindVariantConfirmedByCode[linkedSelectionModel.code] = true;
+    }
     const bindPreviewSelection = bindPreviewModelCode
       ? {
           code: bindPreviewModelCode,
@@ -7222,22 +7271,24 @@ function showGuideGallery(options = {}) {
           </div>
           <div>
             <div class="guide-gallery-bind-preview-pane">${bindPreviewSelection ? `<img id="guideGalleryBindPreviewModelEl" src="${buildGuidePreviewUrl(bindPreviewSelection.code, bindPreviewSelection.variant)}" alt="${bindPreviewSelection.code} ${bindPreviewSelection.variant}" />` : '<span id="guideGalleryBindPreviewModelEmpty" style="font-size:12px;color:#64748b;">Select one model</span>'}</div>
-            <div id="guideGalleryBindPreviewModelMeta" class="guide-gallery-bind-preview-meta">${bindPreviewSelection ? `${bindPreviewSelection.code} · ${bindPreviewSelection.variant.toUpperCase()}` : 'No model selected'}</div>
+            <div id="guideGalleryBindPreviewModelMeta" class="guide-gallery-bind-preview-meta">${bindPreviewSelection ? `${bindPreviewSelection.code}${bindVariantConfirmedByCode[bindPreviewSelection.code] ? ` · ${bindPreviewSelection.variant.toUpperCase()}` : ' · CHOOSE VIEW'}` : 'No model selected'}</div>
             <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
-              <label style="font-size:11px;font-weight:700;color:#334155;">View</label>
-              <select id="guideGalleryBindModelView" style="flex:1;font-size:12px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;" ${bindPreviewModelCode ? '' : 'disabled'}>
+              <label style="font-size:11px;font-weight:700;color:#334155;">Model view</label>
+              <select id="guideGalleryBindModelView" class="guide-gallery-bind-view-select" ${bindPreviewModelCode ? '' : 'disabled'}>
                 ${
                   bindPreviewModelCode
-                    ? availableViewsForCode(bindPreviewModelCode, viewsByCode)
+                    ? `<option value="" ${bindVariantConfirmedByCode[bindPreviewModelCode] ? '' : 'selected'} disabled>Choose Front, Back or Side</option>` +
+                      availableViewsForCode(bindPreviewModelCode, viewsByCode)
                         .map(view => {
                           const isSelected =
+                            bindVariantConfirmedByCode[bindPreviewModelCode] &&
                             view ===
-                            (bindVariantByCode[bindPreviewModelCode] ||
-                              getDefaultVariantForCode(bindPreviewModelCode));
+                              (bindVariantByCode[bindPreviewModelCode] ||
+                                getDefaultVariantForCode(bindPreviewModelCode));
                           return `<option value="${view}" ${isSelected ? 'selected' : ''}>${view.toUpperCase()}</option>`;
                         })
                         .join('')
-                    : '<option value="front">FRONT</option>'
+                    : '<option value="">Choose a model first</option>'
                 }
               </select>
             </div>
@@ -7293,22 +7344,29 @@ function showGuideGallery(options = {}) {
               <button type="button" class="guide-gallery-toggle-search">${searchVisible ? 'Hide Search' : 'Show Search'}</button>
               <button type="button" class="guide-gallery-toggle-panel">${panelHidden ? 'Show Details' : 'Hide Details'}</button>
               ${
-                showBindTargetSelect
-                  ? `<select class="guide-gallery-bind-target">${bindTargets
-                      .map(viewId => {
-                        const selected = viewId === bindTargetViewId ? 'selected' : '';
-                        const displayName = imageDisplayById[viewId] || viewId;
-                        return `<option value="${viewId}" ${selected}>Bind target: ${displayName}</option>`;
-                      })
-                      .join('')}</select>`
-                  : `<div style="font-size:12px;color:#334155;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;">Bind target: ${bindTargetViewId ? imageDisplayById[bindTargetViewId] || bindTargetViewId : 'none'}</div>`
+                galleryMode === 'bind'
+                  ? ''
+                  : showBindTargetSelect
+                    ? `<select class="guide-gallery-bind-target">${bindTargets
+                        .map(viewId => {
+                          const selected = viewId === bindTargetViewId ? 'selected' : '';
+                          const displayName = imageDisplayById[viewId] || viewId;
+                          return `<option value="${viewId}" ${selected}>Bind target: ${displayName}</option>`;
+                        })
+                        .join('')}</select>`
+                    : `<div style="font-size:12px;color:#334155;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;">Bind target: ${bindTargetViewId ? imageDisplayById[bindTargetViewId] || bindTargetViewId : 'none'}</div>`
               }
-              <button type="button" class="guide-gallery-load-current">Use On Current</button>
-              <button type="button" class="guide-gallery-add-image">Add Current View</button>
-              <button type="button" class="guide-gallery-add-all">Add All Views</button>
-              <button type="button" class="guide-gallery-add-selected">Add Queued</button>
-              <button type="button" class="guide-gallery-bind">Bind Selected</button>
-              <div id="guideGalleryStatus" class="guide-gallery-status ${selectedCode ? '' : 'empty'}">${selectedCode ? `Selected: ${selectedCode} · Variant: ${selectedView.toUpperCase()} · Queue: ${modelState.selections.length}` : `Select a model card, or use Add buttons on any card. Queue: ${modelState.selections.length}`}</div>
+              ${
+                galleryMode === 'bind'
+                  ? ''
+                  : `
+                <button type="button" class="guide-gallery-load-current">Use On Current</button>
+                <button type="button" class="guide-gallery-add-image">Add Current View</button>
+                <button type="button" class="guide-gallery-add-all">Add All Views</button>
+                <button type="button" class="guide-gallery-add-selected">Add Queued</button>
+                <button type="button" class="guide-gallery-bind">Bind Selected</button>`
+              }
+              <div id="guideGalleryStatus" class="guide-gallery-status ${selectedCode ? '' : 'empty'}">${galleryMode === 'bind' ? 'Select image · Select model · Choose view · Bind' : selectedCode ? `Selected: ${selectedCode} · Variant: ${selectedView.toUpperCase()} · Queue: ${modelState.selections.length}` : `Select a model card, or use Add buttons on any card. Queue: ${modelState.selections.length}`}</div>
             </div>
             ${
               galleryMode === 'bind'
@@ -7384,6 +7442,11 @@ function showGuideGallery(options = {}) {
       );
 
       const selectedCodes = Array.from(new Set(state.selections.map(item => item.code)));
+      const selectedCodeSet = new Set(selectedCodes.map(normalizeCode));
+      galleryOverlay.querySelectorAll('[data-select-code]').forEach(input => {
+        const code = normalizeCode(input.getAttribute('data-select-code') || '');
+        input.checked = selectedCodeSet.has(code);
+      });
       selectedCodes.forEach(code => {
         if (bindVariantByCode[code]) return;
         bindVariantByCode[code] = getDefaultVariantForCode(code);
@@ -7450,6 +7513,7 @@ function showGuideGallery(options = {}) {
             .toLowerCase();
           if (!code || !value) return;
           bindVariantByCode[code] = value;
+          bindVariantConfirmedByCode[code] = true;
           if (code === bindPreviewModelCode) {
             refreshBindPreviewDom();
             syncBindActionState();
@@ -7486,6 +7550,10 @@ function showGuideGallery(options = {}) {
       }
       if (bindPreviewModelCode && !bindVariantByCode[bindPreviewModelCode]) {
         bindVariantByCode[bindPreviewModelCode] = getDefaultVariantForCode(bindPreviewModelCode);
+      }
+      if (linkedSelection?.code && bindPreviewModelCode === linkedSelection.code) {
+        bindVariantByCode[linkedSelection.code] = linkedSelection.variant;
+        bindVariantConfirmedByCode[linkedSelection.code] = true;
       }
 
       const image = images.find(item => item.id === bindPreviewImageId) || null;
@@ -7526,27 +7594,29 @@ function showGuideGallery(options = {}) {
       }
       if (modelMeta) {
         modelMeta.textContent = selection
-          ? `${selection.code} · ${selection.variant.toUpperCase()}`
+          ? `${selection.code}${bindVariantConfirmedByCode[selection.code] ? ` · ${selection.variant.toUpperCase()}` : ' · CHOOSE VIEW'}`
           : 'No model selected';
       }
 
       if (modelViewSelect) {
         if (!bindPreviewModelCode) {
-          modelViewSelect.innerHTML = '<option value="front">FRONT</option>';
+          modelViewSelect.innerHTML = '<option value="">Choose a model first</option>';
           modelViewSelect.disabled = true;
         } else {
           const views = availableViewsForCode(bindPreviewModelCode, viewsByCode);
           const activeView =
             bindVariantByCode[bindPreviewModelCode] ||
             getDefaultVariantForCode(bindPreviewModelCode);
-          modelViewSelect.innerHTML = views
+          modelViewSelect.innerHTML = `<option value="" disabled ${bindVariantConfirmedByCode[bindPreviewModelCode] ? '' : 'selected'}>Choose Front, Back or Side</option>${views
             .map(
               view =>
-                `<option value="${view}" ${view === activeView ? 'selected' : ''}>${view.toUpperCase()}</option>`
+                `<option value="${view}" ${bindVariantConfirmedByCode[bindPreviewModelCode] && view === activeView ? 'selected' : ''}>${view.toUpperCase()}</option>`
             )
-            .join('');
+            .join('')}`;
           modelViewSelect.disabled = false;
-          modelViewSelect.value = activeView;
+          modelViewSelect.value = bindVariantConfirmedByCode[bindPreviewModelCode]
+            ? activeView
+            : '';
         }
       }
 
@@ -7615,6 +7685,7 @@ function showGuideGallery(options = {}) {
       const state = getGuideModelLinkState();
       const byId = new Map(state.selections.map(item => [item.id, item]));
       if (galleryMode === 'bind' && bindPreviewModelCode) {
+        if (!bindVariantConfirmedByCode[bindPreviewModelCode]) return null;
         return {
           selectionId: '',
           code: bindPreviewModelCode,
@@ -7706,6 +7777,7 @@ function showGuideGallery(options = {}) {
         .toLowerCase();
       if (!bindPreviewModelCode || !nextView) return;
       bindVariantByCode[bindPreviewModelCode] = nextView;
+      bindVariantConfirmedByCode[bindPreviewModelCode] = true;
       refreshBindPreviewDom();
       syncBindActionState();
     });
@@ -8094,6 +8166,11 @@ function showGuideGallery(options = {}) {
         if (linkedSelection?.code) {
           bindPreviewModelCode = linkedSelection.code;
           bindVariantByCode[linkedSelection.code] = linkedSelection.variant;
+          bindVariantConfirmedByCode[linkedSelection.code] = true;
+        } else if (bindPreviewModelCode) {
+          // Each unlinked project image requires its own explicit model-view
+          // choice; do not carry FRONT/BACK/SIDE over from the previous image.
+          bindVariantConfirmedByCode[bindPreviewModelCode] = false;
         }
         refreshBindPreviewDom();
         syncBindActionState();
@@ -8116,6 +8193,7 @@ function showGuideGallery(options = {}) {
         ).trim();
         if (!modelCode) return;
         bindPreviewModelCode = modelCode;
+        bindVariantConfirmedByCode[modelCode] = false;
         refreshBindPreviewDom();
         syncBindActionState();
         requestAnimationFrame(() => {
@@ -8172,6 +8250,7 @@ function showGuideGallery(options = {}) {
           // while only changing the variant.
           if (galleryMode === 'bind' || !bindPreviewModelCode) {
             bindPreviewModelCode = code;
+            bindVariantConfirmedByCode[code] = false;
           }
         } else {
           const state = getGuideModelLinkState();

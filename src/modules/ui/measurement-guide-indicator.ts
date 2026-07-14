@@ -1,5 +1,10 @@
 import { resolveScopedImageLabel } from './scoped-image-label.js';
-import { fetchGuideRasterUrl } from './measurement-guide-flash.js';
+import { getNextTagElement, setNextTagValue } from './next-tag-control.js';
+import {
+  fetchGuideRasterUrl,
+  fetchGuideRoleTokens,
+  resolveGuideActiveRole,
+} from './measurement-guide-flash.js';
 
 const DRAW_MEASUREMENT_TOOLS = new Set(['line', 'curve']);
 const INDICATOR_ID = 'measurementGuideIndicator';
@@ -15,6 +20,7 @@ let lastRenderKey = '';
 let renderPending = false;
 let lastRenderTime = 0;
 const MIN_RENDER_INTERVAL = 100; // ms
+const recentDrawnGuideRolesByScope = new Map<string, Set<string>>();
 
 function dispatchGuideNextTagChanged(viewId: string, tag: string): boolean {
   const normalizedViewId = (viewId || '').trim();
@@ -251,7 +257,11 @@ function ensureHeaderToggle(): void {
     }
 
     if (stack.parentElement !== controls) {
-      controls.insertBefore(stack, collapseButton);
+      // Gallery imports rebuild this header while views are switching. Avoid a
+      // positional reference node here: Safari can invalidate that reference
+      // between header refreshes and throw NotFoundError. Flex order keeps the
+      // appended stack in the same visual position.
+      controls.appendChild(stack);
     }
     if (collapseButton.parentElement !== stack) {
       stack.appendChild(collapseButton);
@@ -564,6 +574,15 @@ function ensureStyles(): void {
       background: #7dd3fc;
       border-color: #bae6fd;
       box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.3);
+    }
+    .measurement-guide-indicator-complete {
+      margin-left: auto;
+      color: #99f6e4;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
     }
     .measurement-guide-indicator-resize {
       position: absolute;
@@ -967,7 +986,7 @@ function applyGuideOneTimeSeed(
 
   (window as any).currentImageLabel = scoped;
 
-  const nextTagDisplay = document.getElementById('nextTagDisplay');
+  const nextTagDisplay = getNextTagElement();
   // Don't overwrite nextTagDisplay when a manual override is active (unless this is a chip click)
   const hasManualOverride =
     !options.isChipClick &&
@@ -977,7 +996,7 @@ function applyGuideOneTimeSeed(
         normalizeLabel((window as any).manualTagByImage[key]) !== normalizedTag
     );
   if (nextTagDisplay && document.activeElement !== nextTagDisplay && !hasManualOverride) {
-    nextTagDisplay.textContent = normalizedTag;
+    setNextTagValue(normalizedTag);
   }
 
   if (options.dispatchEvent !== false) {
@@ -989,6 +1008,66 @@ function hideIndicator(): void {
   const root = ensureRoot();
   root.style.display = 'none';
   lastRenderKey = '';
+}
+
+function getDrawnGuideRoles(viewId: string): Set<string> {
+  const metadataManager = (window as any).app?.metadataManager;
+  const vectorMap = metadataManager?.vectorStrokesByImage || {};
+  const candidates = Array.from(
+    new Set([viewId, toBaseViewId(viewId), getCwScopedViewKey(viewId)].filter(Boolean))
+  );
+  const drawn = new Set<string>();
+  candidates.forEach(candidate => {
+    const bucket = vectorMap[candidate];
+    if (!bucket || typeof bucket !== 'object') return;
+    Object.keys(bucket).forEach(label => {
+      const normalized = normalizeLabel(label);
+      if (normalized) drawn.add(normalized);
+    });
+    const lineLabels = (window as any).lineStrokesByImage?.[candidate];
+    if (Array.isArray(lineLabels)) {
+      lineLabels.forEach((label: unknown) => {
+        const normalized = normalizeLabel(label);
+        if (normalized) drawn.add(normalized);
+      });
+    }
+    recentDrawnGuideRolesByScope.get(candidate)?.forEach(label => drawn.add(label));
+  });
+  const canvasObjects = (window as any).app?.canvasManager?.fabricCanvas?.getObjects?.() || [];
+  canvasObjects.forEach((object: any) => {
+    const objectScope = toText(object?.imageLabel || object?.strokeMetadata?.imageLabel).trim();
+    if (objectScope && !candidates.includes(objectScope)) return;
+    const normalized = normalizeLabel(object?.strokeLabel || object?.strokeMetadata?.strokeLabel);
+    if (normalized) drawn.add(normalized);
+  });
+  return drawn;
+}
+
+function resolveNextGuideRole(viewId: string, roles: string[]): string {
+  const normalizedRoles = roles.map(normalizeLabel).filter(Boolean);
+  if (!normalizedRoles.length) return '';
+  const drawn = getDrawnGuideRoles(viewId);
+  const requested = normalizeLabel(resolveGuideActiveRole(viewId, normalizedRoles));
+  if (requested && !drawn.has(requested)) return requested;
+  return normalizedRoles.find(role => !drawn.has(role)) || '';
+}
+
+function clearCompletedGuideSeed(viewId: string): void {
+  const baseView = toBaseViewId(viewId);
+  const scoped = getCwScopedViewKey(viewId);
+  const keys = Array.from(new Set([viewId, baseView, scoped].filter(Boolean)));
+  const guideSeeds = (window as any).guideOneTimeTagByImage || {};
+  const labels = (window as any).labelsByImage || {};
+  const manual = (window as any).manualTagByImage || {};
+  keys.forEach(key => {
+    const staleGuideValue = normalizeLabel(guideSeeds[key]);
+    delete guideSeeds[key];
+    if (!manual[key] && staleGuideValue && normalizeLabel(labels[key]) === staleGuideValue) {
+      delete labels[key];
+    }
+  });
+  (window as any).guideOneTimeTagByImage = guideSeeds;
+  (window as any).labelsByImage = labels;
 }
 
 async function renderIndicator(): Promise<void> {
@@ -1015,13 +1094,23 @@ async function renderIndicator(): Promise<void> {
       return;
     }
     const breadcrumb = getBindingBreadcrumb(viewId);
+    const roles = await fetchGuideRoleTokens(code, activeGuide.variant);
+    const activeRole = resolveNextGuideRole(viewId, roles);
+    if (activeRole) {
+      applyGuideOneTimeSeed(viewId, activeRole);
+    } else if (roles.length) {
+      clearCompletedGuideSeed(viewId);
+      (window as any).updateNextTagDisplay?.();
+    }
     const heroUrl = code
       ? await fetchGuideRasterUrl(code, activeGuide.variant, {
-          mode: 'preview',
-          stripText: true,
+          mode: activeRole ? 'highlight-only' : 'preview',
+          activeRole,
+          dimInactive: false,
+          stripText: false,
         })
       : '';
-    const renderKey = `bound|${code}|${activeGuide.variant}|${viewId}`;
+    const renderKey = `bound|${code}|${activeGuide.variant}|${viewId}|${activeRole}|${roles.join(',')}`;
     if (renderKey === lastRenderKey) {
       positionIndicator(root);
       root.style.display = 'block';
@@ -1040,9 +1129,28 @@ async function renderIndicator(): Promise<void> {
     <div class="measurement-guide-indicator-hero">
       <img src="${heroUrl}" alt="${code} ${activeGuide.variant.toUpperCase()}" />
     </div>
+    <div class="measurement-guide-indicator-track" aria-label="Guide measurement order">
+      ${roles
+        .map(
+          role =>
+            `<button type="button" class="measurement-guide-indicator-chip ${normalizeLabel(role) === activeRole ? 'active' : ''}" data-guide-role="${normalizeLabel(role)}">${normalizeLabel(role)}</button>`
+        )
+        .join('')}
+      ${roles.length && !activeRole ? '<span class="measurement-guide-indicator-complete">Guide complete</span>' : ''}
+    </div>
   `;
     positionIndicator(root);
     bindIndicatorWindowControls(root);
+    root.querySelectorAll<HTMLButtonElement>('[data-guide-role]').forEach(button => {
+      button.addEventListener('click', event => {
+        event.preventDefault();
+        const role = normalizeLabel(button.dataset.guideRole || '');
+        if (!role) return;
+        applyGuideOneTimeSeed(viewId, role, { isChipClick: true });
+        lastRenderKey = '';
+        scheduleRender();
+      });
+    });
     root.style.display = 'block';
   } catch (error) {
     console.error('[measurement-guide-indicator] Render error:', error);
@@ -1082,7 +1190,21 @@ export function initMeasurementGuideIndicator(): void {
   };
 
   window.addEventListener('toolchange', scheduleRender);
-  window.addEventListener('openpaint:stroke-created', (() => {
+  window.addEventListener('openpaint:stroke-created', ((event: CustomEvent) => {
+    const imageLabel = toText(event.detail?.imageLabel).trim();
+    const strokeLabel = normalizeLabel(event.detail?.strokeLabel);
+    if (imageLabel && strokeLabel) {
+      const scopes = Array.from(
+        new Set(
+          [imageLabel, toBaseViewId(imageLabel), getCwScopedViewKey(imageLabel)].filter(Boolean)
+        )
+      );
+      scopes.forEach(scope => {
+        const drawn = recentDrawnGuideRolesByScope.get(scope) || new Set<string>();
+        drawn.add(strokeLabel);
+        recentDrawnGuideRolesByScope.set(scope, drawn);
+      });
+    }
     scheduleRender();
   }) as EventListener);
   window.addEventListener('openpaint:guide-binding-changed', scheduleRender);

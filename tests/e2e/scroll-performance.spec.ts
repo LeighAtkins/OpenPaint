@@ -1232,8 +1232,18 @@ test.describe('Guide split compare pane', () => {
     await setSplitEnabled(page, true);
     await page.waitForTimeout(600);
 
-    const initialCompare = await captureCompareGuideState(page, 'A1');
-    expect(initialCompare.overlayCount).toBe(1);
+    let initialCompare: Awaited<ReturnType<typeof captureCompareGuideState>>;
+    await expect
+      .poll(async () => {
+        initialCompare = await captureCompareGuideState(page, 'A1');
+        return initialCompare.hasBackground;
+      })
+      .toBe(true);
+    initialCompare = await captureCompareGuideState(page, 'A1');
+    expect(initialCompare.hasBackground).toBe(true);
+    // The active guide is now composed into the compare background instead of
+    // being stacked as a second Fabric image. This avoids duplicate SVG edges.
+    expect(initialCompare.overlayCount).toBe(0);
     expect(initialCompare.importedWithArrowSettings).toBe(0);
     expect(initialCompare.highlightedGuideTags).toContain('A1');
 
@@ -1243,8 +1253,16 @@ test.describe('Guide split compare pane', () => {
     const updatedMiniGuide = await captureMiniGuideState(page);
     expect(updatedMiniGuide.activeChip).toBe('B1');
 
-    const updatedCompare = await captureCompareGuideState(page, 'B1');
-    expect(updatedCompare.overlayCount).toBe(1);
+    let updatedCompare: Awaited<ReturnType<typeof captureCompareGuideState>>;
+    await expect
+      .poll(async () => {
+        updatedCompare = await captureCompareGuideState(page, 'B1');
+        return updatedCompare.hasBackground && updatedCompare.highlightedGuideTags.includes('B1');
+      })
+      .toBe(true);
+    updatedCompare = await captureCompareGuideState(page, 'B1');
+    expect(updatedCompare.hasBackground).toBe(true);
+    expect(updatedCompare.overlayCount).toBe(0);
     expect(updatedCompare.importedWithArrowSettings).toBe(0);
     expect(updatedCompare.highlightedGuideTags).toContain('B1');
   });

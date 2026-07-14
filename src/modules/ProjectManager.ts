@@ -1903,6 +1903,9 @@ export class ProjectManager {
     } else if (typeof this.views[viewId]?.rotation === 'number') {
       this.updateThumbnailRotation(viewId, this.views[viewId].rotation);
     }
+    window.dispatchEvent(
+      new CustomEvent('openpaint:image-collection-change', { detail: { viewId } })
+    );
   }
 
   async setBackgroundImage(url, fitMode, options = {}) {

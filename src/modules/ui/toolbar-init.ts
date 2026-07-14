@@ -349,16 +349,28 @@
 
     // Label background style toggle button
     const labelBackgroundToggleBtn = document.getElementById('labelBackgroundToggleBtn');
-    const backgroundStyles = ['solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'];
+    const backgroundStyles = [
+      'solid',
+      'no-fill',
+      'clear-black',
+      'clear-color',
+      'clear-white',
+      'frosted',
+    ];
     const backgroundLabels = {
       solid: 'Solid',
       'no-fill': 'No Fill',
       'clear-black': 'Clear Black',
       'clear-color': 'Clear Color',
       'clear-white': 'Clear White',
+      frosted: 'Frosted',
     };
 
-    if (labelBackgroundToggleBtn) {
+    if (
+      labelBackgroundToggleBtn &&
+      labelBackgroundToggleBtn.dataset.backgroundStyleBound !== 'true'
+    ) {
+      labelBackgroundToggleBtn.dataset.backgroundStyleBound = 'true';
       labelBackgroundToggleBtn.addEventListener('click', () => {
         console.log(
           '[TagBackground] Button clicked, app.tagManager available:',
@@ -380,7 +392,7 @@
           console.warn('[TagBackground] Button clicked but tagManager not available');
         }
       });
-    } else {
+    } else if (!labelBackgroundToggleBtn) {
       console.warn('[TagBackground] Button element not found');
     }
 

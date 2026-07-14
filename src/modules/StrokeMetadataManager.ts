@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 // Handles attaching labels, measurements, visibility flags to Fabric objects
+import { getNextTagValue, setNextTagValue } from './ui/next-tag-control.js';
 
 export class StrokeMetadataManager {
   constructor() {
@@ -475,12 +476,15 @@ export class StrokeMetadataManager {
       typeof currentScope === 'string'
         ? currentScope.split('::tab:')[0] || currentScope
         : baseImageLabel;
+    const scopeKeys = [imageLabel, baseImageLabel, currentScope, currentBaseScope];
+    const manualTags = window.manualTagByImage || {};
+    const manualTag = scopeKeys.map(key => manualTags[key]).find(Boolean) || '';
     const seededGuideTag =
       oneTimeGuideTags[imageLabel] ||
       oneTimeGuideTags[baseImageLabel] ||
       oneTimeGuideTags[currentScope] ||
       oneTimeGuideTags[currentBaseScope];
-    const seededMode = inferTagMode(seededGuideTag);
+    const seededMode = inferTagMode(manualTag || seededGuideTag);
     const resolvedMode =
       seededMode ||
       (mode === 'letters' || mode === 'letters+numbers'
@@ -488,6 +492,19 @@ export class StrokeMetadataManager {
         : window.tagMode === 'letters' || window.tagMode === 'letters+numbers'
           ? window.tagMode
           : 'letters+numbers');
+    const manualLetterOnly = /^[A-Z]$/.test(manualTag || '');
+    if (manualTag && (this.isValidTag(manualTag, resolvedMode) || manualLetterOnly)) {
+      window.labelsByImage = window.labelsByImage || {};
+      window.manualTagByImage = window.manualTagByImage || {};
+      for (const key of scopeKeys) {
+        delete window.labelsByImage[key];
+        delete window.manualTagByImage[key];
+      }
+      // A manual label is authoritative for this stroke. Keep the guide seed
+      // intact so the guide can resume on its pending role afterwards.
+      this.updateTagPredictionAfterUse(imageLabel, manualTag);
+      return manualTag;
+    }
     const seededLetterOnly = /^[A-Z]$/.test(seededGuideTag || '');
     if (seededGuideTag && (this.isValidTag(seededGuideTag, resolvedMode) || seededLetterOnly)) {
       delete oneTimeGuideTags[imageLabel];
@@ -499,7 +516,7 @@ export class StrokeMetadataManager {
       // Clear any stale manual override so the guide regains control after this draw
       window.labelsByImage = window.labelsByImage || {};
       window.manualTagByImage = window.manualTagByImage || {};
-      for (const key of [imageLabel, baseImageLabel, currentScope, currentBaseScope]) {
+      for (const key of scopeKeys) {
         delete window.labelsByImage[key];
         delete window.manualTagByImage[key];
       }
@@ -525,7 +542,7 @@ export class StrokeMetadataManager {
     // Fallback: check nextTagDisplay directly
     const nextTagDisplay = document.getElementById('nextTagDisplay');
     if (nextTagDisplay) {
-      const tag = nextTagDisplay.textContent.trim().toUpperCase();
+      const tag = getNextTagValue().toUpperCase();
       if (tag && this.isValidTag(tag, resolvedMode)) {
         // Use the predicted tag and update the display
         this.updateTagPredictionAfterUse(imageLabel, tag);
@@ -665,7 +682,7 @@ export class StrokeMetadataManager {
       const nextTagDisplay = document.getElementById('nextTagDisplay');
       if (nextTagDisplay && window.calculateNextTag) {
         const nextTag = window.calculateNextTag();
-        nextTagDisplay.textContent = nextTag;
+        setNextTagValue(nextTag);
       }
     }
   }
@@ -740,17 +757,41 @@ export class StrokeMetadataManager {
     const strokesList = document.getElementById('strokesList');
     if (!strokesList) return;
 
+    const findMeasurementSpan = () => {
+      const currentItems = strokesList.querySelectorAll('.stroke-visibility-item');
+      for (const currentItem of currentItems) {
+        if (currentItem.dataset.stroke === strokeLabel) {
+          return currentItem.querySelector('.stroke-measurement');
+        }
+      }
+      return null;
+    };
+
     const strokeItems = strokesList.querySelectorAll('.stroke-visibility-item');
 
     for (const item of strokeItems) {
       if (item.dataset.stroke === strokeLabel) {
         const measurementSpan = item.querySelector('.stroke-measurement');
         if (measurementSpan) {
-          // Ensure panel is visible and expanded when focusing from a tag click.
           const elementsBody = document.getElementById('elementsBody');
           const strokePanel = document.getElementById('strokePanel');
+          const panelCollapsed = !this.isStrokePanelOpen();
+          const strokeScopeId =
+            item.dataset.imageLabel ||
+            measurementSpan.dataset.imageLabel ||
+            this.resolveActiveImageLabel?.(window.app?.projectManager?.currentViewId || 'front');
+
+          if (panelCollapsed && typeof window.focusQuickMeasurementInput === 'function') {
+            setTimeout(() => {
+              if (!isExpectedCanvasSelection()) return;
+              window.focusQuickMeasurementInput(strokeLabel, strokeScopeId);
+            }, 0);
+            return;
+          }
+
+          // Fallback for hosts that have not loaded the compact measurement editor.
           if (strokePanel) {
-            strokePanel.classList.remove('minimized');
+            strokePanel.classList.remove('collapsed', 'minimized');
             strokePanel.setAttribute('aria-expanded', 'true');
           }
 
@@ -774,13 +815,22 @@ export class StrokeMetadataManager {
             }
           }
 
-          // Enable editing
+          // Use the field's canonical click handler so tag-driven editing gets
+          // the same placeholder, lock, original-value and validation behavior
+          // as clicking the measurement field directly. Re-query after the
+          // delay because rebuilding the Elements list can replace this node.
+          measurementSpan.classList.remove('empty-measurement');
           setTimeout(() => {
-            if (!measurementSpan.isConnected) return;
             if (!isExpectedCanvasSelection()) return;
-            measurementSpan.contentEditable = 'true';
-            measurementSpan.focus();
-            this.safeSelectNodeContents(measurementSpan);
+            const currentSpan = findMeasurementSpan();
+            if (!currentSpan?.isConnected) return;
+            currentSpan.classList.remove('empty-measurement');
+            if (currentSpan.contentEditable !== 'true') {
+              currentSpan.click();
+            } else {
+              currentSpan.focus();
+              this.safeSelectNodeContents(currentSpan);
+            }
           }, 100);
         }
         break;
@@ -1352,6 +1402,7 @@ export class StrokeMetadataManager {
         strokeItem.classList.add('measurement-split-row');
       }
       strokeItem.dataset.stroke = strokeLabel;
+      strokeItem.dataset.imageLabel = strokeScopeId;
       strokeItem.dataset.elementKind = 'measurements';
       strokeItem.dataset.selected = 'false';
       strokeItem.dataset.editMode = 'false';

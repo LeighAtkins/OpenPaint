@@ -8,6 +8,7 @@ import { StrokeMetadataManager } from './StrokeMetadataManager.js';
 import { UploadManager } from './UploadManager.js';
 import { imageRegistry } from './ImageRegistry.js';
 import { PathUtils } from './utils/PathUtils';
+import { initQuickMeasurementEntry } from './ui/quick-measurement-entry.js';
 
 // Deferred managers are dynamically loaded JS modules with varying shapes
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,6 +58,8 @@ export class App {
     savedCursor: string | null;
   };
   activeCanvasPane: 'left' | 'right';
+  preEraserBrushSize: number;
+  keyboardToolCycleQueue: Promise<void>;
 
   constructor() {
     this.canvasManager = new CanvasManager('canvas');
@@ -101,6 +104,8 @@ export class App {
       savedCursor: null,
     };
     this.activeCanvasPane = 'left';
+    this.preEraserBrushSize = 0;
+    this.keyboardToolCycleQueue = Promise.resolve();
 
     if (typeof performance !== 'undefined' && performance.mark) {
       performance.mark('app-init-start');
@@ -1453,6 +1458,7 @@ export class App {
 
   setupUI(): void {
     this.setupToolbarMenus();
+    initQuickMeasurementEntry(this.metadataManager);
 
     // Undo/Redo
     const undoBtn = document.getElementById('undoBtn');
@@ -1486,6 +1492,27 @@ export class App {
     const textFontOptions = document.querySelectorAll<HTMLElement>('[data-text-font]');
     const clearBtn = document.getElementById('clear');
     let preferredTextWrapper: HTMLElement | null = null;
+    const curveActivationTimers = new WeakMap<HTMLElement, number>();
+
+    const syncCurveRepeatUI = (enabled: boolean) => {
+      drawingModeOptions.forEach(option => {
+        if (option.getAttribute('data-drawing-mode') !== 'curve') return;
+        option.classList.toggle('repeat-latched', enabled);
+        option.dataset.repeatMode = enabled ? 'true' : 'false';
+        option.setAttribute(
+          'title',
+          enabled
+            ? 'Repeat Curved Line mode. Click once for one curved line.'
+            : 'Draw one curved line. Double-click to keep Curved Line active.'
+        );
+      });
+    };
+
+    const setCurveRepeatMode = async (enabled: boolean) => {
+      const curveTool = await this.toolManager.ensureTool('curve');
+      curveTool?.setRepeatMode?.(enabled);
+      syncCurveRepeatUI(enabled);
+    };
 
     const textToolFontFamilies: Record<string, string> = {
       handdrawn: 'Caveat',
@@ -1900,45 +1927,62 @@ export class App {
 
     // Eraser brush size: save/restore normal size when entering/leaving eraser
     const ERASER_DEFAULT_SIZE = 30;
-    let preEraserBrushSize = 0; // 0 = not in eraser mode
+    const enterEraserBrushSize = () => this.enterEraserBrushSize(ERASER_DEFAULT_SIZE);
+    const leaveEraserBrushSize = () => this.leaveEraserBrushSize();
 
-    const enterEraserBrushSize = () => {
-      const bs = document.getElementById('brushSize') as HTMLInputElement | null;
-      if (!bs) return;
-      preEraserBrushSize = parseInt(bs.value, 10) || 2;
-      bs.value = String(ERASER_DEFAULT_SIZE);
-      bs.dispatchEvent(new Event('input', { bubbles: true }));
+    const setActiveDrawingModeOption = (mode: string) => {
+      drawingModeOptions.forEach(item => {
+        item.classList.toggle('active', item.getAttribute('data-drawing-mode') === mode);
+      });
     };
 
-    const leaveEraserBrushSize = () => {
-      if (!preEraserBrushSize) return;
-      const bs = document.getElementById('brushSize') as HTMLInputElement | null;
-      if (!bs) return;
-      bs.value = String(preEraserBrushSize);
-      bs.dispatchEvent(new Event('input', { bubbles: true }));
-      preEraserBrushSize = 0;
+    const activateCurveMode = async (repeat: boolean) => {
+      if (this.preEraserBrushSize > 0) leaveEraserBrushSize();
+      await setCurveRepeatMode(repeat);
+      await this.toolManager.selectTool('curve');
+      setActiveDrawingModeOption('curve');
+      updateDrawingToggleLabels(repeat ? 'Curved Line ∞' : 'Curved Line');
     };
 
     drawingModeOptions.forEach(btn => {
       btn.addEventListener('click', () => {
         const mode = btn.getAttribute('data-drawing-mode');
         if (!mode) return;
-        const wasEraser = preEraserBrushSize > 0;
+
         if (mode === 'curve') {
-          if (wasEraser) leaveEraserBrushSize();
-          this.toolManager.selectTool('curve');
-          updateDrawingToggleLabels('Curved Line');
-        } else if (mode === 'select') {
-          if (wasEraser) leaveEraserBrushSize();
-          this.toolManager.selectTool('select');
+          const priorTimer = curveActivationTimers.get(btn);
+          if (priorTimer) window.clearTimeout(priorTimer);
+          const timer = window.setTimeout(() => {
+            curveActivationTimers.delete(btn);
+            void activateCurveMode(false);
+          }, 220);
+          curveActivationTimers.set(btn, timer);
+          return;
+        }
+
+        void setCurveRepeatMode(false);
+        const wasEraser = this.preEraserBrushSize > 0;
+        if (wasEraser) leaveEraserBrushSize();
+        if (mode === 'select') {
+          void this.toolManager.selectTool('select');
           updateDrawingToggleLabels('Select');
         } else {
-          if (wasEraser) leaveEraserBrushSize();
-          this.toolManager.selectTool('line');
+          void this.toolManager.selectTool('line');
           updateDrawingToggleLabels('Straight Line');
         }
-        drawingModeOptions.forEach(item => item.classList.remove('active'));
-        btn.classList.add('active');
+        setActiveDrawingModeOption(mode);
+      });
+
+      btn.addEventListener('dblclick', event => {
+        if (btn.getAttribute('data-drawing-mode') !== 'curve') return;
+        event.preventDefault();
+        event.stopPropagation();
+        const timer = curveActivationTimers.get(btn);
+        if (timer) {
+          window.clearTimeout(timer);
+          curveActivationTimers.delete(btn);
+        }
+        void activateCurveMode(true);
       });
     });
 
@@ -1955,7 +1999,7 @@ export class App {
     // Eraser toggle selects eraser tool
     document.querySelectorAll('#eraserModeToggle').forEach(toggle => {
       toggle.addEventListener('click', () => {
-        const wasEraser = preEraserBrushSize > 0;
+        const wasEraser = this.preEraserBrushSize > 0;
         if (!wasEraser) enterEraserBrushSize();
         const currentToolName = this.toolManager.activeToolName || 'line';
         this.toolManager.previousToolName = currentToolName;
@@ -1980,7 +2024,7 @@ export class App {
           .forEach(b => b.classList.add('active'));
 
         // Immediately activate the eraser tool
-        const wasEraser = preEraserBrushSize > 0;
+        const wasEraser = this.preEraserBrushSize > 0;
         if (!wasEraser) enterEraserBrushSize();
         const currentToolName = this.toolManager.activeToolName || 'line';
         this.toolManager.previousToolName = currentToolName;
@@ -2048,12 +2092,16 @@ export class App {
       }
       const currentTool = this.toolManager.activeTool;
       if (currentTool === this.toolManager.tools.line) {
+        setActiveDrawingModeOption('line');
         updateDrawingToggleLabels('Straight Line');
       } else if (currentTool === this.toolManager.tools.curve) {
-        updateDrawingToggleLabels('Curved Line');
+        setActiveDrawingModeOption('curve');
+        const repeat = this.toolManager.tools.curve?.repeatMode === true;
+        updateDrawingToggleLabels(repeat ? 'Curved Line ∞' : 'Curved Line');
       } else if (currentTool === this.toolManager.tools.privacy) {
         updateDrawingToggleLabels('Eraser Tool');
       } else if (currentTool === this.toolManager.tools.select) {
+        setActiveDrawingModeOption('select');
         updateDrawingToggleLabels('Select');
       }
       syncTextCursor();
@@ -3447,19 +3495,21 @@ export class App {
   setupUnitToggle(): void {
     const unitToggle = document.getElementById('unitToggleBtn');
     const unitToggleSecondary = document.getElementById('unitToggleBtnSecondary');
-    const unitToggles = [unitToggle, unitToggleSecondary].filter(
-      (el): el is HTMLElement => el instanceof HTMLElement
+    const unitToggles = [unitToggle].filter((el): el is HTMLElement => el instanceof HTMLElement);
+    const unitSegmentButtons = Array.from(
+      unitToggleSecondary?.querySelectorAll<HTMLButtonElement>('[data-unit]') || []
     );
     const unitSelector = document.getElementById('unitSelector') as HTMLSelectElement | null;
     const inchDisplayToggleWrap = document.getElementById('inchDisplayToggleWrap');
     const inchDisplayToggle = document.getElementById(
       'inchDisplayToggleBtn'
     ) as HTMLButtonElement | null;
-    const inchDisplayToggleSecondary = document.getElementById(
-      'inchDisplayToggleBtnSecondary'
-    ) as HTMLButtonElement | null;
-    const inchDisplayToggles = [inchDisplayToggle, inchDisplayToggleSecondary].filter(
+    const inchDisplayToggleSecondary = document.getElementById('inchDisplayToggleBtnSecondary');
+    const inchDisplayToggles = [inchDisplayToggle].filter(
       (el): el is HTMLButtonElement => el instanceof HTMLButtonElement
+    );
+    const inchDisplaySegmentButtons = Array.from(
+      inchDisplayToggleSecondary?.querySelectorAll<HTMLButtonElement>('[data-inch-display]') || []
     );
     const syncInchInputs = (): void => {
       const syncInput = (inchInputId: string, cmInputId?: string): void => {
@@ -3501,21 +3551,16 @@ export class App {
       this.currentInchDisplayMode = mode;
 
       inchDisplayToggles.forEach(toggle => {
-        const isSecondary = toggle === inchDisplayToggleSecondary;
-        toggle.textContent =
-          mode === 'decimal'
-            ? isSecondary
-              ? 'dec'
-              : 'decimals'
-            : isSecondary
-              ? 'frac'
-              : 'fractions';
+        toggle.textContent = mode === 'decimal' ? 'decimals' : 'fractions';
         toggle.setAttribute(
           'aria-label',
           `Switch inches display to ${mode === 'decimal' ? 'fractions' : 'decimals'}`
         );
         toggle.setAttribute('title', `Display inches as ${mode}`);
         toggle.setAttribute('aria-pressed', String(mode === 'fraction'));
+      });
+      inchDisplaySegmentButtons.forEach(toggle => {
+        toggle.setAttribute('aria-pressed', String(toggle.dataset.inchDisplay === mode));
       });
 
       if (this.measurementSystem?.setInchDisplayMode) {
@@ -3545,6 +3590,9 @@ export class App {
       unitToggles.forEach(toggle => {
         toggle.textContent = unitLabel;
       });
+      unitSegmentButtons.forEach(toggle => {
+        toggle.setAttribute('aria-pressed', String(toggle.dataset.unit === unit));
+      });
 
       if (this.measurementSystem) {
         this.measurementSystem.setUnit(unitLabel);
@@ -3556,9 +3604,10 @@ export class App {
       if (inchDisplayToggleWrap) {
         inchDisplayToggleWrap.classList.toggle('hidden', unit !== 'inch');
       }
-      if (inchDisplayToggleSecondary) {
-        inchDisplayToggleSecondary.classList.toggle('hidden', unit !== 'inch');
-      }
+      inchDisplaySegmentButtons.forEach(toggle => {
+        toggle.disabled = unit !== 'inch';
+      });
+      inchDisplayToggleSecondary?.classList.toggle('is-disabled', unit !== 'inch');
 
       if (this.metadataManager) {
         this.metadataManager.refreshAllMeasurements();
@@ -3578,6 +3627,11 @@ export class App {
         applyUnit(this.currentUnit === 'inch' ? 'cm' : 'inch');
       });
     });
+    unitSegmentButtons.forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        applyUnit(toggle.dataset.unit === 'cm' ? 'cm' : 'inch');
+      });
+    });
 
     // Also listen for direct changes to unit selector
     if (unitSelector) {
@@ -3591,28 +3645,60 @@ export class App {
         applyInchDisplayMode(this.currentInchDisplayMode === 'decimal' ? 'fraction' : 'decimal');
       });
     });
+    inchDisplaySegmentButtons.forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        if (toggle.disabled) return;
+        applyInchDisplayMode(toggle.dataset.inchDisplay === 'fraction' ? 'fraction' : 'decimal');
+      });
+    });
 
-    // Setup Show Measurements toggle
-    const showMeasurementsCheckbox = document.getElementById(
+    // Setup tag display mode toggle (3-state eye button)
+    // contextual → labels-only → measurements-only → contextual
+    const tagDisplayBtn = document.getElementById(
       'toggleShowMeasurements'
-    ) as HTMLInputElement | null;
-    if (showMeasurementsCheckbox) {
-      showMeasurementsCheckbox.addEventListener('change', (e: Event) => {
-        const target = e.target as HTMLInputElement | null;
-        if (!target) return;
-        const showMeasurements = target.checked;
-        console.log(`[ShowMeasurements] Toggle: ${showMeasurements}`);
+    ) as HTMLButtonElement | null;
+    if (tagDisplayBtn) {
+      const tagModes = ['contextual', 'labels-only', 'measurements-only'] as const;
+      const modeTooltips: Record<string, string> = {
+        contextual: 'Contextual: labels + measurements',
+        'labels-only': 'Labels only (click for measurements only)',
+        'measurements-only': 'Measurements only, frosted (click for contextual)',
+      };
+      const modeIcons: Record<string, string> = {
+        // open eye
+        contextual:
+          '<path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle>',
+        // eye with slash (labels only)
+        'labels-only':
+          '<path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle><path d="M3 3l18 18" stroke-width="2" stroke="currentColor"></path>',
+        // eye with line through pupil (measurements only)
+        'measurements-only':
+          '<path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.5"></circle><path d="M9 9l6 6" stroke-width="1.5" stroke="currentColor"></path>',
+      };
+      const updateBtnUI = (mode: string) => {
+        tagDisplayBtn.title = modeTooltips[mode] || mode;
+        tagDisplayBtn.setAttribute('aria-label', modeTooltips[mode] || mode);
+        tagDisplayBtn.setAttribute('aria-pressed', mode === 'contextual' ? 'true' : 'false');
+        tagDisplayBtn.dataset.tagMode = mode;
+        const svg = tagDisplayBtn.querySelector('svg');
+        if (svg) svg.innerHTML = modeIcons[mode] || modeIcons['contextual'];
+      };
 
-        // Update all tags to show/hide measurements
-        if (this.tagManager) {
-          this.tagManager.setShowMeasurements(showMeasurements);
-        }
+      tagDisplayBtn.addEventListener('click', () => {
+        if (!this.tagManager) return;
+        const currentMode = this.tagManager.tagDisplayMode || 'contextual';
+        const currentIdx = tagModes.indexOf(currentMode as (typeof tagModes)[number]);
+        const nextMode = tagModes[(currentIdx + 1) % tagModes.length];
+        console.log(`[TagDisplayMode] ${currentMode} → ${nextMode}`);
+        this.tagManager.setTagDisplayMode(nextMode);
+      });
+
+      window.addEventListener('tag-display-mode-change', event => {
+        updateBtnUI((event as CustomEvent<{ mode?: string }>).detail?.mode || 'contextual');
       });
 
       // Set initial state
-      if (this.tagManager) {
-        this.tagManager.setShowMeasurements(showMeasurementsCheckbox.checked);
-      }
+      updateBtnUI('contextual');
     }
   }
 
@@ -3627,24 +3713,19 @@ export class App {
           return;
         }
 
-        // Don't cycle if typing in an input/textarea or if text tool is active
-        // Exception: Allow cycling if the target is a measurement span (user wants to tab out of it)
+        // Preserve normal Tab behavior only while the user is editing text.
+        // Numeric/range toolbar controls must not trap the tool-cycle shortcut.
         const target = e.target as HTMLElement | null;
         const isMeasurement = target?.classList && target.classList.contains('stroke-measurement');
-        if (
-          (target?.tagName === 'INPUT' ||
-            target?.tagName === 'TEXTAREA' ||
-            target?.isContentEditable) &&
-          !isMeasurement
-        ) {
-          return;
-        }
-
-        // Don't cycle if text tool is active (user might be typing).
-        // Also prevent default focus navigation so Tab does not appear to switch modes.
-        if (this.toolManager.activeToolName === 'text') {
-          e.preventDefault();
-          e.stopPropagation();
+        const inputType =
+          target instanceof HTMLInputElement ? String(target.type || 'text').toLowerCase() : '';
+        const isTextInput =
+          target instanceof HTMLTextAreaElement ||
+          (target instanceof HTMLInputElement &&
+            ['text', 'search', 'email', 'url', 'tel', 'password'].includes(inputType)) ||
+          (target?.isContentEditable && !isMeasurement);
+        const textTool = this.toolManager?.tools?.text;
+        if (isTextInput || textTool?.activeTextObject?.isEditing) {
           return;
         }
 
@@ -3657,39 +3738,50 @@ export class App {
           (document.activeElement as HTMLElement).blur();
         }
 
-        const currentToolName = this.toolManager.activeToolName;
-        const drawingModeToggle = document.getElementById('drawingModeToggle');
-
-        if (currentToolName === 'line') {
-          // Straight Line -> Curved Line
-          this.toolManager.selectTool('curve');
-          if (drawingModeToggle) {
-            this.updateToggleLabel(drawingModeToggle, 'Curved Line');
-          }
-        } else if (currentToolName === 'curve') {
-          // Curved Line -> Eraser Tool
-          enterEraserBrushSize();
-          this.toolManager.selectTool('privacy');
-          if (drawingModeToggle) {
-            this.updateToggleLabel(drawingModeToggle, 'Eraser Tool');
-          }
-        } else if (currentToolName === 'privacy') {
-          // Eraser Tool -> Select
-          leaveEraserBrushSize();
-          this.toolManager.selectTool('select');
-          if (drawingModeToggle) {
-            this.updateToggleLabel(drawingModeToggle, 'Select');
-          }
-        } else {
-          // Select (or any other tool) -> Straight Line
-          this.toolManager.selectTool('line');
-          if (drawingModeToggle) {
-            this.updateToggleLabel(drawingModeToggle, 'Straight Line');
-          }
-        }
+        this.keyboardToolCycleQueue = this.keyboardToolCycleQueue.then(() =>
+          this.cycleDrawingTool()
+        );
       },
       true
     ); // Use capture phase
+  }
+
+  enterEraserBrushSize(defaultSize = 30): void {
+    const brushSize = document.getElementById('brushSize') as HTMLInputElement | null;
+    if (!brushSize) return;
+    if (this.preEraserBrushSize <= 0) {
+      this.preEraserBrushSize = Number.parseFloat(brushSize.value) || 2;
+    }
+    brushSize.value = String(defaultSize);
+    brushSize.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  leaveEraserBrushSize(): void {
+    if (this.preEraserBrushSize <= 0) return;
+    const brushSize = document.getElementById('brushSize') as HTMLInputElement | null;
+    if (!brushSize) return;
+    brushSize.value = String(this.preEraserBrushSize);
+    brushSize.dispatchEvent(new Event('input', { bubbles: true }));
+    this.preEraserBrushSize = 0;
+  }
+
+  async cycleDrawingTool(): Promise<void> {
+    const currentToolName = this.toolManager.activeToolName;
+    if (currentToolName === 'line') {
+      await this.toolManager.selectTool('curve');
+      return;
+    }
+    if (currentToolName === 'curve') {
+      this.enterEraserBrushSize();
+      await this.toolManager.selectTool('privacy');
+      return;
+    }
+    if (currentToolName === 'privacy') {
+      this.leaveEraserBrushSize();
+      await this.toolManager.selectTool('select');
+      return;
+    }
+    await this.toolManager.selectTool('line');
   }
 
   updateToggleLabel(button: Element, text: string): void {

@@ -238,6 +238,53 @@ test.describe('Mini-stepper image selection sync', () => {
     // Sidebar should also show this as active
     expect(sidebarActive).toBe(targetLabel);
   });
+
+  test('wheel over thumbnails scrolls and selects the centered image in Auto mode', async ({
+    appPage: page,
+  }) => {
+    const labels = await loadMultiImageProject(page);
+    expect(labels.length).toBeGreaterThanOrEqual(3);
+
+    await page.evaluate(async firstLabel => {
+      const manager = window.app!.projectManager;
+      await manager.switchView(firstLabel, true);
+      await manager.whenIdle?.();
+
+      window.scrollToSelectEnabled = true;
+      const list = document.getElementById('imageList')!;
+      list
+        .querySelector<HTMLElement>(`.image-container[data-label="${firstLabel}"]`)
+        ?.scrollIntoView({
+          behavior: 'auto',
+          block: 'center',
+        });
+
+      // Reproduce the guard left behind by an explicit thumbnail/pill navigation.
+      window.__suppressScrollSelectUntil = Date.now() + 2000;
+      window.__imageListProgrammaticScrollUntil = Date.now() + 2000;
+    }, labels[0]);
+
+    const list = page.locator('#imageList');
+    await page.evaluate(() => {
+      const panel = document.getElementById('imagePanel');
+      if (panel?.classList.contains('collapsed')) {
+        document.getElementById('toggleImagePanel')?.click();
+      }
+    });
+    await expect(list).toBeVisible();
+    const initialScrollTop = await list.evaluate(element => element.scrollTop);
+    await list.hover();
+    await page.mouse.wheel(0, 420);
+
+    await expect
+      .poll(() => list.evaluate(element => element.scrollTop))
+      .toBeGreaterThan(initialScrollTop + 20);
+    await expect
+      .poll(() => page.evaluate(() => window.app?.projectManager?.currentViewId), {
+        timeout: 3000,
+      })
+      .not.toBe(labels[0]);
+  });
 });
 
 test.describe('Mini-stepper visibility change resilience', () => {

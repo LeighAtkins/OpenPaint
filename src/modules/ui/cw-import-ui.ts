@@ -3,6 +3,7 @@ import {
   shouldAllowMeasurementSplitEdit,
 } from './measurement-split-workspace';
 import { imageRegistry } from '../ImageRegistry.js';
+import { getNextTagValue } from './next-tag-control.js';
 
 interface ImportedRow {
   id: string;
@@ -2061,9 +2062,7 @@ function createModal(): HTMLElement {
   };
 
   const readWorkspaceNextTag = (scopeLabel: string): string => {
-    const displayTag = normalizeGuideLabel(
-      document.getElementById('nextTagDisplay')?.textContent || ''
-    );
+    const displayTag = normalizeGuideLabel(getNextTagValue());
     if (displayTag) return displayTag;
 
     const calculated =

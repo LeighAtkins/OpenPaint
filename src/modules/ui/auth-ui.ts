@@ -11,16 +11,17 @@ import { isAuthEnabled, isSupabaseConfigured } from '@/utils/env';
 // ── Styles (injected once) ───────────────────────────────────────────────
 
 const AUTH_STYLES = /* css */ `
-  /* ── Fix toolbar overflow — let tbRight sit next to tbLeft, not far-right ── */
+  /* Keep workflow/account commands as one stable toolbar group. */
   #tbRight {
-    flex-shrink: 1 !important;
-    min-width: 0 !important;
+    flex: 0 0 auto !important;
+    min-width: max-content !important;
     margin-left: 0 !important;
   }
 
   .toolbar-wrap {
-    gap: 8px;
-    justify-content: center !important;
+    gap: 8px !important;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
   }
 
   /* ── Auth toolbar area ── */
@@ -51,7 +52,7 @@ const AUTH_STYLES = /* css */ `
     min-width: 0;
     flex: 0 0 auto;
     padding: 2px 8px 2px 2px;
-    border-radius: 999px;
+    border-radius: 7px;
     border: 1px solid rgba(148, 163, 184, 0.35);
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.96) 100%);
     box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
@@ -106,9 +107,7 @@ const AUTH_STYLES = /* css */ `
   }
 
   .auth-menu-panel {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 8px);
+    position: fixed;
     width: 150px;
     display: none;
     padding: 8px;
@@ -116,10 +115,10 @@ const AUTH_STYLES = /* css */ `
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.98);
     box-shadow: 0 18px 42px rgba(15, 23, 42, 0.18);
-    z-index: 2600;
+    z-index: 15000;
   }
 
-  .auth-toolbar-group.open .auth-menu-panel {
+  .auth-menu-panel.open {
     display: block;
   }
 
@@ -332,28 +331,43 @@ function createToolbarGroup(): HTMLElement {
   menu.className = 'auth-menu-panel';
   menu.appendChild(signOutBtn);
 
+  const positionMenu = () => {
+    const anchor = userArea.getBoundingClientRect();
+    const viewportGap = 8;
+    const menuWidth = 150;
+    menu.style.top = `${Math.min(anchor.bottom + viewportGap, window.innerHeight - 56)}px`;
+    menu.style.left = `${Math.max(viewportGap, Math.min(anchor.right - menuWidth, window.innerWidth - menuWidth - viewportGap))}px`;
+  };
+
+  const closeMenu = () => {
+    group.classList.remove('open');
+    menu.classList.remove('open');
+    userArea.setAttribute('aria-expanded', 'false');
+  };
+
   userArea.addEventListener('click', event => {
     event.preventDefault();
     event.stopPropagation();
     const nextOpen = !group.classList.contains('open');
     group.classList.toggle('open', nextOpen);
+    menu.classList.toggle('open', nextOpen);
     userArea.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
+    if (nextOpen) positionMenu();
   });
 
-  document.addEventListener('click', () => {
-    group.classList.remove('open');
-    userArea.setAttribute('aria-expanded', 'false');
-  });
+  document.addEventListener('click', closeMenu);
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') {
-      group.classList.remove('open');
-      userArea.setAttribute('aria-expanded', 'false');
+      closeMenu();
     }
+  });
+  window.addEventListener('resize', () => {
+    if (group.classList.contains('open')) positionMenu();
   });
 
   group.appendChild(signInBtn);
   group.appendChild(userArea);
-  group.appendChild(menu);
+  document.body.appendChild(menu);
 
   return group;
 }
