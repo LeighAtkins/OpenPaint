@@ -3214,6 +3214,14 @@ export class CanvasManager {
     this.fabricCanvas.on('mouse:down', (opt: FabricIEvent) => {
       if (!this.isInteractionActive()) return;
       const evt = opt.e;
+      const bendTarget = opt.target?.isTag ? opt.target.connectedStroke : opt.target;
+      const isLineBendGesture =
+        evt.altKey === true &&
+        window.app?.toolManager?.activeToolName === 'line' &&
+        bendTarget?.type === 'line' &&
+        Boolean(bendTarget?.strokeMetadata?.strokeLabel) &&
+        bendTarget?.isConnectorLine !== true;
+      if (isLineBendGesture) return;
       if (evt.altKey === true || evt.shiftKey === true) {
         console.log('[PAN] Starting pan gesture with', evt.altKey ? 'Alt' : 'Shift');
         this.fabricCanvas.isDrawingMode = false; // Temporarily disable drawing

@@ -13,6 +13,12 @@ import {
   normalizeViewportRecord as normalizeSharedViewportRecord,
   normalizeWorldRect as normalizeSharedWorldRect,
 } from '../utils/viewportRestore.ts';
+import {
+  focusNextTagValue,
+  getNextTagElement,
+  getNextTagValue,
+  setNextTagValue,
+} from './next-tag-control.js';
 
 export function initToolbarController() {
   const dispatchGuideNextTagChanged = (viewId, tag) => {
@@ -361,16 +367,28 @@ export function initToolbarController() {
 
     // Label background style toggle button
     const labelBackgroundToggleBtn = document.getElementById('labelBackgroundToggleBtn');
-    const backgroundStyles = ['solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'];
+    const backgroundStyles = [
+      'solid',
+      'no-fill',
+      'clear-black',
+      'clear-color',
+      'clear-white',
+      'frosted',
+    ];
     const backgroundLabels = {
       solid: 'Solid',
       'no-fill': 'No Fill',
       'clear-black': 'Clear Black',
       'clear-color': 'Clear Color',
       'clear-white': 'Clear White',
+      frosted: 'Frosted',
     };
 
-    if (labelBackgroundToggleBtn) {
+    if (
+      labelBackgroundToggleBtn &&
+      labelBackgroundToggleBtn.dataset.backgroundStyleBound !== 'true'
+    ) {
+      labelBackgroundToggleBtn.dataset.backgroundStyleBound = 'true';
       labelBackgroundToggleBtn.addEventListener('click', () => {
         console.log(
           '[TagBackground] Button clicked, app.tagManager available:',
@@ -392,7 +410,7 @@ export function initToolbarController() {
           console.warn('[TagBackground] Button clicked but tagManager not available');
         }
       });
-    } else {
+    } else if (!labelBackgroundToggleBtn) {
       console.warn('[TagBackground] Button element not found');
     }
 
@@ -5250,7 +5268,7 @@ export function initToolbarController() {
 
     // Update the next tag display
     function updateNextTagDisplay() {
-      const nextTagDisplay = document.getElementById('nextTagDisplay');
+      const nextTagDisplay = getNextTagElement();
       if (nextTagDisplay) {
         const currentImageLabel = resolveTagScopeLabel();
 
@@ -5275,7 +5293,7 @@ export function initToolbarController() {
           nextTag = normalizePredictedTag(nextTag);
         }
 
-        nextTagDisplay.textContent = nextTag;
+        setNextTagValue(nextTag);
         dispatchGuideNextTagChanged(currentImageLabel, nextTag);
       }
     }
@@ -5301,23 +5319,17 @@ export function initToolbarController() {
     );
 
     // Allow user to set the next tag directly by typing in the display
-    const nextTagEl = document.getElementById('nextTagDisplay');
+    const nextTagEl = getNextTagElement();
 
     // Store original value when user starts editing
     let originalTagValue = '';
 
     nextTagEl?.addEventListener('focus', e => {
       const target = e.target as HTMLElement | null;
-      originalTagValue = target?.textContent?.trim?.() || '';
+      originalTagValue = getNextTagValue();
       if (!target?.isConnected) return;
-      // Select all text for easy replacement
       try {
-        const range = document.createRange();
-        range.selectNodeContents(target);
-        const sel = window.getSelection();
-        if (!sel) return;
-        sel.removeAllRanges();
-        sel.addRange(range);
+        focusNextTagValue({ select: true });
       } catch {
         // Ignore selection errors when DOM updates mid-focus.
       }
@@ -5330,7 +5342,7 @@ export function initToolbarController() {
         e.target.blur(); // Trigger validation via blur
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        e.target.textContent = originalTagValue;
+        setNextTagValue(originalTagValue);
         e.target.blur();
       }
     });
@@ -5339,11 +5351,11 @@ export function initToolbarController() {
     nextTagEl?.addEventListener('blur', e => {
       const mode = typeof tagMode === 'string' ? tagMode : 'letters+numbers';
       const currentImageLabel = resolveTagScopeLabel();
-      const input = e.target.textContent.trim().toUpperCase();
+      const input = getNextTagValue().toUpperCase();
 
       // If empty or unchanged, restore original
       if (!input || input === originalTagValue) {
-        e.target.textContent = originalTagValue;
+        setNextTagValue(originalTagValue);
         return;
       }
 
@@ -5353,10 +5365,10 @@ export function initToolbarController() {
 
       if (!valid) {
         // Show error briefly and restore original
-        e.target.textContent = '❌ Invalid';
+        setNextTagValue('Invalid');
         e.target.classList.add('text-red-600');
         setTimeout(() => {
-          e.target.textContent = originalTagValue;
+          setNextTagValue(originalTagValue);
           e.target.classList.remove('text-red-600');
         }, 1000);
         return;
@@ -5377,7 +5389,7 @@ export function initToolbarController() {
       window.manualTagByImage = window.manualTagByImage || {};
       window.manualTagByImage[currentImageLabel] = input;
 
-      e.target.textContent = input;
+      setNextTagValue(input);
       dispatchGuideNextTagChanged(currentImageLabel, input);
       console.log('[nextTagDisplay] Updated next tag to:', input, '(manual override)');
     });

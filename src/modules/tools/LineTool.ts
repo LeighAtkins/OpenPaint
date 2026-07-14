@@ -28,6 +28,7 @@ export class LineTool extends BaseTool {
     this.snapThreshold = 10; // pixels
     this.startSnapTarget = null;
     this.endSnapTarget = null;
+    this.bendState = null;
 
     // Bind event handlers
     this.onMouseDown = this.onMouseDown.bind(this);
@@ -65,6 +66,8 @@ export class LineTool extends BaseTool {
   deactivate() {
     super.deactivate();
 
+    this.cancelLineBend();
+
     // Remove snap indicator
     if (this.snapIndicator) {
       this.canvas.remove(this.snapIndicator);
@@ -90,6 +93,22 @@ export class LineTool extends BaseTool {
     const evt = o.e;
 
     const isSnapHeld = this.isSnapModifier(evt);
+    const bendTarget = o.target?.isTag ? o.target.connectedStroke : o.target;
+
+    // Option on macOS / Alt elsewhere turns an existing straight measurement
+    // into an editable three-anchor curve. This takes precedence over canvas
+    // panning only when the pointer is directly over a real measurement line.
+    if (
+      evt.altKey &&
+      bendTarget?.type === 'line' &&
+      bendTarget?.strokeMetadata?.strokeLabel &&
+      !bendTarget.isConnectorLine
+    ) {
+      evt.preventDefault?.();
+      evt.stopPropagation?.();
+      this.startLineBend(bendTarget, this.canvas.getPointer(evt), o.target);
+      return;
+    }
 
     // If clicking on existing object AND snap modifier is NOT held, let Fabric handle dragging.
     // If snap modifier IS held, ignore the object and proceed to draw with snap.
@@ -173,6 +192,12 @@ export class LineTool extends BaseTool {
     const evt = o.e;
     const pointer = this.canvas.getPointer(evt);
     const isSnapHeld = this.isSnapModifier(evt);
+
+    if (this.bendState) {
+      evt.preventDefault?.();
+      this.updateLineBend(pointer);
+      return;
+    }
 
     if (!this.isDrawing) {
       // Not drawing - check for snap on hover
@@ -356,6 +381,11 @@ export class LineTool extends BaseTool {
   }
 
   onMouseUp(o) {
+    if (this.bendState) {
+      this.finishLineBend(this.canvas.getPointer(o.e));
+      return;
+    }
+
     if (!this.isDrawing) return;
 
     // Don't complete drawing if this is the end of a touch gesture
@@ -505,6 +535,212 @@ export class LineTool extends BaseTool {
 
   setColor(color) {
     this.strokeColor = color;
+  }
+
+  getLineWorldEndpoints(line) {
+    const managed = window.app?.arrowManager?.getLineWorldEndpoints?.(line);
+    if (managed) {
+      return {
+        start: { x: managed.x1, y: managed.y1 },
+        end: { x: managed.x2, y: managed.y2 },
+      };
+    }
+    if (!line?.calcLinePoints || !fabric?.util?.transformPoint) return null;
+    const points = line.calcLinePoints();
+    const matrix = line.calcTransformMatrix();
+    const start = fabric.util.transformPoint(new fabric.Point(points.x1, points.y1), matrix);
+    const end = fabric.util.transformPoint(new fabric.Point(points.x2, points.y2), matrix);
+    return { start: { x: start.x, y: start.y }, end: { x: end.x, y: end.y } };
+  }
+
+  cloneSerializable(value) {
+    if (!value) return value;
+    try {
+      return JSON.parse(JSON.stringify(value));
+    } catch (_error) {
+      return { ...value };
+    }
+  }
+
+  createBentPath(line, points) {
+    const curve = new fabric.Path(PathUtils.createSmoothPath(points), {
+      stroke: line.stroke,
+      strokeWidth: line.strokeWidth,
+      strokeUniform: line.strokeUniform,
+      fill: 'transparent',
+      opacity: line.opacity,
+      strokeDashArray: Array.isArray(line.strokeDashArray) ? [...line.strokeDashArray] : null,
+      strokeDashOffset: line.strokeDashOffset,
+      strokeLineCap: line.strokeLineCap,
+      strokeLineJoin: line.strokeLineJoin,
+      lineStyle: line.lineStyle,
+      selectable: false,
+      evented: false,
+      perPixelTargetFind: true,
+      padding: 8,
+      objectCaching: false,
+      excludeFromExport: true,
+    });
+    curve.customPoints = points.map(point => ({ x: point.x, y: point.y }));
+    curve.dashSettings = this.cloneSerializable(line.dashSettings);
+    curve.arrowSettings = this.cloneSerializable(line.arrowSettings);
+    FabricControls.canonicalizeCurveFromWorldPoints(curve);
+
+    const arrowManager = window.app?.arrowManager;
+    if (arrowManager) {
+      if (!curve.arrowSettings) arrowManager.applyArrows?.(curve);
+      if (line.arrowSettings) {
+        curve.arrowSettings = this.cloneSerializable(line.arrowSettings);
+        curve.arrowSettings.curveArrows = true;
+        delete curve.arrowSettings.baseLine;
+        delete curve.arrowSettings.basePath;
+        delete curve.arrowSettings.basePathOffset;
+        curve.arrowSettings.baselineCaptured = false;
+      }
+      arrowManager.attachArrowRendering?.(curve);
+      arrowManager.captureBaselineGeometry?.(curve);
+      arrowManager.syncArrowMetadata?.(curve);
+    }
+    return curve;
+  }
+
+  startLineBend(line, pointer, gestureTarget = line) {
+    if (this.bendState || !line?.canvas) return;
+    const endpoints = this.getLineWorldEndpoints(line);
+    if (!endpoints) return;
+
+    window.app?.historyManager?.saveState?.({ force: true, reason: 'line:bend-start' });
+    // Fabric resolves and starts its normal object transform before emitting
+    // mouse:down. Cancel it so dragging from a tag or the line cannot also move
+    // that object while the bend gesture is active.
+    this.canvas._currentTransform = null;
+    this.canvas.discardActiveObject();
+    const originalState = {
+      visible: line.visible !== false,
+      selectable: line.selectable !== false,
+      evented: line.evented !== false,
+    };
+    const gestureTargetState =
+      gestureTarget && gestureTarget !== line
+        ? {
+            selectable: gestureTarget.selectable !== false,
+            evented: gestureTarget.evented !== false,
+          }
+        : null;
+    if (gestureTargetState) {
+      gestureTarget.set({ selectable: false, evented: false });
+    }
+    line.set({ visible: false, selectable: false, evented: false });
+
+    const points = [endpoints.start, { x: pointer.x, y: pointer.y }, endpoints.end];
+    const curve = this.createBentPath(line, points);
+    this.canvas.add(curve);
+    this.bendState = {
+      line,
+      curve,
+      endpoints,
+      originalState,
+      gestureTarget,
+      gestureTargetState,
+    };
+    this.canvas.selection = false;
+    this.canvas.defaultCursor = 'crosshair';
+    this.canvas.requestRenderAll();
+  }
+
+  updateLineBend(pointer) {
+    const state = this.bendState;
+    if (!state) return;
+    state.curve.customPoints = [
+      { ...state.endpoints.start },
+      { x: pointer.x, y: pointer.y },
+      { ...state.endpoints.end },
+    ];
+    FabricControls.canonicalizeCurveFromWorldPoints(state.curve);
+    state.curve.dirty = true;
+    this.canvas.requestRenderAll();
+  }
+
+  finishLineBend(pointer) {
+    const state = this.bendState;
+    if (!state) return;
+    this.updateLineBend(pointer);
+
+    const { line, curve, endpoints, originalState, gestureTarget, gestureTargetState } = state;
+    const midpoint = {
+      x: (endpoints.start.x + endpoints.end.x) / 2,
+      y: (endpoints.start.y + endpoints.end.y) / 2,
+    };
+    const bendDistance = PathUtils.calculateDistance(curve.customPoints[1], midpoint);
+    this.bendState = null;
+    this.canvas.selection = true;
+    if (gestureTargetState && gestureTarget) gestureTarget.set(gestureTargetState);
+
+    if (bendDistance < 3) {
+      this.canvas.remove(curve);
+      line.set(originalState);
+      this.canvas.requestRenderAll();
+      return;
+    }
+
+    const metadata = { ...(line.strokeMetadata || {}) };
+    const imageLabel = metadata.imageLabel;
+    const strokeLabel = metadata.strokeLabel;
+    curve.strokeMetadata = metadata;
+    curve.set({
+      visible: originalState.visible,
+      selectable: originalState.selectable,
+      evented: originalState.evented,
+      excludeFromExport: false,
+      hasControls: false,
+      hasBorders: false,
+    });
+    curve.__lastCenter = curve.getCenterPoint();
+    FabricControls.createCurveControls(curve);
+
+    const metadataManager = window.app?.metadataManager;
+    if (imageLabel && strokeLabel && metadataManager) {
+      metadataManager.vectorStrokesByImage[imageLabel] ||= {};
+      metadataManager.vectorStrokesByImage[imageLabel][strokeLabel] = curve;
+    }
+
+    const tagManager = window.app?.tagManager;
+    if (imageLabel && strokeLabel && tagManager) {
+      const foundTag = tagManager.getTagObject?.(strokeLabel, imageLabel);
+      if (foundTag?.tagObj) {
+        foundTag.tagObj.connectedStroke = curve;
+        tagManager.updateConnector?.(strokeLabel, imageLabel);
+      } else {
+        tagManager.createTag(strokeLabel, imageLabel, curve);
+      }
+    }
+
+    // The global object:removed handler normally treats removal as deletion and
+    // removes the matching tag. This is a geometry replacement, not deletion,
+    // so detach the old object's metadata before removing it. The canonical
+    // metadata and tag now point at the curve above.
+    line.strokeMetadata = null;
+    this.canvas.remove(line);
+    this.canvas.discardActiveObject();
+    curve.setCoords();
+    metadataManager?.updateStrokeVisibilityControls?.();
+    this.canvas.requestRenderAll();
+    window.app?.historyManager?.saveState?.({ force: true, reason: 'line:bend-end' });
+  }
+
+  cancelLineBend() {
+    const state = this.bendState;
+    if (!state) return;
+    this.canvas?.remove?.(state.curve);
+    state.line?.set?.(state.originalState);
+    if (state.gestureTargetState && state.gestureTarget) {
+      state.gestureTarget.set(state.gestureTargetState);
+    }
+    this.bendState = null;
+    if (this.canvas) {
+      this.canvas.selection = true;
+      this.canvas.requestRenderAll();
+    }
   }
 
   setWidth(width) {

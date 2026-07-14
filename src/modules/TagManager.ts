@@ -5,6 +5,7 @@
 // Creates draggable, resizable tag objects that connect to strokes
 import { StrokeMetadataManager } from './StrokeMetadataManager.js';
 import { PathUtils } from './utils/PathUtils.js';
+import { getNextTagValue } from './ui/next-tag-control.js';
 
 export class TagManager {
   constructor(canvasManager, metadataManager) {
@@ -15,7 +16,9 @@ export class TagManager {
     this.tagSize = 34; // Default tag font size
     this.tagShape = 'square'; // 'square' or 'circle'
     this.tagMode = 'letters+numbers'; // 'letters' or 'letters+numbers'
-    this.tagBackgroundStyle = 'solid'; // 'solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'
+    this.tagBackgroundStyle = 'solid'; // 'solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white', 'frosted'
+    this.tagDisplayMode = 'contextual'; // 'contextual', 'labels-only', 'measurements-only'
+    this.savedTagBackgroundStyle = null; // Restored when leaving measurements-only mode
     this.strokeColor = '#3b82f6'; // Default stroke color for clear-color style
     this.connectorColor = '#ffffff';
     this.connectorMatchesLine = true;
@@ -29,12 +32,8 @@ export class TagManager {
     this.syncTagStyleConfigFromMetadata();
     this.syncTagSizeFromMetadata();
 
-    // Initialize showMeasurements to visible by default; sync checkbox state if present
-    const showMeasurementsCheckbox = document.getElementById('toggleShowMeasurements');
+    // Legacy compatibility flag. tagDisplayMode is the authoritative state.
     this.showMeasurements = true;
-    if (showMeasurementsCheckbox) {
-      showMeasurementsCheckbox.checked = true;
-    }
 
     // Initialize tag prediction system integration
     this.initTagPrediction();
@@ -144,9 +143,10 @@ export class TagManager {
   }
 
   getViewScopes(viewId) {
-    const base = this.normalizeImageLabel(
+    const normalized = this.normalizeImageLabel(
       viewId || window.app?.projectManager?.currentViewId || 'front'
     );
+    const base = this.getBaseScopeKey(normalized);
     const keys = Object.keys(this.metadataManager?.vectorStrokesByImage || {});
     const scopes = keys.filter(key => {
       if (key.startsWith('__guide__:')) return false;
@@ -184,7 +184,7 @@ export class TagManager {
     // Fallback: check nextTagDisplay directly
     const nextTagDisplay = document.getElementById('nextTagDisplay');
     if (nextTagDisplay) {
-      const tag = nextTagDisplay.textContent.trim().toUpperCase();
+      const tag = getNextTagValue().toUpperCase();
       if (tag && this.isValidTag(tag)) {
         return tag;
       }
@@ -633,7 +633,9 @@ export class TagManager {
     const scopeStyle = this.getTagScopeStyle(imageLabel);
     const orientation = this.getStrokeOrientation(strokeObject);
     const palette = this.getTagPalette(strokeLabel, orientation, imageLabel);
-    const backgroundStyle = String(scopeStyle.backgroundStyle || 'solid');
+    const storedBackgroundStyle = String(scopeStyle.backgroundStyle || 'solid');
+    const backgroundStyle =
+      this.tagDisplayMode === 'measurements-only' ? 'frosted' : storedBackgroundStyle;
     const tagShape = scopeStyle.tagShape === 'circle' ? 'circle' : 'square';
     const connectorColorMode = scopeStyle.connectorColorMode || 'same-as-line';
     const connectorDash = Array.isArray(scopeStyle.connectorDash)
@@ -858,6 +860,11 @@ export class TagManager {
       bgStroke = '#ffffff';
       bgStrokeWidth = resolvedStyle.outlineWidth;
       textFill = '#ffffff';
+    } else if (resolvedStyle.backgroundStyle === 'frosted') {
+      bgFill = 'rgba(255,255,255,0.55)';
+      bgStroke = resolvedStyle.palette.stroke;
+      bgStrokeWidth = resolvedStyle.outlineWidth;
+      textFill = resolvedStyle.palette.text;
     }
     // 'solid' style uses defaults
 
@@ -877,7 +884,78 @@ export class TagManager {
       evented: true,
       excludeFromExport: true, // Don't save tag backgrounds to canvas JSON
       isTagBackground: true,
+      isFrostedTagBackground: resolvedStyle.backgroundStyle === 'frosted',
     });
+
+    // Frosted-glass effect: override the background rect's render to blur the
+    // canvas content behind the tag before drawing the semi-opaque fill on top.
+    if (resolvedStyle.backgroundStyle === 'frosted') {
+      const canvasRef = canvas;
+      const frostedFill = bgFill;
+      const originalRectRender = background._render;
+      background._render = function (ctx, noTransform) {
+        // Get this rect's absolute position on the main canvas element
+        const canvasEl = canvasRef?.getElement?.();
+        const fabricCanvas = canvasRef;
+        if (canvasEl && fabricCanvas) {
+          // Compute the screen-space rect of this tag background by reading
+          // the tag group's transform. The background is centered at (0,0)
+          // within the group; the group's position + viewportTransform gives
+          // us the screen position.
+          const parentGroup = this.group;
+          if (parentGroup) {
+            const matrix = parentGroup.calcTransformMatrix();
+            const fabricApi = typeof fabric !== 'undefined' ? fabric : null;
+            if (fabricApi?.util?.multiplyTransformMatrices && fabricApi?.Point) {
+              const center = fabricApi.util.transformPoint(new fabricApi.Point(0, 0), matrix);
+              const halfW = (this.width || 0) / 2;
+              const halfH = (this.height || 0) / 2;
+              const vpt = fabricCanvas.viewportTransform || [1, 0, 0, 1, 0, 0];
+              const tlScreen = fabricApi.util.transformPoint(
+                new fabricApi.Point(center.x - halfW, center.y - halfH),
+                vpt
+              );
+              const brScreen = fabricApi.util.transformPoint(
+                new fabricApi.Point(center.x + halfW, center.y + halfH),
+                vpt
+              );
+              const retinaScale = fabricCanvas.getRetinaScaling?.() || 1;
+              const sx = Math.round(tlScreen.x * retinaScale);
+              const sy = Math.round(tlScreen.y * retinaScale);
+              const sw = Math.max(1, Math.round((brScreen.x - tlScreen.x) * retinaScale));
+              const sh = Math.max(1, Math.round((brScreen.y - tlScreen.y) * retinaScale));
+              // Draw blurred backdrop from the main canvas element
+              ctx.save();
+              try {
+                ctx.filter = 'blur(7px)';
+                // Offset from the rect's local origin (it's drawn centered)
+                ctx.drawImage(
+                  canvasEl,
+                  sx,
+                  sy,
+                  sw,
+                  sh,
+                  -this.width / 2,
+                  -this.height / 2,
+                  this.width,
+                  this.height
+                );
+              } catch {
+                // drawImage can fail if out of bounds; silently ignore
+              }
+              ctx.restore();
+            }
+          }
+        }
+        // Draw the semi-opaque tint fill on top of the blurred backdrop
+        this.__frostedFill = frostedFill;
+        const savedFill = this.fill;
+        this.fill = frostedFill;
+        originalRectRender.call(this, ctx, noTransform);
+        this.fill = savedFill;
+      };
+      background.objectCaching = false;
+    }
 
     // Update text color based on background style
     tagText.set('fill', textFill);
@@ -1636,12 +1714,23 @@ export class TagManager {
       context: 'tag',
     });
 
-    // Only show measurement if showMeasurements is true and measurement exists
+    // Build tag text based on the current display mode:
+    //   contextual:       "A1 = 24.5cm" (label + measurement)
+    //   labels-only:      "A1"         (label only)
+    //   measurements-only: "24.5cm"    (measurement only, falls back to label)
     let fullText;
-    if (this.showMeasurements && measurementString) {
-      fullText = `${strokeLabel} = ${measurementString}`;
-    } else {
-      fullText = strokeLabel;
+    const mode = this.tagDisplayMode || 'contextual';
+    switch (mode) {
+      case 'measurements-only':
+        fullText = measurementString || strokeLabel;
+        break;
+      case 'labels-only':
+        fullText = strokeLabel;
+        break;
+      case 'contextual':
+      default:
+        fullText = measurementString ? `${strokeLabel} = ${measurementString}` : strokeLabel;
+        break;
     }
 
     // Update the text
@@ -1899,19 +1988,22 @@ export class TagManager {
 
   // Set the background style for all tags
   setBackgroundStyle(style) {
-    this.tagBackgroundStyle = style; // 'solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'
+    this.tagBackgroundStyle = style;
 
-    const currentViewId = this.getCurrentTagScopeKey();
-    this.persistTagScopeStyle(currentViewId, { backgroundStyle: style, connectorAvoidsTag: true });
-    const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
-
-    Object.entries(strokes).forEach(([strokeLabel, strokeObj]) => {
-      const found = this.getTagObject(strokeLabel, currentViewId);
-      if (found && this.isRenderableStrokeObject(strokeObj)) {
-        // Recreate tag with new background style
-        this.createTag(strokeLabel, currentViewId, strokeObj);
+    const currentScope = this.getCurrentTagScopeKey();
+    const baseScope = this.getBaseScopeKey(currentScope);
+    const targetScopes = new Set([baseScope, currentScope, ...this.getViewScopes(baseScope)]);
+    targetScopes.forEach(scope => {
+      if (scope) {
+        this.persistTagScopeStyle(scope, {
+          backgroundStyle: style,
+          connectorAvoidsTag: true,
+        });
       }
     });
+    // Tags can be registered under either the base view or its active frame
+    // scope. Recreate the live registry instead of assuming one bucket.
+    this.refreshAllTagStyles();
   }
 
   // Set the stroke color for clear-color style
@@ -2005,17 +2097,43 @@ export class TagManager {
 
   // Toggle showing measurements on all tags
   setShowMeasurements(show) {
-    this.showMeasurements = show;
+    this.setTagDisplayMode(show ? 'contextual' : 'labels-only');
+  }
 
-    // Update all existing tags
-    const currentViewId = this.normalizeImageLabel(
-      window.app?.projectManager?.currentViewId || 'front'
+  /**
+   * Set the tag display mode — controls what text appears on tags and whether
+   * the frosted-glass background is applied.
+   *   'contextual':       "A1 = 24.5cm" (label + measurement)
+   *   'labels-only':      "A1"          (label only)
+   *   'measurements-only': "24.5cm"     (measurement only + frosted background)
+   */
+  setTagDisplayMode(mode) {
+    const validModes = ['contextual', 'labels-only', 'measurements-only'];
+    if (!validModes.includes(mode)) return;
+    const prevMode = this.tagDisplayMode || 'contextual';
+    this.tagDisplayMode = mode;
+    this.showMeasurements = mode === 'contextual';
+
+    // Automatic frost is a display override, not a persisted image style. This
+    // preserves each image's manual background choice while switching views.
+    if (mode === 'measurements-only' && prevMode !== 'measurements-only') {
+      this.savedTagBackgroundStyle = this.tagBackgroundStyle;
+      this.tagBackgroundStyle = 'frosted';
+    } else if (mode !== 'measurements-only' && prevMode === 'measurements-only') {
+      const currentScopeStyle = this.getTagScopeStyle(this.getCurrentTagScopeKey());
+      this.tagBackgroundStyle =
+        currentScopeStyle?.backgroundStyle || this.savedTagBackgroundStyle || 'solid';
+      this.savedTagBackgroundStyle = null;
+    }
+
+    // Recreate registered tags so text, bounds and frosted backgrounds change
+    // together without touching stroke/image coordinates.
+    this.refreshAllTagStyles();
+    window.dispatchEvent(
+      new CustomEvent('tag-display-mode-change', {
+        detail: { mode },
+      })
     );
-    const strokes = this.metadataManager.vectorStrokesByImage[currentViewId] || {};
-
-    Object.keys(strokes).forEach(strokeLabel => {
-      this.updateTagText(strokeLabel, currentViewId);
-    });
   }
 
   // Update tags when stroke visibility changes

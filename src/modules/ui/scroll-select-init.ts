@@ -121,6 +121,12 @@ export function initScrollSelectSystem() {
     if (toggle) {
       toggle.checked = enabled;
     }
+    document.querySelectorAll<HTMLButtonElement>('[data-scroll-select]').forEach(button => {
+      button.setAttribute(
+        'aria-pressed',
+        String(button.dataset.scrollSelect === (enabled ? 'auto' : 'manual'))
+      );
+    });
   }
 
   function isScrollSelectEnabled(): boolean {
@@ -143,6 +149,28 @@ export function initScrollSelectSystem() {
       return false;
     }
     return window.scrollToSelectEnabled !== false;
+  }
+
+  function beginExplicitImageNavigation(durationMs = 800): number {
+    const suppressUntil = Date.now() + durationMs;
+    window.__cancelPendingScrollSelect?.();
+    window.__imageListUserScrollUntil = 0;
+    window.__suppressScrollSelectUntil = Math.max(
+      Number(window.__suppressScrollSelectUntil) || 0,
+      suppressUntil
+    );
+    window.__imageListProgrammaticScrollUntil = Math.max(
+      Number(window.__imageListProgrammaticScrollUntil) || 0,
+      suppressUntil
+    );
+    return suppressUntil;
+  }
+  window.__beginExplicitImageNavigation = beginExplicitImageNavigation;
+
+  function isImageListProgrammaticScrollActive(): boolean {
+    const now = Date.now();
+    const userScrollActive = Number(window.__imageListUserScrollUntil) > now;
+    return !userScrollActive && Number(window.__imageListProgrammaticScrollUntil) > now;
   }
 
   const MIN_CENTER_TOLERANCE = 8;
@@ -243,6 +271,16 @@ export function initScrollSelectSystem() {
         }
       });
     }
+    document.querySelectorAll<HTMLButtonElement>('[data-scroll-select]').forEach(button => {
+      button.addEventListener('click', () => {
+        const enabled = button.dataset.scrollSelect !== 'manual';
+        setScrollSelectEnabled(enabled, 'segment');
+        if (enabled) {
+          updateImageListPadding();
+          syncSelectionToCenteredThumbnail();
+        }
+      });
+    });
   }
 
   initScrollSelectToggle();
@@ -526,10 +564,7 @@ export function initScrollSelectSystem() {
           if (requestedGeneration !== scrollSelectionGeneration) return;
           if (!isScrollSelectEnabled()) return;
           // Skip if this is a programmatic scroll
-          if (
-            window.__imageListProgrammaticScrollUntil &&
-            Date.now() < window.__imageListProgrammaticScrollUntil
-          ) {
+          if (isImageListProgrammaticScrollActive()) {
             return;
           }
 
@@ -566,10 +601,7 @@ export function initScrollSelectSystem() {
       const imageObserver = new IntersectionObserver(
         entries => {
           // Skip if this is a programmatic scroll
-          if (
-            window.__imageListProgrammaticScrollUntil &&
-            Date.now() < window.__imageListProgrammaticScrollUntil
-          ) {
+          if (isImageListProgrammaticScrollActive()) {
             return;
           }
 
@@ -613,10 +645,7 @@ export function initScrollSelectSystem() {
       const handleScrollEnd = () => {
         if (window.__imageListReorderInProgress) return;
         // Skip if this is a programmatic scroll
-        if (
-          window.__imageListProgrammaticScrollUntil &&
-          Date.now() < window.__imageListProgrammaticScrollUntil
-        ) {
+        if (isImageListProgrammaticScrollActive()) {
           return;
         }
 
@@ -634,15 +663,28 @@ export function initScrollSelectSystem() {
 
       // Track scroll state for better snap detection
       let isScrolling = false;
+
+      // A wheel/trackpad gesture over the thumbnail rail is explicit user intent.
+      // It must supersede guards left by an earlier click or programmatic centering;
+      // otherwise the list moves while Auto mode silently keeps the old image active.
+      imageList.addEventListener(
+        'wheel',
+        () => {
+          if (window.__imageListReorderInProgress) return;
+          window.__cancelPendingScrollSelect?.();
+          window.__imageListUserScrollUntil = Date.now() + 1200;
+          window.__suppressScrollSelectUntil = 0;
+          window.__imageListProgrammaticScrollUntil = 0;
+        },
+        { passive: true }
+      );
+
       imageList.addEventListener(
         'scroll',
         () => {
           if (window.__imageListReorderInProgress) return;
           // Skip if this is a programmatic scroll
-          if (
-            window.__imageListProgrammaticScrollUntil &&
-            Date.now() < window.__imageListProgrammaticScrollUntil
-          ) {
+          if (isImageListProgrammaticScrollActive()) {
             return;
           }
 
@@ -688,10 +730,7 @@ export function initScrollSelectSystem() {
           'scrollend',
           () => {
             // Skip if this is a programmatic scroll
-            if (
-              window.__imageListProgrammaticScrollUntil &&
-              Date.now() < window.__imageListProgrammaticScrollUntil
-            ) {
+            if (isImageListProgrammaticScrollActive()) {
               return;
             }
 
@@ -1376,6 +1415,7 @@ export function initScrollSelectSystem() {
           const stepperRect = scrollEl.getBoundingClientRect();
           const btnRect = btn.getBoundingClientRect();
           const delta = btnRect.left - stepperRect.left + btnRect.width / 2 - stepperRect.width / 2;
+          beginExplicitImageNavigation();
           scrollEl.scrollBy({ left: delta, behavior: 'smooth' });
 
           // Then switch to the image
@@ -1401,7 +1441,10 @@ export function initScrollSelectSystem() {
                   const elRect = container.getBoundingClientRect();
                   const delta = elRect.top - listRect.top + elRect.height / 2 - listRect.height / 2;
                   // Suppress scroll-driven switching during this smooth scroll
-                  window.__imageListProgrammaticScrollUntil = Date.now() + 200;
+                  window.__imageListProgrammaticScrollUntil = Math.max(
+                    Number(window.__imageListProgrammaticScrollUntil) || 0,
+                    Date.now() + 200
+                  );
                   list.scrollBy({ top: delta, behavior: 'smooth' });
                 }
               }
@@ -1590,7 +1633,8 @@ export function initScrollSelectSystem() {
 
       window.addEventListener('openpaint:view-switched', () => {
         window.__miniStepperLastAutoScrollLabel = '';
-        window.__miniStepperProgrammaticScrollUntil = Date.now() + 200;
+        window.__miniStepperProgrammaticScrollUntil =
+          Date.now() + (window.__scrollSelectDrivenSwitch ? 30 : 200);
         updateActivePill({ animate: false, forceCenter: true });
         requestAnimationFrame(() => {
           updateActivePill({ animate: false, forceCenter: true });

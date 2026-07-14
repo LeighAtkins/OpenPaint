@@ -2858,7 +2858,95 @@
       #darkOverlay {
         transition: none;
       }
+
+      /* ── Elements panel header ── */
+      .elements-panel-header {
+        min-height: 62px;
+        padding: 10px 12px;
+        border-bottom: 1px solid #e8ecf2;
+      }
+      .elements-panel-title {
+        margin: 0;
+        color: #121826;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 20px;
+      }
+      .elements-panel-count {
+        display: inline-flex;
+        min-width: 22px;
+        height: 20px;
+        padding: 0 6px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #dbe1ea;
+        border-radius: 6px;
+        background: #f6f8fb;
+        color: #526077;
+        font-size: 11px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+      .elements-panel-subtitle {
+        max-width: 190px;
+        margin: 1px 0 0;
+        overflow: hidden;
+        color: #7a8699;
+        font-size: 11px;
+        line-height: 16px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .elements-header-actions {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+      }
+      .elements-icon-button,
+      .elements-icon-toggle {
+        display: inline-flex;
+        width: 26px;
+        height: 26px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        background: transparent;
+        color: #647086;
+        cursor: pointer;
+      }
+      .elements-icon-button:hover,
+      .elements-icon-toggle:hover {
+        border-color: #dbe1ea;
+        background: #f6f8fb;
+        color: #172033;
+      }
+      .elements-icon-button svg,
+      .elements-icon-toggle svg {
+        width: 15px;
+        height: 15px;
+        stroke-width: 1.8;
+      }
+      .elements-icon-toggle {
+        position: relative;
+      }
+      .elements-icon-toggle input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      .elements-icon-toggle:has(input:not(:checked)) {
+        color: #a7b0bf;
+      }
+      .elements-icon-toggle:has(input:not(:checked)) svg {
+        opacity: 0.55;
+      }
     </style>
+    <link rel="stylesheet" href="/css/workstation-ui.css" />
   </head>
 
   <body
@@ -2874,7 +2962,6 @@
           <button id="paste" class="tbtn" title="Upload Images — or paste with Ctrl+V / Cmd+V" aria-label="Upload Images">
             <span class="label-long">Upload Images</span><span class="label-short">Upload</span>
           </button>
-          <button id="clear" class="tbtn">Clear</button>
           <div id="drawingModeWrapper" class="shape-toggle shape-active">
             <button
               id="drawingModeToggle"
@@ -3132,6 +3219,10 @@
                   Save
                 </button>
               </div>
+              <div class="toolbar-menu-danger-zone">
+                <span>Destructive</span>
+                <button id="clear" class="tbtn toolbar-menu-danger" type="button">Clear project</button>
+              </div>
             </div>
           </div>
         </div>
@@ -3308,7 +3399,7 @@
             <!-- Load .opaint button -->
             <div class="flex justify-center">
               <button
-                id="loadProject"
+                id="loadProjectLegacy"
                 title="Load .opaint archive"
                 class="px-4 py-2 bg-white border border-gray-300 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-all"
               >
@@ -3352,7 +3443,7 @@
           <!-- Primary Tools -->
           <div class="flex items-center gap-3">
             <button
-              id="clear"
+              id="clearLegacy"
               class="px-4 py-2.5 bg-danger-500 hover:bg-danger-600 active:bg-danger-700 text-white text-sm font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 active:scale-95"
             >
               Clear
@@ -3652,13 +3743,12 @@
           <p id="elementsScopeSummary" class="elements-panel-subtitle">Current image</p>
         </div>
         <div class="elements-header-actions">
-          <label class="elements-icon-toggle" title="Show or hide all measurement labels">
-            <input id="toggleShowMeasurements" type="checkbox" checked />
+          <button id="toggleShowMeasurements" type="button" class="elements-icon-button" title="Contextual: labels + measurements" aria-label="Toggle tag display mode" data-tag-mode="contextual">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
               <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
               <circle cx="12" cy="12" r="2.5"></circle>
             </svg>
-          </label>
+          </button>
           <button
             id="toggleStrokePanel"
             class="elements-icon-button"
@@ -3681,18 +3771,18 @@
       >
         <div id="elementsControls" class="elements-controls">
           <div class="elements-next-tag-control">
-            <div class="elements-field-copy">
+            <label class="elements-field-copy" for="nextTagDisplay">
               <span class="elements-kicker">Next tag</span>
-              <div
+              <input
                 id="nextTagDisplay"
-                contenteditable="true"
                 spellcheck="false"
                 class="elements-next-tag-value"
                 title="Type to set the next tag"
-              >
-                A
-              </div>
-            </div>
+                aria-label="Next measurement tag"
+                value="A"
+                autocomplete="off"
+              />
+            </label>
             <button
               id="tagModeToggle"
               title="Change tag sequence"
@@ -3710,21 +3800,16 @@
             >
               Hide all
             </button>
-            <button
-              id="unitToggleBtnSecondary"
-              class="elements-quiet-button elements-unit-button"
-              title="Toggle measurement units"
-            >
-              inches
-            </button>
-            <button
-              id="inchDisplayToggleBtnSecondary"
-              class="elements-quiet-button elements-decimal-button hidden"
-              title="Display inches as decimals"
-              aria-pressed="false"
-            >
-              dec
-            </button>
+            <div class="elements-unit-controls" aria-label="Measurement display">
+              <div id="unitToggleBtnSecondary" class="op-segmented" role="group" aria-label="Measurement unit">
+                <button type="button" data-unit="inch" aria-pressed="true" title="Use inches">In</button>
+                <button type="button" data-unit="cm" aria-pressed="false" title="Use centimetres">Cm</button>
+              </div>
+              <div id="inchDisplayToggleBtnSecondary" class="op-segmented" role="group" aria-label="Inch display format">
+                <button type="button" data-inch-display="decimal" aria-pressed="true" title="Show decimal inches">Dec</button>
+                <button type="button" data-inch-display="fraction" aria-pressed="false" title="Show fractional inches">Frac</button>
+              </div>
+            </div>
             <button
               id="elementsFrameToggleBtn"
               type="button"
@@ -3848,7 +3933,7 @@
     <!-- Image Gallery Panel (Right Sidebar) -->
     <div
       id="imagePanel"
-      class="floating-panel flex-shrink-0 w-72 transition-all duration-300 overflow-hidden bg-white border-l border-gray-200 flex flex-col shadow-xl z-10"
+      class="floating-panel images-panel flex-shrink-0 transition-all duration-300 overflow-hidden bg-white border-l border-gray-200 flex flex-col z-10"
       style="
         position: fixed !important;
         top: var(--toolbar-height, 48px) !important;
@@ -3858,22 +3943,22 @@
     >
       <div
         id="imagePanelHeader"
-        class="flex items-center justify-between p-3 border-b border-gray-200/50 bg-white"
+        class="images-panel-header flex items-center justify-between bg-white"
       >
-        <h3 class="text-sm font-semibold text-slate-800">Images</h3>
-        <div class="flex items-center gap-2">
-          <label
-            class="flex items-center gap-1 text-[11px] font-medium text-slate-600 bg-slate-100 border border-slate-200 rounded-lg px-2 py-1 select-none"
-            title="Toggle whether scrolling selects images automatically"
-          >
-            <input type="checkbox" id="scrollSelectToggle" class="accent-blue-600" checked />
-            <span>Scroll selects</span>
-            <span
-              class="text-[10px] uppercase tracking-wide text-blue-600"
-              id="scrollSelectModeLabel"
-              >Auto</span
-            >
-          </label>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <h3 class="images-panel-title">Images</h3>
+            <span id="imagesVisibleSummary" class="elements-panel-count">0</span>
+          </div>
+          <p class="images-panel-subtitle">Project views</p>
+        </div>
+        <div class="images-header-actions">
+          <div class="images-scroll-mode op-segmented" role="group" aria-label="Scroll selection mode" title="Choose whether scrolling selects images">
+            <input type="checkbox" id="scrollSelectToggle" checked />
+            <button type="button" data-scroll-select="auto" aria-pressed="true">Auto</button>
+            <button type="button" data-scroll-select="manual" aria-pressed="false">Manual</button>
+            <span id="scrollSelectModeLabel" class="sr-only">Auto</span>
+          </div>
           <button
             type="button"
             id="compareDeselectAll"
@@ -3888,11 +3973,11 @@
           </button>
           <button
             id="toggleImagePanel"
-            class="text-slate-500 hover:text-slate-700 rounded-lg p-1 transition-colors"
+            class="elements-icon-button"
             title="Minimize/Expand Panel"
             aria-label="Toggle image panel"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"

@@ -102,6 +102,14 @@ async function openBindGallery(page: Page): Promise<void> {
   });
   await expect(page.locator('.guide-gallery-overlay.visible')).toBeVisible();
   await expect(page.locator('[data-gallery-mode="bind"].active')).toBeVisible();
+  await expect
+    .poll(() =>
+      page.locator('.guide-gallery-link-grid.bind-mode').evaluate(element => {
+        const style = getComputedStyle(element);
+        return style.opacity === '1' && style.maxHeight === 'none' && element.clientHeight >= 260;
+      })
+    )
+    .toBe(true);
 }
 
 async function bindTestGuideToFrame(page: Page, imageId: string, frameId: string): Promise<void> {
@@ -122,6 +130,9 @@ async function bindTestGuideToFrame(page: Page, imageId: string, frameId: string
 
   await page.locator(`[data-bind-preview-image="${imageId}"]`).click();
   await page.locator('#guideGalleryBindFrameTarget').selectOption(frameId);
+  await expect(page.locator('[data-link-action="bind-preview"]')).toBeDisabled();
+  await page.locator('#guideGalleryBindModelView').selectOption('front');
+  await expect(page.locator('[data-link-action="bind-preview"]')).toBeEnabled();
   await page.locator('[data-link-action="bind-preview"]').click();
 
   await expect
@@ -175,7 +186,7 @@ async function bindGuideViaGallery(
   await openBindGallery(page);
   await expect(page.locator(`[data-select-code="${options.code}"]`).first()).toBeVisible();
 
-  await page.evaluate(({ imageId, frameId, code, variant }) => {
+  await page.evaluate(({ code }) => {
     const checkbox = document.querySelector(`[data-select-code="${code}"]`);
     if (!(checkbox instanceof HTMLInputElement)) {
       throw new Error(`Guide checkbox not found for ${code}`);
@@ -184,32 +195,19 @@ async function bindGuideViaGallery(
       checkbox.checked = true;
       checkbox.dispatchEvent(new Event('change', { bubbles: true }));
     }
-
-    const imageButton = document.querySelector(`[data-bind-preview-image="${imageId}"]`);
-    if (!(imageButton instanceof HTMLElement)) {
-      throw new Error(`Bind preview image button not found for ${imageId}`);
-    }
-    imageButton.click();
-
-    const frameSelect = document.querySelector('#guideGalleryBindFrameTarget');
-    if (!(frameSelect instanceof HTMLSelectElement)) {
-      throw new Error('Frame target select not found');
-    }
-    frameSelect.value = frameId;
-    frameSelect.dispatchEvent(new Event('change', { bubbles: true }));
-
-    const modelViewSelect = document.querySelector('#guideGalleryBindModelView');
-    if (modelViewSelect instanceof HTMLSelectElement) {
-      modelViewSelect.value = variant;
-      modelViewSelect.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-
-    const bindButton = document.querySelector('[data-link-action="bind-preview"]');
-    if (!(bindButton instanceof HTMLElement)) {
-      throw new Error('Bind preview button not found');
-    }
-    bindButton.click();
   }, options);
+
+  await page.locator(`[data-bind-preview-image="${options.imageId}"]`).first().click();
+  await expect(page.locator('#guideGalleryBindPreviewModelMeta')).toContainText(options.code);
+  await page.locator('#guideGalleryBindFrameTarget').selectOption(options.frameId);
+
+  const viewSelect = page.locator('#guideGalleryBindModelView');
+  const bindButton = page.locator('[data-link-action="bind-preview"]');
+  await expect(viewSelect).toHaveValue('');
+  await expect(bindButton).toBeDisabled();
+  await viewSelect.selectOption(options.variant);
+  await expect(bindButton).toBeEnabled();
+  await bindButton.click();
 
   await page.waitForTimeout(400);
   await page.locator('.guide-gallery-close').click();
@@ -769,5 +767,148 @@ test.describe('Measurement Guide Frame Binding', () => {
     expect(result.eventCount).toBe(1);
     expect(result.events[0]?.viewId).toContain('next-tag-image');
     expect(result.events[0]?.tag).toBeTruthy();
+  });
+
+  test('bound guide advances the canonical drawing label and survives repeated split toggles', async ({
+    page,
+  }) => {
+    await page.route('**/api/measurement-guides/codes', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          codes: ['CS3B-SA-HB'],
+          viewsByCode: { 'CS3B-SA-HB': ['front', 'back', 'side'] },
+        }),
+      });
+    });
+    await page.route('**/api/measurement-guides/svg**', async route => {
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+          <rect width="800" height="600" fill="#f8fafc" />
+          <path d="M100 470 L240 210 L560 210 L700 470 Z" fill="none" stroke="#334155" stroke-width="8" />
+          <g id="mA1cm"><line x1="180" y1="280" x2="620" y2="280" stroke="#ef4444" stroke-width="8" /></g>
+          <g id="bA1cm"><text x="650" y="280">000.00</text></g>
+          <g id="cA1cm"><rect x="360" y="235" width="80" height="40" fill="#fff"/><text x="380" y="264">A1</text></g>
+          <g id="mA2cm"><line x1="180" y1="380" x2="620" y2="380" stroke="#14b8a6" stroke-width="8" /></g>
+          <g id="bA2cm"><text x="650" y="380">000.00</text></g>
+          <g id="cA2cm"><rect x="360" y="335" width="80" height="40" fill="#fff"/><text x="380" y="364">A2</text></g>
+        </svg>`;
+      await route.fulfill({ status: 200, contentType: 'image/svg+xml', body: svg });
+    });
+
+    await page.goto('/');
+    await waitForApp(page);
+    await seedProjectImages(page, [{ label: 'customer-front-photo', color: '#e2e8f0' }]);
+    await switchToView(page, 'customer-front-photo');
+    await createFrameTabs(page, 1);
+    const [frame] = await getNormalFrameTabs(page, 'customer-front-photo');
+    await setFrameBindings(page, 'customer-front-photo', [
+      { frameId: frame.id, code: 'CS3B-SA-HB', variant: 'front' },
+    ]);
+    await activateFrameTab(page, frame.id);
+
+    await expect(page.locator('#measurementGuideIndicator')).toBeVisible();
+    await expect(page.locator('.measurement-guide-indicator-chip.active')).toHaveText('A1');
+    await expect(page.locator('#nextTagDisplay')).toHaveValue('A1');
+    await expect(page.locator('.measurement-guide-indicator-hero img')).toHaveAttribute(
+      'src',
+      /^data:image\/png/
+    );
+
+    await page.evaluate(
+      ({ viewId, frameId }) => {
+        const metadataManager = window.app?.metadataManager;
+        const scopeId = `${viewId}::tab:${frameId}`;
+        metadataManager.vectorStrokesByImage[scopeId] = {
+          ...(metadataManager.vectorStrokesByImage[scopeId] || {}),
+          A1: { type: 'line', visible: true },
+        };
+        window.dispatchEvent(
+          new CustomEvent('openpaint:stroke-created', {
+            detail: { imageLabel: scopeId, strokeLabel: 'A1' },
+          })
+        );
+      },
+      { viewId: 'customer-front-photo', frameId: frame.id }
+    );
+
+    await expect(page.locator('.measurement-guide-indicator-chip.active')).toHaveText('A2');
+    await expect(page.locator('#nextTagDisplay')).toHaveValue('A2');
+
+    await page.evaluate(
+      ({ viewId, frameId }) => {
+        const metadataManager = window.app?.metadataManager;
+        const scopeId = `${viewId}::tab:${frameId}`;
+        metadataManager.vectorStrokesByImage[scopeId].A2 = { type: 'line', visible: true };
+        window.dispatchEvent(
+          new CustomEvent('openpaint:stroke-created', {
+            detail: { imageLabel: scopeId, strokeLabel: 'A2' },
+          })
+        );
+      },
+      { viewId: 'customer-front-photo', frameId: frame.id }
+    );
+
+    await expect(page.locator('.measurement-guide-indicator-chip.active')).toHaveCount(0);
+    await expect(page.locator('.measurement-guide-indicator-complete')).toHaveText(
+      'Guide complete'
+    );
+    const completionState = await page.evaluate(
+      ({ viewId, frameId }) => {
+        const scopeId = `${viewId}::tab:${frameId}`;
+        return {
+          scopedSeed: window.guideOneTimeTagByImage?.[scopeId] || '',
+          baseSeed: window.guideOneTimeTagByImage?.[viewId] || '',
+        };
+      },
+      { viewId: 'customer-front-photo', frameId: frame.id }
+    );
+    expect(completionState).toEqual({ scopedSeed: '', baseSeed: '' });
+
+    await page.evaluate(
+      ({ viewId, frameId }) => {
+        const scopeId = `${viewId}::tab:${frameId}`;
+        window.labelsByImage = window.labelsByImage || {};
+        window.manualTagByImage = window.manualTagByImage || {};
+        window.labelsByImage[scopeId] = 'Z9';
+        window.manualTagByImage[scopeId] = 'Z9';
+        window.updateNextTagDisplay?.();
+        window.dispatchEvent(new Event('openpaint:guide-next-tag-changed'));
+      },
+      { viewId: 'customer-front-photo', frameId: frame.id }
+    );
+    await expect(page.locator('#nextTagDisplay')).toHaveValue('Z9');
+
+    for (let cycle = 0; cycle < 2; cycle += 1) {
+      await enableGuideSplit(page, { code: 'CS3B-SA-HB', variant: 'front' });
+      await expect(page.locator('#guideSplitCompareCanvasHost canvas').first()).toBeVisible();
+      await expect
+        .poll(() =>
+          page.evaluate(() => {
+            const canvas = window.app?.compareCanvasManager?.fabricCanvas?.lowerCanvasEl;
+            const context = canvas?.getContext?.('2d', { willReadFrequently: true });
+            if (!canvas || !context) return 0;
+            const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+            let visible = 0;
+            for (let index = 0; index < pixels.length; index += 32) {
+              const alpha = pixels[index + 3];
+              const nearWhite =
+                pixels[index] > 248 && pixels[index + 1] > 248 && pixels[index + 2] > 248;
+              if (alpha > 0 && !nearWhite) visible += 1;
+            }
+            return visible;
+          })
+        )
+        .toBeGreaterThan(20);
+      await page.evaluate(() => window.setGuideSplitEnabled?.(false));
+      await expect(page.locator('#guideSplitRoot')).toHaveCount(0);
+    }
+
+    await expect(page.locator('.measurement-guide-indicator-complete')).toHaveText(
+      'Guide complete'
+    );
+    await expect(page.locator('#nextTagDisplay')).toHaveValue('Z9');
   });
 });

@@ -10,6 +10,9 @@ function makeCanvas(objects: Array<Record<string, unknown>>) {
 describe('StrokeMetadataManager vector metadata', () => {
   beforeEach(() => {
     (window as any).lineStrokesByImage = {};
+    (window as any).guideOneTimeTagByImage = {};
+    (window as any).labelsByImage = {};
+    (window as any).manualTagByImage = {};
     (window as any).currentImageLabel = 'front';
     (window as any).app = {
       projectManager: {
@@ -58,5 +61,18 @@ describe('StrokeMetadataManager vector metadata', () => {
       isVector: true,
     });
     expect(manager.vectorStrokesByImage['cs5b-ra-sb-back'].J1).toBe(legacyGuideObject);
+  });
+
+  test('a manual next tag wins over a pending mini-guide seed', () => {
+    const manager = new StrokeMetadataManager();
+    const scope = 'front::tab:frame-1';
+    (window as any).currentImageLabel = scope;
+    (window as any).guideOneTimeTagByImage[scope] = 'A1';
+    (window as any).labelsByImage[scope] = 'Z9';
+    (window as any).manualTagByImage[scope] = 'Z9';
+
+    expect(manager.getNextLabel(scope, 'letters+numbers')).toBe('Z9');
+    expect((window as any).guideOneTimeTagByImage[scope]).toBe('A1');
+    expect((window as any).manualTagByImage[scope]).toBeUndefined();
   });
 });

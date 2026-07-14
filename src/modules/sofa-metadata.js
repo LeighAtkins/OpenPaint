@@ -79,7 +79,9 @@ function normalizeTagScopeStyle(input) {
 
   if (typeof input.backgroundStyle === 'string') {
     const value = input.backgroundStyle.trim();
-    if (['solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white'].includes(value)) {
+    if (
+      ['solid', 'no-fill', 'clear-black', 'clear-color', 'clear-white', 'frosted'].includes(value)
+    ) {
       style.backgroundStyle = value;
     }
   }

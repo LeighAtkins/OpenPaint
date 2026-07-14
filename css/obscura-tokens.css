@@ -76,10 +76,10 @@
   --ob-sp-8: 64px;
 
   /* ── Surfaces ──────────────────────────────────────────────── */
-  --ob-radius-card: 16px;
-  --ob-radius-button: 12px;
+  --ob-radius-card: 8px;
+  --ob-radius-button: 7px;
   --ob-radius-chip: 999px;
-  --ob-radius-input: 12px;
+  --ob-radius-input: 7px;
 
   --ob-shadow-soft: 0 1px 2px rgba(0,0,0,0.06), 0 10px 30px rgba(0,0,0,0.06);
   --ob-shadow-elevated: 0 4px 12px rgba(0,0,0,0.08), 0 20px 40px rgba(0,0,0,0.06);
@@ -96,8 +96,8 @@
   --ob-ease-exit: cubic-bezier(0.4, 0, 1, 1);
 
   /* ── Button densities ──────────────────────────────────────── */
-  --ob-btn-sm-h: 36px;
-  --ob-btn-sm-px: 12px;
+  --ob-btn-sm-h: 32px;
+  --ob-btn-sm-px: 10px;
   --ob-btn-md-h: 44px;
   --ob-btn-md-px: 16px;
   --ob-btn-lg-h: 52px;

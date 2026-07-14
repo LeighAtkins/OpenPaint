@@ -20,6 +20,7 @@ export class CurveTool extends BaseTool {
     this.dashPattern = []; // Dash pattern for curves
     this.lineStyle = 'solid';
     this.tapeTickSpacing = 1;
+    this.repeatMode = false;
 
     // Snap properties
     this.snapPoint = null;
@@ -84,6 +85,15 @@ export class CurveTool extends BaseTool {
 
     const evt = o.e;
     const isSnapHeld = this.isSnapModifier(evt);
+
+    // A curve may only begin inside the visible capture frame. The Fabric
+    // canvas extends behind the inspectors and surrounding workspace, so a
+    // canvas event alone does not guarantee that the click is in the drawing
+    // area. Existing curves may still be completed outside the frame if the
+    // user deliberately drags there; only the initial anchor is constrained.
+    if (this.points.length === 0 && !this.isEventInsideDrawingFrame(evt)) {
+      return;
+    }
 
     // If clicking on existing object AND snap modifier is NOT held, let Fabric handle dragging.
     // If snap modifier IS held, ignore the object and proceed to draw with snap.
@@ -270,6 +280,30 @@ export class CurveTool extends BaseTool {
   onDoubleClick(o) {
     if (!this.isActive) return;
     this.completeCurve();
+  }
+
+  isEventInsideDrawingFrame(evt) {
+    const clientPoint = evt?.touches?.[0] || evt?.changedTouches?.[0] || evt;
+    const clientX = Number(clientPoint?.clientX);
+    const clientY = Number(clientPoint?.clientY);
+    if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return false;
+
+    const captureFrame = document.getElementById('captureFrame');
+    const frameVisible =
+      captureFrame &&
+      getComputedStyle(captureFrame).display !== 'none' &&
+      captureFrame.getClientRects().length > 0;
+    const bounds = frameVisible
+      ? captureFrame.getBoundingClientRect()
+      : this.canvas?.upperCanvasEl?.getBoundingClientRect?.();
+    if (!bounds || bounds.width <= 0 || bounds.height <= 0) return false;
+
+    return (
+      clientX >= bounds.left &&
+      clientX <= bounds.right &&
+      clientY >= bounds.top &&
+      clientY <= bounds.bottom
+    );
   }
 
   onKeyDown(e) {
@@ -590,6 +624,14 @@ export class CurveTool extends BaseTool {
       curve.setCoords();
       this.canvas.requestRenderAll();
     });
+
+    if (!this.repeatMode) {
+      queueMicrotask(() => {
+        if (window.app?.toolManager?.activeTool === this) {
+          void window.app.toolManager.selectTool('line');
+        }
+      });
+    }
   }
 
   cleanupDrawingMarkers() {
@@ -678,5 +720,9 @@ export class CurveTool extends BaseTool {
       this.previewPath.dirty = true;
       this.canvas.renderAll();
     }
+  }
+
+  setRepeatMode(enabled) {
+    this.repeatMode = enabled === true;
   }
 }

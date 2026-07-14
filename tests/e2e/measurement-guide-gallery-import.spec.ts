@@ -43,6 +43,196 @@ const WORKFLOW_GUIDE_SVG = (view: string) => {
 };
 
 test.describe('Measurement Guide Gallery import attachment', () => {
+  test('Add All reconciles guide controls after the image header moves them', async ({ page }) => {
+    const indicatorErrors: string[] = [];
+    page.on('console', message => {
+      if (
+        message.type() === 'error' &&
+        message.text().includes('[measurement-guide-indicator] Render error')
+      ) {
+        indicatorErrors.push(message.text());
+      }
+    });
+    page.on('pageerror', error => {
+      if (error.name === 'NotFoundError') indicatorErrors.push(error.message);
+    });
+
+    await page.route('**/api/measurement-guides/codes', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          count: 1,
+          codes: ['CS1-CNR'],
+          viewsByCode: { 'CS1-CNR': ['front', 'back'] },
+        }),
+      });
+    });
+    await page.route('**/api/measurement-guides/svg**', async route => {
+      const url = new URL(route.request().url());
+      const view = String(url.searchParams.get('view') || 'front').toLowerCase();
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/svg+xml; charset=utf-8',
+        body: GUIDE_SVG('CS1-CNR', view),
+      });
+    });
+
+    await page.goto('/');
+    await waitForApp(page);
+    await expect(page.locator('#measurementGuideToggleStack')).toBeAttached();
+
+    // Reproduce the connected-but-reparented state seen during the image-panel
+    // header refresh: the collapse button remains inside the persistent stack,
+    // while the stack itself is no longer a child of the controls container.
+    await page.evaluate(() => {
+      const header = document.getElementById('imagePanelHeader');
+      const stack = document.getElementById('measurementGuideToggleStack');
+      if (!header || !stack) throw new Error('Guide header controls unavailable');
+      header.appendChild(stack);
+    });
+
+    await page.evaluate(() => window.openMeasurementGuideGallery?.({ mode: 'select' }));
+    await page.locator('[data-guide-quick-add="CS1-CNR"][data-guide-quick-view="all"]').click();
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          ['cs1-cnr-front', 'cs1-cnr-back'].every(id =>
+            Boolean(window.app?.projectManager?.views?.[id]?.image)
+          )
+        )
+      )
+      .toBe(true);
+
+    for (const viewId of ['cs1-cnr-front', 'cs1-cnr-back', 'cs1-cnr-front']) {
+      await page.evaluate(id => window.app?.projectManager?.switchView?.(id, true), viewId);
+      await expect
+        .poll(() => page.evaluate(() => window.app?.projectManager?.currentViewId))
+        .toBe(viewId);
+    }
+
+    await page.waitForTimeout(350);
+    expect(indicatorErrors).toEqual([]);
+    await expect(page.locator('#measurementGuideToggleStack')).toBeAttached();
+    expect(
+      await page.evaluate(() => {
+        const header = document.getElementById('imagePanelHeader');
+        const controls = header?.querySelector('.flex.items-center.gap-2');
+        const stack = document.getElementById('measurementGuideToggleStack');
+        return stack?.parentElement === controls;
+      })
+    ).toBe(true);
+
+    await page.locator('.guide-gallery-overlay.visible .guide-gallery-close').click();
+    const backStep = page.locator(
+      '#mini-stepper button[data-target="cs1-cnr-back"][data-step-kind="image"]'
+    );
+    await expect(backStep).toBeVisible();
+    await page.evaluate(() => {
+      const manager = window.app?.projectManager;
+      if (!manager) throw new Error('Project manager unavailable');
+      const originalSwitchView = manager.switchView.bind(manager);
+      manager.switchView = async (...args) => {
+        (window as any).__galleryTestSuppressedAtSwitch =
+          Date.now() < Number(window.__imageListProgrammaticScrollUntil || 0);
+        return originalSwitchView(...args);
+      };
+    });
+    await backStep.click();
+    expect(await page.evaluate(() => (window as any).__galleryTestSuppressedAtSwitch)).toBe(true);
+    await expect
+      .poll(() => page.evaluate(() => window.app?.projectManager?.currentViewId), {
+        timeout: 1_500,
+      })
+      .toBe('cs1-cnr-back');
+    await page.waitForTimeout(650);
+    expect(await page.evaluate(() => window.app?.projectManager?.currentViewId)).toBe(
+      'cs1-cnr-back'
+    );
+    expect(indicatorErrors).toEqual([]);
+
+    await page.evaluate(() => {
+      const strokePanel = document.getElementById('strokePanel');
+      const elementsBody = document.getElementById('elementsBody');
+      strokePanel?.classList.remove('minimized', 'collapsed');
+      strokePanel?.setAttribute('aria-expanded', 'true');
+      elementsBody?.classList.remove('hidden');
+      if (elementsBody) elementsBody.style.display = 'flex';
+      window.app?.metadataManager?.updateStrokeVisibilityControls?.();
+    });
+
+    const enterMeasurement = async (viewId: string, value: string) => {
+      await page.evaluate(id => window.app?.projectManager?.switchView?.(id, true), viewId);
+      await expect
+        .poll(() => page.evaluate(() => window.app?.projectManager?.currentViewId))
+        .toBe(viewId);
+      const field = page.locator('[data-stroke="A1"] .stroke-measurement');
+      await expect(field).toBeVisible();
+      await field.click();
+      await expect(field).toHaveAttribute('contenteditable', 'true');
+      await field.fill(value);
+      await field.press('Enter');
+      await expect(field).toContainText(value);
+    };
+
+    await enterMeasurement('cs1-cnr-front', '24');
+    await enterMeasurement('cs1-cnr-back', '31');
+
+    for (const [viewId, value] of [
+      ['cs1-cnr-front', '24'],
+      ['cs1-cnr-back', '31'],
+      ['cs1-cnr-front', '24'],
+      ['cs1-cnr-back', '31'],
+    ] as const) {
+      await page.evaluate(id => window.app?.projectManager?.switchView?.(id, true), viewId);
+      await expect
+        .poll(() => page.evaluate(() => window.app?.projectManager?.currentViewId))
+        .toBe(viewId);
+      await expect(page.locator('[data-stroke="A1"] .stroke-measurement')).toContainText(value);
+
+      const state = await page.evaluate(id => {
+        const canvas = window.app?.canvasManager?.fabricCanvas;
+        const list = document.getElementById('imageList');
+        const active = list?.querySelector<HTMLElement>(`.image-container[data-label="${id}"]`);
+        const listRect = list?.getBoundingClientRect();
+        const activeRect = active?.getBoundingClientRect();
+        const preview = active?.querySelector<HTMLElement>('.pasted-image');
+        const cardStyle = active ? getComputedStyle(active) : null;
+        const previewStyle = preview ? getComputedStyle(preview) : null;
+        const objects = canvas?.getObjects?.() || [];
+        return {
+          visibleStrokeCount: objects.filter(
+            object =>
+              object?.visible !== false &&
+              (object?.strokeMetadata?.strokeLabel || object?.strokeLabel) === 'A1' &&
+              object?.isTag !== true
+          ).length,
+          visibleTagCount: objects.filter(
+            object => object?.visible !== false && object?.isTag && object?.strokeLabel === 'A1'
+          ).length,
+          thumbnailFullyVisible: Boolean(
+            listRect &&
+              activeRect &&
+              activeRect.left >= listRect.left - 1 &&
+              activeRect.right <= listRect.right + 1 &&
+              activeRect.top >= listRect.top - 1 &&
+              activeRect.bottom <= listRect.bottom + 1
+          ),
+          cardTransform: cardStyle?.transform || '',
+          cardOverflow: cardStyle?.overflow || '',
+          previewBackground: previewStyle?.backgroundColor || '',
+        };
+      }, viewId);
+      expect(state.visibleStrokeCount).toBeGreaterThan(0);
+      expect(state.visibleTagCount).toBeGreaterThan(0);
+      expect(state.thumbnailFullyVisible).toBe(true);
+      expect(state.cardTransform).toBe('none');
+      expect(state.cardOverflow).toBe('hidden');
+      expect(state.previewBackground).toBe('rgb(255, 255, 255)');
+    }
+  });
+
   test('CS1L Add All preserves independent visibility while drawing and deleting measurements', async ({
     page,
   }) => {
@@ -558,6 +748,7 @@ test.describe('Measurement Guide Gallery import attachment', () => {
       await modelCheckbox.check();
     }
     await page.locator('[data-bind-preview-image="customer-photo"]').click();
+    await page.locator('#guideGalleryBindModelView').selectOption('front');
     await expect(page.locator('[data-link-action="bind-preview"]')).toBeEnabled();
     await page.locator('[data-link-action="bind-preview"]').click();
 
