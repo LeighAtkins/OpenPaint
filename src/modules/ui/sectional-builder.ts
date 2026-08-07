@@ -1838,10 +1838,14 @@ function sectionalProductPieceLayers(
   const p = (localX: number, localY: number, z: number) =>
     sectionalPiecePoint(piece, localX, localY, z, layout);
   const bodyTop = 38;
-  const seatBottom = style.cushion === 'knife' ? 45 : 44;
+  // The seat cushion's front face runs right down to the base-front junction
+  // (no bare body-top strip showing), as in the CW reference renders.
+  const seatBottom = style.cushion === 'knife' ? 44 : 40;
   const seatTop = style.cushion === 'knife' ? 52 : 59;
   const structuralBackTop = style.back === 'short' ? 96 : style.back === 'curved' ? 119 : 128;
-  const looseBackTop = style.back === 'short' ? 88 : style.back === 'curved' ? 108 : 115;
+  // Loose back cushions crown a few pixels above the frame rails, the way
+  // they sit proud in the CW reference renders.
+  const looseBackTop = style.back === 'short' ? 100 : style.back === 'curved' ? 124 : 133;
   const armTop = style.arm === 'wedge' ? 84 : 96;
   const inset = style.cushion === 'rounded' ? 11 : 9;
   const isPerpendicularReturn = ((piece.rotation % 180) + 180) % 180 !== 0;
@@ -1876,14 +1880,16 @@ function sectionalProductPieceLayers(
   // one continuous seat; open edges keep the usual cushion reveal.
   const leftContentInset = seatLeftX + (backJoinsCorner ? 3 : inset);
   const rightContentX = seatRightX - inset;
-  const leftBackInset = seatLeftX + (backJoinsCorner ? 4 : 15);
-  const rightBackX = seatRightX - 15;
+  const leftBackInset = seatLeftX + (backJoinsCorner ? 4 : 11);
+  const rightBackX = seatRightX - 11;
   const frontY = d;
   const rearY = 0;
   // Tuck the seat cushion under the loose back cushion. The overlap makes the
   // upholstery read as one assembly instead of two disconnected rectangles.
   const seatRear = Math.min(23, d * 0.2);
-  const seatFront = frontY - (frontConnected ? 3 : 8);
+  // An open seat cushion sits proud of the base front edge, as in the CW
+  // reference renders; a connected one tucks to the joint.
+  const seatFront = frontY - (frontConnected ? 3 : -2);
   const topFace = productPolygon(projection, [
     p(bodyLeftX, rearY, bodyTop),
     p(bodyRightX, rearY, bodyTop),
@@ -2111,6 +2117,54 @@ function sectionalProductPieceLayers(
     p(w / 2, d / 2, bodyTop),
     `<polygon class="sb-body" points="${topFace}" fill="${theme.body}" stroke="${outline}" stroke-width="2"/>`
   );
+  // Block feet ground the module like the CW reference renders. Skirted bases
+  // hide their feet; connected edges keep them (they are inset from the joint).
+  const hasSkirt =
+    style.base === 'long-skirt' || style.base === 'loose-fit' || style.base === 'straight-skirt';
+  if (!hasSkirt) {
+    const legFill = shadeHex(theme.outline, 12);
+    const foot = (corners: ProductPoint3D[], depth: ProductPoint3D) =>
+      bodySurface(
+        'body',
+        depth,
+        `<polygon class="sb-body-leg" points="${productPolygon(projection, corners)}" fill="${legFill}" stroke="none"/>`
+      );
+    if (frontFacesCamera && !frontConnected) {
+      [bodyLeftX + 6, bodyRightX - 17].forEach(legX => {
+        foot(
+          [
+            p(legX, frontY, 0),
+            p(legX + 11, frontY, 0),
+            p(legX + 11, frontY, 9),
+            p(legX, frontY, 9),
+          ],
+          p(legX + 5.5, frontY, 4.5)
+        );
+      });
+    }
+    if (showLeftSide) {
+      foot(
+        [
+          p(bodyLeftX, rearY + 9, 0),
+          p(bodyLeftX, rearY + 20, 0),
+          p(bodyLeftX, rearY + 20, 9),
+          p(bodyLeftX, rearY + 9, 9),
+        ],
+        p(bodyLeftX, rearY + 14.5, 4.5)
+      );
+    }
+    if (showRightSide) {
+      foot(
+        [
+          p(bodyRightX, rearY + 9, 0),
+          p(bodyRightX, rearY + 20, 0),
+          p(bodyRightX, rearY + 20, 9),
+          p(bodyRightX, rearY + 9, 9),
+        ],
+        p(bodyRightX, rearY + 14.5, 4.5)
+      );
+    }
+  }
   if (
     style.base === 'long-skirt' ||
     style.base === 'loose-fit' ||
@@ -2391,9 +2445,11 @@ function sectionalProductPieceLayers(
     // so each camera sees a consistent solid.
     const uX = (u: number) => (armSide === 'left' ? u : w - u);
     // The arm tucks into the back frame so the roll never shows a raw rear
-    // end, and stops just short of the base front.
+    // end. Its base front is flush with the sofa front, while a roll arm's
+    // round face stands a few pixels proud of it, as in the CW references.
     const armRear = rearY + 4;
-    const armFront = frontY - 5;
+    const armFront = frontY - 1;
+    const rollFront = frontY + 2;
     const armLayer: SectionalProductSurface['layer'] = 'arm';
     const armFacesInterior = productArmInnerFacesCamera(piece, projection, armSide);
     const armFrontFacesCamera = productPanelFacesCamera(piece, projection, 0, 1);
@@ -2514,7 +2570,7 @@ function sectionalProductPieceLayers(
         ...prof
           .slice(2)
           .reverse()
-          .map(([u, z]) => p(uX(u), armFront, z)),
+          .map(([u, z]) => p(uX(u), rollFront, z)),
       ];
       armPieces.push({
         layer: armLayer,
@@ -2549,7 +2605,7 @@ function sectionalProductPieceLayers(
           ...prof
             .slice(from, to)
             .reverse()
-            .map(([u, z]) => p(uX(u), armFront, z)),
+            .map(([u, z]) => p(uX(u), rollFront, z)),
         ];
         const midU = (prof[from][0] + prof[to - 1][0]) / 2;
         const midZ = (prof[from][1] + prof[to - 1][1]) / 2;
@@ -2581,8 +2637,10 @@ function sectionalProductPieceLayers(
     }
     // Camera-facing end cap carries the arm's silhouette. A round arm splits
     // the end into the arm base front plus the roll's own round face, so the
-    // roll reads as a fat disc sitting on the arm (the letter-P read).
+    // roll reads as a fat disc sitting on the arm (the letter-P read). The
+    // disc stands proud of the arm base front.
     const endY = armFrontFacesCamera ? armFront : armRear;
+    const rollEndY = armFrontFacesCamera ? rollFront : armRear;
     if (style.arm === 'round') {
       const baseFront = productPolygon(projection, [
         p(uX(0), endY, bodyTop),
@@ -2598,9 +2656,9 @@ function sectionalProductPieceLayers(
     }
     armPieces.push({
       layer: armLayer,
-      depthPoint: p(uX(armThickness / 2), endY, (bodyTop + armTop) / 2),
+      depthPoint: p(uX(armThickness / 2), rollEndY, (bodyTop + armTop) / 2),
       markup: armFrontFacesCamera
-        ? `<path class="sb-arm-front sb-arm-front-${style.arm}${style.arm === 'round' ? ' sb-arm-roll' : ''}" d="${endCapPath(armFront)}" fill="${shadeHex(theme.body, style.arm === 'round' ? 3 : -17)}" stroke="${outline}" stroke-width="${style.arm === 'round' ? 2.4 : 1.8}" stroke-linejoin="round"/>`
+        ? `<path class="sb-arm-front sb-arm-front-${style.arm}${style.arm === 'round' ? ' sb-arm-roll' : ''}" d="${endCapPath(style.arm === 'round' ? rollFront : armFront)}" fill="${shadeHex(theme.body, style.arm === 'round' ? 3 : -17)}" stroke="${outline}" stroke-width="${style.arm === 'round' ? 2.4 : 1.8}" stroke-linejoin="round"/>`
         : `<path class="sb-arm-rear sb-arm-rear-${style.arm}${style.arm === 'round' ? ' sb-arm-roll' : ''}" d="${endCapPath(armRear)}" fill="${shadeHex(theme.body, style.arm === 'round' ? -3 : -20)}" stroke="${outline}" stroke-width="${style.arm === 'round' ? 2.4 : 1.8}" stroke-linejoin="round"/>`,
     });
     if (style.arm === 'wedge') {
