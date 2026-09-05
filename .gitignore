@@ -99,3 +99,21 @@ __pycache__/
 *.pt
 arm_annotation_dataset/
 tmp/
+
+CLAUDE.md
+
+# Windows zone-marker junk
+*.Zone.Identifier
+
+# Local test/browser artifacts
+playwright-report/
+.playwright-cli/
+
+# Stray symlink created by tooling
+Memory
+
+# Onnx model binaries
+*.onnx
+
+# Template stays tracked even with .env* ignored
+!.env.example
