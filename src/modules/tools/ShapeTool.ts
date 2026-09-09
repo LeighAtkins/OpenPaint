@@ -173,8 +173,8 @@ export class ShapeTool extends BaseTool {
 
     this.shape = null;
 
-    // Return to previous tool after drawing one shape
-    this.returnToPreviousTool();
+    // Stay in shape mode after drawing so several shapes can be drawn in a
+    // row; switching back to lines is a manual tool choice.
   }
 
   returnToPreviousTool() {

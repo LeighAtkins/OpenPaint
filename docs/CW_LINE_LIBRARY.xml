@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cwLineLibraryFeature id="cw-line-library" status="implemented-local-testing" lastUpdated="2026-09-05">
+
+  <summary>
+    The CW Line Library turns the manual measurement-drawing workflow on Comfort Works
+    catalogue photos into a draw-once, replay-forever system. When measurement lines are
+    drawn on an imported CW photo, they are captured as a reusable "recipe" keyed by the
+    photo's catalogue geometry. Any future import of a photo with matching geometry —
+    same cover, any fabric colour — has its lines auto-drawn with the saved labels and
+    centimetre values, exactly as if drawn by hand.
+  </summary>
+
+  <goals>
+    <goal>Eliminate repeated manual drawing of the same measurement lines on the same CW product photos.</goal>
+    <goal>Work across the entire Comfort Works catalogue: every active product becomes "searchable and already measured" once it has been drawn once.</goal>
+    <goal>Handle Shopify's one-product-per-colour duplication so one drawing serves every fabric variant.</goal>
+    <goal>Persist recipes across reloads, browsers, and devices.</goal>
+  </goals>
+
+  <architecture>
+
+    <dataFlow>
+      <step order="1" name="capture">
+        Every stroke committed on a CW-imported photo dispatches openpaint:stroke-created.
+        A debounced listener (1.2s) snapshots all vector line strokes on the view, converts
+        their endpoints to normalized photo coordinates (0..1 relative to the background
+        image via inverse affine transform), and upserts a recipe into the library.
+        The latest drawing always wins: the recipe is replaced wholesale.
+      </step>
+      <step order="2" name="storage">
+        Recipes persist to localStorage immediately and are PUT to /api/cw-line-library
+        (debounced 800ms). The server writes a local JSON file in dev and mirrors the
+        library to an R2 object (cw-line-library/v1.json) in production. On startup the
+        client GETs the server library and merges by updatedAt (newer wins per key).
+      </step>
+      <step order="3" name="replay">
+        During CW photo import, after the guide seeding step, each selected photo's
+        catalogue URL is looked up in the library. Matching photos are activated one by
+        one (switchView + wait for canvas ready), the recipe is translated back to canvas
+        coordinates, and lines are created through the same code path as manual drawing:
+        fabric.Line + arrowManager.applyArrows + FabricControls.createLineControls +
+        metadataManager.attachMetadata + applyMeasurement + tagManager.createTagForStroke.
+        Matching measurement rows are marked completed so the draw queue skips them.
+      </step>
+    </dataFlow>
+
+    <geometryKey>
+      Parsed from the catalogue image filename stem, e.g.
+      IK-TD-2M__L%28VELC_SP%29_STCC_01.png
+        reference = IK-TD-2M
+        styleCode = VELC_SP  (from parenthesized group; dash-separated styles also stripped)
+        component = STCC     (last all-letter token)
+        sequence  = 01
+
+      exactKey = "IK-TD-2M|VELC_SP|STCC|01"
+      looseKey = "IK-TD-2M|STCC|01"
+
+      Lookup order: exactKey, then looseKey, then scan for any recipe whose looseKey
+      matches. This is what makes one drawing serve every colour and (as fallback)
+      every style of the same cover component.
+      Non-catalogue photos (lifestyle, storefront) fall back to a "stem:" key of the full
+      filename — replayable only for byte-identical URLs.
+    </geometryKey>
+
+    <recipeShape>
+      <![CDATA[
+      {
+        "key": "IK-TD-2M|VELC_SP|STCC|01",
+        "looseKey": "IK-TD-2M|STCC|01",
+        "reference": "IK-TD-2M",
+        "styleCode": "VELC_SP",
+        "component": "STCC",
+        "sequence": "01",
+        "imageUrl": "https://img.comfort-works.com/...",
+        "lines": [
+          {
+            "label": "A",
+            "value": "133",
+            "sourceLabel": "Width (A)",
+            "x1": 0.05, "y1": 0.20, "x2": 0.40, "y2": 0.20
+          }
+        ],
+        "updatedAt": "2026-09-05T10:00:00.000Z"
+      }
+      ]]>
+      Line endpoints are normalized to the background photo box so recipes replay at any
+      canvas size, zoom, or fit mode.
+    </recipeShape>
+
+    <files>
+      <file path="src/modules/ui/cw-line-library.ts" role="Core module: geometry keys, recipe store, capture, replay coordinate math, console bridge (window.cwLineLibrary)." />
+      <file path="src/modules/ui/cw-import-ui.ts" role="Integration: capture listener on openpaint:stroke-created, replay phase in the Import Photos handler (replayCwLibraryLinesForView, autoDrawTargets), init wiring in initCwImportUI." />
+      <file path="server/cw-line-library.js" role="GET/PUT /api/cw-line-library — local JSON file fallback (data/cw-line-library.json, gitignored) plus R2 object mirror." />
+      <file path="app.js" role="Registers the routes via registerCwLineLibraryRoutes(app, '/api/cw-line-library'). Requires server restart after edits to app.js." />
+      <file path="tests/unit/cw-line-library.test.ts" role="9 unit tests: geometry-key parsing, capture normalization, style-independent lookup, replay round-trip, used-label skipping." />
+    </files>
+
+  </architecture>
+
+  <testing>
+
+    <automated>
+      <command>npx vitest --config vitest.config.ts run tests/unit/cw-line-library.test.ts</command>
+      <expectation>9/9 pass. Full suite: npm test (419+ pass; the extension-install-guide version mismatch failure is pre-existing and unrelated).</expectation>
+      <command>npm run type-check</command>
+      <expectation>Clean.</expectation>
+    </automated>
+
+    <manual>
+      <step order="1">
+        Restart the dev server (npm run dev). Vite auto-spawns Express and proxies /api;
+        the route only exists after a restart.
+      </step>
+      <step order="2">
+        Sanity-check the endpoint:
+        curl -s localhost:5173/api/cw-line-library
+        Expected: {"success":true,"source":"empty"|"local","library":{"recipes":{}}}
+      </step>
+      <step order="3">
+        Capture: open the app, click CW Import, search a product (e.g. Tylosand), import
+        photos, and draw measurement lines manually. About a second after the last stroke
+        the console logs: [CW Line Library] Captured N lines for &lt;geometryKey&gt;.
+      </step>
+      <step order="4">
+        Verify in DevTools: window.cwLineLibrary.snapshot() returns
+        { recipeCount, lineCount, references }.
+      </step>
+      <step order="5">
+        Replay: open CW Import again and import the same product's photos. Matching photos
+        auto-draw their lines with labels and values applied; the measurement queue marks
+        them done. The import status ends with
+        "Auto-drew N saved lines across M photos from your line library."
+      </step>
+      <step order="6">
+        Persistence: reload the page — snapshot() still shows the recipes (localStorage).
+        The server mirror is data/cw-line-library.json; the curl above then reports
+        "source":"local".
+      </step>
+      <step order="7">
+        Colour independence: import the same cover in a different fabric/style. Lines
+        should still auto-draw via the loose geometry key.
+      </step>
+      <step order="8">
+        Reset for a clean run: localStorage.removeItem('cwLineLibrary:v1') then
+        window.cwLineLibrary.reload().
+      </step>
+    </manual>
+
+    <troubleshooting>
+      <issue symptom="GET /api/cw-line-library returns 404">
+        Stale Express child still running. Kill node app.js / restart npm run dev.
+      </issue>
+      <issue symptom="No [CW Line Library] capture log after drawing">
+        The view is not recognized as a CW-imported scope (no entry in
+        state.importedViewMetaByScope and no seeded cwImportedMeasurementsByImage), or the
+        photo resolved no http catalogue URL. Check console for capture warnings.
+      </issue>
+      <issue symptom="Replay does not fire on import">
+        The photo's geometry key differs from the captured one. Compare with
+        window.cwLineLibrary.find('&lt;imageUrl&gt;') and inspect the logged keys.
+      </issue>
+      <issue symptom="Auto-drew 0 lines despite a match">
+        Canvas background was not ready (waitForImportedViewReady timeout) or all labels
+        already existed on the view.
+      </issue>
+    </troubleshooting>
+
+  </testing>
+
+  <catalogueRollout>
+
+    <coverageModel>
+      The library grows passively: the operator keeps drawing with the existing armed-row
+      workflow, and each completed photo silently becomes a recipe. No extra clicks.
+      Over time the whole active catalogue converges to "search, import, lines already drawn."
+    </coverageModel>
+
+    <shopifyProducts>
+      Authoritative list of active products (user-provided):
+      https://admin.shopify.com/store/comfortworkscovers/products?savedViewId=650899718452
+
+      Public, credential-free access to the same catalogue for scripts:
+      https://comfortworkscovers.myshopify.com/products.json?limit=250&amp;page=N
+      (750+ products observed; multiple pages needed)
+
+      Known quirk: many covers exist as one Shopify product per fabric+colour
+      (e.g. "Snuggler Dog Bed - Signature Microfiber Dark Coral", "...Coral",
+      "...Forest Green"). The geometry key deliberately ignores fabric and colour, so a
+      single recipe covers the whole colour family of a cover component. Styles
+      (VELC_SP, SHRT_SP, ...) match exactly first and fall back to shared geometry.
+    </shopifyProducts>
+
+    <knownLimitations>
+      <limitation>Only straight lines replay. Curve/path strokes are skipped during capture (they would distort if replayed as lines).</limitation>
+      <limitation>Zippers and text objects are excluded from recipes.</limitation>
+      <limitation>Lifestyle and storefront photos use a filename-stem fallback key: they only replay for byte-identical URLs.</limitation>
+      <limitation>Server persistence is whole-file last-write-wins — fine for single-operator use; concurrent editors on different devices could overwrite each other's newest recipes if R2 is not configured.</limitation>
+      <limitation>Products never drawn before still require one manual session (by design: geometry comes from the operator, not from CW — the CW API exposes measurement values only, no line coordinates).</limitation>
+    </knownLimitations>
+
+    <roadmap>
+      <item priority="high">
+        Coverage panel in the CW Import dialog: walk the Shopify products.json list, match
+        against library references, and show which active products still need a first
+        drawing (per-product / per-component badges on photo cards: "saved lines" vs "new").
+      </item>
+      <item priority="medium">
+        Cold-start pre-placement for never-drawn products using the existing
+        POST /api/measurements/generate pipeline (SAM strategy, Gemini fallback) to
+        suggest line positions the operator only has to verify.
+      </item>
+      <item priority="medium">Curve stroke replay (store sampled path points normalized like line endpoints).</item>
+      <item priority="low">Per-key history instead of last-write-wins, if multiple operators run concurrently.</item>
+    </roadmap>
+
+    <debugBridge>
+      window.cwLineLibrary = {
+        snapshot(),                        // counts + covered references
+        find(catalogueImageUrl),           // recipe lookup (exact or loose)
+        capture(viewId, catalogueImageUrl),// force an out-of-band capture
+        reload()                           // wipe in-memory state and refetch
+      }
+    </debugBridge>
+
+  </catalogueRollout>
+
+  <validationState>
+    <check name="type-check" result="pass" />
+    <check name="lint" result="pass" note="New files clean; no new errors introduced in cw-import-ui.ts (pre-existing baseline untouched)." />
+    <check name="unit-tests" result="pass" note="9/9 new tests; full suite green except a pre-existing, unrelated extension-zip version mismatch." />
+    <check name="api" result="pass" note="GET verified; PUT exercised by client sync; R2 mirror active only when R2 is configured." />
+  </validationState>
+
+</cwLineLibraryFeature>

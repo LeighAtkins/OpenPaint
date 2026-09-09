@@ -1,5 +1,11 @@
 declare const fabric: any;
 
+import {
+  buildSectionalMeasurementRules,
+  countFilledMeasurements,
+  evaluateSectionalMeasurementRules,
+} from './sectional-measurement-rules';
+
 type PieceKind =
   | 'left-arm'
   | 'seat'
@@ -8,26 +14,34 @@ type PieceKind =
   | 'right-arm'
   | 'ottoman'
   | 'left-arm-chaise'
-  | 'right-arm-chaise';
+  | 'right-arm-chaise'
+  | 'armchair'
+  | 'two-arm-chaise';
 type ConnectorSide = 'top' | 'right' | 'bottom' | 'left';
 type SectionalArmSide = 'left' | 'right';
 type SectionalOpenEdge = 'front' | 'rear' | 'left' | 'right';
 export type SectionalViewMode = 'plan' | 'front-left' | 'front-right';
 export type SectionalArmStyle = 'square' | 'round' | 'wedge';
+export type SectionalArmLength = 'full' | 'half';
+export type SectionalBackCushionFit = 'straight' | 'wrap';
 export type SectionalBackStyle = 'high' | 'short' | 'curved';
 export type SectionalCushionStyle = 'boxed' | 'knife' | 'rounded';
 export type SectionalBaseStyle = 'snug' | 'long-skirt' | 'loose-fit' | 'straight-skirt';
 
 export interface SectionalProductStyle {
   arm: SectionalArmStyle;
+  armLength: SectionalArmLength;
   back: SectionalBackStyle;
+  backCushionFit: SectionalBackCushionFit;
   cushion: SectionalCushionStyle;
   base: SectionalBaseStyle;
 }
 
 export const DEFAULT_SECTIONAL_PRODUCT_STYLE: SectionalProductStyle = {
   arm: 'round',
+  armLength: 'full',
   back: 'high',
+  backCushionFit: 'straight',
   cushion: 'boxed',
   base: 'snug',
 };
@@ -41,9 +55,15 @@ export interface SectionalPiece {
   mirrored: boolean;
   guideCode?: string;
   armStyle?: SectionalArmStyle;
+  armLength?: SectionalArmLength;
+  backCushionFit?: SectionalBackCushionFit;
   backStyle?: SectionalBackStyle;
   cushionStyle?: SectionalCushionStyle;
   baseStyle?: SectionalBaseStyle;
+  /** Editable real width in cm — overrides the kind default when set. */
+  widthCm?: number;
+  /** Editable real depth in cm — overrides the kind default when set. */
+  depthCm?: number;
 }
 
 export interface SectionalAssemblyRecord {
@@ -81,6 +101,8 @@ const PIECES: Record<PieceKind, { name: string; short: string; width: number; de
   ottoman: { name: 'Ottoman', short: 'Ott', width: 90, depth: 60 },
   'left-arm-chaise': { name: 'Left arm chaise', short: 'LA-Ch', width: 105, depth: 160 },
   'right-arm-chaise': { name: 'Right arm chaise', short: 'RA-Ch', width: 105, depth: 160 },
+  armchair: { name: 'Armchair', short: 'Chair', width: 105, depth: 95 },
+  'two-arm-chaise': { name: 'Two-arm chaise', short: 'TA-Ch', width: 105, depth: 160 },
 };
 
 interface SectionalPieceCapabilities {
@@ -143,6 +165,18 @@ const SECTIONAL_PIECE_CAPABILITIES: Record<PieceKind, SectionalPieceCapabilities
     hasBackCushion: true,
     armSides: ['right'],
     openEdges: ['front', 'left'],
+  },
+  armchair: {
+    hasBackFrame: true,
+    hasBackCushion: true,
+    armSides: ['left', 'right'],
+    openEdges: ['front'],
+  },
+  'two-arm-chaise': {
+    hasBackFrame: true,
+    hasBackCushion: true,
+    armSides: ['left', 'right'],
+    openEdges: ['front'],
   },
 };
 
@@ -376,6 +410,8 @@ const PIECE_CONNECTORS: Record<PieceKind, ConnectorSide[]> = {
   ottoman: [],
   'left-arm-chaise': ['right'],
   'right-arm-chaise': ['left'],
+  armchair: [],
+  'two-arm-chaise': [],
 };
 
 const SIDE_ORDER: ConnectorSide[] = ['top', 'right', 'bottom', 'left'];
@@ -429,6 +465,10 @@ export function deriveGuideCode(piece: SectionalPiece): string {
       return `CS5L-${arm}-${back}-${facing}`;
     case 'right-arm-chaise':
       return `CS5L-${arm}-${back}-${piece.mirrored ? 'L' : 'R'}`;
+    case 'armchair':
+      return `CS1B-${arm}-${back}`;
+    case 'two-arm-chaise':
+      return `CS5L-${arm}-${back}`;
     default:
       return '';
   }
@@ -457,49 +497,49 @@ interface SectionalTheme {
 const SECTIONAL_THEMES: Record<SectionalThemeId, SectionalTheme> = {
   flax: {
     name: 'Flax',
-    body: '#d8ddd7',
-    cushion: '#f2f4f1',
-    cushionStroke: '#667273',
-    accent: '#596465',
-    outline: '#2f3a3b',
+    body: '#c2c9be',
+    cushion: '#d9dcd2',
+    cushionStroke: '#7c8779',
+    accent: '#57645c',
+    outline: '#333d38',
   },
   charcoal: {
     name: 'Charcoal',
-    body: '#515a5b',
-    cushion: '#737e7f',
-    cushionStroke: '#3a4445',
+    body: '#4a5252',
+    cushion: '#636e6e',
+    cushionStroke: '#394343',
     accent: '#2e3637',
     outline: '#1d2425',
   },
   navy: {
     name: 'Navy',
-    body: '#53647f',
-    cushion: '#7488a8',
-    cushionStroke: '#3b4b66',
+    body: '#4d5f7b',
+    cushion: '#6b7fa0',
+    cushionStroke: '#3d4e6a',
     accent: '#32405a',
     outline: '#232e42',
   },
   terracotta: {
     name: 'Terracotta',
-    body: '#b57e66',
-    cushion: '#d1a48f',
+    body: '#b57a60',
+    cushion: '#d09d86',
     cushionStroke: '#8a5c49',
     accent: '#7d5340',
     outline: '#59392c',
   },
   forest: {
     name: 'Forest',
-    body: '#5f7d69',
-    cushion: '#819f8c',
-    cushionStroke: '#476353',
+    body: '#5b7a64',
+    cushion: '#7d9c87',
+    cushionStroke: '#4a6355',
     accent: '#3f584a',
     outline: '#2c3f35',
   },
   sand: {
     name: 'Sand',
-    body: '#d7cab1',
-    cushion: '#ede4d3',
-    cushionStroke: '#a3937a',
+    body: '#cfc0a1',
+    cushion: '#e6dabf',
+    cushionStroke: '#a08f6f',
     accent: '#8d8069',
     outline: '#5f5647',
   },
@@ -811,6 +851,65 @@ CW_US_FABRIC_PRICES['corner-square-seat-section-slipcover'] =
 CW_US_FABRIC_PRICES['l-seat-right-square-arm-chaise-section-cover'] =
   CW_US_FABRIC_PRICES['l-seat-left-square-arm-chaise-section-cover'];
 
+// CW sells multi-seat end units alongside single-seat sections: a loveseat
+// section (CS2B), a sofa section (CS3B), a boxed-seat round-arm chaise (CS5B)
+// and an armless sofa section (CS3X). Their fabric ladders are anchored on
+// the Shopify snapshot price and follow the chair-section tier structure
+// until the lazy Shopify fetch refines them.
+const scaleLadder = (
+  base: Partial<Record<SectionalPricingFabric, SectionalPriceEntry>>,
+  factor: number
+): Partial<Record<SectionalPricingFabric, SectionalPriceEntry>> =>
+  Object.fromEntries(
+    Object.entries(base).map(([fabric, entry]) => [
+      fabric,
+      {
+        ...(entry as SectionalPriceEntry),
+        price: Math.round(((entry as SectionalPriceEntry).price * factor) / 10) * 10,
+      },
+    ])
+  );
+{
+  const chairArmLadder = CW_US_FABRIC_PRICES['boxed-seat-left-square-arm-chair-section-cover'];
+  const chairArmlessLadder = CW_US_FABRIC_PRICES['boxed-seat-armless-chair-slipcover'];
+  // Snapshot anchors (classic-velvet tier): CS2B $709, CS3B $859, CS3X $859;
+  // CS5B shares the CS5L chaise ladder (both $659 default).
+  CW_US_FABRIC_PRICES['boxed-seat-left-round-arm-loveseat-section-cover'] = scaleLadder(
+    chairArmLadder,
+    709 / 519
+  );
+  CW_US_FABRIC_PRICES['boxed-seat-left-square-arm-loveseat-section-cover'] = scaleLadder(
+    chairArmLadder,
+    709 / 519
+  );
+  CW_US_FABRIC_PRICES['boxed-seat-left-round-arm-sofa-section-cover'] = scaleLadder(
+    chairArmLadder,
+    859 / 519
+  );
+  CW_US_FABRIC_PRICES['boxed-seat-left-square-arm-sofa-section-cover'] = scaleLadder(
+    chairArmLadder,
+    859 / 519
+  );
+  CW_US_FABRIC_PRICES['boxed-seat-left-round-arm-chaise-section-cover'] =
+    CW_US_FABRIC_PRICES['l-seat-left-square-arm-chaise-section-cover'];
+  CW_US_FABRIC_PRICES['armless-sofa-section-slipcover'] = scaleLadder(
+    chairArmlessLadder,
+    859 / 469
+  );
+  CW_US_FABRIC_PRICES['boxed-seat-left-round-arm-chair-section-cover'] = chairArmLadder;
+  CW_US_FABRIC_PRICES['boxed-seat-right-round-arm-chair-section-cover'] = chairArmLadder;
+  CW_US_FABRIC_PRICES['boxed-seat-right-round-arm-loveseat-section-cover'] =
+    CW_US_FABRIC_PRICES['boxed-seat-left-round-arm-loveseat-section-cover'];
+  CW_US_FABRIC_PRICES['boxed-seat-right-square-arm-loveseat-section-cover'] =
+    CW_US_FABRIC_PRICES['boxed-seat-left-square-arm-loveseat-section-cover'];
+  CW_US_FABRIC_PRICES['boxed-seat-right-round-arm-sofa-section-cover'] =
+    CW_US_FABRIC_PRICES['boxed-seat-left-round-arm-sofa-section-cover'];
+  CW_US_FABRIC_PRICES['boxed-seat-right-square-arm-sofa-section-cover'] =
+    CW_US_FABRIC_PRICES['boxed-seat-left-square-arm-sofa-section-cover'];
+  CW_US_FABRIC_PRICES['boxed-seat-right-round-arm-chaise-section-cover'] =
+    CW_US_FABRIC_PRICES['boxed-seat-left-round-arm-chaise-section-cover'];
+}
+
 const CW_SECTIONAL_COLLECTION = 'custom-sectional-slipcovers';
 const CW_OTTOMAN_COLLECTION = 'custom-ottoman-slipcovers';
 const CW_BASE = 'https://comfort-works.com';
@@ -918,6 +1017,22 @@ export function getPiecePricing(piece: SectionalPiece): CwProduct | null {
         249,
         'CS0-SNUG-1'
       );
+    case 'armchair':
+      // Standalone armchairs: same boxed-seat chair products as the sectional
+      // end units, without the facing suffix (both arms included).
+      return cwProduct(
+        'boxed-seat-left-round-arm-chair-section-cover',
+        'Boxed Seat Round Arm Chair Cover',
+        519,
+        'CS1B-RA'
+      );
+    case 'two-arm-chaise':
+      return cwProduct(
+        'l-seat-left-square-arm-chaise-section-cover',
+        'Two-Arm Chaise Section Cover',
+        659,
+        'CS5L-SSA'
+      );
     default:
       return null;
   }
@@ -935,36 +1050,195 @@ export interface AssemblyPricing {
   currency: string;
 }
 
-/** Map the full assembly to CW products and compute the total. */
+function cwUnitProduct(seats: number, facing: 'L' | 'R', armCode: 'SRA' | 'SSA'): CwProduct {
+  const size = Math.min(3, Math.max(1, seats));
+  const shape = armCode === 'SRA' ? 'round' : 'square';
+  const sizeName = size === 1 ? 'chair' : size === 2 ? 'loveseat' : 'sofa';
+  const titleSize = size === 1 ? 'Chair' : size === 2 ? 'Loveseat' : 'Sofa';
+  const handle = `boxed-seat-${facing === 'L' ? 'left' : 'right'}-${shape}-arm-${sizeName}-section-cover`;
+  return {
+    handle,
+    title: `${facing === 'L' ? 'Left' : 'Right'} ${shape === 'round' ? 'Round' : 'Square'} Arm ${titleSize} Section Cover`,
+    price: size === 1 ? 519 : size === 2 ? 709 : 859,
+    url: cwUrl(handle),
+    ref: `CS${size}B-${armCode}-${facing}`,
+  };
+}
+
+function cwArmlessProduct(seats: number): CwProduct {
+  return seats >= 3
+    ? {
+        handle: 'armless-sofa-section-slipcover',
+        title: 'Armless Sofa Section Slipcover',
+        price: 859,
+        url: cwUrl('armless-sofa-section-slipcover'),
+        ref: 'CS3X-NA',
+      }
+    : {
+        handle: 'boxed-seat-armless-chair-slipcover',
+        title: 'Armless Chair Slipcover',
+        price: 469,
+        url: cwUrl('boxed-seat-armless-chair-slipcover'),
+        ref: 'CS1X-NA',
+      };
+}
+
+const STRAIGHT_RUN_KINDS: ReadonlySet<PieceKind> = new Set(['left-arm', 'seat', 'right-arm']);
+
+/**
+ * Map the full assembly to CW products and compute the total. Straight runs
+ * are quoted the way CW sells them: a CS3B sofa section covers three seats —
+ * not three chair sections — with armless infill (CS3X/CS1X) for longer
+ * runs and a matching end unit at an armed far end.
+ */
 export function getAssemblyPricing(
   pieces: SectionalPiece[],
   country: SectionalPricingCountry = DEFAULT_PRICING_COUNTRY,
   fabric: SectionalPricingFabric = DEFAULT_PRICING_FABRIC,
-  catalog: SectionalPricingCatalog = CW_US_FABRIC_PRICES
+  catalog: SectionalPricingCatalog = CW_US_FABRIC_PRICES,
+  style: SectionalProductStyle = DEFAULT_SECTIONAL_PRODUCT_STYLE
 ): AssemblyPricing {
   const items: AssemblyPricingItem[] = [];
   let total = 0;
-  pieces.forEach((piece, index) => {
-    const product = getPiecePricing(piece);
-    if (product) {
-      const localized = catalog[product.handle]?.[fabric];
-      const pricedProduct = localized
-        ? {
-            ...product,
-            price: localized.price,
-            url: localizeCwProductUrl(localized.url || product.url, country),
-          }
-        : { ...product, url: localizedCwUrl(product.handle, country) };
-      items.push({ pieceIndex: index, pieceName: PIECES[piece.kind].name, product: pricedProduct });
-      total += pricedProduct.price;
+  const push = (product: CwProduct, pieceIndex: number, pieceName: string) => {
+    const localized = catalog[product.handle]?.[fabric];
+    const pricedProduct = localized
+      ? {
+          ...product,
+          price: localized.price,
+          url: localizeCwProductUrl(localized.url || product.url, country),
+        }
+      : { ...product, url: localizedCwUrl(product.handle, country) };
+    items.push({ pieceIndex, pieceName, product: pricedProduct });
+    total += pricedProduct.price;
+  };
+  const armCodeFor = (piece: SectionalPiece): 'SRA' | 'SSA' =>
+    (piece.armStyle || style.arm) === 'round' ? 'SRA' : 'SSA';
+  const hasWorldLeftArm = (piece: SectionalPiece) =>
+    (piece.kind === 'left-arm' && !piece.mirrored) ||
+    (piece.kind === 'right-arm' && piece.mirrored);
+  const hasWorldRightArm = (piece: SectionalPiece) =>
+    (piece.kind === 'right-arm' && !piece.mirrored) ||
+    (piece.kind === 'left-arm' && piece.mirrored);
+  const pushArmlessChunks = (seatCount: number, startIndex: number) => {
+    let remaining = seatCount;
+    while (remaining > 0) {
+      const take = remaining >= 3 ? 3 : 1;
+      push(
+        cwArmlessProduct(take),
+        startIndex,
+        take >= 3 ? '3-seat armless infill' : '1-seat armless infill'
+      );
+      remaining -= take;
     }
+  };
+
+  const handled = new Set<string>();
+  // Group straight main-row modules (rotation 0, seat/arm kinds) into runs.
+  const straight = pieces
+    .map((piece, index) => ({ piece, index }))
+    .filter(({ piece }) => piece.rotation % 360 === 0 && STRAIGHT_RUN_KINDS.has(piece.kind))
+    .sort((a, b) => a.piece.col - b.piece.col);
+  let run: Array<{ piece: SectionalPiece; index: number }> = [];
+  const flushRun = () => {
+    if (!run.length) return;
+    run.forEach(entry => handled.add(entry.piece.id));
+    const seats = run.length;
+    const first = run[0].piece;
+    const last = run[run.length - 1].piece;
+    const startIndex = run[0].index;
+    const leftArmed = hasWorldLeftArm(first);
+    const rightArmed = hasWorldRightArm(last);
+    if (leftArmed && rightArmed) {
+      const leftSeats = Math.min(3, seats - 1);
+      const rightSeats = Math.min(3, seats - leftSeats);
+      push(
+        cwUnitProduct(leftSeats, 'L', armCodeFor(first)),
+        startIndex,
+        `${leftSeats}-seat left-arm unit`
+      );
+      push(
+        cwUnitProduct(rightSeats, 'R', armCodeFor(last)),
+        run[run.length - 1].index,
+        `${rightSeats}-seat right-arm unit`
+      );
+      pushArmlessChunks(seats - leftSeats - rightSeats, startIndex);
+    } else if (leftArmed || rightArmed) {
+      const facing = leftArmed ? 'L' : 'R';
+      const armedPiece = leftArmed ? first : last;
+      const unitSeats = Math.min(3, seats);
+      push(
+        cwUnitProduct(unitSeats, facing, armCodeFor(armedPiece)),
+        leftArmed ? startIndex : run[run.length - 1].index,
+        `${unitSeats}-seat ${leftArmed ? 'left' : 'right'}-arm unit`
+      );
+      pushArmlessChunks(seats - unitSeats, startIndex);
+    } else {
+      pushArmlessChunks(seats, startIndex);
+    }
+    run = [];
+  };
+  straight.forEach(entry => {
+    if (
+      run.length &&
+      entry.piece.col ===
+        run[run.length - 1].piece.col + pieceFootprint(run[run.length - 1].piece).colSpan
+    ) {
+      run.push(entry);
+    } else {
+      flushRun();
+      run = [entry];
+    }
+  });
+  flushRun();
+
+  pieces.forEach((piece, index) => {
+    if (handled.has(piece.id)) return;
+    if (piece.kind === 'left-arm-chaise' || piece.kind === 'right-arm-chaise') {
+      const armCode = armCodeFor(piece);
+      if (armCode === 'SRA') {
+        const facing = piece.kind === 'left-arm-chaise' ? 'L' : 'R';
+        push(
+          {
+            handle: `boxed-seat-${facing === 'L' ? 'left' : 'right'}-round-arm-chaise-section-cover`,
+            title: `${facing === 'L' ? 'Left' : 'Right'} Round Arm Chaise Section Cover`,
+            price: 659,
+            url: cwUrl(
+              `boxed-seat-${facing === 'L' ? 'left' : 'right'}-round-arm-chaise-section-cover`
+            ),
+            ref: `CS5B-SRA-${facing}`,
+          },
+          index,
+          'Chaise unit (round arm)'
+        );
+        return;
+      }
+    }
+    const product = getPiecePricing(piece);
+    if (product) push(product, index, PIECES[piece.kind].name);
   });
   return { items, total, currency: SECTIONAL_PRICING_MARKETS[country].currency };
 }
 
 export function createSectionalPreset(
-  name: 'sofa' | 'chaise' | 'corner' | 'two-seat' | 'l-chaise' | 'ottoman-set'
+  name:
+    | 'sofa'
+    | 'chaise'
+    | 'corner'
+    | 'two-seat'
+    | 'l-chaise'
+    | 'ottoman-set'
+    | 'armchair'
+    | 'two-arm-chaise'
 ): SectionalPiece[] {
+  if (name === 'armchair') {
+    return [{ id: createId(), kind: 'armchair', col: 0, row: 0, rotation: 0, mirrored: false }];
+  }
+  if (name === 'two-arm-chaise') {
+    return [
+      { id: createId(), kind: 'two-arm-chaise', col: 0, row: 0, rotation: 0, mirrored: false },
+    ];
+  }
   if (name === 'two-seat') {
     return [
       { id: createId(), kind: 'left-arm', col: 0, row: 0, rotation: 0, mirrored: false },
@@ -1017,7 +1291,14 @@ export function createSectionalPreset(
 export function getPieceDimensions(piece: SectionalPiece): { width: number; depth: number } {
   const spec = PIECES[piece.kind];
   const swapped = ((piece.rotation % 180) + 180) % 180 !== 0;
-  return { width: swapped ? spec.depth : spec.width, depth: swapped ? spec.width : spec.depth };
+  const baseWidth = swapped ? spec.depth : spec.width;
+  const baseDepth = swapped ? spec.width : spec.depth;
+  const overrideWidth = Number(piece.widthCm);
+  const overrideDepth = Number(piece.depthCm);
+  return {
+    width: Number.isFinite(overrideWidth) && overrideWidth > 0 ? overrideWidth : baseWidth,
+    depth: Number.isFinite(overrideDepth) && overrideDepth > 0 ? overrideDepth : baseDepth,
+  };
 }
 
 /** Reference depth (95 cm) maps to one grid cell. */
@@ -1366,8 +1647,16 @@ function pieceMarkup(
   let body = '';
 
   const armEnd = Math.round(7 + ((h - 22) * 2) / 3);
-  const hasLeftArm = piece.kind === 'left-arm' || piece.kind === 'left-arm-chaise';
-  const hasRightArm = piece.kind === 'right-arm' || piece.kind === 'right-arm-chaise';
+  const hasLeftArm =
+    piece.kind === 'left-arm' ||
+    piece.kind === 'left-arm-chaise' ||
+    piece.kind === 'armchair' ||
+    piece.kind === 'two-arm-chaise';
+  const hasRightArm =
+    piece.kind === 'right-arm' ||
+    piece.kind === 'right-arm-chaise' ||
+    piece.kind === 'armchair' ||
+    piece.kind === 'two-arm-chaise';
   const planArmWidth = 15;
   const planSeatLeft = hasLeftArm ? planArmWidth : 0;
   const planSeatRight = hasRightArm ? w - planArmWidth : w;
@@ -1384,14 +1673,12 @@ function pieceMarkup(
     body = `<rect x="6" y="7" width="${w - 12}" height="${h - 14}" rx="4" ${common}/><rect x="${planCushionX}" y="30" width="${planCushionWidth}" height="${h - 49}" rx="3" ${cushion}/><path d="M${planBackStart} 21H${planBackEnd}" stroke="${theme.accent}" stroke-width="8"/><path d="M8 17V${armEnd}" stroke="${theme.accent}" stroke-width="14"/>`;
   } else if (piece.kind === 'right-arm-chaise') {
     body = `<rect x="6" y="7" width="${w - 12}" height="${h - 14}" rx="4" ${common}/><rect x="${planCushionX}" y="30" width="${planCushionWidth}" height="${h - 49}" rx="3" ${cushion}/><path d="M${planBackStart} 21H${planBackEnd}" stroke="${theme.accent}" stroke-width="8"/><path d="M${w - 8} 17V${armEnd}" stroke="${theme.accent}" stroke-width="14"/>`;
+  } else if (piece.kind === 'two-arm-chaise') {
+    body = `<rect x="6" y="7" width="${w - 12}" height="${h - 14}" rx="4" ${common}/><rect x="${planCushionX}" y="30" width="${planCushionWidth}" height="${h - 49}" rx="3" ${cushion}/><path d="M${planBackStart} 21H${planBackEnd}" stroke="${theme.accent}" stroke-width="8"/><path d="M8 17V${armEnd}" stroke="${theme.accent}" stroke-width="14"/><path d="M${w - 8} 17V${armEnd}" stroke="${theme.accent}" stroke-width="14"/>`;
   } else if (piece.kind === 'ottoman') {
     body = `<rect x="10" y="10" width="${w - 20}" height="${h - 20}" rx="8" ${common}/><rect x="20" y="20" width="${w - 40}" height="${h - 40}" rx="6" ${cushion}/>`;
   } else {
-    const arm = hasLeftArm
-      ? `<path d="M8 17V${armEnd}" stroke="${theme.accent}" stroke-width="14"/>`
-      : hasRightArm
-        ? `<path d="M${w - 8} 17V${armEnd}" stroke="${theme.accent}" stroke-width="14"/>`
-        : '';
+    const arm = `${hasLeftArm ? `<path d="M8 17V${armEnd}" stroke="${theme.accent}" stroke-width="14"/>` : ''}${hasRightArm ? `<path d="M${w - 8} 17V${armEnd}" stroke="${theme.accent}" stroke-width="14"/>` : ''}`;
     body = `<rect x="6" y="7" width="${w - 12}" height="${h - 14}" rx="4" ${common}/><rect x="${planCushionX}" y="29" width="${planCushionWidth}" height="${h - 57}" rx="3" ${cushion}/><path d="M${planBackStart} 17H${planBackEnd}" stroke="${theme.accent}" stroke-width="10"/>${arm}`;
   }
 
@@ -1441,7 +1728,7 @@ export function getSectionalPlanViewBox(pieces: SectionalPiece[]): SectionalPlan
 }
 
 export interface SectionalMeasurementSeed {
-  role: 'overall-width' | 'overall-depth' | 'column-width';
+  role: 'overall-width' | 'overall-depth' | 'column-width' | 'row-depth';
   label: string;
   suggestedTag: string;
   pieceId?: string;
@@ -1515,10 +1802,163 @@ export function getSectionalMeasurementSeeds(pieces: SectionalPiece[]): Sectiona
         });
       });
   }
+  // Per-row depth segments (the PDF side view's D codes): one per occupied
+  // row beyond the first, matching how chaise/return legs add depth.
+  const rowDepths = new Map<number, number>();
+  pieces.forEach(piece => {
+    const dims = getPieceDimensions(piece);
+    rowDepths.set(piece.row, Math.max(rowDepths.get(piece.row) || 0, dims.depth));
+  });
+  if (rowDepths.size > 1) {
+    [...rowDepths.entries()]
+      .sort(([a], [b]) => a - b)
+      .forEach(([row, depth], index) => {
+        if (index === 0) return; // row 0 depth is the overall depth already
+        const rowY0 = GRID_ORIGIN_Y + row * CELL;
+        seeds.push({
+          role: 'row-depth',
+          label: `Row ${index + 1} depth`,
+          suggestedTag: `D${index}`,
+          valueCm: depth,
+          x1: x1 + 28,
+          y1: rowY0,
+          x2: x1 + 28,
+          y2: rowY0 + CELL,
+        });
+      });
+  }
   return seeds;
 }
 
-/** Map a plan-SVG point into canvas world coordinates via the placed image rect. */
+/**
+ * Apply an edited measurement code to the assembly by rescaling the affected
+ * piece dimension overrides. Codes:
+ *   A1          → overall width: every piece rescales proportionally
+ *   A3, A4, …   → one occupied column: pieces in that column rescale
+ *   A2          → overall depth: every piece rescales proportionally
+ *   D1, D2, …   → one row: pieces in that row rescale
+ * Mutates the passed pieces in place (builder state) and returns the count of
+ * pieces whose dimensions changed.
+ */
+export function applySectionalMeasurementEdit(
+  pieces: SectionalPiece[],
+  code: string,
+  valueCm: number
+): number {
+  const normalized = String(code || '')
+    .trim()
+    .toUpperCase();
+  const value = Number(valueCm);
+  if (!normalized || !Number.isFinite(value) || value <= 0) return 0;
+
+  const scalePieces = (
+    targets: SectionalPiece[],
+    dimension: 'width' | 'depth',
+    targetCm: number,
+    groupKey: (piece: SectionalPiece) => string
+  ): number => {
+    if (!targets.length) return 0;
+    // The target is a slot-spanning sum (per column for widths, per row for
+    // depths): compute the current total from each slot's widest/deepest
+    // piece so stacked pieces are never double-counted.
+    const groups = new Map<string, SectionalPiece[]>();
+    targets.forEach(piece => {
+      const key = groupKey(piece);
+      const group = groups.get(key) || [];
+      group.push(piece);
+      groups.set(key, group);
+    });
+    const current = Array.from(groups.values()).reduce(
+      (total, group) =>
+        total + Math.max(...group.map(piece => getPieceDimensions(piece)[dimension])),
+      0
+    );
+    if (current <= 0) return 0;
+    const factor = targetCm / current;
+    let changed = 0;
+    groups.forEach(group =>
+      group.forEach(piece => {
+        const dims = getPieceDimensions(piece);
+        const next = Math.max(20, Math.round(dims[dimension] * factor * 10) / 10);
+        if (Math.abs(next - dims[dimension]) > 0.05) changed += 1;
+        if (dimension === 'width') piece.widthCm = next;
+        else piece.depthCm = next;
+      })
+    );
+    return changed;
+  };
+
+  const occupiedCols = Array.from(new Set(pieces.map(piece => piece.col))).sort((a, b) => a - b);
+  const occupiedRows = Array.from(new Set(pieces.map(piece => piece.row))).sort((a, b) => a - b);
+
+  if (normalized === 'A1') return scalePieces(pieces, 'width', value, piece => String(piece.col));
+  if (normalized === 'A2') return scalePieces(pieces, 'depth', value, piece => String(piece.row));
+
+  const moduleMatch = normalized.match(/^A(\d+)$/);
+  if (moduleMatch) {
+    const moduleIndex = Number(moduleMatch[1]) - 3; // A3 → column 0
+    const col = occupiedCols[moduleIndex];
+    if (col === undefined) return 0;
+    return scalePieces(
+      pieces.filter(piece => piece.col === col),
+      'width',
+      value,
+      piece => String(piece.row)
+    );
+  }
+
+  const depthMatch = normalized.match(/^D(\d+)$/);
+  if (depthMatch) {
+    const rowIndex = Number(depthMatch[1]);
+    const row = occupiedRows[rowIndex];
+    if (row === undefined) return 0;
+    return scalePieces(
+      pieces.filter(piece => piece.row === row),
+      'depth',
+      value,
+      piece => String(piece.col)
+    );
+  }
+
+  return 0;
+}
+
+/**
+ * Current code → cm values for the assembly (overall, per-module, per-row),
+ * used to label the drawn dimension annotations.
+ */
+export function getSectionalProductMeasurementLabels(pieces: SectionalPiece[]): Array<{
+  code: string;
+  valueCm: number;
+  editable: boolean;
+}> {
+  const labels: Array<{ code: string; valueCm: number; editable: boolean }> = [];
+  const occupiedCols = Array.from(new Set(pieces.map(piece => piece.col))).sort((a, b) => a - b);
+  const occupiedRows = Array.from(new Set(pieces.map(piece => piece.row))).sort((a, b) => a - b);
+  const overall = calculateSectionalBounds(pieces);
+  labels.push({ code: 'A1', valueCm: overall.width, editable: true });
+  if (occupiedCols.length > 1) {
+    occupiedCols.forEach((col, index) => {
+      const width = Math.max(
+        ...pieces.filter(piece => piece.col === col).map(piece => getPieceDimensions(piece).width)
+      );
+      labels.push({ code: `A${index + 3}`, valueCm: width, editable: true });
+    });
+  }
+  labels.push({ code: 'A2', valueCm: overall.depth, editable: true });
+  if (occupiedRows.length > 1) {
+    occupiedRows.forEach((row, index) => {
+      const depth = Math.max(
+        ...pieces.filter(piece => piece.row === row).map(piece => getPieceDimensions(piece).depth)
+      );
+      labels.push({ code: `D${index}`, valueCm: depth, editable: index > 0 });
+    });
+  }
+  return labels;
+}
+
+/**
+ * Map a plan-SVG point into canvas world coordinates via the placed image rect. */
 export function planPointToWorld(
   planX: number,
   planY: number,
@@ -1551,6 +1991,12 @@ interface ProductPiecePlacement {
   bodyH: number;
   effectiveW: number;
   effectiveH: number;
+  /**
+   * Curved-back arc lift (svg px) at this piece's left edge, right edge and
+   * centre, measured from one shared circular arc across the whole assembly
+   * row. Undefined for straight backs and perpendicular return legs.
+   */
+  backLift?: { left: number; right: number; mid: number };
 }
 
 type ProductLayout = Map<string, ProductPiecePlacement>;
@@ -1609,12 +2055,70 @@ function createProductLayout(pieces: SectionalPiece[]): ProductLayout {
   );
 }
 
+/**
+ * A curved back is ONE continuous arc across the whole assembly, not a
+ * scallop per module: individual seat sections do not curve on their own,
+ * a curved sofa curves as a single piece (CW ref CS3B-RA-RB). Each main-row
+ * piece receives the arc's lift at its left/right edges and centre so
+ * adjacent modules share identical edge heights and their chords join.
+ * Perpendicular return legs keep their module-local curve.
+ */
+function applyUniformBackCurve(pieces: SectionalPiece[], layout: ProductLayout): void {
+  const mainRow = pieces.filter(piece => {
+    if (((piece.rotation % 180) + 180) % 180 !== 0) return false;
+    const placement = layout.get(piece.id);
+    return !!placement;
+  });
+  if (!mainRow.length) return;
+  const xs = mainRow.flatMap(piece => {
+    const placement = layout.get(piece.id)!;
+    return [placement.originX, placement.originX + placement.effectiveW];
+  });
+  const x0 = Math.min(...xs);
+  const x1 = Math.max(...xs);
+  const half = Math.max(1, (x1 - x0) / 2);
+  const maxLift = 13;
+  const radius = (half * half + maxLift * maxLift) / (2 * maxLift);
+  const centerX = (x0 + x1) / 2;
+  const liftAt = (x: number): number => {
+    const dx = Math.max(-half, Math.min(half, x - centerX));
+    return radius - Math.sqrt(Math.max(0, radius * radius - dx * dx));
+  };
+  mainRow.forEach(piece => {
+    const placement = layout.get(piece.id)!;
+    placement.backLift = {
+      left: liftAt(placement.originX),
+      right: liftAt(placement.originX + placement.effectiveW),
+      mid: liftAt(placement.originX + placement.effectiveW / 2),
+    };
+  });
+}
+
+/** T/L back-cushion wrap is the natural default on half-arm and two-arm modules. */
+function armLengthWrapDefault(piece: SectionalPiece): boolean {
+  return (
+    piece.kind === 'armchair' ||
+    piece.kind === 'two-arm-chaise' ||
+    (piece.armLength ?? '') === 'half'
+  );
+}
+
 function resolveProductStyle(
   piece: SectionalPiece,
   fallback: SectionalProductStyle = DEFAULT_SECTIONAL_PRODUCT_STYLE
 ): SectionalProductStyle {
   return {
     arm: piece.armStyle || fallback.arm,
+    // Two-arm modules (armchair, two-arm chaise) default to the CS1L-style
+    // half-length arm: their arms stop set back from the seat front.
+    armLength:
+      piece.armLength ||
+      (piece.kind === 'armchair' || piece.kind === 'two-arm-chaise' ? 'half' : fallback.armLength),
+    // Wrap (T/L) back cushions auto-enable on half-arm and two-arm modules:
+    // the cushion widens above the arm tops, forming a T on two-arm pieces
+    // and an L on single-arm ends.
+    backCushionFit:
+      piece.backCushionFit || (armLengthWrapDefault(piece) ? 'wrap' : fallback.backCushionFit),
     back: piece.backStyle || fallback.back,
     cushion: piece.cushionStyle || fallback.cushion,
     base: piece.baseStyle || fallback.base,
@@ -1650,21 +2154,58 @@ function productProjection(
         x1: GRID_ORIGIN_X + CELL * 3,
         y1: GRID_ORIGIN_Y + CELL,
       };
-  // Cabinet projection for a true 45-degree product angle: front faces stay
-  // true-shape (level, like a camera orbiting the sofa — never a tilted
-  // object), the depth axis recedes at 45 degrees, and verticals stay
-  // vertical. The projector direction L = (-0.72, 1, 0.72) also agrees with
-  // the face culling (south + west + top faces): the previous form
-  // (sx = -x + 0.72y) collapsed along (+0.72, 1, 0.4408), an east-facing
-  // camera — the exact opposite of the culled faces. That "impossible camera"
-  // made abutting modules falsely overlap on screen (the exploded L-shape)
-  // and made no linear depth functional able to sort it.
-  const direction = viewMode === 'front-left' ? -1 : 1;
+  // True perspective replaces the old fixed-shear cabinet projection: a
+  // pinhole camera on the same sight line L = (-0.72, 1, 0.72) that already
+  // drives the face culling and the painter depth. Parallel lines now
+  // converge and near modules read larger than far ones — the cue that makes
+  // the render read as an object instead of a tilted diagram. Only the
+  // canonical front-right camera exists; front-left mirrors the finished
+  // render in sectionalProductMarkup, so one camera serves every view.
+  const sightLen = Math.hypot(-0.72, 1, 0.72);
+  const sceneCx = (bounds.x0 + bounds.x1) / 2;
+  const sceneCy = (bounds.y0 + bounds.y1) / 2;
+  const sceneCz = 62;
+  const radius = Math.hypot(bounds.x1 - bounds.x0, bounds.y1 - bounds.y0) / 2;
+  // Product-shot framing: a moderate horizontal FOV keeps the perspective
+  // present without wide-angle distortion. The camera distance scales with
+  // the assembly so every preset is photographed with the same lens.
+  const hfov = (40 * Math.PI) / 180;
+  const dist = radius * 2.75 + 140;
+  const focal = dist / Math.tan(hfov / 2);
+  // Flattened elevation: product photography sits ~15-20° above the seat
+  // plane, not 36° — a high camera turns cushion tops into runways and
+  // pushes the backrest into card-land. The camera stays on the same
+  // horizontal bearing (the L = (-0.72, 1, ·) sight line) but its vertical
+  // offset is scaled down, and the forward vector re-aims at scene centre.
+  const elevFactor = 0.42;
+  const camDir = { x: -0.72, y: 1, z: 0.72 * elevFactor };
+  const camDirLen = Math.hypot(camDir.x, camDir.y, camDir.z);
+  const camera = {
+    x: sceneCx + (camDir.x / camDirLen) * dist,
+    y: sceneCy + (camDir.y / camDirLen) * dist,
+    z: sceneCz + (camDir.z / camDirLen) * dist,
+  };
+  // Orthonormal camera basis in a z-up world: forward points at the scene
+  // centre, right matches the old screen-x direction so the composition
+  // keeps its orientation, and up completes the frame.
+  const fwd = { x: -camDir.x / camDirLen, y: -camDir.y / camDirLen, z: -camDir.z / camDirLen };
+  const rightLen = Math.hypot(fwd.y, fwd.x) || 1;
+  const right = { x: -fwd.y / rightLen, y: fwd.x / rightLen, z: 0 };
+  const up = {
+    x: fwd.y * right.z - fwd.z * right.y,
+    y: fwd.z * right.x - fwd.x * right.z,
+    z: fwd.x * right.y - fwd.y * right.x,
+  };
   const raw = (point: ProductPoint3D): SectionalPoint => {
-    const consistentViewX = point.x - bounds.x0 + (point.y - bounds.y0) * 0.72;
+    const vx = point.x - camera.x;
+    const vy = point.y - camera.y;
+    const vz = point.z - camera.z;
+    const camZ = vx * fwd.x + vy * fwd.y + vz * fwd.z;
+    const camX = vx * right.x + vy * right.y;
+    const camY = vx * up.x + vy * up.y + vz * up.z;
     return {
-      x: direction * consistentViewX,
-      y: (point.y - bounds.y0) * 0.72 - point.z,
+      x: (focal * camX) / camZ,
+      y: (-focal * camY) / camZ,
     };
   };
   const samples: ProductPoint3D[] = [];
@@ -1837,28 +2378,52 @@ function sectionalProductPieceLayers(
   const capabilities = getSectionalPieceCapabilities(piece.kind);
   const p = (localX: number, localY: number, z: number) =>
     sectionalPiecePoint(piece, localX, localY, z, layout);
-  const bodyTop = 38;
-  // The seat cushion's front face runs right down to the base-front junction
-  // (no bare body-top strip showing), as in the CW reference renders.
-  const seatBottom = style.cushion === 'knife' ? 44 : 40;
-  const seatTop = style.cushion === 'knife' ? 52 : 59;
-  const structuralBackTop = style.back === 'short' ? 96 : style.back === 'curved' ? 119 : 128;
-  // Loose back cushions crown a few pixels above the frame rails, the way
-  // they sit proud in the CW reference renders.
-  const looseBackTop = style.back === 'short' ? 100 : style.back === 'curved' ? 124 : 133;
-  const armTop = style.arm === 'wedge' ? 84 : 96;
+  // Per-surface vertical gradients in user space: shared bounding-box ramps
+  // shade along a long quad's *length* (the old "water-slide" arms), so every
+  // face gets its own top-to-bottom ramp from its projected z-extent.
+  let surfaceGradients: string[] = [];
+  let gradientSeq = 0;
+  const vGrad = (
+    from: string,
+    to: string,
+    topPoint: ProductPoint3D,
+    bottomPoint: ProductPoint3D
+  ): string => {
+    const top = projection.point(topPoint);
+    const bottom = projection.point(bottomPoint);
+    const id = `sbg${(gradientSeq += 1)}`;
+    surfaceGradients.push(
+      `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${top.x.toFixed(1)}" y1="${top.y.toFixed(1)}" x2="${bottom.x.toFixed(1)}" y2="${bottom.y.toFixed(1)}"><stop offset="0" stop-color="${from}"/><stop offset="1" stop-color="${to}"/></linearGradient>`
+    );
+    return `url(#${id})`;
+  };
+  const withGradients = (markup: string): string => {
+    if (!surfaceGradients.length) return markup;
+    const defs = `<defs>${surfaceGradients.join('')}</defs>`;
+    surfaceGradients = [];
+    return defs + markup;
+  };
+  // Vertical anatomy in svg px (1 px ≈ 0.76 cm): deck, plump seat cushion,
+  // arm crown and back heights follow real sofa proportions (~45 cm seat,
+  // ~65 cm arm, ~90 cm back) so modules read as furniture, not billboards.
+  const bodyTop = 37;
+  const seatBottom = style.cushion === 'knife' ? 41 : 38;
+  const seatTop = style.cushion === 'knife' ? 54 : 60;
+  const structuralBackTop = style.back === 'short' ? 108 : style.back === 'curved' ? 130 : 136;
+  const looseBackTop = style.back === 'short' ? 100 : style.back === 'curved' ? 122 : 128;
+  const armTop = style.arm === 'wedge' ? 82 : 90;
   const inset = style.cushion === 'rounded' ? 11 : 9;
   const isPerpendicularReturn = ((piece.rotation % 180) + 180) % 180 !== 0;
-  const armSide = capabilities.armSides[0] || '';
+  const armSides = capabilities.armSides;
   // A roll/square arm on a 105 cm module is a real volume (~22 cm), not a
   // 15 px appliqué. The seat rectangle shrinks accordingly; the saved module
-  // footprint is unchanged.
+  // footprint is unchanged. Two-arm modules (armchair, two-arm chaise) shrink
+  // the seat from both sides.
   const armThickness = 29;
-  const armInnerX = armSide === 'left' ? armThickness : armSide === 'right' ? w - armThickness : 0;
   const bodyLeftX = 0;
   const bodyRightX = w;
-  const seatLeftX = armSide === 'left' ? armInnerX : 0;
-  const seatRightX = armSide === 'right' ? armInnerX : w;
+  const seatLeftX = armSides.includes('left') ? armThickness : 0;
+  const seatRightX = armSides.includes('right') ? w - armThickness : w;
   const localSideConnected = (side: ConnectorSide) => {
     const turns = Math.round((((piece.rotation % 360) + 360) % 360) / 90) % 4;
     let worldSide = SIDE_ORDER[(SIDE_ORDER.indexOf(side) + turns) % 4];
@@ -1878,18 +2443,48 @@ function sectionalProductPieceLayers(
   const backJoinsCorner = isPerpendicularReturn && localSideConnected('left');
   // Upholstery reaches almost to a joined edge so connected modules read as
   // one continuous seat; open edges keep the usual cushion reveal.
-  const leftContentInset = seatLeftX + (backJoinsCorner ? 3 : inset);
-  const rightContentX = seatRightX - inset;
+  // Upholstery reaches almost to a joined edge so connected modules read as
+  // one continuous seat (2px seam reveal); open edges keep the cushion reveal.
+  const leftContentInset =
+    seatLeftX + (backJoinsCorner ? 3 : localSideConnected('left') ? 2 : inset);
+  const rightContentX = seatRightX - (localSideConnected('right') ? 2 : inset);
   const leftBackInset = seatLeftX + (backJoinsCorner ? 4 : 11);
   const rightBackX = seatRightX - 11;
   const frontY = d;
   const rearY = 0;
   // Tuck the seat cushion under the loose back cushion. The overlap makes the
   // upholstery read as one assembly instead of two disconnected rectangles.
-  const seatRear = Math.min(23, d * 0.2);
-  // An open seat cushion sits proud of the base front edge, as in the CW
-  // reference renders; a connected one tucks to the joint.
-  const seatFront = frontY - (frontConnected ? 3 : -2);
+  // Real seat cushions occupy the front ~two-thirds of the deck, leaving the
+  // rear third for the back pillows and their well. A full-depth cushion top
+  // reads as a runway and pushes the pillows into floating-card territory.
+  const seatRear = Math.min(38, d * 0.3);
+  // An open seat cushion sits flush with the base front (a 2px tuck), as do
+  // connected ones — a proud overhang reads as a detached lid.
+  const seatFront = frontY - 2;
+  // Arm extent is shared by every arm of the module (and drives the T-shaped
+  // seat cushion): full-length arms end flush with the seat front; half-length
+  // arms (CS1L family) stop set back ~20 cm from it, so the cushion fills the
+  // full footprint in front of them. Two-arm modules default to half-length.
+  const armRear = rearY + 18;
+  const armIsOnChaise = piece.kind === 'left-arm-chaise' || piece.kind === 'right-arm-chaise';
+  const armLength = resolveProductStyle(piece, fallbackStyle).armLength;
+  const armSetback = armLength === 'half' ? 26 : 0;
+  const armFront =
+    (armIsOnChaise ? Math.min(frontY - 1, armRear + 95 * PRODUCT_PX_PER_CM) : frontY - 1) -
+    armSetback;
+  const tSeatActive = armSides.length > 0 && armFront < frontY - 6;
+  // T-shaped seat cushion: with set-back (half-length) arms the cushion fills
+  // the full module width in front of the arm ends — narrow between the arms,
+  // full width at the front — so no dead space is left around the arms.
+  const tArmY = tSeatActive ? Math.max(seatRear + 6, armFront - 2) : seatFront;
+  const frontInsetL = localSideConnected('left') || frontConnected ? 2 : inset;
+  const frontInsetR = localSideConnected('right') || frontConnected ? 2 : inset;
+  const frontLeftX = tSeatActive ? frontInsetL : leftContentInset;
+  const frontRightX = tSeatActive ? w - frontInsetR : rightContentX;
+  // Tonal strokes replace the old near-black CAD outlines: definition comes
+  // from shaded gradients, edges only need a whisper of the shadow tone.
+  const bodyStroke = shadeHex(theme.body, -48);
+  const cushionLine = shadeHex(theme.cushion, -46);
   const topFace = productPolygon(projection, [
     p(bodyLeftX, rearY, bodyTop),
     p(bodyRightX, rearY, bodyTop),
@@ -1897,94 +2492,159 @@ function sectionalProductPieceLayers(
     p(bodyLeftX, frontY, bodyTop),
   ]);
   const frontFace = productPolygon(projection, [
-    p(bodyLeftX, frontY, 4),
-    p(bodyRightX, frontY, 4),
+    p(bodyLeftX, frontY, 5),
+    p(bodyRightX, frontY, 5),
     p(bodyRightX, frontY, bodyTop),
     p(bodyLeftX, frontY, bodyTop),
   ]);
   const rearFace = productPolygon(projection, [
-    p(bodyLeftX, rearY, 4),
-    p(bodyRightX, rearY, 4),
+    p(bodyLeftX, rearY, 5),
+    p(bodyRightX, rearY, 5),
     p(bodyRightX, rearY, bodyTop),
     p(bodyLeftX, rearY, bodyTop),
   ]);
   const leftSideFace = productPolygon(projection, [
-    p(bodyLeftX, rearY, 4),
-    p(bodyLeftX, frontY, 4),
+    p(bodyLeftX, rearY, 5),
+    p(bodyLeftX, frontY, 5),
     p(bodyLeftX, frontY, bodyTop),
     p(bodyLeftX, rearY, bodyTop),
   ]);
   const rightSideFace = productPolygon(projection, [
-    p(bodyRightX, rearY, 4),
-    p(bodyRightX, frontY, 4),
+    p(bodyRightX, rearY, 5),
+    p(bodyRightX, frontY, 5),
     p(bodyRightX, frontY, bodyTop),
     p(bodyRightX, rearY, bodyTop),
   ]);
   // Cushion silhouettes vary by cut: boxed stays crisp, knife-edge is pinched
-  // at the front corners, and rounded bellies over the front edge.
-  const cushionTopCorners: ProductPoint3D[] = [
-    p(leftContentInset, seatRear, seatTop),
-    p(rightContentX, seatRear, seatTop),
-    p(rightContentX, seatFront, seatTop),
-    p(leftContentInset, seatFront, seatTop),
-  ];
-  const cushionTop = productPolygon(projection, cushionTopCorners);
-  const seatCushionTopElement = (fill: string, strokeWidth: number): string => {
+  // at the front corners, and rounded bellies over the front edge. With
+  // set-back arms the outline is a T: narrow between the arms, full width in
+  // front of them.
+  const seatOutlineLocal: Array<readonly [number, number]> = tSeatActive
+    ? [
+        [leftContentInset, seatRear],
+        [rightContentX, seatRear],
+        [rightContentX, tArmY],
+        [frontRightX, tArmY],
+        [frontRightX, seatFront],
+        [frontLeftX, seatFront],
+        [frontLeftX, tArmY],
+        [leftContentInset, tArmY],
+      ]
+    : [
+        [leftContentInset, seatRear],
+        [rightContentX, seatRear],
+        [rightContentX, seatFront],
+        [leftContentInset, seatFront],
+      ];
+  const cushionTopCorners: ProductPoint3D[] = seatOutlineLocal.map(([lx, ly]) =>
+    p(lx, ly, seatTop)
+  );
+  // A soft crown over the front edge makes the cushion read as stuffed
+  // instead of a foam slab. The dome control sits a few px above the edge.
+  const crownRise = style.cushion === 'rounded' ? 5 : 3.5;
+  const seatCushionTopElement = (strokeWidth: number): string => {
+    const s = (pt: SectionalPoint) => `${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+    const fill = vGrad(
+      shadeHex(theme.cushion, 14),
+      shadeHex(theme.cushion, 3),
+      p((leftContentInset + rightContentX) / 2, seatRear, seatTop),
+      p((leftContentInset + rightContentX) / 2, seatFront, seatTop)
+    );
+    const outlinePath = (pts: SectionalPoint[]) => `M${pts.map(s).join('L')}Z`;
+    if (tSeatActive) {
+      // T-shaped top: straight perimeter, the welt/crown overlays carry the
+      // stuffed read on each arm of the T.
+      return `<path class="sb-seat-cushion" d="${outlinePath(cushionTopCorners.map(corner => projection.point(corner)))}" fill="${fill}" stroke="${cushionLine}" stroke-width="${strokeWidth}" stroke-linejoin="round"/>`;
+    }
+    const [rearLeft, rearRight, frontRight, frontLeft] = cushionTopCorners.map(corner =>
+      projection.point(corner)
+    );
     if (style.cushion === 'rounded') {
-      const [rearLeft, rearRight, frontRight, frontLeft] = cushionTopCorners.map(corner =>
-        projection.point(corner)
-      );
       const belly = projection.point(
-        p((leftContentInset + rightContentX) / 2, seatFront + 5, seatTop)
+        p((leftContentInset + rightContentX) / 2, seatFront + 4, seatTop + 3)
       );
-      const s = (pt: SectionalPoint) => `${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
-      return `<path class="sb-seat-cushion" d="M${s(rearLeft)}L${s(rearRight)}L${s(frontRight)}Q${s(belly)} ${s(frontLeft)}Z" fill="${fill}" stroke="${theme.cushionStroke}" stroke-width="${strokeWidth}" stroke-linejoin="round"/>`;
+      return `<path class="sb-seat-cushion" d="M${s(rearLeft)}L${s(rearRight)}L${s(frontRight)}Q${s(belly)} ${s(frontLeft)}Z" fill="${fill}" stroke="${cushionLine}" stroke-width="${strokeWidth}" stroke-linejoin="round"/>`;
     }
     if (style.cushion === 'knife') {
       const pinch = 7;
-      const hex = productPolygon(projection, [
+      const hex = [
         p(leftContentInset, seatRear, seatTop),
         p(rightContentX, seatRear, seatTop),
         p(rightContentX, seatFront - 4, seatTop),
         p(rightContentX - pinch, seatFront, seatTop),
         p(leftContentInset + pinch, seatFront, seatTop),
         p(leftContentInset, seatFront - 4, seatTop),
-      ]);
-      return `<polygon class="sb-seat-cushion" points="${hex}" fill="${fill}" stroke="${theme.cushionStroke}" stroke-width="${strokeWidth}" stroke-linejoin="round"/>`;
-    }
-    return `<polygon class="sb-seat-cushion" points="${cushionTop}" fill="${fill}" stroke="${theme.cushionStroke}" stroke-width="${strokeWidth}" stroke-linejoin="round"/>`;
-  };
-  const cushionFront = productPolygon(projection, [
-    p(leftContentInset, seatFront, seatBottom),
-    p(rightContentX, seatFront, seatBottom),
-    p(rightContentX, seatFront, seatTop),
-    p(leftContentInset, seatFront, seatTop),
-  ]);
-  const seatCushionFrontElement = (fill: string, strokeWidth: number): string => {
-    if (style.cushion === 'rounded') {
-      const bottomLeft = projection.point(p(leftContentInset, seatFront, seatBottom));
-      const bottomRight = projection.point(p(rightContentX, seatFront, seatBottom));
-      const topRight = projection.point(p(rightContentX, seatFront, seatTop));
-      const topLeft = projection.point(p(leftContentInset, seatFront, seatTop));
-      const crown = projection.point(
-        p((leftContentInset + rightContentX) / 2, seatFront + 5, seatTop - 2)
+      ].map(corner => projection.point(corner));
+      const dome = projection.point(
+        p((leftContentInset + rightContentX) / 2, seatFront, seatTop + crownRise)
       );
-      const s = (pt: SectionalPoint) => `${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
-      return `<path class="sb-seat-cushion-front" d="M${s(bottomLeft)}L${s(bottomRight)}L${s(topRight)}Q${s(crown)} ${s(topLeft)}Z" fill="${fill}" stroke="${theme.cushionStroke}" stroke-width="${strokeWidth}" stroke-linejoin="round"/>`;
+      return `<path class="sb-seat-cushion" d="M${s(hex[0])}L${s(hex[1])}L${s(hex[2])}L${s(hex[3])}Q${s(dome)} ${s(hex[4])}L${s(hex[5])}Z" fill="${fill}" stroke="${cushionLine}" stroke-width="${strokeWidth}" stroke-linejoin="round"/>`;
+    }
+    const dome = projection.point(
+      p((leftContentInset + rightContentX) / 2, seatFront, seatTop + crownRise)
+    );
+    return `<path class="sb-seat-cushion" d="M${s(rearLeft)}L${s(rearRight)}L${s(frontRight)}Q${s(dome)} ${s(frontLeft)}Z" fill="${fill}" stroke="${cushionLine}" stroke-width="${strokeWidth}" stroke-linejoin="round"/>`;
+  };
+  // Crown highlight + welt cord sell the upholstery: a light pool on top and
+  // a piped seam tracing the perimeter just in from the edge. Both shrink
+  // toward the outline centroid in *local* space so rotated modules and
+  // T-shaped outlines stay exact.
+  const seatCentroid = seatOutlineLocal.reduce(
+    (acc, [lx, ly]) => ({
+      x: acc.x + lx / seatOutlineLocal.length,
+      y: acc.y + ly / seatOutlineLocal.length,
+    }),
+    { x: 0, y: 0 }
+  );
+  const shrunkSeatCorners = (shrink: number, z: number): string => {
+    const s = (pt: SectionalPoint) => `${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+    const pts = seatOutlineLocal.map(([lx, ly]) =>
+      projection.point(
+        p(
+          seatCentroid.x + (lx - seatCentroid.x) * (1 - shrink),
+          seatCentroid.y + (ly - seatCentroid.y) * (1 - shrink),
+          z
+        )
+      )
+    );
+    return `M${pts.map(s).join('L')}Z`;
+  };
+  const seatCushionCrownElement = (): string =>
+    `<path class="sb-seat-cushion-crown" d="${shrunkSeatCorners(0.08, seatTop + 0.4)}" fill="${shadeHex(theme.cushion, 18)}" opacity="0.3" stroke="none"/>`;
+  const seatCushionWeltElement = (): string =>
+    `<path class="sb-seat-cushion-welt-top" d="${shrunkSeatCorners(0.055, seatTop + 0.2)}" fill="none" stroke="${shadeHex(theme.cushion, -38)}" stroke-width="1" opacity="0.55"/>`;
+  const seatCushionFrontElement = (strokeWidth: number): string => {
+    const bottomLeft = projection.point(p(frontLeftX, seatFront, seatBottom));
+    const bottomRight = projection.point(p(frontRightX, seatFront, seatBottom));
+    const topRight = projection.point(p(frontRightX, seatFront, seatTop));
+    const topLeft = projection.point(p(frontLeftX, seatFront, seatTop));
+    const crown = projection.point(
+      p((frontLeftX + frontRightX) / 2, seatFront, seatTop + crownRise)
+    );
+    const s = (pt: SectionalPoint) => `${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+    const fill = vGrad(
+      shadeHex(theme.cushion, 4),
+      shadeHex(theme.cushion, -17),
+      p((frontLeftX + frontRightX) / 2, seatFront, seatTop + 2),
+      p((frontLeftX + frontRightX) / 2, seatFront, seatBottom)
+    );
+    if (style.cushion === 'rounded') {
+      const belly = projection.point(p((frontLeftX + frontRightX) / 2, seatFront + 4, seatTop + 1));
+      return `<path class="sb-seat-cushion-front" d="M${s(bottomLeft)}L${s(bottomRight)}L${s(topRight)}Q${s(belly)} ${s(topLeft)}Z" fill="${fill}" stroke="${cushionLine}" stroke-width="${strokeWidth}" stroke-linejoin="round"/>`;
     }
     if (style.cushion === 'knife') {
       const pinch = 7;
       const hex = productPolygon(projection, [
-        p(leftContentInset, seatFront, seatBottom),
-        p(rightContentX, seatFront, seatBottom),
-        p(rightContentX, seatFront, seatTop - 3),
-        p(rightContentX - pinch, seatFront, seatTop),
-        p(leftContentInset + pinch, seatFront, seatTop),
-        p(leftContentInset, seatFront, seatTop - 3),
+        p(frontLeftX, seatFront, seatBottom),
+        p(frontRightX, seatFront, seatBottom),
+        p(frontRightX, seatFront, seatTop - 3),
+        p(frontRightX - pinch, seatFront, seatTop),
+        p(frontLeftX + pinch, seatFront, seatTop),
+        p(frontLeftX, seatFront, seatTop - 3),
       ]);
-      return `<polygon class="sb-seat-cushion-front" points="${hex}" fill="${fill}" stroke="${theme.cushionStroke}" stroke-width="${strokeWidth}" stroke-linejoin="round"/>`;
+      return `<polygon class="sb-seat-cushion-front" points="${hex}" fill="${fill}" stroke="${cushionLine}" stroke-width="${strokeWidth}" stroke-linejoin="round"/>`;
     }
-    return `<polygon class="sb-seat-cushion-front" points="${cushionFront}" fill="${fill}" stroke="${theme.cushionStroke}" stroke-width="${strokeWidth}"/>`;
+    return `<path class="sb-seat-cushion-front" d="M${s(bottomLeft)}L${s(bottomRight)}L${s(topRight)}Q${s(crown)} ${s(topLeft)}Z" fill="${fill}" stroke="${cushionLine}" stroke-width="${strokeWidth}" stroke-linejoin="round"/>`;
   };
   const cushionRear = productPolygon(projection, [
     p(leftContentInset, seatRear, seatBottom),
@@ -1992,187 +2652,359 @@ function sectionalProductPieceLayers(
     p(rightContentX, seatRear, seatTop),
     p(leftContentInset, seatRear, seatTop),
   ]);
+  // Side faces: the rear segment runs between the arms (seatRear..tArmY);
+  // with a T seat the front segment adds exposed end faces at the module
+  // edges (tArmY..seatFront).
   const cushionLeftSide = productPolygon(projection, [
     p(leftContentInset, seatRear, seatBottom),
-    p(leftContentInset, seatFront, seatBottom),
-    p(leftContentInset, seatFront, seatTop),
+    p(leftContentInset, tArmY, seatBottom),
+    p(leftContentInset, tArmY, seatTop),
     p(leftContentInset, seatRear, seatTop),
   ]);
   const cushionRightSide = productPolygon(projection, [
     p(rightContentX, seatRear, seatBottom),
-    p(rightContentX, seatFront, seatBottom),
-    p(rightContentX, seatFront, seatTop),
+    p(rightContentX, tArmY, seatBottom),
+    p(rightContentX, tArmY, seatTop),
     p(rightContentX, seatRear, seatTop),
   ]);
-  // Every structural back sits the same 8/6 px inside its footprint edge, so
-  // the corner's return back and the return leg's backs share one plane and
-  // the spine of the L reads as a single continuous wall. Where a return
-  // leg's local-left edge joins the corner, the back runs right up to the
-  // joint instead of leaving a seam-wide gap.
-  const junctionBottomInset = 8;
-  const junctionTopInset = 6;
-  const backMinX = backJoinsCorner ? 0 : 4;
-  const backMinXTop = backJoinsCorner ? 2 : 6;
-  const structuralBackPath = productPanelPath(
-    projection,
-    p(backMinX, rearY + junctionBottomInset, bodyTop),
-    p(w - 4, rearY + junctionBottomInset, bodyTop),
-    p(backMinXTop, rearY + junctionTopInset, structuralBackTop),
-    p(w - 6, rearY + junctionTopInset, structuralBackTop),
-    style.back === 'curved'
+  const cushionFrontLeftSide = productPolygon(projection, [
+    p(frontLeftX, tArmY, seatBottom),
+    p(frontLeftX, seatFront, seatBottom),
+    p(frontLeftX, seatFront, seatTop),
+    p(frontLeftX, tArmY, seatTop),
+  ]);
+  const cushionFrontRightSide = productPolygon(projection, [
+    p(frontRightX, tArmY, seatBottom),
+    p(frontRightX, seatFront, seatBottom),
+    p(frontRightX, seatFront, seatTop),
+    p(frontRightX, tArmY, seatTop),
+  ]);
+  // The back is a framed box with real depth (~11 cm), not a billboard: the
+  // face plane stands a hand-width in front of the footprint's rear edge and
+  // a deep top cap wraps the frame, so the sofa reads with a back you could
+  // lean against. Every structural back shares these planes, so the corner's
+  // return back and the return leg's backs form one continuous spine.
+  const frameFront = 14;
+  const frameLean = 2;
+  const junctionBottomInset = frameFront;
+  const junctionTopInset = frameFront - frameLean;
+  // Where a module side joins its neighbour, the structural back runs to the
+  // module edge so the row reads as one continuous wall — no light slits
+  // between adjacent backs (exposed on tight RB backs where no cushions
+  // cover the joints).
+  const joinsLeft = backJoinsCorner || localSideConnected('left');
+  const joinsRight = localSideConnected('right');
+  const backMinX = joinsLeft ? 0 : 4;
+  const backMinXTop = joinsLeft ? 0 : 6;
+  const backMaxX = joinsRight ? w : w - 4;
+  const backMaxXTop = joinsRight ? w : w - 6;
+  // Curved-back pieces ride the assembly-wide arc (see applyUniformBackCurve):
+  // top corners lift by the arc height at their x positions, so a row of
+  // modules forms one continuous curve instead of per-module scallops. The
+  // top edge bows to the arc's mid height so each chord itself curves.
+  const backLift: { left: number; right: number; mid: number } = (
+    layout.get(piece.id) as ProductPiecePlacement | undefined
+  )?.backLift || { left: 0, right: 0, mid: 0 };
+  const backTopA = projection.point(
+    p(backMinXTop, rearY + junctionTopInset, structuralBackTop + backLift.left)
   );
-  // The loose back cushion is deliberately independent from the structural
-  // back. Its top leans toward the rear frame so rotated return modules follow
-  // their own back plane instead of all facing the camera.
-  const looseBackPath = productPanelPath(
-    projection,
-    p(leftBackInset - 3, rearY + 28, seatTop - 1),
-    p(rightBackX + 3, rearY + 28, seatTop - 1),
-    p(leftBackInset, rearY + 12, looseBackTop),
-    p(rightBackX, rearY + 12, looseBackTop),
-    style.cushion === 'rounded'
+  const backTopB = projection.point(
+    p(backMaxXTop, rearY + junctionTopInset, structuralBackTop + backLift.right)
   );
+  const backBottomA = projection.point(p(backMinX, rearY + junctionBottomInset, bodyTop));
+  const backBottomB = projection.point(p(backMaxX, rearY + junctionBottomInset, bodyTop));
+  const backBow = backLift.mid - (backLift.left + backLift.right) / 2;
+  const backTopControl = projection.point(
+    p(
+      (backMinXTop + w - 6) / 2,
+      rearY + junctionTopInset,
+      structuralBackTop + (backLift.left + backLift.right) / 2 + 2 * Math.max(0, backBow)
+    )
+  );
+  const structuralBackPath =
+    `M${backBottomA.x.toFixed(1)} ${backBottomA.y.toFixed(1)}` +
+    `L${backBottomB.x.toFixed(1)} ${backBottomB.y.toFixed(1)}` +
+    `L${backTopB.x.toFixed(1)} ${backTopB.y.toFixed(1)}` +
+    (Math.abs(backBow) > 0.3
+      ? `Q${backTopControl.x.toFixed(1)} ${backTopControl.y.toFixed(1)} ${backTopA.x.toFixed(1)} ${backTopA.y.toFixed(1)}`
+      : `L${backTopA.x.toFixed(1)} ${backTopA.y.toFixed(1)}`) +
+    'Z';
+  // The loose back cushion is a boxed pillow, deliberately independent from
+  // the structural back: its front plane sits well ahead of the frame face,
+  // its top leans back and tucks against the frame, and its bottom rests on
+  // the seat cushion's rear (tucked under). The face crowns gently for
+  // boxed/knife cuts and generously for the rounded cut.
+  const cushionFront = 30;
+  const cushionTopFront = 20;
+  const cushionTopRear = 12;
+  const backCushionCrown = style.cushion === 'rounded' ? 14 : 6;
+  // T/L back-cushion wrap: above the arm crowns the cushion widens to the
+  // module edges on sides that carry an arm — a T on two-arm modules, an L on
+  // single-arm ends (CW T-cushion armchair / CS1L end-section look). Only
+  // when the back is tall enough to clear the arms.
+  const armCrownZ = style.arm === 'round' ? 101 : style.arm === 'wedge' ? 94 : 90;
+  const wrapBendZ = armCrownZ + 5;
+  const wrapActive =
+    resolveProductStyle(piece, fallbackStyle).backCushionFit === 'wrap' &&
+    armSides.length > 0 &&
+    looseBackTop >= wrapBendZ + 6;
+  const wrapL = armSides.includes('left') ? 5 : leftBackInset - 3;
+  const wrapR = armSides.includes('right') ? w - 5 : rightBackX + 3;
+  const looseBackPanel = (crown: number, pad = 0): string => {
+    const s = (pt: SectionalPoint) => `${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+    const bl = projection.point(
+      p(leftBackInset - 3 + pad, rearY + cushionFront, seatTop - 1 + pad * 0.4)
+    );
+    const br = projection.point(
+      p(rightBackX + 3 - pad, rearY + cushionFront, seatTop - 1 + pad * 0.4)
+    );
+    if (!wrapActive) {
+      const tl = projection.point(
+        p(
+          leftBackInset + pad * 0.8,
+          rearY + cushionTopFront,
+          looseBackTop + backLift.left - pad * 0.8
+        )
+      );
+      const tr = projection.point(
+        p(
+          rightBackX - pad * 0.8,
+          rearY + cushionTopFront,
+          looseBackTop + backLift.right - pad * 0.8
+        )
+      );
+      const control = projection.point(
+        p(
+          (leftBackInset + rightBackX) / 2,
+          rearY + cushionTopFront - 1,
+          looseBackTop + crown + backLift.mid - pad * 0.8
+        )
+      );
+      return `M${s(bl)}L${s(br)}L${s(tr)}Q${s(control)} ${s(tl)}Z`;
+    }
+    const stemL = leftBackInset - 3 + pad;
+    const stemR = rightBackX + 3 - pad;
+    const bendR = wrapR - pad;
+    const bendL = wrapL + pad;
+    const bendY = rearY + cushionFront;
+    const topR = projection.point(
+      p(rightBackX - pad * 0.8, rearY + cushionTopFront, looseBackTop + backLift.right - pad * 0.8)
+    );
+    const topL = projection.point(
+      p(
+        leftBackInset + pad * 0.8,
+        rearY + cushionTopFront,
+        looseBackTop + backLift.left - pad * 0.8
+      )
+    );
+    const control = projection.point(
+      p(
+        (leftBackInset + rightBackX) / 2,
+        rearY + cushionTopFront - 1,
+        looseBackTop + crown + backLift.mid - pad * 0.8
+      )
+    );
+    const kinkR = projection.point(p(bendR, bendY, wrapBendZ));
+    const kinkL = projection.point(p(bendL, bendY, wrapBendZ));
+    return (
+      `M${s(bl)}L${s(br)}` +
+      `L${s(projection.point(p(stemR, bendY, wrapBendZ)))}` +
+      `L${s(kinkR)}` +
+      `L${s(topR)}` +
+      `Q${s(control)} ${s(topL)}` +
+      `L${s(kinkL)}` +
+      `L${s(projection.point(p(bendL, bendY, wrapBendZ)))}` +
+      `L${s(projection.point(p(stemL, bendY, wrapBendZ)))}Z`
+    );
+  };
+  const looseBackPath = looseBackPanel(backCushionCrown);
+  // Deep top cap wrapping the frame — the head-on clue that the backrest is
+  // a thick structure rather than a fence. On a curved back the cap rides
+  // the same assembly arc as the frame face.
   const structuralBackCap = productPolygon(projection, [
-    p(6, rearY + 6, structuralBackTop),
-    p(w - 6, rearY + 6, structuralBackTop),
-    p(w - 6, rearY, structuralBackTop - 2),
-    p(6, rearY, structuralBackTop - 2),
+    p(backMinXTop, rearY + junctionTopInset, structuralBackTop + backLift.left),
+    p(backMaxXTop, rearY + junctionTopInset, structuralBackTop + backLift.right),
+    p(backMaxXTop, rearY, structuralBackTop - 2.5 + backLift.right),
+    p(backMinXTop, rearY, structuralBackTop - 2.5 + backLift.left),
   ]);
   const structuralBackLeftEdge = productPolygon(projection, [
-    p(4, rearY + 8, bodyTop),
+    p(4, rearY + frameFront, bodyTop),
     p(4, rearY, bodyTop),
-    p(6, rearY, structuralBackTop - 2),
-    p(6, rearY + 6, structuralBackTop),
+    p(6, rearY, structuralBackTop - 2.5 + backLift.left),
+    p(6, rearY + junctionTopInset, structuralBackTop + backLift.left),
   ]);
   const structuralBackRightEdge = productPolygon(projection, [
-    p(w - 4, rearY + 8, bodyTop),
-    p(w - 4, rearY, bodyTop),
-    p(w - 6, rearY, structuralBackTop - 2),
-    p(w - 6, rearY + 6, structuralBackTop),
+    p(backMaxX, rearY + frameFront, bodyTop),
+    p(backMaxX, rearY, bodyTop),
+    p(backMaxXTop, rearY, structuralBackTop - 2.5 + backLift.right),
+    p(backMaxXTop, rearY + junctionTopInset, structuralBackTop + backLift.right),
   ]);
+  // Pillow top: from the front edge of the face back to the tuck against the
+  // frame — real boxing width, not a sliver. Rides the arc on curved backs.
   const looseBackTopCap = productPolygon(projection, [
-    p(leftBackInset, rearY + 12, looseBackTop),
-    p(rightBackX, rearY + 12, looseBackTop),
-    p(rightBackX, rearY + 7, looseBackTop - 2),
-    p(leftBackInset, rearY + 7, looseBackTop - 2),
+    p(wrapActive ? wrapL : leftBackInset, rearY + cushionTopFront, looseBackTop + backLift.left),
+    p(wrapActive ? wrapR : rightBackX, rearY + cushionTopFront, looseBackTop + backLift.right),
+    p(wrapActive ? wrapR : rightBackX, rearY + cushionTopRear, looseBackTop - 2 + backLift.right),
+    p(wrapActive ? wrapL : leftBackInset, rearY + cushionTopRear, looseBackTop - 2 + backLift.left),
   ]);
+  // Full-depth side gussets: the pillow's end face runs from its front plane
+  // back to the tuck, so exposed ends read as stuffed boxing.
   const looseBackLeftEdge = productPolygon(projection, [
-    p(leftBackInset - 3, rearY + 28, seatTop - 1),
-    p(leftBackInset - 3, rearY + 23, seatTop - 1),
-    p(leftBackInset, rearY + 7, looseBackTop - 2),
-    p(leftBackInset, rearY + 12, looseBackTop),
+    p(leftBackInset - 3, rearY + cushionFront, seatTop - 1),
+    p(leftBackInset - 3, rearY + cushionFront - 13, seatTop - 1),
+    p(leftBackInset, rearY + cushionTopRear, looseBackTop - 2 + backLift.left),
+    p(leftBackInset, rearY + cushionTopFront, looseBackTop + backLift.left),
   ]);
   const looseBackRightEdge = productPolygon(projection, [
-    p(rightBackX + 3, rearY + 28, seatTop - 1),
-    p(rightBackX + 3, rearY + 23, seatTop - 1),
-    p(rightBackX, rearY + 7, looseBackTop - 2),
-    p(rightBackX, rearY + 12, looseBackTop),
+    p(rightBackX + 3, rearY + cushionFront, seatTop - 1),
+    p(rightBackX + 3, rearY + cushionFront - 13, seatTop - 1),
+    p(rightBackX, rearY + cushionTopRear, looseBackTop - 2 + backLift.right),
+    p(rightBackX, rearY + cushionTopFront, looseBackTop + backLift.right),
   ]);
-  const outline = theme.outline;
   const bodySurfaces: SectionalProductSurface[] = [];
   const bodySurface = (
     layer: SectionalProductSurface['layer'],
     depthPoint: ProductPoint3D,
     markup: string
-  ) => bodySurfaces.push({ layer, depthPoint, markup });
+  ) => bodySurfaces.push({ layer, depthPoint, markup: withGradients(markup) });
   const seatSurfaces: SectionalProductSurface[] = [];
   const seatSurface = (
     layer: SectionalProductSurface['layer'],
     depthPoint: ProductPoint3D,
     markup: string
-  ) => seatSurfaces.push({ layer, depthPoint, markup });
+  ) => seatSurfaces.push({ layer, depthPoint, markup: withGradients(markup) });
   const showLeftSide =
     productPanelFacesCamera(piece, projection, -1, 0) && !localSideConnected('left');
   const showRightSide =
     productPanelFacesCamera(piece, projection, 1, 0) && !localSideConnected('right');
-  if (showLeftSide) {
-    bodySurface(
-      'body',
-      p(bodyLeftX, d / 2, bodyTop / 2),
-      `<polygon class="sb-body-side sb-body-side-left" points="${leftSideFace}" fill="${shadeHex(theme.body, -23)}" stroke="${outline}" stroke-width="2"/>`
-    );
-  }
-  if (showRightSide) {
-    bodySurface(
-      'body',
-      p(bodyRightX, d / 2, bodyTop / 2),
-      `<polygon class="sb-body-side sb-body-side-right" points="${rightSideFace}" fill="${shadeHex(theme.body, -28)}" stroke="${outline}" stroke-width="2"/>`
-    );
-  }
-  if (frontFacesCamera && !frontConnected) {
-    bodySurface(
-      'body',
-      p(w / 2, frontY, bodyTop / 2),
-      `<polygon class="sb-body-front" points="${frontFace}" fill="${shadeHex(theme.body, -18)}" stroke="${outline}" stroke-width="2"/>`
-    );
-  } else if (!frontFacesCamera && !rearConnected) {
-    bodySurface(
-      'body',
-      p(w / 2, rearY, bodyTop / 2),
-      `<polygon class="sb-body-rear" points="${rearFace}" fill="${shadeHex(theme.body, -25)}" stroke="${outline}" stroke-width="2"/>`
-    );
-  }
-  bodySurface(
-    'body',
-    p(w / 2, d / 2, bodyTop),
-    `<polygon class="sb-body" points="${topFace}" fill="${theme.body}" stroke="${outline}" stroke-width="2"/>`
-  );
-  // Block feet ground the module like the CW reference renders. Skirted bases
-  // hide their feet; connected edges keep them (they are inset from the joint).
+  // Tapered wooden feet ground the module like a real furniture render. They
+  // tuck slightly under the base and paint before the front/side faces so the
+  // base rail overlaps their tops. Skirted bases hide their feet entirely.
   const hasSkirt =
     style.base === 'long-skirt' || style.base === 'loose-fit' || style.base === 'straight-skirt';
   if (!hasSkirt) {
-    const legFill = shadeHex(theme.outline, 12);
+    const legHeight = 10;
     const foot = (corners: ProductPoint3D[], depth: ProductPoint3D) =>
       bodySurface(
         'body',
         depth,
-        `<polygon class="sb-body-leg" points="${productPolygon(projection, corners)}" fill="${legFill}" stroke="none"/>`
+        `<polygon class="sb-body-leg" points="${productPolygon(projection, corners)}" fill="url(#sbLegGrad)" stroke="none"/>`
       );
     if (frontFacesCamera && !frontConnected) {
-      [bodyLeftX + 6, bodyRightX - 17].forEach(legX => {
+      [bodyLeftX + 7, bodyRightX - 18].forEach(legX => {
         foot(
           [
-            p(legX, frontY, 0),
-            p(legX + 11, frontY, 0),
-            p(legX + 11, frontY, 9),
-            p(legX, frontY, 9),
+            p(legX, frontY - 2, 0),
+            p(legX + 9, frontY - 2, 0),
+            p(legX + 10.5, frontY - 2, legHeight),
+            p(legX - 1.5, frontY - 2, legHeight),
           ],
-          p(legX + 5.5, frontY, 4.5)
+          p(legX + 4.5, frontY - 2, legHeight / 2)
         );
       });
     }
     if (showLeftSide) {
       foot(
         [
-          p(bodyLeftX, rearY + 9, 0),
-          p(bodyLeftX, rearY + 20, 0),
-          p(bodyLeftX, rearY + 20, 9),
-          p(bodyLeftX, rearY + 9, 9),
+          p(bodyLeftX + 2, rearY + 10, 0),
+          p(bodyLeftX + 2, rearY + 19, 0),
+          p(bodyLeftX + 2, rearY + 20.5, legHeight),
+          p(bodyLeftX + 2, rearY + 8.5, legHeight),
         ],
-        p(bodyLeftX, rearY + 14.5, 4.5)
+        p(bodyLeftX + 2, rearY + 14.5, legHeight / 2)
       );
     }
     if (showRightSide) {
       foot(
         [
-          p(bodyRightX, rearY + 9, 0),
-          p(bodyRightX, rearY + 20, 0),
-          p(bodyRightX, rearY + 20, 9),
-          p(bodyRightX, rearY + 9, 9),
+          p(bodyRightX - 2, rearY + 10, 0),
+          p(bodyRightX - 2, rearY + 19, 0),
+          p(bodyRightX - 2, rearY + 20.5, legHeight),
+          p(bodyRightX - 2, rearY + 8.5, legHeight),
         ],
-        p(bodyRightX, rearY + 14.5, 4.5)
+        p(bodyRightX - 2, rearY + 14.5, legHeight / 2)
       );
     }
   }
-  if (
-    style.base === 'long-skirt' ||
-    style.base === 'loose-fit' ||
-    style.base === 'straight-skirt'
-  ) {
-    const skirtHeight = style.base === 'loose-fit' ? 34 : style.base === 'straight-skirt' ? 26 : 28;
-    const skirtFill = shadeHex(theme.body, -9);
-    const pleatStroke = shadeHex(theme.body, -18);
+  if (showLeftSide) {
+    const fill = vGrad(
+      shadeHex(theme.body, -6),
+      shadeHex(theme.body, -24),
+      p(bodyLeftX, d / 2, bodyTop),
+      p(bodyLeftX, d / 2, 5)
+    );
+    bodySurface(
+      'body',
+      p(bodyLeftX, d / 2, bodyTop / 2),
+      `<polygon class="sb-body-side sb-body-side-left" points="${leftSideFace}" fill="${fill}" stroke="${bodyStroke}" stroke-width="1.1"/>`
+    );
+  }
+  if (showRightSide) {
+    const fill = vGrad(
+      shadeHex(theme.body, -3),
+      shadeHex(theme.body, -20),
+      p(bodyRightX, d / 2, bodyTop),
+      p(bodyRightX, d / 2, 5)
+    );
+    bodySurface(
+      'body',
+      p(bodyRightX, d / 2, bodyTop / 2),
+      `<polygon class="sb-body-side sb-body-side-right" points="${rightSideFace}" fill="${fill}" stroke="${bodyStroke}" stroke-width="1.1"/>`
+    );
+  }
+  if (frontFacesCamera && !frontConnected) {
+    const fill = vGrad(
+      shadeHex(theme.body, 4),
+      shadeHex(theme.body, -18),
+      p(w / 2, frontY, bodyTop),
+      p(w / 2, frontY, 5)
+    );
+    bodySurface(
+      'body',
+      p(w / 2, frontY, bodyTop / 2),
+      `<polygon class="sb-body-front" points="${frontFace}" fill="${fill}" stroke="${bodyStroke}" stroke-width="1.1"/>`
+    );
+  } else if (!frontFacesCamera && !rearConnected) {
+    const fill = vGrad(
+      shadeHex(theme.body, -10),
+      shadeHex(theme.body, -27),
+      p(w / 2, rearY, bodyTop),
+      p(w / 2, rearY, 5)
+    );
+    bodySurface(
+      'body',
+      p(w / 2, rearY, bodyTop / 2),
+      `<polygon class="sb-body-rear" points="${rearFace}" fill="${fill}" stroke="${bodyStroke}" stroke-width="1.1"/>`
+    );
+  }
+  const bodyTopFill = vGrad(
+    shadeHex(theme.body, 14),
+    shadeHex(theme.body, 3),
+    p(w / 2, rearY, bodyTop),
+    p(w / 2, frontY, bodyTop)
+  );
+  bodySurface(
+    'body',
+    p(w / 2, d / 2, bodyTop),
+    `<polygon class="sb-body" points="${topFace}" fill="${bodyTopFill}" stroke="${bodyStroke}" stroke-width="1"/>`
+  );
+  // Contact shadow on the deck where the seat cushion meets the base rail —
+  // the ambient-occlusion accent that anchors the cushion onto the frame.
+  if (!frontConnected) {
+    const deckShadow = productPolygon(projection, [
+      p(leftContentInset + 2, frontY - 6, bodyTop + 0.1),
+      p(rightContentX - 2, frontY - 6, bodyTop + 0.1),
+      p(rightContentX - 2, frontY, bodyTop + 0.1),
+      p(leftContentInset + 2, frontY, bodyTop + 0.1),
+    ]);
+    bodySurface(
+      'body',
+      p(w / 2, frontY - 3, bodyTop),
+      `<polygon class="sb-deck-shadow" points="${deckShadow}" fill="${shadeHex(theme.body, -34)}" opacity="0.4" stroke="none"/>`
+    );
+  }
+  if (hasSkirt) {
+    const skirtHeight = style.base === 'loose-fit' ? 33 : style.base === 'straight-skirt' ? 26 : 28;
     // A skirt is a hanging band that wraps every camera-facing open edge of
     // the base: front, plus whichever side faces the camera. Connected edges
     // are interior joints and stay bare.
@@ -2184,6 +3016,7 @@ function sectionalProductPieceLayers(
       span: [number, number];
       axis: 'x' | 'y';
       fixed: number;
+      fill: string;
     }> = [];
     if (frontFacesCamera && !frontConnected) {
       skirtPanels.push({
@@ -2198,6 +3031,12 @@ function sectionalProductPieceLayers(
         span: [4, w - 4],
         axis: 'x',
         fixed: frontY + 1,
+        fill: vGrad(
+          shadeHex(theme.body, 0),
+          shadeHex(theme.body, -16),
+          p(w / 2, frontY + 1, skirtHeight),
+          p(w / 2, frontY + 1, 0)
+        ),
       });
     }
     if (showLeftSide) {
@@ -2213,6 +3052,12 @@ function sectionalProductPieceLayers(
         span: [rearY + 4, frontY - 2],
         axis: 'y',
         fixed: bodyLeftX - 1,
+        fill: vGrad(
+          shadeHex(theme.body, -6),
+          shadeHex(theme.body, -22),
+          p(bodyLeftX - 1, d / 2, skirtHeight),
+          p(bodyLeftX - 1, d / 2, 0)
+        ),
       });
     }
     if (showRightSide) {
@@ -2228,6 +3073,12 @@ function sectionalProductPieceLayers(
         span: [rearY + 4, frontY - 2],
         axis: 'y',
         fixed: bodyRightX + 1,
+        fill: vGrad(
+          shadeHex(theme.body, -3),
+          shadeHex(theme.body, -19),
+          p(bodyRightX + 1, d / 2, skirtHeight),
+          p(bodyRightX + 1, d / 2, 0)
+        ),
       });
     }
     skirtPanels.forEach(panel => {
@@ -2236,7 +3087,7 @@ function sectionalProductPieceLayers(
       bodySurface(
         'body',
         panel.depth,
-        `<polygon class="${cls}" points="${productPolygon(projection, panel.corners)}" fill="${skirtFill}" stroke="${outline}" stroke-width="1.4"/>`
+        `<polygon class="${cls}" points="${productPolygon(projection, panel.corners)}" fill="${panel.fill}" stroke="${bodyStroke}" stroke-width="1"/>`
       );
       // Fold detailing distinguishes the cuts: cornered pleats gather at the
       // vertical corners, a long skirt gets two soft folds, and a straight
@@ -2263,7 +3114,7 @@ function sectionalProductPieceLayers(
         bodySurface(
           'body',
           topPoint,
-          `<path class="sb-skirt-pleat" d="M${pt.x.toFixed(1)} ${pt.y.toFixed(1)}L${pb.x.toFixed(1)} ${pb.y.toFixed(1)}" stroke="${pleatStroke}" stroke-width="0.8" opacity="0.5"/>`
+          `<path class="sb-skirt-pleat" d="M${pt.x.toFixed(1)} ${pt.y.toFixed(1)}L${pb.x.toFixed(1)} ${pb.y.toFixed(1)}" stroke="${shadeHex(theme.body, -30)}" stroke-width="0.8" opacity="0.4"/>`
         );
       });
       if (style.base !== 'straight-skirt') {
@@ -2272,56 +3123,136 @@ function sectionalProductPieceLayers(
         bodySurface(
           'body',
           panel.corners[0],
-          `<path class="sb-skirt-hem" d="M${hemA.x.toFixed(1)} ${hemA.y.toFixed(1)}L${hemB.x.toFixed(1)} ${hemB.y.toFixed(1)}" stroke="${pleatStroke}" stroke-width="1" opacity="0.45"/>`
+          `<path class="sb-skirt-hem" d="M${hemA.x.toFixed(1)} ${hemA.y.toFixed(1)}L${hemB.x.toFixed(1)} ${hemB.y.toFixed(1)}" stroke="${shadeHex(theme.body, -26)}" stroke-width="1" opacity="0.4"/>`
         );
       }
     });
   }
   const structuralRearPieces: SectionalProductSurface[] = [];
   const rearSurface = (depthPoint: ProductPoint3D, markup: string) =>
-    structuralRearPieces.push({ layer: 'rear', depthPoint, markup });
+    structuralRearPieces.push({ layer: 'rear', depthPoint, markup: withGradients(markup) });
   if (showLeftSide) {
     rearSurface(
       p(5, rearY + 4, structuralBackTop / 2),
-      `<polygon class="sb-structural-back-edge sb-structural-back-edge-left" points="${structuralBackLeftEdge}" fill="${shadeHex(theme.body, -19)}" stroke="${outline}" stroke-width="1.7"/>`
+      `<polygon class="sb-structural-back-edge sb-structural-back-edge-left" points="${structuralBackLeftEdge}" fill="${shadeHex(theme.body, -18)}" stroke="${bodyStroke}" stroke-width="1"/>`
     );
   }
   if (showRightSide) {
     rearSurface(
       p(w - 5, rearY + 4, structuralBackTop / 2),
-      `<polygon class="sb-structural-back-edge sb-structural-back-edge-right" points="${structuralBackRightEdge}" fill="${shadeHex(theme.body, -14)}" stroke="${outline}" stroke-width="1.7"/>`
+      `<polygon class="sb-structural-back-edge sb-structural-back-edge-right" points="${structuralBackRightEdge}" fill="${shadeHex(theme.body, -12)}" stroke="${bodyStroke}" stroke-width="1"/>`
     );
   }
+  const backCapFill = vGrad(
+    shadeHex(theme.body, 10),
+    shadeHex(theme.body, -2),
+    p(w / 2, rearY, structuralBackTop),
+    p(w / 2, rearY + 6, structuralBackTop)
+  );
   rearSurface(
     p(w / 2, rearY + 3, structuralBackTop),
-    `<polygon class="sb-structural-back-cap" points="${structuralBackCap}" fill="${shadeHex(theme.body, 5)}" stroke="${outline}" stroke-width="1.5"/>`
+    `<polygon class="sb-structural-back-cap" points="${structuralBackCap}" fill="${backCapFill}" stroke="${bodyStroke}" stroke-width="1"/>`
+  );
+  const backFaceFill = vGrad(
+    shadeHex(theme.body, -2),
+    shadeHex(theme.body, -16),
+    p(w / 2, rearY + 6, structuralBackTop),
+    p(w / 2, rearY + 8, bodyTop)
   );
   rearSurface(
     p(w / 2, rearY + 7, (bodyTop + structuralBackTop) / 2),
-    `<path class="sb-structural-back" d="${structuralBackPath}" fill="${shadeHex(theme.body, -8)}" stroke="${outline}" stroke-width="2.4"/>`
+    `<path class="sb-structural-back" d="${structuralBackPath}" fill="${backFaceFill}" stroke="${bodyStroke}" stroke-width="1.3"/>`
+  );
+  // Rim light along the back frame's top edge — the thin highlight studio
+  // renders use to separate furniture from the backdrop.
+  const rimA = projection.point(p(backMinXTop + 1, rearY + 5, structuralBackTop - 1));
+  const rimB = projection.point(p(w - 7, rearY + 5, structuralBackTop - 1));
+  rearSurface(
+    p(w / 2, rearY + 5, structuralBackTop),
+    `<path class="sb-back-rim-light" d="M${rimA.x.toFixed(1)} ${rimA.y.toFixed(1)}L${rimB.x.toFixed(1)} ${rimB.y.toFixed(1)}" stroke="${shadeHex(theme.body, 22)}" stroke-width="1.3" opacity="0.6"/>`
   );
   const looseRearPieces: SectionalProductSurface[] = [];
   const looseSurface = (depthPoint: ProductPoint3D, markup: string) =>
-    looseRearPieces.push({ layer: 'rear', depthPoint, markup });
+    looseRearPieces.push({ layer: 'rear', depthPoint, markup: withGradients(markup) });
   if (showLeftSide) {
+    const fill = vGrad(
+      shadeHex(theme.cushion, -6),
+      shadeHex(theme.cushion, -19),
+      p(leftBackInset, rearY + 18, looseBackTop),
+      p(leftBackInset, rearY + 18, seatTop)
+    );
     looseSurface(
       p(leftBackInset, rearY + 18, (seatTop + looseBackTop) / 2),
-      `<polygon class="sb-back-cushion-edge sb-back-cushion-edge-left" points="${looseBackLeftEdge}" fill="${shadeHex(theme.cushion, -16)}" stroke="${theme.cushionStroke}" stroke-width="1.4"/>`
+      `<polygon class="sb-back-cushion-edge sb-back-cushion-edge-left" points="${looseBackLeftEdge}" fill="${fill}" stroke="${cushionLine}" stroke-width="1"/>`
     );
   }
   if (showRightSide) {
+    const fill = vGrad(
+      shadeHex(theme.cushion, -6),
+      shadeHex(theme.cushion, -19),
+      p(rightBackX, rearY + 18, looseBackTop),
+      p(rightBackX, rearY + 18, seatTop)
+    );
     looseSurface(
       p(rightBackX, rearY + 18, (seatTop + looseBackTop) / 2),
-      `<polygon class="sb-back-cushion-edge sb-back-cushion-edge-right" points="${looseBackRightEdge}" fill="${shadeHex(theme.cushion, -12)}" stroke="${theme.cushionStroke}" stroke-width="1.4"/>`
+      `<polygon class="sb-back-cushion-edge sb-back-cushion-edge-right" points="${looseBackRightEdge}" fill="${fill}" stroke="${cushionLine}" stroke-width="1"/>`
     );
   }
+  const backCapTopFill = vGrad(
+    shadeHex(theme.cushion, 8),
+    shadeHex(theme.cushion, -3),
+    p(w / 2, rearY + 7, looseBackTop),
+    p(w / 2, rearY + 12, looseBackTop)
+  );
   looseSurface(
     p(w / 2, rearY + 10, looseBackTop),
-    `<polygon class="sb-back-cushion-cap" points="${looseBackTopCap}" fill="${shadeHex(theme.cushion, 4)}" stroke="${theme.cushionStroke}" stroke-width="1.4"/>`
+    `<polygon class="sb-back-cushion-cap" points="${looseBackTopCap}" fill="${backCapTopFill}" stroke="${cushionLine}" stroke-width="1"/>`
+  );
+  const backCushionFill = vGrad(
+    shadeHex(theme.cushion, 2),
+    shadeHex(theme.cushion, -15),
+    p(w / 2, rearY + 12, looseBackTop),
+    p(w / 2, rearY + 28, seatTop)
   );
   looseSurface(
     p(w / 2, rearY + 20, (seatTop + looseBackTop) / 2),
-    `<path class="sb-back-cushion" d="${looseBackPath}" fill="${shadeHex(theme.cushion, -4)}" stroke="${theme.cushionStroke}" stroke-width="${style.cushion === 'knife' ? 1.6 : 2.2}"/>`
+    `<path class="sb-back-cushion" d="${looseBackPath}" fill="${backCushionFill}" stroke="${cushionLine}" stroke-width="1.2"/>`
+  );
+  // Stuffed front boxing: a light vertical strip along the pillow's bottom
+  // front edge. This is the front-on cue that the cushion is a thick pillow,
+  // not a flat panel leaning on the frame.
+  looseSurface(
+    p(w / 2, rearY + cushionFront, seatTop + 3),
+    `<path class="sb-back-cushion-boxing" d="${(() => {
+      const a = projection.point(p(leftBackInset - 2, rearY + cushionFront, seatTop - 1));
+      const b = projection.point(p(rightBackX + 2, rearY + cushionFront, seatTop - 1));
+      const c = projection.point(p(rightBackX + 2, rearY + cushionFront + 6, seatTop + 6));
+      const dd = projection.point(p(leftBackInset - 2, rearY + cushionFront + 6, seatTop + 6));
+      const s = (pt: SectionalPoint) => `${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+      return `M${s(a)}L${s(b)}L${s(c)}L${s(dd)}Z`;
+    })()}" fill="${shadeHex(theme.cushion, 6)}" opacity="0.75" stroke="none"/>`
+  );
+  // Stuffed-pillow modelling on the face: a light pool toward the crown and a
+  // soft contact shadow along the bottom where the cushion meets the seat.
+  looseSurface(
+    p(w / 2, rearY + 18, looseBackTop - 14),
+    `<path class="sb-back-cushion-crown" d="${looseBackPanel(backCushionCrown * 0.6, 8)}" fill="${shadeHex(theme.cushion, 18)}" opacity="0.32" stroke="none"/>`
+  );
+  const backContactShadow = productPolygon(projection, [
+    p(leftBackInset + 2, rearY + cushionFront + 1, seatTop + 12),
+    p(rightBackX - 2, rearY + cushionFront + 1, seatTop + 12),
+    p(rightBackX - 1, rearY + cushionFront + 2, seatTop - 1),
+    p(leftBackInset + 1, rearY + cushionFront + 2, seatTop - 1),
+  ]);
+  looseSurface(
+    p(w / 2, rearY + 28, seatTop + 5),
+    `<polygon class="sb-back-cushion-shadow" points="${backContactShadow}" fill="${shadeHex(theme.cushion, -30)}" opacity="0.28" stroke="none"/>`
+  );
+  // A piped welt just inside the cushion edge reads as a stitched seam — the
+  // detail that separates a stuffed pillow from a flat board.
+  looseSurface(
+    p(w / 2, rearY + 20, (seatTop + looseBackTop) / 2 + 1),
+    `<path class="sb-back-cushion-welt" d="${looseBackPanel(backCushionCrown * 0.7, 4.5)}" fill="none" stroke="${shadeHex(theme.cushion, -36)}" stroke-width="0.9" opacity="0.5"/>`
   );
   const mainBackFacesCamera = productPanelFacesCamera(piece, projection, 0, 1);
   const farStructuralPieces: SectionalProductSurface[] =
@@ -2334,31 +3265,109 @@ function sectionalProductPieceLayers(
   // upholstered face looks toward the camera. The old blanket suppression hid
   // show-through from a since-removed independent second camera; with one
   // canonical camera the cushion is legitimately visible and its absence made
-  // return legs read as bare benches.
+  // return legs read as bare benches. A curved (RB) back is TIGHT upholstered
+  // back — no loose cushions at all (CS3B-RA-RB / CS1B-RA-RB refs).
   const visibleLooseBackPieces: SectionalProductSurface[] =
-    capabilities.hasBackFrame && capabilities.hasBackCushion && mainBackFacesCamera
+    capabilities.hasBackFrame &&
+    capabilities.hasBackCushion &&
+    mainBackFacesCamera &&
+    style.back !== 'curved'
       ? looseRearPieces
       : [];
-  if (showLeftSide) {
+  if (capabilities.hasBackFrame) {
+    // Shadowed well on the deck between the back frame and the cushions —
+    // the strip light cannot reach. It is the strongest single cue that the
+    // back assembly has real depth. Painted with the seat layer so it sits
+    // above the deck face but below every cushion.
     seatSurface(
       'body',
-      p(leftContentInset, (seatRear + seatFront) / 2, (seatBottom + seatTop) / 2),
-      `<polygon class="sb-seat-cushion-side sb-seat-cushion-side-left" points="${cushionLeftSide}" fill="${shadeHex(theme.cushion, -18)}" stroke="${theme.cushionStroke}" stroke-width="1.5"/>`
+      p(w / 2, rearY + (frameFront + cushionFront) / 2 - 7, bodyTop + 1),
+      `<polygon class="sb-back-well-shadow" points="${productPolygon(projection, [
+        p(leftContentInset + 2, rearY + frameFront - 1, bodyTop + 0.8),
+        p(rightContentX - 2, rearY + frameFront - 1, bodyTop + 0.8),
+        p(rightContentX - 2, rearY + cushionFront - 6, bodyTop + 0.8),
+        p(leftContentInset + 2, rearY + cushionFront - 6, bodyTop + 0.8),
+      ])}" fill="${shadeHex(theme.body, -40)}" opacity="0.5" stroke="none"/>`
     );
   }
+  if (showLeftSide) {
+    const fill = vGrad(
+      shadeHex(theme.cushion, -7),
+      shadeHex(theme.cushion, -22),
+      p(leftContentInset, (seatRear + seatFront) / 2, seatTop),
+      p(leftContentInset, (seatRear + seatFront) / 2, seatBottom)
+    );
+    seatSurface(
+      'body',
+      p(leftContentInset, (seatRear + tArmY) / 2, (seatBottom + seatTop) / 2),
+      `<polygon class="sb-seat-cushion-side sb-seat-cushion-side-left" points="${cushionLeftSide}" fill="${fill}" stroke="${cushionLine}" stroke-width="1"/>`
+    );
+    if (tSeatActive) {
+      const frontFill = vGrad(
+        shadeHex(theme.cushion, -7),
+        shadeHex(theme.cushion, -22),
+        p(frontLeftX, (tArmY + seatFront) / 2, seatTop),
+        p(frontLeftX, (tArmY + seatFront) / 2, seatBottom)
+      );
+      seatSurface(
+        'body',
+        p(frontLeftX, (tArmY + seatFront) / 2, (seatBottom + seatTop) / 2),
+        `<polygon class="sb-seat-cushion-side sb-seat-cushion-front-left" points="${cushionFrontLeftSide}" fill="${frontFill}" stroke="${cushionLine}" stroke-width="1"/>`
+      );
+    }
+  }
   if (showRightSide) {
+    const fill = vGrad(
+      shadeHex(theme.cushion, -3),
+      shadeHex(theme.cushion, -17),
+      p(rightContentX, (seatRear + seatFront) / 2, seatTop),
+      p(rightContentX, (seatRear + seatFront) / 2, seatBottom)
+    );
     seatSurface(
       'body',
       p(rightContentX, (seatRear + seatFront) / 2, (seatBottom + seatTop) / 2),
-      `<polygon class="sb-seat-cushion-side sb-seat-cushion-side-right" points="${cushionRightSide}" fill="${shadeHex(theme.cushion, -11)}" stroke="${theme.cushionStroke}" stroke-width="1.5"/>`
+      `<polygon class="sb-seat-cushion-side sb-seat-cushion-side-right" points="${cushionRightSide}" fill="${fill}" stroke="${cushionLine}" stroke-width="1"/>`
     );
+    if (tSeatActive) {
+      const frontFill = vGrad(
+        shadeHex(theme.cushion, -3),
+        shadeHex(theme.cushion, -17),
+        p(frontRightX, (tArmY + seatFront) / 2, seatTop),
+        p(frontRightX, (tArmY + seatFront) / 2, seatBottom)
+      );
+      seatSurface(
+        'body',
+        p(frontRightX, (tArmY + seatFront) / 2, (seatBottom + seatTop) / 2),
+        `<polygon class="sb-seat-cushion-side sb-seat-cushion-front-right" points="${cushionFrontRightSide}" fill="${frontFill}" stroke="${cushionLine}" stroke-width="1"/>`
+      );
+    }
   }
-  if (frontFacesCamera && !frontConnected) {
+  if (frontFacesCamera) {
     seatSurface(
       'body',
       p(w / 2, seatFront, (seatBottom + seatTop) / 2),
-      seatCushionFrontElement(shadeHex(theme.cushion, -15), 1.8)
+      seatCushionFrontElement(1.1)
     );
+    // Boundary seams close the cushion visually where it abuts a neighbour —
+    // without them, flush fronts read as one open slab.
+    if (frontConnected || localSideConnected('left') || localSideConnected('right')) {
+      const seamTop = projection.point(p(w / 2, seatFront, seatTop - 1));
+      const seamBottom = projection.point(p(w / 2, seatFront, seatBottom));
+      const leftEdge = projection.point(p(frontLeftX, seatFront, (seatBottom + seatTop) / 2));
+      const rightEdge = projection.point(p(frontRightX, seatFront, (seatBottom + seatTop) / 2));
+      const seams: string[] = [];
+      const vSeam = (edge: SectionalPoint, top: SectionalPoint) =>
+        `M${edge.x.toFixed(1)} ${(top.y + 2).toFixed(1)}L${edge.x.toFixed(1)} ${seamBottom.y.toFixed(1)}`;
+      if (localSideConnected('left')) seams.push(vSeam(leftEdge, seamTop));
+      if (localSideConnected('right')) seams.push(vSeam(rightEdge, seamTop));
+      if (seams.length) {
+        seatSurface(
+          'body',
+          p(w / 2, seatFront, (seatBottom + seatTop) / 2),
+          `<path class="sb-seat-cushion-boundary" d="${seams.join('')}" stroke="${shadeHex(theme.cushion, -44)}" stroke-width="1.1" opacity="0.6" fill="none"/>`
+        );
+      }
+    }
     if (style.cushion === 'knife') {
       const seamA = projection.point(
         p(leftContentInset + 4, seatFront, (seatBottom + seatTop) / 2)
@@ -2367,31 +3376,55 @@ function sectionalProductPieceLayers(
       seatSurface(
         'body',
         p(w / 2, seatFront, (seatBottom + seatTop) / 2),
-        `<path class="sb-seat-cushion-welt" d="M${seamA.x.toFixed(1)} ${seamA.y.toFixed(1)}L${seamB.x.toFixed(1)} ${seamB.y.toFixed(1)}" stroke="${theme.cushionStroke}" stroke-width="0.9" opacity="0.6"/>`
+        `<path class="sb-seat-cushion-welt" d="M${seamA.x.toFixed(1)} ${seamA.y.toFixed(1)}L${seamB.x.toFixed(1)} ${seamB.y.toFixed(1)}" stroke="${shadeHex(theme.cushion, -34)}" stroke-width="0.9" opacity="0.55"/>`
       );
     }
+    // Contact line where the cushion front meets the deck.
+    const contactA = projection.point(p(frontLeftX + 1, seatFront, seatBottom));
+    const contactB = projection.point(p(frontRightX - 1, seatFront, seatBottom));
+    seatSurface(
+      'body',
+      p(w / 2, seatFront, seatBottom),
+      `<path class="sb-seat-cushion-contact" d="M${contactA.x.toFixed(1)} ${contactA.y.toFixed(1)}L${contactB.x.toFixed(1)} ${contactB.y.toFixed(1)}" stroke="${shadeHex(theme.cushion, -52)}" stroke-width="1.6" opacity="0.45"/>`
+    );
   } else if (!frontFacesCamera && !rearConnected) {
+    const fill = vGrad(
+      shadeHex(theme.cushion, -9),
+      shadeHex(theme.cushion, -24),
+      p(w / 2, seatRear, seatTop),
+      p(w / 2, seatRear, seatBottom)
+    );
     seatSurface(
       'body',
       p(w / 2, seatRear, (seatBottom + seatTop) / 2),
-      `<polygon class="sb-seat-cushion-rear" points="${cushionRear}" fill="${shadeHex(theme.cushion, -19)}" stroke="${theme.cushionStroke}" stroke-width="1.8"/>`
+      `<polygon class="sb-seat-cushion-rear" points="${cushionRear}" fill="${fill}" stroke="${cushionLine}" stroke-width="1.1"/>`
     );
   }
   seatSurface(
     'body',
     p(w / 2, (seatRear + seatFront) / 2, seatTop),
-    seatCushionTopElement(theme.cushion, style.cushion === 'boxed' ? 2.4 : 1.7)
+    seatCushionTopElement(style.cushion === 'boxed' ? 1.3 : 1.1)
   );
+  seatSurface('body', p(w / 2, (seatRear + seatFront) / 2, seatTop + 1), seatCushionCrownElement());
+  seatSurface('body', p(w / 2, (seatRear + seatFront) / 2, seatTop + 2), seatCushionWeltElement());
   if (piece.kind === 'corner') {
     const returnStructuralBack = productPanelPath(
       projection,
-      p(w - 8, rearY + 8, bodyTop),
+      p(w - 8, rearY + frameFront, bodyTop),
       p(w - 8, frontY, bodyTop),
-      p(w - 6, rearY + 6, structuralBackTop),
+      p(w - 6, rearY + junctionTopInset, structuralBackTop),
       p(w - 6, frontY, structuralBackTop),
       style.back === 'curved'
     );
-    const returnStructuralMarkup = `<path class="sb-structural-back sb-corner-return-back" d="${returnStructuralBack}" fill="${shadeHex(theme.body, -11)}" stroke="${outline}" stroke-width="2.4"/>`;
+    const returnBackFill = vGrad(
+      shadeHex(theme.body, -2),
+      shadeHex(theme.body, -16),
+      p(w - 7, d / 2, structuralBackTop),
+      p(w - 7, d / 2, bodyTop)
+    );
+    const returnStructuralMarkup = withGradients(
+      `<path class="sb-structural-back sb-corner-return-back" d="${returnStructuralBack}" fill="${returnBackFill}" stroke="${bodyStroke}" stroke-width="1.3"/>`
+    );
     const returnInteriorFacesCamera = productPanelFacesCamera(piece, projection, -1, 0);
     // The return is viewed from its reverse side in one oblique angle.
     // Its structural shell must then close over the upholstery as a near face.
@@ -2404,291 +3437,500 @@ function sectionalProductPieceLayers(
       farStructuralPieces.push(returnSurface);
       // A real corner unit is furnished on both backs: the return leg leans a
       // loose cushion against the return frame, starting just past the main
-      // back cushion so the two do not interpenetrate.
-      const returnCushionPath = productPanelPath(
-        projection,
-        p(w - 30, rearY + 30, seatTop - 1),
-        p(w - 30, frontY - 2, seatTop - 1),
-        p(w - 14, rearY + 26, looseBackTop),
-        p(w - 14, frontY - 4, looseBackTop),
-        style.cushion === 'rounded'
-      );
-      const returnCushionCap = productPolygon(projection, [
-        p(w - 14, rearY + 26, looseBackTop),
-        p(w - 14, frontY - 4, looseBackTop),
-        p(w - 9, frontY - 6, looseBackTop - 2),
-        p(w - 9, rearY + 24, looseBackTop - 2),
-      ]);
-      visibleLooseBackPieces.push(
-        {
-          layer: 'rear',
-          depthPoint: p(w - 17, d / 2, (seatTop + looseBackTop) / 2),
-          markup: `<path class="sb-back-cushion sb-corner-return-cushion" d="${returnCushionPath}" fill="${shadeHex(theme.cushion, -6)}" stroke="${theme.cushionStroke}" stroke-width="${style.cushion === 'knife' ? 1.6 : 2.2}"/>`,
-        },
-        {
-          layer: 'rear',
-          depthPoint: p(w - 12, d / 2, looseBackTop),
-          markup: `<polygon class="sb-back-cushion-cap sb-corner-return-cushion-cap" points="${returnCushionCap}" fill="${shadeHex(theme.cushion, 3)}" stroke="${theme.cushionStroke}" stroke-width="1.4"/>`,
-        }
-      );
+      // back cushion so the two do not interpenetrate. A tight curved back
+      // (RB) skips the loose cushion, matching the sofa row.
+      if (style.back !== 'curved') {
+        const returnCushionPath = productPanelPath(
+          projection,
+          p(w - 30, rearY + cushionFront, seatTop - 1),
+          p(w - 30, frontY - 2, seatTop - 1),
+          p(w - 14, rearY + cushionTopFront + 2, looseBackTop),
+          p(w - 14, frontY - 4, looseBackTop),
+          style.cushion === 'rounded'
+        );
+        const returnCushionCap = productPolygon(projection, [
+          p(w - 14, rearY + cushionTopFront + 2, looseBackTop),
+          p(w - 14, frontY - 4, looseBackTop),
+          p(w - 9, frontY - 6, looseBackTop - 2),
+          p(w - 9, rearY + cushionTopRear, looseBackTop - 2),
+        ]);
+        const returnCushionFill = vGrad(
+          shadeHex(theme.cushion, 0),
+          shadeHex(theme.cushion, -16),
+          p(w - 14, d / 2, looseBackTop),
+          p(w - 30, d / 2, seatTop)
+        );
+        visibleLooseBackPieces.push(
+          {
+            layer: 'rear',
+            depthPoint: p(w - 17, d / 2, (seatTop + looseBackTop) / 2),
+            markup: withGradients(
+              `<path class="sb-back-cushion sb-corner-return-cushion" d="${returnCushionPath}" fill="${returnCushionFill}" stroke="${cushionLine}" stroke-width="1.2"/>`
+            ),
+          },
+          {
+            layer: 'rear',
+            depthPoint: p(w - 12, d / 2, looseBackTop),
+            markup: `<polygon class="sb-back-cushion-cap sb-corner-return-cushion-cap" points="${returnCushionCap}" fill="${shadeHex(theme.cushion, 4)}" stroke="${cushionLine}" stroke-width="1"/>`,
+          }
+        );
+      }
     } else {
       nearStructuralPieces.push(returnSurface);
     }
   }
-  const armPieces: SectionalProductSurface[] = [];
-  if (armSide) {
-    // The arm is modelled as a real extruded volume: a cross-section profile
-    // in (u, z), swept along the module depth. u = 0 is the arm's outer face,
-    // u = armThickness its inner face. Square is a box, wedge a sloped box,
-    // and round a faceted bolster whose crown rolls over the outer shoulder
-    // (Ektorp-style). Panels, roll bands, and end caps are separate surfaces
-    // so each camera sees a consistent solid.
+  const nearArmPieces: SectionalProductSurface[] = [];
+  const farArmPieces: SectionalProductSurface[] = [];
+  const buildArm = (armSide: SectionalArmSide): void => {
+    // Two-arm modules (armchair, two-arm chaise) build one arm per side; the
+    // shadowed `armPieces` target routes surfaces into the near/far paint
+    // groups based on which side faces the camera.
+    const armPieces = productPanelFacesCamera(piece, projection, armSide === 'left' ? -1 : 1, 0)
+      ? nearArmPieces
+      : farArmPieces;
+    // The arm is modelled as a real extruded volume. Square is a tailored box
+    // with a padded end panel, wedge a sloped box, and round a sock roll: a
+    // half-cylinder bolster swept along the module depth whose end cap is a
+    // true circle (the x-z plane projects undistorted), overhanging the arm
+    // base the way a real roll arm does.
     const uX = (u: number) => (armSide === 'left' ? u : w - u);
-    // The arm tucks into the back frame so the roll never shows a raw rear
-    // end. Its base front is flush with the sofa front, while a roll arm's
-    // round face stands a few pixels proud of it, as in the CW references.
-    const armRear = rearY + 4;
-    const armFront = frontY - 1;
-    const rollFront = frontY + 2;
+    // The roll's round face stands a few pixels proud of the arm front, as in
+    // the CW references. The rear tucks behind the back cushions.
+    const rollFront = Math.min(frontY + 2.5, armFront + 3.5);
     const armLayer: SectionalProductSurface['layer'] = 'arm';
     const armFacesInterior = productArmInnerFacesCamera(piece, projection, armSide);
     const armFrontFacesCamera = productPanelFacesCamera(piece, projection, 0, 1);
-    const rollShoulder = 60;
-    const rollOuterShoulder = 56;
-    const rollApex = armTop;
-    // The round arm is a sock roll: a fat bolster whose fullest point bulges
-    // well *past the arm's outer face* (negative u), so the end cap reads as
-    // the classic letter-P silhouette instead of a symmetric hump. The roll is
-    // ~30% wider than the arm base it sits on.
-    const roundProfile: Array<readonly [number, number]> = [
-      [0, bodyTop],
-      [armThickness, bodyTop],
-      [armThickness - 2, rollShoulder],
-      [armThickness - 4, 80],
-      [14, rollApex - 2],
-      [0, rollApex - 5],
-      [-9, 72],
-      [0, rollOuterShoulder],
-    ];
+    // Sock-roll geometry per CSAP-RA / CS3L-RA-HB: the roll is the dominant
+    // volume — a fat cylinder whose mass leans outboard (centre pushed toward
+    // the outer edge), riding a tall box so the arm crown reaches up toward
+    // the back the way an Ektorp scroll does. The box top rises exactly to
+    // the sweep's tuck line so slab and roll read as one continuous form.
+    const rollCenterU = armThickness / 2 + 1.5;
+    const rollRadius = 17;
+    const rollCenterZ = 84;
+    const rollBoxTop = rollCenterZ + rollRadius * Math.cos((150 * Math.PI) / 180);
     const squareProfile: Array<readonly [number, number]> = [
       [0, bodyTop],
       [armThickness, bodyTop],
       [armThickness, armTop],
       [0, armTop],
     ];
-    const wedgeHeightAt = (localY: number) =>
-      armTop + 12 - ((localY - armRear) / Math.max(1, armFront - armRear)) * 32;
-    const wedgeProfileAt = (localY: number): Array<readonly [number, number]> => [
-      [0, bodyTop],
-      [armThickness, bodyTop],
-      [armThickness, wedgeHeightAt(localY)],
-      [0, wedgeHeightAt(localY)],
-    ];
-    const profileAt = (localY: number): Array<readonly [number, number]> =>
-      style.arm === 'round'
-        ? roundProfile
-        : style.arm === 'wedge'
-          ? wedgeProfileAt(localY)
-          : squareProfile;
-    // End-cap path. The round profile is drawn as a smooth silhouette through
-    // the facet points; square and wedge stay rectilinear.
+    const profileAt = (localY: number): Array<readonly [number, number]> => squareProfile;
+    // End-cap path for the square arm: the two top corners are softly
+    // rounded like a padded arm panel. Corner walking is direction-aware so
+    // left- and right-arm (mirrored u) panels round identically.
     const endCapPath = (localY: number): string => {
       const pts = profileAt(localY).map(([u, z]) => projection.point(p(uX(u), localY, z)));
       const s = (pt: SectionalPoint) => `${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
-      if (style.arm !== 'round' || pts.length !== 8) {
-        return `M${pts.map(s).join('L')}Z`;
-      }
-      const control = (a: SectionalPoint, through: SectionalPoint, b: SectionalPoint) => ({
-        x: 2 * through.x - (a.x + b.x) / 2,
-        y: 2 * through.y - (a.y + b.y) / 2,
-      });
-      const c1 = control(pts[2], pts[3], pts[4]);
-      const c2 = control(pts[4], pts[5], pts[6]);
-      // The bowl tucks concavely into the arm's outer face — the pinch that
-      // makes the silhouette read as a letter P instead of a tombstone arch.
-      // The cap is the round roll face only; the arm base front is separate.
-      const tuck = projection.point(p(uX(1), localY, 64));
-      return `M${s(pts[2])}Q${s(c1)} ${s(pts[4])}Q${s(c2)} ${s(pts[6])}Q${s(tuck)} ${s(pts[7])}L${s(pts[2])}Z`;
+      if (pts.length !== 4) return `M${pts.map(s).join('L')}Z`;
+      const radius = 5;
+      const toward = (from: SectionalPoint, to: SectionalPoint, dist: number): SectionalPoint => {
+        const vx = to.x - from.x;
+        const vy = to.y - from.y;
+        const length = Math.hypot(vx, vy) || 1;
+        return { x: from.x + (vx / length) * dist, y: from.y + (vy / length) * dist };
+      };
+      // pts order: 0 bottom-outer, 1 bottom-inner, 2 top-inner, 3 top-outer.
+      const topIn = pts[2];
+      const topOut = pts[3];
+      const aIn = toward(topIn, pts[1], radius);
+      const bIn = toward(topIn, topOut, radius);
+      const aOut = toward(topOut, topIn, radius);
+      const bOut = toward(topOut, pts[0], radius);
+      return (
+        `M${s(pts[0])}L${s(pts[1])}L${s(aIn)}Q${s(topIn)} ${s(bIn)}` +
+        `L${s(aOut)}Q${s(topOut)} ${s(bOut)}Z`
+      );
     };
-    // A profile edge swept along the arm's depth becomes one band surface.
-    const bandMarkup = (
-      a: readonly [number, number],
-      b: readonly [number, number],
-      cls: string,
-      fill: string,
-      strokeWidth: number
-    ): string => {
-      const quad = productPolygon(projection, [
-        p(uX(a[0]), armRear, a[1]),
-        p(uX(b[0]), armRear, b[1]),
-        p(uX(b[0]), armFront, b[1]),
-        p(uX(a[0]), armFront, a[1]),
-      ]);
-      return `<polygon class="${cls}" points="${quad}" fill="${fill}" stroke="${outline}" stroke-width="${strokeWidth}" stroke-linejoin="round"/>`;
-    };
-    const lineJoin = style.arm === 'round' ? 'round' : 'miter';
     // Inner / outer vertical panels are mutually exclusive faces of the arm.
-    const visiblePanelPath = (() => {
-      const u = armFacesInterior ? armThickness : 0;
-      const rearH =
-        style.arm === 'wedge'
-          ? wedgeHeightAt(armRear)
-          : style.arm === 'round'
-            ? armFacesInterior
-              ? rollShoulder
-              : rollOuterShoulder
-            : armTop;
-      const frontH =
-        style.arm === 'wedge'
-          ? wedgeHeightAt(armFront)
-          : style.arm === 'round'
-            ? armFacesInterior
-              ? rollShoulder
-              : rollOuterShoulder
-            : armTop;
-      return productPolygon(projection, [
-        p(uX(u), armRear, bodyTop),
-        p(uX(u), armFront, bodyTop),
-        p(uX(u), armFront, frontH),
-        p(uX(u), armRear, rearH),
+    const visiblePanelTop = (localY: number): number => {
+      if (style.arm === 'round') return rollBoxTop;
+      return armTop;
+    };
+    const panelU = armFacesInterior ? armThickness : 0;
+    // The visible panel is always the camera-facing (west) face of the arm,
+    // whether it is the near arm's outer skin or the far arm's inner skin.
+    // Both have the same world normal, so both get the same gradient —
+    // differing tones here made the far arm glow and pop in front.
+    // The wedge builds its own slab below; its cross-section prism has no
+    // full-depth vertical panel of this shape.
+    if (style.arm !== 'wedge') {
+      const visiblePanelPath = productPolygon(projection, [
+        p(uX(panelU), armRear, bodyTop),
+        p(uX(panelU), armFront, bodyTop),
+        p(uX(panelU), armFront, visiblePanelTop(armFront)),
+        p(uX(panelU), armRear, visiblePanelTop(armRear)),
       ]);
-    })();
-    armPieces.push({
-      layer: armLayer,
-      depthPoint: p(uX(armFacesInterior ? armThickness : 0), d / 2, (bodyTop + armTop) / 2),
-      markup: armFacesInterior
-        ? `<polygon class="sb-arm-inner sb-arm-inner-${style.arm}" points="${visiblePanelPath}" fill="${shadeHex(theme.body, -2)}" stroke="${outline}" stroke-width="1.8" stroke-linejoin="${lineJoin}"/>`
-        : `<polygon class="sb-arm-panel sb-arm-${style.arm}" points="${visiblePanelPath}" fill="${shadeHex(theme.body, -8)}" stroke="${outline}" stroke-width="2.4" stroke-linejoin="${lineJoin}"/>`,
-    });
-    // Top surfaces: one flat cap for square/wedge. Round is a swept cylinder:
-    // a single stroked silhouette body with *unstroked* shading overlays —
-    // dark seams between bands would read as bench slats, not a soft roll.
-    if (style.arm === 'round') {
-      const prof = roundProfile;
-      const rollBodyPoints = [
-        ...prof.slice(2).map(([u, z]) => p(uX(u), armRear, z)),
-        ...prof
-          .slice(2)
-          .reverse()
-          .map(([u, z]) => p(uX(u), rollFront, z)),
-      ];
+      const panelMidTop = (visiblePanelTop(armFront) + visiblePanelTop(armRear)) / 2;
+      const panelFill = vGrad(
+        shadeHex(theme.body, -2),
+        shadeHex(theme.body, -20),
+        p(uX(panelU), d / 2, panelMidTop),
+        p(uX(panelU), d / 2, bodyTop)
+      );
       armPieces.push({
         layer: armLayer,
-        depthPoint: p(uX(armThickness / 2), d / 2, rollApex - 10),
-        markup: `<polygon class="sb-arm-roll-body" points="${productPolygon(projection, rollBodyPoints)}" fill="${shadeHex(theme.body, -1)}" stroke="${outline}" stroke-width="2" stroke-linejoin="round"/>`,
-      });
-      // Shading overlays: a bright crown along the top, a soft shadow rolling
-      // over the outer bulge. No strokes — the eye blends them into a cylinder.
-      const overlays: Array<{ from: number; to: number; shade: number; cls: string }> = [
-        { from: 2, to: 4, shade: -10, cls: 'sb-arm-roll-band sb-arm-roll-band-inner' },
-        { from: 3, to: 6, shade: 20, cls: 'sb-arm-cap sb-arm-roll-band sb-arm-roll-band-crown' },
-        { from: 5, to: 8, shade: -26, cls: 'sb-arm-roll-band sb-arm-roll-band-outer' },
-      ];
-      // Contact shadow where the overhanging roll meets the arm's outer face
-      // (only meaningful when that outer face is the camera side).
-      if (!armFacesInterior) {
-        const rollShadow = productPolygon(projection, [
-          p(uX(0), armRear, rollOuterShoulder + 3),
-          p(uX(0), armFront, rollOuterShoulder + 3),
-          p(uX(0), armFront, rollOuterShoulder - 6),
-          p(uX(0), armRear, rollOuterShoulder - 6),
-        ]);
-        armPieces.push({
-          layer: armLayer,
-          depthPoint: p(uX(0), d / 2, rollOuterShoulder),
-          markup: `<polygon class="sb-arm-roll-shadow" points="${rollShadow}" fill="${shadeHex(theme.body, -34)}" stroke="none"/>`,
-        });
-      }
-      overlays.forEach(({ from, to, shade, cls }) => {
-        const strip = [
-          ...prof.slice(from, to).map(([u, z]) => p(uX(u), armRear, z)),
-          ...prof
-            .slice(from, to)
-            .reverse()
-            .map(([u, z]) => p(uX(u), rollFront, z)),
-        ];
-        const midU = (prof[from][0] + prof[to - 1][0]) / 2;
-        const midZ = (prof[from][1] + prof[to - 1][1]) / 2;
-        armPieces.push({
-          layer: armLayer,
-          depthPoint: p(uX(midU), d / 2, midZ),
-          markup: `<polygon class="${cls}" points="${productPolygon(projection, strip)}" fill="${shadeHex(theme.body, shade)}" stroke="none"/>`,
-        });
-      });
-    } else {
-      const capProfile = style.arm === 'wedge' ? null : profileAt(armRear);
-      const capMarkup =
-        style.arm === 'wedge'
-          ? (() => {
-              const quad = productPolygon(projection, [
-                p(uX(0), armRear, wedgeHeightAt(armRear)),
-                p(uX(armThickness), armRear, wedgeHeightAt(armRear)),
-                p(uX(armThickness), armFront, wedgeHeightAt(armFront)),
-                p(uX(0), armFront, wedgeHeightAt(armFront)),
-              ]);
-              return `<polygon class="sb-arm-cap" points="${quad}" fill="${shadeHex(theme.body, 8)}" stroke="${outline}" stroke-width="1.8" stroke-linejoin="round"/>`;
-            })()
-          : bandMarkup(capProfile![3], capProfile![2], 'sb-arm-cap', shadeHex(theme.body, 8), 1.8);
-      armPieces.push({
-        layer: armLayer,
-        depthPoint: p(uX(armThickness / 2), d / 2, style.arm === 'wedge' ? armTop - 4 : armTop),
-        markup: capMarkup,
+        depthPoint: p(uX(panelU), d / 2, (bodyTop + armTop) / 2),
+        markup: withGradients(
+          armFacesInterior
+            ? `<polygon class="sb-arm-inner sb-arm-inner-${style.arm}" points="${visiblePanelPath}" fill="${panelFill}" stroke="${bodyStroke}" stroke-width="1.1" stroke-linejoin="round"/>`
+            : `<polygon class="sb-arm-panel sb-arm-${style.arm}" points="${visiblePanelPath}" fill="${panelFill}" stroke="${bodyStroke}" stroke-width="1.2" stroke-linejoin="round"/>`
+        ),
       });
     }
-    // Camera-facing end cap carries the arm's silhouette. A round arm splits
-    // the end into the arm base front plus the roll's own round face, so the
-    // roll reads as a fat disc sitting on the arm (the letter-P read). The
-    // disc stands proud of the arm base front.
-    const endY = armFrontFacesCamera ? armFront : armRear;
-    const rollEndY = armFrontFacesCamera ? rollFront : armRear;
     if (style.arm === 'round') {
-      const baseFront = productPolygon(projection, [
+      // Contact shadow where the roll meets the arm's side panel: a soft band
+      // on the panel face just under the roll line.
+      const shadowStrip = productPolygon(projection, [
+        p(uX(panelU), armRear, rollBoxTop - 7),
+        p(uX(panelU), armFront, rollBoxTop - 7),
+        p(uX(panelU), armFront, rollBoxTop),
+        p(uX(panelU), armRear, rollBoxTop),
+      ]);
+      armPieces.push({
+        layer: armLayer,
+        depthPoint: p(uX(panelU), d / 2, rollBoxTop - 3),
+        markup: `<polygon class="sb-arm-roll-shadow" points="${shadowStrip}" fill="${shadeHex(theme.body, -36)}" opacity="0.4" stroke="none"/>`,
+      });
+      // Swept half-pipe: sample the circular arc from tuck-under to tuck-under
+      // so the roll's lower edge disappears into the arm box, exactly like a
+      // sock roll upholstered over its base. The wide wrap (±150°) leaves just
+      // a waist where the roll meets the box, as in the CW round-arm refs. A
+      // vertical user-space gradient shades crown-to-tuck across the cylinder,
+      // never along its length.
+      const arcAngles = [-150, -128, -106, -84, -62, -40, -18, 18, 40, 62, 84, 106, 128, 150];
+      const arcPoint = (deg: number, localY: number): ProductPoint3D => {
+        const theta = (deg * Math.PI) / 180;
+        return p(
+          uX(rollCenterU + rollRadius * Math.sin(theta)),
+          localY,
+          rollCenterZ + rollRadius * Math.cos(theta)
+        );
+      };
+      const rollBodyPoints = [
+        ...arcAngles.map(deg => arcPoint(deg, armRear)),
+        ...arcAngles
+          .slice()
+          .reverse()
+          .map(deg => arcPoint(deg, rollFront)),
+      ];
+      const rollMidY = (armRear + rollFront) / 2;
+      const rollBodyFill = vGrad(
+        shadeHex(theme.body, 18),
+        shadeHex(theme.body, -40),
+        p(uX(rollCenterU), rollMidY, rollCenterZ + rollRadius),
+        p(uX(rollCenterU), rollMidY, rollBoxTop - 2)
+      );
+      armPieces.push({
+        layer: armLayer,
+        depthPoint: p(uX(rollCenterU), d / 2, rollCenterZ + rollRadius / 2),
+        markup: withGradients(
+          `<polygon class="sb-arm-roll-body" points="${productPolygon(projection, rollBodyPoints)}" fill="${rollBodyFill}" stroke="${bodyStroke}" stroke-width="1.1" stroke-linejoin="round"/>`
+        ),
+      });
+      // Core shadow on the cylinder's shadow side: without it the swept strip
+      // reads as a flat ribbon, especially on the far arm seen end-on.
+      const coreAngles = [-78, -58, -40];
+      const corePoints = [
+        ...coreAngles.map(deg => arcPoint(deg, armRear)),
+        ...coreAngles
+          .slice()
+          .reverse()
+          .map(deg => arcPoint(deg, rollFront)),
+      ];
+      armPieces.push({
+        layer: armLayer,
+        depthPoint: p(uX(rollCenterU), d / 2, rollCenterZ - rollRadius / 3),
+        markup: `<polygon class="sb-arm-roll-core" points="${productPolygon(projection, corePoints)}" fill="${shadeHex(theme.body, -34)}" opacity="0.4" stroke="none"/>`,
+      });
+      // Specular highlight along the crown (this strip carries the arm-cap
+      // review token — a roll arm has no flat cap, its crown is the top).
+      // Narrow and subtle: a wide pale band reads as a painted stripe.
+      const highlightAngles = [-16, -5, 7, 18];
+      const highlightPoints = [
+        ...highlightAngles.map(deg => arcPoint(deg, armRear + 2)),
+        ...highlightAngles
+          .slice()
+          .reverse()
+          .map(deg => arcPoint(deg, rollFront - 2)),
+      ];
+      armPieces.push({
+        layer: armLayer,
+        depthPoint: p(uX(rollCenterU), d / 2, rollCenterZ + rollRadius),
+        markup: `<polygon class="sb-arm-cap sb-arm-roll-highlight" points="${productPolygon(projection, highlightPoints)}" fill="${shadeHex(theme.body, 22)}" opacity="0.45" stroke="none"/>`,
+      });
+      // Camera-facing end: the arm box end panel plus the roll's round face.
+      // The circle sits proud of the box and reads as the classic letter-P
+      // silhouette from either oblique angle.
+      const endY = armFrontFacesCamera ? armFront : armRear;
+      const rollEndY = armFrontFacesCamera ? rollFront : armRear;
+      const baseEnd = productPolygon(projection, [
         p(uX(0), endY, bodyTop),
         p(uX(armThickness), endY, bodyTop),
-        p(uX(armThickness - 2), endY, rollShoulder),
-        p(uX(0), endY, rollOuterShoulder),
+        p(uX(armThickness), endY, rollBoxTop),
+        p(uX(0), endY, rollBoxTop),
+      ]);
+      const baseEndFill = vGrad(
+        shadeHex(theme.body, -6),
+        shadeHex(theme.body, -22),
+        p(uX(armThickness / 2), endY, rollBoxTop),
+        p(uX(armThickness / 2), endY, bodyTop)
+      );
+      armPieces.push({
+        layer: armLayer,
+        depthPoint: p(uX(armThickness / 2), endY, (bodyTop + rollBoxTop) / 2),
+        markup: withGradients(
+          `<polygon class="${armFrontFacesCamera ? 'sb-arm-base-front' : 'sb-arm-base-rear'}" points="${baseEnd}" fill="${baseEndFill}" stroke="${bodyStroke}" stroke-width="1.1" stroke-linejoin="round"/>`
+        ),
+      });
+      // The end cap is a 3D circle sampled and projected, so perspective
+      // foreshortens it into the correctly angled ellipse — never a flat
+      // screen-space circle ignoring the camera.
+      const discPath = (radius: number): string => {
+        const pts: SectionalPoint[] = [];
+        for (let deg = 0; deg < 360; deg += 10) {
+          const theta = (deg * Math.PI) / 180;
+          pts.push(
+            projection.point(
+              p(
+                uX(rollCenterU + radius * Math.sin(theta)),
+                rollEndY,
+                rollCenterZ + radius * Math.cos(theta)
+              )
+            )
+          );
+        }
+        return `M${pts.map(pt => `${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`).join('L')}Z`;
+      };
+      const circlePath = discPath(rollRadius);
+      armPieces.push({
+        layer: armLayer,
+        depthPoint: p(uX(rollCenterU), rollEndY, rollCenterZ),
+        markup: armFrontFacesCamera
+          ? `<path class="sb-arm-front sb-arm-front-round sb-arm-roll" d="${circlePath}" fill="url(#sbRollEnd)" stroke="${bodyStroke}" stroke-width="1.2"/>`
+          : `<path class="sb-arm-rear sb-arm-rear-round sb-arm-roll" d="${circlePath}" fill="url(#sbRollEnd)" stroke="${bodyStroke}" stroke-width="1.2"/>`,
+      });
+      // Piped welt ring just inside the roll face — same projected ellipse.
+      const weltPath = discPath(rollRadius - 4);
+      armPieces.push({
+        layer: armLayer,
+        depthPoint: p(uX(rollCenterU), rollEndY, rollCenterZ + 1),
+        markup: `<path class="sb-arm-roll-welt" d="${weltPath}" fill="none" stroke="${shadeHex(theme.body, -40)}" stroke-width="1" opacity="0.5"/>`,
+      });
+    } else if (style.arm === 'wedge') {
+      // CW wedge anatomy (Modular MT -WA template, CS1B-WA/CS3B-WA refs): the
+      // wedge is a cross-section in the width-height plane — a tall rounded
+      // outer edge, a short flat ledge at full height, then a concave slope
+      // descending to the seat at the inner edge — and that cross-section is
+      // the arm's front face. The depth is a straight extrusion of it, so the
+      // side view shows level top edges, not a ramp. On chaise modules the
+      // extrusion stops at the seat-depth end (the CS3L set-back arm).
+      const wedgeArmTop = Math.min(structuralBackTop - 14, 118);
+      const ledgeU = armThickness * 0.45;
+      const wedgeNoseZ = seatTop + 6;
+      // The slope descends toward the inner side: visible from the west
+      // camera on a left arm, hidden on a right arm (and vice versa).
+      const slopeFacesCamera = productPanelFacesCamera(
+        piece,
+        projection,
+        armSide === 'left' ? -0.6 : 0.6,
+        0
+      );
+      // Side slab: the near arm shows its tall outer skin; a far arm shows
+      // the short inner wall below the slope's foot.
+      if (!armFacesInterior) {
+        const slabPath = productPolygon(projection, [
+          p(uX(0), armRear, bodyTop),
+          p(uX(0), armFront, bodyTop),
+          p(uX(0), armFront, wedgeArmTop),
+          p(uX(0), armRear, wedgeArmTop),
+        ]);
+        const slabFill = vGrad(
+          shadeHex(theme.body, -2),
+          shadeHex(theme.body, -20),
+          p(uX(0), d / 2, wedgeArmTop),
+          p(uX(0), d / 2, bodyTop)
+        );
+        armPieces.push({
+          layer: armLayer,
+          depthPoint: p(uX(0), d / 2, (bodyTop + wedgeArmTop) / 2),
+          markup: withGradients(
+            `<polygon class="sb-arm-panel sb-arm-wedge" points="${slabPath}" fill="${slabFill}" stroke="${bodyStroke}" stroke-width="1.2" stroke-linejoin="round"/>`
+          ),
+        });
+      } else {
+        const slabPath = productPolygon(projection, [
+          p(uX(armThickness), armRear, bodyTop),
+          p(uX(armThickness), armFront, bodyTop),
+          p(uX(armThickness), armFront, wedgeNoseZ),
+          p(uX(armThickness), armRear, wedgeNoseZ),
+        ]);
+        const slabFill = vGrad(
+          shadeHex(theme.body, -2),
+          shadeHex(theme.body, -20),
+          p(uX(armThickness), d / 2, wedgeNoseZ),
+          p(uX(armThickness), d / 2, bodyTop)
+        );
+        armPieces.push({
+          layer: armLayer,
+          depthPoint: p(uX(armThickness), d / 2, (bodyTop + wedgeNoseZ) / 2),
+          markup: withGradients(
+            `<polygon class="sb-arm-inner sb-arm-inner-wedge" points="${slabPath}" fill="${slabFill}" stroke="${bodyStroke}" stroke-width="1.1" stroke-linejoin="round"/>`
+          ),
+        });
+      }
+      if (slopeFacesCamera) {
+        const slopePath = productPolygon(projection, [
+          p(uX(ledgeU), armRear, wedgeArmTop),
+          p(uX(armThickness), armRear, wedgeNoseZ),
+          p(uX(armThickness), armFront, wedgeNoseZ),
+          p(uX(ledgeU), armFront, wedgeArmTop),
+        ]);
+        const slopeFill = vGrad(
+          shadeHex(theme.body, 4),
+          shadeHex(theme.body, -22),
+          p(uX((ledgeU + armThickness) / 2), d / 2, wedgeArmTop),
+          p(uX((ledgeU + armThickness) / 2), d / 2, wedgeNoseZ)
+        );
+        armPieces.push({
+          layer: armLayer,
+          depthPoint: p(uX((ledgeU + armThickness) / 2), d / 2, (wedgeArmTop + wedgeNoseZ) / 2),
+          markup: withGradients(
+            `<polygon class="sb-arm-slope sb-wedge-slope" points="${slopePath}" fill="${slopeFill}" stroke="${bodyStroke}" stroke-width="1" stroke-linejoin="round"/>`
+          ),
+        });
+      }
+      // Flat ledge along the outer top — the arm-cap review token.
+      const ledgePath = productPolygon(projection, [
+        p(uX(0), armRear, wedgeArmTop),
+        p(uX(ledgeU), armRear, wedgeArmTop),
+        p(uX(ledgeU), armFront, wedgeArmTop),
+        p(uX(0), armFront, wedgeArmTop),
       ]);
       armPieces.push({
         layer: armLayer,
-        depthPoint: p(uX(armThickness / 2), endY, bodyTop + 8),
-        markup: `<polygon class="sb-arm-base-front" points="${baseFront}" fill="${shadeHex(theme.body, -13)}" stroke="${outline}" stroke-width="1.8" stroke-linejoin="round"/>`,
+        depthPoint: p(uX(ledgeU / 2), d / 2, wedgeArmTop),
+        markup: withGradients(
+          `<polygon class="sb-arm-cap" points="${ledgePath}" fill="${shadeHex(theme.body, 8)}" stroke="${bodyStroke}" stroke-width="1.1" stroke-linejoin="round"/>`
+        ),
       });
-    }
-    armPieces.push({
-      layer: armLayer,
-      depthPoint: p(uX(armThickness / 2), rollEndY, (bodyTop + armTop) / 2),
-      markup: armFrontFacesCamera
-        ? `<path class="sb-arm-front sb-arm-front-${style.arm}${style.arm === 'round' ? ' sb-arm-roll' : ''}" d="${endCapPath(style.arm === 'round' ? rollFront : armFront)}" fill="${shadeHex(theme.body, style.arm === 'round' ? 3 : -17)}" stroke="${outline}" stroke-width="${style.arm === 'round' ? 2.4 : 1.8}" stroke-linejoin="round"/>`
-        : `<path class="sb-arm-rear sb-arm-rear-${style.arm}${style.arm === 'round' ? ' sb-arm-roll' : ''}" d="${endCapPath(armRear)}" fill="${shadeHex(theme.body, style.arm === 'round' ? -3 : -20)}" stroke="${outline}" stroke-width="${style.arm === 'round' ? 2.4 : 1.8}" stroke-linejoin="round"/>`,
-    });
-    if (style.arm === 'wedge') {
-      const slopeU = armFacesInterior ? armThickness : 0;
-      const slope = [
-        projection.point(p(uX(slopeU), armRear, wedgeHeightAt(armRear))),
-        projection.point(p(uX(slopeU), armFront, wedgeHeightAt(armFront))),
-      ];
+      // Camera-facing end: the wedge cross-section itself — rounded outer-top
+      // corner, flat ledge, concave slope down to the nose at the seat.
+      const endY = armFrontFacesCamera ? armFront : armRear;
+      const s = (pt: SectionalPoint) => `${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+      const eA = projection.point(p(uX(0), endY, bodyTop));
+      const eB = projection.point(p(uX(0), endY, wedgeArmTop - 8));
+      const eC = projection.point(p(uX(0), endY, wedgeArmTop));
+      const eD = projection.point(p(uX(ledgeU), endY, wedgeArmTop));
+      const eE = projection.point(p(uX(armThickness), endY, wedgeNoseZ));
+      const eF = projection.point(p(uX(armThickness), endY, bodyTop));
+      const slopeCtrl = projection.point(
+        p(uX(armThickness - 1), endY, wedgeNoseZ + (wedgeArmTop - wedgeNoseZ) * 0.32)
+      );
+      const endPath =
+        `M${s(eA)}L${s(eB)}` + `Q${s(eC)} ${s(eD)}` + `Q${s(slopeCtrl)} ${s(eE)}` + `L${s(eF)}Z`;
+      const endFill = vGrad(
+        shadeHex(theme.body, -4),
+        shadeHex(theme.body, -22),
+        p(uX(armThickness / 2), endY, wedgeArmTop),
+        p(uX(armThickness / 2), endY, bodyTop)
+      );
       armPieces.push({
         layer: armLayer,
-        depthPoint: p(uX(slopeU), d / 2, armTop),
-        markup: `<path class="sb-arm-slope-line" d="M${slope[0].x.toFixed(1)} ${slope[0].y.toFixed(1)}Q${((slope[0].x + slope[1].x) / 2).toFixed(1)} ${(Math.min(slope[0].y, slope[1].y) + 13).toFixed(1)} ${slope[1].x.toFixed(1)} ${slope[1].y.toFixed(1)}" fill="none" stroke="${outline}" stroke-width="2.2"/>`,
+        depthPoint: p(uX(armThickness / 2), endY, (bodyTop + wedgeArmTop) / 2),
+        markup: withGradients(
+          armFrontFacesCamera
+            ? `<path class="sb-arm-front sb-arm-front-wedge" d="${endPath}" fill="${endFill}" stroke="${bodyStroke}" stroke-width="1.2" stroke-linejoin="round"/>`
+            : `<path class="sb-arm-rear sb-arm-rear-wedge" d="${endPath}" fill="${endFill}" stroke="${bodyStroke}" stroke-width="1.2" stroke-linejoin="round"/>`
+        ),
+      });
+    } else {
+      const capFill = vGrad(
+        shadeHex(theme.body, 12),
+        shadeHex(theme.body, -2),
+        p(uX(armThickness / 2), armRear, armTop),
+        p(uX(armThickness / 2), armFront, armTop)
+      );
+      const capProfile = profileAt(armRear);
+      armPieces.push({
+        layer: armLayer,
+        depthPoint: p(uX(armThickness / 2), d / 2, armTop),
+        markup: withGradients(
+          `<polygon class="sb-arm-cap" points="${productPolygon(projection, [
+            p(uX(capProfile[3][0]), armRear - 1, capProfile[3][1]),
+            p(uX(capProfile[2][0]), armRear - 1, capProfile[2][1]),
+            p(uX(capProfile[2][0]), armFront + 1.5, capProfile[2][1]),
+            p(uX(capProfile[3][0]), armFront + 1.5, capProfile[3][1]),
+          ])}" fill="${capFill}" stroke="${bodyStroke}" stroke-width="1.1" stroke-linejoin="round"/>`
+        ),
+      });
+      // Camera-facing padded end panel with softly rounded top corners.
+      const endY = armFrontFacesCamera ? armFront : armRear;
+      const endFill = vGrad(
+        shadeHex(theme.body, -6),
+        shadeHex(theme.body, -22),
+        p(uX(armThickness / 2), endY, armTop),
+        p(uX(armThickness / 2), endY, bodyTop)
+      );
+      armPieces.push({
+        layer: armLayer,
+        depthPoint: p(uX(armThickness / 2), endY, (bodyTop + armTop) / 2),
+        markup: withGradients(
+          armFrontFacesCamera
+            ? `<path class="sb-arm-front sb-arm-front-square" d="${endCapPath(armFront)}" fill="${endFill}" stroke="${bodyStroke}" stroke-width="1.2" stroke-linejoin="round"/>`
+            : `<path class="sb-arm-rear sb-arm-rear-square" d="${endCapPath(armRear)}" fill="${endFill}" stroke="${bodyStroke}" stroke-width="1.2" stroke-linejoin="round"/>`
+        ),
+      });
+      // Welt trim inset on the visible side panel — the tailored seam that
+      // furniture renders use to separate a panel from its padding. It lies
+      // in the panel plane, inset from the panel edges.
+      const weltInset = 4.5;
+      const weltQuad = productPolygon(projection, [
+        p(uX(panelU), armRear + weltInset, bodyTop + 4.5),
+        p(uX(panelU), armFront - weltInset, bodyTop + 4.5),
+        p(uX(panelU), armFront - weltInset, visiblePanelTop(armFront) - 4.5),
+        p(uX(panelU), armRear + weltInset, visiblePanelTop(armRear) - 4.5),
+      ]);
+      armPieces.push({
+        layer: armLayer,
+        depthPoint: p(uX(panelU), d / 2, (bodyTop + armTop) / 2),
+        markup: `<polygon class="sb-arm-welt" points="${weltQuad}" fill="none" stroke="${shadeHex(theme.body, -34)}" stroke-width="0.9" opacity="0.45" stroke-linejoin="round"/>`,
       });
     }
-  }
-  const attributes = `data-piece-id="${piece.id}" data-kind="${piece.kind}" data-rotation="${((piece.rotation % 360) + 360) % 360}" data-arm="${style.arm}" data-arm-extension="${armSide ? armThickness : 0}" data-seat-start="${seatLeftX}" data-seat-end="${seatRightX}" data-back="${style.back}" data-cushion="${style.cushion}" data-base="${style.base}"`;
+  };
+  armSides.forEach(buildArm);
+  const attributes = `data-piece-id="${piece.id}" data-kind="${piece.kind}" data-rotation="${((piece.rotation % 360) + 360) % 360}" data-arm="${style.arm}" data-arm-extension="${armSides.length ? armThickness : 0}" data-seat-start="${seatLeftX}" data-seat-end="${seatRightX}" data-back="${style.back}" data-cushion="${style.cushion}" data-base="${style.base}"`;
   // Paint a module as physical anatomy rather than as unrelated polygons:
   // frame and loose back sit behind the upholstered base, the seat cushion
-  // rests on top, reverse-facing return shells close over that upholstery,
-  // and arms are the final local occluders. This fixed anatomy order is sound
-  // because the canonical projection is a consistent oblique projection (see
-  // productProjection), so surfaces of one module never falsely overlap.
-  const orderedModuleSurfaces = [
-    ...farStructuralPieces,
-    ...visibleLooseBackPieces,
-    ...bodySurfaces,
-    ...seatSurfaces,
-    ...nearStructuralPieces,
-    ...armPieces,
-  ];
+  // rests on top, and reverse-facing return shells close over that upholstery.
+  // Under perspective the arm's place in that anatomy depends on which side of
+  // the module it occupies: near-side arms are the final local occluders, but
+  // far-side arms sit BEHIND their own module's cushions and back frame along
+  // the sight line, so they must paint first or they cover upholstery they
+  // should disappear behind. Two-arm modules get one arm in each group.
+  // With a T-shaped seat the cushion's front segment sits IN FRONT of the
+  // arms, so near arms must paint before the seat group and the cushion
+  // legitimately occludes their lower front. Without a T the near arm stays
+  // the final local occluder.
+  const orderedModuleSurfaces = tSeatActive
+    ? [
+        ...farArmPieces,
+        ...farStructuralPieces,
+        ...visibleLooseBackPieces,
+        ...bodySurfaces,
+        ...nearArmPieces,
+        ...seatSurfaces,
+        ...nearStructuralPieces,
+      ]
+    : [
+        ...farArmPieces,
+        ...farStructuralPieces,
+        ...visibleLooseBackPieces,
+        ...bodySurfaces,
+        ...seatSurfaces,
+        ...nearStructuralPieces,
+        ...nearArmPieces,
+      ];
   const pieceSortDepth = projection.depth(p(w / 2, d / 2, bodyTop / 2));
   return orderedModuleSurfaces.map(entry => ({
     piece,
@@ -2699,6 +3941,18 @@ function sectionalProductPieceLayers(
 }
 
 const SECTIONAL_REVIEW_PART_NAMES: Array<[string, string]> = [
+  ['sb-arm-roll-highlight', 'arm roll crown'],
+  ['sb-arm-roll-welt', 'arm roll welt'],
+  ['sb-arm-base-rear', 'arm base rear'],
+  ['sb-arm-welt', 'arm panel welt'],
+  ['sb-back-cushion-welt', 'back cushion welt'],
+  ['sb-back-cushion-crown', 'back cushion crown light'],
+  ['sb-back-cushion-shadow', 'back cushion contact shadow'],
+  ['sb-back-rim-light', 'back frame rim light'],
+  ['sb-seat-cushion-crown', 'seat cushion crown'],
+  ['sb-seat-cushion-welt-top', 'seat cushion top welt'],
+  ['sb-seat-cushion-contact', 'seat cushion contact shadow'],
+  ['sb-deck-shadow', 'deck shadow'],
   ['sb-arm-front', 'arm front'],
   ['sb-arm-rear', 'arm rear'],
   ['sb-arm-roll-body', 'arm roll body'],
@@ -2719,6 +3973,7 @@ const SECTIONAL_REVIEW_PART_NAMES: Array<[string, string]> = [
   ['sb-structural-back-edge-right', 'back frame right edge'],
   ['sb-corner-return-back', 'corner return back'],
   ['sb-structural-back', 'back frame face'],
+  ['sb-back-well-shadow', 'back well shadow'],
   ['sb-seat-cushion-welt', 'seat cushion welt seam'],
   ['sb-seat-cushion-front', 'seat cushion front'],
   ['sb-seat-cushion-rear', 'seat cushion rear'],
@@ -2759,6 +4014,220 @@ function annotateSectionalProductPart(
   );
 }
 
+/**
+ * Shared stage definitions for the product renderer: the studio backdrop, the
+ * wooden leg ramp and the roll-end radial. Face shading uses per-surface
+ * user-space gradients emitted by sectionalProductPieceLayers (bounding-box
+ * ramps shade along a long quad's length — the old "water-slide" arms).
+ */
+function productStageDefs(theme: SectionalTheme): string {
+  const b = theme.body;
+  return `<defs><linearGradient id="sbStageBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e8edeb"/></linearGradient><linearGradient id="sbLegGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9c8264"/><stop offset="1" stop-color="#67513a"/></linearGradient><radialGradient id="sbRollEnd" cx="0.38" cy="0.34" r="0.85"><stop offset="0" stop-color="${shadeHex(b, 16)}"/><stop offset="0.55" stop-color="${shadeHex(b, -4)}"/><stop offset="1" stop-color="${shadeHex(b, -30)}"/></radialGradient><radialGradient id="sbGround" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#22302e" stop-opacity="0.3"/><stop offset="0.62" stop-color="#22302e" stop-opacity="0.12"/><stop offset="1" stop-color="#22302e" stop-opacity="0"/></radialGradient></defs>`;
+}
+
+/**
+ * Drawn measurement annotations for the 2.5D product view — the PDF-style
+ * dimension lines (A-widths across the front, D depth along the side, G/H
+ * heights at the corners), projected through the same camera as the sofa.
+ * Width/depth codes are editable: editing one rescales the assembly.
+ */
+const PRODUCT_VERTICAL_CM_PER_PX = 0.7576;
+
+function buildProductDimensionMarkup(
+  pieces: SectionalPiece[],
+  projection: ProductProjection,
+  layout: ProductLayout
+): string {
+  if (!pieces.length) return '';
+  const placements = pieces
+    .map(piece => ({ piece, placement: layout.get(piece.id) }))
+    .filter(entry => entry.placement);
+  if (!placements.length) return '';
+
+  const minX = Math.min(...placements.map(entry => entry.placement!.originX));
+  const maxX = Math.max(
+    ...placements.map(entry => entry.placement!.originX + entry.placement!.effectiveW)
+  );
+  const minY = Math.min(...placements.map(entry => entry.placement!.originY));
+  const maxY = Math.max(
+    ...placements.map(entry => entry.placement!.originY + entry.placement!.effectiveH)
+  );
+  const cmPerPxH = 1 / PRODUCT_PX_PER_CM;
+
+  const escapeAttr = (value: string) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+
+  const dimLine = (
+    a: ProductPoint3D,
+    b: ProductPoint3D,
+    offsetDx: number,
+    offsetDy: number,
+    code: string,
+    valueCm: number,
+    editable: boolean
+  ): string => {
+    const pa = projection.point(a);
+    const pb = projection.point(b);
+    const x1 = pa.x + offsetDx;
+    const y1 = pa.y + offsetDy;
+    const x2 = pb.x + offsetDx;
+    const y2 = pb.y + offsetDy;
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+    const horizontal = Math.abs(x2 - x1) >= Math.abs(y2 - y1);
+    const tick = 5;
+    const ticks = horizontal
+      ? `<line class="sb-dim-tick" x1="${x1.toFixed(1)}" y1="${(y1 - tick).toFixed(1)}" x2="${x1.toFixed(1)}" y2="${(y1 + tick).toFixed(1)}"/><line class="sb-dim-tick" x1="${x2.toFixed(1)}" y1="${(y2 - tick).toFixed(1)}" x2="${x2.toFixed(1)}" y2="${(y2 + tick).toFixed(1)}"/>`
+      : `<line class="sb-dim-tick" x1="${(x1 - tick).toFixed(1)}" y1="${y1.toFixed(1)}" x2="${(x1 + tick).toFixed(1)}" y2="${y1.toFixed(1)}"/><line class="sb-dim-tick" x1="${(x2 - tick).toFixed(1)}" y1="${y2.toFixed(1)}" x2="${(x2 + tick).toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+    const labelX = horizontal ? midX : x1 + 6;
+    const labelY = horizontal ? y1 - 6 : midY;
+    const anchor = horizontal ? 'middle' : 'start';
+    return `<g class="sb-dim${editable ? ' sb-dim-editable' : ''}" data-code="${escapeAttr(code)}" data-value-cm="${valueCm.toFixed(1)}" data-editable="${editable}">
+      ${ticks}<line class="sb-dim-line" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>
+      <text class="sb-dim-label" x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="${anchor}">${escapeAttr(code)} · ${Math.round(valueCm)} cm</text>
+    </g>`;
+  };
+
+  const dims: string[] = [];
+
+  // Per-module widths along the front (A3, A4, …).
+  const cols = new Map<number, { x0: number; x1: number; widthCm: number }>();
+  placements.forEach(({ piece, placement }) => {
+    const entry = cols.get(piece.col) || {
+      x0: placement!.originX,
+      x1: placement!.originX + placement!.effectiveW,
+      widthCm: getPieceDimensions(piece).width,
+    };
+    entry.x0 = Math.min(entry.x0, placement!.originX);
+    entry.x1 = Math.max(entry.x1, placement!.originX + placement!.effectiveW);
+    cols.set(piece.col, entry);
+  });
+  Array.from(cols.entries())
+    .sort(([a], [b]) => a - b)
+    .forEach(([col, entry], index) => {
+      dims.push(
+        dimLine(
+          { x: entry.x0, y: maxY, z: 0 },
+          { x: entry.x1, y: maxY, z: 0 },
+          0,
+          16,
+          `A${index + 3}`,
+          entry.widthCm,
+          true
+        )
+      );
+    });
+
+  // Overall width (A1), furthest out.
+  dims.push(
+    dimLine(
+      { x: minX, y: maxY, z: 0 },
+      { x: maxX, y: maxY, z: 0 },
+      0,
+      48,
+      'A1',
+      (maxX - minX) * cmPerPxH,
+      true
+    )
+  );
+
+  // Inner seat span (B1): between the arm inner edges on the front row.
+  const frontRow = minY; // front row starts at the rear line
+  const frontPieces = placements.filter(
+    ({ piece, placement }) => piece.row === 0 || placement!.originY === minY
+  );
+  const hasLeftArm = frontPieces.some(
+    ({ piece }) =>
+      piece.kind === 'left-arm' ||
+      piece.kind === 'left-arm-chaise' ||
+      piece.kind === 'armchair' ||
+      piece.kind === 'two-arm-chaise'
+  );
+  const hasRightArm = frontPieces.some(
+    ({ piece }) =>
+      piece.kind === 'right-arm' ||
+      piece.kind === 'right-arm-chaise' ||
+      piece.kind === 'armchair' ||
+      piece.kind === 'two-arm-chaise'
+  );
+  if (hasLeftArm && hasRightArm) {
+    const armThickness = 29;
+    const leftArmX = Math.min(
+      ...frontPieces
+        .filter(
+          ({ piece }) =>
+            piece.kind === 'left-arm' ||
+            piece.kind === 'left-arm-chaise' ||
+            piece.kind === 'armchair' ||
+            piece.kind === 'two-arm-chaise'
+        )
+        .map(({ placement }) => placement!.originX)
+    );
+    const rightArmX = Math.max(
+      ...frontPieces
+        .filter(
+          ({ piece }) =>
+            piece.kind === 'right-arm' ||
+            piece.kind === 'right-arm-chaise' ||
+            piece.kind === 'armchair' ||
+            piece.kind === 'two-arm-chaise'
+        )
+        .map(({ placement }) => placement!.originX + placement!.effectiveW)
+    );
+    dims.push(
+      dimLine(
+        { x: leftArmX + armThickness, y: maxY, z: 0 },
+        { x: rightArmX - armThickness, y: maxY, z: 0 },
+        0,
+        32,
+        'B1',
+        (rightArmX - armThickness - (leftArmX + armThickness)) * cmPerPxH,
+        false
+      )
+    );
+  }
+
+  // Depth (D) along the right side.
+  dims.push(
+    dimLine(
+      { x: maxX, y: minY, z: 0 },
+      { x: maxX, y: maxY, z: 0 },
+      30,
+      0,
+      'D',
+      (maxY - minY) * cmPerPxH,
+      true
+    )
+  );
+
+  // Heights at the left corner: G1 back height (rear) and H1 seat height (front).
+  const backTopPx = 126;
+  const seatTopPx = 60;
+  dims.push(
+    dimLine(
+      { x: minX, y: minY, z: 0 },
+      { x: minX, y: minY, z: backTopPx },
+      -26,
+      0,
+      'G1',
+      backTopPx * PRODUCT_VERTICAL_CM_PER_PX,
+      false
+    )
+  );
+  dims.push(
+    dimLine(
+      { x: minX, y: maxY, z: 0 },
+      { x: minX, y: maxY, z: seatTopPx },
+      -26,
+      0,
+      'H1',
+      seatTopPx * PRODUCT_VERTICAL_CM_PER_PX,
+      false
+    )
+  );
+
+  return `<g class="sb-product-dims">${dims.join('')}</g>`;
+}
+
 export function sectionalProductMarkup(
   pieces: SectionalPiece[],
   viewMode: Exclude<SectionalViewMode, 'plan'> = 'front-left',
@@ -2773,6 +4242,17 @@ export function sectionalProductMarkup(
   // literal mirror of the finished render, so painter order and face culling
   // cannot diverge and make the same sofa appear to have different anatomy.
   const projection = productProjection(pieces, 'front-right', layout);
+  // A curved back is one arc across the whole assembly, never per-module
+  // scallops — compute the shared lift before any module renders. The arc
+  // only makes sense on a single straight row (2/3-seat sofas): sectionals
+  // with returns or multi-row layouts keep straight module backs.
+  const effectiveBack = fallbackStyle.back;
+  const isSingleStraightRow =
+    pieces.every(piece => piece.rotation % 360 === 0) &&
+    new Set(pieces.map(piece => piece.row)).size <= 1;
+  if (effectiveBack === 'curved' && isSingleStraightRow) {
+    applyUniformBackCurve(pieces, layout);
+  }
   const theme = SECTIONAL_THEMES[themeId] || SECTIONAL_THEMES[DEFAULT_THEME];
   const connections = evaluateSectionalConnections(pieces);
   const layerRank: Record<SectionalProductRenderLayer['layer'], number> = {
@@ -2799,11 +4279,32 @@ export function sectionalProductMarkup(
       const layerDiff = layerRank[a.layer] - layerRank[b.layer];
       return a.surfaceIndex - b.surfaceIndex || layerDiff;
     });
+  // Ground the assembly with a soft contact shadow computed from the actual
+  // projected footprint, not a fixed ellipse that drifts off the furniture.
+  const groundPoints: SectionalPoint[] = pieces.flatMap(piece => {
+    const footprint = layout.get(piece.id) || unrotatedFootprint(piece);
+    const w = footprint.bodyW;
+    const d = footprint.bodyH;
+    return [
+      projection.point(sectionalPiecePoint(piece, 0, 0, 0, layout)),
+      projection.point(sectionalPiecePoint(piece, w, 0, 0, layout)),
+      projection.point(sectionalPiecePoint(piece, w, d, 0, layout)),
+      projection.point(sectionalPiecePoint(piece, 0, d, 0, layout)),
+    ];
+  });
+  const groundMinX = Math.min(...groundPoints.map(point => point.x));
+  const groundMaxX = Math.max(...groundPoints.map(point => point.x));
+  const groundY = Math.max(...groundPoints.map(point => point.y));
+  const shadowCx = (groundMinX + groundMaxX) / 2;
+  const shadowRx = Math.max(60, (groundMaxX - groundMinX) * 0.54);
+  const groundShadow =
+    `<ellipse cx="${shadowCx.toFixed(1)}" cy="${(groundY + 10).toFixed(1)}" rx="${shadowRx.toFixed(1)}" ry="16" fill="url(#sbGround)"/>` +
+    `<ellipse cx="${shadowCx.toFixed(1)}" cy="${(groundY + 5).toFixed(1)}" rx="${(shadowRx * 0.82).toFixed(1)}" ry="8" fill="url(#sbGround)" opacity="0.7"/>`;
   const mirrorTransform =
     viewMode === 'front-left' ? ' transform="translate(920 0) scale(-1 1)"' : '';
-  return `<g class="sb-product-view" data-section-view="${viewMode}" data-canonical-view="front-right"${mirrorTransform}><defs><filter id="sbProductShadow" x="-30%" y="-40%" width="160%" height="180%"><feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#24302f" flood-opacity=".18"/></filter></defs><ellipse cx="460" cy="512" rx="330" ry="38" fill="#253132" opacity=".09"/><g filter="url(#sbProductShadow)">${ordered
+  return `<g class="sb-product-view" data-section-view="${viewMode}" data-canonical-view="front-right"${mirrorTransform}>${productStageDefs(theme)}<rect x="0" y="0" width="${BOARD_WIDTH}" height="${BOARD_HEIGHT}" fill="url(#sbStageBg)"/>${groundShadow}<g>${ordered
     .map(entry => entry.markup)
-    .join('')}</g></g>`;
+    .join('')}</g>${buildProductDimensionMarkup(pieces, projection, layout)}</g>`;
 }
 
 export function serializeSectionalProductSvg(
@@ -2887,16 +4388,98 @@ export function normalizeModulePiece(piece: SectionalPiece): SectionalPiece {
   return { ...piece, col: 0, row: 0, rotation: 0 };
 }
 
+/**
+ * Plan-view pictograms for the piece library — the same top-down language as
+ * professional space planners: body outline, back rail band, seat inset and
+ * arm/chaise silhouettes, instead of cryptic text abbreviations.
+ */
+function libraryIconSvg(kind: PieceKind): string {
+  const body = '#d3dcd6';
+  const cushion = '#ffffff';
+  const rail = '#93a29a';
+  const line = '#5f6e66';
+  const r = (x: number, y: number, w: number, h: number, rx: number, fill: string, sw = 1.4) =>
+    `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}" stroke="${line}" stroke-width="${sw}"/>`;
+  const pad = (x: number, y: number, wdt: number, hgt: number) =>
+    `<rect x="${x}" y="${y}" width="${wdt}" height="${hgt}" rx="2.5" fill="${cushion}" stroke="${rail}" stroke-width="1"/>`;
+  const backRail = (x: number, y: number, wdt: number) =>
+    `<rect x="${x}" y="${y}" width="${wdt}" height="5.5" rx="2.2" fill="${rail}" stroke="none"/>`;
+  const sideRail = (x: number, y: number, hgt: number) =>
+    `<rect x="${x}" y="${y}" width="5.5" height="${hgt}" rx="2.2" fill="${rail}" stroke="none"/>`;
+  const armPill = (x: number, y: number, hgt: number) => r(x, y, 8, hgt, 3.5, '#bcc8c0');
+  let inner = '';
+  switch (kind) {
+    case 'left-arm':
+      inner =
+        r(10, 4, 33, 32, 4, body) +
+        backRail(12, 6.5, 29) +
+        armPill(3.5, 7, 27) +
+        pad(14, 15, 24, 17);
+      break;
+    case 'right-arm':
+      inner =
+        r(5, 4, 33, 32, 4, body) +
+        backRail(7, 6.5, 29) +
+        armPill(36.5, 7, 27) +
+        pad(10, 15, 24, 17);
+      break;
+    case 'seat':
+      inner = r(7, 4, 34, 32, 4, body) + backRail(9, 6.5, 30) + pad(11, 15, 26, 17);
+      break;
+    case 'corner':
+      inner =
+        r(6, 4, 36, 34, 4, body) +
+        backRail(8, 6.5, 32) +
+        sideRail(33.5, 9, 25) +
+        pad(11, 15, 17, 19);
+      break;
+    case 'chaise':
+      inner = r(13, 3, 22, 37, 4, body) + backRail(15, 5, 18) + pad(17, 13, 14, 24);
+      break;
+    case 'ottoman':
+      inner = r(8, 10, 32, 22, 4, body) + pad(12, 13.5, 24, 15);
+      break;
+    case 'left-arm-chaise':
+      inner =
+        r(11, 3, 26, 37, 4, body) + backRail(13, 5, 22) + armPill(6, 5.5, 22) + pad(15, 13, 18, 24);
+      break;
+    case 'right-arm-chaise':
+      inner =
+        r(11, 3, 26, 37, 4, body) +
+        backRail(13, 5, 22) +
+        armPill(34, 5.5, 22) +
+        pad(15, 13, 18, 24);
+      break;
+    case 'armchair':
+      inner =
+        r(8, 4, 36, 32, 4, body) +
+        backRail(10, 6.5, 32) +
+        armPill(3.5, 7, 27) +
+        armPill(40.5, 7, 27) +
+        pad(14, 15, 24, 17);
+      break;
+    case 'two-arm-chaise':
+      inner =
+        r(10, 3, 30, 37, 4, body) +
+        backRail(12, 5, 26) +
+        armPill(5, 5.5, 22) +
+        armPill(41, 5.5, 22) +
+        pad(15, 13, 20, 24);
+      break;
+  }
+  return `<svg viewBox="0 0 48 42" width="46" height="40" aria-hidden="true" focusable="false">${inner}</svg>`;
+}
+
 function dialogMarkup(): string {
   const library = (Object.keys(PIECES) as PieceKind[])
     .map(
       kind =>
-        `<button type="button" class="sb-library-item" draggable="true" data-piece-kind="${kind}"><span class="sb-library-icon">${PIECES[kind].short}</span><span><strong>${PIECES[kind].name}</strong><small>${PIECES[kind].width} × ${PIECES[kind].depth} cm</small></span><span class="sb-add-symbol" aria-hidden="true">+</span></button>`
+        `<button type="button" class="sb-library-item" draggable="true" data-piece-kind="${kind}"><span class="sb-library-icon">${libraryIconSvg(kind)}</span><span><strong>${PIECES[kind].name}</strong><small>${PIECES[kind].width} × ${PIECES[kind].depth} cm</small></span><span class="sb-add-symbol" aria-hidden="true">+</span></button>`
     )
     .join('');
   return `<dialog id="sectionalBuilderDialog" class="sectional-builder-dialog">
     <div class="sb-shell">
-      <header class="sb-header"><div><span class="sb-eyebrow">Assembly workspace</span><h2>Sectional Builder</h2></div><div class="sb-presets" aria-label="Assembly presets"><span>Start with</span><button type="button" data-sb-preset="sofa">3-seat</button><button type="button" data-sb-preset="two-seat">2-seat</button><button type="button" data-sb-preset="chaise">Chaise</button><button type="button" data-sb-preset="corner">L-shape</button><button type="button" data-sb-preset="l-chaise">L+Chaise</button><button type="button" data-sb-preset="ottoman-set">+Ottoman</button></div><button type="button" class="sb-close" data-sb-close aria-label="Close sectional builder">×</button></header>
+      <header class="sb-header"><div><span class="sb-eyebrow">Assembly workspace</span><h2>Sectional Builder</h2></div><div class="sb-presets" aria-label="Assembly presets"><span>Start with</span><button type="button" data-sb-preset="sofa">3-seat</button><button type="button" data-sb-preset="two-seat">2-seat</button><button type="button" data-sb-preset="chaise">Chaise</button><button type="button" data-sb-preset="corner">L-shape</button><button type="button" data-sb-preset="l-chaise">L+Chaise</button><button type="button" data-sb-preset="ottoman-set">+Ottoman</button><button type="button" data-sb-preset="armchair">Armchair</button><button type="button" data-sb-preset="two-arm-chaise">2-Arm Chaise</button></div><button type="button" class="sb-close" data-sb-close aria-label="Close sectional builder">×</button></header>
       <div class="sb-body">
         <aside class="sb-library"><div class="sb-panel-heading"><h3>Pieces</h3><span>Click or drag to add</span></div>${library}</aside>
         <main class="sb-stage"><div class="sb-stage-toolbar"><div><strong id="sbAssemblyName">Custom sectional</strong><span id="sbPieceCount">0 pieces</span></div><div class="sb-view-switch" role="tablist" aria-label="Sectional view"><button type="button" role="tab" data-sb-view="plan" aria-selected="true">Plan</button><button type="button" role="tab" data-sb-view="front-left" aria-selected="false">Left 45°</button><button type="button" role="tab" data-sb-view="front-right" aria-selected="false">Right 45°</button></div><div class="sb-toolbar-side"><div class="sb-swatches" role="radiogroup" aria-label="Fabric colour">${(
@@ -2909,7 +4492,7 @@ function dialogMarkup(): string {
           .join(
             ''
           )}</div><button type="button" class="sb-quiet-button" data-sb-undo title="Undo (Ctrl+Z)" disabled>Undo</button><button type="button" class="sb-quiet-button" data-sb-redo title="Redo (Ctrl+Shift+Z)" disabled>Redo</button><button type="button" class="sb-quiet-button" data-sb-clear>Clear</button></div></div><svg id="sbBoard" viewBox="0 0 ${BOARD_WIDTH} ${BOARD_HEIGHT}" aria-label="Sectional assembly board"><defs><pattern id="sbGrid" width="${CELL}" height="${CELL}" patternUnits="userSpaceOnUse"><path d="M ${CELL} 0 L 0 0 0 ${CELL}" fill="none" stroke="#dce2e1" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="#f8faf9"/><g id="sbPlanView"><rect x="${GRID_ORIGIN_X}" y="${GRID_ORIGIN_Y}" width="660" height="462" fill="url(#sbGrid)"/><g id="sbDimensions"></g><g id="sbGuides"></g><g id="sbPieces"></g><g id="sbSnapPreview"></g></g><g id="sbProductPreview" class="sb-product-preview" hidden></g></svg></main>
-        <aside class="sb-inspector"><div class="sb-panel-heading"><h3>Assembly</h3><span id="sbViewLabel">Plan view</span></div><div class="sb-metrics"><div><span>Pieces</span><strong id="sbMetricPieces">0</strong></div><div><span>Width</span><strong id="sbMetricWidth">0 cm</strong></div><div><span>Depth</span><strong id="sbMetricDepth">0 cm</strong></div></div><div class="sb-model-controls" aria-label="Product model"><label><span>Arm profile</span><select id="sbArmStyle"><option value="round">Round roll arm</option><option value="square">Square arm</option><option value="wedge">Wedge arm</option></select></label><label><span>Back frame</span><select id="sbBackStyle"><option value="high">High box back</option><option value="short">Short box back</option><option value="curved">Rounded back</option></select></label><label><span>Loose cushions</span><select id="sbCushionStyle"><option value="boxed">Boxed edge</option><option value="knife">Knife edge</option><option value="rounded">Rounded front</option></select></label><label><span>Base / skirt</span><select id="sbBaseStyle"><option value="snug">Snug fit</option><option value="long-skirt">Long skirt</option><option value="loose-fit">Cornered pleats</option><option value="straight-skirt">Straight skirt</option></select></label></div><div id="sbSelectionInspector" class="sb-selection-inspector is-empty"><span class="sb-eyebrow">Selected piece</span><h3 id="sbSelectedName">Select a piece</h3><p id="sbSelectedSize">Drag pieces on the board to arrange them.</p><div class="sb-inspector-actions"><button type="button" data-sb-action="rotate">Rotate</button><button type="button" data-sb-action="mirror">Mirror</button><button type="button" data-sb-action="duplicate">Duplicate</button><button type="button" class="is-danger" data-sb-action="delete">Delete</button></div></div><div class="sb-handoff"><p>Keep the plan editable, or add the selected product angle as a normal SofaPaint image.</p><label class="sb-modules-toggle"><input type="checkbox" id="sbIncludeModules" checked /><span>Also create a measured view per module</span></label><button type="button" class="sb-primary" data-sb-use>Use plan in project</button><button type="button" class="sb-secondary" data-sb-use-product hidden>Add selected product view</button><button type="button" class="sb-secondary" data-sb-update hidden>Update project image</button><button type="button" class="sb-secondary" data-sb-sync-canvas hidden title="Read piece positions from the canvas back into the builder">Sync from canvas</button></div><div class="sb-pricing"><div class="sb-panel-heading"><h3>Pricing</h3><span>CW unbranded</span></div><div class="sb-pricing-filters"><label><span>Country</span><select id="sbPricingCountry">${(Object.entries(SECTIONAL_PRICING_MARKETS) as [SectionalPricingCountry, SectionalPricingMarket][]).map(([id, market]) => `<option value="${id}"${id === DEFAULT_PRICING_COUNTRY ? ' selected' : ''}>${market.country} · ${market.currency}</option>`).join('')}</select></label><label><span>Fabric</span><select id="sbPricingFabric">${(Object.entries(SECTIONAL_PRICING_FABRICS) as [SectionalPricingFabric, string][]).map(([id, label]) => `<option value="${id}"${id === DEFAULT_PRICING_FABRIC ? ' selected' : ''}>${label}</option>`).join('')}</select></label></div><p id="sbPricingStatus" class="sb-pricing-status">Current US storefront prices</p><div id="sbPricingList"></div><div class="sb-pricing-total"><span>Estimated total</span><strong id="sbPricingTotal">—</strong></div><button type="button" class="sb-pricing-copy" data-sb-copy-pricing>Copy all links</button></div></aside>
+        <aside class="sb-inspector"><div class="sb-panel-heading"><h3>Assembly</h3><span id="sbViewLabel">Plan view</span></div><div class="sb-metrics"><div><span>Pieces</span><strong id="sbMetricPieces">0</strong></div><div><span>Width</span><strong id="sbMetricWidth">0 cm</strong></div><div><span>Depth</span><strong id="sbMetricDepth">0 cm</strong></div></div><div id="sbMeasurementChecks" class="sb-measurement-checks" aria-label="Measurement checks"></div><div class="sb-model-controls" aria-label="Product model"><label><span>Arm profile</span><select id="sbArmStyle"><option value="round">Round roll arm</option><option value="square">Square arm</option><option value="wedge">Wedge arm</option></select></label><label><span>Arm length</span><select id="sbArmLength"><option value="full">Full seat length</option><option value="half">Half (set back)</option></select></label><label><span>Back frame</span><select id="sbBackStyle"><option value="high">High box back</option><option value="short">Short box back</option><option value="curved">Rounded back</option></select></label><label><span>Loose cushions</span><select id="sbCushionStyle"><option value="boxed">Boxed edge</option><option value="knife">Knife edge</option><option value="rounded">Rounded front</option></select></label><label><span>Cushion fit</span><select id="sbBackCushionFit"><option value="straight">Straight (between arms)</option><option value="wrap">Wrap arms (T · L)</option></select></label><label><span>Base / skirt</span><select id="sbBaseStyle"><option value="snug">Snug fit</option><option value="long-skirt">Long skirt</option><option value="loose-fit">Cornered pleats</option><option value="straight-skirt">Straight skirt</option></select></label></div><div id="sbSelectionInspector" class="sb-selection-inspector is-empty"><span class="sb-eyebrow">Selected piece</span><h3 id="sbSelectedName">Select a piece</h3><p id="sbSelectedSize">Drag pieces on the board to arrange them.</p><div class="sb-inspector-actions"><button type="button" data-sb-action="rotate">Rotate</button><button type="button" data-sb-action="mirror">Mirror</button><button type="button" data-sb-action="duplicate">Duplicate</button><button type="button" class="is-danger" data-sb-action="delete">Delete</button></div></div><div class="sb-handoff"><button type="button" data-sb-3d>Edit in 3D</button><p>Keep the plan editable, or add the selected product angle as a normal SofaPaint image.</p><label class="sb-modules-toggle"><input type="checkbox" id="sbIncludeModules" checked /><span>Also create a measured view per module</span></label><button type="button" class="sb-primary" data-sb-use>Use plan in project</button><button type="button" class="sb-secondary" data-sb-use-product hidden>Add selected product view</button><button type="button" class="sb-secondary" data-sb-update hidden>Update project image</button><button type="button" class="sb-secondary" data-sb-sync-canvas hidden title="Read piece positions from the canvas back into the builder">Sync from canvas</button></div><div class="sb-pricing"><div class="sb-panel-heading"><h3>Pricing</h3><span>CW unbranded</span></div><div class="sb-pricing-filters"><label><span>Country</span><select id="sbPricingCountry">${(Object.entries(SECTIONAL_PRICING_MARKETS) as [SectionalPricingCountry, SectionalPricingMarket][]).map(([id, market]) => `<option value="${id}"${id === DEFAULT_PRICING_COUNTRY ? ' selected' : ''}>${market.country} · ${market.currency}</option>`).join('')}</select></label><label><span>Fabric</span><select id="sbPricingFabric">${(Object.entries(SECTIONAL_PRICING_FABRICS) as [SectionalPricingFabric, string][]).map(([id, label]) => `<option value="${id}"${id === DEFAULT_PRICING_FABRIC ? ' selected' : ''}>${label}</option>`).join('')}</select></label></div><p id="sbPricingStatus" class="sb-pricing-status">Current US storefront prices</p><div id="sbPricingList"></div><div class="sb-pricing-total"><span>Estimated total</span><strong id="sbPricingTotal">—</strong></div><button type="button" class="sb-pricing-copy" data-sb-copy-pricing>Copy all links</button></div></aside>
       </div>
     </div>
   </dialog>`;
@@ -3293,6 +4876,63 @@ export function initSectionalBuilder(): void {
   const guideLayer = document.querySelector<SVGGElement>('#sbGuides')!;
   const planView = document.querySelector<SVGGElement>('#sbPlanView')!;
   const productPreview = document.querySelector<SVGGElement>('#sbProductPreview')!;
+  let dimInput: HTMLInputElement | null = null;
+  const closeDimInput = () => {
+    dimInput?.remove();
+    dimInput = null;
+  };
+  // Click a drawn dimension label in the 2.5D view → inline edit → the sofa
+  // rescales to the new measurement.
+  productPreview.addEventListener('click', event => {
+    const target = event.target as Element | null;
+    const dimGroup = target?.closest?.('g.sb-dim');
+    closeDimInput();
+    if (!dimGroup) return;
+    if (dimGroup.getAttribute('data-editable') !== 'true') return;
+    const code = dimGroup.getAttribute('data-code') || '';
+    const current = Number(dimGroup.getAttribute('data-value-cm') || '0');
+    const textEl = dimGroup.querySelector('.sb-dim-label');
+    if (!code || !textEl) return;
+    const rect = textEl.getBoundingClientRect();
+    dimInput = document.createElement('input');
+    dimInput.type = 'number';
+    dimInput.className = 'sb-dim-input';
+    dimInput.min = '20';
+    dimInput.max = '600';
+    dimInput.value = String(Math.round(current));
+    dimInput.style.left = `${Math.max(8, rect.left + rect.width / 2 - 45)}px`;
+    dimInput.style.top = `${Math.max(8, rect.top - 8)}px`;
+    document.body.appendChild(dimInput);
+    dimInput.focus();
+    dimInput.select();
+    let committed = false;
+    const commit = () => {
+      if (committed || !dimInput) return;
+      committed = true;
+      const value = Number(dimInput.value);
+      closeDimInput();
+      if (!Number.isFinite(value) || value <= 0 || value === current) return;
+      const changed = applySectionalMeasurementEdit(pieces, code, value);
+      if (changed > 0) {
+        pushHistory();
+        render();
+        (window as any).setStatusMessage?.(
+          `${code} set to ${Math.round(value * 10) / 10} cm — ${changed} module(s) resized.`,
+          'success'
+        );
+      }
+    };
+    dimInput.addEventListener('keydown', keyEvent => {
+      if (keyEvent.key === 'Enter') {
+        keyEvent.preventDefault();
+        commit();
+      } else if (keyEvent.key === 'Escape') {
+        committed = true;
+        closeDimInput();
+      }
+    });
+    dimInput.addEventListener('blur', commit);
+  });
   let pieces = createSectionalPreset('sofa');
   let selectedId: string | null = pieces[1]?.id || null;
   let selectedIds: Set<string> = new Set(selectedId ? [selectedId] : []);
@@ -3662,6 +5302,66 @@ export function initSectionalBuilder(): void {
       (document.getElementById('sbSelectedSize') as HTMLElement).textContent =
         'Drag pieces on the board to arrange them.';
     }
+    updateMeasurementChecks();
+  };
+
+  // Measurement checks: evaluate the CW code values (from the seeded strokes'
+  // measurement entries) against the PDF-convention rule catalog and render
+  // pass/fail rows in the inspector.
+  const updateMeasurementChecks = () => {
+    const list = document.getElementById('sbMeasurementChecks');
+    if (!list) return;
+    if (!pieces.length) {
+      list.innerHTML = '<p class="sb-checks-empty">Add pieces to check measurements.</p>';
+      return;
+    }
+    const app = (window as any).app;
+    const metadataManager = app?.metadataManager;
+    const viewId = app?.projectManager?.currentViewId;
+    const values: Record<string, number | undefined> = {};
+    if (metadataManager?.strokeMeasurements) {
+      const scopes = Object.keys(metadataManager.strokeMeasurements || {}).filter(
+        (key: string) => key === viewId || key.startsWith(`${viewId}::tab:`)
+      );
+      const wantedCodes = new Set<string>();
+      getSectionalMeasurementSeeds(pieces).forEach(seed => wantedCodes.add(seed.suggestedTag));
+      scopes.forEach((scopeKey: string) => {
+        const bucket = metadataManager.strokeMeasurements[scopeKey] || {};
+        Object.entries(bucket).forEach(([strokeLabel, entry]: [string, any]) => {
+          const code = String(strokeLabel).trim().toUpperCase();
+          if (!wantedCodes.has(code)) return;
+          const raw =
+            typeof entry === 'object' && entry !== null
+              ? (entry.value ?? entry.measurement ?? entry.text)
+              : entry;
+          const numeric = parseFloat(String(raw ?? '').replace(/[^\d.-]/g, ''));
+          if (Number.isFinite(numeric) && numeric > 0) values[code] = numeric;
+        });
+      });
+    }
+
+    const ruleSet = buildSectionalMeasurementRules({ pieces, values });
+    const issues = evaluateSectionalMeasurementRules(ruleSet, values);
+    const { filled, expected } = countFilledMeasurements(ruleSet, values);
+
+    const severityColor: Record<string, string> = {
+      error: '#c2402f',
+      warn: '#b45309',
+      info: '#2563eb',
+    };
+    const rows = issues.length
+      ? issues
+          .map(
+            issue => `<li class="sb-check-row sb-check-${issue.severity}">
+              <strong style="color:${severityColor[issue.severity]}">${issue.severity === 'error' ? '✕' : issue.severity === 'warn' ? '!' : 'i'}</strong>
+              <span><strong>${issue.title}.</strong> ${issue.message}</span>
+            </li>`
+          )
+          .join('')
+      : '<li class="sb-check-row sb-check-ok"><strong style="color:#198b71">✓</strong><span>All entered measurements pass the checks so far.</span></li>';
+    list.innerHTML = `
+      <p class="sb-checks-summary">${filled} of ${expected} codes filled · ${issues.filter(issue => issue.severity === 'error').length} error(s), ${issues.filter(issue => issue.severity === 'warn').length} warning(s)</p>
+      <ul>${rows}</ul>`;
   };
 
   const formatPrice = (value: number): string => {
@@ -3811,7 +5511,9 @@ export function initSectionalBuilder(): void {
     }
     const styleControls: Array<[string, keyof SectionalProductStyle]> = [
       ['sbArmStyle', 'arm'],
+      ['sbArmLength', 'armLength'],
       ['sbBackStyle', 'back'],
+      ['sbBackCushionFit', 'backCushionFit'],
       ['sbCushionStyle', 'cushion'],
       ['sbBaseStyle', 'base'],
     ];
@@ -3894,7 +5596,9 @@ export function initSectionalBuilder(): void {
         | 'corner'
         | 'two-seat'
         | 'l-chaise'
-        | 'ottoman-set';
+        | 'ottoman-set'
+        | 'armchair'
+        | 'two-arm-chaise';
       pushHistory();
       pieces = createSectionalPreset(preset).map(piece => ({
         ...piece,
@@ -3915,7 +5619,11 @@ export function initSectionalBuilder(): void {
                 ? 'L-shape with chaise'
                 : preset === 'ottoman-set'
                   ? 'Sofa with ottoman'
-                  : '3-seat sofa';
+                  : preset === 'armchair'
+                    ? 'Armchair'
+                    : preset === 'two-arm-chaise'
+                      ? 'Two-arm chaise'
+                      : '3-seat sofa';
       selectedId = pieces[0]?.id || null;
       selectedIds = new Set(selectedId ? [selectedId] : []);
       render();
@@ -3964,7 +5672,9 @@ export function initSectionalBuilder(): void {
     });
   };
   bindProductStyle('sbArmStyle', 'arm');
+  bindProductStyle('sbArmLength', 'armLength');
   bindProductStyle('sbBackStyle', 'back');
+  bindProductStyle('sbBackCushionFit', 'backCushionFit');
   bindProductStyle('sbCushionStyle', 'cushion');
   bindProductStyle('sbBaseStyle', 'base');
 
@@ -4887,6 +6597,16 @@ export function initSectionalBuilder(): void {
       button.disabled = false;
       button.textContent = 'Update project image';
     }
+  });
+
+  dialog.querySelector('[data-sb-3d]')?.addEventListener('click', () => {
+    if (!pieces.length) return;
+    dialog.close();
+    window.dispatchEvent(
+      new CustomEvent('openpaint:sofa3d-open', {
+        detail: { sectional: { name: 'My sectional', pieces, style: productStyle } },
+      })
+    );
   });
 
   dialog.querySelector('[data-sb-use]')?.addEventListener('click', async event => {

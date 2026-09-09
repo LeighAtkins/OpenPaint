@@ -27,6 +27,7 @@ window.addEventListener('error', event => {
 
 // ── 1. Vendor libraries (must load before app modules) ──────────────────────
 import { fabric } from 'fabric';
+import './styles/tw.css';
 
 (globalThis as any).fabric = fabric;
 
@@ -63,6 +64,7 @@ declare global {
     currentImageLabel?: any;
     textBgEnabled?: any;
     saveAllImages?: any;
+    saveAllImagesNoTags?: any;
     showPDFExportDialog?: any;
     resizeCanvas?: any;
     shareProject?: any;
@@ -104,6 +106,10 @@ import { authService } from '@/services/auth/authService';
 import { initAuthUI } from './modules/ui/auth-ui';
 import { initCloudUI } from './modules/ui/cloud-ui';
 import { initCwImportUI } from './modules/ui/cw-import-ui';
+import { initQuickSaveMenu } from './modules/ui/quick-save-menu';
+import { initSofa3dStudio } from './modules/ui/sofa3d-entry';
+import { initSectionalBuilder } from './modules/ui/sectional-builder';
+import { initMeasurementReview } from './modules/ui/measurement-review';
 
 // ── 5. Standalone UI modules ─────────────────────────────────────────────────
 import './modules/ui/toolbar-init.js';
@@ -142,6 +148,7 @@ async function bootstrap(): Promise<void> {
   initToolbarReady();
   initPanelRelocation();
   initFrameCaptureToggle();
+  initQuickSaveMenu();
 
   // ── Initialize auth (non-blocking — app loads while auth resolves) ──
   if (isAuthEnabled() && isSupabaseConfigured()) {
@@ -197,6 +204,12 @@ async function bootstrap(): Promise<void> {
   // Initialize CW/PID product measurement import modal
   initCwImportUI();
 
+  // Modular sectional assembly workspace. It remains isolated until the user
+  // explicitly turns the assembly into a normal SofaPaint image.
+  initSectionalBuilder();
+  initSofa3dStudio();
+  initMeasurementReview();
+
   // Initialize coins HUD + pixel pets system
   const { initCoinsHud } = await import('./modules/ui/coins-hud');
   const { initPetsSystem } = await import('./modules/ui/pets-system');
@@ -244,6 +257,36 @@ async function bootstrap(): Promise<void> {
       }),
     };
     logger.debug(CONTEXT, 'Development helpers exposed at window.__openpaint_ts_dev');
+
+    // Dev-only project loader: ?devProject=<same-origin path> loads a .opaint
+    // archive after boot (e.g. ?devProject=/dev-load/project.json). Lets a
+    // specific project be reproduced without file-picker automation.
+    const devProjectParam = new URLSearchParams(window.location.search).get('devProject');
+    if (devProjectParam) {
+      const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+      (window as any).__loadDevProject = async () => {
+        try {
+          const response = await fetch(devProjectParam);
+          const buffer = await response.arrayBuffer();
+          const file = new File([buffer], 'dev-project.opaint');
+          const manager = (window as any).app?.projectManager;
+          if (!manager?.loadProject) throw new Error('projectManager unavailable');
+          await manager.loadProject(file);
+          document.title = '[devProject] loaded';
+          logger.info(CONTEXT, `[devProject] loaded ${devProjectParam}`);
+        } catch (error) {
+          document.title = '[devProject] FAILED: ' + String((error as Error)?.message || error);
+          logger.error(CONTEXT, '[devProject] load failed', error);
+        }
+      };
+      (async () => {
+        for (let attempt = 0; attempt < 40; attempt += 1) {
+          if ((window as any).app?.projectManager?.loadProject) break;
+          await wait(250);
+        }
+        await (window as any).__loadDevProject?.();
+      })();
+    }
   }
 
   // Remove loading class

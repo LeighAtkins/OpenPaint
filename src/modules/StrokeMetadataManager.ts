@@ -193,7 +193,13 @@ export class StrokeMetadataManager {
     // Set flag to auto-focus measurement input for this new stroke
     this._shouldAutoFocus = true;
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !obj.__openpaintStrokeCreatedDispatched) {
+      Object.defineProperty(obj, '__openpaintStrokeCreatedDispatched', {
+        value: true,
+        writable: true,
+        configurable: true,
+        enumerable: false,
+      });
       window.dispatchEvent(
         new CustomEvent('openpaint:stroke-created', {
           detail: {
@@ -342,6 +348,11 @@ export class StrokeMetadataManager {
         obj.strokeMetadata.visible = visible;
       }
     }
+    window.dispatchEvent(
+      new CustomEvent('openpaint:project-mutated', {
+        detail: { source: 'stroke-visibility', imageLabel, strokeLabel },
+      })
+    );
   }
 
   // Set label visibility for a stroke
@@ -356,6 +367,11 @@ export class StrokeMetadataManager {
     if (obj && obj.strokeMetadata) {
       obj.strokeMetadata.labelVisible = visible;
     }
+    window.dispatchEvent(
+      new CustomEvent('openpaint:project-mutated', {
+        detail: { source: 'label-visibility', imageLabel, strokeLabel },
+      })
+    );
   }
 
   // Set measurement for a stroke
@@ -394,13 +410,42 @@ export class StrokeMetadataManager {
 
     // Update UI after setting measurement
     this.updateStrokeVisibilityControls();
+    window.dispatchEvent(
+      new CustomEvent('openpaint:project-mutated', {
+        detail: { source: 'measurement', imageLabel, strokeLabel },
+      })
+    );
   }
 
   // Get measurement for a stroke
   // Returns measurement object: {inchWhole: number, inchFraction: number, cm: number} or null
   getMeasurement(imageLabel, strokeLabel) {
     imageLabel = this.normalizeImageLabel(imageLabel);
-    return this.strokeMeasurements[imageLabel]?.[strokeLabel] || null;
+    // Gallery-imported measurements may be stored under the base viewId while
+    // the lookup uses the scoped label. Check both buckets.
+    const direct = this.strokeMeasurements[imageLabel]?.[strokeLabel];
+    if (direct) return direct;
+    if (typeof imageLabel === 'string' && imageLabel.includes('::tab:')) {
+      const baseLabel = imageLabel.split('::tab:')[0];
+      return this.strokeMeasurements[baseLabel]?.[strokeLabel] || null;
+    }
+    return null;
+  }
+
+  getImportedMeasurementSource(imageLabel, strokeLabel) {
+    const normalizedLabel = this.normalizeImageLabel(imageLabel);
+    const baseLabel =
+      typeof normalizedLabel === 'string' && normalizedLabel.includes('::tab:')
+        ? normalizedLabel.split('::tab:')[0]
+        : normalizedLabel;
+    const candidates = Array.from(
+      new Set([imageLabel, normalizedLabel, baseLabel].filter(Boolean))
+    );
+    for (const candidate of candidates) {
+      const source = window.cwImportedMeasurementsByImage?.[candidate]?.[strokeLabel];
+      if (source) return source;
+    }
+    return null;
   }
 
   renameStrokeLabel(imageLabel, oldLabel, newLabel) {
@@ -461,6 +506,14 @@ export class StrokeMetadataManager {
   // Generate next label (A1, A2, B1, etc.) - integrates with tag prediction system
   getNextLabel(imageLabel, mode) {
     imageLabel = this.normalizeImageLabel(imageLabel);
+    // A CW Library draw is an atomic intent: its row, label, and value were
+    // chosen together. The normal prediction system may update the visible
+    // Next Tag during Fabric's mouse-up work, so it must not replace this
+    // exact label with an unrelated calculated one (for example C5).
+    const queuedLabel = window.getCwQueuedDrawLabel?.(imageLabel);
+    if (queuedLabel) {
+      return String(queuedLabel).trim().toUpperCase();
+    }
     const baseImageLabel =
       typeof imageLabel === 'string' ? imageLabel.split('::tab:')[0] || imageLabel : imageLabel;
     const inferTagMode = tag => {
@@ -494,16 +547,25 @@ export class StrokeMetadataManager {
           : 'letters+numbers');
     const manualLetterOnly = /^[A-Z]$/.test(manualTag || '');
     if (manualTag && (this.isValidTag(manualTag, resolvedMode) || manualLetterOnly)) {
-      window.labelsByImage = window.labelsByImage || {};
-      window.manualTagByImage = window.manualTagByImage || {};
-      for (const key of scopeKeys) {
-        delete window.labelsByImage[key];
-        delete window.manualTagByImage[key];
+      const requestedManualTag = manualTag;
+      const resolvedManualTag = this.resolveAvailableStrokeLabel(
+        imageLabel,
+        requestedManualTag,
+        resolvedMode
+      );
+      // A manual label is authoritative for this stroke. Keep the override in
+      // place: updateTagPredictionAfterUse recognises the used tag as manual
+      // (across every scope key) and advances the sequence itself. Deleting
+      // the override here made the advancement treat the stroke as an auto tag,
+      // clear the seed, and fall back to A1 when the prediction looked at an
+      // empty scope.
+      if (resolvedManualTag !== requestedManualTag) {
+        console.warn(
+          `[Tag] ${requestedManualTag} already exists in ${imageLabel}; using ${resolvedManualTag}.`
+        );
       }
-      // A manual label is authoritative for this stroke. Keep the guide seed
-      // intact so the guide can resume on its pending role afterwards.
-      this.updateTagPredictionAfterUse(imageLabel, manualTag);
-      return manualTag;
+      this.updateTagPredictionAfterUse(imageLabel, resolvedManualTag);
+      return resolvedManualTag;
     }
     const seededLetterOnly = /^[A-Z]$/.test(seededGuideTag || '');
     if (seededGuideTag && (this.isValidTag(seededGuideTag, resolvedMode) || seededLetterOnly)) {
@@ -521,7 +583,10 @@ export class StrokeMetadataManager {
         delete window.manualTagByImage[key];
       }
 
-      this.updateTagPredictionAfterUse(imageLabel, seededGuideTag);
+      // The workspace owns advancement of guide-seeded labels and advances only
+      // after attachMetadata emits a real stroke-created event. Advancing here
+      // creates a transient E after a final D; guide preview rendering can then
+      // consume that transient value repeatedly and lock the browser.
       return seededGuideTag;
     }
 
@@ -611,6 +676,35 @@ export class StrokeMetadataManager {
     }
   }
 
+  resolveAvailableStrokeLabel(imageLabel, requestedLabel, mode = 'letters+numbers') {
+    const scopedLabel = this.normalizeImageLabel(imageLabel);
+    const strokes = this.vectorStrokesByImage[scopedLabel] || {};
+    const isOccupied = label => {
+      const existing = strokes[label];
+      return Boolean(existing && existing._placeholder !== true);
+    };
+    if (!isOccupied(requestedLabel)) return requestedLabel;
+
+    let candidate = requestedLabel;
+    for (let attempt = 0; attempt < 260; attempt += 1) {
+      if (mode === 'letters' || /^[A-Z]$/.test(candidate)) {
+        const code = candidate.charCodeAt(0) - 65;
+        candidate = String.fromCharCode(65 + ((code + 1) % 26));
+      } else {
+        const match = /^([A-Z])(\d+)$/.exec(candidate);
+        if (!match) return requestedLabel;
+        const letter = match[1];
+        const number = Number.parseInt(match[2], 10);
+        candidate =
+          number < 99
+            ? `${letter}${number + 1}`
+            : `${String.fromCharCode(65 + ((letter.charCodeAt(0) - 64) % 26))}1`;
+      }
+      if (!isOccupied(candidate)) return candidate;
+    }
+    return requestedLabel;
+  }
+
   _updatingTagPrediction = false;
 
   // Update tag prediction after a tag is used
@@ -649,27 +743,47 @@ export class StrokeMetadataManager {
     // Update currentImageLabel for tag prediction system
     window.currentImageLabel = imageLabel;
 
-    // Handle manual tag sequences
+    // Handle manual tag sequences. The typed override may live under any of
+    // the scope keys (image, base view, or capture-tab scope) — recognise it
+    // across all of them, and advance/clear consistently.
     window.labelsByImage = window.labelsByImage || {};
     window.manualTagByImage = window.manualTagByImage || {};
 
-    const wasManualTag = window.manualTagByImage[imageLabel] === usedTag;
+    const scopeCandidates = Array.from(
+      new Set(
+        [
+          imageLabel,
+          typeof imageLabel === 'string' ? imageLabel.split('::tab:')[0] || imageLabel : '',
+          typeof window.currentImageLabel === 'string' ? window.currentImageLabel : '',
+          typeof window.currentImageLabel === 'string'
+            ? window.currentImageLabel.split('::tab:')[0] || window.currentImageLabel
+            : '',
+        ].filter(Boolean)
+      )
+    );
+    const wasManualTag = scopeCandidates.some(key => window.manualTagByImage[key] === usedTag);
 
     if (wasManualTag) {
       // User manually set this tag - increment it for the next stroke
       const nextTag = this.incrementTag(usedTag);
-      window.labelsByImage[imageLabel] = nextTag;
-      window.manualTagByImage[imageLabel] = nextTag;
+      scopeCandidates.forEach(key => {
+        window.labelsByImage[key] = nextTag;
+        window.manualTagByImage[key] = nextTag;
+      });
       console.log(`[Tag] Manual tag sequence: ${usedTag} → ${nextTag}`);
     } else {
       if (/^[A-Z]$/.test(usedTag)) {
         const nextTag = this.incrementTag(usedTag);
-        window.labelsByImage[imageLabel] = nextTag;
-        window.manualTagByImage[imageLabel] = nextTag;
+        scopeCandidates.forEach(key => {
+          window.labelsByImage[key] = nextTag;
+          window.manualTagByImage[key] = nextTag;
+        });
       }
       // Clear labelsByImage so the system calculates the next tag automatically
       if (!/^[A-Z]$/.test(usedTag)) {
-        delete window.labelsByImage[imageLabel];
+        scopeCandidates.forEach(key => {
+          delete window.labelsByImage[key];
+        });
       }
       console.log(`[Tag] Auto tag used: ${usedTag}, clearing override`);
     }
@@ -736,6 +850,12 @@ export class StrokeMetadataManager {
   }
 
   focusMeasurementInput(strokeLabel, options = {}) {
+    // The Library is a deliberate browsing state. A newly drawn line should
+    // not drag that list back to the top to focus the hidden Measure-row field;
+    // the compact measurement entry remains available below the canvas.
+    if (document.getElementById('strokePanel')?.dataset.elementsView === 'library') {
+      return;
+    }
     const requireCanvasSingleSelection = options?.requireCanvasSingleSelection === true;
     const getActiveStrokeLabel = target =>
       target?.strokeMetadata?.strokeLabel ||
@@ -798,6 +918,14 @@ export class StrokeMetadataManager {
           if (elementsBody && elementsBody.classList.contains('hidden')) {
             elementsBody.classList.remove('hidden');
             elementsBody.style.maxHeight = 'none';
+          }
+
+          // The CW Library owns this panel's scroll position while its tab is
+          // active. A newly committed stroke normally opens its measurement
+          // editor, but doing that here competes with the Library's next-row
+          // progression and produces a visible up/down bounce.
+          if (strokePanel?.dataset.elementsView === 'library') {
+            return;
           }
 
           const scrollContainer = document.getElementById('strokeVisibilityControls');
@@ -911,6 +1039,42 @@ export class StrokeMetadataManager {
       console.warn('[StrokeMetadata] strokeVisibilityControls container not found!');
       return;
     }
+    const previousControlsScrollTop = controlsContainer.scrollTop;
+    window.captureCwElementsLibraryScroll?.(
+      previousControlsScrollTop,
+      window.app?.projectManager?.currentViewId || window.currentImageLabel || 'front'
+    );
+    controlsContainer.dataset.cwLibraryRebuilding = 'true';
+    let rebuildHeightGuard = null;
+    let previousListMinHeight = '';
+    const finishControlsRebuild = () => {
+      // The replacement rows now exist, so the temporary height can be
+      // released without ever presenting an empty, zero-height list to the
+      // scroll container.
+      if (rebuildHeightGuard) {
+        rebuildHeightGuard.style.minHeight = previousListMinHeight;
+      }
+      const restoreControlsScroll = () => {
+        const maxScrollTop = Math.max(
+          0,
+          controlsContainer.scrollHeight - controlsContainer.clientHeight
+        );
+        controlsContainer.scrollTop = Math.min(previousControlsScrollTop, maxScrollTop);
+      };
+      restoreControlsScroll();
+      window.requestAnimationFrame(() => {
+        restoreControlsScroll();
+        delete controlsContainer.dataset.cwLibraryRebuilding;
+        window.dispatchEvent(
+          new CustomEvent('openpaint:elements-list-rebuilt', {
+            detail: {
+              imageLabel:
+                window.app?.projectManager?.currentViewId || window.currentImageLabel || 'front',
+            },
+          })
+        );
+      });
+    };
 
     const measurementSplitActive = window.isMeasurementSplitWorkspaceActive?.() === true;
     controlsContainer.dataset.measurementSplit = measurementSplitActive ? 'true' : 'false';
@@ -1000,6 +1164,7 @@ export class StrokeMetadataManager {
       if (element) element.textContent = String(value);
     };
     setCount('elementsMeasurementCount', measurementCount);
+    setCount('elementsLibraryCount', window.getCwMeasurementLibraryCount?.() || 0);
     setCount('elementsTextCount', textElements.length);
     setCount('elementsShapeCount', shapeElements.length);
     const summary = document.getElementById('elementsVisibleSummary');
@@ -1025,7 +1190,7 @@ export class StrokeMetadataManager {
 
     const updateElementsViewTabs = nextView => {
       if (!strokePanel) return;
-      const normalized = ['measurements', 'text', 'shapes'].includes(nextView)
+      const normalized = ['measurements', 'library', 'text', 'shapes'].includes(nextView)
         ? nextView
         : 'measurements';
       strokePanel.dataset.elementsView = normalized;
@@ -1034,6 +1199,7 @@ export class StrokeMetadataManager {
         button.classList.toggle('active', active);
         button.setAttribute('aria-selected', String(active));
       });
+      if (normalized === 'library') window.renderCwElementsMeasurementLibrary?.();
     };
     strokePanel?.querySelectorAll('[data-elements-view][role="tab"]').forEach(button => {
       if (button.dataset.elementsViewBound === 'true') return;
@@ -1057,15 +1223,17 @@ export class StrokeMetadataManager {
       const query = String(document.getElementById('elementsSearchInput')?.value || '')
         .trim()
         .toLowerCase();
-      document.querySelectorAll('#strokesList .stroke-visibility-item').forEach(item => {
-        item.dataset.searchHidden =
-          query &&
-          !String(item.textContent || '')
-            .toLowerCase()
-            .includes(query)
-            ? 'true'
-            : 'false';
-      });
+      document
+        .querySelectorAll('#strokesList .stroke-visibility-item, #strokesList .cw-measure-row')
+        .forEach(item => {
+          item.dataset.searchHidden =
+            query &&
+            !String(item.textContent || '')
+              .toLowerCase()
+              .includes(query)
+              ? 'true'
+              : 'false';
+        });
     };
     const searchInput = document.getElementById('elementsSearchInput');
     if (searchInput && searchInput.dataset.elementsSearchBound !== 'true') {
@@ -1084,11 +1252,27 @@ export class StrokeMetadataManager {
       strokesList.classList.remove('justify-center', 'flex-grow');
       strokesList.classList.remove('justify-start', 'flex', 'flex-col');
       strokesList.classList.add('px-3', 'pt-2', 'pb-2');
-      strokesList.style.minHeight = ''; // Remove inline style if present
+      // Keep the scrollable list at its current height while its children are
+      // replaced. Clearing a long Library otherwise clamps scrollTop to zero
+      // before the new rows are appended, which appears as a sharp up/down
+      // jitter even though the old position is restored a moment later.
+      rebuildHeightGuard = strokesList;
+      previousListMinHeight = strokesList.style.minHeight;
+      strokesList.style.minHeight = `${Math.max(
+        strokesList.scrollHeight,
+        controlsContainer.scrollHeight
+      )}px`;
       strokesList.style.setProperty('padding-bottom', '70px', 'important');
       strokesList.innerHTML = '';
     }
     strokesList.classList.toggle('measurement-split-strokes-list', measurementSplitActive);
+
+    const measurementLibrary = document.createElement('div');
+    measurementLibrary.id = 'elementsMeasurementLibrary';
+    measurementLibrary.className = 'cw-elements-library';
+    measurementLibrary.dataset.elementKind = 'library';
+    strokesList.appendChild(measurementLibrary);
+    window.renderCwElementsMeasurementLibrary?.();
 
     // Add text elements header
     const textHeader = document.createElement('h4');
@@ -1375,6 +1559,7 @@ export class StrokeMetadataManager {
         this.isUpdatingControls = false;
       }, 0);
       applyElementSearch();
+      finishControlsRebuild();
       return;
     }
 
@@ -1716,6 +1901,43 @@ export class StrokeMetadataManager {
       labelContainer.appendChild(strokeName);
       labelContainer.appendChild(labelToggleBtn);
       labelContainer.appendChild(measurementSpan);
+      const importedSource = this.getImportedMeasurementSource(strokeScopeId, strokeLabel);
+      if (importedSource) {
+        const sourceBadge = document.createElement('span');
+        sourceBadge.className = 'stroke-measurement-source';
+        sourceBadge.dataset.measurementSource = 'cw';
+        sourceBadge.textContent = `CW · ${importedSource.sourceLabel || strokeLabel}`;
+        const originalValue = importedSource.originalValue || importedSource.value || '';
+        sourceBadge.title = `CW source: ${importedSource.sourceLabel || strokeLabel}${originalValue ? ` · original ${originalValue} cm` : ''}. The current value remains editable.`;
+        sourceBadge.style.fontSize = '9px';
+        sourceBadge.style.color = '#64748b';
+        sourceBadge.style.whiteSpace = 'nowrap';
+        labelContainer.appendChild(sourceBadge);
+        if (isMeasurementLocked()) {
+          const unlockButton = document.createElement('button');
+          unlockButton.type = 'button';
+          unlockButton.className = 'stroke-measurement-unlock';
+          unlockButton.textContent = 'Unlock';
+          unlockButton.title = `Unlock ${strokeLabel} for editing`;
+          unlockButton.style.fontSize = '9px';
+          unlockButton.style.color = '#2563eb';
+          unlockButton.style.background = 'transparent';
+          unlockButton.style.border = '0';
+          unlockButton.style.padding = '0 2px';
+          unlockButton.style.cursor = 'pointer';
+          unlockButton.addEventListener('click', event => {
+            event.preventDefault();
+            event.stopPropagation();
+            window.setCwMeasurementLock?.(strokeScopeId, strokeLabel, false);
+            this.updateStrokeVisibilityControls();
+            window.app?.projectManager?.showStatusMessage?.(
+              `${strokeLabel} unlocked for editing.`,
+              'success'
+            );
+          });
+          labelContainer.appendChild(unlockButton);
+        }
+      }
 
       strokeItem.appendChild(labelContainer);
       strokeItem.appendChild(deleteBtn);
@@ -1790,6 +2012,11 @@ export class StrokeMetadataManager {
     });
 
     applyElementSearch();
+
+    // Rebuilding the list briefly empties the scroll container. Safari and
+    // Chromium can clamp scrollTop to zero during that gap, so explicitly
+    // restore the user's position once the replacement rows exist.
+    finishControlsRebuild();
 
     // Reset flag after update
     setTimeout(() => {
@@ -1959,6 +2186,12 @@ export class StrokeMetadataManager {
     }
 
     if (successfullyParsedAndSaved) {
+      const importedSource = this.getImportedMeasurementSource(imageLabel, strokeLabel);
+      if (importedSource) {
+        importedSource.userAdjusted = true;
+        importedSource.currentCm = this.strokeMeasurements[imageLabel]?.[strokeLabel]?.cm;
+        importedSource.userAdjustedAt = new Date().toISOString();
+      }
       // Update UI
       this.updateStrokeVisibilityControls();
 
@@ -1966,6 +2199,12 @@ export class StrokeMetadataManager {
       if (window.app?.tagManager) {
         window.app.tagManager.updateTagText(strokeLabel, imageLabel);
       }
+
+      window.dispatchEvent(
+        new CustomEvent('openpaint:project-mutated', {
+          detail: { source: 'measurement', imageLabel, strokeLabel },
+        })
+      );
 
       return true;
     }

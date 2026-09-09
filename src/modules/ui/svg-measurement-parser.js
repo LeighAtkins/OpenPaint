@@ -1,3 +1,4 @@
+import { getSvgElementTransform, transformSvgPoint } from '../measurement-mos/svg-geometry';
 function parseNumericAttr(rawValue, fallback = 0) {
   const source = String(rawValue || '').trim();
   if (!source) return fallback;
@@ -161,6 +162,21 @@ function resolveElementColor(el, classColorMap) {
 }
 
 function segmentFromElement(el, classColorMap) {
+  const segment = localSegmentFromElement(el, classColorMap);
+  if (!segment) return null;
+  const matrix = getSvgElementTransform(el);
+  const points = segment.points.map(p => transformSvgPoint(matrix, p.x, p.y));
+  return {
+    ...segment,
+    points,
+    x1: points[0].x,
+    y1: points[0].y,
+    x2: points[points.length - 1].x,
+    y2: points[points.length - 1].y,
+  };
+}
+
+function localSegmentFromElement(el, classColorMap) {
   const tagName = String(el?.tagName || '').toLowerCase();
   const color = resolveElementColor(el, classColorMap);
   if (tagName === 'line') {
@@ -479,19 +495,12 @@ function distancePointToSegment(point, segment) {
 }
 
 function getTextPosition(textEl) {
-  const transform = String(textEl.getAttribute?.('transform') || '');
-  const matrixMatch = /matrix\([^)]*?(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)\s*\)$/i.exec(transform);
-  if (matrixMatch) {
-    return {
-      x: Number(matrixMatch[1]),
-      y: Number(matrixMatch[2]),
-    };
-  }
-
-  return {
-    x: parseNumericAttr(textEl.getAttribute?.('x')),
-    y: parseNumericAttr(textEl.getAttribute?.('y')),
-  };
+  const span = textEl.querySelector('tspan');
+  return transformSvgPoint(
+    getSvgElementTransform(textEl),
+    parseNumericAttr(textEl.getAttribute('x') || span?.getAttribute('x')),
+    parseNumericAttr(textEl.getAttribute('y') || span?.getAttribute('y'))
+  );
 }
 
 function collectAdjacentTextLabels(svgRoot) {

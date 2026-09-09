@@ -35,6 +35,7 @@ declare global {
     syncSelectionToCenteredThumbnail?: () => void;
     updateActivePill?: (options?: { animate?: boolean }) => void;
     updatePills?: () => HTMLButtonElement[];
+    openImageOverview?: () => void;
     updateActiveImageInSidebar?: () => void;
     projectManager?: ProjectManagerLike;
     paintApp?: PaintAppLike | any;
@@ -69,6 +70,8 @@ declare global {
     isMeasurementSplitWorkspaceActive?: () => boolean;
     shouldAllowMeasurementSplitEdit?: (scopeLabel: string, strokeLabel?: string) => boolean;
     renderCwMeasurementWorkspacePane?: () => void;
+    renderCwElementsMeasurementLibrary?: () => void;
+    getCwMeasurementLibraryCount?: () => number;
   }
 }
 

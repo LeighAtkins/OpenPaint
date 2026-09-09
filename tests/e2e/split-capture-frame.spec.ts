@@ -110,6 +110,24 @@ async function getCaptureOverlayRect(page: Page) {
   });
 }
 
+async function getLiveCanvasRect(page: Page) {
+  return page.evaluate(() => {
+    const canvas = document.querySelector<HTMLCanvasElement>(
+      '#guideSplitLiveCanvasHost .lower-canvas'
+    );
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+      right: rect.right,
+      bottom: rect.bottom,
+    };
+  });
+}
+
 /** Check if guide split mode is active via CSS class. */
 async function isSplitActive(page: Page): Promise<boolean> {
   return page.evaluate(() => {
@@ -229,6 +247,25 @@ test.describe('Capture frame sizing in split mode', () => {
     // Both should have non-zero dimensions
     expect(frameRect!.width).toBeGreaterThan(0);
     expect(overlayRect!.width).toBeGreaterThan(0);
+  });
+
+  test('left split pane uses one edge-aligned canvas frame', async ({ appPage: page }) => {
+    await setupMultiImageProject(page, 2);
+    const enabled = await enableGuideSplit(page);
+    test.skip(!enabled, 'setGuideSplitEnabled not available');
+    await waitForCanvasLayoutSettle(page);
+
+    const frameRect = await getCaptureFrameRect(page);
+    const canvasRect = await getLiveCanvasRect(page);
+    expect(frameRect).not.toBeNull();
+    expect(canvasRect).not.toBeNull();
+
+    const frameRight = frameRect!.left + frameRect!.width;
+    const frameBottom = frameRect!.top + frameRect!.height;
+    expect(Math.abs(frameRect!.left - canvasRect!.left)).toBeLessThanOrEqual(2);
+    expect(Math.abs(frameRect!.top - canvasRect!.top)).toBeLessThanOrEqual(2);
+    expect(Math.abs(frameRight - canvasRect!.right)).toBeLessThanOrEqual(2);
+    expect(Math.abs(frameBottom - canvasRect!.bottom)).toBeLessThanOrEqual(2);
   });
 
   test('sequential view switching in split mode does not crash or produce zero-size frames', async ({

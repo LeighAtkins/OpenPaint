@@ -855,6 +855,60 @@ function sanitizePdfFieldPart(value, fallback) {
   return cleaned || fallback;
 }
 
+// Measurement guide gallery diagrams printed on the cushions worksheet page.
+const CUSHION_WORKSHEET_GUIDES = [
+  { shape: 'T', guideCode: 'CC-BK-T' },
+  { shape: 'L', guideCode: 'CC-BK-L' },
+  { shape: 'B', guideCode: 'CC-ST-BE' },
+  { shape: 'W', guideCode: 'CC-BK-W' },
+];
+
+// The gallery diagrams mark each measurement with a circled letter; the
+// worksheet tables get one row per letter so they match the printed diagram.
+function parseGuideDiagramLetters(svgDoc: Document) {
+  const letters = new Set();
+  svgDoc.querySelectorAll('text').forEach(textEl => {
+    const value = (textEl.textContent || '').trim();
+    if (/^[A-Z]\*?$/.test(value)) letters.add(value);
+  });
+  return Array.from(letters).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+}
+
+async function fetchCushionWorksheetDiagrams() {
+  const diagrams = {};
+  await Promise.all(
+    CUSHION_WORKSHEET_GUIDES.map(async guide => {
+      try {
+        const response = await fetch(
+          `/api/measurement-guides/svg?code=${encodeURIComponent(guide.guideCode)}&view=front`
+        );
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const svgText = await response.text();
+        if (!svgText.trim().startsWith('<')) throw new Error('Response was not an SVG document');
+        const svgDoc = new DOMParser().parseFromString(svgText, 'image/svg+xml');
+        if (svgDoc.querySelector('parsererror')) throw new Error('SVG could not be parsed');
+        // Raw gallery SVGs carry both the square 0000.00 measurement boxes and
+        // the circled letters; the worksheet only prints the circles. Same
+        // groups the gallery hideBoxes option hides (g[id^="b"]).
+        svgDoc.querySelectorAll('g[id^="b"]').forEach(el => el.remove());
+        // CC-BK-W has a larger artboard margin than the other gallery cushions.
+        // Frame its existing artwork and circled letters at the same visual size.
+        if (guide.guideCode === 'CC-BK-W') {
+          svgDoc.documentElement.setAttribute('viewBox', '34 43 292 282');
+        }
+        const serialized = new XMLSerializer().serializeToString(svgDoc.documentElement);
+        diagrams[guide.shape] = {
+          src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(serialized)}`,
+          labels: parseGuideDiagramLetters(svgDoc),
+        };
+      } catch (error) {
+        console.warn(`[PDF] Cushion diagram ${guide.guideCode} unavailable:`, error);
+      }
+    })
+  );
+  return diagrams;
+}
+
 function createUniquePdfFieldName(baseName, usedNames) {
   let candidate = baseName;
   let suffix = 1;
@@ -1377,6 +1431,16 @@ export async function switchPdfCaptureView(projectManager, viewId, { force = fal
     await waitForPdfProjectIdle(projectManager);
   }
 
+  // Sidebar observers or scroll-driven selectors can steal focus to a
+  // neighbouring image between our switch and this check. Re-assert the
+  // capture target a couple of times before giving up.
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (projectManager.currentViewId === viewId) return;
+    await sleep(120);
+    await projectManager.switchView(viewId, true);
+    await waitForPdfProjectIdle(projectManager);
+  }
+
   if (projectManager.currentViewId !== viewId) {
     throw new Error(
       `PDF export could not activate ${viewId}; active view is ${projectManager.currentViewId || 'unknown'}`
@@ -1895,6 +1959,17 @@ export function initPdfExport() {
       rendererWrap.style.fontFamily = "'Instrument Sans','Inter',sans-serif";
       includeMeasurementsLabel.parentElement?.insertBefore(rendererWrap, includeMeasurementsLabel);
     }
+    const worksheetToggle = document.createElement('label');
+    worksheetToggle.style.cssText =
+      'display:flex;align-items:flex-start;gap:10px;padding:12px 14px;margin-bottom:16px;border:1px solid #E7EAEE;border-radius:12px;background:#F6F7F9;cursor:pointer';
+    worksheetToggle.innerHTML = `<input type="checkbox" id="includeCushionWorksheet" style="margin-top:3px;accent-color:#0B0D10"><span>Add cushions table page<br><small style="color:#667085">T, L, box and wedge diagrams from the measurement guide gallery (CC-BK-T/L/W, CC-ST-BE) with Seat / Back, Type 1 / Type 2 and quantity fields. Uses the modern renderer.</small></span>`;
+    document.getElementById('includeMeasurements')?.parentElement?.after(worksheetToggle);
+    const worksheetInput = worksheetToggle.querySelector('input')!;
+    worksheetInput.addEventListener('change', () => {
+      const renderer = document.getElementById('pdfRendererMode') as HTMLSelectElement;
+      if (worksheetInput.checked) renderer.value = 'modern';
+      renderer.disabled = worksheetInput.checked;
+    });
     document.getElementById('cancelPdfBtn').onclick = () => overlay.remove();
     document.getElementById('generatePdfBtn').onclick = async () => {
       const quality = document.getElementById('pdfQuality').value;
@@ -1903,7 +1978,10 @@ export function initPdfExport() {
       const includeRepeatedComparisons =
         (document.getElementById('includeRepeatedComparisons') as HTMLInputElement | null)
           ?.checked === true;
-      const rendererMode = document.getElementById('pdfRendererMode')?.value || 'modern';
+      const includeCushionWorksheet = worksheetInput.checked;
+      const rendererMode = includeCushionWorksheet
+        ? 'modern'
+        : document.getElementById('pdfRendererMode')?.value || 'modern';
       const cushionQuantityViews = {};
       overlay.querySelectorAll('[data-cushion-quantity-key]').forEach(input => {
         if (input.checked) {
@@ -1919,6 +1997,7 @@ export function initPdfExport() {
         if (note) customerNotes[input.dataset.pdfNoteKey] = note;
       });
       const exportSession = beginPdfExportSession();
+      window.__pdfExportingSince = Date.now();
       document.getElementById('pdfProgress').style.display = 'block';
       document.getElementById('generatePdfBtn').disabled = true;
       document.getElementById('cancelPdfBtn').disabled = true;
@@ -1933,7 +2012,8 @@ export function initPdfExport() {
             includeMeasurements,
             includeRepeatedComparisons,
             cushionQuantityViews,
-            customerNotes
+            customerNotes,
+            includeCushionWorksheet
           );
         } else {
           await generatePDFWithPDFLib(
@@ -1948,6 +2028,13 @@ export function initPdfExport() {
       } catch (error) {
         console.error('[PDF] Export failed:', error);
         const progressTextEl = document.getElementById('pdfProgressText');
+        if (includeCushionWorksheet) {
+          alert(
+            `PDF export failed: ${String(error?.message || error)}. The cushions worksheet requires the modern renderer; please retry.`
+          );
+          overlay.remove();
+          return;
+        }
         const modernFailure = rendererMode === 'modern';
         if (progressTextEl) {
           progressTextEl.textContent = modernFailure
@@ -1988,7 +2075,8 @@ export function initPdfExport() {
     includeMeasurements,
     includeRepeatedComparisons = false,
     cushionQuantityViews = {},
-    customerNotes = {}
+    customerNotes = {},
+    includeCushionWorksheet = false
   ) {
     const progressBar = document.getElementById('pdfProgressBar');
     const progressText = document.getElementById('pdfProgressText');
@@ -2044,7 +2132,11 @@ export function initPdfExport() {
         ).sort((a, b) => a.localeCompare(b));
         return baseStrokes.map(strokeLabel => {
           const m = baseMeasurements[strokeLabel] || {};
-          return { label: strokeLabel, value: formatExportMeasurement(m, currentUnit) };
+          return {
+            label: strokeLabel,
+            value: formatExportMeasurement(m, currentUnit),
+            fieldName: `m_${sanitizePdfFieldPart(target.viewId, 'view')}_${sanitizePdfFieldPart(strokeLabel, 'measurement')}`,
+          };
         });
       }
 
@@ -2054,8 +2146,22 @@ export function initPdfExport() {
         return {
           label: strokeLabel,
           value,
+          fieldName: `m_${sanitizePdfFieldPart(target.viewId, 'view')}_${sanitizePdfFieldPart(strokeLabel, 'measurement')}`,
         };
       });
+    };
+
+    const reviewManifest = {
+      version: 1,
+      projectName,
+      views: pageTargets.map(target => ({
+        viewId: target.viewId,
+        title: formatTargetDisplayName(target),
+        measurements: getTargetMeasurementRows(target).map(row => ({
+          label: row.label,
+          value: row.value,
+        })),
+      })),
     };
 
     const captureCurrentFrameDataUrl = async () => {
@@ -2224,10 +2330,17 @@ export function initPdfExport() {
 
     const comparisonGroups = await buildComparisonGroups();
 
+    let cushionDiagrams = {};
+    if (includeCushionWorksheet) {
+      progressText.textContent = 'Loading cushion diagrams from the guide gallery…';
+      progressBar.style.width = '88%';
+      cushionDiagrams = await fetchCushionWorksheetDiagrams();
+    }
+
     // Cross-image connections / measurement validation summary page removed —
     // the fail/pass statuses were not actionable in the PDF output.
 
-    progressText.textContent = 'Rendering modern PDF\u2026';
+    progressText.textContent = 'Rendering modern PDF…';
     progressBar.style.width = '92%';
     const response = await requestServerRenderedPdf({
       source: 'report',
@@ -2237,6 +2350,9 @@ export function initPdfExport() {
         unit: currentUnit,
         groups,
         comparisonGroups,
+        includeCushionWorksheet,
+        cushionDiagrams,
+        reviewManifest,
       },
       options: {
         renderer: 'hybrid',
@@ -2285,6 +2401,25 @@ export function initPdfExport() {
       window.app?.projectManager?.getProjectMetadata?.() || window.projectMetadata || {};
     const partLabels = metadata.imagePartLabels || {};
     const metaPieceGroups = Array.isArray(metadata.pieceGroups) ? metadata.pieceGroups : [];
+    pdfDoc.setSubject(
+      `SOFAPAINT_REVIEW_V1:${JSON.stringify({
+        version: 1,
+        projectName,
+        views: pageTargets.map(target => ({
+          viewId: target.viewId,
+          title: partLabels[target.viewId] || target.viewId,
+          measurements: getScopedStrokeLabels(target.scopeKey, {
+            includeBase: target.includeBase,
+          }).map(label => ({
+            label,
+            value: formatExportMeasurement(
+              getScopedMeasurements(target.scopeKey, { includeBase: target.includeBase })[label],
+              document.getElementById('unitSelector')?.value || 'inch'
+            ),
+          })),
+        })),
+      })}`
+    );
     const pageSizes = { letter: { width: 612, height: 792 }, a4: { width: 595, height: 842 } };
     const { width: pageWidth, height: pageHeight } = pageSizes[pageSize] || pageSizes.letter;
     const qualityScales = { high: 3.0, medium: 2.0, low: 1.5 };

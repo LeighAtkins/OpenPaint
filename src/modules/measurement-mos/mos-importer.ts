@@ -16,7 +16,10 @@ import type {
   MosFabricCustomData,
   ImageRect,
 } from './types';
-import { mosToCanvas, mosScaleFactor } from './mos-transform';
+import { separateSvgRoleInstances } from './svg-role-instances';
+import { parseSvgMeasurements } from '../ui/svg-measurement-parser.js';
+import { getSvgElementTransform, transformSvgPoint } from './svg-geometry';
+import { mosToCanvas, canvasToMos, mosScaleFactor } from './mos-transform';
 import { FabricControls } from '../utils/FabricControls.js';
 
 declare const fabric: any;
@@ -87,6 +90,8 @@ export function importMosSvg(
     throw new Error('[MOS Importer] No <svg> root in sanitised text');
   }
 
+  const instanceLabels = separateSvgRoleInstances(svgRoot);
+
   // Build the CSS class → declarations map so extractStyle can resolve
   // class-based stroke colors (measurement guides use classes, not inline).
   classStyleMap = parseStyleBlock(svgRoot);
@@ -117,6 +122,49 @@ export function importMosSvg(
       canvas,
       elements
     );
+  }
+
+  // Flat Illustrator exports lack m/b/c IDs. Use the shared guide parser to
+  // bind their measurement geometry to the same editable TagManager roles.
+  if (![...elements.values()].some(element => element.kind === 'measureLine')) {
+    const parsed = parseSvgMeasurements(svgText);
+    for (const measurement of parsed.measurements) {
+      const role = String(measurement.label || '').toUpperCase();
+      if (!/^[A-Z]\d*$/.test(role)) continue;
+      for (const [index, segment] of measurement.lines.entries()) {
+        const points = segment.points.map(p => ({
+          x: ((p.x - srcMinX) / srcWidth) * MOS_RANGE,
+          y: ((p.y - srcMinY) / srcHeight) * MOS_RANGE,
+        }));
+        if (points.length < 2) continue;
+        const id = `${prefix}flat_${role}_${index}`;
+        const element: MeasurementOverlayElement = {
+          id,
+          opId: id,
+          roleToken: role,
+          kind: 'measureLine',
+          editMode: 'endpoint',
+          endpoints: [{ point: points[0] }, { point: points[points.length - 1] }],
+          ...(segment.kind === 'curve' ? { curvePoints: points } : {}),
+          style: { strokeColor: segment.color || DEFAULT_STROKE_COLOR },
+          fabricObjectIds: [],
+          dirty: false,
+        };
+        element.fabricObjectIds = createFabricObjectsForElement(
+          element,
+          overlayId,
+          imageRect,
+          scale,
+          canvas
+        );
+        elements.set(id, element);
+      }
+    }
+  }
+
+  for (const element of elements.values()) {
+    const displayLabel = instanceLabels.get(element.roleToken || '');
+    if (displayLabel) element.displayLabel = displayLabel;
   }
 
   const overlay: MeasurementOverlay = {
@@ -170,6 +218,7 @@ function processElement(
   inheritedLabelRoleToken?: string
 ): void {
   const tag = el.tagName.toLowerCase();
+  if (getStyleProp(el, 'display') === 'none' || getStyleProp(el, 'visibility') === 'hidden') return;
 
   // Recurse into groups
   if (tag === 'g') {
@@ -209,7 +258,7 @@ function processElement(
 
   const elId = el.getAttribute('id') || `${prefix}auto_${elements.size}`;
   let kind = classifyElement(el, elId);
-  if (tag === 'path' && inheritedMeasureRoleToken) {
+  if (['path', 'ellipse', 'circle'].includes(tag) && inheritedMeasureRoleToken) {
     kind = 'measureLine';
   }
 
@@ -338,8 +387,9 @@ function extractElementGeometry(
     }
 
     case 'text': {
-      const x = parseFloat(el.getAttribute('x') || '0');
-      const y = parseFloat(el.getAttribute('y') || '0');
+      const span = el.querySelector('tspan');
+      const x = parseFloat(el.getAttribute('x') || span?.getAttribute('x') || '0');
+      const y = parseFloat(el.getAttribute('y') || span?.getAttribute('y') || '0');
       const text = el.textContent?.trim() || '';
       label = {
         text,
@@ -367,7 +417,14 @@ function extractElementGeometry(
     case 'ellipse': {
       const cx = parseFloat(el.getAttribute('cx') || '0');
       const cy = parseFloat(el.getAttribute('cy') || '0');
-      endpoints.push({ point: { x: toMosX(cx), y: toMosY(cy) } });
+      if (kind === 'measureLine') {
+        const rx = parseFloat(el.getAttribute('rx') || el.getAttribute('r') || '0');
+        const ry = parseFloat(el.getAttribute('ry') || el.getAttribute('r') || '0');
+        endpoints.push(
+          { point: { x: toMosX(cx - rx), y: toMosY(cy - ry) } },
+          { point: { x: toMosX(cx + rx), y: toMosY(cy + ry) } }
+        );
+      } else endpoints.push({ point: { x: toMosX(cx), y: toMosY(cy) } });
       break;
     }
 
@@ -403,6 +460,8 @@ function extractElementGeometry(
   const style = extractStyle(el);
 
   const baseElement = {
+    ellipseAngle: Number(el.getAttribute('data-ellipse-angle') || 0),
+    ellipse: (tag === 'ellipse' || tag === 'circle') && kind === 'measureLine',
     id: elId,
     opId: elId,
     kind,
@@ -414,14 +473,36 @@ function extractElementGeometry(
     dirty: false,
   };
 
-  if (tag === 'path' && kind === 'measureLine') {
-    const d = el.getAttribute('d') || '';
-    const points = extractPathPoints(d);
+  if ((tag === 'path' || tag === 'polyline') && kind === 'measureLine') {
+    const points =
+      tag === 'polyline'
+        ? parsePoints(el.getAttribute('points') || '')
+        : extractPathPoints(el.getAttribute('d') || '');
+    if (tag === 'polyline') baseElement.curveInterpolation = 'linear';
     if (points.length >= 2) {
       baseElement.curvePoints = points.map(point => ({ x: toMosX(point.x), y: toMosY(point.y) }));
     }
   }
 
+  // Transform both axes together: rotation/skew cannot be handled by separate
+  // x/y conversions. Store transformed MOS points so remounting is identical.
+  const matrix = getSvgElementTransform(el);
+  const transformPoint = point => {
+    const p = transformSvgPoint(
+      matrix,
+      (point.x / MOS_RANGE) * safeWidth + srcMinX,
+      (point.y / MOS_RANGE) * safeHeight + srcMinY
+    );
+    return { x: toMosX(p.x), y: toMosY(p.y) };
+  };
+  for (const endpoint of endpoints) endpoint.point = transformPoint(endpoint.point);
+  if (label) {
+    const p = transformPoint({ x: label.cx, y: label.cy });
+    label.cx = p.x;
+    label.cy = p.y;
+  }
+  if (baseElement.curvePoints)
+    baseElement.curvePoints = baseElement.curvePoints.map(transformPoint);
   return baseElement;
 }
 
@@ -446,15 +527,69 @@ function createFabricObjectsForElement(
 
   const strokeColor = element.style?.strokeColor || DEFAULT_STROKE_COLOR;
   const measurementStrokeWidth = 4;
+  if (element.ellipse && element.endpoints.length === 2) {
+    const a = mosToCanvas(element.endpoints[0].point, imageRect);
+    const b = mosToCanvas(element.endpoints[1].point, imageRect);
+    const obj = new fabric.Ellipse({
+      left: (a.x + b.x) / 2,
+      top: (a.y + b.y) / 2,
+      rx: Math.abs(b.x - a.x) / 2,
+      ry: Math.abs(b.y - a.y) / 2,
+      originX: 'center',
+      originY: 'center',
+      fill: '',
+      stroke: strokeColor,
+      strokeWidth: measurementStrokeWidth,
+      selectable: true,
+      evented: true,
+      customData,
+      objectCaching: false,
+      angle: element.ellipseAngle || 0,
+    });
+    obj.__mosId = `${element.id}_line`;
+    canvas.add(obj);
+    window.app?.applyDashSettingsToObject?.(obj, {
+      style: 'dashed',
+      pattern: element.style?.strokeDashArray || [5, 5],
+      mixedEnabled: element.style?.splitRatio !== undefined,
+      splitRatio: element.style?.splitRatio ?? 0.5,
+      dashFirst: element.style?.dashFirst !== false,
+    });
+    obj.__mosSyncEllipse = () => {
+      const center = obj.getCenterPoint();
+      const rx = obj.rx * Math.abs(obj.scaleX || 1),
+        ry = obj.ry * Math.abs(obj.scaleY || 1);
+      element.endpoints = [
+        { point: canvasToMos({ x: center.x - rx, y: center.y - ry }, imageRect) },
+        { point: canvasToMos({ x: center.x + rx, y: center.y + ry }, imageRect) },
+      ];
+      element.ellipseAngle = obj.angle || 0;
+      if (obj.dashSettings) {
+        element.style = {
+          ...element.style,
+          strokeDashArray: obj.strokeDashArray || [],
+          splitRatio: obj.dashSettings.mixedEnabled ? obj.dashSettings.splitRatio : undefined,
+          dashFirst: obj.dashSettings.dashFirst,
+        };
+      }
+      element.dirty = true;
+    };
+    obj.on('modified', obj.__mosSyncEllipse);
+    return [obj.__mosId];
+  }
 
   if (element.kind === 'measureLine' && element.endpoints.length === 2) {
     if (Array.isArray(element.curvePoints) && element.curvePoints.length >= 2) {
       const curveWorldPoints = element.curvePoints.map(point => mosToCanvas(point, imageRect));
-      const pathData = buildSmoothPathFromPoints(curveWorldPoints);
+      const pathData =
+        element.curveInterpolation === 'linear'
+          ? curveWorldPoints.map((p, i) => `${i ? 'L' : 'M'} ${p.x} ${p.y}`).join(' ')
+          : buildSmoothPathFromPoints(curveWorldPoints);
       const pathObj = new fabric.Path(pathData, {
         fill: '',
         stroke: strokeColor,
         strokeWidth: measurementStrokeWidth,
+        strokeDashArray: element.style?.strokeDashArray || null,
         selectable: true,
         evented: true,
         hasControls: true,
@@ -463,6 +598,7 @@ function createFabricObjectsForElement(
         customData: { ...customData, endpointIndex: undefined },
       });
 
+      pathObj.curveInterpolation = element.curveInterpolation;
       pathObj.customPoints = curveWorldPoints.map(point => ({ x: point.x, y: point.y }));
       FabricControls.createCurveControls(pathObj);
 
@@ -517,8 +653,10 @@ function createFabricObjectsForElement(
       fabricIds.push(lineId, startArrowId, endArrowId);
 
       canvas.add(pathObj);
-      canvas.add(startArrow);
-      canvas.add(endArrow);
+      if (!element.style?.strokeDashArray?.length) {
+        canvas.add(startArrow);
+        canvas.add(endArrow);
+      }
       updateCurveArrows();
 
       pathObj.on('moving', updateCurveArrows);
@@ -536,6 +674,7 @@ function createFabricObjectsForElement(
     const line = new fabric.Line([p1.x, p1.y, p2.x, p2.y], {
       stroke: strokeColor,
       strokeWidth: measurementStrokeWidth,
+      strokeDashArray: element.style?.strokeDashArray || null,
       selectable: false,
       evented: false,
       hasControls: false,
@@ -579,16 +718,19 @@ function createFabricObjectsForElement(
     });
     tailHead.set({ left: p1.x, top: p1.y, angle: angle - 180 });
 
-    const group = new fabric.Group([line, head, tailHead], {
-      originX: 'center',
-      originY: 'center',
-      selectable,
-      evented: selectable,
-      hasControls: selectable,
-      hasBorders: false,
-      lockRotation: false,
-      customData: { ...customData, endpointIndex: undefined },
-    });
+    const group = new fabric.Group(
+      element.style?.strokeDashArray?.length ? [line] : [line, head, tailHead],
+      {
+        originX: 'center',
+        originY: 'center',
+        selectable,
+        evented: selectable,
+        hasControls: selectable,
+        hasBorders: false,
+        lockRotation: false,
+        customData: { ...customData, endpointIndex: undefined },
+      }
+    );
 
     if (selectable) {
       FabricControls.createArrowControls(group);
@@ -837,13 +979,30 @@ function updateCurveArrowheadsFromCustomPoints(pathObj: any, startArrow: any, en
   pathObj.canvas?.requestRenderAll?.();
 }
 
-function extractStyle(el: Element): { strokeColor?: string; strokeWidth?: number } | undefined {
-  const stroke = el.getAttribute('stroke') || getStyleProp(el, 'stroke');
-  const sw = el.getAttribute('stroke-width') || getStyleProp(el, 'stroke-width');
+function extractStyle(el: Element):
+  | {
+      strokeColor?: string;
+      strokeWidth?: number;
+      strokeDashArray?: number[];
+      splitRatio?: number;
+      dashFirst?: boolean;
+    }
+  | undefined {
+  const stroke = getStyleProp(el, 'stroke');
+  const sw = getStyleProp(el, 'stroke-width');
 
-  if (!stroke && !sw) return undefined;
+  const dash = (getStyleProp(el, 'stroke-dasharray') || '')
+    .split(/[\s,]+/)
+    .map(Number)
+    .filter(n => Number.isFinite(n) && n > 0);
+  if (!stroke && !sw && !dash.length) return undefined;
 
   return {
+    splitRatio: el.hasAttribute('data-split-ratio')
+      ? Number(el.getAttribute('data-split-ratio'))
+      : undefined,
+    dashFirst: el.getAttribute('data-dash-first') !== 'false',
+    strokeDashArray: dash.length ? dash : undefined,
     strokeColor: stroke || undefined,
     strokeWidth: sw ? parseFloat(sw) : undefined,
   };
@@ -863,11 +1022,16 @@ function getStyleProp(el: Element, prop: string): string | null {
     const declarations = classStyleMap.get(cls);
     if (declarations && declarations[prop]) return declarations[prop];
   }
-  return null;
+  const attribute = el.getAttribute(prop);
+  if (attribute) return attribute;
+  return el.parentElement ? getStyleProp(el.parentElement, prop) : null;
 }
 
 function extractRoleTokenFromId(id: string): string | undefined {
-  const normalized = (id || '').replace(/^mos\d+_/, '').trim();
+  const normalized = (id || '')
+    .replace(/^mos\d+_/, '')
+    .replace(/_\d+_$/, '')
+    .trim();
   if (!isMeasurementOpId(normalized)) return undefined;
 
   const token = normalized
@@ -888,13 +1052,19 @@ function isMeasurementOpId(normalizedId: string): boolean {
 }
 
 function isMeasurementGroupId(id: string): boolean {
-  const normalized = (id || '').replace(/^mos\d+_/, '').trim();
+  const normalized = (id || '')
+    .replace(/^mos\d+_/, '')
+    .replace(/_\d+_$/, '')
+    .trim();
   if (!normalized) return false;
   return /^m[a-z0-9-]+(?:cm|mm|in)\d*(?:_(?:label|text))?$/i.test(normalized);
 }
 
 function isLabelGroupId(id: string): boolean {
-  const normalized = (id || '').replace(/^mos\d+_/, '').trim();
+  const normalized = (id || '')
+    .replace(/^mos\d+_/, '')
+    .replace(/_\d+_$/, '')
+    .trim();
   if (!normalized) return false;
   return /^[bc][a-z0-9-]+(?:cm|mm|in)\d*(?:_(?:label|text))?$/i.test(normalized);
 }

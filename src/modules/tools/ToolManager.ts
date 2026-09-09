@@ -29,6 +29,8 @@ type ToolLoader = () => Promise<ToolConstructor>;
 const TOOL_LOADERS = {
   select: () => import('./SelectTool').then(module => module.SelectTool as ToolConstructor),
   pencil: () => import('./PencilTool.js').then(module => module.PencilTool as ToolConstructor),
+  highlighter: () =>
+    import('./HighlighterTool.js').then(module => module.HighlighterTool as ToolConstructor),
   curve: () => import('./CurveTool.js').then(module => module.CurveTool as ToolConstructor),
   line: () => Promise.resolve(LineTool as ToolConstructor),
   arrow: () => import('./ArrowTool.js').then(module => module.ArrowTool as ToolConstructor),

@@ -56,6 +56,14 @@ function isMeasurementSplitWorkspaceActive(): boolean {
   return document.body.classList.contains('measurement-split-workspace-active');
 }
 
+function isGuideSplitWorkspaceActive(): boolean {
+  const splitState = (window as any).getGuideCompareWorkspaceState?.();
+  if (splitState?.open === true) {
+    return true;
+  }
+  return document.body.classList.contains('guide-split-workspace-active');
+}
+
 function getWindowPrefs(): any {
   try {
     const raw = localStorage.getItem(GUIDE_WINDOW_PREFS_KEY);
@@ -230,7 +238,7 @@ function syncHeaderToggleUi(enabled: boolean): void {
 function ensureHeaderToggle(): void {
   const header = document.getElementById('imagePanelHeader');
   if (!header) return;
-  const controls = header.querySelector('.flex.items-center.gap-2');
+  const controls = header.querySelector('.images-header-actions');
   if (!controls) return;
   const collapseButton = document.getElementById('toggleImagePanel') as HTMLButtonElement | null;
   let button = document.getElementById('measurementGuideToggle') as HTMLButtonElement | null;
@@ -457,9 +465,9 @@ function ensureStyles(): void {
   style.textContent = `
     .measurement-guide-indicator {
       position: fixed;
-      top: 12px;
+      top: 56px;
       right: 12px;
-      z-index: 13340;
+      z-index: 2400;
       width: min(320px, calc(100vw - 24px));
       border-radius: 12px;
       border: 1px solid rgba(148, 163, 184, 0.5);
@@ -470,7 +478,8 @@ function ensureStyles(): void {
       pointer-events: auto;
       transition: opacity 150ms ease;
     }
-    body.measurement-split-workspace-active .measurement-guide-indicator {
+    body.measurement-split-workspace-active .measurement-guide-indicator,
+    body.guide-split-workspace-active .measurement-guide-indicator {
       display: none !important;
     }
     .measurement-guide-indicator.is-unlocked .measurement-guide-indicator-head {
@@ -774,6 +783,9 @@ function positionIndicator(root: HTMLElement): void {
 
   root.style.left = 'auto';
   root.style.height = '';
+  const toolbar = document.getElementById('toolbarWrap');
+  const toolbarBottom = toolbar?.getBoundingClientRect().bottom || 48;
+  const top = Math.max(8, Math.round(toolbarBottom + 8));
   let right = 12;
   const imagePanel = document.getElementById('imagePanel');
   if (imagePanel) {
@@ -790,7 +802,8 @@ function positionIndicator(root: HTMLElement): void {
     }
   }
   root.style.right = `${Math.round(right)}px`;
-  root.style.top = '12px';
+  root.style.top = `${top}px`;
+  root.style.maxHeight = `${Math.max(180, window.innerHeight - top - 12)}px`;
 }
 
 function clampIndicatorRect(rect: { x: number; y: number; width: number; height: number }): {
@@ -834,6 +847,7 @@ function bindIndicatorWindowControls(root: HTMLElement): void {
   const fit = root.querySelector('[data-guide-size-fit]') as HTMLButtonElement | null;
   const unlock = root.querySelector('[data-guide-layout-unlock]') as HTMLButtonElement | null;
   const bind = root.querySelector('[data-guide-bind]') as HTMLButtonElement | null;
+  const close = root.querySelector('[data-guide-close]') as HTMLButtonElement | null;
 
   const updateUnlockUi = () => {
     const nextUnlocked = getIndicatorLayoutUnlocked();
@@ -884,6 +898,13 @@ function bindIndicatorWindowControls(root: HTMLElement): void {
     if (typeof (window as any).openGuideBindingPanel === 'function') {
       (window as any).openGuideBindingPanel({ viewId, source: 'indicator' });
     }
+  });
+  close?.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIndicatorEnabled(false);
+    syncHeaderToggleUi(false);
+    hideIndicator();
   });
 
   header?.addEventListener('pointerdown', event => {
@@ -1070,6 +1091,42 @@ function clearCompletedGuideSeed(viewId: string): void {
   (window as any).labelsByImage = labels;
 }
 
+async function advanceBoundGuideAfterStroke(viewId: string): Promise<void> {
+  const activeGuide = resolveActiveGuideSelection(viewId);
+  if (!activeGuide.code || !activeGuide.bound) return;
+
+  const roles = await fetchGuideRoleTokens(activeGuide.code, activeGuide.variant);
+  const activeRole = resolveNextGuideRole(viewId, roles);
+  if (activeRole) {
+    // Stroke completion is an explicit guide action. It must replace stale
+    // manual/automatic labels even when the Mini Guide projection is hidden.
+    applyGuideOneTimeSeed(viewId, activeRole, { isChipClick: true });
+    return;
+  }
+
+  if (roles.length) {
+    clearCompletedGuideSeed(viewId);
+    (window as any).updateNextTagDisplay?.();
+    window.dispatchEvent(
+      new CustomEvent('openpaint:guide-next-tag-changed', {
+        detail: { viewId: toBaseViewId(viewId), tag: '' },
+      })
+    );
+    const splitState = (window as any).getGuideCompareWorkspaceState?.();
+    if (splitState?.open === true) {
+      (window as any).notifyOpenPaint?.({
+        kind: 'success',
+        title: '',
+        message: 'Guide complete',
+        durationMs: 2200,
+      });
+      window.setTimeout(() => {
+        (window as any).setGuideSplitEnabled?.(false);
+      }, 120);
+    }
+  }
+}
+
 async function renderIndicator(): Promise<void> {
   try {
     const root = ensureRoot();
@@ -1081,7 +1138,8 @@ async function renderIndicator(): Promise<void> {
       !showForTool ||
       !isIndicatorEnabled() ||
       isGuideOverlayVisible() ||
-      isMeasurementSplitWorkspaceActive()
+      isMeasurementSplitWorkspaceActive() ||
+      isGuideSplitWorkspaceActive()
     ) {
       hideIndicator();
       return;
@@ -1097,7 +1155,9 @@ async function renderIndicator(): Promise<void> {
     const roles = await fetchGuideRoleTokens(code, activeGuide.variant);
     const activeRole = resolveNextGuideRole(viewId, roles);
     if (activeRole) {
-      applyGuideOneTimeSeed(viewId, activeRole);
+      // Rendering is a projection of guide state. It may update the displayed
+      // seed, but must not emit the event that schedules this same render.
+      applyGuideOneTimeSeed(viewId, activeRole, { dispatchEvent: false });
     } else if (roles.length) {
       clearCompletedGuideSeed(viewId);
       (window as any).updateNextTagDisplay?.();
@@ -1123,6 +1183,7 @@ async function renderIndicator(): Promise<void> {
       <span>Mini Guide</span>
       <div class="measurement-guide-indicator-controls">
         <button type="button" class="measurement-guide-indicator-ctl" data-guide-bind aria-label="Guide binding">Bind</button>
+        <button type="button" class="measurement-guide-indicator-ctl" data-guide-close aria-label="Hide Mini Guide" title="Hide Mini Guide">&times;</button>
       </div>
     </div>
     <p class="measurement-guide-indicator-meta">${breadcrumb}</p>
@@ -1205,7 +1266,15 @@ export function initMeasurementGuideIndicator(): void {
         recentDrawnGuideRolesByScope.set(scope, drawn);
       });
     }
-    scheduleRender();
+    if (imageLabel && strokeLabel) {
+      void advanceBoundGuideAfterStroke(imageLabel)
+        .catch(error => {
+          console.warn('[measurement-guide] Failed to advance bound guide:', error);
+        })
+        .finally(scheduleRender);
+    } else {
+      scheduleRender();
+    }
   }) as EventListener);
   window.addEventListener('openpaint:guide-binding-changed', scheduleRender);
   window.addEventListener('openpaint:guide-split-changed', scheduleRender);

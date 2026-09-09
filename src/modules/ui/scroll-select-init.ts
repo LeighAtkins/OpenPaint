@@ -391,30 +391,39 @@ export function initScrollSelectSystem() {
       }
 
       // Get current label from ProjectManager if available, otherwise fallback to legacy
-      const currentLabel =
+      const rawCurrentLabel =
         window.projectManager?.currentViewId ||
         window.currentImageLabel ||
         window.paintApp?.state?.currentImageLabel;
-      if (!currentLabel) return;
+      if (!rawCurrentLabel) return;
+      // The current label may carry a capture-tab scope suffix (::tab:…) —
+      // pills are keyed per view, so match on the base view id.
+      const currentLabel = String(rawCurrentLabel).split('::tab:')[0] || rawCurrentLabel;
 
       const stepper = document.getElementById('mini-stepper');
       const stepButtons = Array.from(
         stepper?.querySelectorAll<HTMLButtonElement>('button[data-target]') || []
       );
       const framesVisible = document.body.classList.contains('frames-visible');
-      const tabState = window.captureTabsByLabel?.[currentLabel];
+      const tabState =
+        window.captureTabsByLabel?.[currentLabel] || window.captureTabsByLabel?.[rawCurrentLabel];
       const activeTabId = String(tabState?.activeTabId || tabState?.masterTabId || 'master');
+      // Exact match first (view + active tab). When tab ids drift (tabs are
+      // recreated on reload/imports), fall back to ANY pill of the current
+      // view — the user must always see which image is active, in frames
+      // mode or not.
       const activeButton =
         stepButtons.find(
           btn => btn.dataset.target === currentLabel && btn.dataset.tabId === activeTabId
         ) ||
-        (!framesVisible
-          ? stepButtons.find(
-              btn => btn.dataset.target === currentLabel && btn.dataset.stepKind === 'image'
-            )
-          : null) ||
+        stepButtons.find(
+          btn => btn.dataset.target === currentLabel && btn.dataset.stepKind === 'image'
+        ) ||
         stepButtons.find(btn => btn.dataset.target === currentLabel) ||
         null;
+      // NOTE: never rewrite pill data-tab-id here — frame pills point at
+      // their OWN frame, and flattening them to the active tab makes every
+      // frame pill resolve to the same frame (the "1b stuck" symptom).
 
       // During view switches, current label can be temporarily out of sync with
       // rendered pills. Keep previous active styling instead of flashing to all-white.
@@ -435,6 +444,30 @@ export function initScrollSelectSystem() {
         }
       });
       applyMiniStepperGuideBadges(stepButtons.filter(btn => btn.dataset.stepKind === 'image'));
+
+      const compactMode = stepper.classList.contains('is-compact');
+      if (compactMode) {
+        const indicator = document.getElementById('mini-stepper-indicator');
+        let labels: string[] = [];
+        try {
+          labels = JSON.parse(stepper.dataset.imageLabels || '[]');
+        } catch {
+          labels = [];
+        }
+        const activeIndex = labels.indexOf(currentLabel);
+        const position = stepper.querySelector<HTMLButtonElement>('[data-mini-step-overview]');
+        const previous = stepper.querySelector<HTMLButtonElement>('[data-mini-step-prev]');
+        const next = stepper.querySelector<HTMLButtonElement>('[data-mini-step-next]');
+        if (position) {
+          position.textContent =
+            activeIndex >= 0 ? `${activeIndex + 1} / ${labels.length}` : `1 / ${labels.length}`;
+          position.title = 'Open image overview';
+        }
+        if (previous) previous.disabled = activeIndex <= 0;
+        if (next) next.disabled = activeIndex < 0 || activeIndex >= labels.length - 1;
+        if (indicator) indicator.style.display = 'none';
+        return;
+      }
 
       const panelCollapsed = isImagePanelCollapsed();
       positionStepperIndicator(activeButton, { animate: panelCollapsed ? false : animate });
@@ -567,6 +600,18 @@ export function initScrollSelectSystem() {
           if (isImageListProgrammaticScrollActive()) {
             return;
           }
+          // Never fight a PDF export: its capture loop switches views
+          // programmatically and restores the original afterwards; an
+          // observer-driven switch here makes activation fail with
+          // "could not activate <view>; active view is <other>".
+          // The flag is time-boxed: a wedged export that never restores must
+          // not disable scroll-select for the rest of the session.
+          const pdfExportFresh =
+            (window as any).__isPdfExporting === true &&
+            Date.now() - (Number((window as any).__pdfExportingSince) || 0) < 90_000;
+          if ((window as any).__isPdfExporting && pdfExportFresh) {
+            return;
+          }
 
           if (label && window.projectManager && window.projectManager.currentViewId !== label) {
             console.log(`[ScrollSelect] ${reason} requesting switch to ${label}`);
@@ -663,18 +708,75 @@ export function initScrollSelectSystem() {
 
       // Track scroll state for better snap detection
       let isScrolling = false;
+      let wheelFallbackFrame: number | null = null;
+      let wheelSnapRestoreTimeout: ReturnType<typeof setTimeout> | null = null;
+
+      const normalizeWheelDelta = (event: WheelEvent): number => {
+        if (!Number.isFinite(event.deltaY) || event.deltaY === 0) return 0;
+        if (event.deltaMode === WheelEvent.DOM_DELTA_LINE) return event.deltaY * 32;
+        if (event.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
+          return event.deltaY * Math.max(1, imageList.clientHeight * 0.85);
+        }
+        return event.deltaY;
+      };
+
+      const releaseWheelScrollSnap = () => {
+        if (!imageList.dataset.wheelScrollSnapActive) {
+          imageList.dataset.wheelScrollSnapActive = 'true';
+          imageList.dataset.wheelScrollSnapInline = imageList.style.scrollSnapType || '';
+          imageList.style.scrollSnapType = 'none';
+        }
+        if (wheelSnapRestoreTimeout) clearTimeout(wheelSnapRestoreTimeout);
+        wheelSnapRestoreTimeout = setTimeout(() => {
+          wheelSnapRestoreTimeout = null;
+          imageList.style.scrollSnapType = imageList.dataset.wheelScrollSnapInline || '';
+          delete imageList.dataset.wheelScrollSnapInline;
+          delete imageList.dataset.wheelScrollSnapActive;
+          handleScrollEnd();
+        }, 180);
+      };
 
       // A wheel/trackpad gesture over the thumbnail rail is explicit user intent.
       // It must supersede guards left by an earlier click or programmatic centering;
       // otherwise the list moves while Auto mode silently keeps the old image active.
       imageList.addEventListener(
         'wheel',
-        () => {
+        event => {
           if (window.__imageListReorderInProgress) return;
           window.__cancelPendingScrollSelect?.();
           window.__imageListUserScrollUntil = Date.now() + 1200;
           window.__suppressScrollSelectUntil = 0;
           window.__imageListProgrammaticScrollUntil = 0;
+
+          const active = document.activeElement as HTMLElement | null;
+          if (
+            active &&
+            active !== imageList &&
+            (active.isContentEditable || active.matches('input, textarea, select'))
+          ) {
+            active.blur();
+          }
+
+          const delta = normalizeWheelDelta(event);
+          if (!delta) return;
+          releaseWheelScrollSnap();
+
+          // Safari can deliver a wheel gesture to a nested draggable thumbnail
+          // without advancing its overflow ancestor. Let native scrolling run
+          // first; only provide the missing movement when scrollTop is unchanged.
+          const before = imageList.scrollTop;
+          if (wheelFallbackFrame !== null) cancelAnimationFrame(wheelFallbackFrame);
+          wheelFallbackFrame = requestAnimationFrame(() => {
+            wheelFallbackFrame = null;
+            if (Math.abs(imageList.scrollTop - before) > 0.5) return;
+            const maxScrollTop = Math.max(0, imageList.scrollHeight - imageList.clientHeight);
+            const boundedDelta = Math.max(
+              -imageList.clientHeight * 0.85,
+              Math.min(imageList.clientHeight * 0.85, delta)
+            );
+            const next = Math.max(0, Math.min(maxScrollTop, before + boundedDelta));
+            if (Math.abs(next - before) > 0.5) imageList.scrollTop = next;
+          });
         },
         { passive: true }
       );
@@ -932,6 +1034,7 @@ export function initScrollSelectSystem() {
           scrollTimeout = setTimeout(() => {
             if (!isScrollSelectEnabled()) return;
             if (document.hidden) return;
+            if ((window as any).__isPdfExporting) return;
             if (
               window.__miniStepperProgrammaticScrollUntil &&
               Date.now() < window.__miniStepperProgrammaticScrollUntil
@@ -1312,6 +1415,9 @@ export function initScrollSelectSystem() {
       if (!pillsList) return [];
 
       if (imageLabels.length === 0) {
+        stepper.classList.remove('is-compact');
+        delete stepper.dataset.imageLabels;
+        stepper.querySelector('.mini-stepper-compact')?.remove();
         if (indicator) indicator.style.display = 'none';
         pillsList.innerHTML = '<li class="px-2 py-1 text-slate-500 text-xs">No images yet</li>';
         pillsList.className =
@@ -1383,6 +1489,21 @@ export function initScrollSelectSystem() {
         .join('');
 
       pillsList.innerHTML = pillsHTML;
+      const compactMode = imageLabels.length > 12;
+      stepper.classList.toggle('is-compact', compactMode);
+      stepper.dataset.imageLabels = JSON.stringify(imageLabels);
+      stepper.querySelector('.mini-stepper-compact')?.remove();
+      if (compactMode) {
+        stepper.insertAdjacentHTML(
+          'beforeend',
+          `<div class="mini-stepper-compact" role="group" aria-label="Image quick navigation">
+            <button type="button" data-mini-step-prev aria-label="Previous image" title="Previous image">‹</button>
+            <button type="button" class="mini-stepper-position" data-mini-step-overview aria-label="Open image overview">1 / ${imageLabels.length}</button>
+            <button type="button" data-mini-step-next aria-label="Next image" title="Next image">›</button>
+            <button type="button" data-mini-step-grid aria-label="Arrange all images" title="Arrange all images">▦</button>
+          </div>`
+        );
+      }
 
       const stepButtons = Array.from(
         stepper.querySelectorAll<HTMLButtonElement>('button[data-target]')
@@ -1394,6 +1515,33 @@ export function initScrollSelectSystem() {
         btn.classList.add(...cfg.inactiveClasses.split(' '));
       });
       applyMiniStepperGuideBadges(imageButtons);
+
+      const navigateCompact = async (offset: number) => {
+        const currentLabel = window.projectManager?.currentViewId || '';
+        const currentIndex = imageLabels.indexOf(currentLabel);
+        const targetIndex = Math.max(0, Math.min(imageLabels.length - 1, currentIndex + offset));
+        const targetLabel = imageLabels[targetIndex];
+        if (!targetLabel || targetLabel === currentLabel) return;
+        beginExplicitImageNavigation();
+        if (typeof window.projectManager?.switchView === 'function') {
+          await window.projectManager.switchView(targetLabel);
+        } else {
+          window.switchToImage?.(targetLabel);
+        }
+        updateActivePill({ animate: false, forceCenter: false });
+      };
+      stepper
+        .querySelector<HTMLButtonElement>('[data-mini-step-prev]')
+        ?.addEventListener('click', () => void navigateCompact(-1));
+      stepper
+        .querySelector<HTMLButtonElement>('[data-mini-step-next]')
+        ?.addEventListener('click', () => void navigateCompact(1));
+      stepper
+        .querySelector<HTMLButtonElement>('[data-mini-step-overview]')
+        ?.addEventListener('click', () => window.openImageOverview?.());
+      stepper
+        .querySelector<HTMLButtonElement>('[data-mini-step-grid]')
+        ?.addEventListener('click', () => window.openImageOverview?.());
 
       // Update active state immediately after creating pills
       setTimeout(() => updateActivePill({ animate: false }), 100);
@@ -1429,7 +1577,27 @@ export function initScrollSelectSystem() {
                 }
               }
               if (tabId && typeof window.setActiveCaptureTab === 'function') {
-                window.setActiveCaptureTab(label, tabId);
+                // The pill's data-tab-id is a snapshot from render time;
+                // capture-tab state can be recreated since (fresh ids on
+                // reload or after an import). Resolve against the live state
+                // so the click lands on the frame the view is actually using
+                // instead of a stale id.
+                const tabState = window.captureTabsByLabel?.[label];
+                const liveTabIds = new Set(
+                  (Array.isArray(tabState?.tabs) ? tabState.tabs : [])
+                    .map(tab => String(tab?.id || ''))
+                    .filter(Boolean)
+                );
+                let resolvedTabId = tabId;
+                if (tabState && !liveTabIds.has(tabId)) {
+                  resolvedTabId =
+                    (btn.dataset.stepKind === 'frame'
+                      ? tabState.activeTabId
+                      : tabState.masterTabId && liveTabIds.has(tabState.masterTabId)
+                        ? tabState.masterTabId
+                        : tabState.activeTabId) || tabId;
+                }
+                window.setActiveCaptureTab(label, resolvedTabId);
               }
 
               // Also scroll the sidebar to center the corresponding thumbnail

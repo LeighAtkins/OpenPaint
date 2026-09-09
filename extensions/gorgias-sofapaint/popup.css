@@ -1,0 +1,49 @@
+:root {
+  color: #172033;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+body { width: 390px; max-height: 580px; margin: 0; background: #fff; font-size: 12px; }
+button, input { font: inherit; }
+header, footer { padding: 14px; background: #fbfcfe; }
+header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #dbe1ea; }
+h1 { margin: 0; font-size: 16px; }
+p { margin: 3px 0 0; color: #647086; }
+.icon-btn, .selection-actions button { height: 30px; border: 1px solid #dbe1ea; border-radius: 6px; background: #fff; cursor: pointer; }
+.icon-btn { width: 30px; font-size: 17px; }
+main { min-height: 150px; max-height: 390px; overflow: auto; }
+#status { padding: 14px; color: #647086; }
+#status[data-kind="error"] { color: #b42318; }
+.project-status { margin: 8px 12px; padding: 8px 9px; border: 1px solid #bfdbfe; border-radius: 6px; background: #eff6ff; color: #1e3a8a; font-size: 11px; line-height: 1.35; }
+.project-status[data-match="false"] { border-color: #e2e8f0; background: #f8fafc; color: #475569; }
+.project-status { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.project-status span { min-width: 0; }
+.project-status a { flex: 0 0 auto; color: #1d4ed8; font-weight: 750; text-decoration: none; }
+.project-status a:hover { text-decoration: underline; }
+.import-progress { position: sticky; top: 0; z-index: 3; display: grid; grid-template-columns: 96px minmax(0,1fr); gap: 9px; align-items: center; padding: 9px 12px; border-bottom: 1px solid #dbe1ea; background: rgba(255,255,255,.97); color: #475569; font-size: 10px; font-weight: 700; }
+.import-progress[hidden] { display: none; }
+.import-progress-track { height: 5px; overflow: hidden; border-radius: 999px; background: #e2e8f0; }
+.import-progress-track span { display: block; width: 0; height: 100%; border-radius: inherit; background: #2563eb; transition: width 160ms ease; }
+.import-progress > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.selection-actions { position: sticky; top: 0; z-index: 2; display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid #e5e9ef; background: rgba(255,255,255,.96); }
+.selection-actions button { padding: 0 9px; }
+.attachment-list { display: grid; gap: 1px; background: #e7ebf1; }
+.attachment { position: relative; display: grid; grid-template-columns: 58px minmax(0,1fr) 20px; gap: 10px; align-items: center; min-height: 70px; padding: 7px 12px; background: #fff; cursor: pointer; }
+.attachment:hover { background: #f7f9fc; }
+.attachment-low-quality { background: #f8fafc; opacity: .7; }
+.attachment-low-quality strong { text-decoration: line-through; text-decoration-color: #94a3b8; }
+.attachment-imported { background: #f1f5f9; opacity: .65; }
+.attachment-imported strong::after { content: 'In project'; display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 4px; background: #dbeafe; color: #1d4ed8; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+.attachment img { width: 58px; height: 56px; border: 1px solid #e0e5ec; border-radius: 5px; background: #f1f4f8; object-fit: cover; }
+.attachment img[data-unavailable="true"] { background: #f1f4f8 center/22px no-repeat; }
+.attachment-copy { min-width: 0; }
+.attachment strong, .attachment span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attachment strong { font-size: 12px; }
+.attachment span { margin-top: 3px; color: #7a8597; font-size: 10px; }
+.attachment input { width: 16px; height: 16px; accent-color: #2563eb; }
+footer { display: grid; gap: 7px; border-top: 1px solid #dbe1ea; }
+footer label { color: #647086; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+footer input { width: 100%; height: 32px; padding: 0 8px; border: 1px solid #c6cfdb; border-radius: 6px; }
+.primary { height: 36px; border: 1px solid #1d4ed8; border-radius: 6px; background: #2563eb; color: #fff; font-weight: 700; cursor: pointer; }
+.primary:disabled { opacity: .45; cursor: not-allowed; }

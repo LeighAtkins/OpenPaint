@@ -94,6 +94,29 @@ async function uploadImage(page: Page, w: number, h: number) {
   );
 }
 
+async function uploadImageThroughUiPipeline(page: Page, w: number, h: number) {
+  await page.evaluate(
+    async ({ w, h }) => {
+      const off = document.createElement('canvas');
+      off.width = w;
+      off.height = h;
+      const ctx = off.getContext('2d')!;
+      ctx.fillStyle = '#d9e4ef';
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#315b7d';
+      ctx.fillRect(0, 0, Math.max(12, w / 8), h);
+      const blob = await new Promise<Blob>(resolve =>
+        off.toBlob(value => resolve(value!), 'image/png')
+      );
+      const file = new File([blob], 'compact-panel-upload.png', { type: 'image/png' });
+      const transfer = new DataTransfer();
+      transfer.items.add(file);
+      await window.app!.uploadManager.handleFiles(transfer.files);
+    },
+    { w, h }
+  );
+}
+
 test('first image frame is vertically centered in the usable wide-screen workspace', async ({
   page,
 }) => {
@@ -163,3 +186,52 @@ for (const [name, w, h] of [
     expect(Math.abs(m.dy), `${name} dy`).toBeLessThan(4);
   });
 }
+
+test('first UI upload centers immediately after opening Images at compact width', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 840, height: 752 });
+  await page.goto('/');
+  await waitForApp(page);
+
+  const imagePanel = page.locator('#imagePanel');
+  if (await page.locator('#imagePanelContent').isVisible()) {
+    await page.locator('#toggleImagePanel').click();
+    await expect(imagePanel).toHaveAttribute('aria-expanded', 'false');
+  }
+  await page.locator('#toggleImagePanel').click();
+  await expect(imagePanel).toHaveAttribute('aria-expanded', 'true');
+
+  // Intentionally upload before the panel-triggered canvas transaction has
+  // settled. This mirrors opening the sidebar and immediately choosing a file.
+  await uploadImageThroughUiPipeline(page, 1200, 800);
+  await page.waitForTimeout(250);
+
+  const geometry = await page.evaluate(() => {
+    const frame = document.getElementById('captureFrame')?.getBoundingClientRect();
+    const leftPanel = document.getElementById('strokePanel')?.getBoundingClientRect();
+    const rightPanel = document.getElementById('imagePanel')?.getBoundingClientRect();
+    const canvas = window.app?.canvasManager?.fabricCanvas;
+    const canvasRect = canvas?.lowerCanvasEl?.getBoundingClientRect();
+    const background = canvas?.backgroundImage;
+    if (!frame || !leftPanel || !rightPanel || !canvas || !canvasRect || !background) return null;
+
+    const center = fabric.util.transformPoint(
+      background.getCenterPoint(),
+      canvas.viewportTransform
+    );
+    const availableCenterX = (leftPanel.right + rightPanel.left) / 2;
+    const frameCenterX = frame.left + frame.width / 2;
+    const frameCenterY = frame.top + frame.height / 2;
+    return {
+      frameCenterDelta: frameCenterX - availableCenterX,
+      imageCenterDeltaX: canvasRect.left + center.x - frameCenterX,
+      imageCenterDeltaY: canvasRect.top + center.y - frameCenterY,
+    };
+  });
+
+  expect(geometry).not.toBeNull();
+  expect(Math.abs(geometry!.frameCenterDelta)).toBeLessThanOrEqual(3);
+  expect(Math.abs(geometry!.imageCenterDeltaX)).toBeLessThanOrEqual(3);
+  expect(Math.abs(geometry!.imageCenterDeltaY)).toBeLessThanOrEqual(3);
+});

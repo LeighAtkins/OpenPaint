@@ -45,6 +45,9 @@ export interface MosLabelData {
 }
 
 export interface MosStyle {
+  strokeDashArray?: number[];
+  splitRatio?: number;
+  dashFirst?: boolean;
   strokeColor?: string;
   strokeWidth?: number;
   arrowStyle?: 'open' | 'filled' | 'none';
@@ -58,11 +61,15 @@ export interface MeasurementOverlayElement {
   kind: MosElementKind;
   /** Canonical role token, e.g. A1, C2 */
   roleToken?: string;
+  displayLabel?: string;
   editMode: MosEditMode;
   endpoints: MosEndpoint[];
   label?: MosLabelData;
   style?: MosStyle;
   /** Optional sampled curve points in MOS coordinates (for path-based measurements) */
+  ellipse?: boolean;
+  ellipseAngle?: number;
+  curveInterpolation?: 'linear' | 'smooth';
   curvePoints?: MosPoint[];
   /** IDs of all Fabric objects created for this element */
   fabricObjectIds: string[];
@@ -80,6 +87,8 @@ export interface MeasurementOverlay {
   viewId: string;
   /** Monotonically incrementing index for ID prefixing */
   overlayIndex: number;
+  /** Per-role offsets from the stroke centre, normalised to image width/height. */
+  tagOffsets?: Record<string, { x: number; y: number }>;
   /** Original SVG text (sanitised) */
   svgText: string;
   /** All elements parsed from the SVG */
@@ -290,5 +299,6 @@ export interface MosFabricCustomData {
   elementId: string;
   kind: MosElementKind;
   roleToken?: string;
+  displayLabel?: string;
   endpointIndex?: number;
 }

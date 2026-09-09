@@ -21,6 +21,7 @@ import type {
 } from './types';
 import { getImageRect, mosToCanvas } from './mos-transform';
 import { exportMosSvg } from './mos-exporter';
+import { separateTag, readTagOffsets } from './mos-tag-layout';
 import { FabricControls } from '../utils/FabricControls.js';
 
 export class MeasurementOverlayManager {
@@ -169,6 +170,21 @@ export class MeasurementOverlayManager {
     this.store.byId.set(overlay.id, overlay);
     this.store.order.push(overlay.id);
     this.store.activeId = overlay.id;
+
+    // Seed guide presentation once; respect style edits and project-restored scopes.
+    const tags = window.app?.tagManager;
+    const scopeStyle = tags?.getTagScopeStyle?.(viewId) || {};
+    if (tags && Object.keys(scopeStyle).length === 0) {
+      tags.persistTagScopeStyle?.(viewId, {
+        tagShape: 'circle',
+        textColor: '#66758a',
+        outlineWidth: 1.5,
+        connectorDash: [],
+        connectorWidth: 1.25,
+        backgroundStyle: 'solid',
+      });
+      tags.persistTagSizeToMetadata?.(16, viewId);
+    }
 
     this._syncOverlayTags(overlay.id);
 
@@ -345,7 +361,10 @@ export class MeasurementOverlayManager {
         } else if (lineObj && lineObj.type === 'path' && Array.isArray(element.curvePoints)) {
           const worldPoints = element.curvePoints.map(point => mosToCanvas(point, imageRect));
           if (worldPoints.length >= 2) {
-            const pathData = this._buildSmoothPathFromPoints(worldPoints);
+            const pathData =
+              element.curveInterpolation === 'linear'
+                ? worldPoints.map((p, i) => `${i ? 'L' : 'M'} ${p.x} ${p.y}`).join(' ')
+                : this._buildSmoothPathFromPoints(worldPoints);
             // fabric v5 exposes path parsing as fabric.util.parsePath, not
             // fabric.Path.parsePath (the latter does not exist and throws
             // "fabric.Path.parsePath is not a function"). Matches the pattern
@@ -436,6 +455,7 @@ export class MeasurementOverlayManager {
     const canvas = this.canvasManager.fabricCanvas;
     if (!canvas) return;
 
+    this._captureTagOffsets(viewId);
     const toRemove = canvas.getObjects().filter((obj: any) => {
       const cd = obj.customData as MosFabricCustomData | undefined;
       if (cd?.layerType !== 'mos-overlay') return false;
@@ -445,7 +465,10 @@ export class MeasurementOverlayManager {
     toRemove.forEach((obj: any) => canvas.remove(obj));
     for (const overlay of this.store.byId.values()) {
       if (overlay.viewId === viewId) {
-        this._clearOverlayTags(overlay.id);
+        // Unmounting is a transient view-switch operation. Remove live tag
+        // objects, but keep the user's visibility and measurement maps intact
+        // so a hidden gallery label does not return when the overlay remounts.
+        this._clearOverlayTags(overlay.id, { preserveMetadata: true });
       }
     }
     canvas.requestRenderAll();
@@ -458,15 +481,20 @@ export class MeasurementOverlayManager {
     const canvas = this.canvasManager.fabricCanvas;
     if (!canvas) return;
 
+    const { remountOverlayObjects } = await import('./mos-importer');
+    const activeView = window.app?.projectManager?.currentViewId;
+    if (activeView && activeView !== viewId) return;
     const imageRect = getImageRect(canvas);
 
-    // Defensive cleanup to avoid duplicate overlay objects when mountView is called repeatedly.
-    this.unmountView(viewId);
+    // A batch import may have mounted a different view while this mount awaited
+    // its importer. Clear every live overlay before restoring the selected view.
+    for (const mountedView of new Set([...this.store.byId.values()].map(o => o.viewId))) {
+      this.unmountView(mountedView);
+    }
 
     for (const overlay of this.store.byId.values()) {
       if (overlay.viewId !== viewId) continue;
 
-      const { remountOverlayObjects } = await import('./mos-importer');
       remountOverlayObjects(overlay, imageRect, canvas);
       this._syncOverlayTags(overlay.id);
     }
@@ -479,6 +507,7 @@ export class MeasurementOverlayManager {
   // -----------------------------------------------------------------------
 
   toJSON(): object {
+    this._captureTagOffsets();
     const overlays: object[] = [];
     const canvas = this.canvasManager.fabricCanvas;
     const imageRect = canvas
@@ -496,6 +525,7 @@ export class MeasurementOverlayManager {
         viewId: overlay.viewId,
         overlayIndex: overlay.overlayIndex,
         svgText: currentSvgText,
+        tagOffsets: overlay.tagOffsets || {},
         sourceR2Key: overlay.sourceR2Key,
         supabaseId: overlay.supabaseId,
       });
@@ -517,10 +547,18 @@ export class MeasurementOverlayManager {
     const activeViewId = window.app?.projectManager?.currentViewId;
 
     for (const entry of data.overlays) {
-      await this.importSvg(entry.svgText, entry.viewId, {
+      const restoredId = await this.importSvg(entry.svgText, entry.viewId, {
         sourceR2Key: entry.sourceR2Key,
         supabaseId: entry.supabaseId,
       });
+
+      const restored = this.store.byId.get(restoredId);
+      if (restored) {
+        restored.tagOffsets = readTagOffsets(entry.tagOffsets);
+        // Discard import-time tags before applying saved positions.
+        this._clearOverlayTags(restoredId, { preserveMetadata: true });
+        this._syncOverlayTags(restoredId);
+      }
 
       // Keep only the active view mounted on canvas; other overlays stay in the store.
       if (activeViewId && entry.viewId !== activeViewId) {
@@ -691,6 +729,27 @@ export class MeasurementOverlayManager {
     console.log('[MOS] MeasurementOverlayManager disposed');
   }
 
+  private _captureTagOffsets(viewId?: string): void {
+    const canvas = this.canvasManager.fabricCanvas;
+    if (!canvas) return;
+    const rect = getImageRect(canvas);
+    if (!(rect.width > 0 && rect.height > 0)) return;
+    for (const tag of canvas.getObjects()) {
+      if (!tag.isTag || !tag.connectedStroke) continue;
+      const cd = tag.connectedStroke.customData;
+      const overlay = this.store.byId.get(cd?.overlayId);
+      if (!overlay || (viewId && overlay.viewId !== viewId)) continue;
+      const center = window.app?.tagManager?.getCanvasObjectCenter(tag.connectedStroke);
+      const role = String(tag.strokeLabel || '').toUpperCase();
+      if (!center || !role) continue;
+      overlay.tagOffsets ||= {};
+      overlay.tagOffsets[role] = {
+        x: (tag.left - center.x) / rect.width,
+        y: (tag.top - center.y) / rect.height,
+      };
+    }
+  }
+
   private _syncOverlayTags(overlayId: string): void {
     const overlay = this.store.byId.get(overlayId);
     if (!overlay) return;
@@ -699,7 +758,8 @@ export class MeasurementOverlayManager {
     const metadataManager = window.app?.metadataManager;
     if (!tagManager) return;
 
-    this._clearOverlayTags(overlayId);
+    this._captureTagOffsets(overlay.viewId);
+    this._clearOverlayTags(overlayId, { preserveMetadata: true });
 
     const canvas = this.canvasManager.fabricCanvas;
     if (!canvas) return;
@@ -736,11 +796,8 @@ export class MeasurementOverlayManager {
     let tagThemeConfigChanged = false;
     const roleAnchors = this._collectRoleAnchors(overlay);
 
-    // Enforce MOS guide tag size for consistent readability/styling.
-    if (typeof tagManager.persistTagSizeToMetadata === 'function') {
-      tagManager.tagSize = 34;
-      tagManager.persistTagSizeToMetadata(34, overlay.viewId);
-    }
+    // TagManager resolves the saved per-view size, including user adjustments.
+    // Never overwrite it when an overlay remounts or changes frames.
 
     const candidatesByRole = new Map<
       string,
@@ -764,6 +821,9 @@ export class MeasurementOverlayManager {
 
     for (const [roleToken, candidates] of candidatesByRole.entries()) {
       const primary = candidates.slice().sort((a, b) => {
+        const aDashed = Boolean(a.element.style?.strokeDashArray?.length);
+        const bDashed = Boolean(b.element.style?.strokeDashArray?.length);
+        if (aDashed !== bDashed) return aDashed ? 1 : -1;
         const aScore = this._strokePriorityScore(a.lineObj);
         const bScore = this._strokePriorityScore(b.lineObj);
         if (aScore !== bScore) return bScore - aScore;
@@ -773,10 +833,21 @@ export class MeasurementOverlayManager {
       })[0];
       if (!primary) continue;
 
-      // Keep only one stroke per role; remove all duplicate drawables.
+      // Keep distinct source segments; remove only duplicate geometry for a role.
       for (const candidate of candidates) {
         const isPrimary = candidate === primary;
         if (!isPrimary) {
+          // A role can include extensions or repeated dimension locations.
+          // Preserve distinct geometry instead of treating the role as a duplicate.
+          const sameGeometry =
+            candidate.element.endpoints.length === primary.element.endpoints.length &&
+            candidate.element.endpoints.every((endpoint, index) => {
+              const other = primary.element.endpoints[index]?.point;
+              return (
+                other && Math.hypot(endpoint.point.x - other.x, endpoint.point.y - other.y) < 0.1
+              );
+            });
+          if (!sameGeometry) continue;
           // Remove the line/path AND any associated arrowhead triangles.
           // Curve-path measurements create separate triangle objects
           // (`<id>_curve_start_arrow` / `<id>_curve_end_arrow`); removing only
@@ -832,8 +903,17 @@ export class MeasurementOverlayManager {
         metadataManager.attachMetadata(lineObj, overlay.viewId, roleToken);
       }
 
-      this._seedMosTagOffset(lineObj);
-      this._applyRoleAnchorOffset(lineObj, roleAnchors.get(roleToken));
+      if (_element.displayLabel) {
+        lineObj.strokeMetadata = { ...lineObj.strokeMetadata, displayLabel: _element.displayLabel };
+      }
+      const savedOffset = overlay.tagOffsets?.[roleToken];
+      if (savedOffset) {
+        const rect = getImageRect(canvas);
+        lineObj.tagOffset = { x: savedOffset.x * rect.width, y: savedOffset.y * rect.height };
+      } else {
+        this._seedMosTagOffset(lineObj);
+        this._applyRoleAnchorOffset(lineObj, roleAnchors.get(roleToken));
+      }
       // Resolve the stroke color so the tag border matches the measurement's
       // actual color (green/teal/red). For arrow groups the color lives on the
       // child line; for curve paths it's on the path itself.
@@ -846,7 +926,36 @@ export class MeasurementOverlayManager {
         this._ensureMosTagTheme(tagManager, roleToken, overlay.viewId, tagStrokeColor) ||
         tagThemeConfigChanged;
 
-      tagManager.createTag(roleToken, overlay.viewId, lineObj);
+      const tag = tagManager.createTag(roleToken, overlay.viewId, lineObj);
+      if (tag && !savedOffset) {
+        const box = {
+          x: tag.left,
+          y: tag.top,
+          width: tag.getScaledWidth(),
+          height: tag.getScaledHeight(),
+        };
+        const occupied = canvas
+          .getObjects()
+          .filter((obj: any) => obj !== tag && obj.isTag && obj.visible !== false)
+          .map((obj: any) => ({
+            x: obj.left,
+            y: obj.top,
+            width: obj.getScaledWidth(),
+            height: obj.getScaledHeight(),
+          }));
+        const placed = separateTag(box, occupied);
+        tag.set({ left: placed.x, top: placed.y });
+        tag.setCoords();
+        const center = tagManager.getCanvasObjectCenter(lineObj);
+        if (center)
+          tag.tagOffset = lineObj.tagOffset = { x: placed.x - center.x, y: placed.y - center.y };
+        tagManager.updateConnector(roleToken, tagManager.normalizeImageLabel(overlay.viewId));
+      }
+      if (tag) {
+        const remember = () => this._captureTagOffsets(overlay.viewId);
+        tag.on('moving', remember);
+        tag.on('modified', remember);
+      }
       createdKeys.push(roleToken);
       createdRoles.push(roleToken);
     }
@@ -856,6 +965,7 @@ export class MeasurementOverlayManager {
     }
 
     this._overlayTagKeys.set(overlayId, createdKeys);
+    this._captureTagOffsets(overlay.viewId);
     if (metadataManager?.updateStrokeVisibilityControls) {
       metadataManager.updateStrokeVisibilityControls();
     }
@@ -1122,6 +1232,9 @@ export class MeasurementOverlayManager {
     const anchors = new Map<string, { x: number; y: number }>();
     for (const element of overlay.elements.values()) {
       if (element.kind !== 'label') continue;
+      // Illustrator's b-groups contain numeric entry placeholders, not tag anchors.
+      // Prefer the source c-group circles and named labels.
+      if (element.label && !/[A-Za-z]/.test(element.label.text || '')) continue;
       const roleToken = this._deriveRoleToken(element);
       if (!roleToken) continue;
       const anchor = this._extractMosAnchorFromLabelElement(element);
@@ -1175,21 +1288,9 @@ export class MeasurementOverlayManager {
       return;
     }
 
-    // Clamp the anchor-derived offset. The label anchor nudges the tag toward
-    // where the label text sat in the source SVG, but for arrow-group line
-    // objects (whose center can differ from the underlying line geometry) the
-    // raw offset can be hundreds of pixels, landing the tag far from the
-    // measurement. Bound it so the tag stays near the line while still
-    // respecting the anchor's direction.
-    const MAX_TAG_OFFSET = 60;
-    let dx = anchorCanvas.x - lineCenter.x;
-    let dy = anchorCanvas.y - lineCenter.y;
-    const mag = Math.hypot(dx, dy);
-    if (Number.isFinite(mag) && mag > MAX_TAG_OFFSET) {
-      const scale = MAX_TAG_OFFSET / mag;
-      dx *= scale;
-      dy *= scale;
-    }
+    // Source labels can be deliberately far from line midpoints. Preserve that layout.
+    const dx = anchorCanvas.x - lineCenter.x;
+    const dy = anchorCanvas.y - lineCenter.y;
 
     lineObj.tagOffset = {
       x: dx,
@@ -1241,7 +1342,7 @@ export class MeasurementOverlayManager {
     return true;
   }
 
-  private _clearOverlayTags(overlayId: string): void {
+  private _clearOverlayTags(overlayId: string, options: { preserveMetadata?: boolean } = {}): void {
     const overlay = this.store.byId.get(overlayId);
     const tagManager = window.app?.tagManager;
     const metadataManager = window.app?.metadataManager;
@@ -1254,16 +1355,20 @@ export class MeasurementOverlayManager {
         if (metadataManager.vectorStrokesByImage?.[overlay.viewId]?.[strokeLabel]) {
           delete metadataManager.vectorStrokesByImage[overlay.viewId][strokeLabel];
         }
-        if (
-          metadataManager.strokeVisibilityByImage?.[overlay.viewId]?.[strokeLabel] !== undefined
-        ) {
-          delete metadataManager.strokeVisibilityByImage[overlay.viewId][strokeLabel];
-        }
-        if (metadataManager.strokeLabelVisibility?.[overlay.viewId]?.[strokeLabel] !== undefined) {
-          delete metadataManager.strokeLabelVisibility[overlay.viewId][strokeLabel];
-        }
-        if (metadataManager.strokeMeasurements?.[overlay.viewId]?.[strokeLabel] !== undefined) {
-          delete metadataManager.strokeMeasurements[overlay.viewId][strokeLabel];
+        if (!options.preserveMetadata) {
+          if (
+            metadataManager.strokeVisibilityByImage?.[overlay.viewId]?.[strokeLabel] !== undefined
+          ) {
+            delete metadataManager.strokeVisibilityByImage[overlay.viewId][strokeLabel];
+          }
+          if (
+            metadataManager.strokeLabelVisibility?.[overlay.viewId]?.[strokeLabel] !== undefined
+          ) {
+            delete metadataManager.strokeLabelVisibility[overlay.viewId][strokeLabel];
+          }
+          if (metadataManager.strokeMeasurements?.[overlay.viewId]?.[strokeLabel] !== undefined) {
+            delete metadataManager.strokeMeasurements[overlay.viewId][strokeLabel];
+          }
         }
       }
     }
@@ -1276,6 +1381,7 @@ export class MeasurementOverlayManager {
       viewId: overlay.viewId,
       clearedCount: keys.length,
       clearedRoles: keys,
+      preserveMetadata: options.preserveMetadata === true,
     });
   }
 

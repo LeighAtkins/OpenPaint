@@ -5,12 +5,126 @@ import { isAuthEnabled, isSupabaseConfigured } from '@/utils/env';
 import { getNoRewardMessage, showRewardAchievement } from './reward-achievement';
 import { ensureCloudSaveDetails } from './project-naming.js';
 
+type CloudSaveStatus = 'saving' | 'saved' | 'dirty' | 'error';
+let latestCloudSaveStatus: CloudSaveStatus | null = null;
+let projectRevision = 0;
+
+function applyCloudSaveButtonStatus(): void {
+  if (!latestCloudSaveStatus) return;
+  const labels: Record<CloudSaveStatus, string> = {
+    saving: 'Saving...',
+    saved: 'Cloud saved',
+    dirty: 'Cloud Save',
+    error: 'Save failed',
+  };
+  getCloudSaveButtons().forEach(button => {
+    if (button.textContent?.trim() === 'My Projects') {
+      delete button.dataset.cloudState;
+      return;
+    }
+    button.dataset.cloudState = latestCloudSaveStatus || '';
+    button.title =
+      latestCloudSaveStatus === 'dirty' ? 'Save changes to cloud' : labels[latestCloudSaveStatus!];
+    button.setAttribute('aria-label', labels[latestCloudSaveStatus!]);
+    const label = button.querySelector<HTMLElement>('.label-long');
+    if (label) label.textContent = labels[latestCloudSaveStatus!];
+  });
+}
+
+function markProjectMutated(): void {
+  projectRevision += 1;
+  if (latestCloudSaveStatus === 'saved') {
+    emitCloudSaveStatus('dirty', { message: 'Changes not saved' });
+  }
+}
+
+function bindCloudDirtyTracking(): void {
+  [
+    'openpaint:stroke-created',
+    'openpaint:project-mutated',
+    'openpaint:image-collection-change',
+    'openpaint:tag-style-state-changed',
+    'frameCreated',
+    'frameUpdated',
+    'frameDeleted',
+  ].forEach(eventName => window.addEventListener(eventName, markProjectMutated));
+
+  const app = (window as any).app;
+  const canvas = app?.canvasManager?.fabricCanvas;
+  if (!canvas?.on) return;
+
+  const markCanvasMutation = (event: { target?: any } = {}): void => {
+    if (
+      (window as any).__isLoadingProject ||
+      app?.projectManager?.isLoadingProject ||
+      app?.canvasManager?.isLoadingFromJSON
+    ) {
+      return;
+    }
+    const target = event.target;
+    if (
+      !target ||
+      target.excludeFromExport ||
+      target.isTag ||
+      target.isTagText ||
+      target.isTagBackground ||
+      target.isTagGroup ||
+      target.isConnectorLine ||
+      target.parentTagObject
+    ) {
+      return;
+    }
+    const semanticObject =
+      target.strokeMetadata ||
+      target.textMetadata ||
+      target.shapeMetadata ||
+      target.type === 'i-text' ||
+      target.type === 'textbox';
+    if (semanticObject) markProjectMutated();
+  };
+
+  canvas.on('object:added', markCanvasMutation);
+  canvas.on('object:modified', markCanvasMutation);
+  canvas.on('object:removed', markCanvasMutation);
+}
+
+function emitCloudSaveStatus(
+  status: CloudSaveStatus,
+  detail: { savedAt?: string; message?: string; projectId?: string } = {}
+): void {
+  latestCloudSaveStatus = status;
+  applyCloudSaveButtonStatus();
+  window.dispatchEvent(
+    new CustomEvent('openpaint:cloud-save-status', {
+      detail: { status, ...detail },
+    })
+  );
+}
+
 const CLOUD_UI_STYLES = /* css */ `
   .cloud-save-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     flex-shrink: 0;
+  }
+
+  .cloud-save-btn[data-cloud-state='saved'] {
+    border-color: #86efac;
+    color: #047857;
+    background: #f0fdf4;
+  }
+
+  .cloud-save-btn[data-cloud-state='dirty'] {
+    border-color: #cbd5e1;
+    color: inherit;
+    background: #fff;
+  }
+
+  .cloud-save-btn[data-cloud-state='error'] {
+    border-color: #fecaca;
+    color: #b91c1c;
+    background: #fef2f2;
   }
 
   .cloud-save-menu {
@@ -46,7 +160,8 @@ const CLOUD_UI_STYLES = /* css */ `
   }
 
   .cloud-save-menu:hover .cloud-save-menu-panel,
-  .cloud-save-menu:focus-within .cloud-save-menu-panel {
+  .cloud-save-menu:focus-within .cloud-save-menu-panel,
+  .cloud-save-menu-panel.visible {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
@@ -264,6 +379,106 @@ let searchTimeout: ReturnType<typeof setTimeout> | null = null;
 let cloudProjectsCache: Array<{ id: string; name: string; updated_at: string }> = [];
 let cloudMenuEmptyProjectMode = false;
 
+function bindCanvasCloudMenu(): void {
+  const root = document.getElementById('canvasCloudMenu');
+  const trigger = document.getElementById('canvasCloudSaveBtn');
+  const panel = root?.querySelector<HTMLElement>('.cloud-save-menu-panel');
+  if (!root || !trigger || !panel || root.dataset.cloudMenuBound === 'true') return;
+
+  root.dataset.cloudMenuBound = 'true';
+  let hideTimer: number | undefined;
+
+  const positionPanel = (): void => {
+    if (panel.parentElement !== document.body) document.body.appendChild(panel);
+    const triggerRect = trigger.getBoundingClientRect();
+    const panelWidth = Math.max(142, panel.offsetWidth || 0);
+    const center = triggerRect.left + triggerRect.width / 2;
+    const left = Math.min(
+      Math.max(8 + panelWidth / 2, center),
+      Math.max(8 + panelWidth / 2, window.innerWidth - 8 - panelWidth / 2)
+    );
+    panel.style.position = 'fixed';
+    panel.style.left = `${left}px`;
+    panel.style.right = 'auto';
+    panel.style.top = 'auto';
+    panel.style.bottom = `${Math.max(8, window.innerHeight - triggerRect.top + 7)}px`;
+    panel.style.zIndex = '15000';
+  };
+
+  const hidePanel = (): void => {
+    window.clearTimeout(hideTimer);
+    hideTimer = undefined;
+    panel.classList.remove('visible');
+    trigger.setAttribute('aria-expanded', 'false');
+  };
+
+  const showPanel = (): void => {
+    window.clearTimeout(hideTimer);
+    hideTimer = undefined;
+    positionPanel();
+    panel.classList.add('visible');
+    trigger.setAttribute('aria-expanded', 'true');
+  };
+
+  const scheduleHide = (): void => {
+    window.clearTimeout(hideTimer);
+    hideTimer = window.setTimeout(hidePanel, 220);
+  };
+
+  trigger.setAttribute('aria-haspopup', 'menu');
+  trigger.setAttribute('aria-expanded', 'false');
+  root.addEventListener('mouseenter', showPanel);
+  root.addEventListener('mouseleave', scheduleHide);
+  panel.addEventListener('mouseenter', showPanel);
+  panel.addEventListener('mouseleave', scheduleHide);
+  panel.addEventListener('focusin', showPanel);
+  panel.addEventListener('focusout', event => {
+    if (!panel.contains(event.relatedTarget as Node | null)) scheduleHide();
+  });
+  trigger.addEventListener('focus', showPanel);
+  trigger.addEventListener('keydown', event => {
+    if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      event.preventDefault();
+      showPanel();
+      panel.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+    } else if (event.key === 'Escape') {
+      hidePanel();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (panel.classList.contains('visible')) positionPanel();
+  });
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (panel.classList.contains('visible')) positionPanel();
+    },
+    true
+  );
+  // Safety nets: mouseleave can be swallowed when the panel is re-parented to
+  // body mid-hover or after a canvas drag ends with the pointer elsewhere —
+  // without these the panel sticks open indefinitely.
+  window.addEventListener(
+    'pointerdown',
+    (event: PointerEvent) => {
+      if (!panel.classList.contains('visible')) return;
+      const target = event.target as Node | null;
+      if (panel.contains(target) || root.contains(target)) return;
+      hidePanel();
+    },
+    true
+  );
+  window.addEventListener('blur', hidePanel);
+  window.addEventListener(
+    'keydown',
+    (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && panel.classList.contains('visible')) hidePanel();
+    },
+    true
+  );
+}
+
 const cloudSaveButtonMarkup = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span class="label-long">Cloud Save</span>`;
 const myProjectsButtonMarkup = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg><span class="label-long">My Projects</span>`;
 
@@ -331,6 +546,7 @@ function syncCloudPrimaryAction(): void {
     secondaryButton.title = emptyProjectMode ? 'Save to cloud' : 'My Projects';
     secondaryButton.setAttribute('aria-label', emptyProjectMode ? 'Cloud save' : 'My Projects');
   }
+  applyCloudSaveButtonStatus();
 }
 
 function scheduleCloudPrimaryActionSync(): void {
@@ -477,11 +693,11 @@ async function loadProjectsList(
   }
 }
 
-async function handleLoadProject(projectId: string): Promise<void> {
+async function handleLoadProject(projectId: string): Promise<boolean> {
   const projectManager = (window as any).app?.projectManager;
   if (!projectManager) {
     console.error('[Cloud] Project manager not available');
-    return;
+    return false;
   }
 
   try {
@@ -496,7 +712,7 @@ async function handleLoadProject(projectId: string): Promise<void> {
       if (typeof (window as any).showStatusMessage === 'function') {
         (window as any).showStatusMessage('Failed to load: ' + result.error.message, 'error');
       }
-      return;
+      return false;
     }
 
     const projectData = result.data.data as Record<string, unknown>;
@@ -508,15 +724,21 @@ async function handleLoadProject(projectId: string): Promise<void> {
       if (typeof (window as any).showStatusMessage === 'function') {
         (window as any).showStatusMessage('Cloud load not supported in this version', 'error');
       }
-      return;
+      return false;
     }
 
     cloudSaveService.setCurrentProjectId(projectId);
+    projectRevision = 0;
+    emitCloudSaveStatus('saved', {
+      projectId,
+      savedAt: result.data.updated_at,
+    });
     closeCloudModal();
 
     if (typeof (window as any).showStatusMessage === 'function') {
       (window as any).showStatusMessage('Project loaded from cloud', 'success');
     }
+    return true;
   } catch (error) {
     console.error('[Cloud] Load error:', error);
     if (typeof (window as any).showStatusMessage === 'function') {
@@ -525,6 +747,7 @@ async function handleLoadProject(projectId: string): Promise<void> {
         'error'
       );
     }
+    return false;
   }
 }
 
@@ -558,21 +781,23 @@ function resetSaveBtn(): void {
     saveBtn.disabled = false;
     saveBtn.innerHTML = cloudSaveButtonMarkup;
   });
+  applyCloudSaveButtonStatus();
 }
 
-async function handleCloudSave(): Promise<void> {
+async function handleCloudSave(options: { allowPartialDetails?: boolean } = {}): Promise<boolean> {
   const projectManager = (window as any).app?.projectManager;
   if (!projectManager) {
     console.error('[Cloud] Project manager not available');
     if (typeof (window as any).showStatusMessage === 'function') {
       (window as any).showStatusMessage('Project manager not available', 'error');
     }
-    return;
+    emitCloudSaveStatus('error', { message: 'Project manager not available' });
+    return false;
   }
 
   const DEFAULT_PROJECT_NAME = 'OpenPaint Project';
 
-  const canProceed = await ensureCloudSaveDetails();
+  const canProceed = options.allowPartialDetails === true || (await ensureCloudSaveDetails());
   if (!canProceed) {
     if (typeof (window as any).showStatusMessage === 'function') {
       (window as any).showStatusMessage(
@@ -580,13 +805,15 @@ async function handleCloudSave(): Promise<void> {
         'warning'
       );
     }
-    return;
+    return false;
   }
 
   getCloudSaveButtons().forEach(saveBtn => {
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving...';
   });
+  const saveRevision = projectRevision;
+  emitCloudSaveStatus('saving');
 
   try {
     console.warn('[Cloud] Preparing project data for cloud save...');
@@ -645,11 +872,20 @@ async function handleCloudSave(): Promise<void> {
       if (typeof (window as any).showStatusMessage === 'function') {
         (window as any).showStatusMessage('Cloud save failed: ' + result.error.message, 'error');
       }
-      return;
+      emitCloudSaveStatus('error', { message: result.error.message });
+      return false;
     }
 
     console.warn('[Cloud] Save succeeded, id:', result.data.id);
     cloudSaveService.setCurrentProjectId(result.data.id);
+    if (projectRevision === saveRevision) {
+      emitCloudSaveStatus('saved', {
+        projectId: result.data.id,
+        savedAt: result.data.updated_at || new Date().toISOString(),
+      });
+    } else {
+      emitCloudSaveStatus('dirty', { message: 'Changes made during save' });
+    }
 
     // Earn coins on successful qualifying cloud save
     if (isAuthEnabled()) {
@@ -677,6 +913,7 @@ async function handleCloudSave(): Promise<void> {
     if (typeof (window as any).showStatusMessage === 'function') {
       (window as any).showStatusMessage('Project saved to cloud', 'success');
     }
+    return true;
   } catch (error) {
     console.error('[Cloud] Save error:', error);
     if (typeof (window as any).showStatusMessage === 'function') {
@@ -685,9 +922,39 @@ async function handleCloudSave(): Promise<void> {
         'error'
       );
     }
+    emitCloudSaveStatus('error', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
+    return false;
   } finally {
     resetSaveBtn();
   }
+}
+
+export function getCloudImportState(): {
+  status: CloudSaveStatus | null;
+  projectId: string | null;
+  revision: number;
+} {
+  return {
+    status: latestCloudSaveStatus,
+    projectId: cloudSaveService.getCurrentProjectId(),
+    revision: projectRevision,
+  };
+}
+
+export async function saveCurrentProjectForImport(): Promise<boolean> {
+  return handleCloudSave({ allowPartialDetails: true });
+}
+
+export async function loadCloudProjectForImport(projectId: string): Promise<boolean> {
+  return handleLoadProject(projectId);
+}
+
+export function detachCloudProjectForImport(): void {
+  cloudSaveService.clearCurrentProject();
+  projectRevision = 0;
+  emitCloudSaveStatus('dirty', { message: 'New project not saved' });
 }
 
 function openCloudModal(): void {
@@ -783,6 +1050,12 @@ export function initCloudUI(): void {
   if (!isAuthEnabled() || !isSupabaseConfigured()) return;
 
   bindCloudSaveTriggers();
+  bindCloudDirtyTracking();
+  bindCanvasCloudMenu();
+  window.addEventListener('openpaint:request-cloud-save', event => {
+    const detail = (event as CustomEvent<{ allowPartialDetails?: boolean }>).detail;
+    void handleCloudSave({ allowPartialDetails: detail?.allowPartialDetails === true });
+  });
 
   const style = document.createElement('style');
   style.textContent = CLOUD_UI_STYLES;

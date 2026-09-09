@@ -1006,6 +1006,153 @@
         justify-content: center;
       }
 
+      .toolbar-menu-wide-action {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 8px;
+        color: #1e40af;
+        background: #eff6ff;
+        border-color: #bfdbfe;
+      }
+
+      .toolbar-menu-wide-action:hover {
+        background: #dbeafe;
+        border-color: #93c5fd;
+      }
+
+      #gorgiasExtensionDialog {
+        width: min(520px, calc(100vw - 24px));
+        max-height: calc(100vh - 32px);
+        padding: 0;
+        border: 0;
+        border-radius: 10px;
+        color: #0f172a;
+        background: #fff;
+        box-shadow: 0 24px 64px rgba(15, 23, 42, 0.28);
+      }
+
+      #gorgiasExtensionDialog::backdrop {
+        background: rgba(15, 23, 42, 0.48);
+        backdrop-filter: blur(2px);
+      }
+
+      .extension-guide-card {
+        display: flex;
+        flex-direction: column;
+        max-height: calc(100vh - 32px);
+      }
+
+      .extension-guide-header,
+      .extension-guide-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 16px;
+      }
+
+      .extension-guide-header {
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .extension-guide-header h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .extension-guide-close {
+        width: 32px;
+        height: 32px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        background: #fff;
+        color: #475569;
+        cursor: pointer;
+      }
+
+      .extension-guide-body {
+        overflow-y: auto;
+        padding: 16px;
+      }
+
+      .extension-guide-intro {
+        margin: 0 0 14px;
+        color: #475569;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .extension-guide-steps {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        counter-reset: extension-step;
+      }
+
+      .extension-guide-steps li {
+        display: grid;
+        grid-template-columns: 24px minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+        padding: 9px 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 7px;
+        color: #334155;
+        font-size: 13px;
+        line-height: 1.4;
+        counter-increment: extension-step;
+      }
+
+      .extension-guide-steps li::before {
+        content: counter(extension-step);
+        display: grid;
+        place-items: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        color: #fff;
+        background: #2563eb;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .extension-guide-note {
+        margin: 12px 0 0;
+        padding: 9px 10px;
+        border-left: 3px solid #2563eb;
+        background: #f8fafc;
+        color: #475569;
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .extension-guide-footer {
+        border-top: 1px solid #e2e8f0;
+        justify-content: flex-end;
+      }
+
+      .extension-guide-download {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 32px;
+        padding: 0 13px;
+        border: 1px solid #1d4ed8;
+        border-radius: 6px;
+        color: #fff;
+        background: #2563eb;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .extension-guide-download:hover {
+        background: #1d4ed8;
+      }
+
       .toolbar-menu-panel .cloud-toolbar-group {
         display: grid !important;
         grid-template-columns: 1fr 1fr;
@@ -1385,6 +1532,53 @@
 
       #mini-stepper ol::-webkit-scrollbar {
         display: none;
+      }
+
+      #mini-stepper.is-compact > ol,
+      #mini-stepper.is-compact > #mini-stepper-indicator {
+        display: none !important;
+      }
+
+      .mini-stepper-compact {
+        display: none;
+        align-items: center;
+        gap: 2px;
+        height: 34px;
+        padding: 2px;
+      }
+
+      #mini-stepper.is-compact .mini-stepper-compact {
+        display: flex;
+      }
+
+      .mini-stepper-compact button {
+        height: 28px;
+        min-width: 28px;
+        padding: 0 7px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: #475569;
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .mini-stepper-compact button:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+      }
+
+      .mini-stepper-compact button:disabled {
+        opacity: 0.32;
+        cursor: default;
+      }
+
+      .mini-stepper-position {
+        min-width: 62px !important;
+        border-left: 1px solid #e2e8f0 !important;
+        border-right: 1px solid #e2e8f0 !important;
+        border-radius: 0 !important;
+        color: #0f172a !important;
       }
 
       /* Navigation container styling - positioned next to lock button inside capture frame */
@@ -1968,7 +2162,10 @@
 
       /* Force scrollbars to always show when content overflows */
       #strokeVisibilityControls {
-        scroll-behavior: smooth;
+        /* Library selection and Elements rebuilds restore exact anchors.
+           Smooth programmatic scrolling turns those corrections into a
+           visible up/down wobble, especially in Safari. */
+        scroll-behavior: auto;
         overflow-y: scroll !important;
         scrollbar-width: auto !important;
         scrollbar-color: #9ca3af #f3f4f6 !important;
@@ -1984,6 +2181,9 @@
       #imageList {
         position: relative;
         z-index: 100;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+        touch-action: pan-y;
       }
 
       #elementsBody {
@@ -2031,6 +2231,19 @@
 
       #imageList {
         background: white !important;
+      }
+      #imageList::-webkit-scrollbar {
+        width: 6px;
+      }
+      #imageList::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      #imageList::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.5);
+        border-radius: 3px;
+      }
+      #imageList::-webkit-scrollbar-thumb:hover {
+        background: rgba(148, 163, 184, 0.8);
       }
 
       /* Snap guide line should be above image list content */
@@ -2201,11 +2414,37 @@
         font-weight: 800;
         line-height: 1;
         box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+        opacity: 0;
         transition:
           background 120ms ease,
           color 120ms ease,
           transform 120ms ease,
-          border-color 120ms ease;
+          border-color 120ms ease,
+          opacity 120ms ease;
+      }
+
+      .image-thumbnail:hover .thumbnail-compare-toggle,
+      .image-thumbnail:focus-within .thumbnail-compare-toggle,
+      .image-container:hover .thumbnail-compare-toggle,
+      .image-container:focus-within .thumbnail-compare-toggle,
+      .image-thumbnail.compare-selected .thumbnail-compare-toggle,
+      .image-container.compare-selected .thumbnail-compare-toggle {
+        opacity: 1;
+      }
+
+      /* Soft snap-focus indicator for the vertical project gallery — fades at
+         the edges so it reads as a guide, not a stray hairline. */
+      .image-list-focus-line {
+        height: 0;
+        border-top: 1px solid rgba(100, 116, 139, 0.3);
+        -webkit-mask-image: linear-gradient(
+          90deg,
+          transparent,
+          #000 14%,
+          #000 86%,
+          transparent
+        );
+        mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
       }
 
       .thumbnail-compare-toggle:hover {
@@ -2341,7 +2580,7 @@
       }
 
       .multiview-pane-label {
-        max-width: min(50%, 200px);
+        max-width: calc(100% - 104px);
         overflow: hidden;
         padding: 4px 7px;
         border: 1px solid rgba(148, 163, 184, 0.55);
@@ -2353,6 +2592,10 @@
         line-height: 1;
         text-overflow: ellipsis;
         white-space: nowrap;
+      }
+
+      .multiview-grid .multiview-pane:nth-child(2) .multiview-pane-actions {
+        right: 48px;
       }
 
       .multiview-pane.mv-focused .multiview-pane-label {
@@ -2976,6 +3219,7 @@
             <div class="shape-menu" id="drawingModeMenu">
               <button type="button" data-drawing-mode="line">Straight Line</button>
               <button type="button" data-drawing-mode="curve">Curved Line</button>
+              <button type="button" data-drawing-mode="highlighter">Highlight</button>
               <div id="textModeWrapper" class="shape-toggle text-mode-toggle tool-flyout">
                 <button id="textModeToggle" class="tbtn" title="Text Tool (T) — Add text annotations" aria-label="Text Tool" type="button">
                   <span class="label-long">Text</span><span class="label-short">Text</span>
@@ -3219,6 +3463,36 @@
                   Save
                 </button>
               </div>
+              <button
+                id="sectionalBuilderBtn"
+                class="tbtn toolbar-menu-wide-action"
+                type="button"
+                role="menuitem"
+                title="Build a sectional from modular sofa pieces"
+              >
+                <span aria-hidden="true">&#9638;</span>
+                Sectional Builder
+              </button>
+              <button
+                id="measurementReviewBtn"
+                class="tbtn toolbar-menu-wide-action"
+                type="button"
+                role="menuitem"
+                title="Review selected measurements from a SofaPaint PDF"
+              >
+                <span aria-hidden="true">✓</span>
+                Measurement Review
+              </button>
+              <button
+                id="gorgiasExtensionGuideBtn"
+                class="tbtn toolbar-menu-wide-action"
+                type="button"
+                role="menuitem"
+                title="Install the Gorgias image importer"
+              >
+                <span aria-hidden="true">&#8595;</span>
+                Gorgias image importer
+              </button>
               <div class="toolbar-menu-danger-zone">
                 <span>Destructive</span>
                 <button id="clear" class="tbtn toolbar-menu-danger" type="button">Clear project</button>
@@ -3545,6 +3819,7 @@
               <div class="shape-menu" id="drawingModeMenu">
                 <button type="button" data-drawing-mode="line">Straight Line</button>
                 <button type="button" data-drawing-mode="curve">Curved Line</button>
+                <button type="button" data-drawing-mode="highlighter">Highlight</button>
                 <div id="textModeWrapper" class="shape-toggle text-mode-toggle tool-flyout">
                   <button id="textModeToggle" class="tbtn" title="Text Tool" aria-label="Text Tool" type="button">
                     <span class="label-long">Text</span><span class="label-short">Text</span>
@@ -3678,6 +3953,7 @@
                 class="px-3 py-2 border border-gray-300 rounded-xl text-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 shadow-sm"
               >
                 <option value="solid">Solid</option>
+                <option value="stretchy">Stretch</option>
                 <option value="dotted">Dotted</option>
                 <option value="small">Small Dash</option>
                 <option value="medium">Medium Dash</option>
@@ -3685,6 +3961,7 @@
                 <option value="dot-dash">Dot-Dash</option>
                 <option value="mixed">Split Dash</option>
                 <option value="tape">Measuring Tape</option>
+                <option value="zipper">Zipper</option>
                 <option value="custom">Custom</option>
               </select>
               <div id="customDashControls" class="hidden items-center gap-2">
@@ -3792,6 +4069,60 @@
             </button>
           </div>
 
+          <div class="elements-quick-style-row" role="group" aria-label="Quick styles">
+            <label class="elements-quick-style-field" title="Line width in pixels — click −/+ or type">
+              <button type="button" class="elements-step-btn" data-quick-adjust="width" data-delta="-1" aria-label="Decrease line width">−</button>
+              <input
+                id="quickLineWidth"
+                type="number"
+                min="0.5"
+                max="300"
+                step="1"
+                value="2"
+                autocomplete="off"
+                aria-label="Line width in pixels"
+              />
+              <button type="button" class="elements-step-btn" data-quick-adjust="width" data-delta="1" aria-label="Increase line width">+</button>
+            </label>
+            <label class="elements-quick-style-field" title="Arrow scale — click −/+ or type">
+              <button type="button" class="elements-step-btn" data-quick-adjust="arrow" data-delta="-0.5" aria-label="Decrease arrow scale">−</button>
+              <input
+                id="quickArrowScale"
+                type="number"
+                min="2"
+                max="8"
+                step="0.5"
+                value="5"
+                autocomplete="off"
+                aria-label="Arrow scale"
+              />
+              <button type="button" class="elements-step-btn" data-quick-adjust="arrow" data-delta="0.5" aria-label="Increase arrow scale">+</button>
+            </label>
+            <label class="elements-quick-style-field" title="Tag size — click −/+ or type">
+              <button
+                id="quickTagDecrease"
+                type="button"
+                class="elements-step-btn"
+                data-quick-adjust="tag"
+                data-delta="-2"
+                title="Decrease tag size"
+                aria-label="Decrease tag size"
+              >−</button>
+              <span id="quickTagSizeValue" data-quick-mirror-bound="true">20</span>
+              <button
+                id="quickTagIncrease"
+                type="button"
+                class="elements-step-btn"
+                data-quick-adjust="tag"
+                data-delta="2"
+                title="Increase tag size"
+                aria-label="Increase tag size"
+              >+</button>
+            </label>
+
+          </div>
+
+
           <div class="elements-quick-actions">
             <button
               id="selectAllStrokesBtn"
@@ -3826,6 +4157,9 @@
             <button type="button" class="elements-view-tab active" data-elements-view="measurements" role="tab" aria-selected="true">
               Measure <span id="elementsMeasurementCount">0</span>
             </button>
+            <button type="button" class="elements-view-tab" data-elements-view="library" role="tab" aria-selected="false">
+              Library <span id="elementsLibraryCount">0</span>
+            </button>
             <button type="button" class="elements-view-tab" data-elements-view="text" role="tab" aria-selected="false">
               Text <span id="elementsTextCount">0</span>
             </button>
@@ -3851,6 +4185,8 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>
             </summary>
             <div class="elements-appearance-body">
+              <div id="elementsStrokeAppearanceMount"></div>
+              <div class="elements-appearance-section-title elements-appearance-tag-title">Tag</div>
               <div class="elements-setting-row">
                 <span>Tag size</span>
                 <div class="elements-stepper">
@@ -3953,6 +4289,20 @@
           <p class="images-panel-subtitle">Project views</p>
         </div>
         <div class="images-header-actions">
+          <button
+            id="openImageOverviewBtn"
+            class="elements-icon-button"
+            type="button"
+            title="Open image overview"
+            aria-label="Open image overview"
+          >
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7" rx="1"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="1"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="1"></rect>
+              <rect x="14" y="14" width="7" height="7" rx="1"></rect>
+            </svg>
+          </button>
           <div class="images-scroll-mode op-segmented" role="group" aria-label="Scroll selection mode" title="Choose whether scrolling selects images">
             <input type="checkbox" id="scrollSelectToggle" checked />
             <button type="button" data-scroll-select="auto" aria-pressed="true">Auto</button>
@@ -3982,7 +4332,7 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M19 9l-7 7-7-7"
+                d="M9 5l7 7-7 7"
               ></path>
             </svg>
           </button>
@@ -4010,18 +4360,20 @@
           <!-- Legacy image list for backwards compatibility -->
           <div
             id="imageList"
-            class="space-y-4 mb-0 h-full overflow-y-auto overflow-x-hidden pr-0 snap-y snap-mandatory scroll-smooth"
+            class="space-y-4 mb-0 h-full overflow-y-auto pr-0 snap-y snap-proximity"
             style="
               padding-top: calc(30vh - 5rem);
               padding-bottom: calc(30vh - 5rem + 70px);
               position: relative;
               z-index: 100;
+              scrollbar-width: thin;
+              scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
             "
           ></div>
 
           <!-- Snap guide line -->
           <div
-            class="pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 border-t border-slate-300/70 z-[80]"
+            class="image-list-focus-line pointer-events-none absolute left-0 right-0 top-1/2 -translate-y-1/2 z-[80]"
           ></div>
         </div>
 
@@ -4272,6 +4624,10 @@
           <button
             id="quickSaveBtn"
             class="px-3 py-1 bg-black hover:bg-slate-900 border border-black text-white text-xs rounded-lg"
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            aria-controls="quickSaveMenu"
           >
             Save
           </button>
@@ -4279,6 +4635,8 @@
             id="quickSaveMenu"
             class="hidden absolute bottom-full mb-1 left-0 bg-white border border-gray-200 rounded-xl shadow-lg min-w-[120px]"
             style="white-space: nowrap; z-index: 5000"
+            role="menu"
+            aria-label="Save options"
           >
             <button
               class="block w-full text-left px-3 py-2 text-xs hover:bg-slate-50 rounded-t-xl transition-colors"
@@ -4541,6 +4899,47 @@
           </tbody>
         </table>
       </div>
+    </dialog>
+
+    <dialog id="gorgiasExtensionDialog" aria-labelledby="gorgiasExtensionTitle">
+      <section class="extension-guide-card">
+        <header class="extension-guide-header">
+          <div>
+            <h2 id="gorgiasExtensionTitle">Gorgias image importer</h2>
+          </div>
+          <button
+            id="gorgiasExtensionClose"
+            class="extension-guide-close"
+            type="button"
+            aria-label="Close extension guide"
+          >
+            &#10005;
+          </button>
+        </header>
+        <div class="extension-guide-body">
+          <p class="extension-guide-intro">
+            Send full-resolution ticket photos and attachments directly from Gorgias into SofaPaint.
+          </p>
+          <ol class="extension-guide-steps">
+            <li><span>Download the extension ZIP below, then unzip it.</span></li>
+            <li><span>Open <strong>chrome://extensions</strong> in Chrome.</span></li>
+            <li><span>Turn on <strong>Developer mode</strong> in the top-right corner.</span></li>
+            <li><span>Choose <strong>Load unpacked</strong> and select the unzipped <strong>gorgias-sofapaint</strong> folder.</span></li>
+            <li><span>Pin the extension, open a Gorgias ticket, and choose the photos to send.</span></li>
+          </ol>
+          <p class="extension-guide-note">
+            Keep SofaPaint signed in. The importer can open SofaPaint automatically when it is not already running.
+          </p>
+        </div>
+        <footer class="extension-guide-footer">
+          <a
+            id="gorgiasExtensionDownload"
+            class="extension-guide-download"
+            href="/downloads/gorgias-sofapaint-extension.zip"
+            download
+          >Download extension</a>
+        </footer>
+      </section>
     </dialog>
 
     <!-- Welcome Overlay for First-Time Users -->

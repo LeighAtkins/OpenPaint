@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sectional-builder-45-handoff version="1.0" date="2026-07-29">
+  <objective>
+    Make the Sectional Builder left and right 45-degree previews read as one
+    physically connected sofa. Both views must show the same assembly from
+    opposite front corners without inside-out arms, detached return modules,
+    cushions showing through structural backs, or ottomans acquiring backs.
+  </objective>
+
+  <workspace>
+    <root>/Users/leigh/Documents/New project/OpenPaint</root>
+    <primary-file>src/modules/ui/sectional-builder.ts</primary-file>
+    <unit-test>tests/unit/sectional-builder.test.ts</unit-test>
+    <visual-test>tests/e2e/sectional-builder-45-visual.spec.ts</visual-test>
+    <review-sheet-actual>test-results/sectional-builder-45-visua-459e4-nt-from-both-product-angles-e2e/sectional-builder-45-review-sheet-actual.png</review-sheet-actual>
+    <existing-general-handoff>HANDOFF_SECTIONAL_BUILDER.xml</existing-general-handoff>
+  </workspace>
+
+  <current-symptoms>
+    <working>
+      <item>Straight 3-seat and 2-seat presets are visually coherent in both views.</item>
+      <item>Straight sofa plus chaise is mostly coherent in both views.</item>
+      <item>Sofa plus ottoman is mostly coherent and the ottoman remains backless.</item>
+      <item>Arms, seat cushions, structural backs, and loose back cushions are separate semantic surfaces.</item>
+      <item>Every surface has data-sb-review-part metadata for targeted visual review.</item>
+    </working>
+    <broken>
+      <item>L-shape and L-shape-plus-chaise return rows appear exploded or disconnected, especially in Right 45.</item>
+      <item>Rotated return backs can look like oversized freestanding panels.</item>
+      <item>Changing painter order changes which artifact is visible but does not make the return physically coherent.</item>
+      <item>Some arm faces still read inside-out from the opposite camera angle.</item>
+      <item>Flat SVG polygon painter ordering is being asked to resolve intersecting module geometry without a reliable physical layout.</item>
+    </broken>
+  </current-symptoms>
+
+  <root-cause-analysis>
+    <cause id="geometry-grid-leak" confidence="high">
+      The editable plan uses a forgiving fixed grid where CELL is 132 pixels.
+      The 45-degree renderer also used this grid as product-space geometry.
+      Consequently 90 cm, 100 cm, and 105 cm modules all commonly become one
+      132-pixel tile, while a 160 cm chaise becomes two tiles. This means
+      dimensions, rotations, and connector positions are not represented by
+      one consistent physical coordinate system.
+    </cause>
+    <cause id="incorrect-mirror-invariant" confidence="confirmed">
+      A previous test required left and right views to use the identical module
+      paint sequence because screen x is mirrored. That assumption is false.
+      Screen projection may mirror, but camera depth changes between opposite
+      front corners. Asymmetric assemblies require camera-specific paint order.
+    </cause>
+    <cause id="painter-granularity" confidence="confirmed">
+      Whole-module sorting keeps each module anatomically coherent but cannot
+      resolve a true L intersection where one edge of a return is behind the
+      corner and another is in front. Global surface sorting can represent that
+      intersection, but only if every surface has correct world coordinates and
+      depth. Layer-rank-first global sorting previously split modules badly.
+    </cause>
+  </root-cause-analysis>
+
+  <work-completed-this-pass>
+    <item>
+      Replaced the invalid same-paint-sequence unit test with a camera-specific
+      depth expectation. Before the interrupted refactor, 60/60 unit tests passed.
+    </item>
+    <item>
+      Changed the renderer from whole-module painter ordering to global
+      surface-depth ordering with semantic layer, piece, and source-order
+      tie-breaks.
+    </item>
+    <item>
+      Ran the 12-case visual matrix. Surface sorting alone did not repair the
+      L-shape geometry, proving that ordering is not the sole defect.
+    </item>
+  </work-completed-this-pass>
+
+  <important-partial-change status="incomplete">
+    <warning>
+      A centimetre-derived ProductLayout refactor has been partially applied to
+      src/modules/ui/sectional-builder.ts and may not currently type-check.
+      Do not assume the branch is green.
+    </warning>
+    <added>
+      <item>ProductPiecePlacement and ProductLayout types.</item>
+      <item>PRODUCT_PX_PER_CM constant.</item>
+      <item>createProductLayout(pieces), using exact module dimensions for column and row offsets.</item>
+      <item>productProjection now accepts ProductLayout and derives bounds from physical placements.</item>
+      <item>sectionalPiecePoint now accepts ProductLayout.</item>
+      <item>sectionalProductPieceLayers now accepts ProductLayout.</item>
+    </added>
+    <still-required>
+      <item>Create the layout in sectionalProductMarkup before productProjection.</item>
+      <item>Pass layout into productProjection.</item>
+      <item>Pass layout into every sectionalProductPieceLayers call.</item>
+      <item>Update any remaining sectionalPiecePoint calls.</item>
+      <item>Run npx tsc --noEmit immediately and fix all signature errors.</item>
+    </still-required>
+  </important-partial-change>
+
+  <recommended-implementation>
+    <step order="1">
+      Finish the ProductLayout wiring and restore a clean type-check. Do not
+      change the editable plan grid or saved project format.
+    </step>
+    <step order="2">
+      Define product-space placement from explicit connector alignment rather
+      than merely summing row and column maxima. A rotated return must attach
+      its local connector to the corner connector exactly.
+    </step>
+    <step order="3">
+      Give each rendered surface a stable depth interval, not only a center
+      depth point. Use far-to-near surface ordering and split a polygon only if
+      two connected surfaces genuinely cross in projection.
+    </step>
+    <step order="4">
+      Keep capability rules explicit by PieceKind. Ottoman has no back frame or
+      back cushion. Corner has two structural back planes. Perpendicular return
+      upholstery must obey camera visibility rather than a blanket hide rule.
+    </step>
+    <step order="5">
+      Render arm outer panel, inner panel, front end, rear end, and top cap as
+      separate surfaces. Cull faces by transformed normal for each camera. Do
+      not infer the visible arm face from left/right screen position.
+    </step>
+    <step order="6">
+      Compare all six presets in both views after every geometry change. Do not
+      update the screenshot baseline until all twelve cells are coherent.
+    </step>
+  </recommended-implementation>
+
+  <test-contract>
+    <commands>
+      <command>npx tsc --noEmit</command>
+      <command>npx vitest run tests/unit/sectional-builder.test.ts</command>
+      <command>npx playwright test tests/e2e/sectional-builder-45-visual.spec.ts --project=e2e</command>
+    </commands>
+    <matrix>
+      <preset>3-seat</preset>
+      <preset>2-seat</preset>
+      <preset>chaise</preset>
+      <preset>L-shape</preset>
+      <preset>L+Chaise</preset>
+      <preset>+Ottoman</preset>
+      <view>Left 45</view>
+      <view>Right 45</view>
+    </matrix>
+    <assertions>
+      <item>No blank product render.</item>
+      <item>No ottoman back-frame or back-cushion surface.</item>
+      <item>No connected module gap larger than the outline width.</item>
+      <item>No loose back cushion visible through a camera-facing structural back.</item>
+      <item>No contradictory inner and outer arm panels visible simultaneously.</item>
+      <item>Both views contain the same modules but may use different paint sequences.</item>
+      <item>Every module surface retains semantic data-sb-review-part metadata.</item>
+    </assertions>
+  </test-contract>
+
+  <do-not-repeat>
+    <item>Do not force identical paint order for Left 45 and Right 45.</item>
+    <item>Do not update the visual snapshot merely because the diff is stable.</item>
+    <item>Do not fix only the currently selected preset; use the full 12-view sheet.</item>
+    <item>Do not modify the plan-grid persistence format to solve a product-view-only issue.</item>
+    <item>Do not use broad per-camera hacks that hide an entire semantic category.</item>
+  </do-not-repeat>
+</sectional-builder-45-handoff>

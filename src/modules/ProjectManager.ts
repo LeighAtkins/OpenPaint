@@ -309,7 +309,7 @@ export class ProjectManager {
     this.historyManager?.saveState?.();
 
     if (window.app?.measurementOverlayManager?.mountView) {
-      window.app.measurementOverlayManager.mountView(viewId);
+      await window.app.measurementOverlayManager.mountView(viewId);
     }
 
     const liveRotation = canvasManager?.getRotationDegrees?.();
@@ -677,9 +677,15 @@ export class ProjectManager {
 
             const objects = this.canvasManager.fabricCanvas.getObjects();
             objects.forEach(obj => {
-              if (obj.type === 'line' && obj.strokeMetadata) {
+              if (
+                obj.type === 'line' &&
+                (obj.strokeMetadata || obj.isZipper || obj.customType === 'zipper')
+              ) {
                 ControlsApi.createLineControls(obj);
-              } else if (obj.type === 'path' && obj.customPoints) {
+              } else if (
+                obj.type === 'path' &&
+                (obj.customPoints || obj.isZipper || obj.customType === 'zipper')
+              ) {
                 ControlsApi.createCurveControls(obj);
               } else if (
                 (obj.type === 'i-text' || obj.type === 'text') &&
@@ -795,7 +801,7 @@ export class ProjectManager {
 
       // Mount MOS overlays for the new view
       if (window.app?.measurementOverlayManager) {
-        window.app.measurementOverlayManager.mountView(viewId);
+        await window.app.measurementOverlayManager.mountView(viewId);
       }
 
       this.syncLegacyImageListSelection(viewId);
@@ -3236,6 +3242,13 @@ export class ProjectManager {
       '_customPointsConverted',
       'dashSettings',
       'lineStyle',
+      'customData',
+      'customType',
+      'isZipper',
+      'isHighlighter',
+      'highlighterStyle',
+      'highlighterSourceColor',
+      'imageLabel',
     ];
   }
 
@@ -3302,8 +3315,23 @@ export class ProjectManager {
     }
     this.saveCurrentViewState();
 
-    const projectNameInput = document.getElementById('projectName');
-    const projectName = projectNameInput?.value?.trim() || 'OpenPaint Project';
+    const projectNameInput = document.getElementById('projectName') as HTMLInputElement | null;
+    const projectMetadata = this.getProjectMetadata();
+    const naming = projectMetadata?.naming || {};
+    const derivedProjectName =
+      String(naming.autoProjectTitle || '').trim() ||
+      [naming.customerName, naming.sofaTypeLabel]
+        .map(value => String(value || '').trim())
+        .filter(Boolean)
+        .join(' - ');
+    const currentProjectName = projectNameInput?.value?.trim() || '';
+    const projectName =
+      (!currentProjectName || currentProjectName === 'OpenPaint Project') && derivedProjectName
+        ? derivedProjectName
+        : currentProjectName || 'OpenPaint Project';
+    if (projectNameInput && projectNameInput.value !== projectName) {
+      projectNameInput.value = projectName;
+    }
     const fabricCanvas = this.canvasManager?.fabricCanvas;
     const metadataManager = window.app?.metadataManager;
     const customProps = this.getCanvasCustomProps();
@@ -3327,7 +3355,7 @@ export class ProjectManager {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       currentViewId: this.currentViewId,
-      metadata: this.getProjectMetadata(),
+      metadata: projectMetadata,
       viewOrder: [],
       views: {},
     };
@@ -4123,7 +4151,14 @@ export class ProjectManager {
   }
 
   revokeLoadedProjectObjectUrls(): void {
+    // CloudProjectManager owns and caches its asset URLs. Revoking one here
+    // leaves a poisoned cache entry that returns the now-dead blob URL on the
+    // next project load/save. Only revoke URLs created by ProjectManager.
+    const cloudAssetUrls = new Set(
+      Array.from(window.app?.cloudProjectManager?.assetObjectUrlCache?.values?.() || [])
+    );
     (this.loadedProjectObjectUrls || []).forEach(url => {
+      if (cloudAssetUrls.has(url)) return;
       try {
         URL.revokeObjectURL(url);
       } catch (error) {
@@ -4267,9 +4302,6 @@ export class ProjectManager {
           viewData.imageAssetHash,
           cloudProjectId
         );
-        if (objectUrl && !this.loadedProjectObjectUrls.includes(objectUrl)) {
-          this.loadedProjectObjectUrls.push(objectUrl);
-        }
         return objectUrl || viewData.imageUrl;
       }
       return viewData.imageUrl;
@@ -4284,9 +4316,6 @@ export class ProjectManager {
       const hash = String(viewData.imageUrl).replace('cloud-asset://', '').trim();
       if (hash && typeof cloudManager?.resolveCloudAssetToObjectUrl === 'function') {
         const objectUrl = await cloudManager.resolveCloudAssetToObjectUrl(hash, cloudProjectId);
-        if (objectUrl && !this.loadedProjectObjectUrls.includes(objectUrl)) {
-          this.loadedProjectObjectUrls.push(objectUrl);
-        }
         return objectUrl || null;
       }
       return null;
@@ -4300,9 +4329,6 @@ export class ProjectManager {
         viewData.imageAssetHash,
         cloudProjectId
       );
-      if (objectUrl && !this.loadedProjectObjectUrls.includes(objectUrl)) {
-        this.loadedProjectObjectUrls.push(objectUrl);
-      }
       if (objectUrl) return objectUrl;
     }
 

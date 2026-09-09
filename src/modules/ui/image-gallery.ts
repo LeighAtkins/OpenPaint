@@ -29,6 +29,284 @@ export function initImageGalleryModule() {
   let multiviewResizeObserver = null;
   let multiviewMutationObserver = null;
   let multiviewLayoutRaf = null;
+  let overviewDraggedLabel = '';
+  let imageOverviewQuery = '';
+  let imageOverviewComfortable = false;
+  const imageOverviewBrokenLabels = new Set();
+
+  function imageOverviewLabel(imageData, index) {
+    return String(
+      imageData?.name ||
+        imageData?.original?.name ||
+        imageData?.original?.label ||
+        imageData?.label ||
+        `Image ${index + 1}`
+    ).trim();
+  }
+
+  function imageOverviewSource(imageData) {
+    return String(
+      imageData?.src || imageData?.url || imageData?.original?.src || imageData?.original?.url || ''
+    );
+  }
+
+  function ensureImageOverviewStyles() {
+    if (document.getElementById('imageOverviewStyles')) return;
+    const style = document.createElement('style');
+    style.id = 'imageOverviewStyles';
+    style.textContent = `
+      .image-overview-overlay { position: fixed; inset: 0; z-index: 16000; display: flex; flex-direction: column; background: rgba(248,250,252,.98); color: #0f172a; }
+      .image-overview-header { min-height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 18px; border-bottom: 1px solid #e2e8f0; background: #fff; }
+      .image-overview-heading { min-width: 0; }
+      .image-overview-heading h2 { margin: 0; font-size: 17px; line-height: 1.2; font-weight: 720; letter-spacing: 0; }
+      .image-overview-heading p { margin: 3px 0 0; color: #64748b; font-size: 12px; }
+      .image-overview-actions { display: flex; align-items: center; gap: 6px; }
+      .image-overview-search { width: min(260px, 28vw); height: 32px; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 7px; background: #fff; color: #0f172a; font: inherit; font-size: 12px; outline: none; }
+      .image-overview-search:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,.12); }
+      .image-overview-actions button { height: 32px; padding: 0 11px; border: 1px solid #cbd5e1; border-radius: 7px; background: #fff; color: #334155; font-size: 12px; font-weight: 650; }
+      .image-overview-actions button:hover { background: #f8fafc; border-color: #94a3b8; }
+      .image-overview-actions [data-remove-unavailable][hidden] { display: none; }
+      .image-overview-actions [data-remove-unavailable] { color: #b91c1c; border-color: #fecaca; background: #fff7f7; }
+      .image-overview-grid { flex: 1; min-height: 0; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); grid-auto-rows: max-content; align-content: start; gap: 9px; padding: 12px 14px 24px; }
+      .image-overview-overlay.is-comfortable .image-overview-grid { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; padding: 16px 18px 28px; }
+      .image-overview-card { position: relative; min-width: 0; overflow: hidden; border: 1px solid #dbe3ec; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgba(15,23,42,.04); cursor: grab; }
+      .image-overview-card:hover { border-color: #94a3b8; box-shadow: 0 4px 12px rgba(15,23,42,.08); }
+      .image-overview-card.is-active { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,.14); }
+      .image-overview-card.is-dragging { opacity: .45; }
+      .image-overview-card.is-drag-over { border-color: #2563eb; box-shadow: inset 4px 0 0 #2563eb; }
+      .image-overview-preview { height: 92px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #f1f5f9; }
+      .image-overview-overlay.is-comfortable .image-overview-preview { height: 150px; }
+      .image-overview-preview img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+      .image-overview-card.is-broken .image-overview-preview::after { content: 'Image unavailable'; color: #b91c1c; font-size: 11px; font-weight: 650; }
+      .image-overview-card.is-broken .image-overview-preview img { display: none; }
+      .image-overview-number { position: absolute; top: 7px; left: 7px; display: inline-flex; align-items: center; justify-content: center; min-width: 25px; height: 25px; padding: 0 6px; border-radius: 6px; background: rgba(15,23,42,.9); color: #fff; font-size: 11px; font-weight: 750; box-shadow: 0 1px 4px rgba(15,23,42,.2); }
+      .image-overview-copy { min-height: 41px; padding: 6px 7px; border-top: 1px solid #eef2f7; }
+      .image-overview-name { display: -webkit-box; min-width: 0; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-height: 14px; font-size: 11px; font-weight: 650; overflow-wrap: anywhere; }
+      .image-overview-movers { position: absolute; right: 7px; bottom: 48px; display: inline-flex; border: 1px solid rgba(203,213,225,.9); border-radius: 6px; overflow: hidden; box-shadow: 0 2px 8px rgba(15,23,42,.14); opacity: 0; transition: opacity 120ms ease; }
+      .image-overview-card:hover .image-overview-movers, .image-overview-card:focus-within .image-overview-movers { opacity: 1; }
+      .image-overview-movers button { width: 27px; height: 26px; border: 0; border-left: 1px solid #e2e8f0; background: #fff; color: #475569; font-size: 14px; }
+      .image-overview-movers button:first-child { border-left: 0; }
+      .image-overview-movers button:hover { background: #f1f5f9; color: #0f172a; }
+      .image-overview-movers button:disabled { opacity: .28; }
+      .image-overview-remove { position: absolute; top: 7px; right: 7px; width: 25px; height: 25px; padding: 0; border: 1px solid rgba(148,163,184,.7); border-radius: 6px; background: rgba(255,255,255,.92); color: #475569; font-size: 15px; line-height: 1; opacity: 0; }
+      .image-overview-card:hover .image-overview-remove, .image-overview-card.is-broken .image-overview-remove { opacity: 1; }
+      .image-overview-empty { grid-column: 1 / -1; padding: 48px 20px; color: #64748b; text-align: center; font-size: 13px; }
+      @media (max-width: 720px) { .image-overview-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 7px; padding: 8px; } .image-overview-preview { height: 80px; } .image-overview-header { padding: 9px 10px; } .image-overview-heading p { display: none; } .image-overview-search { width: min(190px, 42vw); } .image-overview-movers { opacity: 1; } }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function closeImageOverview() {
+    document.getElementById('imageOverviewOverlay')?.remove();
+  }
+
+  function updateUnavailableOverviewAction() {
+    const button = document.querySelector('#imageOverviewOverlay [data-remove-unavailable]');
+    if (!(button instanceof HTMLButtonElement)) return;
+    const count = imageOverviewBrokenLabels.size;
+    button.hidden = count === 0;
+    button.textContent = `Remove unavailable (${count})`;
+  }
+
+  async function deleteImageFromOverview(label) {
+    if (window.projectManager?.deleteImage) {
+      await window.projectManager.deleteImage(label);
+      return;
+    }
+    removeImageByLabel(label);
+  }
+
+  function renderImageOverview() {
+    const overlay = document.getElementById('imageOverviewOverlay');
+    const grid = overlay?.querySelector('.image-overview-grid');
+    const count = overlay?.querySelector('[data-image-overview-count]');
+    if (!overlay || !grid) return;
+    if (count) count.textContent = `${imageGalleryData.length} images`;
+    const activeLabel = window.projectManager?.currentViewId || '';
+    grid.innerHTML = '';
+
+    const normalizedQuery = imageOverviewQuery.trim().toLowerCase();
+    const visibleItems = imageGalleryData
+      .map((imageData, index) => ({ imageData, index }))
+      .filter(({ imageData, index }) => {
+        if (!normalizedQuery) return true;
+        return imageOverviewLabel(imageData, index).toLowerCase().includes(normalizedQuery);
+      });
+    if (!visibleItems.length) {
+      grid.innerHTML = '<div class="image-overview-empty">No images match this search.</div>';
+      return;
+    }
+
+    visibleItems.forEach(({ imageData, index }) => {
+      const label = getImageLabelAtIndex(index);
+      const card = document.createElement('article');
+      card.className = `image-overview-card${label === activeLabel ? ' is-active' : ''}`;
+      card.draggable = true;
+      card.dataset.label = label;
+      card.innerHTML = `
+        <span class="image-overview-number">${index + 1}</span>
+        <div class="image-overview-preview"><img alt="" draggable="false"></div>
+        <button type="button" class="image-overview-remove" data-remove-image aria-label="Remove image" title="Remove image">×</button>
+        <div class="image-overview-copy">
+          <div class="image-overview-name" title=""></div>
+          <div class="image-overview-movers" aria-label="Move image">
+            <button type="button" data-move="left" aria-label="Move image left" ${index === 0 ? 'disabled' : ''}>‹</button>
+            <button type="button" data-move="right" aria-label="Move image right" ${index === imageGalleryData.length - 1 ? 'disabled' : ''}>›</button>
+          </div>
+        </div>`;
+      const img = card.querySelector('img');
+      const name = card.querySelector('.image-overview-name');
+      const displayName = imageOverviewLabel(imageData, index);
+      if (img) {
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.addEventListener(
+          'error',
+          () => {
+            card.classList.add('is-broken');
+            imageOverviewBrokenLabels.add(label);
+            updateUnavailableOverviewAction();
+          },
+          { once: true }
+        );
+        img.addEventListener('load', () => {
+          card.classList.remove('is-broken');
+          imageOverviewBrokenLabels.delete(label);
+          updateUnavailableOverviewAction();
+        });
+        const source = imageOverviewSource(imageData);
+        if (source) {
+          img.src = source;
+        } else {
+          card.classList.add('is-broken');
+          imageOverviewBrokenLabels.add(label);
+          updateUnavailableOverviewAction();
+        }
+      }
+      if (name) {
+        name.textContent = displayName;
+        name.title = displayName;
+      }
+
+      card.addEventListener('click', async event => {
+        if (event.target.closest('[data-move], [data-remove-image]')) return;
+        const manager = window.app?.projectManager || window.projectManager;
+        if (!manager?.switchView || !label) return;
+        const suppressUntil = window.__beginExplicitImageNavigation?.(1000) || Date.now() + 1000;
+        window.__cancelPendingScrollSelect?.();
+        window.__suppressScrollSelectUntil = Math.max(
+          Number(window.__suppressScrollSelectUntil) || 0,
+          suppressUntil
+        );
+        await manager.switchView(label);
+        window.imageGallery?.syncToLabel?.(label, { scroll: true, smooth: false });
+        closeImageOverview();
+      });
+      card.querySelector('[data-move="left"]')?.addEventListener('click', event => {
+        event.stopPropagation();
+        reorderImages(index, index - 1);
+      });
+      card.querySelector('[data-move="right"]')?.addEventListener('click', event => {
+        event.stopPropagation();
+        reorderImages(index, index + 1);
+      });
+      card.querySelector('[data-remove-image]')?.addEventListener('click', async event => {
+        event.stopPropagation();
+        if (!window.confirm(`Remove ${displayName || `image ${index + 1}`} from this project?`))
+          return;
+        await deleteImageFromOverview(label);
+        imageOverviewBrokenLabels.delete(label);
+        renderImageOverview();
+      });
+      card.addEventListener('dragstart', event => {
+        overviewDraggedLabel = label;
+        card.classList.add('is-dragging');
+        event.dataTransfer?.setData('text/plain', label);
+        if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+      });
+      card.addEventListener('dragend', () => {
+        overviewDraggedLabel = '';
+        card.classList.remove('is-dragging');
+        grid
+          .querySelectorAll('.is-drag-over')
+          .forEach(node => node.classList.remove('is-drag-over'));
+      });
+      card.addEventListener('dragover', event => {
+        event.preventDefault();
+        if (overviewDraggedLabel && overviewDraggedLabel !== label)
+          card.classList.add('is-drag-over');
+      });
+      card.addEventListener('dragleave', () => card.classList.remove('is-drag-over'));
+      card.addEventListener('drop', event => {
+        event.preventDefault();
+        card.classList.remove('is-drag-over');
+        const sourceLabel = event.dataTransfer?.getData('text/plain') || overviewDraggedLabel;
+        if (sourceLabel && sourceLabel !== label) reorderImagesByLabel(sourceLabel, label);
+      });
+      grid.appendChild(card);
+    });
+  }
+
+  function openImageOverview() {
+    if (!imageGalleryData.length) return;
+    ensureImageOverviewStyles();
+    closeImageOverview();
+    const overlay = document.createElement('section');
+    overlay.id = 'imageOverviewOverlay';
+    overlay.className = 'image-overview-overlay';
+    if (imageOverviewComfortable) overlay.classList.add('is-comfortable');
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Arrange project images');
+    overlay.innerHTML = `
+      <header class="image-overview-header">
+        <div class="image-overview-heading"><h2>Image overview</h2><p><span data-image-overview-count></span> · Drag to reorder or use the arrow buttons</p></div>
+        <div class="image-overview-actions">
+          <input type="search" class="image-overview-search" placeholder="Find an image" aria-label="Find an image">
+          <button type="button" data-remove-unavailable hidden>Remove unavailable (0)</button>
+          <button type="button" data-image-overview-density>${imageOverviewComfortable ? 'Compact' : 'Larger'}</button>
+          <button type="button" data-close-image-overview>Done</button>
+        </div>
+      </header>
+      <div class="image-overview-grid"></div>`;
+    overlay
+      .querySelector('[data-close-image-overview]')
+      ?.addEventListener('click', closeImageOverview);
+    const search = overlay.querySelector('.image-overview-search');
+    if (search) {
+      search.value = imageOverviewQuery;
+      search.addEventListener('input', event => {
+        imageOverviewQuery = event.target.value || '';
+        renderImageOverview();
+      });
+    }
+    overlay.querySelector('[data-image-overview-density]')?.addEventListener('click', event => {
+      imageOverviewComfortable = !imageOverviewComfortable;
+      overlay.classList.toggle('is-comfortable', imageOverviewComfortable);
+      event.currentTarget.textContent = imageOverviewComfortable ? 'Compact' : 'Larger';
+    });
+    overlay.querySelector('[data-remove-unavailable]')?.addEventListener('click', async () => {
+      const labels = Array.from(imageOverviewBrokenLabels);
+      if (!labels.length) return;
+      if (
+        !window.confirm(
+          `Remove ${labels.length} unavailable image${labels.length === 1 ? '' : 's'}?`
+        )
+      ) {
+        return;
+      }
+      for (const label of labels) await deleteImageFromOverview(label);
+      imageOverviewBrokenLabels.clear();
+      renderImageOverview();
+      updateUnavailableOverviewAction();
+    });
+    overlay.addEventListener('keydown', event => {
+      if (event.key === 'Escape') closeImageOverview();
+    });
+    document.body.appendChild(overlay);
+    renderImageOverview();
+    overlay.querySelector('button')?.focus();
+  }
 
   function syncImagesVisibleSummary() {
     const summary = document.getElementById('imagesVisibleSummary');
@@ -210,6 +488,12 @@ export function initImageGalleryModule() {
     const imageGallery = document.getElementById('imageGallery');
 
     if (!imageGallery) return;
+
+    const overviewButton = document.getElementById('openImageOverviewBtn');
+    if (overviewButton && overviewButton.dataset.bound !== 'true') {
+      overviewButton.dataset.bound = 'true';
+      overviewButton.addEventListener('click', openImageOverview);
+    }
 
     // Intersection Observer for active image detection
     intersectionObserver = new IntersectionObserver(
@@ -661,6 +945,7 @@ export function initImageGalleryModule() {
     }
     if (typeof window.updatePills === 'function') window.updatePills();
     if (typeof window.updateActivePill === 'function') window.updateActivePill();
+    renderImageOverview();
     setTimeout(() => {
       window.__imageListReorderInProgress = false;
     }, 220);
@@ -1100,6 +1385,8 @@ export function initImageGalleryModule() {
   function applyMultiViewStageInsets() {
     const stage = document.getElementById('multiViewStage');
     if (!stage) return;
+    const wrapper = document.getElementById('main-canvas-wrapper');
+    const toolbar = document.getElementById('topToolbar');
     const leftPanel = document.getElementById('strokePanel');
     const rightPanel = document.getElementById('imagePanel');
     const panelInset = panel => {
@@ -1112,8 +1399,12 @@ export function initImageGalleryModule() {
     };
     const leftInset = panelInset(leftPanel);
     const rightInset = panelInset(rightPanel);
+    const wrapperTop = wrapper?.getBoundingClientRect?.().top || 0;
+    const toolbarBottom = toolbar?.getBoundingClientRect?.().bottom || 0;
+    const topInset = Math.max(0, toolbarBottom - wrapperTop);
     stage.style.left = `${leftInset}px`;
     stage.style.right = `${rightInset}px`;
+    stage.style.top = `${topInset}px`;
   }
 
   function resizeComparePanesForLayout() {
@@ -1144,10 +1435,12 @@ export function initImageGalleryModule() {
   function startMultiViewLayoutObservers() {
     if (multiviewResizeObserver || typeof ResizeObserver === 'undefined') return;
     multiviewResizeObserver = new ResizeObserver(scheduleMultiViewLayout);
-    ['main-canvas-wrapper', 'strokePanel', 'imagePanel', 'canvasControls'].forEach(id => {
-      const element = document.getElementById(id);
-      if (element) multiviewResizeObserver.observe(element);
-    });
+    ['main-canvas-wrapper', 'topToolbar', 'strokePanel', 'imagePanel', 'canvasControls'].forEach(
+      id => {
+        const element = document.getElementById(id);
+        if (element) multiviewResizeObserver.observe(element);
+      }
+    );
     multiviewMutationObserver = new MutationObserver(scheduleMultiViewLayout);
     ['strokePanel', 'imagePanel', 'canvasControls'].forEach(id => {
       const element = document.getElementById(id);
@@ -1176,6 +1469,27 @@ export function initImageGalleryModule() {
     return (
       window.projectManager?.views?.[label] || window.app?.projectManager?.views?.[label] || null
     );
+  }
+
+  function getCompareDisplayLabel(label) {
+    const entry = imageGalleryData.find(item => {
+      const entryLabel = item?.original?.label || item?.label || item?.name || '';
+      return entryLabel === label;
+    });
+    const rawName =
+      entry?.name || entry?.filename || entry?.original?.filename || entry?.original?.name || label;
+    return String(rawName || label)
+      .replace(/\.[a-z0-9]{2,5}$/i, '')
+      .trim();
+  }
+
+  function escapeCompareMarkup(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   function cloneCanvasData(data) {
@@ -1591,21 +1905,23 @@ export function initImageGalleryModule() {
       <div class="multiview-grid count-${count}">
         ${labels
           .slice(0, 4)
-          .map(
-            label => `
+          .map(label => {
+            const displayLabel = getCompareDisplayLabel(label);
+            const safeDisplayLabel = escapeCompareMarkup(displayLabel);
+            return `
               <section class="multiview-pane ${label === window.app?.projectManager?.currentViewId ? 'mv-origin' : ''}" data-compare-label="${label}">
-                <div class="multiview-pane-actions" aria-label="${label} comparison controls">
-                  <span class="multiview-pane-label">${label}<span class="multiview-pane-status"></span></span>
+                <div class="multiview-pane-actions" aria-label="${safeDisplayLabel} comparison controls">
+                  <span class="multiview-pane-label" title="${safeDisplayLabel}">${safeDisplayLabel}<span class="multiview-pane-status"></span></span>
                   <div class="multiview-pane-tools">
-                    <button type="button" class="mv-pane-btn" data-mv-action="zoom-out" title="Zoom out ${label}" aria-label="Zoom out ${label}">−</button>
-                    <button type="button" class="mv-pane-btn" data-mv-action="zoom-in" title="Zoom in ${label}" aria-label="Zoom in ${label}">+</button>
-                    <button type="button" class="mv-pane-btn mv-pane-fit" data-mv-action="fit" title="Fit ${label}" aria-label="Fit ${label}">Fit</button>
+                    <button type="button" class="mv-pane-btn" data-mv-action="zoom-out" title="Zoom out ${safeDisplayLabel}" aria-label="Zoom out ${safeDisplayLabel}">−</button>
+                    <button type="button" class="mv-pane-btn" data-mv-action="zoom-in" title="Zoom in ${safeDisplayLabel}" aria-label="Zoom in ${safeDisplayLabel}">+</button>
+                    <button type="button" class="mv-pane-btn mv-pane-fit" data-mv-action="fit" title="Fit ${safeDisplayLabel}" aria-label="Fit ${safeDisplayLabel}">Fit</button>
                   </div>
                 </div>
                 <div class="multiview-canvas-wrap" id="mvWrap-${label}"><canvas></canvas></div>
               </section>
-            `
-          )
+            `;
+          })
           .join('')}
       </div>
     `;
@@ -1857,7 +2173,9 @@ export function initImageGalleryModule() {
       removeByLabel: removeImageByLabel,
       syncLegacyImages: syncLegacyImagesToGallery,
       captureCompareGrid,
+      openOverview: openImageOverview,
     };
+    window.openImageOverview = openImageOverview;
     window.addImageToGallery = addImageToGallery;
     window.addImageToGalleryCompat = function addImageToGalleryCompat(imageData) {
       const label = imageData?.original?.label || imageData?.label || imageData?.name || '';
@@ -1894,9 +2212,13 @@ export function initImageGalleryModule() {
 
     const img = document.createElement('img');
     img.src = imageUrl;
-    img.className = 'pasted-image w-full h-40 rounded-lg object-contain bg-slate-100 shadow-sm';
+    img.className = 'pasted-image w-full h-40 rounded-lg object-contain bg-white';
     img.alt = `${label} view`;
     container.appendChild(img);
+
+    // No view-label chip over the thumbnail: the caption under each card and
+    // the thumbnail itself already identify the image, and a raw "front" /
+    // "img-5814-…" overlay on the picture just reads as clutter.
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'delete-image-btn opacity-0 group-hover:opacity-100 transition-opacity';
@@ -2236,6 +2558,17 @@ export function initImageGalleryModule() {
   }
   syncImagesVisibleSummary();
   window.addEventListener('openpaint:image-collection-change', syncImagesVisibleSummary);
+  window.addEventListener('openpaint:compare-images', event => {
+    const labels = Array.isArray(event?.detail?.labels)
+      ? event.detail.labels.map(label => String(label || '').trim()).filter(Boolean)
+      : [];
+    if (event?.detail?.replace !== false) compareSelectedLabels.clear();
+    labels.slice(0, 4).forEach(label => {
+      if (getViewForLabel(label)) compareSelectedLabels.add(label);
+    });
+    syncCompareSelectionStyles();
+    updateMultiViewStage();
+  });
   setTimeout(() => {
     syncLegacyImagesToGallery();
     const imageList = document.getElementById('imageList');

@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "Gorgias to SofaPaint",
+  "version": "0.9.22",
+  "description": "Send selected image attachments from the open Gorgias ticket to SofaPaint.",
+  "permissions": ["activeTab", "storage", "tabs", "scripting", "webRequest"],
+  "host_permissions": [
+    "https://comfort-works.gorgias.com/*",
+    "https://*.gorgias.io/*",
+    "https://ctrk.klclick.com/*",
+    "https://drive.google.com/*",
+    "https://drive.usercontent.google.com/*",
+    "https://*.googleusercontent.com/*",
+    "https://s3-us-west-1.amazonaws.com/*",
+    "http://127.0.0.1:5173/*",
+    "http://localhost:5173/*",
+    "https://*.vercel.app/*"
+  ],
+  "optional_host_permissions": ["https://*/*"],
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "action": {
+    "default_title": "Send ticket photos to SofaPaint",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://comfort-works.gorgias.com/app/*"],
+      "js": ["page-gorgias.js"],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://comfort-works.gorgias.com/app/*"],
+      "js": ["content-gorgias.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["http://127.0.0.1:5173/*", "http://localhost:5173/*", "https://*.vercel.app/*"],
+      "js": ["content-sofapaint.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

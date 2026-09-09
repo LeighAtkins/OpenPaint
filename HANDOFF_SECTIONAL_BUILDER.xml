@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sectional-builder-handoff version="5.0" status="live-parametric-cw-pricing-45deg-active">
+
+  <!--
+    HANDOFF — 2026-07-29
+    52 files changed, +9530 / -629 lines across this session.
+    All work is uncommitted on top of commit 54ffc7d.
+    Production deployment: https://sofapaint.vercel.app (Vercel CLI, not git-based)
+    Local dev: npm run dev (auto-starts Express + Vite together)
+  -->
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!--  SESSION SUMMARY                                                     -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+  <session-summary>
+
+    <completed-features>
+
+      <feature-group name="Gorgias Chrome Extension">
+        <item>Default target changed to https://sofapaint.vercel.app/</item>
+        <item>Extension zip rebuilt and pushed to main</item>
+        <item>Production deployment verified — download link live</item>
+        <item>Extension button and dialog present in production build</item>
+      </feature-group>
+
+      <feature-group name="Sectional Builder — Phase 1 (Structured 2D Foundation)">
+        <item status="done">Exact per-piece dimensions replace approximate 95cm grid</item>
+        <item status="done">Connector metadata + compatibility validation (green/red pips)</item>
+        <item status="done">Assembly JSON persisted in project metadata (sectionalAssemblies)</item>
+        <item status="done">Reopen saved assembly for editing on builder open</item>
+        <item status="done">Scale-aware piece footprints (chaise spans 2 rows; rotation swaps)</item>
+      </feature-group>
+
+      <feature-group name="Sectional Builder — Phase 2 (Visual Quality + Catalog)">
+        <item status="done">CAD-style dimension lines on stage and exported plan SVG</item>
+        <item status="done">6 upholstery fabric themes (Flax, Charcoal, Navy, Terracotta, Forest, Sand)</item>
+        <item status="done">Cushion seam lines (dashed front-edge indicator on all cushion pieces)</item>
+        <item status="done">6 presets: 3-seat, 2-seat, Chaise, L-shape, L+Chaise, Sofa+Ottoman</item>
+        <item status="done">Undo/redo with 50-entry history + Ctrl+Z / Ctrl+Shift+Z</item>
+        <item status="done">Multi-select (shift-click) + group drag for connected chains</item>
+        <item status="done">Arrow-key nudge with span-aware collision</item>
+        <item status="done">Center-line alignment guides during drag</item>
+        <item status="done">8 piece kinds: left-arm, seat, corner, chaise, right-arm, ottoman, left-arm-chaise, right-arm-chaise</item>
+        <item status="done">CW guide code derivation per piece kind + per-module guide binding</item>
+        <item status="done">Naming/metadata handoff (sofaType=sectional_l_shape, sofaTypeLabel)</item>
+        <item status="done">Corner piece rendering: proper square with two backrests (top + right)</item>
+        <item status="done">Arm rendering: backrest gap from edge, arms 2/3 height flush with backrest</item>
+        <item status="done">Rotation alignment fix for non-square pieces (chaise at 90° renders correctly)</item>
+      </feature-group>
+
+      <feature-group name="Sectional Builder — Phase 3 (Live Parametric Canvas Objects)">
+        <item status="done">"Use in project" creates live fabric.Group objects — not a static PNG</item>
+        <item status="done">Each piece Group: body rect, cushion rect, backrest bar, arm bar, seam, label</item>
+        <item status="done">Per-piece measurement strokes linked via customData.sectionalPieceId</item>
+        <item status="done">Parametric auto-update: resize piece → measurement values recompute instantly</item>
+        <item status="done">Bidirectional editing: type a cm value → piece resizes proportionally</item>
+        <item status="done">Connector snapping on canvas (findLiveSectionalSnap, 24px threshold)</item>
+        <item status="done">Assembly-level measurement recompute (getLiveAssemblyMetrics + overall strokes)</item>
+        <item status="done">Transform persistence (persistLiveAssemblyTransforms → metadata)</item>
+        <item status="done">Transform restore on reopen (restoreLiveSectionalTransform)</item>
+        <item status="done">"Update project image" removes old live objects and re-imports</item>
+        <item status="done">"Sync from canvas" reads live positions back into builder grid state</item>
+        <item status="done">Full undo/redo support (Fabric Groups captured by HistoryManager)</item>
+      </feature-group>
+
+      <feature-group name="Sectional Builder — Phase 3.5 (CW Pricing Integration)">
+        <item status="done">Embedded CW unbranded slipcover catalog from 5 Shopify collections</item>
+        <item status="done">Mirror-aware product mapping (left-arm mirrored → right-facing product)</item>
+        <item status="done">Pricing panel in inspector: per-piece rows, total, copy-links button</item>
+        <item status="done">Direct clickable links to comfort-works.com product pages</item>
+        <item status="done">Multi-country pricing (US, AU storefronts via Shopify API)</item>
+        <item status="done">Fabric selection affects price tier</item>
+        <item status="done">Lazy catalog fetch from Shopify with embedded fallback prices</item>
+      </feature-group>
+
+      <feature-group name="Sectional Builder — 45° Product View">
+        <item status="done">Left 45° and Right 45° product view rendering (sectionalProductMarkup)</item>
+        <item status="done">Camera projection with direction sign for left/right symmetry</item>
+        <item status="done">Semantic surface model: base, seat cushion, back frame, back cushion, arm faces</item>
+        <item status="done">Face-normal visibility culling (productPanelFacesCamera)</item>
+        <item status="done">Arm styles aligned to CW catalog: Round roll arm (RA), Square arm (SA), Wedge arm (WA)</item>
+        <item status="done">Base/skirt styles aligned to CW: Snug fit, Long skirt, Cornered pleats (loose fit), Straight skirt</item>
+        <item status="done">Cornered pleats render visible vertical fold lines on skirt</item>
+        <item status="done">Occlusion ordering fix: piece-row-first sort prevents L-shape return painting over main row</item>
+        <item status="done">Semantic review targets on every surface (data-sb-review-part, aria-label)</item>
+        <item status="done">Visual contact sheet test (12-case matrix: 6 presets × 2 camera angles)</item>
+        <item status="todo">45° geometry still has visual issues — see "Known Issues" below</item>
+      </feature-group>
+
+      <feature-group name="UI Fixes">
+        <item status="done">Images panel collapsed state: buttons stack vertically (display:flex fix)</item>
+        <item status="done">Gorgias extension dialog and download link wired into production</item>
+      </feature-group>
+
+      <feature-group name="Dev Experience">
+        <item status="done">Vite auto-starts Express backend via configureServer plugin — no more 502 proxy errors</item>
+        <item status="done">npm run dev now fully self-contained (Express + Vite together)</item>
+      </feature-group>
+
+    </completed-features>
+
+  </session-summary>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!--  KNOWN ISSUES — what needs fixing next                               -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+  <known-issues>
+
+    <issue id="SB45-001" severity="critical" area="occlusion-order">
+      <title>45° back frames and cushions use inconsistent painter ordering for complex arrangements</title>
+      <status>The piece-row-first sort fixed L-shape cross-row occlusion. Same-row ordering uses layer rank which is correct for linear sofas. Remaining issues are with chaise/corner depth sorting in oblique views.</status>
+      <next-step>Test all 6 presets in both camera angles. Audit any remaining inside-out or show-through artifacts.</next-step>
+    </issue>
+
+    <issue id="SB45-002" severity="high" area="arm-geometry">
+      <title>Arm geometry needs per-camera-direction face selection refinement</title>
+      <status>Current arm rendering uses armFacesInterior to choose inner vs outer panel. Round arm style produces a curved silhouette but may not fully convince as a Pottery Barn-style rounded front.</status>
+      <next-step>Model arm front/end as separate surfaces with explicit visibility per camera. Reference CW product photos for round arm silhouette accuracy.</next-step>
+    </issue>
+
+    <issue id="SB45-005" severity="high" area="piece-semantics">
+      <title>Ottoman back rendering and corner orientation need capability-map enforcement</title>
+      <status>The hasBack check exists (piece.kind !== 'ottoman') and corner return-back logic exists. Verify no leaking in all 12 test cases.</status>
+      <next-step>Add explicit capability map: { hasBackFrame, hasBackCushion, armSides, openEdges } per piece kind. Never infer from grid position.</next-step>
+    </issue>
+
+    <issue id="PRICING-001" severity="medium" area="pricing-accuracy">
+      <title>Pricing catalog uses embedded snapshot prices, not live Shopify API</title>
+      <status>Prices are baked in from the Shopify products.json snapshot. Lazy fetch exists but fallback prices may go stale.</status>
+      <next-step>Wire lazy fetch to always check Shopify first, fall back to embedded prices only on network failure.</next-step>
+    </issue>
+
+    <issue id="UNCOMMITTED" severity="info" area="git">
+      <title>All work is uncommitted (52 files, +9530/-629 lines on top of 54ffc7d)</title>
+      <status>Production is deployed via Vercel CLI (not git-based). Nothing has been committed to git in this session.</status>
+      <next-step>Commit and push when ready. Run npm run validate first.</next-step>
+    </issue>
+
+  </known-issues>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!--  ARCHITECTURE                                                        -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+  <architecture>
+
+    <module name="SectionalBuilderDialog (sectional-builder.ts:~2200-3730)">
+      Owns dialog UI, stage SVG rendering, presets, undo/redo, multi-select,
+      dimension lines, theme swatches, pricing panel, model controls, and the
+      "Use in project" handoff. Delegates canvas manipulation to
+      ImportLiveAssembly and refreshLiveAssembly.
+    </module>
+
+    <module name="ProductViewRenderer (sectional-builder.ts:~1290-2010)">
+      45° product view projection, surface creation, layering, arm geometry,
+      semantic review annotations. Camera projection via productProjection().
+      Surface visibility via productPanelFacesCamera(). Painter sort by piece
+      row → layer rank → surface depth.
+    </module>
+
+    <module name="createPieceFabricGroup (sectional-builder.ts:~750-840)">
+      Pure function converting a SectionalPiece + theme into a fabric.Group
+      at SVG-pixel coordinates. Caller positions/scales into world space.
+    </module>
+
+    <module name="ParametricMeasurementSystem (sectional-builder.ts:~3035-3400)">
+      ensureParametricListener registers on canvas: object:moving (snap +
+      refresh), object:scaling/rotating (refresh), object:modified (commit +
+      persist). refreshLiveAssembly recomputes all linked stroke positions and
+      values. applyMeasurementToLiveAssembly provides bidirectional editing.
+      persistLiveAssemblyTransforms saves to metadata. restoreLiveSectionalTransform
+      reads them back on reopen.
+    </module>
+
+    <module name="CWPricingCatalog (sectional-builder.ts:~150-270)">
+      Embedded product catalog from 5 Shopify collections (49 products).
+      getPiecePricing(piece) maps kind+mirror → CW product. getAssemblyPricing(pieces)
+      computes total. Multi-country with lazy Shopify fetch.
+    </module>
+
+    <module name="ViteExpressPlugin (vite.config.ts:8-30)">
+      Auto-spawns Express backend when Vite dev server starts. Forwards stdout
+      as [api] prefixed lines. Auto-restarts on crash. Kills on Vite shutdown.
+    </module>
+
+    <constraint>Piece Groups must NOT carry strokeMetadata — they are furniture objects, not strokes.</constraint>
+    <constraint>Piece Groups excluded from stroke visibility panel via absence of strokeMetadata.</constraint>
+    <constraint>Pricing data is read-only. Builder never writes to CW website.</constraint>
+    <constraint>All sectional work is uncommitted on top of git commit 54ffc7d.</constraint>
+
+  </architecture>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!--  KEY FILES                                                           -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+  <key-files>
+    <file path="src/modules/ui/sectional-builder.ts" lines="3737">
+      All builder logic: types, presets, connectors, dimensions, themes,
+      pricing catalog, product view rendering, live import, parametric system.
+    </file>
+    <file path="src/modules/sofa-metadata.js">
+      sectionalAssemblies normalization, liveTransforms, guideCode/theme
+      preservation, piece kind validation (8 kinds including ottoman + arm-chaise).
+    </file>
+    <file path="css/workstation-ui.css">
+      Builder layout, pricing panel, model controls, collapsed panel vertical
+      buttons, guide lines, connector pips, dimension lines.
+    </file>
+    <file path="tests/unit/sectional-builder.test.ts" tests="56">
+      Bounds, connectors, themes, guide codes, presets, scaling, pricing,
+      product view layering, arm visibility, corner returns.
+    </file>
+    <file path="vite.config.ts">
+      Auto-start Express plugin, proxy config for /api, /ai, /uploads.
+    </file>
+    <file path="index.html">
+      Sectional Builder menu button, Gorgias extension dialog + download link.
+    </file>
+    <file path="extensions/gorgias-sofapaint/service-worker.js">
+      DEFAULT_TARGET = 'https://sofapaint.vercel.app/'
+    </file>
+  </key-files>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!--  VERIFICATION STATUS                                                 -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+  <verification-status>
+    <check name="TypeScript type check" result="pass" />
+    <check name="Sectional Builder unit tests" result="pass" count="56" />
+    <check name="Vite build" result="pass" />
+    <check name="Vercel production deployment" result="pass" url="https://sofapaint.vercel.app" />
+    <check name="Local dev (npm run dev)" result="pass" note="Auto-starts Express + Vite, no 502 errors" />
+    <check name="45° visual matrix" result="pass" cases="12" note="Renders non-blank with semantic targets. Geometry may still have visual artifacts." />
+  </verification-status>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!--  NEXT STEPS                                                          -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+  <next-steps priority="ordered">
+
+    <step priority="1" area="commit">
+      Commit all 52 changed files. Run npm run validate first.
+      Push to main so Vercel git-based deploys pick up the work.
+    </step>
+
+    <step priority="2" area="45-visual-quality">
+      Open the builder, render all 6 presets in both Left 45° and Right 45°.
+      Photograph or screenshot each. Fix remaining arm/occlusion/cushion issues
+      per the known-issues list. The piece-row-first sort handles cross-row
+      ordering; remaining issues are within-row depth sorting and arm face
+      selection.
+    </step>
+
+    <step priority="3" area="product-accuracy">
+      Compare rendered 45° views against actual CW product photos from
+      comfort-works.com/collections/custom-sectional-slipcovers.
+      Arm silhouettes (especially round roll arm) should match.
+      Skirt rendering (long skirt, cornered pleats) should read correctly.
+    </step>
+
+    <step priority="4" area="branded-pricing">
+      Add branded pricing sheets (IKEA, Freedom, etc.) alongside the current
+      unbranded/M2M pricing. These live on different CW collection pages.
+    </step>
+
+    <step priority="5" area="pdf-assembly-page">
+      Wire getAssemblyPricing + getAssemblySummary into the PDF exporter.
+      The pure functions exist and are tested; only the pdf-export-inline.ts
+      wiring is missing.
+    </step>
+
+    <step priority="6" area="per-module-views">
+      Re-add per-module views to the live import flow (was available in the
+      old PNG flow, removed during the live-object migration).
+    </step>
+
+  </next-steps>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!--  CW CATALOG REFERENCE                                                -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+  <cw-catalog-reference>
+
+    <collections>
+      <collection name="Sectional" url="https://comfort-works.com/collections/custom-sectional-slipcovers" products="19" priceRange="$469-$859" />
+      <collection name="Sofa" url="https://comfort-works.com/collections/custom-sofa-slipcovers" products="8" priceRange="$589-$869" />
+      <collection name="Loveseat" url="https://comfort-works.com/collections/custom-loveseat-slipcovers" products="8" priceRange="$379-$699" />
+      <collection name="Armchair" url="https://comfort-works.com/collections/custom-armchair-slipcovers" products="9" priceRange="$219-$499" />
+      <collection name="Ottoman" url="https://comfort-works.com/collections/custom-ottoman-slipcovers" products="5" priceRange="$249-$259" />
+    </collections>
+
+    <arm-styles>
+      <style code="RA" name="Round Arm" note="Like Pottery Barn basic round arm" />
+      <style code="SA" name="Square Arm" />
+      <style code="WA" name="Wedge Arm" note="Snug-fit only on CW" />
+      <style code="NA" name="Armless" />
+      <style code="SRA" name="Single Round Arm (sectional L/R)" />
+      <style code="SSA" name="Single Square Arm (sectional L/R)" />
+    </arm-styles>
+
+    <skirt-options>
+      <option code="SKIRT" name="Long Skirt" />
+      <option code="SHORT/SNUG" name="Snug Fit" />
+      <option code="CNRP" name="Loose Fit w/ cornered pleats" />
+      <option code="SSKT" name="Straight Skirt (ottoman only)" />
+    </skirt-options>
+
+    <style-code-families>
+      Loose-fit products carry: CNRP + LSKT + MLTP (×PC/PM/SP = 9 tags)
+      Snug-fit products carry: SHRT + SNUG (×PC/PM/SP = 6 tags)
+      Cushion-covers-only carry: bare PC/PM/SP (3 tags)
+    </style-code-families>
+
+    <product-ref-grammar>
+      CS{size}{seat}-{arm}-{fit/orientation}
+      Size: 0=Ottoman, 1=Chair, 2=Loveseat, 3=Sofa, 5=Chaise
+      Seat: B=Boxed, L=T/L-cushion, X=None/armless
+      Example: CS1B-SRA-L = 1-seat boxed, Single Round Arm, Left-facing
+    </product-ref-grammar>
+
+  </cw-catalog-reference>
+
+</sectional-builder-handoff>

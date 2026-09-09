@@ -96,10 +96,11 @@ export class UploadManager {
     input.click();
   }
 
-  async handleFiles(fileList) {
+  async handleFiles(fileList, options = {}) {
+    const suppressStatus = Boolean(options.suppressStatus);
     if (this.isHandlingUpload) {
-      this.showStatus('Upload already in progress. Please wait...', 'info');
-      return;
+      if (!suppressStatus) this.showStatus('Upload already in progress. Please wait...', 'info');
+      return [];
     }
 
     const files = Array.from(fileList || []);
@@ -124,7 +125,9 @@ export class UploadManager {
     this.isHandlingUpload = true;
 
     try {
-      this.showStatus(`Uploading ${files.length} image${files.length > 1 ? 's' : ''}...`, 'info');
+      if (!suppressStatus) {
+        this.showStatus(`Uploading ${files.length} image${files.length > 1 ? 's' : ''}...`, 'info');
+      }
 
       // Remember the current view before uploads to preserve it
       const currentViewBeforeUpload = this.projectManager.currentViewId;
@@ -141,13 +144,15 @@ export class UploadManager {
           results.push({ file, viewId, success: true });
         } catch (error) {
           console.error('[UploadManager] Failed to process file:', file.name, error);
-          this.showStatus(`Failed to process ${file.name}: ${error.message}`, 'error');
+          if (!suppressStatus) {
+            this.showStatus(`Failed to process ${file.name}: ${error.message}`, 'error');
+          }
           results.push({ file, error, success: false });
         }
       }
 
       const successCount = results.filter(r => r.success).length;
-      if (successCount) {
+      if (successCount && !suppressStatus) {
         this.showStatus(
           `Uploaded ${successCount} image${successCount > 1 ? 's' : ''} successfully.`,
           'success'
@@ -159,8 +164,10 @@ export class UploadManager {
         console.log(`[UploadManager] Restoring original view: ${currentViewBeforeUpload}`);
         await this.projectManager.switchView(currentViewBeforeUpload);
       }
+      return results;
     } catch (err) {
       console.error('[UploadManager] handleFiles error:', err);
+      return [];
     } finally {
       this.isHandlingUpload = false;
     }

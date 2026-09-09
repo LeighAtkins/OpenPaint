@@ -3,7 +3,22 @@ import {
   shouldAllowMeasurementSplitEdit,
 } from './measurement-split-workspace';
 import { imageRegistry } from '../ImageRegistry.js';
-import { getNextTagValue } from './next-tag-control.js';
+import { getNextTagValue, setNextTagValue } from './next-tag-control.js';
+import {
+  applySharedComparisonFabric,
+  parseCatalogueComparisonInput,
+  type CatalogueComparisonRequestItem,
+} from './cw-catalogue-comparison';
+import {
+  buildReplayPlan,
+  hasRecipeForImageUrl,
+  initCwLineLibrary,
+  installCwLineLibraryBridge,
+  isReplayInProgress,
+  scheduleCaptureForView,
+  setReplayInProgress,
+} from './cw-line-library';
+import { FabricControls } from '../utils/FabricControls.js';
 
 interface ImportedRow {
   id: string;
@@ -19,6 +34,7 @@ interface VariantOption {
   style: string;
   styleCode: string;
   label: string;
+  source?: string;
 }
 
 interface VersionOption {
@@ -27,6 +43,7 @@ interface VersionOption {
   scopedReference?: string;
   isDefault?: boolean;
   confirmed?: boolean | null;
+  source?: string;
 }
 
 interface SearchResultItem {
@@ -44,7 +61,22 @@ interface SearchResultItem {
   selectedStyleKey: string;
 }
 
+export function isCwConfigurationSelectionReady(item: {
+  versionOptions?: unknown[];
+  styleOptions?: unknown[];
+  selectedVersionCode?: string;
+  selectedStyleKey?: string;
+}): boolean {
+  const versionOptions = Array.isArray(item.versionOptions) ? item.versionOptions : [];
+  const styleOptions = Array.isArray(item.styleOptions) ? item.styleOptions : [];
+  return (
+    (versionOptions.length === 0 || Boolean(item.selectedVersionCode?.trim())) &&
+    (styleOptions.length === 0 || Boolean(item.selectedStyleKey?.trim()))
+  );
+}
+
 interface BasketItem {
+  productId: string;
   selectionKey: string;
   search: string;
   productReference: string;
@@ -54,6 +86,9 @@ interface BasketItem {
   scopedReference: string;
   style: string;
   styleCode: string;
+  styleOptions: VariantOption[];
+  versionOptions: VersionOption[];
+  derivedScopedReferences: string[];
   label: string;
 }
 
@@ -69,6 +104,40 @@ interface LoadedMeasurementItem {
   rawData: any;
   loadMessage: string;
   success: boolean;
+}
+
+interface StorefrontProduct {
+  title: string;
+  url: string;
+  imageUrl: string;
+  imageUrls?: string[];
+  dimensions?: {
+    width?: unknown;
+    depth?: unknown;
+    height?: unknown;
+  } | null;
+  measurementReference?: string;
+  measurementStyle?: string;
+  measurementStyleCode?: string;
+}
+
+interface CatalogueComparisonItem extends CatalogueComparisonRequestItem {
+  imageUrl: string;
+  productUrl: string;
+  requestedSku: string;
+  matchedSku: string;
+  imageMatch: 'exact' | 'configuration-fallback' | 'product-fallback' | 'unavailable';
+  note: string;
+  dimensions?: StorefrontProduct['dimensions'];
+  measurementReference?: string;
+  measurementStyle?: string;
+  measurementStyleCode?: string;
+  configurationGroups?: Array<{
+    key: string;
+    label: string;
+    codeIndex: number;
+    options: Array<{ code: string; label: string }>;
+  }>;
 }
 
 type VisibleImportedRow = ImportedRow & {
@@ -95,9 +164,29 @@ interface SearchState {
   activeItemKey: string;
   activeSection: string;
   armedRowKey: string;
+  armedRowKeyByScope: Record<string, string>;
+  readyRowKeyByScope: Record<string, string>;
+  readyLabelByScope: Record<string, string>;
+  // The Library row the user deliberately chose to draw. This is kept as one
+  // atomic record because view/tab aliases can otherwise mix a row from one
+  // alias with a label from another during Fabric's mouse-up lifecycle.
+  activeDrawIntentByScope: Record<
+    string,
+    {
+      rowKey: string;
+      label: string;
+    }
+  >;
+  completedLabelsByScope: Record<string, string[]>;
+  completedRowKeysByScope: Record<string, string[]>;
   selectedImageKeys: string[];
   rowTargetLabels: Record<string, string>;
+  rowOriginalValues: Record<string, string>;
+  rowValueOverrides: Record<string, string>;
+  rowValueInvalid: Record<string, boolean>;
   discoveryImageUrls: string[];
+  storefrontProduct: StorefrontProduct | null;
+  comparisonItems: CatalogueComparisonItem[];
   importedViewMetaByScope: Record<
     string,
     {
@@ -170,6 +259,11 @@ function makeRowStorageKey(itemKey: string, rowId: string): string {
 const MODAL_ID = 'cwImportModalOverlay';
 const STYLE_ID = 'cwImportStyles';
 const CW_UI_STATE_KEY = 'openpaint:cw-import-ui:v1';
+const CW_SESSION_PASSWORD_KEY = 'openpaint:cw-import-password:session';
+// Bump when a cached API payload gains fields that change the available UI.
+// v4 adds exact per-product configuration option labels to comparison responses.
+const CW_REQUEST_CACHE_PREFIX = 'openpaint:cw-import-cache:v5:';
+const CW_REQUEST_CACHE_TTL_MS = 10 * 60 * 1000;
 const STAGED_PROBE_BATCH_SIZES = [50, 250] as const;
 const STAGED_PROBE_NON_JSON_STOP_COUNT = 10;
 const STAGED_PROBE_FAILURE_RATE_STOP = 0.8;
@@ -209,6 +303,23 @@ function writePersistedCwUiState(state: CwUiPersistedState): void {
     window.localStorage.setItem(CW_UI_STATE_KEY, JSON.stringify(state));
   } catch {
     // Ignore persistence failures (private mode/quota/storage disabled).
+  }
+}
+
+function readSessionCwPassword(): string {
+  try {
+    return window.sessionStorage.getItem(CW_SESSION_PASSWORD_KEY) || '';
+  } catch {
+    return '';
+  }
+}
+
+function writeSessionCwPassword(password: string): void {
+  try {
+    if (password) window.sessionStorage.setItem(CW_SESSION_PASSWORD_KEY, password);
+    else window.sessionStorage.removeItem(CW_SESSION_PASSWORD_KEY);
+  } catch {
+    // Session persistence is optional when storage is unavailable.
   }
 }
 
@@ -268,11 +379,11 @@ function ensureStyles(): void {
   style.id = STYLE_ID;
   style.textContent = `
     .cw-import-overlay { position: fixed; inset: 0; z-index: 11020; display: none; align-items: center; justify-content: center; background: rgba(2, 6, 23, 0.55); }
-    .cw-import-card { width: min(960px, 94vw); max-height: 88vh; overflow: hidden; background: #fff; border-radius: 12px; box-shadow: 0 28px 50px rgba(15, 23, 42, 0.28); display: flex; flex-direction: column; }
+    .cw-import-card { box-sizing: border-box; width: min(1040px, calc(100vw - 32px)); max-width: 100%; height: min(860px, calc(100dvh - 32px)); max-height: calc(100dvh - 32px); min-width: 0; overflow: hidden; background: #fff; border: 1px solid rgba(203,213,225,.9); border-radius: 8px; box-shadow: 0 28px 50px rgba(15, 23, 42, 0.28); display: flex; flex-direction: column; }
     .cw-import-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #e2e8f0; }
     .cw-import-head h3 { margin: 0; font-size: 15px; color: #0f172a; }
     .cw-import-close { border: 1px solid #cbd5e1; background: #fff; color: #334155; border-radius: 8px; padding: 4px 8px; cursor: pointer; }
-    .cw-import-body { padding: 12px 14px; overflow: auto; }
+    .cw-import-body { min-width: 0; min-height: 0; padding: 12px 14px; overflow: auto; overscroll-behavior: contain; }
     .cw-grid { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .cw-grid-full { grid-column: 1 / -1; }
     .cw-import-body label { display: block; margin: 0 0 4px; font-size: 12px; color: #334155; }
@@ -291,19 +402,29 @@ function ensureStyles(): void {
     .cw-discovery-preview { margin-top: 8px; display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
     .cw-discovery-thumb { width: 56px; height: 42px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; background: #f0f0f0; flex-shrink: 0; }
     .cw-result-meta { margin-top: 12px; font-size: 12px; color: #334155; }
-    .cw-discovery-grid { margin-top: 12px; display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .cw-result-card, .cw-basket-card { position: relative; border: 1px solid #d7dee8; border-radius: 14px; padding: 12px; background:
-      radial-gradient(circle at top right, rgba(15, 23, 42, 0.06), transparent 35%),
-      linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-      box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08); }
-    .cw-result-card.is-selected { border-color: #0f172a; box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.08), 0 18px 32px rgba(15, 23, 42, 0.12); }
+    .cw-load-progress { display: none; margin-top: 10px; }
+    .cw-load-progress.visible { display: block; }
+    .cw-load-progress-copy { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; color: #475569; font-size: 11px; }
+    .cw-load-progress-copy strong { color: #0f172a; font-weight: 700; }
+    .cw-load-progress-track { height: 5px; overflow: hidden; border-radius: 999px; background: #e2e8f0; }
+    .cw-load-progress-bar { width: 0; height: 100%; border-radius: inherit; background: #2563eb; transition: width 220ms ease; }
+    .cw-load-progress.complete .cw-load-progress-bar { background: #16a34a; }
+    .cw-discovery-grid { margin-top: 8px; display: grid; gap: 6px; }
+    .cw-result-card, .cw-basket-card { position: relative; border: 1px solid #d7dee8; border-radius: 8px; padding: 11px 12px; background: #fff; }
+    .cw-result-card:hover { background: #f8fafc; }
+    .cw-result-card.is-selected { border-color: #2563eb; background: #eff6ff; box-shadow: inset 3px 0 0 #2563eb; }
     .cw-result-top { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; }
     .cw-result-check { margin-top: 2px; width: 16px !important; height: 16px; accent-color: #0f172a; }
     .cw-result-title { margin: 0; font-size: 13px; font-weight: 700; color: #0f172a; }
     .cw-result-subtitle { margin: 4px 0 0; font-size: 11px; color: #64748b; }
     .cw-result-pill { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 3px 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; background: #e2e8f0; color: #334155; }
     .cw-result-pill.is-ok { background: #dcfce7; color: #166534; }
-    .cw-result-controls { margin-top: 10px; display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cw-result-controls { margin-top: 10px; display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)) auto; align-items: end; }
+    .cw-result-field { display: grid !important; gap: 4px; min-width: 0; margin: 0 !important; color: #64748b !important; font-size: 10px !important; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+    .cw-result-controls .cw-btn { min-height: 34px; white-space: nowrap; }
+    .cw-result-action { display: grid; gap: 4px; }
+    .cw-result-action small { color: #64748b; font-size: 10px; white-space: nowrap; }
+    .cw-result-controls .cw-btn:disabled { cursor: not-allowed; opacity: 0.45; }
     .cw-select { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 7px 9px; font-size: 12px; background: #fff; }
     .cw-section-label { margin-top: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 11px; font-weight: 700; color: #334155; letter-spacing: 0.05em; text-transform: uppercase; }
     .cw-basket-wrap { margin-top: 10px; display: grid; gap: 8px; }
@@ -344,7 +465,16 @@ function ensureStyles(): void {
     .cw-measure-row { display: grid; grid-template-columns: 160px 120px 1fr 180px 180px; gap: 8px; align-items: center; padding: 8px; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
     .cw-measure-row:last-child { border-bottom: none; }
     .cw-measure-row.armed { background: #dbeafe; box-shadow: inset 3px 0 0 #2563eb; }
+    .cw-measure-row.armed.label-required { background: #fff1f2; box-shadow: inset 3px 0 0 #ef4444; }
+    .cw-measure-row.armed.label-required .cw-measure-input { border-color: #f87171; background: #fffafa; box-shadow: 0 0 0 2px rgba(239,68,68,.08); }
     .cw-measure-row.ready { background: #f8fafc; box-shadow: inset 3px 0 0 #94a3b8; }
+    .cw-measure-row.suggested { background: #f8fafc; }
+    .cw-measure-value-field { position: relative; min-width: 0; }
+    .cw-measure-value-input { width: 100%; min-width: 62px; height: 32px; padding: 5px 42px 5px 7px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #0f172a; font: inherit; font-weight: 700; }
+    .cw-measure-value-input:focus { border-color: #2563eb; outline: 2px solid rgba(37,99,235,.14); outline-offset: 0; }
+    .cw-measure-value-input[aria-invalid="true"] { border-color: #dc2626; background: #fef2f2; }
+    .cw-measure-source { display: flex; align-items: center; min-height: 16px; margin-top: 3px; overflow: visible; color: #64748b; font-size: 9px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
+    .cw-measure-reset { position: absolute; top: 7px; right: 5px; z-index: 1; padding: 2px 3px; border: 0; background: #fff; color: #2563eb; font-size: 9px; font-weight: 700; line-height: 1.2; cursor: pointer; }
     .cw-split-measure-wrap { margin-top: 0; width: 100%; height: 100%; min-width: 0; min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; border-radius: 18px; border: 1px solid rgba(203, 213, 225, 0.85); background: rgba(255,255,255,0.98); box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08); overflow: hidden; }
     .cw-split-measure-wrap .cw-measure-head { position: sticky; top: 0; z-index: 2; padding: 12px 14px; background: linear-gradient(180deg, #f8fafc 0%, #eef4ff 100%); border-bottom-color: rgba(203, 213, 225, 0.9); }
     .cw-split-rows { width: 100%; flex: 1 1 auto; min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-bottom: 18px; }
@@ -354,14 +484,174 @@ function ensureStyles(): void {
     .cw-measure-group { padding: 10px 8px; background: linear-gradient(180deg, #ffffff, #f8fafc); border-bottom: 1px solid #e2e8f0; font-size: 11px; font-weight: 700; color: #0f172a; letter-spacing: 0.03em; text-transform: uppercase; }
     .cw-measure-val { color: #0f172a; font-weight: 600; }
     .cw-measure-input { width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 8px; font-size: 12px; }
+    .cw-workspace-next { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 12px; margin: 10px 12px; padding: 12px; border: 1px solid #bfdbfe; border-radius: 8px; background: #eff6ff; }
+    .cw-workspace-next-copy { min-width: 0; }
+    .cw-workspace-next-kicker { color: #1d4ed8; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+    .cw-workspace-next-main { display: flex; align-items: baseline; gap: 8px; margin-top: 3px; }
+    .cw-workspace-next-label { color: #0f172a; font-size: 22px; font-weight: 750; }
+    .cw-workspace-next-value { color: #0f172a; font-size: 18px; font-weight: 650; }
+    .cw-workspace-next-source { overflow: hidden; margin-top: 2px; color: #64748b; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .cw-split-measure-wrap.compact .cw-measure-head,
+    .cw-split-measure-wrap.compact .cw-measure-row { grid-template-columns: minmax(150px,1.5fr) 78px 92px 82px; gap: 8px; }
+    .cw-split-measure-wrap.compact .cw-measure-head { padding: 8px 12px; }
+    .cw-split-measure-wrap.compact .cw-measure-row { min-height: 54px; padding: 8px 12px; cursor: pointer; }
+    .cw-split-measure-wrap.compact .cw-measure-input { min-height: 32px; padding: 4px 7px; font-size: 13px; font-weight: 700; text-align: center; }
+    .cw-split-measure-wrap.compact .cw-btn { min-height: 32px; width: 100%; padding: 5px 8px; }
+    .cw-queue-dock { position: fixed; right: 318px; bottom: 72px; z-index: 4800; display: none; width: min(390px, calc(100vw - 32px)); border: 1px solid #cbd5e1; border-radius: 8px; background: rgba(255,255,255,.98); box-shadow: 0 10px 28px rgba(15,23,42,.16); backdrop-filter: blur(10px); overflow: hidden; }
+    .cw-queue-dock.visible { display: block; }
+    .cw-queue-dock-bar { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 8px 10px; cursor: pointer; }
+    .cw-queue-dock-copy { min-width: 0; flex: 1; }
+    .cw-queue-dock-kicker { color: #64748b; font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+    .cw-queue-dock-main { overflow: hidden; color: #0f172a; font-size: 14px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+    .cw-queue-dock-source { overflow: hidden; color: #64748b; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .cw-queue-dock-actions { display: flex; gap: 5px; }
+    .cw-queue-dock .cw-btn { min-height: 30px; padding: 5px 9px; }
+    .cw-queue-progress { flex: 0 0 auto; min-width: 40px; color: #475569; font-size: 10px; font-weight: 700; text-align: right; }
+    .cw-queue-chevron { width: 28px; min-width: 28px !important; padding: 0 !important; font-size: 14px; }
+    .cw-queue-panel { display: none; border-top: 1px solid #e2e8f0; background: #fff; }
+    .cw-queue-dock.expanded .cw-queue-panel { display: block; }
+    .cw-queue-tools { display: flex; gap: 6px; padding: 8px; border-bottom: 1px solid #eef2f7; }
+    .cw-queue-search { min-width: 0; flex: 1; height: 32px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 10px; color: #0f172a; font-size: 12px; outline: none; }
+    .cw-queue-search:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,.12); }
+    .cw-queue-list { max-height: min(330px, 42vh); overflow-y: auto; overscroll-behavior: contain; }
+    .cw-queue-item { display: grid; grid-template-columns: 62px minmax(0,1fr) auto 54px; align-items: center; gap: 8px; width: 100%; min-height: 44px; border: 0; border-bottom: 1px solid #f1f5f9; padding: 6px 10px; background: #fff; color: #0f172a; text-align: left; }
+    .cw-queue-item:hover { background: #f8fafc; }
+    .cw-queue-item.active { background: #eff6ff; box-shadow: inset 3px 0 0 #2563eb; }
+    .cw-queue-item.done { opacity: .55; }
+    .cw-queue-label { width: 100%; min-width: 0; height: 30px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 6px; color: #0f172a; background: #fff; font-size: 13px; font-weight: 800; text-transform: uppercase; }
+    .cw-queue-label:focus { border-color: #2563eb; outline: 0; box-shadow: 0 0 0 2px rgba(37,99,235,.12); }
+    .cw-queue-name { min-width: 0; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .cw-queue-value { font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .cw-queue-empty { padding: 18px 12px; color: #64748b; font-size: 12px; text-align: center; }
+    .cw-queue-footer { display: flex; justify-content: space-between; gap: 6px; padding: 7px 8px; border-top: 1px solid #eef2f7; background: #f8fafc; }
+    @media (max-width: 900px) { .cw-queue-dock { right: 12px; bottom: 70px; } }
     .cw-section-select { width: 220px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 8px; font-size: 12px; }
     .cw-rendered-html { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 10px; min-height: 92px; resize: vertical; font-size: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .cw-product-search-shell { position: sticky; top: -12px; z-index: 8; margin: -4px -2px 0; padding: 8px 2px 12px; background: rgba(255,255,255,.97); backdrop-filter: blur(10px); }
+    .cw-product-search-label { display: flex !important; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 7px !important; color: #0f172a !important; font-size: 13px !important; font-weight: 700; }
+    .cw-product-search-label span { color: #64748b; font-size: 11px; font-weight: 500; }
+    .cw-product-search-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
+    .cw-product-search-row input { min-height: 42px; border-color: #94a3b8; font-size: 15px; }
+    .cw-product-search-row .cw-btn { min-width: 92px; min-height: 42px; font-size: 13px; font-weight: 700; }
+    .cw-comparison-builder { margin-top: 9px; border: 1px solid #dbe4ee; border-radius: 8px; background: #f8fafc; }
+    .cw-comparison-builder > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 36px; padding: 7px 10px; color: #334155; cursor: pointer; font-size: 12px; font-weight: 700; list-style: none; }
+    .cw-comparison-builder > summary::-webkit-details-marker { display: none; }
+    .cw-comparison-builder > summary::after { content: '+'; color: #64748b; font-size: 16px; font-weight: 500; }
+    .cw-comparison-builder[open] > summary::after { content: '−'; }
+    .cw-comparison-body { padding: 0 10px 10px; }
+    .cw-comparison-copy { margin: 0 0 7px; color: #64748b; font-size: 11px; line-height: 1.4; }
+    .cw-comparison-input { display: block; width: 100%; min-height: 88px; resize: vertical; border: 1px solid #cbd5e1; border-radius: 7px; padding: 8px 10px; background: #fff; color: #0f172a; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; outline: none; }
+    .cw-comparison-input:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,.12); }
+    .cw-comparison-toolbar { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+    .cw-comparison-fabric { width: 132px; height: 32px; flex: 0 0 132px; border: 1px solid #cbd5e1; border-radius: 7px; padding: 0 9px; background: #fff; color: #0f172a; font-size: 11px; font-weight: 650; outline: none; }
+    .cw-comparison-fabric:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,.12); }
+    .cw-comparison-status { min-width: 0; flex: 1; color: #64748b; font-size: 11px; }
+    .cw-comparison-items { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 7px; margin-top: 9px; }
+    .cw-comparison-item { min-width: 0; overflow: hidden; border: 1px solid #dbe4ee; border-radius: 7px; background: #fff; }
+    .cw-comparison-item-image { display: flex; align-items: center; justify-content: center; height: 108px; padding: 5px; background: #f1f5f9; }
+    .cw-comparison-item-image img { display: block; width: 100%; height: 100%; object-fit: contain; }
+    .cw-comparison-item-copy { padding: 7px; }
+    .cw-comparison-item-title { overflow: hidden; color: #0f172a; font-size: 11px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+    .cw-comparison-item-config { margin-top: 2px; overflow: hidden; color: #475569; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .cw-comparison-item-note { margin-top: 5px; color: #64748b; font-size: 9px; line-height: 1.25; }
+    .cw-comparison-item-note.exact { color: #166534; }
+    .cw-comparison-item-note.fallback { color: #9a3412; }
+    .cw-comparison-item-options { display: grid; gap: 5px; margin-top: 7px; padding-top: 7px; border-top: 1px solid #eef2f7; }
+    .cw-comparison-item-option { display: grid; grid-template-columns: 48px minmax(0,1fr); align-items: center; gap: 5px; color: #64748b; font-size: 9px; font-weight: 700; }
+    .cw-comparison-item-option select { width: 100%; min-width: 0; height: 27px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 22px 0 6px; background: #fff; color: #0f172a; font-size: 10px; font-weight: 650; outline: none; }
+    .cw-comparison-item-option select:focus { border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,.1); }
+    .cw-comparison-item.is-refreshing { opacity: .65; }
+    .cw-comparison-item-action { width: 100%; min-height: 28px; margin-top: 7px; }
+    .cw-product-results-shell { margin-top: 4px; }
+    .cw-product-results-shell.is-empty .cw-section-label { display: none; }
+    .cw-product-workspace { display: none; margin-top: 14px; border-top: 1px solid #e2e8f0; }
+    .cw-product-workspace.has-product { display: block; }
+    .cw-product-toolbar { position: sticky; top: 58px; z-index: 7; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 -2px; padding: 10px 2px; background: rgba(255,255,255,.97); backdrop-filter: blur(10px); }
+    .cw-product-toolbar-copy { min-width: 0; }
+    .cw-product-toolbar-title { overflow: hidden; color: #0f172a; font-size: 14px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+    .cw-product-toolbar-meta { margin-top: 2px; color: #64748b; font-size: 11px; }
+    .cw-product-actions { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+    .cw-product-actions .cw-btn { min-height: 34px; }
+    .cw-internal-control { display: none !important; }
+    .cw-product-content { display: grid; gap: 12px; }
+    .cw-product-pane { min-width: 0; }
+    .cw-product-pane .cw-section-label { margin-top: 4px; }
+    .cw-product-pane .cw-images { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .cw-product-pane .cw-measure-wrap { max-height: 52vh; overflow: auto; }
+    .cw-product-pane .cw-measure-head { position: sticky; top: 0; z-index: 2; }
+    .cw-product-pane .cw-measure-head,
+    .cw-product-pane .cw-measure-row { grid-template-columns: minmax(130px,1.5fr) minmax(86px,.8fr) 64px 96px minmax(92px,1fr); gap: 6px; }
+    .cw-product-pane .cw-measure-row { min-height: 48px; padding: 7px 8px; }
+    .cw-product-pane .cw-measure-input { min-width: 0; }
+    .cw-product-pane .cw-measure-row .cw-btn { padding: 5px 7px; }
+    .cw-storefront-product { display: none; grid-template-columns: minmax(220px, 38%) minmax(0, 1fr); gap: 20px; margin: 4px 0 16px; padding: 14px; border: 1px solid #dbe4ee; border-radius: 8px; background: #fff; }
+    .cw-storefront-product.visible { display: grid; }
+    .cw-storefront-image-link { display: flex; align-items: center; justify-content: center; min-height: 220px; overflow: hidden; border-radius: 6px; background: #f7f8fa; }
+    .cw-storefront-image-link img { display: block; width: 100%; height: 100%; max-height: 310px; object-fit: contain; }
+    .cw-storefront-copy { min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+    .cw-storefront-eyebrow { color: #64748b; font-size: 10px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+    .cw-storefront-copy h4 { margin: 7px 0 5px; color: #0f172a; font-size: clamp(20px, 2.2vw, 30px); line-height: 1.12; }
+    .cw-storefront-copy > a { width: fit-content; color: #2563eb; font-size: 12px; font-weight: 650; text-decoration: none; }
+    .cw-storefront-copy > a:hover { text-decoration: underline; }
+    .cw-storefront-links { display: flex; align-items: center; gap: 8px; }
+    .cw-storefront-links > a { color: #2563eb; font-size: 12px; font-weight: 650; text-decoration: none; }
+    .cw-storefront-links > a:hover { text-decoration: underline; }
+    .cw-storefront-links .cw-btn { min-height: 32px; }
+    .cw-overall-dimensions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 22px; }
+    .cw-dimension { width: 100%; min-width: 0; padding: 11px 12px; border: 1px solid #dbe4ee; border-radius: 6px; background: #f8fafc; text-align: left; }
+    .cw-dimension-label { display: block; color: #64748b; font-size: 10px; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; }
+    .cw-dimension-value { display: block; margin-top: 3px; overflow: hidden; color: #0f172a; font-size: 20px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+    .cw-dimension.missing .cw-dimension-value { color: #94a3b8; font-weight: 550; }
+    .cw-dimension.is-armed { border-color: #2563eb; background: #dbeafe; box-shadow: inset 3px 0 0 #2563eb; }
+    .cw-dimension-action { display: block; margin-top: 5px; color: #2563eb; font-size: 10px; font-weight: 700; }
+    .cw-product-photos { border: 1px solid #dbe4ee; border-radius: 8px; background: #fff; }
+    .cw-product-photos > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; color: #334155; font-size: 12px; font-weight: 700; cursor: pointer; list-style: none; }
+    .cw-product-photos > summary::-webkit-details-marker { display: none; }
+    .cw-product-photos > summary::after { content: '+'; color: #64748b; font-size: 17px; font-weight: 500; }
+    .cw-product-photos[open] > summary::after { content: '−'; }
+    .cw-product-photos > summary span:last-child { margin-left: auto; color: #64748b; font-size: 11px; font-weight: 550; }
+    .cw-photo-actions { display: flex; gap: 7px; padding: 0 12px 10px; }
+    .cw-product-photos .cw-images { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 0 12px 12px; }
+    .cw-product-advanced { margin-top: 12px; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+    .cw-product-advanced > summary { cursor: pointer; color: #64748b; font-size: 12px; font-weight: 650; user-select: none; }
+    .cw-product-advanced-body { padding-top: 8px; }
+    .cw-result-card { cursor: pointer; }
+    .cw-result-card:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+    .cw-result-card.is-ready::after { content: 'Ready'; position: absolute; top: 9px; right: 9px; border-radius: 999px; padding: 3px 7px; background: #166534; color: #fff; font-size: 9px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+    .cw-result-card.is-ready .cw-result-top { padding-right: 48px; }
+    .cw-result-check { display: none; }
+    .cw-loaded-summary { display: none; }
+    .cw-flow-steps, .cw-note, #cwBasketSection { display: none !important; }
     @media (max-width: 900px) {
       .cw-grid { grid-template-columns: 1fr; }
       .cw-discovery-grid { grid-template-columns: 1fr; }
-      .cw-result-controls { grid-template-columns: 1fr; }
-      .cw-measure-head, .cw-measure-row { grid-template-columns: 1fr; }
+      .cw-result-controls { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .cw-result-action { grid-column: 1 / -1; }
+      .cw-result-action .cw-btn { width: 100%; }
+      .cw-product-pane .cw-measure-wrap { overflow: auto; }
+      .cw-product-pane .cw-measure-head, .cw-product-pane .cw-measure-row { min-width: 700px; }
       .cw-images { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .cw-product-content { grid-template-columns: 1fr; }
+      .cw-product-toolbar { align-items: flex-start; flex-direction: column; }
+      .cw-product-actions { justify-content: flex-start; }
+      .cw-storefront-product { grid-template-columns: 1fr; }
+      .cw-storefront-image-link { min-height: 180px; }
+      .cw-product-photos .cw-images { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .cw-comparison-items { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width: 620px) {
+      .cw-import-card { width: calc(100vw - 12px); height: calc(100dvh - 12px); max-height: calc(100dvh - 12px); }
+      .cw-import-head { padding: 10px; }
+      .cw-import-body { padding: 10px; }
+      .cw-product-search-shell { top: -10px; margin-top: -2px; padding-top: 6px; }
+      .cw-product-search-row { grid-template-columns: 1fr; }
+      .cw-product-search-row .cw-btn { width: 100%; }
+      .cw-result-controls { grid-template-columns: 1fr; }
+      .cw-result-action { grid-column: auto; }
+      .cw-storefront-product { padding: 10px; }
+      .cw-overall-dimensions { grid-template-columns: 1fr; }
+      .cw-comparison-toolbar { align-items: stretch; flex-direction: column; }
+      .cw-comparison-toolbar .cw-btn { width: 100%; }
     }
   `;
   document.head.appendChild(style);
@@ -400,6 +690,70 @@ function normalizeGuideLabel(value: string): string {
   return (value || '').trim().toUpperCase().replace(/\s+/g, '');
 }
 
+export function resolveCwWorkspaceNextTag(options: {
+  scopeKeys: string[];
+  manualTags?: Record<string, string>;
+  guideTags?: Record<string, string>;
+  labelTags?: Record<string, string>;
+  displayTag?: string;
+  calculatedTag?: string;
+}): string {
+  const { scopeKeys, manualTags = {}, guideTags = {}, labelTags = {} } = options;
+  for (const key of scopeKeys) {
+    const authoritative =
+      normalizeGuideLabel(manualTags[key] || '') ||
+      normalizeGuideLabel(guideTags[key] || '') ||
+      normalizeGuideLabel(labelTags[key] || '');
+    if (authoritative) return authoritative;
+  }
+  return (
+    normalizeGuideLabel(options.displayTag || '') ||
+    normalizeGuideLabel(options.calculatedTag || '')
+  );
+}
+
+export function resolveNextAvailableCwLabel(baseLabel: string, usedLabels: Set<string>): string {
+  const normalized = normalizeGuideLabel(baseLabel);
+  if (!normalized || !usedLabels.has(normalized)) return normalized;
+  const root = normalized.replace(/\(\d+\)$/, '');
+  for (let index = 1; index < 1000; index += 1) {
+    const candidate = `${root}(${index})`;
+    if (!usedLabels.has(candidate)) return candidate;
+  }
+  return normalized;
+}
+
+export function seedCwMeasurementEntry(
+  store: Record<string, any>,
+  targetLabel: string,
+  payload: Record<string, any>
+): boolean {
+  const normalizedLabel = normalizeGuideLabel(targetLabel);
+  if (!normalizedLabel || store[normalizedLabel]) return false;
+  store[normalizedLabel] = payload;
+  return true;
+}
+
+export function hasCwWorkspaceSeedChanged(options: {
+  scopeKeys: string[];
+  targetLabel: string;
+  rowKey?: string;
+  displayTag?: string;
+  guideTags?: Record<string, string>;
+  labelTags?: Record<string, string>;
+  readyRows?: Record<string, string>;
+}): boolean {
+  const target = normalizeGuideLabel(options.targetLabel);
+  if (!target) return false;
+  if (normalizeGuideLabel(options.displayTag || '') !== target) return true;
+  return options.scopeKeys.some(
+    key =>
+      normalizeGuideLabel(options.guideTags?.[key] || '') !== target ||
+      normalizeGuideLabel(options.labelTags?.[key] || '') !== target ||
+      Boolean(options.rowKey && options.readyRows?.[key] !== options.rowKey)
+  );
+}
+
 function getCanonicalCwScopeKey(scopeLabel: string): string {
   const metadata = (window as any).app?.metadataManager;
   return typeof metadata?.normalizeImageLabel === 'function'
@@ -431,7 +785,6 @@ function getCwImportedMeasurementEntry(scopeLabel: string, strokeLabel: string):
         bindingScopeKey: String(direct.bindingScopeKey || canonicalKey).trim() || canonicalKey,
       };
     }
-    return null;
   }
   for (const candidate of buildLegacyCwScopeCandidates(scopeLabel)) {
     const scopedStore = store[candidate];
@@ -491,6 +844,96 @@ function normalizeSectionName(value: string): string {
   if (token.includes('seat') || token.includes('stcc')) return 'Seat Cushion Cover';
   if (token.includes('back') || token.includes('bkcc')) return 'Back Cushion Cover';
   return raw;
+}
+
+export function filterCwWorkspaceRows<T extends { itemKey: string; sectionName?: string }>(
+  rows: T[],
+  scopeMeta?: { itemKey?: string; sectionName?: string } | null
+): T[] {
+  if (!scopeMeta) return rows;
+  const itemKey = (scopeMeta.itemKey || '').trim();
+  const sectionName = normalizeSectionName(scopeMeta.sectionName || '');
+  const exact = rows.filter(row => {
+    if (itemKey && row.itemKey !== itemKey) return false;
+    if (sectionName && normalizeSectionName(row.sectionName || '') !== sectionName) return false;
+    return true;
+  });
+  return exact.length ? exact : rows;
+}
+
+export function isCwOverallDimensionRow(
+  row:
+    | {
+        sourceLabel?: string;
+        sectionName?: string;
+      }
+    | null
+    | undefined
+): boolean {
+  if (!row) return false;
+  const section = normalizeSectionName(row.sectionName || '');
+  if (section && section !== 'Frame Cover') return false;
+  const label = normalizeValueText(row.sourceLabel || '')
+    .toLowerCase()
+    .replace(/^overall\s+/, '');
+  return label === 'width' || label === 'length' || label === 'depth' || label === 'height';
+}
+
+export function resolveCwWorkspaceDrawRow<
+  T extends { rowKey: string; targetLabel: string },
+>(options: {
+  rows: T[];
+  armedRowKey?: string;
+  readyRowKey?: string;
+  strokeLabel: string;
+}): T | null {
+  const strokeLabel = normalizeGuideLabel(options.strokeLabel);
+  const exactKey = options.armedRowKey || options.readyRowKey || '';
+  if (exactKey) {
+    const exact = options.rows.find(row => row.rowKey === exactKey) || null;
+    return exact && normalizeGuideLabel(exact.targetLabel) === strokeLabel ? exact : null;
+  }
+  const matches = options.rows.filter(row => normalizeGuideLabel(row.targetLabel) === strokeLabel);
+  return matches.length === 1 ? matches[0] : null;
+}
+
+export function findNextCwWorkspaceRow<T extends { rowKey: string; targetLabel: string }>(
+  rows: T[],
+  usedLabels: Set<string>,
+  afterRowKey = ''
+): T | null {
+  const startIndex = afterRowKey ? rows.findIndex(row => row.rowKey === afterRowKey) + 1 : 0;
+  const start = Math.max(0, startIndex);
+  for (const row of rows.slice(start)) {
+    const targetLabel = normalizeGuideLabel(row.targetLabel);
+    if (!targetLabel || usedLabels.has(targetLabel)) continue;
+    return row;
+  }
+  return null;
+}
+
+export function resolveCwWorkspaceQueueRow<T extends { rowKey: string; targetLabel: string }>(
+  rows: T[],
+  usedLabels: Set<string>,
+  armedRowKey = ''
+): { row: T; armed: boolean } | null {
+  if (armedRowKey) {
+    const armedRow = rows.find(row => row.rowKey === armedRowKey);
+    if (armedRow) return { row: armedRow, armed: true };
+  }
+  const next = findNextCwWorkspaceRow(rows, usedLabels);
+  return next ? { row: next, armed: false } : null;
+}
+
+export function resolveCwScopedArmedRowKey(
+  armedRowsByScope: Record<string, string>,
+  scopeKeys: string[]
+): string {
+  for (const key of scopeKeys) {
+    const rowKey = armedRowsByScope[key];
+    if (rowKey) return rowKey;
+  }
+  return '';
 }
 
 function classifyMeasurementSection(sourceLabel: string, sectionName: string): string {
@@ -1004,7 +1447,27 @@ function extractRowsFromQcNode(node: any, contextSectionName: string, out: Impor
   })();
 
   const measurements = node?.measurements || node?.measurement_data || node?.measurementData;
-  if (measurements && typeof measurements === 'object') {
+  if (Array.isArray(measurements)) {
+    measurements.forEach((measurement, index) => {
+      if (!measurement || typeof measurement !== 'object') return;
+      const sourceLabel = normalizeValueText(
+        measurement?.translations?.en ||
+          measurement?.label ||
+          measurement?.name ||
+          measurement?.code
+      );
+      const normalizedValue = toPrimitiveMeasurementValue(
+        measurement?.value ?? measurement?.measurement ?? measurement?.actual ?? measurement?.result
+      );
+      if (!isLikelyMeasurementLabel(sourceLabel) || !normalizedValue) return;
+      out.push({
+        id: `qc-component-${out.length + 1}-${index}`,
+        sourceLabel,
+        value: normalizedValue,
+        sectionName: sectionFromNode || 'Frame Cover',
+      });
+    });
+  } else if (measurements && typeof measurements === 'object') {
     Object.entries(measurements).forEach(([key, value]) => {
       const sourceLabel = normalizeValueText(key);
       const normalizedValue = toPrimitiveMeasurementValue(value);
@@ -1073,7 +1536,7 @@ function nextUniqueViewId(baseId: string): string {
   return `${baseId}-${i}`;
 }
 
-function extractRows(payload: any): ImportedRow[] {
+export function extractRows(payload: any): ImportedRow[] {
   const rows: ImportedRow[] = [];
   const pushMeasurementEntry = (
     sourceLabelRaw: unknown,
@@ -1200,7 +1663,7 @@ function createModal(): HTMLElement {
 
   const head = document.createElement('div');
   head.className = 'cw-import-head';
-  head.innerHTML = '<h3>CW Product Measurements</h3>';
+  head.innerHTML = '<h3>Comfort Works Product</h3>';
 
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';
@@ -1211,76 +1674,102 @@ function createModal(): HTMLElement {
   body.className = 'cw-import-body';
   body.innerHTML = `
     <form class="cw-import-form" novalidate>
-    <details id="cwLoginDetails" class="cw-login-details">
-      <summary style="cursor:pointer;font-size:13px;font-weight:600;color:#475569;padding:6px 0;user-select:none;">CW Connection Settings</summary>
-      <div class="cw-grid" style="margin-top:8px;">
-        <div>
-          <label for="cwBaseUrl">CW Base URL</label>
-          <input id="cwBaseUrl" value="https://cw40.comfort-works.com" />
-        </div>
-        <div>
-          <label for="cwFormId">Form ID (optional)</label>
-          <input id="cwFormId" />
-        </div>
-        <div>
-          <label for="cwUsername">CW Username</label>
-          <input id="cwUsername" autocomplete="off" />
-        </div>
-        <div>
-          <label for="cwPassword">CW Password</label>
-          <input id="cwPassword" type="password" autocomplete="off" />
-        </div>
+    <div class="cw-product-search-shell">
+      <label class="cw-product-search-label" for="cwSearchTerm">Find a sofa <span>Name, product code, or PID</span></label>
+      <div class="cw-product-search-row">
+        <input id="cwSearchTerm" type="search" placeholder="e.g. IK-KL-3, Harmony chaise, PID 12345" autocomplete="off" />
+        <button type="button" class="cw-btn cw-btn-primary" id="cwSearchBtn">Find product</button>
       </div>
-    </details>
-    <div class="cw-grid" style="margin-top:4px;">
-      <div class="cw-grid-full">
-        <label for="cwSearchTerm">Product search (name or code)</label>
-        <input id="cwSearchTerm" placeholder="PB Comfort Roll Arm Sofa Slipcover" />
+      <div class="cw-load-progress" id="cwLoadProgress" role="status" aria-live="polite">
+        <div class="cw-load-progress-copy"><strong id="cwLoadProgressLabel">Finding product</strong><span id="cwLoadProgressDetail">Starting...</span></div>
+        <div class="cw-load-progress-track"><div class="cw-load-progress-bar" id="cwLoadProgressBar"></div></div>
       </div>
-      <div class="cw-grid-full" id="cwRenderedHtmlWrap" style="display:none;">
-        <label for="cwRenderedHtml">Rendered PID HTML (optional)</label>
-        <textarea id="cwRenderedHtml" class="cw-rendered-html" placeholder="Paste expanded measurements HTML when needed"></textarea>
-      </div>
+      <div class="cw-result-meta" id="cwResultMeta">Search for the exact product. Its photos and complete measurements will load here.</div>
+      <details class="cw-comparison-builder" id="cwComparisonBuilder">
+        <summary>Compare catalogue products</summary>
+        <div class="cw-comparison-body">
+          <p class="cw-comparison-copy">Paste up to eight product codes, product links, order lines, or fabric samples. Each item keeps its own side, model, style, and fabric options.</p>
+          <textarea id="cwComparisonInput" class="cw-comparison-input" placeholder="IK-KS-0&#10;Code: LV, SHRT_SP, COS-105&#10;IK-KS-2M Kramfors 2 Seater 1 Armrest Sofa Cover&#10;Code: R, LV, LSKT_PM, COS-105"></textarea>
+          <div class="cw-comparison-toolbar">
+            <input id="cwComparisonFabric" class="cw-comparison-fabric" type="text" autocomplete="off" spellcheck="false" placeholder="Shared fabric name or code" aria-label="Shared fabric name or code" />
+            <span class="cw-comparison-status" id="cwComparisonStatus">Nothing loaded yet.</span>
+            <button type="button" class="cw-btn" id="cwBuildComparisonBtn">Load comparison</button>
+            <button type="button" class="cw-btn cw-btn-primary" id="cwImportComparisonBtn" hidden>Add to SofaPaint</button>
+          </div>
+          <div class="cw-comparison-items" id="cwComparisonItems"></div>
+        </div>
+      </details>
     </div>
-    <div class="cw-row">
-      <button type="button" class="cw-btn cw-btn-primary" id="cwSearchBtn">Search</button>
-      <button type="button" class="cw-btn" id="cwLoadSelectedBtn">Load Selected</button>
-      <button type="button" class="cw-btn" id="cwImportExactBtn">Import Matching Labels</button>
-      <button type="button" class="cw-btn" id="cwImportPhotosBtn">Import Photos to Project</button>
-      <select id="cwItemFilter" class="cw-section-select"><option value="">All Items</option></select>
-      <button type="button" class="cw-btn" id="cwClearBasketBtn" title="Clear basket and loaded items">Clear</button>
-      <select id="cwSectionFilter" class="cw-section-select"><option value="">All Sections</option></select>
-      <span class="cw-image-actions">
-        <button type="button" class="cw-btn" id="cwSelectVisibleImagesBtn">Select Visible</button>
-        <button type="button" class="cw-btn" id="cwClearVisibleImagesBtn">Clear Visible</button>
-      </span>
-      <label><input type="checkbox" id="cwImportLocked" checked /> Locked by default</label>
+    <div class="cw-product-results-shell is-empty" id="cwProductResultsShell">
+      <div class="cw-section-label"><span>Choose product</span><span id="cwResultsMeta"></span></div>
+      <div class="cw-discovery-grid" id="cwSearchResults"></div>
     </div>
-    <div class="cw-flow-steps" id="cwFlowSteps">
-      <span class="cw-flow-step is-active" id="cwStep1">1. Search</span>
-      <span class="cw-flow-arrow">→</span>
-      <span class="cw-flow-step" id="cwStep2">2. Review</span>
-      <span class="cw-flow-arrow">→</span>
-      <span class="cw-flow-step" id="cwStep3">3. Import</span>
-    </div>
-    <div class="cw-note">Search auto-loads measurements and photos. Use Import Matching Labels to apply measurements, or Import Photos to add images to your project.</div>
-    <div class="cw-result-meta" id="cwResultMeta">Enter a product name or code and click Search.</div>
-    <div class="cw-section-label">
-      <span>Search Results</span>
-      <span id="cwResultsMeta"></span>
-    </div>
-    <div class="cw-discovery-grid" id="cwSearchResults"></div>
     <div class="cw-section-collapsible" id="cwBasketSection" style="display:none">
       <div class="cw-basket-wrap" id="cwBasket"></div>
     </div>
-    <div class="cw-section-collapsible" id="cwLoadedSection">
-      <div class="cw-section-label">
-        <span>Loaded Items &amp; Photos</span>
-        <span id="cwLoadedMeta"></span>
+    <div class="cw-product-workspace" id="cwProductWorkspace">
+      <div class="cw-product-toolbar">
+        <div class="cw-product-toolbar-copy">
+          <div class="cw-product-toolbar-title" id="cwSelectedProductTitle">Selected product</div>
+          <div class="cw-product-toolbar-meta" id="cwLoadedMeta"></div>
+        </div>
+        <div class="cw-product-actions">
+          <select id="cwItemFilter" class="cw-section-select cw-internal-control" aria-label="Loaded product"><option value="">All Items</option></select>
+          <select id="cwSectionFilter" class="cw-section-select cw-internal-control" aria-label="Product section"><option value="">All Sections</option></select>
+          <button type="button" class="cw-btn cw-btn-primary" id="cwUseMeasurementsBtn">Use measurements</button>
+          <button type="button" class="cw-btn cw-icon-action" id="cwClearBasketBtn" title="Choose another product" aria-label="Choose another product">Change</button>
+        </div>
       </div>
-      <div class="cw-loaded-summary" id="cwLoadedItems"></div>
+      <div class="cw-section-collapsible" id="cwLoadedSection"><div class="cw-loaded-summary" id="cwLoadedItems"></div></div>
+      <section class="cw-storefront-product" id="cwStorefrontProduct" aria-label="Comfort Works product">
+        <a id="cwStorefrontProductLink" target="_blank" rel="noopener noreferrer" class="cw-storefront-image-link">
+          <img id="cwStorefrontProductImage" alt="" />
+        </a>
+        <div class="cw-storefront-copy">
+          <div class="cw-storefront-eyebrow">Comfort Works product</div>
+          <h4 id="cwStorefrontProductName"></h4>
+          <div class="cw-storefront-links">
+            <a id="cwStorefrontProductTextLink" target="_blank" rel="noopener noreferrer">View product</a>
+            <button type="button" class="cw-btn" id="cwOpen3dBtn">Model in 3D</button><button type="button" class="cw-btn cw-btn-primary" id="cwImportStorefrontImageBtn">Add image + draw dimensions</button>
+          </div>
+          <div class="cw-overall-dimensions" id="cwOverallDimensions" aria-label="Overall dimensions"></div>
+        </div>
+      </section>
+      <div class="cw-product-content">
+        <section class="cw-product-pane" aria-label="Product measurements">
+          <div class="cw-section-label"><span>Measurements</span><span>Click one to draw</span></div>
+          <div class="cw-measure-wrap">
+            <div class="cw-measure-head"><div>Measurement</div><div>Section</div><div>Value</div><div>Label</div><div>Action</div></div>
+            <div id="cwRows"></div>
+          </div>
+        </section>
+        <details class="cw-product-photos" id="cwProductPhotos">
+          <summary><span>Photos</span><span id="cwPhotoCount">0 available</span></summary>
+          <div class="cw-photo-actions">
+            <button type="button" class="cw-btn" id="cwSelectVisibleImagesBtn">Select all</button>
+            <button type="button" class="cw-btn" id="cwClearVisibleImagesBtn">Clear</button>
+            <button type="button" class="cw-btn cw-btn-primary" id="cwImportPhotosBtn">Add selected photos</button>
+          </div>
+          <div class="cw-images" id="cwResultImages"></div>
+        </details>
+      </div>
     </div>
-    <div class="cw-probe-panel" id="cwProbePanel" style="display:none;">
+    <details id="cwLoginDetails" class="cw-product-advanced">
+      <summary>Advanced connection and diagnostics</summary>
+      <div class="cw-product-advanced-body">
+      <div class="cw-grid">
+        <div><label for="cwBaseUrl">CW Base URL</label><input id="cwBaseUrl" value="https://cw40.comfort-works.com" /></div>
+        <div><label for="cwFormId">Form ID (optional)</label><input id="cwFormId" /></div>
+        <div><label for="cwUsername">CW Username</label><input id="cwUsername" autocomplete="off" /></div>
+        <div><label for="cwPassword">CW Password</label><input id="cwPassword" type="password" autocomplete="current-password" /></div>
+        <div class="cw-grid-full" id="cwRenderedHtmlWrap" style="display:none;"><label for="cwRenderedHtml">Rendered PID HTML</label><textarea id="cwRenderedHtml" class="cw-rendered-html"></textarea></div>
+      </div>
+      <div class="cw-row">
+        <button type="button" class="cw-btn" id="cwLoadSelectedBtn">Reload selected product</button>
+        <button type="button" class="cw-btn" id="cwImportExactBtn">Apply to matching labels</button>
+        <label><input type="checkbox" id="cwImportLocked" /> Lock imported values</label>
+      </div>
+      <div class="cw-probe-panel" id="cwProbePanel" style="display:none;">
       <div class="cw-row" style="margin-top:0;">
         <label style="margin:0;"><input type="checkbox" id="cwProbeEnabled" /> Enable probe diagnostics</label>
         <button type="button" class="cw-btn" id="cwRunProbeBtn">Run Probe</button>
@@ -1310,12 +1799,10 @@ function createModal(): HTMLElement {
       </div>
       <div class="cw-probe-summary" id="cwProbeSummary">Probe disabled.</div>
       <pre class="cw-probe-pre" id="cwProbeOutput"></pre>
-    </div>
-    <div class="cw-images" id="cwResultImages"></div>
-    <div class="cw-measure-wrap">
-      <div class="cw-measure-head"><div>Item / Source Label</div><div>Section</div><div>Value</div><div>Map to Stroke Label</div><div>Actions</div></div>
-      <div id="cwRows"></div>
-    </div>
+      </div>
+      </div>
+    </details>
+    <div class="cw-flow-steps" id="cwFlowSteps"><span class="cw-flow-step" id="cwStep1"></span><span class="cw-flow-step" id="cwStep2"></span><span class="cw-flow-step" id="cwStep3"></span></div>
     </form>
   `;
 
@@ -1328,6 +1815,12 @@ function createModal(): HTMLElement {
   const usernameEl = body.querySelector<HTMLInputElement>('#cwUsername')!;
   const passwordEl = body.querySelector<HTMLInputElement>('#cwPassword')!;
   const searchTermEl = body.querySelector<HTMLInputElement>('#cwSearchTerm')!;
+  const comparisonInput = body.querySelector<HTMLTextAreaElement>('#cwComparisonInput')!;
+  const comparisonFabric = body.querySelector<HTMLInputElement>('#cwComparisonFabric')!;
+  const buildComparisonBtn = body.querySelector<HTMLButtonElement>('#cwBuildComparisonBtn')!;
+  const importComparisonBtn = body.querySelector<HTMLButtonElement>('#cwImportComparisonBtn')!;
+  const comparisonStatus = body.querySelector<HTMLElement>('#cwComparisonStatus')!;
+  const comparisonItems = body.querySelector<HTMLDivElement>('#cwComparisonItems')!;
   const renderedHtmlEl = body.querySelector<HTMLTextAreaElement>('#cwRenderedHtml')!;
   const importExactBtn = body.querySelector<HTMLButtonElement>('#cwImportExactBtn')!;
   const importPhotosBtn = body.querySelector<HTMLButtonElement>('#cwImportPhotosBtn')!;
@@ -1337,6 +1830,23 @@ function createModal(): HTMLElement {
     '#cwSelectVisibleImagesBtn'
   )!;
   const clearVisibleImagesBtn = body.querySelector<HTMLButtonElement>('#cwClearVisibleImagesBtn')!;
+  const useMeasurementsBtn = body.querySelector<HTMLButtonElement>('#cwUseMeasurementsBtn')!;
+  const productResultsShell = body.querySelector<HTMLDivElement>('#cwProductResultsShell')!;
+  const productWorkspace = body.querySelector<HTMLDivElement>('#cwProductWorkspace')!;
+  const selectedProductTitle = body.querySelector<HTMLDivElement>('#cwSelectedProductTitle')!;
+  const storefrontProduct = body.querySelector<HTMLElement>('#cwStorefrontProduct')!;
+  const storefrontProductImage = body.querySelector<HTMLImageElement>('#cwStorefrontProductImage')!;
+  const storefrontProductLink = body.querySelector<HTMLAnchorElement>('#cwStorefrontProductLink')!;
+  const storefrontProductTextLink = body.querySelector<HTMLAnchorElement>(
+    '#cwStorefrontProductTextLink'
+  )!;
+  const storefrontProductName = body.querySelector<HTMLElement>('#cwStorefrontProductName')!;
+  const importStorefrontImageBtn = body.querySelector<HTMLButtonElement>(
+    '#cwImportStorefrontImageBtn'
+  )!;
+  const overallDimensions = body.querySelector<HTMLDivElement>('#cwOverallDimensions')!;
+  const photoCount = body.querySelector<HTMLSpanElement>('#cwPhotoCount')!;
+  const productPhotos = body.querySelector<HTMLDetailsElement>('#cwProductPhotos')!;
   const searchResultsWrap = body.querySelector<HTMLDivElement>('#cwSearchResults')!;
   const basketWrap = body.querySelector<HTMLDivElement>('#cwBasket')!;
   const loadedItemsWrap = body.querySelector<HTMLDivElement>('#cwLoadedItems')!;
@@ -1352,6 +1862,10 @@ function createModal(): HTMLElement {
   ].filter(Boolean);
   const rowsContainer = body.querySelector<HTMLDivElement>('#cwRows')!;
   const resultMeta = body.querySelector<HTMLDivElement>('#cwResultMeta')!;
+  const loadProgress = body.querySelector<HTMLDivElement>('#cwLoadProgress')!;
+  const loadProgressLabel = body.querySelector<HTMLElement>('#cwLoadProgressLabel')!;
+  const loadProgressDetail = body.querySelector<HTMLElement>('#cwLoadProgressDetail')!;
+  const loadProgressBar = body.querySelector<HTMLDivElement>('#cwLoadProgressBar')!;
   const imagesWrap = body.querySelector<HTMLDivElement>('#cwResultImages')!;
   const lockedEl = body.querySelector<HTMLInputElement>('#cwImportLocked')!;
   const probePanel = body.querySelector<HTMLDivElement>('#cwProbePanel')!;
@@ -1371,6 +1885,67 @@ function createModal(): HTMLElement {
   const probeOutput = body.querySelector<HTMLPreElement>('#cwProbeOutput')!;
   const probeModeAvailable = isCwProbePreviewEnabled();
   let lastProbeReport: Record<string, unknown> | null = null;
+  const requestPayloadCache = new Map<
+    string,
+    { at: number; status: number; contentType: string; rawText: string; data: any }
+  >();
+
+  const setLoadProgress = (
+    percent: number,
+    label: string,
+    detail = '',
+    options: { complete?: boolean; hidden?: boolean } = {}
+  ) => {
+    loadProgress.classList.toggle('visible', !options.hidden);
+    loadProgress.classList.toggle('complete', options.complete === true);
+    loadProgressLabel.textContent = label;
+    loadProgressDetail.textContent = detail;
+    loadProgressBar.style.width = `${Math.max(0, Math.min(100, percent))}%`;
+  };
+
+  const makeRequestCacheKey = (payload: Record<string, unknown>): string => {
+    const cachePayload = { ...payload, password: '', renderedHtml: '' };
+    let hash = 2166136261;
+    const source = JSON.stringify(cachePayload);
+    for (let index = 0; index < source.length; index += 1) {
+      hash ^= source.charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return `${CW_REQUEST_CACHE_PREFIX}${(hash >>> 0).toString(36)}`;
+  };
+
+  const readCachedRequest = (key: string) => {
+    const memoryValue = requestPayloadCache.get(key);
+    if (memoryValue && Date.now() - memoryValue.at < CW_REQUEST_CACHE_TTL_MS) {
+      return memoryValue;
+    }
+    try {
+      const raw = window.sessionStorage.getItem(key);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed?.at || Date.now() - Number(parsed.at) >= CW_REQUEST_CACHE_TTL_MS) {
+        window.sessionStorage.removeItem(key);
+        return null;
+      }
+      requestPayloadCache.set(key, parsed);
+      return parsed;
+    } catch {
+      return null;
+    }
+  };
+
+  const writeCachedRequest = (
+    key: string,
+    value: { at: number; status: number; contentType: string; rawText: string; data: any }
+  ) => {
+    requestPayloadCache.set(key, value);
+    if (value.rawText.length > 1_500_000) return;
+    try {
+      window.sessionStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      // The in-memory cache remains available when session storage is full.
+    }
+  };
 
   importForm?.addEventListener('submit', event => {
     event.preventDefault();
@@ -1393,6 +1968,7 @@ function createModal(): HTMLElement {
   if (persisted.baseUrl && baseUrlEl) baseUrlEl.value = persisted.baseUrl;
   if (persisted.formId && formIdEl) formIdEl.value = persisted.formId;
   if (persisted.username && usernameEl) usernameEl.value = persisted.username;
+  if (passwordEl) passwordEl.value = readSessionCwPassword();
   if (persisted.searchTerm && searchTermEl) searchTermEl.value = persisted.searchTerm;
   if (persisted.probeTerms && probeTermsEl) probeTermsEl.value = persisted.probeTerms;
   if (persisted.probeTermsPath && probeTermsPathEl)
@@ -1413,6 +1989,8 @@ function createModal(): HTMLElement {
     el?.addEventListener('input', persistUiState);
     el?.addEventListener('change', persistUiState);
   });
+  passwordEl?.addEventListener('input', () => writeSessionCwPassword(passwordEl.value));
+  passwordEl?.addEventListener('change', () => writeSessionCwPassword(passwordEl.value));
   probeTermsEl?.addEventListener('input', persistUiState);
   probeTermsEl?.addEventListener('change', persistUiState);
 
@@ -1427,10 +2005,35 @@ function createModal(): HTMLElement {
     activeItemKey: '',
     activeSection: '',
     armedRowKey: '',
+    armedRowKeyByScope: {},
+    readyRowKeyByScope: {},
+    readyLabelByScope: {},
+    activeDrawIntentByScope: {},
+    completedLabelsByScope: {},
+    completedRowKeysByScope: {},
     selectedImageKeys: [],
     rowTargetLabels: {},
+    rowOriginalValues: {},
+    rowValueOverrides: {},
+    rowValueInvalid: {},
     discoveryImageUrls: [],
+    storefrontProduct: null,
+    comparisonItems: [],
     importedViewMetaByScope: {},
+  };
+
+  const getOriginalRowValue = (row: VisibleImportedRow | ImportedRow): string => {
+    const rowKey = 'rowKey' in row ? row.rowKey : '';
+    if (!rowKey) return String(row.value || '').trim();
+    if (!(rowKey in state.rowOriginalValues)) {
+      state.rowOriginalValues[rowKey] = String(row.value || '').trim();
+    }
+    return state.rowOriginalValues[rowKey];
+  };
+
+  const getEffectiveRowValue = (row: VisibleImportedRow | ImportedRow): string => {
+    const rowKey = 'rowKey' in row ? row.rowKey : '';
+    return (rowKey && state.rowValueOverrides[rowKey]) || getOriginalRowValue(row);
   };
 
   const updateFlowSteps = () => {
@@ -1499,8 +2102,16 @@ function createModal(): HTMLElement {
     activeStyleKeyOverride = '',
     options: {
       probeMode?: 'turbo' | 'default';
-      phase?: 'discover' | 'load-selected';
+      phase?:
+        | 'discover'
+        | 'load-selected'
+        | 'load-selected-details'
+        | 'public-measurements'
+        | 'storefront-product'
+        | 'storefront-comparison';
       selectedItems?: BasketItem[];
+      productReference?: string;
+      comparisonItems?: CatalogueComparisonRequestItem[];
     } = {}
   ): Promise<{
     response: Response;
@@ -1508,6 +2119,7 @@ function createModal(): HTMLElement {
     rawText: string;
     contentType: string;
     jsonParseError: string | null;
+    cached: boolean;
   }> => {
     const baseUrl = (baseUrlEl?.value || '').trim();
     const formId = (formIdEl?.value || '').trim();
@@ -1517,36 +2129,88 @@ function createModal(): HTMLElement {
     const activeStyleKey = (activeStyleKeyOverride || '').trim();
     const activeStyle = parseStyleKey(activeStyleKey);
 
-    const response = await fetch('/api/integrations/cw/measurements/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        baseUrl,
-        formId,
-        username,
-        password,
-        search: searchTerm,
-        renderedHtml,
-        productReference: activeStyle.productReference,
-        style: activeStyle.style,
-        styleCode: activeStyle.styleCode,
-        phase: options.phase || undefined,
-        selectedItems: Array.isArray(options.selectedItems)
-          ? options.selectedItems.map(item => ({
-              selectionKey: item.selectionKey,
-              search: item.search,
-              productReference: item.productReference,
-              productName: item.productName,
-              scopedReference: item.scopedReference,
-              versionCode: item.versionCode,
-              versionLabel: item.versionLabel,
-              style: item.style,
-              styleCode: item.styleCode,
-            }))
-          : undefined,
-        probeMode: options.probeMode === 'turbo' ? 'turbo' : 'default',
-      }),
-    });
+    const requestPayload = {
+      baseUrl,
+      formId,
+      username,
+      password,
+      search: searchTerm,
+      renderedHtml,
+      productReference: options.productReference || activeStyle.productReference,
+      style: activeStyle.style,
+      styleCode: activeStyle.styleCode,
+      phase: options.phase || undefined,
+      selectedItems: Array.isArray(options.selectedItems)
+        ? options.selectedItems.map(item => ({
+            selectionKey: item.selectionKey,
+            productId: item.productId,
+            search: item.search,
+            productReference: item.productReference,
+            productName: item.productName,
+            scopedReference: item.scopedReference,
+            versionCode: item.versionCode,
+            versionLabel: item.versionLabel,
+            style: item.style,
+            styleCode: item.styleCode,
+            styleOptions: item.styleOptions,
+            versionOptions: item.versionOptions,
+            derivedScopedReferences: item.derivedScopedReferences,
+          }))
+        : undefined,
+      comparisonItems: Array.isArray(options.comparisonItems)
+        ? options.comparisonItems.map(item => ({
+            kind: item.kind || 'product',
+            productReference: item.productReference,
+            title: item.title,
+            url: item.url,
+            handle: item.handle,
+            codes: item.codes,
+            fabricCode: item.fabricCode,
+            styleName: item.styleName,
+            fabricName: item.fabricName,
+          }))
+        : undefined,
+      probeMode: options.probeMode === 'turbo' ? 'turbo' : 'default',
+    };
+    const canCache = Boolean(options.phase) && !renderedHtml.trim();
+    const cacheKey = canCache ? makeRequestCacheKey(requestPayload) : '';
+    const cachedValue = cacheKey ? readCachedRequest(cacheKey) : null;
+    if (cachedValue) {
+      return {
+        response: new Response(cachedValue.rawText, {
+          status: cachedValue.status,
+          headers: { 'Content-Type': cachedValue.contentType },
+        }),
+        data: cachedValue.data,
+        rawText: cachedValue.rawText,
+        contentType: cachedValue.contentType,
+        jsonParseError: null,
+        cached: true,
+      };
+    }
+
+    const transientStatuses = new Set([429, 502, 503, 504]);
+    let response: Response | null = null;
+    let requestError: unknown = null;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        response = await fetch('/api/integrations/cw/measurements/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestPayload),
+        });
+        if (!transientStatuses.has(response.status) || attempt === 1) break;
+      } catch (error) {
+        requestError = error;
+        if (attempt === 1) throw error;
+      }
+      await new Promise(resolve => window.setTimeout(resolve, 450));
+    }
+    if (!response) {
+      throw requestError instanceof Error
+        ? requestError
+        : new Error('Comfort Works product request failed');
+    }
     const rawText = await response.text().catch(() => '');
     const contentType = response.headers.get('content-type') || '';
     let data: any = null;
@@ -1566,17 +2230,319 @@ function createModal(): HTMLElement {
         },
       };
     }
-    return { response, data, rawText, contentType, jsonParseError };
+    const applicationSucceeded =
+      data?.success !== false &&
+      !(Array.isArray(data?.items) && data.items.some((item: any) => item?.success === false));
+    if (cacheKey && response.ok && !jsonParseError && applicationSucceeded) {
+      writeCachedRequest(cacheKey, {
+        at: Date.now(),
+        status: response.status,
+        contentType,
+        rawText,
+        data,
+      });
+    }
+    return { response, data, rawText, contentType, jsonParseError, cached: false };
+  };
+
+  const loadStorefrontProduct = async (search: string, productReference = '') => {
+    try {
+      const storefrontSearch = /^[A-Z0-9][A-Z0-9._-]*(?:__[A-Z0-9._-]+)+$/i.test(search)
+        ? search.replace(/__[^_]+(?:__.*)?$/i, '')
+        : search;
+      const { response, data } = await requestSearchPayload(storefrontSearch, '', {
+        phase: 'storefront-product',
+        productReference: productReference || search,
+      });
+      if (!response.ok || !data?.product) return;
+      const existingProduct = state.storefrontProduct;
+      state.storefrontProduct = {
+        title: String(data.product.title || '').trim(),
+        url: String(data.product.url || '').trim(),
+        imageUrl: String(data.product.imageUrl || '').trim(),
+        imageUrls: Array.from(
+          new Set(
+            [
+              data.product.imageUrl,
+              ...(Array.isArray(data.product.imageUrls) ? data.product.imageUrls : []),
+            ]
+              .map(value => String(value || '').trim())
+              .filter(Boolean)
+          )
+        ),
+        // The independent public-dimensions request is usually faster. A later
+        // photo response must enrich that result, not erase it.
+        dimensions: data.product.dimensions || existingProduct?.dimensions || null,
+        measurementReference:
+          String(data.product.measurementReference || '').trim() ||
+          existingProduct?.measurementReference ||
+          '',
+        measurementStyle:
+          String(data.product.measurementStyle || '').trim() ||
+          existingProduct?.measurementStyle ||
+          '',
+        measurementStyleCode:
+          String(data.product.measurementStyleCode || '').trim() ||
+          existingProduct?.measurementStyleCode ||
+          '',
+      };
+      const storefrontOwnerKey =
+        activeLoadedItems()[0]?.selectionKey ||
+        `storefront:${state.storefrontProduct.measurementReference || slugify(state.storefrontProduct.title)}`;
+      const selectedKeys = new Set(state.selectedImageKeys);
+      (state.storefrontProduct.imageUrls || []).forEach(url => {
+        const key = imageKeyFromUrl(url);
+        if (key) selectedKeys.add(`${storefrontOwnerKey}::${key}`);
+      });
+      state.selectedImageKeys = Array.from(selectedKeys);
+      renderProductOverview();
+      renderSectionFilter();
+      renderImages();
+    } catch (error) {
+      console.warn('[CW Import] Storefront product preview unavailable', error);
+    }
+  };
+
+  const normalizeComparisonResponseItem = (item: any): CatalogueComparisonItem => ({
+    kind: item.kind === 'fabric-sample' ? 'fabric-sample' : 'product',
+    productReference: String(item.productReference || '').trim(),
+    title: String(item.title || '').trim(),
+    url: String(item.url || '').trim(),
+    handle: String(item.handle || '').trim(),
+    codes: Array.isArray(item.codes) ? item.codes.map(String) : [],
+    fabricCode: String(item.fabricCode || '').trim(),
+    styleName: String(item.styleName || '').trim(),
+    fabricName: String(item.fabricName || '').trim(),
+    imageUrl: String(item.imageUrl || '').trim(),
+    productUrl: String(item.productUrl || '').trim(),
+    requestedSku: String(item.requestedSku || '').trim(),
+    matchedSku: String(item.matchedSku || '').trim(),
+    imageMatch: item.imageMatch || 'unavailable',
+    note: String(item.note || '').trim(),
+    dimensions: item.dimensions || null,
+    measurementReference: String(item.measurementReference || '').trim(),
+    measurementStyle: String(item.measurementStyle || '').trim(),
+    measurementStyleCode: String(item.measurementStyleCode || '').trim(),
+    configurationGroups: Array.isArray(item.configurationGroups)
+      ? item.configurationGroups
+          .map((group: any) => ({
+            key: String(group?.key || '').trim(),
+            label: String(group?.label || 'Option').trim(),
+            codeIndex: Number(group?.codeIndex),
+            options: Array.isArray(group?.options)
+              ? group.options
+                  .map((option: any) => ({
+                    code: String(option?.code || '').trim(),
+                    label: String(option?.label || option?.code || '').trim(),
+                  }))
+                  .filter((option: { code: string }) => option.code)
+              : [],
+          }))
+          .filter(
+            (group: { codeIndex: number; options: unknown[] }) =>
+              Number.isInteger(group.codeIndex) && group.codeIndex >= 0 && group.options.length > 1
+          )
+      : [],
+  });
+
+  const renderComparisonItems = () => {
+    const comparisonCodeLabels: Record<string, string> = {
+      L: 'Left Arm',
+      R: 'Right Arm',
+      L1: 'Left Inward Chaise',
+      L2: 'Left Outward Chaise',
+      R1: 'Right Inward Chaise',
+      R2: 'Right Outward Chaise',
+      LV: 'The leather version',
+      SV: 'The standard version',
+      LSKT_PM: 'Signature',
+      LSKT_SI: 'Signature',
+      SHRT_SP: 'Original',
+      VELC_SP: 'Original',
+    };
+    comparisonItems.innerHTML = '';
+    state.comparisonItems.forEach((item, itemIndex) => {
+      const card = document.createElement('article');
+      card.className = 'cw-comparison-item';
+      const imageWrap = document.createElement('a');
+      imageWrap.className = 'cw-comparison-item-image';
+      imageWrap.href = item.productUrl || item.url || '#';
+      imageWrap.target = '_blank';
+      imageWrap.rel = 'noopener noreferrer';
+      if (item.imageUrl) {
+        const image = document.createElement('img');
+        image.src = item.imageUrl;
+        image.alt = `${item.title || item.productReference} catalogue photo`;
+        imageWrap.appendChild(image);
+      } else {
+        imageWrap.textContent = 'No photo';
+      }
+      const copy = document.createElement('div');
+      copy.className = 'cw-comparison-item-copy';
+      const title = document.createElement('div');
+      title.className = 'cw-comparison-item-title';
+      title.textContent =
+        item.kind === 'fabric-sample'
+          ? item.title || item.fabricName || item.fabricCode || 'Fabric Sample'
+          : `${item.productReference}${item.title ? ` · ${item.title}` : ''}`;
+      title.title = title.textContent;
+      const config = document.createElement('div');
+      config.className = 'cw-comparison-item-config';
+      const structuralCodes = item.fabricCode
+        ? item.codes.filter(code => code.toUpperCase() !== item.fabricCode.toUpperCase())
+        : item.codes;
+      const readableConfiguration = [
+        item.styleName,
+        ...structuralCodes.map(code => comparisonCodeLabels[code.toUpperCase()] || code),
+        item.fabricName || item.fabricCode,
+      ].filter(
+        (value, index, values): value is string =>
+          Boolean(value) &&
+          values.findIndex(candidate => candidate?.toLowerCase() === value?.toLowerCase()) === index
+      );
+      config.textContent = readableConfiguration.join(' · ') || 'Default configuration';
+      config.title = item.requestedSku || config.textContent;
+      const note = document.createElement('div');
+      note.className = `cw-comparison-item-note ${item.imageMatch === 'exact' ? 'exact' : 'fallback'}`;
+      note.textContent = item.note;
+      const optionGroups = document.createElement('div');
+      optionGroups.className = 'cw-comparison-item-options';
+      (item.configurationGroups || []).forEach(group => {
+        const field = document.createElement('label');
+        field.className = 'cw-comparison-item-option';
+        const label = document.createElement('span');
+        label.textContent = group.label;
+        const select = document.createElement('select');
+        select.dataset.cwComparisonOption = String(itemIndex);
+        select.dataset.cwComparisonCodeIndex = String(group.codeIndex);
+        select.setAttribute('aria-label', `${group.label} for ${item.productReference}`);
+        group.options.forEach(option => {
+          const optionEl = document.createElement('option');
+          optionEl.value = option.code;
+          optionEl.textContent = option.label;
+          optionEl.selected =
+            option.code.toUpperCase() === String(item.codes[group.codeIndex] || '').toUpperCase();
+          select.appendChild(optionEl);
+        });
+        field.append(label, select);
+        optionGroups.appendChild(field);
+      });
+      const drawButton = document.createElement('button');
+      drawButton.type = 'button';
+      drawButton.className = 'cw-btn cw-comparison-item-action';
+      drawButton.dataset.cwComparisonDraw = String(itemIndex);
+      const dimensionCount = ['width', 'depth', 'height'].filter(key =>
+        toPrimitiveMeasurementValue(
+          item.dimensions?.[key as keyof NonNullable<CatalogueComparisonItem['dimensions']>]
+        )
+      ).length;
+      drawButton.textContent =
+        item.kind === 'fabric-sample'
+          ? 'Add sample'
+          : dimensionCount
+            ? `Add + draw ${dimensionCount} dimensions`
+            : 'Add image';
+      drawButton.disabled = !item.imageUrl;
+      copy.append(title, config, note);
+      if (optionGroups.childElementCount) copy.appendChild(optionGroups);
+      copy.appendChild(drawButton);
+      card.append(imageWrap, copy);
+      comparisonItems.appendChild(card);
+    });
+    const available = state.comparisonItems.filter(item => item.imageUrl).length;
+    importComparisonBtn.hidden = available < 1;
+    comparisonStatus.textContent = state.comparisonItems.length
+      ? `${available} of ${state.comparisonItems.length} catalogue photos ready.`
+      : 'Nothing loaded yet.';
+  };
+
+  buildComparisonBtn.addEventListener('click', () => {
+    void (async () => {
+      const parsed = parseCatalogueComparisonInput(comparisonInput.value, 8);
+      const onlyFabricSamples =
+        parsed.length > 0 && parsed.every(item => item.kind === 'fabric-sample');
+      comparisonFabric.hidden = onlyFabricSamples;
+      comparisonFabric.disabled = onlyFabricSamples;
+      comparisonFabric.placeholder = 'Shared fabric name or code';
+      if (onlyFabricSamples) comparisonFabric.value = '';
+      const detectedFabrics = Array.from(
+        new Set(parsed.map(item => item.fabricName || item.fabricCode).filter(Boolean))
+      );
+      if (!onlyFabricSamples && !comparisonFabric.value.trim() && detectedFabrics.length === 1) {
+        comparisonFabric.value = detectedFabrics[0];
+      }
+      const requested = applySharedComparisonFabric(parsed, comparisonFabric.value);
+      if (requested.length < 1) {
+        comparisonStatus.textContent =
+          'Add a product code, product link, order line, or fabric sample.';
+        comparisonInput.focus();
+        return;
+      }
+      buildComparisonBtn.disabled = true;
+      buildComparisonBtn.textContent = 'Loading...';
+      comparisonStatus.textContent = `Matching ${requested.length} configurations and photos...`;
+      try {
+        const { response, data } = await requestSearchPayload('', '', {
+          phase: 'storefront-comparison',
+          comparisonItems: requested,
+        });
+        if (!response.ok || !Array.isArray(data?.items)) {
+          throw new Error(data?.message || `Catalogue request failed (${response.status})`);
+        }
+        state.comparisonItems = data.items.map(normalizeComparisonResponseItem);
+        renderComparisonItems();
+      } catch (error) {
+        state.comparisonItems = [];
+        renderComparisonItems();
+        comparisonStatus.textContent = `Could not load comparison: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      } finally {
+        buildComparisonBtn.disabled = false;
+        buildComparisonBtn.textContent = 'Load comparison';
+      }
+    })();
+  });
+
+  const loadPublicOverallDimensions = async (productReference: string) => {
+    const reference = String(productReference || '').trim();
+    if (!reference || !/^[A-Z0-9][A-Z0-9._-]*(?:__[A-Z0-9._-]+)*$/i.test(reference)) return;
+    try {
+      const { response, data } = await requestSearchPayload(reference, '', {
+        phase: 'public-measurements',
+        productReference: reference,
+      });
+      if (!response.ok || !data?.measurements) return;
+      state.storefrontProduct = {
+        title: state.storefrontProduct?.title || reference,
+        url: state.storefrontProduct?.url || '',
+        imageUrl: state.storefrontProduct?.imageUrl || '',
+        imageUrls: state.storefrontProduct?.imageUrls || [],
+        dimensions: data.measurements,
+        measurementReference: String(data.productReference || reference).trim(),
+        measurementStyle: String(data.style || '').trim(),
+        measurementStyleCode: String(data.styleCode || '').trim(),
+      };
+      renderProductOverview();
+      setLoadProgress(30, 'Overall dimensions ready', 'Loading product photos and CW40 details...');
+    } catch (error) {
+      console.info('[CW Import] Fast public dimensions unavailable', error);
+    }
   };
 
   const getSearchResultStyleOption = (item: SearchResultItem): VariantOption | null => {
-    if (!Array.isArray(item.styleOptions) || item.styleOptions.length === 0) return null;
+    if (!Array.isArray(item.styleOptions) || item.styleOptions.length === 0) {
+      return {
+        productReference: item.productReference,
+        style: '',
+        styleCode: '',
+        label: 'Standard',
+      };
+    }
     return (
       item.styleOptions.find(
         option =>
           makeStyleKey(option.productReference, option.style, option.styleCode) ===
           item.selectedStyleKey
-      ) || item.styleOptions[0]
+      ) || null
     );
   };
 
@@ -1591,6 +2557,7 @@ function createModal(): HTMLElement {
       (versionOption?.scopedReference || '').trim() ||
       getScopedReference(item.productReference, versionCode);
     return {
+      productId: item.id || '',
       selectionKey: makeSelectionKey(
         item.productReference,
         versionCode,
@@ -1605,6 +2572,9 @@ function createModal(): HTMLElement {
       scopedReference,
       style: styleOption.style,
       styleCode: styleOption.styleCode,
+      styleOptions: item.styleOptions,
+      versionOptions: item.versionOptions,
+      derivedScopedReferences: item.derivedScopedReferences,
       label: buildBasketLabel({
         productReference: item.productReference,
         productName: item.productName,
@@ -1705,18 +2675,22 @@ function createModal(): HTMLElement {
 
   const allImageEntries = (): VisibleImageEntry[] => {
     const entries: VisibleImageEntry[] = [];
+    const seenSelectionImageKeys = new Set<string>();
     activeLoadedItems().forEach(item => {
       const addEntry = (section: string, candidates: string[]) => {
         if (!Array.isArray(candidates) || !candidates.length) return;
         const key = imageKeyFromUrl(candidates[0] || '');
         if (!key) return;
+        const selectionImageKey = `${item.selectionKey}::${key}`;
+        if (seenSelectionImageKeys.has(selectionImageKey)) return;
+        seenSelectionImageKeys.add(selectionImageKey);
         entries.push({
           itemKey: item.selectionKey,
           itemLabel: item.basketItem.label,
           productReference: item.productReference,
           section,
           key,
-          selectionImageKey: `${item.selectionKey}::${key}`,
+          selectionImageKey,
           candidates,
         });
       };
@@ -1731,6 +2705,34 @@ function createModal(): HTMLElement {
         });
       }
     });
+    const storefrontUrls = Array.from(
+      new Set(
+        [state.storefrontProduct?.imageUrl, ...(state.storefrontProduct?.imageUrls || [])]
+          .map(value => String(value || '').trim())
+          .filter(Boolean)
+      )
+    );
+    const storefrontOwner = activeLoadedItems()[0];
+    const storefrontOwnerKey =
+      storefrontOwner?.selectionKey ||
+      `storefront:${state.storefrontProduct?.measurementReference || slugify(state.storefrontProduct?.title || 'product')}`;
+    storefrontUrls.forEach(url => {
+      const key = imageKeyFromUrl(url);
+      if (!key) return;
+      const selectionImageKey = `${storefrontOwnerKey}::${key}`;
+      if (seenSelectionImageKeys.has(selectionImageKey)) return;
+      seenSelectionImageKeys.add(selectionImageKey);
+      entries.push({
+        itemKey: storefrontOwnerKey,
+        itemLabel: storefrontOwner?.basketItem.label || state.storefrontProduct?.title || 'Product',
+        productReference:
+          storefrontOwner?.productReference || state.storefrontProduct?.measurementReference || '',
+        section: 'Product Photos',
+        key,
+        selectionImageKey,
+        candidates: [url],
+      });
+    });
     return state.activeSection
       ? entries.filter(entry => entry.section === state.activeSection)
       : entries;
@@ -1740,27 +2742,134 @@ function createModal(): HTMLElement {
     allImageEntries().filter(entry => state.selectedImageKeys.includes(entry.selectionImageKey));
 
   /** Re-fetch data for a single search result item after version/style change. */
-  const reloadSearchResultItem = async (item: SearchResultItem) => {
-    const basketItem = buildBasketItemFromResult(item);
-    if (!basketItem) return;
-    // Select the item so it ends up in the basket flow
-    item.selected = true;
-    // Update or add to basket
-    const existingIdx = state.basket.findIndex(
-      b => b.productReference === basketItem.productReference
-    );
-    if (existingIdx >= 0) {
-      state.basket[existingIdx] = basketItem;
-    } else {
-      state.basket.push(basketItem);
-    }
-    renderBasket();
-    setStatus(`Loading ${basketItem.scopedReference || basketItem.productReference}...`);
+  const privateDetailsInFlight = new Set<string>();
+  const loadPrivateProductDetails = async (basketItem: BasketItem): Promise<void> => {
+    if (!basketItem.selectionKey || privateDetailsInFlight.has(basketItem.selectionKey)) return;
+    privateDetailsInFlight.add(basketItem.selectionKey);
     try {
+      setLoadProgress(92, 'Measurements ready', 'Loading full CW40 measurements...');
+      const velcroVariant = /__(?:VH|VS)$/i.test(basketItem.scopedReference || '');
+      const detailBasketItem: BasketItem = {
+        ...basketItem,
+        style:
+          basketItem.style ||
+          state.storefrontProduct?.measurementStyle ||
+          (velcroVariant ? 'Urban' : ''),
+        styleCode:
+          basketItem.styleCode ||
+          state.storefrontProduct?.measurementStyleCode ||
+          (velcroVariant ? 'VELC_SP' : ''),
+      };
       const { response, data } = await requestSearchPayload(
         (searchTermEl?.value || '').trim(),
         '',
+        { phase: 'load-selected-details', selectedItems: [detailBasketItem] }
+      );
+      const successfulItems = (Array.isArray(data?.items) ? data.items : []).filter(
+        (item: any) => item?.success !== false
+      );
+      if (!response.ok || !successfulItems.length) {
+        const failure = (Array.isArray(data?.items) ? data.items : []).find(
+          (item: any) => item?.success === false
+        );
+        const message = String(failure?.message || data?.message || '').trim();
+        const needsLogin = /missing cw credentials|username\/password/i.test(message);
+        setLoadProgress(
+          100,
+          'Overall dimensions ready',
+          needsLogin ? 'Sign in to load full CW40 measurements' : 'CW40 details unavailable',
+          { complete: true }
+        );
+        setStatus(
+          needsLogin
+            ? 'Width, Depth and Height are ready. Enter your CW login under Advanced connection to load the full CW40 measurements.'
+            : `Overall dimensions are ready. CW40 details could not load${message ? `: ${message}` : '.'}`,
+          needsLogin ? 'info' : 'bad'
+        );
+        const loginDetails = body.querySelector<HTMLDetailsElement>('#cwLoginDetails');
+        if (needsLogin && loginDetails) loginDetails.open = true;
+        return;
+      }
+      integrateLoadedItems(successfulItems);
+      if (basketItem.selectionKey) state.activeItemKey = basketItem.selectionKey;
+      syncUi();
+      const loaded = state.loadedItems.find(item => item.selectionKey === basketItem.selectionKey);
+      const photoCount = allImageEntries().length;
+      const detailedRows = (loaded?.rows || []).filter(
+        row => !/^(?:width|depth|height)$/i.test(String(row.sourceLabel || '').trim())
+      );
+      if (!detailedRows.length) {
+        setStatus(
+          'Overall dimensions are ready. CW40 returned no component measurements for this selection.',
+          'info'
+        );
+        setLoadProgress(
+          100,
+          'Overall dimensions ready',
+          `${loaded?.rows.length || 0} overall measurements, ${photoCount} photos`,
+          { complete: true }
+        );
+        return;
+      }
+      setStatus(`Ready: ${loaded?.rows.length || 0} measurements and ${photoCount} photos.`, 'ok');
+      setLoadProgress(
+        100,
+        'CW40 measurements ready',
+        `${loaded?.rows.length || 0} measurements, ${photoCount} photos`,
+        { complete: true }
+      );
+    } catch (error) {
+      console.info(
+        '[CW Import] Detailed product photos unavailable; keeping public product data',
+        error
+      );
+    } finally {
+      privateDetailsInFlight.delete(basketItem.selectionKey);
+    }
+  };
+
+  const retryPrivateDetailsForActiveProduct = () => {
+    const activeBasketItem =
+      state.basket.find(item => item.selectionKey === state.activeItemKey) || state.basket[0];
+    if (activeBasketItem && usernameEl.value.trim() && passwordEl.value) {
+      void loadPrivateProductDetails(activeBasketItem);
+    }
+  };
+  usernameEl.addEventListener('change', retryPrivateDetailsForActiveProduct);
+  passwordEl.addEventListener('change', retryPrivateDetailsForActiveProduct);
+
+  const reloadSearchResultItem = async (item: SearchResultItem) => {
+    const basketItem = buildBasketItemFromResult(item);
+    if (!basketItem) return;
+    // A product lookup has one authoritative selection. Changing a version or
+    // style replaces that selection instead of quietly growing a basket.
+    state.searchResults.forEach(candidate => {
+      candidate.selected = candidate === item;
+    });
+    state.basket = [basketItem];
+    state.loadedItems = state.loadedItems.filter(
+      loaded => loaded.selectionKey === basketItem.selectionKey
+    );
+    state.activeItemKey = state.loadedItems[0]?.selectionKey || '';
+    state.activeSection = '';
+    state.selectedImageKeys = [];
+    renderBasket();
+    setStatus(`Loading ${basketItem.scopedReference || basketItem.productReference}...`);
+    setLoadProgress(
+      48,
+      'Loading measurements',
+      basketItem.scopedReference || basketItem.productReference
+    );
+    try {
+      const { response, data, cached } = await requestSearchPayload(
+        (searchTermEl?.value || '').trim(),
+        '',
         { phase: 'load-selected', selectedItems: [basketItem] }
+      );
+      setLoadProgress(
+        84,
+        'Preparing photos',
+        cached ? 'Using recent result' : 'Measurements ready'
       );
       const items = Array.isArray(data?.items) ? data.items : [];
       integrateLoadedItems(items);
@@ -1778,18 +2887,24 @@ function createModal(): HTMLElement {
           `Loaded ${basketItem.scopedReference || basketItem.productReference} — ${rowCount} measurement${rowCount === 1 ? '' : 's'} and ${imageCount} photo${imageCount === 1 ? '' : 's'}.`,
           'ok'
         );
+        setLoadProgress(100, 'Ready', `${rowCount} measurements, ${imageCount} photos`, {
+          complete: true,
+        });
         if (imagesWrap.children.length > 0) {
           requestAnimationFrame(() =>
             imagesWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
           );
         }
+        void loadPrivateProductDetails(basketItem);
       } else {
+        setLoadProgress(100, 'Could not load product', 'Check the connection details');
         setStatus(
           `Load failed for ${basketItem.scopedReference || basketItem.productReference}: ${String(data?.message || data?.code || response.status)}`,
           'bad'
         );
       }
     } catch (error) {
+      setLoadProgress(100, 'Could not load product', 'Please try again');
       setStatus(`Load failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'bad');
     }
   };
@@ -1797,38 +2912,21 @@ function createModal(): HTMLElement {
   const renderSearchResults = () => {
     searchResultsWrap.innerHTML = '';
     if (!state.searchResults.length) {
-      const empty = document.createElement('div');
-      empty.className = 'cw-result-card';
-      empty.textContent = 'No discovery results yet.';
-      searchResultsWrap.appendChild(empty);
-      resultsMeta.textContent = 'Run a search to discover items and options.';
+      productResultsShell.classList.add('is-empty');
+      resultsMeta.textContent = '';
       return;
     }
 
-    resultsMeta.textContent = `${state.searchResults.length} candidate item${state.searchResults.length === 1 ? '' : 's'} found.`;
-
-    // Show discovery image preview strip
-    if (state.discoveryImageUrls.length > 0) {
-      const previewStrip = document.createElement('div');
-      previewStrip.className = 'cw-discovery-preview';
-      previewStrip.style.gridColumn = '1 / -1';
-      state.discoveryImageUrls.forEach(url => {
-        const thumb = document.createElement('img');
-        thumb.className = 'cw-discovery-thumb';
-        thumb.src = url;
-        thumb.alt = 'Product preview';
-        thumb.loading = 'lazy';
-        thumb.addEventListener('error', () => {
-          thumb.style.display = 'none';
-        });
-        previewStrip.appendChild(thumb);
-      });
-      searchResultsWrap.appendChild(previewStrip);
-    }
+    productResultsShell.classList.remove('is-empty');
+    resultsMeta.textContent = `${state.searchResults.length} product${state.searchResults.length === 1 ? '' : 's'}`;
 
     state.searchResults.forEach(item => {
       const card = document.createElement('div');
-      card.className = `cw-result-card${item.selected ? ' is-selected' : ''}`;
+      const selectionReady = isCwConfigurationSelectionReady(item);
+      card.className = `cw-result-card${item.selected ? ' is-selected' : ''}${selectionReady ? ' is-ready' : ''}`;
+      card.tabIndex = 0;
+      card.setAttribute('role', 'radio');
+      card.setAttribute('aria-checked', item.selected ? 'true' : 'false');
 
       const top = document.createElement('div');
       top.className = 'cw-result-top';
@@ -1837,86 +2935,132 @@ function createModal(): HTMLElement {
       const title = document.createElement('p');
       title.className = 'cw-result-title';
       title.textContent = `${item.productReference}${item.productName ? ` - ${item.productName}` : ''}`;
-      const subtitle = document.createElement('p');
-      subtitle.className = 'cw-result-subtitle';
-      subtitle.textContent = item.configParsed
-        ? 'Config parsed from productConfiguration'
-        : 'Using fallback style options';
       copy.appendChild(title);
-      copy.appendChild(subtitle);
 
       const meta = document.createElement('div');
       meta.style.display = 'flex';
-      meta.style.flexDirection = 'column';
-      meta.style.alignItems = 'flex-end';
-      meta.style.gap = '8px';
       const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
+      checkbox.type = 'radio';
+      checkbox.name = 'cw-product-result';
       checkbox.className = 'cw-result-check';
       checkbox.checked = item.selected;
-      checkbox.addEventListener('change', () => {
-        item.selected = checkbox.checked;
-        renderSearchResults();
-      });
-      const pill = document.createElement('span');
-      pill.className = `cw-result-pill${item.configParsed ? ' is-ok' : ''}`;
-      pill.textContent = item.configParsed ? 'Config' : 'Fallback';
       meta.appendChild(checkbox);
-      meta.appendChild(pill);
 
       top.appendChild(copy);
       top.appendChild(meta);
       card.appendChild(top);
 
+      const selectProduct = () => {
+        state.searchResults.forEach(candidate => {
+          candidate.selected = candidate === item;
+        });
+        renderSearchResults();
+      };
+
       const controls = document.createElement('div');
       controls.className = 'cw-result-controls';
-      const versionWrap = document.createElement('div');
-      const versionLabel = document.createElement('label');
-      versionLabel.textContent = 'Version';
+
       const versionSelect = document.createElement('select');
       versionSelect.className = 'cw-select';
-      versionSelect.innerHTML = '<option value="">Base Reference</option>';
-      item.versionOptions.forEach(option => {
-        const optionEl = document.createElement('option');
-        optionEl.value = option.code;
-        const suffix =
-          option.confirmed === true ? ' \u2713' : option.confirmed === false ? ' (not found)' : '';
-        optionEl.textContent = `${option.label}${suffix}`;
-        if (option.confirmed === false) optionEl.disabled = true;
-        if (option.code === item.selectedVersionCode) optionEl.selected = true;
-        versionSelect.appendChild(optionEl);
-      });
-      versionSelect.addEventListener('change', () => {
-        item.selectedVersionCode = (versionSelect.value || '').trim().toUpperCase();
-        // Auto-reload with the new version to fetch version-specific images
-        void reloadSearchResultItem(item);
-      });
-      versionWrap.appendChild(versionLabel);
-      versionWrap.appendChild(versionSelect);
+      versionSelect.setAttribute('aria-label', `Configuration for ${item.productReference}`);
+      if (item.versionOptions.length) {
+        versionSelect.appendChild(new Option('Choose configuration', '', true, false));
+        item.versionOptions.forEach(option => {
+          const code = String(option.code || (option as any).value || '').trim();
+          const label = String(option.label || code).trim();
+          const suffix = option.confirmed === true ? ' · measurements available' : '';
+          versionSelect.appendChild(new Option(`${label}${suffix}`, code));
+        });
+        versionSelect.value = item.selectedVersionCode;
+      } else {
+        versionSelect.appendChild(new Option('Base product', ''));
+        versionSelect.disabled = true;
+      }
 
-      const styleWrap = document.createElement('div');
-      const styleLabel = document.createElement('label');
-      styleLabel.textContent = 'Style';
       const styleSelect = document.createElement('select');
       styleSelect.className = 'cw-select';
-      item.styleOptions.forEach(option => {
-        const optionEl = document.createElement('option');
-        optionEl.value = makeStyleKey(option.productReference, option.style, option.styleCode);
-        optionEl.textContent = option.label;
-        if (optionEl.value === item.selectedStyleKey) optionEl.selected = true;
-        styleSelect.appendChild(optionEl);
-      });
-      styleSelect.addEventListener('change', () => {
-        item.selectedStyleKey = (styleSelect.value || '').trim();
-        // Auto-reload with the new style to fetch style-specific images
+      styleSelect.setAttribute('aria-label', `Style for ${item.productReference}`);
+      if (item.styleOptions.length) {
+        styleSelect.appendChild(new Option('Choose style', '', true, false));
+        item.styleOptions.forEach(option => {
+          const key = makeStyleKey(option.productReference, option.style, option.styleCode);
+          styleSelect.appendChild(
+            new Option(option.label || option.style || option.styleCode, key)
+          );
+        });
+        styleSelect.value = item.selectedStyleKey;
+      } else {
+        styleSelect.appendChild(new Option('Standard', ''));
+        styleSelect.disabled = true;
+      }
+
+      const loadButton = document.createElement('button');
+      loadButton.type = 'button';
+      loadButton.className = 'cw-btn cw-btn-primary';
+      loadButton.textContent = 'Load configuration';
+      loadButton.disabled = !isCwConfigurationSelectionReady(item);
+
+      const versionField = document.createElement('label');
+      versionField.className = 'cw-result-field';
+      const versionLabel = document.createElement('span');
+      versionLabel.textContent = 'Configuration';
+      versionField.append(versionLabel, versionSelect);
+
+      const styleField = document.createElement('label');
+      styleField.className = 'cw-result-field';
+      const styleLabel = document.createElement('span');
+      styleLabel.textContent = 'Style';
+      styleField.append(styleLabel, styleSelect);
+
+      const loadAction = document.createElement('div');
+      loadAction.className = 'cw-result-action';
+      const loadHint = document.createElement('small');
+      loadHint.textContent = 'Choose both options';
+      loadAction.append(loadHint, loadButton);
+
+      const syncSelection = () => {
+        state.searchResults.forEach(candidate => {
+          candidate.selected = candidate === item;
+        });
+        item.selectedVersionCode = versionSelect.value;
+        item.selectedStyleKey = styleSelect.value;
+        loadButton.disabled = !isCwConfigurationSelectionReady(item);
+        card.classList.toggle('is-ready', !loadButton.disabled);
+        loadHint.textContent = loadButton.disabled
+          ? 'Choose both options'
+          : 'Measurements available';
+        card.classList.add('is-selected');
+        card.setAttribute('aria-checked', 'true');
+        checkbox.checked = true;
+      };
+      versionSelect.addEventListener('change', syncSelection);
+      styleSelect.addEventListener('change', syncSelection);
+      loadButton.addEventListener('click', () => {
+        syncSelection();
+        if (!isCwConfigurationSelectionReady(item)) return;
+        const candidate = buildBasketItemFromResult(item);
+        const existing = candidate
+          ? state.loadedItems.find(loaded => loaded.selectionKey === candidate.selectionKey)
+          : null;
+        if (existing) {
+          setActiveLoadedItem(existing.selectionKey);
+          return;
+        }
         void reloadSearchResultItem(item);
       });
-      styleWrap.appendChild(styleLabel);
-      styleWrap.appendChild(styleSelect);
-
-      controls.appendChild(versionWrap);
-      controls.appendChild(styleWrap);
+      controls.append(versionField, styleField, loadAction);
       card.appendChild(controls);
+
+      card.addEventListener('click', event => {
+        if ((event.target as HTMLElement | null)?.closest('input, button, label, select')) return;
+        selectProduct();
+      });
+      card.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        selectProduct();
+      });
+      checkbox.addEventListener('change', selectProduct);
       searchResultsWrap.appendChild(card);
     });
   };
@@ -1998,18 +3142,77 @@ function createModal(): HTMLElement {
     }
   };
 
-  const buildMeasureHeadMarkup = (): string =>
-    '<div class="cw-measure-head"><div>Item / Source Label</div><div>Section</div><div>Value</div><div>Map to Stroke Label</div><div>Actions</div></div>';
+  const buildMeasureHeadMarkup = (compact = false): string =>
+    compact
+      ? '<div class="cw-measure-head"><div>Measurement</div><div>Value</div><div>Label</div><div></div></div>'
+      : '<div class="cw-measure-head"><div>Item / Source Label</div><div>Section</div><div>Value</div><div>Map to Stroke Label</div><div>Actions</div></div>';
 
   let measurementWorkspacePaneSyncRaf: number | null = null;
   let measurementWorkspacePaneRetryTimer: ReturnType<typeof setTimeout> | null = null;
   let measurementWorkspaceScrollTop = 0;
   let measurementWorkspaceScrollLeft = 0;
+  const elementsLibraryScrollTopByScope: Record<string, number> = {};
+  const elementsLibraryRowOffsetByScope: Record<string, number> = {};
+  let elementsLibraryRenderedScope = '';
+  let elementsLibraryRenderedHost: HTMLDivElement | null = null;
+  let elementsLibraryPositionRaf: number | null = null;
+  let elementsLibraryPositionRequest = 0;
 
   const getWorkspaceTagScopeKeys = (scopeLabel: string): string[] => {
     const canonical = getCanonicalCwScopeKey(scopeLabel);
     const base = canonical.split('::tab:')[0] || canonical;
-    return Array.from(new Set([(scopeLabel || '').trim(), canonical, base].filter(Boolean)));
+    const currentScope = String((window as any).currentImageLabel || '').trim();
+    const currentBase = currentScope.split('::tab:')[0] || currentScope;
+    const activeScope =
+      currentScope && currentBase === base
+        ? currentScope
+        : String(
+            (window as any).app?.metadataManager?.resolveActiveImageLabel?.(base) || ''
+          ).trim();
+    return Array.from(
+      new Set([(scopeLabel || '').trim(), canonical, base, activeScope].filter(Boolean))
+    );
+  };
+
+  const getWorkspaceScopeBase = (scopeLabel: string): string => {
+    const canonical = getCanonicalCwScopeKey(scopeLabel);
+    return canonical.split('::tab:')[0] || canonical;
+  };
+
+  const getActiveDrawIntent = (
+    scopeLabel: string
+  ): SearchState['activeDrawIntentByScope'][string] | null => {
+    return state.activeDrawIntentByScope[getWorkspaceScopeBase(scopeLabel)] || null;
+  };
+
+  const getScopedArmedRowKey = (scopeLabel: string): string => {
+    const intent = getActiveDrawIntent(scopeLabel);
+    if (intent?.rowKey) return intent.rowKey;
+    return resolveCwScopedArmedRowKey(
+      state.armedRowKeyByScope,
+      getWorkspaceTagScopeKeys(scopeLabel)
+    );
+  };
+
+  const setScopedArmedRowKey = (scopeLabel: string, rowKey: string): void => {
+    getWorkspaceTagScopeKeys(scopeLabel).forEach(key => {
+      if (rowKey) {
+        state.armedRowKeyByScope[key] = rowKey;
+      } else {
+        delete state.armedRowKeyByScope[key];
+      }
+    });
+    state.armedRowKey = rowKey;
+    const existingIntent = getActiveDrawIntent(scopeLabel);
+    const scopeBase = getWorkspaceScopeBase(scopeLabel);
+    if (!rowKey) {
+      delete state.activeDrawIntentByScope[scopeBase];
+      return;
+    }
+    state.activeDrawIntentByScope[scopeBase] = {
+      rowKey,
+      label: existingIntent?.rowKey === rowKey ? existingIntent.label : '',
+    };
   };
 
   const getWorkspaceSiblingScopeKeys = (scopeLabel: string): string[] => {
@@ -2062,28 +3265,22 @@ function createModal(): HTMLElement {
   };
 
   const readWorkspaceNextTag = (scopeLabel: string): string => {
-    const displayTag = normalizeGuideLabel(getNextTagValue());
-    if (displayTag) return displayTag;
-
-    const calculated =
-      typeof (window as any).calculateNextTag === 'function'
-        ? normalizeGuideLabel((window as any).calculateNextTag())
-        : '';
-    if (calculated) return calculated;
-
     const w = window as any;
-    for (const key of getWorkspaceTagScopeKeys(scopeLabel)) {
-      const seeded =
-        normalizeGuideLabel(w.manualTagByImage?.[key] || '') ||
-        normalizeGuideLabel(w.guideOneTimeTagByImage?.[key] || '') ||
-        normalizeGuideLabel(w.labelsByImage?.[key] || '');
-      if (seeded) return seeded;
-    }
-
-    return '';
+    return resolveCwWorkspaceNextTag({
+      scopeKeys: getWorkspaceTagScopeKeys(scopeLabel),
+      manualTags: w.manualTagByImage,
+      guideTags: w.guideOneTimeTagByImage,
+      labelTags: w.labelsByImage,
+      displayTag: getNextTagValue(),
+      calculatedTag: typeof w.calculateNextTag === 'function' ? w.calculateNextTag() : '',
+    });
   };
 
-  const seedWorkspaceNextDrawLabel = (scopeLabel: string, targetLabel: string): void => {
+  const seedWorkspaceNextDrawLabel = (
+    scopeLabel: string,
+    targetLabel: string,
+    rowKey: string
+  ): void => {
     const normalizedTargetLabel = normalizeGuideLabel(targetLabel);
     if (!normalizedTargetLabel) return;
 
@@ -2094,13 +3291,49 @@ function createModal(): HTMLElement {
     w.manualTagByImage = w.manualTagByImage || {};
 
     const keys = getWorkspaceTagScopeKeys(scopeLabel);
+    const seedChanged = hasCwWorkspaceSeedChanged({
+      scopeKeys: keys,
+      targetLabel: normalizedTargetLabel,
+      rowKey,
+      displayTag: getNextTagValue(),
+      guideTags: w.guideOneTimeTagByImage,
+      labelTags: w.labelsByImage,
+      readyRows: state.readyRowKeyByScope,
+    });
     keys.forEach(key => {
       w.guideOneTimeTagByImage[key] = normalizedTargetLabel;
       w.labelsByImage[key] = normalizedTargetLabel;
-      delete w.manualTagByImage[key];
+      // Keep the visible Next Tag pinned to the armed Library row as well.
+      // Guide refreshes can run between the click and mouse-up; without this
+      // priority seed they repaint the field with the guide's generic next
+      // role (for example W) even though the user explicitly chose A.
+      w.manualTagByImage[key] = normalizedTargetLabel;
+      if (rowKey) state.readyRowKeyByScope[key] = rowKey;
+      if (rowKey) state.readyLabelByScope[key] = normalizedTargetLabel;
     });
+    if (rowKey) {
+      state.activeDrawIntentByScope[getWorkspaceScopeBase(scopeLabel)] = {
+        rowKey,
+        label: normalizedTargetLabel,
+      };
+    }
     w.currentImageLabel = getCanonicalCwScopeKey(scopeLabel);
-    w.updateNextTagDisplay?.();
+    // The bound CW row is authoritative while the split workspace is active.
+    // Write it directly so a stale display/calculated tag cannot win this frame.
+    setNextTagValue(normalizedTargetLabel);
+    if (seedChanged) {
+      window.dispatchEvent(
+        new CustomEvent('openpaint:guide-next-tag-changed', {
+          detail: {
+            viewId: String(scopeLabel || '').split('::')[0] || 'front',
+            tag: normalizedTargetLabel,
+            imageLabel: w.currentImageLabel,
+            nextTag: normalizedTargetLabel,
+            source: 'cw-import',
+          },
+        })
+      );
+    }
   };
 
   const clearWorkspaceNextDrawLabel = (scopeLabel: string): void => {
@@ -2108,50 +3341,253 @@ function createModal(): HTMLElement {
     const keys = getWorkspaceTagScopeKeys(scopeLabel);
     keys.forEach(key => {
       if (w.guideOneTimeTagByImage) delete w.guideOneTimeTagByImage[key];
-      if (!w.manualTagByImage?.[key] && w.labelsByImage) delete w.labelsByImage[key];
+      if (w.labelsByImage) delete w.labelsByImage[key];
+      if (w.manualTagByImage) delete w.manualTagByImage[key];
+      delete state.readyRowKeyByScope[key];
+      delete state.readyLabelByScope[key];
     });
+    delete state.activeDrawIntentByScope[getWorkspaceScopeBase(scopeLabel)];
     w.updateNextTagDisplay?.();
+  };
+
+  const getScopedReadyDrawLabel = (scopeLabel: string, rowKey = ''): string => {
+    const intent = getActiveDrawIntent(scopeLabel);
+    if (intent?.label && (!rowKey || intent.rowKey === rowKey)) {
+      return normalizeGuideLabel(intent.label);
+    }
+    for (const key of getWorkspaceTagScopeKeys(scopeLabel)) {
+      // The row and its seeded label are one draw intent. Never combine a
+      // label from an older alias with the currently armed row from another
+      // alias: that is how a deliberate H1 could become an unrelated C5.
+      if (rowKey && state.readyRowKeyByScope[key] !== rowKey) continue;
+      const label = normalizeGuideLabel(state.readyLabelByScope[key] || '');
+      if (label) return label;
+    }
+    return '';
+  };
+
+  const positionLibraryRow = (
+    rowKey: string,
+    options: { focusLabel?: boolean; useSavedSlot?: boolean } = {}
+  ): void => {
+    if (!rowKey) return;
+    const scroller = document.getElementById('strokeVisibilityControls');
+    const row = document.querySelector<HTMLElement>(
+      `#elementsMeasurementLibrary .cw-measure-row[data-cw-row-key="${CSS.escape(rowKey)}"]`
+    );
+    if (!scroller || !row) return;
+
+    const scrollerRect = scroller.getBoundingClientRect();
+    const rowRect = row.getBoundingClientRect();
+    const inset = 8;
+    const scopeBase = getWorkspaceScopeBase(getCurrentScopeLabel());
+    const savedSlot = elementsLibraryRowOffsetByScope[scopeBase];
+    const visibleSavedSlot = Number.isFinite(savedSlot)
+      ? Math.max(inset, Math.min(savedSlot, scroller.clientHeight - rowRect.height - inset))
+      : Number.NaN;
+    // Only scroll when the row is actually outside the visible viewport.
+    // Scrolling on every render (even when the row is already visible) causes
+    // the erratic, jumpy behavior the user sees. When we do scroll, bring the
+    // row to the top of the viewport with a small inset.
+    const isAbove = rowRect.top < scrollerRect.top + inset;
+    const isBelow = rowRect.bottom > scrollerRect.bottom - inset;
+    // Keeping a row in the same visual slot is useful only when it has left the
+    // viewport. Re-applying the slot while it is already visible makes the
+    // library bounce after every DOM rebuild.
+    if (options.useSavedSlot && Number.isFinite(visibleSavedSlot) && (isAbove || isBelow)) {
+      scroller.scrollTop += rowRect.top - scrollerRect.top - visibleSavedSlot;
+    } else if (isAbove || isBelow) {
+      const delta = isAbove
+        ? rowRect.top - scrollerRect.top - inset
+        : rowRect.bottom - scrollerRect.bottom + inset;
+      scroller.scrollTop += delta;
+    }
+    if (scroller.dataset.cwLibraryRebuilding !== 'true') {
+      elementsLibraryScrollTopByScope[scopeBase] = scroller.scrollTop;
+    }
+
+    if (options.focusLabel) {
+      const input = row.querySelector<HTMLInputElement>('.cw-measure-input');
+      const active = document.activeElement as HTMLElement | null;
+      const userMovedToAnotherControl =
+        active &&
+        active !== document.body &&
+        active !== input &&
+        active.isConnected &&
+        !active.closest('.stroke-visibility-item') &&
+        (active.matches('input, textarea, button, select') || active.isContentEditable);
+      if (!userMovedToAnotherControl) input?.focus({ preventScroll: true });
+    }
+  };
+
+  const keepLibraryRowVisible = (
+    rowKey: string,
+    options: { focusLabel?: boolean; useSavedSlot?: boolean } = {}
+  ): void => {
+    if (!rowKey) return;
+    const request = ++elementsLibraryPositionRequest;
+    if (elementsLibraryPositionRaf !== null) {
+      window.cancelAnimationFrame(elementsLibraryPositionRaf);
+    }
+    elementsLibraryPositionRaf = window.requestAnimationFrame(() => {
+      elementsLibraryPositionRaf = null;
+      if (request !== elementsLibraryPositionRequest) return;
+      positionLibraryRow(rowKey, options);
+    });
+  };
+
+  const captureLibraryRowSlot = (rowKey: string, scopeLabel: string): void => {
+    const scroller = document.getElementById('strokeVisibilityControls');
+    const row = document.querySelector<HTMLElement>(
+      `#elementsMeasurementLibrary .cw-measure-row[data-cw-row-key="${CSS.escape(rowKey)}"]`
+    );
+    if (!scroller || !row) return;
+    const scrollerRect = scroller.getBoundingClientRect();
+    const rowRect = row.getBoundingClientRect();
+    elementsLibraryRowOffsetByScope[getWorkspaceScopeBase(scopeLabel)] = Math.max(
+      8,
+      Math.min(rowRect.top - scrollerRect.top, scroller.clientHeight - rowRect.height - 8)
+    );
+  };
+
+  const cancelArmedMeasurementRow = (scopeLabel = getCurrentScopeLabel()): void => {
+    setScopedArmedRowKey(scopeLabel, '');
+    clearWorkspaceNextDrawLabel(scopeLabel);
+    renderRows();
   };
 
   const toggleArmedMeasurementRow = (
     row: VisibleImportedRow,
     configuredLabel: string,
-    options: { allowToggleOff?: boolean } = {}
+    options: { allowToggleOff?: boolean; preserveSavedSlot?: boolean } = {}
   ): { armed: boolean; targetLabel: string } => {
-    const targetLabel = resolveRowTargetLabel(row, configuredLabel);
-    if (!targetLabel) {
+    const scopeLabel = getCurrentScopeLabel();
+    if (!options.preserveSavedSlot) {
+      captureLibraryRowSlot(row.rowKey, scopeLabel);
+    }
+    const explicitTargetLabel = normalizeGuideLabel(configuredLabel);
+    const suggestedTargetLabel = normalizeGuideLabel(
+      guessMosLabel(row.sourceLabel, row.sectionName || '')
+    );
+    if (!explicitTargetLabel && !suggestedTargetLabel) {
+      state.rowTargetLabels[row.rowKey] = '';
+      setScopedArmedRowKey(scopeLabel, row.rowKey);
+      clearWorkspaceNextDrawLabel(scopeLabel);
+      renderRows();
+      keepLibraryRowVisible(row.rowKey, { focusLabel: true, useSavedSlot: true });
+      setStatus(`Add a label for ${row.sourceLabel} before drawing.`, 'info');
+      return { armed: true, targetLabel: '' };
+    }
+    const baseTargetLabel = resolveRowTargetLabel(
+      row,
+      configuredLabel,
+      readWorkspaceNextTag(scopeLabel) || getNextTagValue()
+    );
+    if (!baseTargetLabel) {
       return { armed: false, targetLabel: '' };
     }
 
-    const allowToggleOff = options.allowToggleOff !== false;
-    if (allowToggleOff && state.armedRowKey === row.rowKey) {
-      state.armedRowKey = '';
-      clearWorkspaceNextDrawLabel(getCurrentScopeLabel());
-      renderRows();
-      return { armed: false, targetLabel };
+    // Unlabelled CW rows stay first-class choices. Claim the current Next Tag
+    // only when the user chooses the row, rather than consuming tags while the
+    // library is merely rendered.
+    if (!normalizeGuideLabel(configuredLabel)) {
+      state.rowTargetLabels[row.rowKey] = baseTargetLabel;
     }
 
-    state.armedRowKey = row.rowKey;
-    seedWorkspaceNextDrawLabel(getCurrentScopeLabel(), targetLabel);
+    const allowToggleOff = options.allowToggleOff !== false;
+    if (allowToggleOff && getScopedArmedRowKey(scopeLabel) === row.rowKey) {
+      setScopedArmedRowKey(scopeLabel, '');
+      clearWorkspaceNextDrawLabel(scopeLabel);
+      renderRows();
+      return { armed: false, targetLabel: baseTargetLabel };
+    }
+
+    const targetLabel = resolveNextAvailableCwLabel(
+      baseTargetLabel,
+      getWorkspaceUsedLabels(scopeLabel)
+    );
+    setScopedArmedRowKey(scopeLabel, row.rowKey);
+    seedWorkspaceNextDrawLabel(scopeLabel, targetLabel, row.rowKey);
     renderRows();
+    keepLibraryRowVisible(row.rowKey, { useSavedSlot: true });
     return { armed: true, targetLabel };
   };
 
   const armNextMeasurementRow = (afterRowKey: string): { armed: boolean; rowKey: string } => {
-    const rows = visibleRows();
+    const scopeLabel = getCurrentScopeLabel();
+    const completedOverallRow = allLoadedRows().find(row => row.rowKey === afterRowKey);
+    const completedOverallLabel =
+      completedOverallRow && isCwOverallDimensionRow(completedOverallRow)
+        ? overallDimensionDisplayLabel(completedOverallRow.sourceLabel)
+        : '';
+    if (completedOverallRow && completedOverallLabel) {
+      const dimensionOrder = ['Width', 'Depth', 'Height'];
+      const completedIndex = dimensionOrder.indexOf(completedOverallLabel);
+      const itemRows = allLoadedRows().filter(row => row.itemKey === completedOverallRow.itemKey);
+      const usedLabels = getWorkspaceUsedLabels(scopeLabel);
+
+      for (let index = completedIndex + 1; index < dimensionOrder.length; index += 1) {
+        const displayLabel = dimensionOrder[index];
+        const nextRow = itemRows.find(
+          row =>
+            isCwOverallDimensionRow(row) &&
+            overallDimensionDisplayLabel(row.sourceLabel) === displayLabel
+        );
+        if (!nextRow) continue;
+        const targetLabel = overallDimensionTag(displayLabel);
+        if (!targetLabel || usedLabels.has(targetLabel)) continue;
+        state.rowTargetLabels[nextRow.rowKey] = targetLabel;
+        const result = toggleArmedMeasurementRow(nextRow, targetLabel, {
+          allowToggleOff: false,
+          preserveSavedSlot: true,
+        });
+        if (result.armed) return { armed: true, rowKey: nextRow.rowKey };
+      }
+
+      // This product may have detail measurements after its available overall
+      // dimensions. Fall through to the normal row-order progression instead
+      // of treating a missing Depth/Height row as the end of the library.
+    }
+
+    const rows = getRowsForWorkspaceScope(scopeLabel);
     const currentIndex = rows.findIndex(row => row.rowKey === afterRowKey);
     if (currentIndex < 0 || currentIndex >= rows.length - 1) {
-      state.armedRowKey = '';
-      clearWorkspaceNextDrawLabel(getCurrentScopeLabel());
+      setScopedArmedRowKey(scopeLabel, '');
+      clearWorkspaceNextDrawLabel(scopeLabel);
       renderRows();
       return { armed: false, rowKey: '' };
     }
 
-    const nextRow = rows[currentIndex + 1];
-    const result = toggleArmedMeasurementRow(nextRow, state.rowTargetLabels[nextRow.rowKey] || '', {
-      allowToggleOff: false,
-    });
-    return { armed: result.armed, rowKey: nextRow.rowKey };
+    const usedLabels = getWorkspaceUsedLabels(scopeLabel);
+    const mappedRows = rows.map(row => ({
+      row,
+      rowKey: row.rowKey,
+      targetLabel: resolveRowTargetLabel(row, state.rowTargetLabels[row.rowKey] || ''),
+    }));
+    const remainingRows = mappedRows.slice(currentIndex + 1);
+    for (const next of remainingRows) {
+      const normalizedTarget = normalizeGuideLabel(next.targetLabel);
+      // If the label is a duplicate, don't skip — arm the row with an
+      // auto-deduplicated label (e.g. "G2" → "G2(1)") so every measurement
+      // gets drawn.
+      let effectiveLabel = state.rowTargetLabels[next.row.rowKey] || '';
+      if (normalizedTarget && usedLabels.has(normalizedTarget)) {
+        effectiveLabel = resolveNextAvailableCwLabel(normalizedTarget, usedLabels);
+        state.rowTargetLabels[next.row.rowKey] = effectiveLabel;
+      }
+      const result = toggleArmedMeasurementRow(next.row, effectiveLabel, {
+        allowToggleOff: false,
+        preserveSavedSlot: true,
+      });
+      if (result.armed) {
+        return { armed: true, rowKey: next.row.rowKey };
+      }
+    }
+
+    setScopedArmedRowKey(scopeLabel, '');
+    clearWorkspaceNextDrawLabel(scopeLabel);
+    renderRows();
+    return { armed: false, rowKey: '' };
   };
 
   const hasWorkspaceManualTagOverride = (scopeLabel: string): boolean => {
@@ -2177,6 +3613,10 @@ function createModal(): HTMLElement {
       });
 
       getWorkspaceTagScopeKeys(siblingScope).forEach(key => {
+        (state.completedLabelsByScope[key] || []).forEach(label => {
+          const normalized = normalizeGuideLabel(label);
+          if (normalized) used.add(normalized);
+        });
         const lineStrokes = Array.isArray((window as any).lineStrokesByImage?.[key])
           ? (window as any).lineStrokesByImage[key]
           : [];
@@ -2190,8 +3630,42 @@ function createModal(): HTMLElement {
     return used;
   };
 
+  const markWorkspaceLabelCompleted = (scopeLabel: string, targetLabel: string): void => {
+    const normalized = normalizeGuideLabel(targetLabel);
+    if (!normalized) return;
+    getWorkspaceTagScopeKeys(scopeLabel).forEach(key => {
+      const labels = new Set(state.completedLabelsByScope[key] || []);
+      labels.add(normalized);
+      state.completedLabelsByScope[key] = [...labels];
+    });
+  };
+
+  const markWorkspaceRowCompleted = (scopeLabel: string, rowKey: string): void => {
+    if (!rowKey) return;
+    getWorkspaceTagScopeKeys(scopeLabel).forEach(key => {
+      const rowKeys = new Set(state.completedRowKeysByScope[key] || []);
+      rowKeys.add(rowKey);
+      state.completedRowKeysByScope[key] = [...rowKeys];
+    });
+  };
+
+  const getCompletedWorkspaceRowKeys = (scopeLabel: string): Set<string> => {
+    const completed = new Set<string>();
+    getWorkspaceTagScopeKeys(scopeLabel).forEach(key => {
+      (state.completedRowKeysByScope[key] || []).forEach(rowKey => completed.add(rowKey));
+    });
+    return completed;
+  };
+
   const getRowsForWorkspaceScope = (scopeLabel: string): VisibleImportedRow[] => {
     const activeRows = visibleRows();
+    const scopeMeta = state.importedViewMetaByScope[getCanonicalCwScopeKey(scopeLabel)];
+    if (scopeMeta) {
+      // Imported comparison images can belong to a product other than the
+      // globally active search result. Resolve from the complete library so a
+      // view always receives its own dimensions when products are switched.
+      return filterCwWorkspaceRows(allLoadedRows(), scopeMeta);
+    }
     const sectionName = normalizeSectionName(sectionFromImageName(scopeLabel));
     if (!sectionName) {
       return activeRows;
@@ -2209,42 +3683,71 @@ function createModal(): HTMLElement {
     const usedLabels = getWorkspaceUsedLabels(scopeLabel);
     const candidateRows = getRowsForWorkspaceScope(scopeLabel);
 
-    for (const row of candidateRows) {
-      const configuredLabel = (state.rowTargetLabels[row.rowKey] || '').trim();
-      const targetLabel = resolveRowTargetLabel(row, configuredLabel);
-      if (!targetLabel || usedLabels.has(targetLabel)) continue;
-      return { row, targetLabel };
-    }
-
-    return null;
+    const mappedRows = candidateRows.map(row => ({
+      row,
+      rowKey: row.rowKey,
+      targetLabel: resolveRowTargetLabel(row, (state.rowTargetLabels[row.rowKey] || '').trim()),
+    }));
+    const next = findNextCwWorkspaceRow(mappedRows, usedLabels);
+    return next ? { row: next.row, targetLabel: next.targetLabel } : null;
   };
 
   const syncWorkspaceGuideSeed = (
     scopeLabel: string,
     options: { render?: boolean; arm?: boolean } = {}
   ): { rowKey: string; targetLabel: string; armed: boolean } | null => {
-    if (!scopeLabel || hasWorkspaceManualTagOverride(scopeLabel)) {
-      return null;
-    }
-
-    const nextRow = findNextWorkspaceGuideRow(scopeLabel);
-    if (!nextRow) {
-      if (!state.armedRowKey) {
-        clearWorkspaceNextDrawLabel(scopeLabel);
-      }
+    const activeIntent = getActiveDrawIntent(scopeLabel);
+    if (!scopeLabel || (hasWorkspaceManualTagOverride(scopeLabel) && !activeIntent)) {
       if (options.render) {
         renderRows();
       }
       return null;
     }
 
-    if (options.arm) {
-      state.armedRowKey = nextRow.row.rowKey;
-    } else if (!state.armedRowKey) {
-      state.armedRowKey = '';
+    const mappedRows = getRowsForWorkspaceScope(scopeLabel).map(row => ({
+      row,
+      rowKey: row.rowKey,
+      targetLabel: resolveRowTargetLabel(row, (state.rowTargetLabels[row.rowKey] || '').trim()),
+    }));
+    const scopedArmedRowKey = getScopedArmedRowKey(scopeLabel);
+    const selection = resolveCwWorkspaceQueueRow(
+      mappedRows,
+      getWorkspaceUsedLabels(scopeLabel),
+      scopedArmedRowKey
+    );
+    if (!selection) {
+      setScopedArmedRowKey(scopeLabel, '');
+      clearWorkspaceNextDrawLabel(scopeLabel);
+      if (options.render) {
+        renderRows();
+      }
+      return null;
     }
 
-    seedWorkspaceNextDrawLabel(scopeLabel, nextRow.targetLabel);
+    if (scopedArmedRowKey && !selection.armed) {
+      setScopedArmedRowKey(scopeLabel, '');
+    }
+    const nextRow = {
+      row: selection.row.row,
+      // Keep a manually selected duplicate exact. Queue reconciliation may
+      // otherwise re-resolve it from generic row data and turn H1(1) into a
+      // stale H1 or a completely different automatic label.
+      targetLabel:
+        activeIntent?.rowKey === selection.row.row.rowKey && activeIntent.label
+          ? activeIntent.label
+          : selection.row.targetLabel,
+    };
+
+    if (options.arm) {
+      setScopedArmedRowKey(scopeLabel, nextRow.row.rowKey);
+    }
+
+    const shouldSeed = options.arm === true || selection.armed;
+    if (shouldSeed) {
+      seedWorkspaceNextDrawLabel(scopeLabel, nextRow.targetLabel, nextRow.row.rowKey);
+    } else {
+      clearWorkspaceNextDrawLabel(scopeLabel);
+    }
     if (options.render) {
       renderRows();
     }
@@ -2252,13 +3755,109 @@ function createModal(): HTMLElement {
     return {
       rowKey: nextRow.row.rowKey,
       targetLabel: nextRow.targetLabel,
-      armed: options.arm === true,
+      armed: shouldSeed,
     };
   };
 
+  const syncCompactCwQueueDock = (): void => {
+    document.getElementById('cwMeasurementQueueDock')?.remove();
+    const scopeLabel = getCurrentScopeLabel();
+    const rows = getRowsForWorkspaceScope(scopeLabel);
+    const armedRowKey = getScopedArmedRowKey(scopeLabel);
+    const armedRow = rows.find(row => row.rowKey === armedRowKey) || null;
+    window.dispatchEvent(
+      new CustomEvent('openpaint:cw-queue-state', {
+        detail: armedRow
+          ? {
+              active: true,
+              rowKey: armedRow.rowKey,
+              label: Object.prototype.hasOwnProperty.call(state.rowTargetLabels, armedRow.rowKey)
+                ? state.rowTargetLabels[armedRow.rowKey]
+                : readWorkspaceNextTag(scopeLabel),
+              value: getEffectiveRowValue(armedRow),
+              sourceLabel: armedRow.sourceLabel,
+            }
+          : { active: false },
+      })
+    );
+  };
+
+  window.addEventListener('openpaint:cw-queue-label-change', event => {
+    const detail = (event as CustomEvent<{ rowKey?: string; label?: string }>).detail || {};
+    const rowKey = String(detail.rowKey || '');
+    const row = allLoadedRows().find(item => item.rowKey === rowKey);
+    if (!row) return;
+    const configuredLabel = normalizeGuideLabel(detail.label || '');
+    state.rowTargetLabels[rowKey] = configuredLabel;
+    const scopeLabel = getCurrentScopeLabel();
+    if (getScopedArmedRowKey(scopeLabel) !== rowKey) return;
+    if (!configuredLabel) {
+      clearWorkspaceNextDrawLabel(scopeLabel);
+      setStatus(`Add a label for ${row.sourceLabel} before drawing.`, 'info');
+    } else {
+      const targetLabel = resolveNextAvailableCwLabel(
+        configuredLabel,
+        getWorkspaceUsedLabels(scopeLabel)
+      );
+      seedWorkspaceNextDrawLabel(scopeLabel, targetLabel, rowKey);
+    }
+    syncCompactCwQueueDock();
+  });
+
+  (window as any).canStartCwQueuedDrawing = (): boolean => {
+    const scopeLabel = getCurrentScopeLabel();
+    const rowKey = getScopedArmedRowKey(scopeLabel);
+    if (!rowKey) return true;
+    const row = allLoadedRows().find(item => item.rowKey === rowKey);
+    if (!row) return true;
+    const configuredLabel = normalizeGuideLabel(state.rowTargetLabels[rowKey] || '');
+    const suggestedLabel = normalizeGuideLabel(
+      isCwOverallDimensionRow(row)
+        ? overallDimensionTag(overallDimensionDisplayLabel(row.sourceLabel))
+        : guessMosLabel(row.sourceLabel, row.sectionName || '')
+    );
+    if (configuredLabel || suggestedLabel) return true;
+
+    renderRows();
+    keepLibraryRowVisible(rowKey, { focusLabel: true });
+    setStatus(`Name ${row.sourceLabel} before drawing, or cancel it to draw freely.`, 'bad');
+    return false;
+  };
+  // The drawing tools read this synchronously while committing a stroke. It is
+  // deliberately independent of the Next Tag display, which can update during
+  // Fabric's mouse-up lifecycle before the CW assignment listener runs.
+  (window as any).getCwQueuedDrawLabel = (scopeLabel = getCurrentScopeLabel()): string => {
+    const rowKey = getScopedArmedRowKey(scopeLabel);
+    if (!rowKey) return '';
+    return getScopedReadyDrawLabel(scopeLabel, rowKey);
+  };
+  (window as any).cancelCwQueuedDrawing = () => cancelArmedMeasurementRow();
+
+  window.addEventListener('openpaint:cw-queue-value-change', event => {
+    const detail = (event as CustomEvent<{ rowKey?: string; value?: string }>).detail || {};
+    const rowKey = String(detail.rowKey || '');
+    const row = allLoadedRows().find(item => item.rowKey === rowKey);
+    if (!row) return;
+    const value = String(detail.value || '').trim();
+    if (parseImportedCentimeterValue(value) === null) {
+      setStatus(`Enter a valid value for ${row.sourceLabel}.`, 'bad');
+      return;
+    }
+    if (value === getOriginalRowValue(row)) delete state.rowValueOverrides[rowKey];
+    else state.rowValueOverrides[rowKey] = value;
+    syncCompactCwQueueDock();
+  });
+
   const renderRowsInto = (
     targetRowsContainer: HTMLDivElement,
-    options: { preserveScroll?: boolean; scrollTop?: number; scrollLeft?: number } = {}
+    options: {
+      preserveScroll?: boolean;
+      scrollTop?: number;
+      scrollLeft?: number;
+      compact?: boolean;
+      library?: boolean;
+      scopeLabel?: string;
+    } = {}
   ) => {
     const preserveScroll = options.preserveScroll === true;
     const previousScrollTop = preserveScroll
@@ -2268,7 +3867,14 @@ function createModal(): HTMLElement {
       ? (options.scrollLeft ?? targetRowsContainer.scrollLeft)
       : 0;
     targetRowsContainer.innerHTML = '';
-    const filteredRows = visibleRows();
+    const compact = options.compact === true;
+    const library = options.library === true;
+    const currentScopeLabel = options.scopeLabel || getCurrentScopeLabel();
+    const filteredRows = library
+      ? allLoadedRows()
+      : compact
+        ? getRowsForWorkspaceScope(currentScopeLabel)
+        : visibleRows();
 
     if (!filteredRows.length) {
       const empty = document.createElement('div');
@@ -2285,9 +3891,9 @@ function createModal(): HTMLElement {
     }
 
     let lastItemKey = '';
-    const currentScopeLabel = getCurrentScopeLabel();
+    const scopedArmedRowKey = getScopedArmedRowKey(currentScopeLabel);
     const readyTag = readWorkspaceNextTag(currentScopeLabel);
-    const nextReadyRow = !state.armedRowKey ? findNextWorkspaceGuideRow(currentScopeLabel) : null;
+    const nextReadyRow = !scopedArmedRowKey ? findNextWorkspaceGuideRow(currentScopeLabel) : null;
     const readyRowKey = nextReadyRow?.row.rowKey || '';
     filteredRows.forEach(row => {
       if (!state.activeItemKey && row.itemKey !== lastItemKey) {
@@ -2300,21 +3906,29 @@ function createModal(): HTMLElement {
 
       const rowEl = document.createElement('div');
       rowEl.className = 'cw-measure-row';
-      const guessedLabel = guessMosLabel(row.sourceLabel, row.sectionName || '');
+      rowEl.dataset.cwRowKey = row.rowKey;
+      rowEl.dataset.cwSourceLabel = row.sourceLabel;
+      const guessedLabel = isCwOverallDimensionRow(row)
+        ? overallDimensionTag(overallDimensionDisplayLabel(row.sourceLabel))
+        : guessMosLabel(row.sourceLabel, row.sectionName || '');
       const configuredTargetLabel = state.rowTargetLabels[row.rowKey] || guessedLabel;
       const resolvedTargetLabel = resolveRowTargetLabel(row, configuredTargetLabel);
       const isReadyRow =
-        !state.armedRowKey &&
+        !scopedArmedRowKey &&
         row.rowKey === readyRowKey &&
         Boolean(resolvedTargetLabel) &&
         resolvedTargetLabel === readyTag;
-      if (state.armedRowKey === row.rowKey) {
+      if (scopedArmedRowKey === row.rowKey) {
         rowEl.classList.add('armed');
+        if (!normalizeGuideLabel(configuredTargetLabel) && !guessedLabel) {
+          rowEl.classList.add('label-required');
+        }
       } else if (isReadyRow) {
-        rowEl.classList.add('ready');
+        rowEl.classList.add('suggested');
       }
 
       const sourceEl = document.createElement('div');
+      if (library) sourceEl.className = 'cw-library-source';
       if (state.activeItemKey) {
         sourceEl.textContent = row.sourceLabel;
       } else {
@@ -2325,10 +3939,80 @@ function createModal(): HTMLElement {
       sectionEl.textContent = row.sectionName || '-';
 
       const valueEl = document.createElement('div');
-      valueEl.className = 'cw-measure-val';
-      valueEl.textContent = row.value;
+      valueEl.className = 'cw-measure-val cw-measure-value-field';
+      const originalValue = getOriginalRowValue(row);
+      const valueInput = document.createElement('input');
+      valueInput.type = 'text';
+      valueInput.inputMode = 'decimal';
+      valueInput.className = 'cw-measure-value-input';
+      valueInput.dataset.cwValueInput = row.rowKey;
+      valueInput.setAttribute('aria-label', `Value for ${row.sourceLabel} in centimetres`);
+      valueInput.value = getEffectiveRowValue(row);
+      const source = document.createElement('div');
+      source.className = 'cw-measure-source';
+      source.dataset.cwSource = row.rowKey;
+      source.textContent = `CW · original ${originalValue} cm`;
+      source.title = `${row.itemLabel} · ${row.sectionName || 'Measurements'} · ${row.sourceLabel} · original ${originalValue} cm`;
+      const resetValue = document.createElement('button');
+      resetValue.type = 'button';
+      resetValue.className = 'cw-measure-reset';
+      resetValue.dataset.cwValueReset = row.rowKey;
+      resetValue.textContent = 'Reset';
+      resetValue.title = `Restore the original CW value (${originalValue} cm)`;
+      resetValue.hidden = !(row.rowKey in state.rowValueOverrides);
+      const commitValue = () => {
+        const nextValue = valueInput.value.trim();
+        if (parseImportedCentimeterValue(nextValue) === null) {
+          state.rowValueInvalid[row.rowKey] = true;
+          valueInput.setAttribute('aria-invalid', 'true');
+          return false;
+        }
+        delete state.rowValueInvalid[row.rowKey];
+        valueInput.removeAttribute('aria-invalid');
+        if (nextValue === originalValue) delete state.rowValueOverrides[row.rowKey];
+        else state.rowValueOverrides[row.rowKey] = nextValue;
+        resetValue.hidden = !(row.rowKey in state.rowValueOverrides);
+        return true;
+      };
+      valueInput.addEventListener('input', () => {
+        const nextValue = valueInput.value.trim();
+        if (parseImportedCentimeterValue(nextValue) === null) {
+          state.rowValueInvalid[row.rowKey] = true;
+          valueInput.setAttribute('aria-invalid', 'true');
+          return;
+        }
+        delete state.rowValueInvalid[row.rowKey];
+        valueInput.removeAttribute('aria-invalid');
+        if (nextValue === originalValue) delete state.rowValueOverrides[row.rowKey];
+        else state.rowValueOverrides[row.rowKey] = nextValue;
+        resetValue.hidden = !(row.rowKey in state.rowValueOverrides);
+      });
+      valueInput.addEventListener('blur', commitValue);
+      valueInput.addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          if (commitValue()) valueInput.blur();
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          valueInput.value = getEffectiveRowValue(row);
+          delete state.rowValueInvalid[row.rowKey];
+          valueInput.removeAttribute('aria-invalid');
+          valueInput.blur();
+        }
+      });
+      resetValue.addEventListener('click', event => {
+        event.preventDefault();
+        delete state.rowValueOverrides[row.rowKey];
+        delete state.rowValueInvalid[row.rowKey];
+        valueInput.value = originalValue;
+        valueInput.removeAttribute('aria-invalid');
+        resetValue.hidden = true;
+        renderProductOverview();
+      });
+      valueEl.append(valueInput, source, resetValue);
 
       const selectWrap = document.createElement('div');
+      if (library) selectWrap.className = 'cw-library-label';
       const input = document.createElement('input');
       input.type = 'text';
       input.className = 'cw-measure-input';
@@ -2336,9 +4020,55 @@ function createModal(): HTMLElement {
       input.value = configuredTargetLabel;
       input.addEventListener('input', () => {
         state.rowTargetLabels[row.rowKey] = (input.value || '').trim();
+        const isEmpty = !normalizeGuideLabel(input.value || '') && !guessedLabel;
+        rowEl.classList.toggle(
+          'label-required',
+          getScopedArmedRowKey(currentScopeLabel) === row.rowKey && isEmpty
+        );
+        // Highlight the input red when the typed label is already used by
+        // another measurement — the user should rename it or it will be
+        // auto-deduplicated (e.g. "G2" → "G2(1)") when drawn.
+        const normalized = normalizeGuideLabel(input.value || '');
+        const isDuplicate = normalized && getWorkspaceUsedLabels(currentScopeLabel).has(normalized);
+        input.classList.toggle('label-duplicate', Boolean(isDuplicate));
+        input.style.borderColor = isDuplicate ? '#ef4444' : '';
+        input.title = isDuplicate
+          ? `"${normalized}" is already used — it will be auto-renamed to ${resolveNextAvailableCwLabel(normalized, getWorkspaceUsedLabels(currentScopeLabel))} when drawn`
+          : '';
+
+        // Only seed the workspace draw label when the input looks complete
+        // (letter+number like "A1", "G2") — not on every keystroke. Otherwise
+        // typing "G" immediately accepts it before the user can type "G2".
+        const looksComplete = /^[A-Za-z]\d+$/.test((input.value || '').trim());
+        if (getScopedArmedRowKey(currentScopeLabel) === row.rowKey && looksComplete) {
+          window.dispatchEvent(
+            new CustomEvent('openpaint:cw-queue-label-change', {
+              detail: { rowKey: row.rowKey, label: input.value },
+            })
+          );
+        }
+      });
+      // Also commit on blur so the label is seeded when the user finishes typing
+      // and clicks away, even if the value is just a single letter.
+      input.addEventListener('blur', () => {
+        if (getScopedArmedRowKey(currentScopeLabel) === row.rowKey && input.value.trim()) {
+          window.dispatchEvent(
+            new CustomEvent('openpaint:cw-queue-label-change', {
+              detail: { rowKey: row.rowKey, label: input.value },
+            })
+          );
+        }
+      });
+      input.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && getScopedArmedRowKey(currentScopeLabel) === row.rowKey) {
+          event.preventDefault();
+          cancelArmedMeasurementRow(currentScopeLabel);
+          setStatus('Measurement selection cancelled. Draw freely.', 'info');
+        }
       });
 
       const actionWrap = document.createElement('div');
+      if (library) actionWrap.className = 'cw-library-action';
       actionWrap.style.display = 'flex';
       actionWrap.style.gap = '6px';
       actionWrap.style.flexWrap = 'wrap';
@@ -2348,12 +4078,17 @@ function createModal(): HTMLElement {
       applyBtn.className = 'cw-btn';
       applyBtn.textContent = 'Assign Now';
       applyBtn.addEventListener('click', () => {
+        if (!commitValue()) {
+          valueInput.focus();
+          setStatus(`Enter a valid value for ${row.sourceLabel}.`, 'bad');
+          return;
+        }
         const targetLabel = resolveRowTargetLabel(row, (input.value || '').trim());
         if (!targetLabel) return;
         const applied = applyMeasurement(
           getCurrentScopeLabel(),
           targetLabel,
-          row.value,
+          getEffectiveRowValue(row),
           row.sourceLabel,
           lockedEl.checked
         );
@@ -2365,14 +4100,31 @@ function createModal(): HTMLElement {
 
       const drawBtn = document.createElement('button');
       drawBtn.type = 'button';
-      drawBtn.className = `cw-btn${state.armedRowKey === row.rowKey || isReadyRow ? ' cw-btn-primary' : ''}`;
-      drawBtn.textContent =
-        state.armedRowKey === row.rowKey ? 'Armed' : isReadyRow ? 'Ready' : 'Draw Next';
+      drawBtn.className = `cw-btn${scopedArmedRowKey === row.rowKey ? ' cw-btn-primary' : ''}`;
+      const rowNeedsLabel =
+        scopedArmedRowKey === row.rowKey &&
+        !normalizeGuideLabel(configuredTargetLabel) &&
+        !guessedLabel;
+      drawBtn.textContent = rowNeedsLabel
+        ? 'Cancel'
+        : scopedArmedRowKey === row.rowKey
+          ? 'Armed'
+          : 'Draw Next';
       drawBtn.addEventListener('click', () => {
+        if (rowNeedsLabel) {
+          cancelArmedMeasurementRow(currentScopeLabel);
+          setStatus('Measurement selection cancelled. Draw freely.', 'info');
+          return;
+        }
+        if (!commitValue()) {
+          valueInput.focus();
+          setStatus(`Enter a valid value for ${row.sourceLabel}.`, 'bad');
+          return;
+        }
         const result = toggleArmedMeasurementRow(row, input.value || '', { allowToggleOff: true });
         if (result.armed) {
           setStatus(
-            `Armed ${row.itemLabel} / ${row.sourceLabel} as ${result.targetLabel}. Draw the next measurement in ${getCurrentScopeLabel()}; value ${row.value} will apply automatically.`,
+            `Armed ${row.itemLabel} / ${row.sourceLabel} as ${result.targetLabel}. Draw the next measurement in ${getCurrentScopeLabel()}; value ${getEffectiveRowValue(row)} will apply automatically.`,
             'info'
           );
         }
@@ -2381,10 +4133,15 @@ function createModal(): HTMLElement {
       rowEl.addEventListener('click', event => {
         const target = event.target as HTMLElement | null;
         if (target?.closest('button, input, textarea, select, label')) return;
+        if (!commitValue()) {
+          valueInput.focus();
+          setStatus(`Enter a valid value for ${row.sourceLabel}.`, 'bad');
+          return;
+        }
         const result = toggleArmedMeasurementRow(row, input.value || '', { allowToggleOff: false });
         if (result.armed) {
           setStatus(
-            `Armed ${row.itemLabel} / ${row.sourceLabel} as ${result.targetLabel}. Draw the next measurement in ${getCurrentScopeLabel()}; value ${row.value} will apply automatically.`,
+            `Armed ${row.itemLabel} / ${row.sourceLabel} as ${result.targetLabel}. Draw the next measurement in ${getCurrentScopeLabel()}; value ${getEffectiveRowValue(row)} will apply automatically.`,
             'info'
           );
         }
@@ -2393,14 +4150,51 @@ function createModal(): HTMLElement {
       selectWrap.appendChild(input);
       actionWrap.appendChild(applyBtn);
       actionWrap.appendChild(drawBtn);
-
-      rowEl.appendChild(sourceEl);
-      rowEl.appendChild(sectionEl);
-      rowEl.appendChild(valueEl);
-      rowEl.appendChild(selectWrap);
-      rowEl.appendChild(actionWrap);
+      if (compact || library) {
+        sourceEl.innerHTML = library
+          ? `<strong>${row.sourceLabel}</strong><small>${row.sectionName || row.itemLabel}</small>`
+          : `<strong>${row.sourceLabel}</strong><div style="font-size:11px;color:#64748b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${row.sectionName || row.itemLabel}</div>`;
+        drawBtn.textContent = rowNeedsLabel
+          ? 'Cancel'
+          : scopedArmedRowKey === row.rowKey
+            ? 'Drawing'
+            : 'Draw';
+        actionWrap.innerHTML = '';
+        actionWrap.appendChild(drawBtn);
+        rowEl.appendChild(sourceEl);
+        rowEl.appendChild(valueEl);
+        rowEl.appendChild(selectWrap);
+        rowEl.appendChild(actionWrap);
+      } else {
+        rowEl.appendChild(sourceEl);
+        rowEl.appendChild(sectionEl);
+        rowEl.appendChild(valueEl);
+        rowEl.appendChild(selectWrap);
+        rowEl.appendChild(actionWrap);
+      }
       targetRowsContainer.appendChild(rowEl);
     });
+
+    if (compact && !library) {
+      const next = scopedArmedRowKey
+        ? filteredRows.find(row => row.rowKey === scopedArmedRowKey)
+        : nextReadyRow?.row;
+      const nextCard =
+        targetRowsContainer.parentElement?.querySelector<HTMLElement>('.cw-workspace-next');
+      if (nextCard) {
+        const targetLabel = next
+          ? resolveRowTargetLabel(next, state.rowTargetLabels[next.rowKey] || '')
+          : '';
+        nextCard.querySelector<HTMLElement>('.cw-workspace-next-label')!.textContent =
+          targetLabel || 'Done';
+        nextCard.querySelector<HTMLElement>('.cw-workspace-next-value')!.textContent = next?.value
+          ? `${getEffectiveRowValue(next)} cm`
+          : '';
+        nextCard.querySelector<HTMLElement>('.cw-workspace-next-source')!.textContent = next
+          ? `${next.sourceLabel} · ${next.sectionName || next.itemLabel}`
+          : 'All mapped measurements have been drawn.';
+      }
+    }
 
     if (preserveScroll) {
       targetRowsContainer.scrollTop = previousScrollTop;
@@ -2426,8 +4220,15 @@ function createModal(): HTMLElement {
     }
 
     host.innerHTML = `
-      <div class="cw-measure-wrap cw-split-measure-wrap">
-        ${buildMeasureHeadMarkup()}
+      <div class="cw-measure-wrap cw-split-measure-wrap compact">
+        <div class="cw-workspace-next">
+          <div class="cw-workspace-next-copy">
+            <div class="cw-workspace-next-kicker">Next measurement</div>
+            <div class="cw-workspace-next-main"><span class="cw-workspace-next-label">—</span><span class="cw-workspace-next-value"></span></div>
+            <div class="cw-workspace-next-source"></div>
+          </div>
+        </div>
+        ${buildMeasureHeadMarkup(true)}
         <div id="cwSplitRows" class="cw-split-rows"></div>
       </div>
     `;
@@ -2467,6 +4268,8 @@ function createModal(): HTMLElement {
         preserveScroll: true,
         scrollTop: measurementWorkspaceScrollTop,
         scrollLeft: measurementWorkspaceScrollLeft,
+        compact: true,
+        scopeLabel: workspaceScope,
       });
       splitRows.scrollTop = measurementWorkspaceScrollTop;
       splitRows.scrollLeft = measurementWorkspaceScrollLeft;
@@ -2474,6 +4277,79 @@ function createModal(): HTMLElement {
   };
 
   (window as any).renderCwMeasurementWorkspacePane = syncMeasurementWorkspacePane;
+
+  const renderElementsMeasurementLibrary = () => {
+    const host = document.getElementById('elementsMeasurementLibrary') as HTMLDivElement | null;
+    const count = allLoadedRows().length;
+    const countElement = document.getElementById('elementsLibraryCount');
+    if (countElement) countElement.textContent = String(count);
+    if (!host) return;
+    const scrollContainer = document.getElementById('strokeVisibilityControls');
+    const scopeBase = getWorkspaceScopeBase(getCurrentScopeLabel());
+    host.style.overflowAnchor = 'none';
+    if (scrollContainer) scrollContainer.style.overflowAnchor = 'none';
+    if (scrollContainer && scrollContainer.dataset.cwLibraryScrollBound !== 'true') {
+      scrollContainer.dataset.cwLibraryScrollBound = 'true';
+      scrollContainer.addEventListener('scroll', () => {
+        if (scrollContainer.dataset.cwLibraryRebuilding === 'true') return;
+        const renderedScope =
+          scrollContainer.dataset.cwLibraryScope || elementsLibraryRenderedScope;
+        if (renderedScope) {
+          elementsLibraryScrollTopByScope[renderedScope] = scrollContainer.scrollTop;
+        }
+      });
+    }
+
+    // Capture the exact position before rebuilding this image's rows. When the
+    // active image changed, use that image's own saved position instead.
+    if (
+      scrollContainer &&
+      elementsLibraryRenderedScope === scopeBase &&
+      elementsLibraryRenderedHost === host
+    ) {
+      elementsLibraryScrollTopByScope[scopeBase] = scrollContainer.scrollTop;
+    }
+    const previousScrollTop = elementsLibraryScrollTopByScope[scopeBase] || 0;
+    elementsLibraryRenderedScope = scopeBase;
+    elementsLibraryRenderedHost = host;
+    if (scrollContainer) scrollContainer.dataset.cwLibraryScope = scopeBase;
+    renderRowsInto(host, { compact: true, library: true, preserveScroll: true });
+    if (count > 0) {
+      const intro = document.createElement('div');
+      intro.className = 'cw-library-intro';
+      intro.textContent = 'Edit any value or label, then draw it on the current image.';
+      host.prepend(intro);
+    }
+    const restoreScroll = () => {
+      if (!scrollContainer) return;
+      const maxScrollTop = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight);
+      scrollContainer.scrollTop = Math.min(previousScrollTop, maxScrollTop);
+      // StrokeMetadataManager temporarily rebuilds the whole Elements list.
+      // During that gap the browser can report a much smaller maxScrollTop.
+      // Never replace the durable per-image position with that transient clamp.
+      if (scrollContainer.dataset.cwLibraryRebuilding !== 'true') {
+        elementsLibraryScrollTopByScope[scopeBase] = scrollContainer.scrollTop;
+      }
+    };
+    restoreScroll();
+    window.requestAnimationFrame(() => {
+      restoreScroll();
+      const armedRowKey = getScopedArmedRowKey(getCurrentScopeLabel());
+      if (armedRowKey) {
+        keepLibraryRowVisible(armedRowKey);
+      }
+    });
+  };
+  (window as any).renderCwElementsMeasurementLibrary = renderElementsMeasurementLibrary;
+  (window as any).captureCwElementsLibraryScroll = (
+    scrollTop: number,
+    scopeLabel = getCurrentScopeLabel()
+  ) => {
+    const scopeBase = getWorkspaceScopeBase(scopeLabel);
+    if (!scopeBase || !Number.isFinite(scrollTop)) return;
+    elementsLibraryScrollTopByScope[scopeBase] = Math.max(0, scrollTop);
+  };
+  (window as any).getCwMeasurementLibraryCount = () => allLoadedRows().length;
 
   const scheduleMeasurementWorkspacePaneSync = (attempt = 0) => {
     if (measurementWorkspacePaneSyncRaf !== null) {
@@ -2506,7 +4382,12 @@ function createModal(): HTMLElement {
 
   const renderRows = () => {
     renderRowsInto(rowsContainer);
+    // The Elements Library owns its own scroll snapshot and restoration. Doing
+    // another restore here made a selected row move twice for one render,
+    // producing the small upward jump while arming or completing a draw.
+    renderElementsMeasurementLibrary();
     syncMeasurementWorkspacePane();
+    syncCompactCwQueueDock();
   };
 
   const seedImportedGuideForView = (
@@ -2523,12 +4404,19 @@ function createModal(): HTMLElement {
     const roles: string[] = [];
     const seenRoles = new Set<string>();
     const now = new Date().toISOString();
+    const labelCounts = new Map<string, number>();
+    rows.forEach(row => {
+      const guessed = guessMosLabel(row.sourceLabel, row.sectionName || sectionName || '');
+      const configured = (state.rowTargetLabels[row.rowKey] || '').trim();
+      const targetLabel = normalizeGuideLabel(configured || guessed || row.sourceLabel);
+      if (targetLabel) labelCounts.set(targetLabel, (labelCounts.get(targetLabel) || 0) + 1);
+    });
 
     rows.forEach(row => {
       const guessed = guessMosLabel(row.sourceLabel, row.sectionName || sectionName || '');
       const configured = (state.rowTargetLabels[row.rowKey] || '').trim();
       const targetLabel = normalizeGuideLabel(configured || guessed || row.sourceLabel);
-      const value = (row.value || '').trim();
+      const value = getEffectiveRowValue(row);
       if (!targetLabel || !/^[A-Z](?:\d+)?$/.test(targetLabel) || !value) return;
 
       if (!seenRoles.has(targetLabel)) {
@@ -2539,17 +4427,22 @@ function createModal(): HTMLElement {
       if (!w.cwImportedMeasurementsByImage[scopeKey]) {
         w.cwImportedMeasurementsByImage[scopeKey] = {};
       }
-      w.cwImportedMeasurementsByImage[scopeKey][targetLabel] = {
+      // Multiple CW components can legitimately reuse labels such as A4. The
+      // first row is the default for this imported image; explicit Draw Next
+      // selections still use their exact row/value transaction below.
+      seedCwMeasurementEntry(w.cwImportedMeasurementsByImage[scopeKey], targetLabel, {
         source: 'cw',
         sourceLabel: row.sourceLabel,
         value,
         locked: lockByDefault,
         pending: true,
-        autoApplyOnDraw: true,
+        autoApplyOnDraw: false,
         sectionName: normalizeSectionName(row.sectionName || sectionName || ''),
         bindingScopeKey: scopeKey,
+        rowKey: row.rowKey,
+        uniqueLabel: labelCounts.get(targetLabel) === 1,
         updatedAt: now,
-      };
+      });
     });
 
     w.cwGuideRolesByImage[scopeKey] = [...roles];
@@ -2582,6 +4475,64 @@ function createModal(): HTMLElement {
     window.dispatchEvent(new Event('resize'));
   };
 
+  const waitForImportedViewReady = async (viewId: string, timeoutMs = 7000): Promise<void> => {
+    const projectManager = (window as any).app?.projectManager;
+    if (!projectManager) throw new Error('Project manager not available');
+
+    const startedAt = Date.now();
+    let stableSamples = 0;
+    let lastSignature = '';
+
+    while (Date.now() - startedAt < timeoutMs) {
+      if (typeof projectManager.whenIdle === 'function') {
+        try {
+          await projectManager.whenIdle({ timeoutMs: 700 });
+        } catch {
+          // A compatibility refresh may still be finishing. Keep sampling.
+        }
+      }
+
+      const canvas = projectManager.canvasManager?.fabricCanvas;
+      const background = canvas?.backgroundImage;
+      const element = background?._element;
+      const source = String(
+        background?.getSrc?.() || element?.currentSrc || element?.src || background?.src || ''
+      );
+      const imageLoaded = Boolean(
+        background &&
+          source &&
+          (!element || element.complete !== false) &&
+          Number(background.width || element?.naturalWidth || 0) > 0 &&
+          Number(background.height || element?.naturalHeight || 0) > 0
+      );
+      const idle = !projectManager.isSwitchingView && !projectManager.pendingSwitchViewId;
+      const correctView = projectManager.currentViewId === viewId;
+      const viewport = Array.isArray(canvas?.viewportTransform)
+        ? canvas.viewportTransform.map((value: number) => Number(value || 0).toFixed(3)).join(',')
+        : '';
+      const signature = `${projectManager.currentViewId}|${source.slice(-160)}|${canvas?.width || 0}x${canvas?.height || 0}|${viewport}`;
+
+      if (idle && correctView && imageLoaded && signature === lastSignature) {
+        stableSamples += 1;
+      } else {
+        stableSamples = 0;
+        lastSignature = signature;
+      }
+
+      // Several quiet samples cover the delayed sidebar/compatibility refresh
+      // that follows the first registered image in Safari and Chrome.
+      if (stableSamples >= 5) {
+        await new Promise<void>(resolve =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+        );
+        return;
+      }
+      await new Promise(resolve => setTimeout(resolve, 120));
+    }
+
+    throw new Error('The image was added, but the canvas did not become ready in time');
+  };
+
   const renderImages = () => {
     imagesWrap.innerHTML = '';
     const baseUrl = (baseUrlEl?.value || '').trim();
@@ -2592,9 +4543,16 @@ function createModal(): HTMLElement {
     entries.forEach(entry => {
       const group = entry.candidates;
       const loadedItem = state.loadedItems.find(item => item.selectionKey === entry.itemKey);
+      const storefrontImageUrls = new Set([
+        state.storefrontProduct?.imageUrl,
+        ...(state.storefrontProduct?.imageUrls || []),
+      ]);
       const direct =
-        group.find(url => loadedItem?.imageUrls.includes(url) && shouldUseDirectImageUrl(url)) ||
-        '';
+        group.find(
+          url =>
+            storefrontImageUrls.has(url) ||
+            (loadedItem?.imageUrls.includes(url) && shouldUseDirectImageUrl(url))
+        ) || '';
       const isSelected = state.selectedImageKeys.includes(entry.selectionImageKey);
       const card = document.createElement('div');
       card.className = 'cw-image-card';
@@ -2700,12 +4658,25 @@ function createModal(): HTMLElement {
     loadedItemsWrap.innerHTML = '';
     if (!state.loadedItems.length) {
       loadedMeta.textContent = '';
+      selectedProductTitle.textContent = 'Selected product';
+      productWorkspace.classList.remove('has-product');
       return;
     }
 
     const successfulItems = state.loadedItems.filter(item => item.success);
+    const activeItem =
+      successfulItems.find(item => item.selectionKey === state.activeItemKey) ||
+      successfulItems[0] ||
+      null;
+    productPhotos.open = Boolean(activeItem);
+    productWorkspace.classList.toggle('has-product', Boolean(activeItem));
+    selectedProductTitle.textContent = activeItem
+      ? `${activeItem.productName || activeItem.productReference}${activeItem.productReference ? ` · ${activeItem.productReference}` : ''}`
+      : 'Selected product';
     const loadedCount = successfulItems.length;
-    loadedMeta.textContent = `${loadedCount}/${state.loadedItems.length} loaded item${state.loadedItems.length === 1 ? '' : 's'}.`;
+    loadedMeta.textContent = activeItem
+      ? `${activeItem.rows.length} measurements · ${Math.max(Object.keys(activeItem.sectionImageGroups || {}).length, activeItem.imageCandidateGroups.length)} photo groups`
+      : `${loadedCount}/${state.loadedItems.length} loaded`;
     const appendLoadedCard = (
       label: string,
       meta: string,
@@ -2775,6 +4746,232 @@ function createModal(): HTMLElement {
         }
       );
     });
+  };
+
+  const findOverallDimension = (rows: ImportedRow[], aliases: string[]): ImportedRow | null => {
+    const normalizedAliases = aliases.map(alias => alias.toLowerCase());
+    const overallRows = rows.filter(row => isCwOverallDimensionRow(row));
+    return (
+      overallRows.find(row => normalizedAliases.includes(row.sourceLabel.trim().toLowerCase())) ||
+      overallRows.find(row => {
+        const label = row.sourceLabel.trim().toLowerCase();
+        return normalizedAliases.some(alias => label === `overall ${alias}`);
+      }) ||
+      null
+    );
+  };
+
+  const overallDimensionTag = (label: string): string => {
+    if (label === 'Width') return 'W';
+    if (label === 'Depth') return 'D';
+    if (label === 'Height') return 'H';
+    return '';
+  };
+
+  const overallDimensionDisplayLabel = (sourceLabel: string): string => {
+    const label = sourceLabel
+      .trim()
+      .toLowerCase()
+      .replace(/^overall\s+/, '');
+    if (label === 'width' || label === 'length') return 'Width';
+    if (label === 'depth') return 'Depth';
+    if (label === 'height') return 'Height';
+    return '';
+  };
+
+  const getOverallDimensionSequence = (
+    item: LoadedMeasurementItem | null
+  ): VisibleImportedRow[] => {
+    if (!item) return [];
+    const itemRows = item.rows.map(row => ({
+      ...row,
+      rowKey: makeRowStorageKey(item.selectionKey, row.id),
+      itemKey: item.selectionKey,
+      itemLabel: item.basketItem.label,
+      productReference: item.productReference,
+    }));
+    return ['Width', 'Depth', 'Height']
+      .map(displayLabel =>
+        itemRows.find(
+          row =>
+            isCwOverallDimensionRow(row) &&
+            overallDimensionDisplayLabel(row.sourceLabel) === displayLabel
+        )
+      )
+      .filter((row): row is VisibleImportedRow => Boolean(row && getEffectiveRowValue(row)));
+  };
+
+  const prepareOverallDimensionChoices = (
+    item: LoadedMeasurementItem | null
+  ): { armed: boolean; count: number; targetLabel: string } => {
+    const rows = getOverallDimensionSequence(item);
+    rows.forEach(row => {
+      const displayLabel = isCwOverallDimensionRow(row)
+        ? overallDimensionDisplayLabel(row.sourceLabel)
+        : '';
+      if (!state.rowTargetLabels[row.rowKey]) {
+        state.rowTargetLabels[row.rowKey] = overallDimensionTag(displayLabel);
+      }
+    });
+    return { armed: false, count: rows.length, targetLabel: '' };
+  };
+
+  const createComparisonMeasurementItem = (
+    item: CatalogueComparisonItem
+  ): LoadedMeasurementItem | null => {
+    const dimensionRows = [
+      ['Width', item.dimensions?.width],
+      ['Depth', item.dimensions?.depth],
+      ['Height', item.dimensions?.height],
+    ]
+      .map(([sourceLabel, rawValue], index) => ({
+        id: `catalogue-overall-${String(sourceLabel).toLowerCase()}-${index + 1}`,
+        sourceLabel: String(sourceLabel),
+        value: toPrimitiveMeasurementValue(rawValue),
+        sectionName: 'Frame Cover',
+      }))
+      .filter(row => Boolean(row.value));
+    if (!dimensionRows.length) return null;
+
+    const selectionKey = `catalogue:${item.requestedSku || item.productReference}`;
+    const productName = item.title || item.productReference;
+    const style = item.measurementStyle || item.styleName || '';
+    const styleCode = item.measurementStyleCode || '';
+    const basketItem: BasketItem = {
+      productId: '',
+      selectionKey,
+      search: item.productReference,
+      productReference: item.productReference,
+      productName,
+      versionCode: '',
+      versionLabel: '',
+      scopedReference: item.measurementReference || item.productReference,
+      style,
+      styleCode,
+      styleOptions: [],
+      versionOptions: [],
+      derivedScopedReferences: [],
+      label: [item.productReference, productName, style].filter(Boolean).join(' · '),
+    };
+    return {
+      selectionKey,
+      basketItem,
+      productReference: item.productReference,
+      productName,
+      rows: dimensionRows,
+      imageUrls: item.imageUrl ? [item.imageUrl] : [],
+      imageCandidateGroups: item.imageUrl ? [[item.imageUrl]] : [],
+      sectionImageGroups: item.imageUrl ? { 'Frame Cover': [[item.imageUrl]] } : {},
+      rawData: { source: 'cw-catalogue-comparison', item },
+      loadMessage: 'Catalogue dimensions',
+      success: true,
+    };
+  };
+
+  const upsertComparisonMeasurementItem = (
+    item: CatalogueComparisonItem
+  ): LoadedMeasurementItem | null => {
+    const loadedItem = createComparisonMeasurementItem(item);
+    if (!loadedItem) return null;
+    const existingIndex = state.loadedItems.findIndex(
+      candidate => candidate.selectionKey === loadedItem.selectionKey
+    );
+    if (existingIndex >= 0) state.loadedItems[existingIndex] = loadedItem;
+    else state.loadedItems.push(loadedItem);
+    prepareOverallDimensionChoices(loadedItem);
+    return loadedItem;
+  };
+
+  const renderProductOverview = () => {
+    const activeItem =
+      state.loadedItems.find(item => item.success && item.selectionKey === state.activeItemKey) ||
+      state.loadedItems.find(item => item.success) ||
+      null;
+    const studioButton = document.getElementById('cwOpen3dBtn') as HTMLButtonElement | null;
+    if (studioButton) {
+      studioButton.disabled = !activeItem;
+      studioButton.onclick = () => {
+        if (!activeItem) return;
+        window.dispatchEvent(
+          new CustomEvent('openpaint:sofa3d-open', {
+            detail: {
+              cw: {
+                name: activeItem.productName,
+                reference: activeItem.productReference,
+                data: activeItem.rawData,
+              },
+            },
+          })
+        );
+      };
+    }
+    const publicProduct = state.storefrontProduct;
+    const fallbackImage = state.discoveryImageUrls[0] || '';
+    const imageUrl = publicProduct?.imageUrl || fallbackImage;
+    const productName = publicProduct?.title || activeItem?.productName || '';
+    const productUrl = publicProduct?.url || '';
+    const shouldShow = Boolean(activeItem || publicProduct || imageUrl);
+
+    productWorkspace.classList.toggle('has-product', shouldShow);
+    storefrontProduct.classList.toggle('visible', shouldShow);
+    if (!activeItem && productName) selectedProductTitle.textContent = productName;
+    storefrontProductName.textContent = productName;
+    storefrontProductImage.src = imageUrl;
+    storefrontProductImage.alt = productName ? `${productName} product photo` : 'Product photo';
+    storefrontProductImage.style.display = imageUrl ? 'block' : 'none';
+    storefrontProductLink.href = productUrl || '#';
+    storefrontProductTextLink.href = productUrl || '#';
+    storefrontProductLink.style.pointerEvents = productUrl ? 'auto' : 'none';
+    storefrontProductTextLink.style.display = productUrl ? 'inline-flex' : 'none';
+
+    const rows = activeItem?.rows || [];
+    const dimensions = [
+      {
+        label: 'Width',
+        row: findOverallDimension(rows, ['width', 'length']),
+        publicValue: toPrimitiveMeasurementValue(publicProduct?.dimensions?.width),
+      },
+      {
+        label: 'Depth',
+        row: findOverallDimension(rows, ['depth']),
+        publicValue: toPrimitiveMeasurementValue(publicProduct?.dimensions?.depth),
+      },
+      {
+        label: 'Height',
+        row: findOverallDimension(rows, ['height']),
+        publicValue: toPrimitiveMeasurementValue(publicProduct?.dimensions?.height),
+      },
+    ];
+    overallDimensions.innerHTML = '';
+    const armedRowKey = getScopedArmedRowKey(getCurrentScopeLabel());
+    dimensions.forEach(({ label, row, publicValue }) => {
+      const rowKey = row && activeItem ? makeRowStorageKey(activeItem.selectionKey, row.id) : '';
+      const dimension = document.createElement('div');
+      dimension.dataset.dimension = label.toLowerCase();
+      const effectiveValue = row
+        ? getEffectiveRowValue({
+            ...row,
+            rowKey,
+            itemKey: activeItem?.selectionKey || '',
+            itemLabel: activeItem?.basketItem.label || '',
+            productReference: activeItem?.productReference || '',
+          })
+        : publicValue;
+      dimension.className = `cw-dimension${effectiveValue ? '' : ' missing'}${rowKey && rowKey === armedRowKey ? ' is-armed' : ''}`;
+      const dimensionLabel = document.createElement('span');
+      dimensionLabel.className = 'cw-dimension-label';
+      dimensionLabel.textContent = label;
+      const dimensionValue = document.createElement('span');
+      dimensionValue.className = 'cw-dimension-value';
+      dimensionValue.textContent = effectiveValue || 'Not listed';
+      const action = document.createElement('span');
+      action.className = 'cw-dimension-action';
+      action.textContent = effectiveValue ? `${overallDimensionTag(label)} tag` : '';
+      dimension.append(dimensionLabel, dimensionValue, action);
+      overallDimensions.appendChild(dimension);
+    });
+
+    photoCount.textContent = `${allImageEntries().length} available`;
   };
 
   let statusTimerId: ReturnType<typeof setInterval> | null = null;
@@ -3042,15 +5239,49 @@ function createModal(): HTMLElement {
         loadMessage: String(item?.message || payload?.message || payload?.code || 'Loaded').trim(),
         success: item?.success !== false,
       };
+      const previous = nextLoaded.get(loadedItem.selectionKey);
+      if (previous?.success) {
+        loadedItem.rows = loadedItem.rows.length ? loadedItem.rows : previous.rows;
+        loadedItem.imageUrls = Array.from(
+          new Set([...(previous.imageUrls || []), ...(loadedItem.imageUrls || [])])
+        );
+        loadedItem.imageCandidateGroups = groupImageCandidates(loadedItem.imageUrls);
+        const combinedSectionGroups: Record<string, string[][]> = {
+          ...(previous.sectionImageGroups || {}),
+        };
+        Object.entries(loadedItem.sectionImageGroups || {}).forEach(([section, groups]) => {
+          const existing = combinedSectionGroups[section] || [];
+          const seen = new Set(existing.map(group => imageKeyFromUrl(group[0] || '')));
+          combinedSectionGroups[section] = [...existing];
+          (groups || []).forEach(group => {
+            const key = imageKeyFromUrl(group[0] || '');
+            if (!key || seen.has(key)) return;
+            seen.add(key);
+            combinedSectionGroups[section].push(group);
+          });
+        });
+        loadedItem.sectionImageGroups = mergeSectionImageGroups(
+          combinedSectionGroups,
+          loadedItem.imageCandidateGroups
+        );
+      }
       nextLoaded.set(loadedItem.selectionKey, loadedItem);
       if (loadedItem.success && loadedItem.selectionKey) {
         newestSelectionKey = loadedItem.selectionKey;
       }
-      const allGroups = Object.values(sectionImageGroups).flat().length
-        ? Object.values(sectionImageGroups).flat()
-        : imageCandidateGroups;
+      const allGroups = Object.values(loadedItem.sectionImageGroups).flat().length
+        ? Object.values(loadedItem.sectionImageGroups).flat()
+        : loadedItem.imageCandidateGroups;
       allGroups.forEach(group => {
         const imageKey = imageKeyFromUrl(group[0] || '');
+        if (imageKey) nextSelectedImageKeys.add(`${loadedItem.selectionKey}::${imageKey}`);
+      });
+      const storefrontUrls = [
+        state.storefrontProduct?.imageUrl,
+        ...(state.storefrontProduct?.imageUrls || []),
+      ];
+      storefrontUrls.forEach(url => {
+        const imageKey = imageKeyFromUrl(String(url || '').trim());
         if (imageKey) nextSelectedImageKeys.add(`${loadedItem.selectionKey}::${imageKey}`);
       });
     });
@@ -3073,6 +5304,7 @@ function createModal(): HTMLElement {
     renderSectionFilter();
     renderImages();
     renderRows();
+    renderProductOverview();
     updateFlowSteps();
   };
 
@@ -3085,8 +5317,13 @@ function createModal(): HTMLElement {
   window.addEventListener('openpaint:guide-split-pane-rendered', () => {
     scheduleMeasurementWorkspacePaneSync();
   });
-  window.addEventListener('openpaint:guide-next-tag-changed', () => {
-    renderRows();
+  window.addEventListener('openpaint:guide-next-tag-changed', event => {
+    // CW arming always calls renderRows itself. Rebuilding here as well made a
+    // visible Library row move twice for one click, which produced the small
+    // upward scroll hop while selecting Draw.
+    if ((event as CustomEvent<{ source?: string }>).detail?.source !== 'cw-import') {
+      renderRows();
+    }
     scheduleMeasurementWorkspacePaneSync();
   });
   window.addEventListener('openpaint:view-switched', () => {
@@ -3097,6 +5334,12 @@ function createModal(): HTMLElement {
     syncWorkspaceGuideSeed(getCurrentScopeLabel(), { render: true });
     scheduleMeasurementWorkspacePaneSync();
   });
+  window.addEventListener('openpaint:elements-list-rebuilt', () => {
+    const armedRowKey = getScopedArmedRowKey(getCurrentScopeLabel());
+    if (armedRowKey) {
+      keepLibraryRowVisible(armedRowKey, { useSavedSlot: true });
+    }
+  });
 
   const runSearch = async () => {
     const search = (searchTermEl?.value || '').trim();
@@ -3106,7 +5349,27 @@ function createModal(): HTMLElement {
       return;
     }
 
-    // Suffix hint: detect if user typed a variant suffix
+    state.searchResults = [];
+    state.basket = [];
+    state.loadedItems = [];
+    state.activeItemKey = '';
+    state.activeSection = '';
+    state.armedRowKey = '';
+    state.armedRowKeyByScope = {};
+    state.readyRowKeyByScope = {};
+    state.readyLabelByScope = {};
+    state.activeDrawIntentByScope = {};
+    state.completedLabelsByScope = {};
+    state.completedRowKeysByScope = {};
+    state.selectedImageKeys = [];
+    state.rowTargetLabels = {};
+    state.rowOriginalValues = {};
+    state.rowValueOverrides = {};
+    state.rowValueInvalid = {};
+    state.storefrontProduct = null;
+    syncUi();
+
+    // Show the suffix hint without blocking the public dimensions request.
     if (/__[A-Z]{1,4}$/i.test(search)) {
       const base = search.replace(/__[A-Za-z0-9._-]+$/, '');
       if (base) {
@@ -3114,19 +5377,23 @@ function createModal(): HTMLElement {
           `Tip: just type the base reference (e.g. ${base}) — variants are auto-detected`,
           'info'
         );
-        await new Promise(r => setTimeout(r, 1800));
       }
     }
 
     setProbeButtonsDisabled(true);
     setStatus('Searching CW products and configuration options...');
+    setLoadProgress(8, 'Finding product', 'Searching Comfort Works');
     resultMeta.classList.add('searching-pulse');
+    void loadPublicOverallDimensions(search);
+    void loadStorefrontProduct(search);
 
     try {
-      const { response, data, rawText, contentType, jsonParseError } = await requestSearchPayload(
-        search,
-        '',
-        { phase: 'discover', probeMode: 'turbo' }
+      const { response, data, rawText, contentType, jsonParseError, cached } =
+        await requestSearchPayload(search, '', { phase: 'discover', probeMode: 'turbo' });
+      setLoadProgress(
+        34,
+        'Product found',
+        cached ? 'Using recent result' : 'Checking available versions'
       );
       const probeReport = {
         at: new Date().toISOString(),
@@ -3154,7 +5421,9 @@ function createModal(): HTMLElement {
       const results = Array.isArray(data?.results) ? data.results : [];
       state.searchResults = results.map((item: any) => {
         const styleOptions = Array.isArray(item?.styleOptions) ? item.styleOptions : [];
-        const firstStyle = styleOptions[0] || null;
+        const versionOptions: VersionOption[] = Array.isArray(item?.versionOptions)
+          ? item.versionOptions
+          : [];
         return {
           id: item?.id || null,
           productReference: String(item?.productReference || item?.product?.reference || '').trim(),
@@ -3164,18 +5433,32 @@ function createModal(): HTMLElement {
           status: item?.status || item?.product?.status || null,
           translations: Array.isArray(item?.translations) ? item.translations : [],
           configParsed: item?.configParsed === true,
-          versionOptions: Array.isArray(item?.versionOptions) ? item.versionOptions : [],
+          versionOptions,
           styleOptions,
           derivedScopedReferences: Array.isArray(item?.derivedScopedReferences)
             ? item.derivedScopedReferences
             : [],
           selected: false,
           selectedVersionCode: '',
-          selectedStyleKey: firstStyle
-            ? makeStyleKey(firstStyle.productReference, firstStyle.style, firstStyle.styleCode)
-            : '',
+          selectedStyleKey: '',
         } as SearchResultItem;
       });
+      const normalizedSearch = search.toUpperCase().replace(/\s+/g, '');
+      const preferredResult =
+        state.searchResults.find(
+          item => item.productReference.toUpperCase().replace(/\s+/g, '') === normalizedSearch
+        ) ||
+        state.searchResults[0] ||
+        null;
+      if (preferredResult) {
+        state.searchResults.forEach(item => {
+          item.selected = item === preferredResult;
+        });
+        void loadStorefrontProduct(
+          preferredResult.productName || search,
+          preferredResult.productReference
+        );
+      }
       // Annotate version options with confirmed status from QC measurement attempts
       const qcAttempts: Array<{ productReference?: string; ok?: boolean }> = Array.isArray(
         data?.qcMeasurementAttempts
@@ -3193,17 +5476,11 @@ function createModal(): HTMLElement {
               opt.confirmed = attemptByRef.get(scopedRef) ?? null;
             }
           });
-          // Auto-select the confirmed version if none selected yet
-          if (!item.selectedVersionCode) {
-            const confirmedVersion = item.versionOptions.find(opt => opt.confirmed === true);
-            if (confirmedVersion) {
-              item.selectedVersionCode = confirmedVersion.code;
-            }
-          }
         });
       }
 
       state.armedRowKey = '';
+      state.armedRowKeyByScope = {};
       state.activeSection = '';
       // Extract discovery image URLs for preview thumbnails
       const baseUrl = (baseUrlEl?.value || '').trim();
@@ -3211,73 +5488,27 @@ function createModal(): HTMLElement {
         .filter(url => /storage\.googleapis\.com/i.test(url) && /Signature=/i.test(url))
         .slice(0, 8);
 
-      // Auto-integrate: if turbo discover returned QC data with measurements,
-      // create loaded items directly — no need for a separate load-selected call
-      let autoIntegratedCount = 0;
-      if (
-        response.ok &&
-        data?.qcMeasurements?.data &&
-        typeof data.qcMeasurements.data === 'object'
-      ) {
-        const qcData = data.qcMeasurements.data;
-        const ref = String(qcData.product_reference || data?.product?.reference || search).trim();
-        const styleName = String(qcData.style_name || '').trim();
-        const styleCode = String(qcData.style_code || '').trim();
-        const syntheticBasketItem: BasketItem = {
-          selectionKey: ref,
-          search,
-          productReference: ref,
-          productName: String(
-            state.searchResults.find(r => r.productReference === ref)?.productName ||
-              data?.product?.reference ||
-              ref
-          ).trim(),
-          scopedReference: ref,
-          versionCode: '',
-          versionLabel: '',
-          style: styleName,
-          styleCode,
-          label: `${ref} - ${styleName}${styleCode ? ` (${styleCode})` : ''}`,
-        };
-        // Build payload shaped like load-selected response item
-        const syntheticLoadedItem = {
-          selectionKey: ref,
-          basketItem: syntheticBasketItem,
-          data: {
-            product: { reference: ref, name: syntheticBasketItem.productName },
-            qcMeasurements: { data: qcData },
-            measurements: qcData?.product_components || [],
-            images: data.images || [],
-          },
-          success: true,
-          message: 'Loaded from discovery',
-        };
-        integrateLoadedItems([syntheticLoadedItem]);
-        // Also add to basket so the UI flow is consistent
-        if (!state.basket.find(b => b.selectionKey === ref)) {
-          state.basket.push(syntheticBasketItem);
-        }
-        autoIntegratedCount = 1;
-      }
-
       syncUi();
-      if (response.ok && autoIntegratedCount > 0) {
-        const imageCount = allImageEntries().length;
-        const rowCount = state.loadedItems[0]?.rows?.length || 0;
+      if (response.ok && preferredResult) {
         setStatus(
-          `Found ${state.searchResults.length} item${state.searchResults.length === 1 ? '' : 's'} — loaded ${rowCount} measurement${rowCount === 1 ? '' : 's'} and ${imageCount} photo${imageCount === 1 ? '' : 's'}. Select images and click Import Photos, or use guide mode.`,
-          'ok'
+          `Found ${preferredResult.productReference}. Choose its configuration and style to load photos and CW40 measurements.`,
+          'info'
         );
-        // Auto-scroll to images
-        if (imagesWrap.children.length > 0) {
-          requestAnimationFrame(() =>
-            imagesWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-          );
-        }
+        setLoadProgress(100, 'Choose configuration', 'Nothing has been selected automatically', {
+          complete: true,
+        });
       } else {
+        setLoadProgress(
+          100,
+          response.ok ? 'Choose a product' : 'Search failed',
+          response.ok
+            ? `${state.searchResults.length} possible matches`
+            : 'Check the connection details',
+          { complete: response.ok }
+        );
         setStatus(
           response.ok
-            ? `Found ${state.searchResults.length} candidate item${state.searchResults.length === 1 ? '' : 's'}${state.discoveryImageUrls.length ? ` with ${state.discoveryImageUrls.length} preview photo${state.discoveryImageUrls.length === 1 ? '' : 's'}` : ''}. Tick items and click Add Selected → Load Selected.`
+            ? `Found ${state.searchResults.length} possible products. Choose the exact sofa to load its photos and measurements.`
             : `Search failed: ${String(data?.message || data?.code || response.status)}`,
           response.ok ? 'ok' : 'bad'
         );
@@ -3295,6 +5526,7 @@ function createModal(): HTMLElement {
         persistUiState();
         renderProbeReport();
       }
+      setLoadProgress(100, 'Search failed', 'Please try again');
       setStatus(
         `Search request failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'bad'
@@ -3382,6 +5614,11 @@ function createModal(): HTMLElement {
   };
 
   searchBtn.addEventListener('click', () => {
+    void runSearch();
+  });
+  searchTermEl.addEventListener('keydown', event => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
     void runSearch();
   });
 
@@ -3929,6 +6166,44 @@ function createModal(): HTMLElement {
     setStatus('Cleared visible photo selections.', 'info');
   });
 
+  useMeasurementsBtn.addEventListener('click', () => {
+    const scopeLabel = getCurrentScopeLabel();
+    const availableRows = visibleRows();
+    if (!availableRows.length) {
+      setStatus('This product has no loaded measurements to use.', 'bad');
+      return;
+    }
+
+    const inferredSection =
+      state.activeSection ||
+      normalizeSectionName(sectionFromImageName(scopeLabel)) ||
+      normalizeSectionName(availableRows[0]?.sectionName || '');
+    const sectionRows = inferredSection
+      ? availableRows.filter(row => normalizeSectionName(row.sectionName || '') === inferredSection)
+      : availableRows;
+    const rowsForImage = sectionRows.length ? sectionRows : availableRows;
+    const activeItem =
+      state.loadedItems.find(item => item.selectionKey === state.activeItemKey) ||
+      state.loadedItems.find(item => item.success);
+
+    getWorkspaceTagScopeKeys(scopeLabel).forEach(key => {
+      delete state.completedLabelsByScope[key];
+      delete state.completedRowKeysByScope[key];
+    });
+    seedImportedGuideForView(scopeLabel, inferredSection, rowsForImage, lockedEl.checked);
+    state.importedViewMetaByScope[getCanonicalCwScopeKey(scopeLabel)] = {
+      itemKey: activeItem?.selectionKey || rowsForImage[0]?.itemKey || '',
+      sectionName: inferredSection,
+    };
+    if (typeof (window as any).setMeasurementGuideIndicatorVisible === 'function') {
+      (window as any).setMeasurementGuideIndicatorVisible(true);
+    }
+    // Loading a library makes its rows available; it does not force the user
+    // into a sequence. They choose the exact measurement they want to draw.
+    syncWorkspaceGuideSeed(scopeLabel, { render: true, arm: false });
+    overlay.style.display = 'none';
+  });
+
   importExactBtn.addEventListener('click', () => {
     const scopeLabel = getCurrentScopeLabel();
     const strokeSet = new Set(getStrokeLabels(scopeLabel));
@@ -3939,7 +6214,7 @@ function createModal(): HTMLElement {
       const ok = applyMeasurement(
         scopeLabel,
         row.sourceLabel,
-        row.value,
+        getEffectiveRowValue(row),
         row.sourceLabel,
         lockedEl.checked
       );
@@ -3954,6 +6229,427 @@ function createModal(): HTMLElement {
       applied > 0 ? 'ok' : 'bad'
     );
   });
+
+  const fetchStorefrontImageDataUrl = async (url: string): Promise<string> => {
+    const response = await fetch(url, { mode: 'cors', credentials: 'omit' });
+    if (!response.ok) throw new Error(`Image download failed (${response.status})`);
+    const blob = await response.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(reader.error || new Error('Image conversion failed'));
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const importCatalogueComparisonItem = async (
+    item: CatalogueComparisonItem,
+    index: number
+  ): Promise<{ viewId: string; loadedItem: LoadedMeasurementItem | null }> => {
+    const projectManager = (window as any).app?.projectManager;
+    if (!projectManager) throw new Error('Project manager not available');
+
+    const resolvedUrl = await fetchStorefrontImageDataUrl(item.imageUrl);
+    const sideCode = item.codes.find(code => /^(?:L|R|LA|RA)$/i.test(code)) || '';
+    const seed = slugify(`${item.productReference}${sideCode ? `-${sideCode}` : ''}`);
+    const viewId = nextUniqueViewId(seed || `catalogue-${index + 1}`);
+    const sideLabel = /^(?:L|LA)$/i.test(sideCode)
+      ? 'Left arm'
+      : /^(?:R|RA)$/i.test(sideCode)
+        ? 'Right arm'
+        : '';
+    const displayName = [item.productReference, sideLabel, item.title]
+      .map(value => String(value || '').trim())
+      .filter(Boolean)
+      .join(' · ');
+    const fileName = `${displayName || item.productReference || `Catalogue ${index + 1}`}.jpg`;
+    const addImageToSidebarFn = (window as any).addImageToSidebar;
+    const addImageToGalleryCompatFn = (window as any).addImageToGalleryCompat;
+    if (imageRegistry.isEnabled() && imageRegistry?.registerImage) {
+      await imageRegistry.registerImage(viewId, resolvedUrl, fileName, {
+        source: 'cw-catalogue-comparison',
+        productReference: item.productReference,
+        requestedSku: item.requestedSku,
+        matchedSku: item.matchedSku,
+        imageMatch: item.imageMatch,
+      });
+    } else {
+      await projectManager.addImage(viewId, resolvedUrl, { refreshBackground: false });
+      if (typeof addImageToSidebarFn === 'function') {
+        addImageToSidebarFn(resolvedUrl, viewId, fileName);
+      } else if (typeof addImageToGalleryCompatFn === 'function') {
+        addImageToGalleryCompatFn({
+          src: resolvedUrl,
+          url: resolvedUrl,
+          name: fileName,
+          label: viewId,
+          filename: fileName,
+        });
+      }
+    }
+
+    const loadedItem = upsertComparisonMeasurementItem(item);
+    if (loadedItem) {
+      const rows = getOverallDimensionSequence(loadedItem);
+      seedImportedGuideForView(viewId, 'Frame Cover', rows, lockedEl.checked);
+      state.importedViewMetaByScope[getCanonicalCwScopeKey(viewId)] = {
+        itemKey: loadedItem.selectionKey,
+        sectionName: 'Frame Cover',
+      };
+    }
+    return { viewId, loadedItem };
+  };
+
+  comparisonItems.addEventListener('change', event => {
+    const select = (event.target as HTMLElement | null)?.closest<HTMLSelectElement>(
+      '[data-cw-comparison-option]'
+    );
+    if (!select) return;
+    const itemIndex = Number(select.dataset.cwComparisonOption);
+    const codeIndex = Number(select.dataset.cwComparisonCodeIndex);
+    const currentItem = state.comparisonItems[itemIndex];
+    if (!currentItem || !Number.isInteger(codeIndex) || codeIndex < 0) return;
+
+    const nextCodes = [...currentItem.codes];
+    nextCodes[codeIndex] = select.value;
+    const nextRequest: CatalogueComparisonRequestItem = {
+      kind: currentItem.kind,
+      productReference: currentItem.productReference,
+      title: currentItem.title,
+      url: currentItem.url,
+      handle: currentItem.handle,
+      codes: nextCodes,
+      fabricCode: currentItem.fabricCode,
+      styleName: currentItem.styleName,
+      fabricName: currentItem.fabricName,
+    };
+    const changedGroup = currentItem.configurationGroups?.find(
+      group => group.codeIndex === codeIndex
+    );
+    const selectedOption = changedGroup?.options.find(option => option.code === select.value);
+    if (changedGroup?.label === 'Fabric') {
+      nextRequest.fabricCode = select.value;
+      nextRequest.fabricName = selectedOption?.label || currentItem.fabricName;
+      if (nextRequest.kind === 'fabric-sample') nextRequest.title = nextRequest.fabricName;
+    } else if (changedGroup?.label === 'Style') {
+      nextRequest.styleName = selectedOption?.label || currentItem.styleName;
+    }
+    const card = select.closest<HTMLElement>('.cw-comparison-item');
+    card?.classList.add('is-refreshing');
+    Array.from(card?.querySelectorAll('select, button') || []).forEach(control => {
+      (control as HTMLInputElement | HTMLButtonElement).disabled = true;
+    });
+    comparisonStatus.textContent = `Updating ${currentItem.productReference}...`;
+
+    void (async () => {
+      try {
+        const { response, data } = await requestSearchPayload('', '', {
+          phase: 'storefront-comparison',
+          comparisonItems: [nextRequest],
+        });
+        const resolvedItem = Array.isArray(data?.items) ? data.items[0] : null;
+        if (!response.ok || !resolvedItem) {
+          throw new Error(data?.message || `Catalogue request failed (${response.status})`);
+        }
+        state.comparisonItems[itemIndex] = normalizeComparisonResponseItem(resolvedItem);
+        renderComparisonItems();
+        comparisonStatus.textContent = `${currentItem.productReference} updated. Other products were left unchanged.`;
+      } catch (error) {
+        renderComparisonItems();
+        comparisonStatus.textContent = `Could not update ${currentItem.productReference}: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`;
+      }
+    })();
+  });
+
+  comparisonItems.addEventListener('click', event => {
+    const button = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>(
+      '[data-cw-comparison-draw]'
+    );
+    if (!button) return;
+    const itemIndex = Number(button.dataset.cwComparisonDraw);
+    const item = state.comparisonItems[itemIndex];
+    if (!item?.imageUrl) return;
+
+    void (async () => {
+      button.disabled = true;
+      const originalLabel = button.textContent || 'Add + draw dimensions';
+      button.textContent = 'Adding...';
+      comparisonStatus.textContent = `Preparing ${item.productReference} for drawing...`;
+      try {
+        const { viewId, loadedItem } = await importCatalogueComparisonItem(item, itemIndex);
+        if (!loadedItem) {
+          overlay.style.display = 'none';
+          await waitForImportedViewReady(viewId);
+          comparisonStatus.textContent = `${item.title || item.productReference} added to SofaPaint.`;
+          setStatus(comparisonStatus.textContent, 'ok');
+          return;
+        }
+        state.activeItemKey = loadedItem.selectionKey;
+        state.activeSection = '';
+        await enableGuideWorkflowDefaults(viewId);
+        await waitForImportedViewReady(viewId);
+        syncWorkspaceGuideSeed(viewId, { render: true, arm: true });
+        overlay.style.display = 'none';
+        openMeasurementSplitWorkspace(viewId);
+        setStatus(
+          `Added ${item.productReference}. Width, Depth, and Height are ready in split view.`,
+          'ok'
+        );
+      } catch (error) {
+        comparisonStatus.textContent = `Could not prepare ${item.productReference}: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`;
+        setStatus(comparisonStatus.textContent, 'bad');
+      } finally {
+        button.disabled = false;
+        button.textContent = originalLabel;
+      }
+    })();
+  });
+
+  importComparisonBtn.addEventListener('click', () => {
+    void (async () => {
+      const readyItems = state.comparisonItems.filter(item => item.imageUrl).slice(0, 8);
+      const projectManager = (window as any).app?.projectManager;
+      if (readyItems.length < 1 || !projectManager) {
+        comparisonStatus.textContent = 'At least one catalogue photo is needed.';
+        return;
+      }
+      importComparisonBtn.disabled = true;
+      const originalLabel = importComparisonBtn.textContent || 'Add to SofaPaint';
+      const importedLabels: string[] = [];
+      try {
+        for (let index = 0; index < readyItems.length; index += 1) {
+          const item = readyItems[index];
+          importComparisonBtn.textContent = `Adding ${index + 1}/${readyItems.length}...`;
+          comparisonStatus.textContent = `Downloading ${item.productReference}...`;
+          const { viewId } = await importCatalogueComparisonItem(item, index);
+          importedLabels.push(viewId);
+        }
+        overlay.style.display = 'none';
+        comparisonStatus.textContent =
+          importedLabels.length === 1
+            ? 'Catalogue image added to SofaPaint.'
+            : `${importedLabels.length} products added to comparison.`;
+        if (importedLabels.length > 1) {
+          window.setTimeout(() => {
+            window.dispatchEvent(
+              new CustomEvent('openpaint:compare-images', {
+                detail: { labels: importedLabels, replace: true },
+              })
+            );
+          }, 120);
+        }
+        setStatus(
+          importedLabels.length === 1
+            ? 'Added catalogue image to SofaPaint.'
+            : `Added ${importedLabels.length} catalogue products to comparison.`,
+          'ok'
+        );
+      } catch (error) {
+        comparisonStatus.textContent = `Import stopped: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        setStatus(comparisonStatus.textContent, 'bad');
+      } finally {
+        importComparisonBtn.disabled = false;
+        importComparisonBtn.textContent = originalLabel;
+      }
+    })();
+  });
+
+  importStorefrontImageBtn.addEventListener('click', () => {
+    void (async () => {
+      const imageUrl = state.storefrontProduct?.imageUrl || '';
+      if (!imageUrl) {
+        setStatus('No storefront product image is available.', 'bad');
+        return;
+      }
+      const projectManager = (window as any).app?.projectManager;
+      if (!projectManager) {
+        setStatus('Project manager not available.', 'bad');
+        return;
+      }
+
+      importStorefrontImageBtn.disabled = true;
+      const idleButtonLabel = importStorefrontImageBtn.textContent || 'Add image + draw dimensions';
+      importStorefrontImageBtn.textContent = 'Downloading image...';
+      setLoadProgress(12, 'Downloading image', 'Using the full product photo');
+      try {
+        const activeItem =
+          state.loadedItems.find(
+            item => item.success && item.selectionKey === state.activeItemKey
+          ) ||
+          state.loadedItems.find(item => item.success) ||
+          null;
+        const resolvedUrl = await fetchStorefrontImageDataUrl(imageUrl);
+        const seed = slugify(state.storefrontProduct?.title || 'cw-product') || 'cw-product';
+        const viewId = nextUniqueViewId(seed);
+        const fileName = `${viewId}.jpg`;
+        const addImageToSidebarFn = (window as any).addImageToSidebar;
+        const addImageToGalleryCompatFn = (window as any).addImageToGalleryCompat;
+
+        if (imageRegistry.isEnabled() && imageRegistry?.registerImage) {
+          await imageRegistry.registerImage(viewId, resolvedUrl, fileName, {
+            source: 'cw-storefront',
+          });
+        } else {
+          await projectManager.addImage(viewId, resolvedUrl, { refreshBackground: false });
+          if (typeof addImageToSidebarFn === 'function') {
+            addImageToSidebarFn(resolvedUrl, viewId, fileName);
+          } else if (typeof addImageToGalleryCompatFn === 'function') {
+            addImageToGalleryCompatFn({
+              src: resolvedUrl,
+              url: resolvedUrl,
+              name: fileName,
+              label: viewId,
+              filename: fileName,
+            });
+          }
+        }
+
+        importStorefrontImageBtn.textContent = 'Preparing canvas...';
+        setLoadProgress(58, 'Preparing canvas', 'Centering the image and drawing area');
+        await enableGuideWorkflowDefaults(viewId);
+        await waitForImportedViewReady(viewId);
+        setLoadProgress(88, 'Preparing dimensions', 'Width, Depth, Height');
+        const dimensionQueue = prepareOverallDimensionChoices(activeItem);
+        const dimensionRows = getOverallDimensionSequence(activeItem);
+        if (dimensionRows.length) {
+          seedImportedGuideForView(viewId, 'Frame Cover', dimensionRows, lockedEl.checked);
+          state.importedViewMetaByScope[getCanonicalCwScopeKey(viewId)] = {
+            itemKey: activeItem?.selectionKey || dimensionRows[0].itemKey,
+            sectionName: 'Frame Cover',
+          };
+          syncWorkspaceGuideSeed(viewId, { render: true, arm: true });
+        }
+        overlay.style.display = 'none';
+        setLoadProgress(100, 'Ready to draw', dimensionQueue.count ? 'Draw Width' : 'Image added', {
+          complete: true,
+        });
+        setStatus(
+          dimensionQueue.count
+            ? `Added ${state.storefrontProduct?.title || 'product image'}. Draw Width, then continue through Depth and Height.`
+            : `Added ${state.storefrontProduct?.title || 'product image'} to the project.`,
+          'ok'
+        );
+      } catch (error) {
+        setStatus(
+          `Could not add the product image: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          'bad'
+        );
+      } finally {
+        importStorefrontImageBtn.disabled = false;
+        importStorefrontImageBtn.textContent = idleButtonLabel;
+      }
+    })();
+  });
+
+  /** First direct catalogue URL from an import candidate group. */
+  const firstCatalogueImageUrl = (group: string[]): string =>
+    group.find(url => /^https?:\/\//i.test(url || '')) || '';
+
+  const resolveCatalogueImageUrlForScope = (scopeLabel: string): string => {
+    const canonical = getCanonicalCwScopeKey(scopeLabel);
+    const meta = state.importedViewMetaByScope[canonical];
+    const itemKey = meta?.itemKey || '';
+    const loadedItem = itemKey
+      ? state.loadedItems.find(item => item.selectionKey === itemKey)
+      : null;
+    return firstCatalogueImageUrl(loadedItem?.imageUrls || []);
+  };
+
+  const isCwImportedScope = (scopeLabel: string): boolean => {
+    const canonical = getCanonicalCwScopeKey(scopeLabel);
+    if (state.importedViewMetaByScope[canonical]) return true;
+    const store = (window as any).cwImportedMeasurementsByImage?.[canonical];
+    return Boolean(store && typeof store === 'object' && Object.keys(store).length > 0);
+  };
+
+  /**
+   * Draw a stored line-library recipe onto the active view: create the line,
+   * attach metadata, apply the saved measurement, and mark matching CW rows
+   * completed so the queue advances exactly like a manual draw.
+   */
+  const replayCwLibraryLinesForView = (
+    viewId: string,
+    imageUrl: string,
+    sectionRows: VisibleImportedRow[]
+  ): { drawn: number; labels: string[] } | null => {
+    const w = window as any;
+    const fabric = w.fabric;
+    const metadata = w.app?.metadataManager;
+    const canvas = w.app?.canvasManager?.fabricCanvas;
+    if (!fabric || !metadata || !canvas) return null;
+
+    const usedLabels = getStrokeLabels(viewId);
+    const usedLabelSet = new Set<string>(usedLabels);
+    const plans = buildReplayPlan(imageUrl, usedLabelSet);
+    if (!plans) return null;
+
+    const drawnLabels: string[] = [];
+    plans.forEach(plan => {
+      const label = resolveNextAvailableCwLabel(plan.label, usedLabelSet);
+      const line = new fabric.Line([plan.start.x, plan.start.y, plan.end.x, plan.end.y], {
+        strokeWidth: 2,
+        stroke: '#3b82f6',
+        originX: 'center',
+        originY: 'center',
+        lineStyle: 'solid',
+        selectable: true,
+        evented: true,
+        perPixelTargetFind: true,
+        padding: 8,
+        objectCaching: false,
+      });
+      if (w.app?.arrowManager?.applyArrows) {
+        w.app.arrowManager.applyArrows(line);
+      }
+      canvas.add(line);
+      FabricControls.createLineControls(line);
+      line.setCoords?.();
+      metadata.attachMetadata(line, viewId, label);
+      const applied = applyMeasurement(
+        viewId,
+        label,
+        plan.value,
+        plan.sourceLabel,
+        lockedEl.checked
+      );
+      if (applied) {
+        const seeded = getCwImportedMeasurementEntry(viewId, label);
+        if (seeded) {
+          markCwImportedMeasurementApplied(viewId, label, seeded);
+        }
+        markWorkspaceLabelCompleted(viewId, label);
+      }
+      drawnLabels.push(label);
+      usedLabelSet.add(label);
+
+      // Mark any CW row this line satisfies so the queue skips it.
+      sectionRows.forEach(row => {
+        const rowKey = row.rowKey || '';
+        if (!rowKey || state.completedRowKeysByScope?.[getCanonicalCwScopeKey(viewId)]?.[rowKey]) {
+          return;
+        }
+        const rowTarget = resolveRowTargetLabel(row, state.rowTargetLabels[rowKey] || '');
+        const sourceMatch =
+          normalizeGuideLabel(row.sourceLabel) === normalizeGuideLabel(plan.sourceLabel);
+        if (rowTarget === label || (sourceMatch && rowTarget === plan.label)) {
+          markWorkspaceRowCompleted(viewId, rowKey);
+        }
+      });
+
+      const createdLine = line;
+      setTimeout(() => {
+        w.app?.tagManager?.createTagForStroke?.(label, viewId, createdLine);
+      }, 50);
+    });
+
+    canvas.requestRenderAll?.();
+    w.app?.historyManager?.saveState?.({ force: true, reason: 'cw-line-library:replay' });
+    return { drawn: drawnLabels.length, labels: drawnLabels };
+  };
 
   importPhotosBtn.addEventListener('click', () => {
     void (async () => {
@@ -3973,6 +6669,11 @@ function createModal(): HTMLElement {
       let imported = 0;
       let seededViews = 0;
       let firstImportedViewId = '';
+      const autoDrawTargets: Array<{
+        viewId: string;
+        imageUrl: string;
+        sectionRows: VisibleImportedRow[];
+      }> = [];
       try {
         const baseUrl = (baseUrlEl?.value || '').trim();
         const username = (usernameEl?.value || '').trim();
@@ -4056,6 +6757,10 @@ function createModal(): HTMLElement {
               itemLabel: entry.itemLabel,
               productReference: entry.productReference,
             }));
+          getWorkspaceTagScopeKeys(viewId).forEach(key => {
+            delete state.completedLabelsByScope[key];
+            delete state.completedRowKeysByScope[key];
+          });
           const seededCount = seedImportedGuideForView(
             viewId,
             section,
@@ -4068,6 +6773,10 @@ function createModal(): HTMLElement {
           };
           if (seededCount > 0) {
             seededViews += 1;
+          }
+          const catalogueImageUrl = firstCatalogueImageUrl(group);
+          if (catalogueImageUrl && hasRecipeForImageUrl(catalogueImageUrl)) {
+            autoDrawTargets.push({ viewId, imageUrl: catalogueImageUrl, sectionRows });
           }
           imported += 1;
         }
@@ -4089,13 +6798,48 @@ function createModal(): HTMLElement {
           (window as any).updateActivePill();
         }
 
+        // Auto-draw saved line-library recipes. Each target view is activated
+        // briefly so the strokes land on the right background, then the
+        // existing guide workflow below restores the first imported view.
+        let autoDrawnLines = 0;
+        let autoDrawnViews = 0;
+        if (autoDrawTargets.length) {
+          for (const target of autoDrawTargets) {
+            try {
+              await projectManager.switchView(target.viewId, true);
+              await waitForImportedViewReady(target.viewId, 6000);
+              setReplayInProgress(true);
+              const result = replayCwLibraryLinesForView(
+                target.viewId,
+                target.imageUrl,
+                target.sectionRows
+              );
+              setReplayInProgress(false);
+              if (result && result.drawn > 0) {
+                autoDrawnLines += result.drawn;
+                autoDrawnViews += 1;
+                syncWorkspaceGuideSeed(target.viewId);
+              }
+            } catch (error) {
+              setReplayInProgress(false);
+              console.warn('[CW Import] Line-library auto-draw failed', target.viewId, error);
+            }
+          }
+          syncCompactCwQueueDock();
+          renderRows();
+        }
+
         await enableGuideWorkflowDefaults(firstImportedViewId);
         if (firstImportedViewId) {
-          openMeasurementSplitWorkspace(firstImportedViewId);
           syncWorkspaceGuideSeed(firstImportedViewId);
         }
+        overlay.style.display = 'none';
+        renderRows();
         setStatus(
-          `Imported ${imported} selected photo${imported === 1 ? '' : 's'} into project views, seeded ${seededViews} guide${seededViews === 1 ? '' : 's'}, and switched units to cm.`,
+          `Imported ${imported} selected photo${imported === 1 ? '' : 's'} into project views, seeded ${seededViews} guide${seededViews === 1 ? '' : 's'}, and switched units to cm.` +
+            (autoDrawnViews
+              ? ` Auto-drew ${autoDrawnLines} saved line${autoDrawnLines === 1 ? '' : 's'} across ${autoDrawnViews} photo${autoDrawnViews === 1 ? '' : 's'} from your line library.`
+              : ''),
           'ok'
         );
       } catch (error) {
@@ -4115,11 +6859,24 @@ function createModal(): HTMLElement {
     const imageLabel = String(detail?.imageLabel || '').trim();
     if (!strokeLabel || !imageLabel) return;
 
-    if (state.armedRowKey) {
-      const armedRowKey = state.armedRowKey;
-      const row = allLoadedRows().find(item => item.rowKey === state.armedRowKey);
+    // Any stroke committed on a CW-imported photo updates that photo's saved
+    // line recipe (debounced), so manual drawing keeps the library current.
+    if (!isReplayInProgress() && isCwImportedScope(imageLabel)) {
+      scheduleCaptureForView(imageLabel, () => resolveCatalogueImageUrlForScope(imageLabel));
+    }
+
+    const scopedArmedRowKey = getScopedArmedRowKey(imageLabel);
+    if (scopedArmedRowKey) {
+      const armedRowKey = scopedArmedRowKey;
+      // Read the immutable draw intent captured when this row was armed.
+      // The global Next Tag field may already have advanced by the time
+      // metadata dispatches this event.
+      const armedTargetLabel = getScopedReadyDrawLabel(imageLabel, armedRowKey);
+      // Consume the intent before doing any work. Metadata/tag refreshes can be
+      // re-entrant and must never advance a second CW row with the same stroke.
+      setScopedArmedRowKey(imageLabel, '');
+      const row = allLoadedRows().find(item => item.rowKey === armedRowKey);
       if (!row) {
-        state.armedRowKey = '';
         renderRows();
         return;
       }
@@ -4127,62 +6884,85 @@ function createModal(): HTMLElement {
       const metadata = (window as any).app?.metadataManager;
       let targetLabel = strokeLabel;
       const configuredLabel = (state.rowTargetLabels[row.rowKey] || '').trim();
-      const desiredLabel = resolveRowTargetLabel(row, configuredLabel, strokeLabel);
+      const desiredLabel =
+        normalizeGuideLabel(armedTargetLabel) ||
+        resolveRowTargetLabel(row, configuredLabel, strokeLabel);
       if (metadata?.renameStrokeLabel && desiredLabel && desiredLabel !== strokeLabel) {
         const rename = metadata.renameStrokeLabel(imageLabel, strokeLabel, desiredLabel);
         if (rename?.ok && rename?.label) {
           targetLabel = rename.label;
+        } else {
+          renderRows();
+          setStatus(`Failed to rename ${strokeLabel} to ${desiredLabel}.`, 'bad');
+          return;
+        }
+      }
+
+      const semanticDisplayLabel = isCwOverallDimensionRow(row)
+        ? overallDimensionDisplayLabel(row.sourceLabel)
+        : '';
+      if (semanticDisplayLabel) {
+        const scopedImageLabel = metadata?.normalizeImageLabel?.(imageLabel) || imageLabel;
+        const strokeObject = metadata?.vectorStrokesByImage?.[scopedImageLabel]?.[targetLabel];
+        if (strokeObject) {
+          strokeObject.strokeMetadata = strokeObject.strokeMetadata || {};
+          strokeObject.strokeMetadata.displayLabel = semanticDisplayLabel;
         }
       }
 
       const ok = applyMeasurement(
         imageLabel,
         targetLabel,
-        row.value,
+        getEffectiveRowValue(row),
         row.sourceLabel,
         lockedEl.checked
       );
-      const nextArmResult = ok ? armNextMeasurementRow(armedRowKey) : { armed: false, rowKey: '' };
-      if (!ok) {
-        state.armedRowKey = '';
-        renderRows();
+      if (ok) {
+        markWorkspaceLabelCompleted(imageLabel, targetLabel);
+        markWorkspaceRowCompleted(imageLabel, armedRowKey);
+        const seeded = getCwImportedMeasurementEntry(imageLabel, targetLabel);
+        if (seeded) {
+          markCwImportedMeasurementApplied(imageLabel, targetLabel, seeded);
+        }
       }
-      setStatus(
-        ok
-          ? nextArmResult.armed
-            ? `Applied ${row.sourceLabel} (${row.value}) to ${targetLabel}. Armed the next row.`
-            : `Applied ${row.sourceLabel} (${row.value}) to ${targetLabel}.`
-          : `Failed to apply ${row.sourceLabel} to ${targetLabel}.`,
-        ok ? 'ok' : 'bad'
-      );
+      if (!ok) {
+        renderRows();
+        setStatus(`Failed to apply ${row.sourceLabel} to ${targetLabel}.`, 'bad');
+        return;
+      }
+
+      // Let Fabric finish its mouse-up/commit stack, then continue through the
+      // library without requiring another Draw click.
+      window.setTimeout(() => {
+        const metadata = (window as any).app?.metadataManager;
+        if (metadata) {
+          // CW Library owns the next focus target. The normal new-stroke
+          // autofocus would otherwise switch back to Measure and pull the
+          // Elements scroller away from the next Library row.
+          metadata._shouldAutoFocus = false;
+        }
+        // A user may choose another Library row immediately after releasing
+        // the line. Do not let this stroke's deferred auto-advance overwrite
+        // that newer choice with the next row in sequence.
+        if (getScopedArmedRowKey(imageLabel)) {
+          renderRows();
+          return;
+        }
+        const next = armNextMeasurementRow(armedRowKey);
+        const nextRow = next.armed
+          ? allLoadedRows().find(item => item.rowKey === next.rowKey)
+          : null;
+        if (nextRow) {
+          setStatus(`Applied ${row.sourceLabel}. Draw ${nextRow.sourceLabel} next.`, 'ok');
+        } else {
+          setStatus(`Applied ${row.sourceLabel}. Measurement list complete.`, 'ok');
+        }
+      }, 0);
       return;
     }
 
-    const seeded = getCwImportedMeasurementEntry(imageLabel, strokeLabel);
-    if (!seeded || seeded.autoApplyOnDraw !== true || seeded.pending === false) {
-      return;
-    }
-
-    const ok = applyMeasurement(
-      imageLabel,
-      strokeLabel,
-      String(seeded.value || ''),
-      String(seeded.sourceLabel || strokeLabel),
-      seeded.locked === true
-    );
-    if (ok) {
-      markCwImportedMeasurementApplied(imageLabel, strokeLabel, seeded);
-      syncWorkspaceGuideSeed(imageLabel, { render: true });
-      setStatus(
-        `Applied CW guide value ${seeded.value} to ${normalizeGuideLabel(strokeLabel)}.`,
-        'ok'
-      );
-    } else {
-      setStatus(
-        `Failed to auto-apply CW guide value for ${normalizeGuideLabel(strokeLabel)}.`,
-        'bad'
-      );
-    }
+    // No image-scoped Draw intent means this is an ordinary OpenPaint stroke.
+    // Suggestions and legacy imported seeds must never assign measurements.
   });
 
   const close = () => {
@@ -4263,10 +7043,13 @@ function applyMeasurement(
   if (!w.cwImportedMeasurementsByImage) w.cwImportedMeasurementsByImage = {};
   if (!w.cwImportedMeasurementsByImage[normalizedScope])
     w.cwImportedMeasurementsByImage[normalizedScope] = {};
+  const existingSource = w.cwImportedMeasurementsByImage[normalizedScope][strokeLabel] || {};
   w.cwImportedMeasurementsByImage[normalizedScope][strokeLabel] = {
+    ...existingSource,
     source: 'cw',
     sourceLabel,
     value,
+    originalValue: existingSource.originalValue || existingSource.value || value,
     locked: lockByDefault,
     updatedAt: new Date().toISOString(),
   };
@@ -4343,6 +7126,8 @@ function attachToolbarButton(): void {
 
 export function initCwImportUI(): void {
   ensureStyles();
+  void initCwLineLibrary();
+  installCwLineLibraryBridge();
   (window as any).isCwMeasurementLocked = (scopeLabel: string, strokeLabel: string) => {
     const locked = Boolean((window as any).cwMeasurementLocksByImage?.[scopeLabel]?.[strokeLabel]);
     if (!locked) return false;

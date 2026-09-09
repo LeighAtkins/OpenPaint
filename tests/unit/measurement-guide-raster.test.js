@@ -58,12 +58,27 @@ describe('measurement guide raster cleanup', () => {
 
     expect(cleaned).toContain('id="sofa-orange-body"');
     expect(cleaned).toContain('id="sofa-outline"');
-    expect(cleaned).not.toContain('id="construction-line"');
+    expect(cleaned).toContain('id="construction-line"');
     expect(cleaned).not.toContain('id="value-box"');
     expect(cleaned).not.toContain('id="mA1cm"');
     expect(cleaned).not.toContain('id="arrowhead"');
     expect(cleaned).not.toContain('id="tag-ring"');
     expect(cleaned).not.toContain('0000.00');
     expect(cleaned).not.toContain('>A1<');
+  });
+
+  test('keeps large saturated furniture polygons while removing small orphan arrowheads', () => {
+    const source = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+        <style>.orange{fill:#f97316}.arrow{fill:#ef4444}</style>
+        <polygon id="orange-sofa" class="orange" points="30,70 370,70 340,250 60,250" />
+        <polygon id="orphan-arrow" class="arrow" points="190,265 205,272 190,279" />
+      </svg>
+    `;
+
+    const cleaned = stripSvgLabels(source);
+
+    expect(cleaned).toContain('id="orange-sofa"');
+    expect(cleaned).not.toContain('id="orphan-arrow"');
   });
 });

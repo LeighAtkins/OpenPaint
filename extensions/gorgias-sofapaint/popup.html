@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gorgias to SofaPaint</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>Ticket photos</h1>
+        <p id="ticketMeta">Checking the open ticket…</p>
+      </div>
+      <button id="refreshBtn" class="icon-btn" type="button" title="Scan again" aria-label="Scan again">↻</button>
+    </header>
+    <main>
+      <div id="status" role="status"></div>
+      <div id="projectStatus" class="project-status" hidden></div>
+      <div id="importProgress" class="import-progress" hidden>
+        <div class="import-progress-track"><span id="importProgressBar"></span></div>
+        <span id="importProgressText">Preparing photos…</span>
+      </div>
+      <div id="actions" class="selection-actions" hidden>
+        <button id="selectAllBtn" type="button">Select all</button>
+        <button id="clearBtn" type="button">Clear</button>
+      </div>
+      <div id="attachmentList" class="attachment-list"></div>
+    </main>
+    <footer>
+      <label for="targetInput">SofaPaint address</label>
+      <input id="targetInput" type="url" value="http://127.0.0.1:5173/" />
+      <button id="importBtn" class="primary" type="button" disabled>Send selected to SofaPaint</button>
+    </footer>
+    <script src="attachment-quality.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

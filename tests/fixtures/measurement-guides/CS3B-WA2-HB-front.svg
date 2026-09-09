@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 25.4.2, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 730.8 313" style="enable-background:new 0 0 730.8 313;" xml:space="preserve">
+<rect width="100%" height="100%" fill="#FFFFFF"/>
+<style type="text/css">
+	.st0{fill:none;stroke:#4F4F4F;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+	.st1{fill:none;stroke:#DF6868;stroke-width:2;stroke-miterlimit:10;}
+	.st2{fill:#DF6868;}
+	.st3{fill:#FFFFFF;stroke:#DF6868;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st4{fill:#626F81;}
+	.st5{font-family:'ArialMT';}
+	.st6{font-size:12px;}
+	.st7{fill:none;stroke:#DF6868;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st8{fill:#52CFBD;}
+	.st9{fill:none;stroke:#52CFBD;stroke-width:2;stroke-miterlimit:10;}
+	.st10{fill:#FFFFFF;stroke:#DF6868;stroke-width:2;stroke-miterlimit:10;}
+	.st11{fill:#FFFFFF;stroke:#52CFBD;stroke-width:2;stroke-miterlimit:10;}
+	.st12{fill:#FFFFFF;stroke:#52CFBD;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st13{fill:none;stroke:#52CFBD;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+</style>
+<g id="Layer_3">
+</g>
+<g>
+	<polyline class="st0" points="94.2,245.5 96.4,265.9 115,265.9 117.2,245.5 	"/>
+	<polyline class="st0" points="115,265.9 120.9,261.5 123.2,245.5 	"/>
+	<polyline class="st0" points="642.8,245.8 640.6,266.1 621.9,266.1 619.7,245.8 	"/>
+	<polyline class="st0" points="621.9,266.1 616,261.7 613.8,245.8 	"/>
+	<polyline class="st0" points="609,105.6 609,75.4 128.5,75.4 128.5,105.6 	"/>
+	<polygon class="st0" points="155.5,105.6 127,122.3 84.7,122.3 127.7,105.6 	"/>
+	<line class="st0" x1="146.9" y1="162.1" x2="175.5" y2="140.3"/>
+	<polygon class="st0" points="609.4,105.6 652.4,122.3 610.1,122.3 581.6,105.6 	"/>
+	<polyline class="st0" points="155.5,105.6 175.5,140.3 175.5,180.4 147,202.1 146.9,162.1 126.9,122.3 84.7,122.3 84.7,245.5 
+		652.4,245.5 652.4,122.3 610.2,122.3 590.2,162.1 590.1,202.1 561.6,180.4 561.6,140.3 581.6,105.6 	"/>
+	<line class="st0" x1="590.1" y1="202.1" x2="147" y2="202.1"/>
+	<line class="st0" x1="561.6" y1="180.4" x2="175.5" y2="180.4"/>
+	<line class="st0" x1="590.2" y1="162.1" x2="561.6" y2="140.3"/>
+</g>
+<g id="mDcm">
+	<g>
+		<polyline class="st1" points="648.9,236 595.2,236 97.2,236 88.7,236 		"/>
+		<polygon class="st2" points="91.7,233.5 87,236 91.7,238.6 		"/>
+		<polygon class="st2" points="645.9,238.6 650.5,236 645.9,233.5 		"/>
+	</g>
+</g>
+<g id="mC1cm">
+	<g>
+		<polyline class="st1" points="609.8,105.5 601.2,105.5 590.8,105.5 582.2,105.5 		"/>
+		<polygon class="st2" points="585.2,102.9 580.6,105.5 585.2,108.1 		"/>
+		<polygon class="st2" points="606.8,108.1 611.4,105.5 606.8,102.9 		"/>
+	</g>
+</g>
+<g id="mA2cm">
+	<g>
+		<polyline class="st1" points="176.9,180.2 278.5,180.2 551,180.2 559.6,180.2 		"/>
+		<polygon class="st2" points="556.6,182.8 561.2,180.2 556.6,177.7 		"/>
+		<polygon class="st2" points="179.9,177.7 175.3,180.2 179.9,182.8 		"/>
+	</g>
+</g>
+<g id="cA1cm">
+	<circle class="st3" cx="351.1" cy="56.9" r="10"/>
+	<text transform="matrix(1 0 0 1 343.6919 60.1078)" class="st4 st5 st6">A1</text>
+	<line class="st7" x1="351.1" y1="66.9" x2="351.1" y2="74.7"/>
+</g>
+<g id="cA2cm">
+	<circle class="st3" cx="351.1" cy="161.9" r="10"/>
+	<text transform="matrix(1 0 0 1 343.5509 165.6036)" class="st4 st5 st6">A2</text>
+	<line class="st7" x1="351.1" y1="172.7" x2="351.1" y2="180.5"/>
+</g>
+<g id="mA1cm">
+	<g>
+		<polyline class="st1" points="609.1,75.4 600.5,75.4 278,75.4 128.4,75.4 		"/>
+		<polygon class="st2" points="131.4,72.9 126.8,75.4 131.4,78 		"/>
+		<polygon class="st2" points="606.1,78 610.7,75.4 606.1,72.9 		"/>
+	</g>
+</g>
+<g id="mB1cm">
+	<g>
+		<g>
+			<polygon class="st8" points="566.4,181.2 561.2,180.2 563.2,185.2 			"/>
+			<polygon class="st8" points="584.9,201.2 590.1,202.1 588.1,197.2 			"/>
+		</g>
+	</g>
+	<line class="st9" x1="564.8" y1="183.2" x2="587.5" y2="200.1"/>
+</g>
+<g id="mB2cm">
+	<g>
+		<g>
+			<polygon class="st8" points="586.4,105.4 581.1,105.7 584.2,110 			"/>
+			<polygon class="st8" points="604.8,122.1 610,121.8 607,117.5 			"/>
+		</g>
+	</g>
+	<line class="st9" x1="583.2" y1="106.7" x2="607.5" y2="120.7"/>
+</g>
+<g id="bA1cm">
+	<rect x="307" y="66.9" class="st10" width="53.9" height="17"/>
+	<text transform="matrix(1 0 0 1 312.0989 79.1374)" class="st4 st5 st6">0000.00</text>
+</g>
+<g id="bA2cm">
+	<rect x="307" y="171.6" class="st10" width="53.9" height="17"/>
+	<text transform="matrix(1 0 0 1 312.0989 183.8884)" class="st4 st5 st6">0000.00</text>
+</g>
+<g id="bC1cm">
+	<rect x="632.3" y="88.7" class="st10" width="53.9" height="17"/>
+	<text transform="matrix(1 0 0 1 637.4403 100.8997)" class="st4 st5 st6">0000.00</text>
+	<g>
+		<polyline class="st1" points="632.3,97.2 598.2,97.2 598.2,105.5 		"/>
+	</g>
+</g>
+<g id="bDcm">
+	<rect x="307" y="227.8" class="st10" width="53.9" height="17"/>
+	<text transform="matrix(1 0 0 1 312.0989 239.9661)" class="st4 st5 st6">0000.00</text>
+</g>
+<g id="bC4cm">
+	<rect x="523" y="216.2" class="st11" width="53.9" height="17"/>
+	<text transform="matrix(1 0 0 1 528.0915 228.4251)" class="st4 st5 st6">0000.00</text>
+	<g>
+		<line class="st9" x1="590.4" y1="224.7" x2="576.8" y2="224.7"/>
+	</g>
+</g>
+<g id="bB2cm">
+	<rect x="552.5" y="132.2" class="st11" width="53.9" height="17"/>
+	<text transform="matrix(1 0 0 1 557.6664 144.4676)" class="st4 st5 st6">0000.00</text>
+	<g>
+		<line class="st9" x1="595.4" y1="113.8" x2="595.4" y2="132.2"/>
+	</g>
+</g>
+<g id="bC3cm">
+	<rect x="665.9" y="214.9" class="st11" width="53.9" height="17"/>
+	<text transform="matrix(1 0 0 1 671.0306 227.1085)" class="st4 st5 st6">0000.00</text>
+	<g>
+		<line class="st9" x1="658" y1="223.4" x2="665.9" y2="223.4"/>
+	</g>
+</g>
+<g id="bB1cm">
+	<rect x="532.5" y="158.4" class="st11" width="53.9" height="17"/>
+	<text transform="matrix(1 0 0 1 537.639 170.5855)" class="st4 st5 st6">0000.00</text>
+	<line class="st9" x1="575.7" y1="176.1" x2="575.7" y2="191.4"/>
+</g>
+<g id="mC4cm">
+	<g>
+		<polyline class="st9" points="590.2,243.2 590.2,240.1 590.2,207.2 590.2,204 		"/>
+		<polygon class="st8" points="592.8,206.2 590.2,201.7 587.6,206.2 		"/>
+		<polygon class="st8" points="587.6,240.2 590.2,244.9 592.8,240.2 		"/>
+	</g>
+</g>
+<g id="mA3cm">
+	<polyline class="st9" points="366.6,176.6 366.6,170.1 366.6,85.6 366.6,79.1 	"/>
+	<polygon class="st8" points="369.1,80.8 366.6,75.4 364.1,80.8 	"/>
+	<polygon class="st8" points="364.1,174.8 366.6,180.2 369.1,174.8 	"/>
+</g>
+<g id="mC3cm">
+	<g>
+		<polyline class="st9" points="658.4,243.4 658.4,226.8 658.4,128 658.4,123.4 		"/>
+		<polygon class="st8" points="661,126.3 658.4,121.7 655.8,126.3 		"/>
+		<polygon class="st8" points="655.8,240.4 658.4,245 661,240.4 		"/>
+	</g>
+</g>
+<g id="bA3cm">
+	<rect x="338.8" y="123.3" class="st11" width="53.9" height="17"/>
+	<text transform="matrix(1 0 0 1 343.9077 135.5616)" class="st4 st5 st6">0000.00</text>
+</g>
+<g id="bE1cm">
+	<rect x="11" y="108" class="st11" width="53.9" height="17"/>
+	<text transform="matrix(1 0 0 1 16.1504 120.2328)" class="st4 st5 st6">0000.00</text>
+	<polyline class="st9" points="64.2,116.8 98.6,116.8 98.6,122.3 	"/>
+</g>
+<g id="cC1cm">
+	<circle class="st3" cx="598.2" cy="90.2" r="10"/>
+	<text transform="matrix(1 0 0 1 590.5225 93.8701)" class="st4 st5 st6">C1</text>
+	<line class="st7" x1="598.2" y1="105.7" x2="598.2" y2="100.8"/>
+</g>
+<g id="mC2cm">
+	<g>
+		<polyline class="st1" points="651.4,122.3 642.8,122.3 620.4,122.3 611.8,122.3 		"/>
+		<polygon class="st2" points="614.8,119.7 610.2,122.3 614.8,124.9 		"/>
+		<polygon class="st2" points="648.4,124.9 653,122.3 648.4,119.7 		"/>
+	</g>
+</g>
+<g id="bC2cm">
+	<rect x="664.9" y="105.6" class="st10" width="53.9" height="17"/>
+	<text transform="matrix(1 0 0 1 670.0603 117.7095)" class="st4 st5 st6">0000.00</text>
+	<g>
+		<polyline class="st1" points="664.9,114.1 630.8,114.1 630.8,122.3 		"/>
+	</g>
+</g>
+<g id="cC2cm">
+	<circle class="st3" cx="630.8" cy="107.1" r="10"/>
+	<text transform="matrix(1 0 0 1 623.1425 110.6798)" class="st4 st5 st6">C2</text>
+	<line class="st7" x1="630.8" y1="122.2" x2="630.8" y2="117.7"/>
+</g>
+<g id="cDcm">
+	<circle class="st3" cx="367.1" cy="236.8" r="10"/>
+	<text transform="matrix(1 0 0 1 363.5423 240.4578)" class="st4 st5 st6">D</text>
+</g>
+<g id="cC4cm">
+	<circle class="st12" cx="574" cy="225.2" r="10"/>
+	<text transform="matrix(1 0 0 1 567.3575 228.9662)" class="st4 st5 st6">C4</text>
+	<line class="st13" x1="589.8" y1="225.2" x2="584.6" y2="225.2"/>
+</g>
+<g id="cA3cm">
+	<circle class="st12" cx="367.1" cy="130.9" r="10"/>
+	<text transform="matrix(1 0 0 1 360.5263 134.6052)" class="st4 st5 st6">A3</text>
+</g>
+<g id="cE1cm">
+	<line class="st9" x1="130.3" y1="146.6" x2="136.7" y2="142.3"/>
+	<circle class="st12" cx="121.9" cy="151.2" r="10"/>
+	<text transform="matrix(1 0 0 1 115.3534 154.9258)" class="st4 st5 st6">E1</text>
+</g>
+<g id="cB1cm">
+	<circle class="st12" cx="575.7" cy="171.4" r="10"/>
+	<text transform="matrix(1 0 0 1 568.9981 175.0068)" class="st4 st5 st6">B1</text>
+	<line class="st13" x1="575.7" y1="181.2" x2="575.7" y2="190.7"/>
+</g>
+<g id="cC3cm">
+	<circle class="st12" cx="675.9" cy="222.9" r="10"/>
+	<text transform="matrix(1 0 0 1 669.1833 226.523)" class="st4 st5 st6">C3</text>
+	<line class="st13" x1="666.1" y1="223.9" x2="658.7" y2="223.9"/>
+</g>
+<g id="cB2cm">
+	<circle class="st12" cx="595.4" cy="134.5" r="10"/>
+	<text transform="matrix(1 0 0 1 588.7174 138.208)" class="st4 st5 st6">B2</text>
+	<line class="st13" x1="595.4" y1="113.8" x2="595.4" y2="123.4"/>
+</g>
+<g id="mE1cm">
+	<polyline class="st9" points="146.9,198.4 146.9,162.1 126.9,122.3 127,122.3 88.4,122.3 	"/>
+	<g>
+		<polygon class="st8" points="149.5,197.6 147,202.1 144.4,197.6 		"/>
+	</g>
+	<g>
+		<polygon class="st8" points="89.1,119.7 84.7,122.3 89.1,124.9 		"/>
+	</g>
+</g>
+</svg>

@@ -117,3 +117,8 @@ Memory
 
 # Template stays tracked even with .env* ignored
 !.env.example
+
+dev-load/
+
+# CW line library runtime store (dev file fallback)
+data/cw-line-library.json
