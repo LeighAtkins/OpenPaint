@@ -102,9 +102,13 @@ async function openBindGallery(page: Page): Promise<void> {
   });
   await expect(page.locator('.guide-gallery-overlay.visible')).toBeVisible();
   await expect(page.locator('[data-gallery-mode="bind"].active')).toBeVisible();
+  const advancedBoard = page.locator('.guide-gallery-link-grid.bind-mode');
+  if (!(await advancedBoard.isVisible())) {
+    await page.locator('.guide-gallery-toggle-panel').click();
+  }
   await expect
     .poll(() =>
-      page.locator('.guide-gallery-link-grid.bind-mode').evaluate(element => {
+      advancedBoard.evaluate(element => {
         const style = getComputedStyle(element);
         return style.opacity === '1' && style.maxHeight === 'none' && element.clientHeight >= 260;
       })
@@ -231,12 +235,25 @@ async function enableGuideSplit(
       page.evaluate(currentExpectedGuide => {
         const compareCanvas = window.app?.compareCanvasManager?.fabricCanvas;
         const background = compareCanvas?.backgroundImage;
+        const canvas = compareCanvas?.lowerCanvasEl;
+        const context = canvas?.getContext?.('2d', { willReadFrequently: true });
+        let visibleGuidePixels = 0;
+        if (canvas && context && canvas.width > 0 && canvas.height > 0) {
+          const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+          for (let index = 0; index < pixels.length; index += 32) {
+            const alpha = pixels[index + 3];
+            const nearWhite =
+              pixels[index] > 248 && pixels[index + 1] > 248 && pixels[index + 2] > 248;
+            if (alpha > 0 && !nearWhite) visibleGuidePixels += 1;
+          }
+        }
         const currentViewId = window.app?.projectManager?.currentViewId || '';
         const activeGuide = window.resolveActiveGuideForView?.(currentViewId) || null;
         const scopeId = `__guide__:${currentExpectedGuide.code}:${currentExpectedGuide.variant}`;
         const scopedVectors = window.app?.metadataManager?.vectorStrokesByImage?.[scopeId] || {};
         return {
           hasBackground: Boolean(background),
+          visibleGuidePixels,
           currentViewId,
           activeGuide,
           scopedStrokeCount: Object.keys(scopedVectors).length,
@@ -245,12 +262,76 @@ async function enableGuideSplit(
     )
     .toMatchObject({
       hasBackground: true,
+      visibleGuidePixels: expect.any(Number),
       activeGuide: {
         code: expectedGuide.code,
         variant: expectedGuide.variant,
         bound: true,
       },
     });
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const canvas = window.app?.compareCanvasManager?.fabricCanvas?.lowerCanvasEl;
+        const context = canvas?.getContext?.('2d', { willReadFrequently: true });
+        if (!canvas || !context) return 0;
+        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+        let visible = 0;
+        for (let index = 0; index < pixels.length; index += 32) {
+          const alpha = pixels[index + 3];
+          const nearWhite =
+            pixels[index] > 248 && pixels[index + 1] > 248 && pixels[index + 2] > 248;
+          if (alpha > 0 && !nearWhite) visible += 1;
+        }
+        return visible;
+      })
+    )
+    .toBeGreaterThan(20);
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const host = document.getElementById('guideSplitLiveCanvasHost');
+        const wrapper = window.app?.canvasManager?.fabricCanvas?.wrapperEl;
+        const hostRect = host?.getBoundingClientRect?.();
+        const wrapperRect = wrapper?.getBoundingClientRect?.();
+        if (!hostRect || !wrapperRect) return null;
+        return Math.max(
+          Math.abs(wrapperRect.left - hostRect.left),
+          Math.abs(wrapperRect.top - hostRect.top),
+          Math.abs(wrapperRect.width - hostRect.width),
+          Math.abs(wrapperRect.height - hostRect.height)
+        );
+      })
+    )
+    .toBeLessThanOrEqual(2);
+  const readPrimaryFit = () =>
+    page.evaluate(() => {
+      const canvas = (window.app?.primaryCanvasManager || window.app?.canvasManager)?.fabricCanvas;
+      const background = canvas?.backgroundImage;
+      const viewport = canvas?.viewportTransform;
+      if (!canvas || !background || !viewport) return null;
+      const rect = background.getBoundingRect?.(true, true);
+      if (!rect) return null;
+      const left = rect.left * viewport[0] + rect.top * viewport[2] + viewport[4];
+      const top = rect.left * viewport[1] + rect.top * viewport[3] + viewport[5];
+      const width = Math.abs(rect.width * viewport[0]) + Math.abs(rect.height * viewport[2]);
+      const height = Math.abs(rect.width * viewport[1]) + Math.abs(rect.height * viewport[3]);
+      return {
+        coverage: Math.max(width / canvas.width, height / canvas.height),
+        centerError: Math.max(
+          Math.abs(left + width / 2 - canvas.width / 2),
+          Math.abs(top + height / 2 - canvas.height / 2)
+        ),
+      };
+    });
+  await expect
+    .poll(async () => (await readPrimaryFit())?.coverage || 0)
+    .toBeGreaterThanOrEqual(0.98);
+  await expect
+    .poll(async () => (await readPrimaryFit())?.centerError ?? Infinity)
+    .toBeLessThanOrEqual(3);
+  await expect(page.locator('#guideSplitFrameGhost')).toBeHidden();
+  await expect(page.locator('#captureFrame')).toBeHidden();
 }
 
 async function setFrameBindings(
@@ -788,12 +869,12 @@ test.describe('Measurement Guide Frame Binding', () => {
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
           <rect width="800" height="600" fill="#f8fafc" />
           <path d="M100 470 L240 210 L560 210 L700 470 Z" fill="none" stroke="#334155" stroke-width="8" />
-          <g id="mA1cm"><line x1="180" y1="280" x2="620" y2="280" stroke="#ef4444" stroke-width="8" /></g>
-          <g id="bA1cm"><text x="650" y="280">000.00</text></g>
-          <g id="cA1cm"><rect x="360" y="235" width="80" height="40" fill="#fff"/><text x="380" y="264">A1</text></g>
-          <g id="mA2cm"><line x1="180" y1="380" x2="620" y2="380" stroke="#14b8a6" stroke-width="8" /></g>
-          <g id="bA2cm"><text x="650" y="380">000.00</text></g>
-          <g id="cA2cm"><rect x="360" y="335" width="80" height="40" fill="#fff"/><text x="380" y="364">A2</text></g>
+          <g id="mFcm"><line x1="180" y1="280" x2="620" y2="280" stroke="#ef4444" stroke-width="8" /></g>
+          <g id="bFcm"><text x="650" y="280">000.00</text></g>
+          <g id="cFcm"><rect x="360" y="235" width="80" height="40" fill="#fff"/><text x="380" y="264">F</text></g>
+          <g id="mG1cm"><line x1="180" y1="380" x2="620" y2="380" stroke="#14b8a6" stroke-width="8" /></g>
+          <g id="bG1cm"><text x="650" y="380">000.00</text></g>
+          <g id="cG1cm"><rect x="360" y="335" width="80" height="40" fill="#fff"/><text x="380" y="364">G1</text></g>
         </svg>`;
       await route.fulfill({ status: 200, contentType: 'image/svg+xml', body: svg });
     });
@@ -810,11 +891,29 @@ test.describe('Measurement Guide Frame Binding', () => {
     await activateFrameTab(page, frame.id);
 
     await expect(page.locator('#measurementGuideIndicator')).toBeVisible();
-    await expect(page.locator('.measurement-guide-indicator-chip.active')).toHaveText('A1');
-    await expect(page.locator('#nextTagDisplay')).toHaveValue('A1');
+    await expect(page.locator('.measurement-guide-indicator-chip.active')).toHaveText('F');
+    await expect(page.locator('#nextTagDisplay')).toHaveValue('F');
     await expect(page.locator('.measurement-guide-indicator-hero img')).toHaveAttribute(
       'src',
       /^data:image\/png/
+    );
+
+    await enableGuideSplit(page, { code: 'CS3B-SA-HB', variant: 'front' });
+    await expect(page.locator('#measurementGuideIndicator')).toBeHidden();
+    await expect(page.locator('#navigation-container')).toBeHidden();
+    const splitDockAlignment = await page.evaluate(() => {
+      const pane = document.getElementById('guideSplitLivePane')?.getBoundingClientRect();
+      const dock = document.getElementById('canvasControls')?.getBoundingClientRect();
+      if (!pane || !dock) return null;
+      return {
+        centerError: Math.abs(dock.left + dock.width / 2 - (pane.left + pane.width / 2)),
+        bottomGap: pane.bottom - dock.bottom,
+      };
+    });
+    expect(splitDockAlignment?.centerError).toBeLessThanOrEqual(4);
+    expect(Math.abs(splitDockAlignment?.bottomGap || 0)).toBeLessThanOrEqual(20);
+    const firstRoleRaster = await page.evaluate(
+      () => window.app?.compareCanvasManager?.fabricCanvas?.backgroundImage?.getSrc?.() || ''
     );
 
     await page.evaluate(
@@ -823,34 +922,44 @@ test.describe('Measurement Guide Frame Binding', () => {
         const scopeId = `${viewId}::tab:${frameId}`;
         metadataManager.vectorStrokesByImage[scopeId] = {
           ...(metadataManager.vectorStrokesByImage[scopeId] || {}),
-          A1: { type: 'line', visible: true },
+          F: { type: 'line', visible: true },
         };
         window.dispatchEvent(
           new CustomEvent('openpaint:stroke-created', {
-            detail: { imageLabel: scopeId, strokeLabel: 'A1' },
+            detail: { imageLabel: scopeId, strokeLabel: 'F' },
           })
         );
       },
       { viewId: 'customer-front-photo', frameId: frame.id }
     );
 
-    await expect(page.locator('.measurement-guide-indicator-chip.active')).toHaveText('A2');
-    await expect(page.locator('#nextTagDisplay')).toHaveValue('A2');
+    await expect(page.locator('#nextTagDisplay')).toHaveValue('G1');
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => window.app?.compareCanvasManager?.fabricCanvas?.backgroundImage?.getSrc?.() || ''
+        )
+      )
+      .not.toBe(firstRoleRaster);
 
     await page.evaluate(
       ({ viewId, frameId }) => {
         const metadataManager = window.app?.metadataManager;
         const scopeId = `${viewId}::tab:${frameId}`;
-        metadataManager.vectorStrokesByImage[scopeId].A2 = { type: 'line', visible: true };
+        metadataManager.vectorStrokesByImage[scopeId].G1 = { type: 'line', visible: true };
         window.dispatchEvent(
           new CustomEvent('openpaint:stroke-created', {
-            detail: { imageLabel: scopeId, strokeLabel: 'A2' },
+            detail: { imageLabel: scopeId, strokeLabel: 'G1' },
           })
         );
       },
       { viewId: 'customer-front-photo', frameId: frame.id }
     );
 
+    await expect(page.locator('#guideSplitRoot')).toHaveCount(0);
+    await expect(page.locator('#navigation-container')).toBeVisible();
+    await expect(page.locator('#measurementGuideIndicator')).toBeVisible();
+    await expect(page.locator('.openpaint-toast')).toContainText('Guide complete');
     await expect(page.locator('.measurement-guide-indicator-chip.active')).toHaveCount(0);
     await expect(page.locator('.measurement-guide-indicator-complete')).toHaveText(
       'Guide complete'
@@ -884,6 +993,25 @@ test.describe('Measurement Guide Frame Binding', () => {
     for (let cycle = 0; cycle < 2; cycle += 1) {
       await enableGuideSplit(page, { code: 'CS3B-SA-HB', variant: 'front' });
       await expect(page.locator('#guideSplitCompareCanvasHost canvas').first()).toBeVisible();
+      await expect(page.locator('#measurementGuideIndicator')).toBeHidden();
+      await expect(page.locator('[data-guide-split-action="close"]')).toBeVisible();
+      if (cycle === 0) {
+        const mirrorButton = page.locator('[data-guide-split-action="mirror"]');
+        await expect(mirrorButton).toHaveAttribute('aria-pressed', 'false');
+        const beforeMirror = await page.evaluate(
+          () => window.app?.compareCanvasManager?.fabricCanvas?.backgroundImage?.getSrc?.() || ''
+        );
+        await mirrorButton.click();
+        await expect(mirrorButton).toHaveAttribute('aria-pressed', 'true');
+        await expect
+          .poll(() =>
+            page.evaluate(
+              () =>
+                window.app?.compareCanvasManager?.fabricCanvas?.backgroundImage?.getSrc?.() || ''
+            )
+          )
+          .not.toBe(beforeMirror);
+      }
       await expect
         .poll(() =>
           page.evaluate(() => {
@@ -904,11 +1032,25 @@ test.describe('Measurement Guide Frame Binding', () => {
         .toBeGreaterThan(20);
       await page.evaluate(() => window.setGuideSplitEnabled?.(false));
       await expect(page.locator('#guideSplitRoot')).toHaveCount(0);
+      await expect(page.locator('#measurementGuideIndicator')).toBeVisible();
     }
 
     await expect(page.locator('.measurement-guide-indicator-complete')).toHaveText(
       'Guide complete'
     );
     await expect(page.locator('#nextTagDisplay')).toHaveValue('Z9');
+
+    await expect(page.locator('[data-guide-close]')).toBeVisible();
+    await page.locator('[data-guide-close]').click();
+    await expect(page.locator('#measurementGuideIndicator')).toBeHidden();
+    await expect(page.locator('#measurementGuideToggle')).toHaveAttribute('data-state', 'off');
+    const bindingAfterClose = await page.evaluate(() =>
+      window.resolveActiveGuideForView?.(window.app?.projectManager?.currentViewId || '')
+    );
+    expect(bindingAfterClose).toMatchObject({
+      code: 'CS3B-SA-HB',
+      variant: 'front',
+      bound: true,
+    });
   });
 });

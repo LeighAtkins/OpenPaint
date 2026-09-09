@@ -163,9 +163,174 @@ export function createDefaultSofaMetadata() {
     tagStyleByScope: {},
     pieceGroups: [],
     imagePartLabels: {},
+    externalSources: {
+      gorgiasTickets: {},
+    },
+    sectionalAssemblies: {},
     photos: [],
     quickSketchMap: null,
   };
+}
+
+const SECTIONAL_PIECE_KINDS = [
+  'left-arm',
+  'seat',
+  'corner',
+  'chaise',
+  'right-arm',
+  'ottoman',
+  'left-arm-chaise',
+  'right-arm-chaise',
+  'armchair',
+  'two-arm-chaise',
+];
+const SECTIONAL_PRICING_COUNTRIES = [
+  'US',
+  'AU',
+  'AT',
+  'BE',
+  'CA',
+  'CN',
+  'FR',
+  'DE',
+  'GLOBAL',
+  'HK',
+  'JP',
+  'MO',
+  'MY',
+  'NZ',
+  'SG',
+  'ES',
+  'CH',
+  'TW',
+  'GB',
+];
+const SECTIONAL_PRICING_FABRICS = [
+  'everyday-weave',
+  'everyday-cotton',
+  'everyday-velvet',
+  'care-canvas',
+  'care-linen',
+  'care-tweed',
+  'mod-boucle',
+  'mod-chenille',
+  'signature-microfiber',
+  'signature-velvet',
+  'crypton®-chenille',
+  'sunbrella®-canvas',
+  'sunbrella®-fretwork',
+  'classic-velvet',
+];
+
+function normalizeSectionalAssemblies(source) {
+  if (!source || typeof source !== 'object') return {};
+  return Object.fromEntries(
+    Object.entries(source)
+      .map(([key, value]) => {
+        const entry = value && typeof value === 'object' ? value : {};
+        const id = String(entry.id || key || '').trim();
+        if (!id) return null;
+        const pieces = (Array.isArray(entry.pieces) ? entry.pieces : [])
+          .map(piece => {
+            const candidate = piece && typeof piece === 'object' ? piece : {};
+            if (!SECTIONAL_PIECE_KINDS.includes(candidate.kind)) return null;
+            const col = Math.round(Number(candidate.col));
+            const row = Math.round(Number(candidate.row));
+            if (!Number.isFinite(col) || !Number.isFinite(row)) return null;
+            const rotationRaw = Math.round(Number(candidate.rotation) / 90) * 90;
+            const rotation = Number.isFinite(rotationRaw) ? ((rotationRaw % 360) + 360) % 360 : 0;
+            return {
+              id:
+                typeof candidate.id === 'string' && candidate.id.trim()
+                  ? candidate.id.trim()
+                  : `${id}-${col}-${row}`,
+              kind: candidate.kind,
+              col,
+              row,
+              rotation,
+              mirrored: candidate.mirrored === true,
+              guideCode:
+                typeof candidate.guideCode === 'string' && candidate.guideCode.trim()
+                  ? candidate.guideCode.trim()
+                  : undefined,
+              widthCm:
+                Number.isFinite(Number(candidate.widthCm)) && Number(candidate.widthCm) > 0
+                  ? Number(candidate.widthCm)
+                  : undefined,
+              depthCm:
+                Number.isFinite(Number(candidate.depthCm)) && Number(candidate.depthCm) > 0
+                  ? Number(candidate.depthCm)
+                  : undefined,
+            };
+          })
+          .filter(Boolean);
+        const liveTransforms =
+          entry.liveTransforms && typeof entry.liveTransforms === 'object'
+            ? Object.fromEntries(
+                Object.entries(entry.liveTransforms)
+                  .map(([pieceId, value]) => {
+                    const transform = value && typeof value === 'object' ? value : {};
+                    const x = Number(transform.x);
+                    const y = Number(transform.y);
+                    const scaleX = Number(transform.scaleX);
+                    const scaleY = Number(transform.scaleY);
+                    const angle = Number(transform.angle);
+                    if (
+                      !pieceId ||
+                      !Number.isFinite(x) ||
+                      !Number.isFinite(y) ||
+                      !Number.isFinite(scaleX) ||
+                      !Number.isFinite(scaleY) ||
+                      !Number.isFinite(angle)
+                    ) {
+                      return null;
+                    }
+                    return [
+                      pieceId,
+                      {
+                        x,
+                        y,
+                        scaleX: Math.max(0.01, scaleX),
+                        scaleY: Math.max(0.01, scaleY),
+                        angle,
+                      },
+                    ];
+                  })
+                  .filter(Boolean)
+              )
+            : undefined;
+        return [
+          id,
+          {
+            id,
+            name:
+              typeof entry.name === 'string' && entry.name.trim()
+                ? entry.name.trim()
+                : 'Custom sectional',
+            pieces,
+            imageViewId: typeof entry.imageViewId === 'string' ? entry.imageViewId : '',
+            updatedAt: typeof entry.updatedAt === 'string' ? entry.updatedAt : '',
+            theme:
+              typeof entry.theme === 'string' &&
+              ['flax', 'charcoal', 'navy', 'terracotta', 'forest', 'sand'].includes(entry.theme)
+                ? entry.theme
+                : undefined,
+            pricingCountry:
+              typeof entry.pricingCountry === 'string' &&
+              SECTIONAL_PRICING_COUNTRIES.includes(entry.pricingCountry)
+                ? entry.pricingCountry
+                : undefined,
+            pricingFabric:
+              typeof entry.pricingFabric === 'string' &&
+              SECTIONAL_PRICING_FABRICS.includes(entry.pricingFabric)
+                ? entry.pricingFabric
+                : undefined,
+            liveTransforms,
+          },
+        ];
+      })
+      .filter(Boolean)
+  );
 }
 
 export function normalizeSofaMetadata(input) {
@@ -329,6 +494,41 @@ export function normalizeSofaMetadata(input) {
     source.imagePartLabels && typeof source.imagePartLabels === 'object'
       ? safeClone(source.imagePartLabels, {})
       : {};
+  const rawGorgiasTickets =
+    source.externalSources?.gorgiasTickets &&
+    typeof source.externalSources.gorgiasTickets === 'object'
+      ? source.externalSources.gorgiasTickets
+      : {};
+  const gorgiasTickets = Object.fromEntries(
+    Object.entries(rawGorgiasTickets)
+      .map(([ticketId, value]) => {
+        const entry = value && typeof value === 'object' ? value : {};
+        const normalizedTicketId = String(ticketId || entry.ticketId || '').trim();
+        if (!normalizedTicketId) return null;
+        return [
+          normalizedTicketId,
+          {
+            ticketId: normalizedTicketId,
+            ticketUrl: typeof entry.ticketUrl === 'string' ? entry.ticketUrl : '',
+            customerName: typeof entry.customerName === 'string' ? entry.customerName : '',
+            productName: typeof entry.productName === 'string' ? entry.productName : '',
+            productSku: typeof entry.productSku === 'string' ? entry.productSku : '',
+            guideCode: typeof entry.guideCode === 'string' ? entry.guideCode : '',
+            importedImageHashes: Array.isArray(entry.importedImageHashes)
+              ? Array.from(
+                  new Set(
+                    entry.importedImageHashes
+                      .map(hash => (typeof hash === 'string' ? hash.trim().toLowerCase() : ''))
+                      .filter(Boolean)
+                  )
+                )
+              : [],
+            lastImportedAt: typeof entry.lastImportedAt === 'string' ? entry.lastImportedAt : '',
+          },
+        ];
+      })
+      .filter(Boolean)
+  );
   const naming =
     source.naming && typeof source.naming === 'object'
       ? {
@@ -371,6 +571,8 @@ export function normalizeSofaMetadata(input) {
     tagStyleByScope,
     pieceGroups,
     imagePartLabels,
+    externalSources: { gorgiasTickets },
+    sectionalAssemblies: normalizeSectionalAssemblies(source.sectionalAssemblies),
     naming,
     photos,
     quickSketchMap: source.quickSketchMap ? safeClone(source.quickSketchMap, null) : null,

@@ -84,6 +84,11 @@ export class CurveTool extends BaseTool {
     if (!this.isActive) return;
 
     const evt = o.e;
+    if (this.points.length === 0 && (window as any).canStartCwQueuedDrawing?.() === false) {
+      evt.preventDefault?.();
+      evt.stopPropagation?.();
+      return;
+    }
     const isSnapHeld = this.isSnapModifier(evt);
 
     // A curve may only begin inside the visible capture frame. The Fabric
@@ -377,7 +382,7 @@ export class CurveTool extends BaseTool {
       strokeWidth: this.strokeWidth,
       fill: '',
       strokeDashArray:
-        this.lineStyle === 'tape' || this.lineStyle === 'stretchy'
+        this.lineStyle === 'tape' || this.lineStyle === 'stretchy' || this.lineStyle === 'zipper'
           ? null
           : this.dashPattern.length > 0
             ? this.dashPattern
@@ -388,6 +393,8 @@ export class CurveTool extends BaseTool {
       hasControls: false,
       hasBorders: false,
       opacity: tempPoint ? 0.6 : 1.0, // Dimmer if temporary
+      isZipper: this.lineStyle === 'zipper',
+      customType: this.lineStyle === 'zipper' ? 'zipper' : undefined,
     });
 
     if (window.app && window.app.arrowManager) {
@@ -457,12 +464,19 @@ export class CurveTool extends BaseTool {
 
     // Create final curve path
     const pathString = PathUtils.createSmoothPath(this.points);
+    const isZipper = this.lineStyle === 'zipper';
+    const imageLabel = isZipper
+      ? resolveDrawingImageLabel(
+          this.canvasManager,
+          window.app?.projectManager?.currentViewId || 'front'
+        )
+      : undefined;
     const curve = new fabric.Path(pathString, {
       stroke: this.strokeColor,
       strokeWidth: this.strokeWidth,
       fill: 'transparent',
       strokeDashArray:
-        this.lineStyle === 'tape' || this.lineStyle === 'stretchy'
+        this.lineStyle === 'tape' || this.lineStyle === 'stretchy' || this.lineStyle === 'zipper'
           ? null
           : this.dashPattern.length > 0
             ? this.dashPattern
@@ -471,8 +485,11 @@ export class CurveTool extends BaseTool {
       selectable: true,
       evented: true,
       perPixelTargetFind: true,
-      padding: 8,
+      padding: isZipper ? 18 : 8,
       objectCaching: false,
+      isZipper,
+      customType: isZipper ? 'zipper' : undefined,
+      imageLabel,
     });
 
     // Store points on the object for editing
@@ -562,8 +579,11 @@ export class CurveTool extends BaseTool {
       }
     }
 
-    // Add metadata for labeling
-    if (window.app && window.app.metadataManager) {
+    // Zippers are annotations, not dimensions. Preserve the curve's exact
+    // anchors without creating a measurement entry or tag.
+    if (isZipper) {
+      window.app?.historyManager?.saveState?.({ force: true, reason: 'zipper:curve-end' });
+    } else if (window.app && window.app.metadataManager) {
       const imageLabel = resolveDrawingImageLabel(
         this.canvasManager,
         window.app.projectManager?.currentViewId || 'front'
@@ -677,7 +697,7 @@ export class CurveTool extends BaseTool {
     if (this.previewPath && this.points.length >= 2) {
       this.previewPath.set(
         'strokeDashArray',
-        this.lineStyle === 'tape' || this.lineStyle === 'stretchy'
+        this.lineStyle === 'tape' || this.lineStyle === 'stretchy' || this.lineStyle === 'zipper'
           ? null
           : this.dashPattern.length > 0
             ? this.dashPattern
@@ -688,7 +708,8 @@ export class CurveTool extends BaseTool {
   }
 
   setLineStyle(style) {
-    this.lineStyle = style === 'tape' || style === 'stretchy' ? style : 'solid';
+    this.lineStyle =
+      style === 'tape' || style === 'stretchy' || style === 'zipper' ? style : 'solid';
     if (this.previewPath && this.points.length >= 2) {
       this.previewPath.lineStyle = this.lineStyle;
       this.previewPath.dashSettings = {
@@ -700,7 +721,7 @@ export class CurveTool extends BaseTool {
       this.previewPath.arrowSettings.tapeTickSpacing = this.tapeTickSpacing;
       this.previewPath.set(
         'strokeDashArray',
-        this.lineStyle === 'tape' || this.lineStyle === 'stretchy'
+        this.lineStyle === 'tape' || this.lineStyle === 'stretchy' || this.lineStyle === 'zipper'
           ? null
           : this.dashPattern.length > 0
             ? this.dashPattern

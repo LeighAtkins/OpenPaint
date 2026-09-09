@@ -91,6 +91,11 @@ export class LineTool extends BaseTool {
     if (!this.isActive) return;
 
     const evt = o.e;
+    if ((window as any).canStartCwQueuedDrawing?.() === false) {
+      evt.preventDefault?.();
+      evt.stopPropagation?.();
+      return;
+    }
 
     const isSnapHeld = this.isSnapModifier(evt);
     const bendTarget = o.target?.isTag ? o.target.connectedStroke : o.target;
@@ -159,6 +164,13 @@ export class LineTool extends BaseTool {
       this.snapIndicator = null;
     }
 
+    const isZipper = this.lineStyle === 'zipper';
+    const imageLabel = isZipper
+      ? resolveDrawingImageLabel(
+          this.canvasManager,
+          window.app?.projectManager?.currentViewId || 'front'
+        )
+      : undefined;
     const points = [this.startX, this.startY, this.startX, this.startY];
     this.line = new fabric.Line(points, {
       strokeWidth: this.strokeWidth,
@@ -166,7 +178,7 @@ export class LineTool extends BaseTool {
       originX: 'center',
       originY: 'center',
       strokeDashArray:
-        this.lineStyle === 'tape' || this.lineStyle === 'stretchy'
+        this.lineStyle === 'tape' || this.lineStyle === 'stretchy' || this.lineStyle === 'zipper'
           ? null
           : this.dashPattern.length > 0
             ? this.dashPattern
@@ -174,6 +186,9 @@ export class LineTool extends BaseTool {
       lineStyle: this.lineStyle,
       selectable: false,
       evented: false,
+      isZipper,
+      customType: isZipper ? 'zipper' : undefined,
+      imageLabel,
     });
 
     // Apply arrow settings if available
@@ -460,7 +475,7 @@ export class LineTool extends BaseTool {
       selectable: true,
       evented: true,
       perPixelTargetFind: true,
-      padding: 8,
+      padding: this.lineStyle === 'zipper' ? 18 : 8,
       objectCaching: false,
     });
 
@@ -473,8 +488,21 @@ export class LineTool extends BaseTool {
 
     this.canvas.requestRenderAll();
 
-    // Attach metadata (label) to the line
-    if (window.app && window.app.metadataManager && window.app.projectManager) {
+    // Zippers are visual annotations. They use the line geometry and history
+    // pipeline, but intentionally do not consume a measurement label or tag.
+    if (this.lineStyle === 'zipper') {
+      this.line.set({
+        isZipper: true,
+        customType: 'zipper',
+        imageLabel:
+          this.line.imageLabel ||
+          resolveDrawingImageLabel(
+            this.canvasManager,
+            window.app?.projectManager?.currentViewId || 'front'
+          ),
+      });
+      window.app?.historyManager?.saveState?.({ force: true, reason: 'zipper:end' });
+    } else if (window.app && window.app.metadataManager && window.app.projectManager) {
       const imageLabel = resolveDrawingImageLabel(
         this.canvasManager,
         window.app.projectManager.currentViewId || 'front'
@@ -753,7 +781,7 @@ export class LineTool extends BaseTool {
     if (this.line && this.isDrawing) {
       this.line.set(
         'strokeDashArray',
-        this.lineStyle === 'tape' || this.lineStyle === 'stretchy'
+        this.lineStyle === 'tape' || this.lineStyle === 'stretchy' || this.lineStyle === 'zipper'
           ? null
           : this.dashPattern.length > 0
             ? this.dashPattern
@@ -764,7 +792,8 @@ export class LineTool extends BaseTool {
   }
 
   setLineStyle(style) {
-    this.lineStyle = style === 'tape' || style === 'stretchy' ? style : 'solid';
+    this.lineStyle =
+      style === 'tape' || style === 'stretchy' || style === 'zipper' ? style : 'solid';
     if (this.line && this.isDrawing) {
       this.line.lineStyle = this.lineStyle;
       this.line.dashSettings = {
@@ -776,7 +805,7 @@ export class LineTool extends BaseTool {
       this.line.arrowSettings.tapeTickSpacing = this.tapeTickSpacing;
       this.line.set(
         'strokeDashArray',
-        this.lineStyle === 'tape' || this.lineStyle === 'stretchy'
+        this.lineStyle === 'tape' || this.lineStyle === 'stretchy' || this.lineStyle === 'zipper'
           ? null
           : this.dashPattern.length > 0
             ? this.dashPattern

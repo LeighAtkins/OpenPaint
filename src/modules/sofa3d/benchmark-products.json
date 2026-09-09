@@ -1,0 +1,67 @@
+[
+  {
+    "id": "karlstad",
+    "title": "Karlstad 3 Seater Sofa Cover",
+    "url": "https://comfort-works.com/products/karlstad-3-seater-sofa-cover",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-3_VELC_SP_CVC-01.jpg?v=1741678943",
+    "reference": "IK-KD-3",
+    "dimensions": {
+      "width": 205,
+      "depth": 93,
+      "height": 80
+    },
+    "version": "Original"
+  },
+  {
+    "id": "ektorp",
+    "title": "Ektorp 3 Seater Sofa Cover",
+    "url": "https://comfort-works.com/products/ektorp-3-seater-sofa-cover",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-3_CNRP_PM_CVC-01.jpg?v=1741320115",
+    "reference": "IK-EP-3",
+    "dimensions": {
+      "width": 218,
+      "depth": 88,
+      "height": 88
+    },
+    "version": "Original"
+  },
+  {
+    "id": "pb-basic",
+    "title": "PB Basic Sofa Slipcover",
+    "url": "https://comfort-works.com/products/pb-basic-sofa-slipcover",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-82_MG_CNRP_PM_CVC-01.jpg?v=1741320177",
+    "reference": "PB-BSC-82__MG",
+    "dimensions": {
+      "width": 209.5,
+      "depth": 90,
+      "height": 96.5
+    },
+    "version": "Mitchell Gold \u00b7 Classic"
+  },
+  {
+    "id": "harmony",
+    "title": "Harmony 82\" Sofa Slipcover",
+    "url": "https://comfort-works.com/products/harmony-82-sofa-slipcover",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-82_EXD_VELC_SP_CVC-01.jpg?v=1741320195",
+    "reference": "WE-HY-82__EXD",
+    "dimensions": {
+      "width": 208.28,
+      "depth": 119.38,
+      "height": 86.36
+    },
+    "version": "47 inch depth \u00b7 Urban"
+  },
+  {
+    "id": "cloud-corner",
+    "title": "Cloud Modular Corner Chair Slipcover",
+    "url": "https://comfort-works.com/products/cloud-modular-corner-chair-slipcover",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CM-40CR_EXD_VELC_SP_CVC-01.jpg?v=1741320095",
+    "reference": "RH-CM-40CR__EXD",
+    "dimensions": {
+      "width": 114.3,
+      "depth": 114.3,
+      "height": 46.99
+    },
+    "version": "Extra depth \u00b7 Original"
+  }
+]

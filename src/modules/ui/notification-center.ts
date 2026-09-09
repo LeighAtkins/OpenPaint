@@ -9,6 +9,7 @@ type NotifyPayload =
       icon?: string;
       durationMs?: number;
       replace?: boolean;
+      progress?: number;
     };
 
 type NotificationElement = HTMLDivElement & { timer?: ReturnType<typeof setTimeout> | null };
@@ -44,6 +45,8 @@ function ensureNotificationStyles(): void {
     }
 
     .openpaint-toast {
+      position: relative;
+      overflow: hidden;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -128,6 +131,24 @@ function ensureNotificationStyles(): void {
       overflow: hidden;
       text-overflow: ellipsis;
       overflow-wrap: anywhere;
+    }
+
+    .openpaint-toast-progress {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .openpaint-toast-progress > span {
+      display: block;
+      width: var(--openpaint-toast-progress, 0%);
+      height: 100%;
+      border-radius: inherit;
+      background: rgba(255, 255, 255, 0.92);
+      transition: width 180ms ease;
     }
 
     .openpaint-toast.success {
@@ -264,6 +285,19 @@ export function notifyOpenPaint(payload: NotifyPayload, fallbackKind = 'info'): 
   body.textContent = message;
   text.appendChild(body);
   toast.appendChild(text);
+
+  const progress = Number(normalized.progress);
+  if (Number.isFinite(progress)) {
+    const track = document.createElement('div');
+    track.className = 'openpaint-toast-progress';
+    const fill = document.createElement('span');
+    fill.style.setProperty(
+      '--openpaint-toast-progress',
+      `${Math.max(0, Math.min(1, progress)) * 100}%`
+    );
+    track.appendChild(fill);
+    toast.appendChild(track);
+  }
 
   host.appendChild(toast);
   requestAnimationFrame(() => toast.classList.add('visible'));

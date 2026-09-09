@@ -44,6 +44,40 @@ describe('ProjectManager cloud image persistence', () => {
     expect(createObjectURL.mock.calls[0][0].type).toBe('image/png');
   });
 
+  test('does not revoke blob URLs owned by the cloud asset cache', async () => {
+    const manager = makeManager();
+    const objectUrl = 'blob:https://sofapaint.vercel.app/cloud-image';
+    const resolveCloudAssetToObjectUrl = vi.fn(async () => objectUrl);
+    window.app.cloudProjectManager = {
+      assetObjectUrlCache: new Map([['asset-hash', objectUrl]]),
+      getActiveProjectId: () => 'project-1',
+      resolveCloudAssetToObjectUrl,
+    };
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+
+    await expect(
+      manager.resolveViewImageUrl({
+        imageUrl: 'cloud-asset://asset-hash',
+        imageAssetHash: 'asset-hash',
+      })
+    ).resolves.toBe(objectUrl);
+    expect(manager.loadedProjectObjectUrls).not.toContain(objectUrl);
+
+    // Also protect sessions created by an older build that incorrectly put a
+    // cloud-owned URL in ProjectManager's cleanup list.
+    manager.loadedProjectObjectUrls.push(objectUrl);
+    manager.revokeLoadedProjectObjectUrls();
+    expect(revokeObjectURL).not.toHaveBeenCalledWith(objectUrl);
+
+    await expect(
+      manager.resolveViewImageUrl({
+        imageUrl: 'cloud-asset://asset-hash',
+        imageAssetHash: 'asset-hash',
+      })
+    ).resolves.toBe(objectUrl);
+    expect(resolveCloudAssetToObjectUrl).toHaveBeenCalledTimes(2);
+  });
+
   test('aborts cloud project data generation when an image upload fails', async () => {
     const manager = makeManager();
     manager.views = {

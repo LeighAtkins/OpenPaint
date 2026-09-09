@@ -23,6 +23,7 @@
     "dev:legacy": "node app.js",
     "build": "tsc -b && vite build --config vite.config.ts",
     "build:css": "node scripts/ensure-public-css.js && tailwindcss -i \"./css/tailwind.input.css\" -o \"./public/css/tailwind.build.css\" --minify",
+    "build:gorgias-extension": "node scripts/package-gorgias-extension.mjs",
     "build:profile:no-minify": "vite build --config vite.config.ts --minify false",
     "preview": "vite preview --config vite.config.ts",
     "build:vercel": "bun run build:css && vite build --config vite.config.ts",
@@ -42,6 +43,8 @@
     "test:e2e": "npx playwright test --project=e2e",
     "test:e2e:headed": "npx playwright test --project=e2e --headed",
     "test:e2e:debug": "npx playwright test --project=e2e --debug",
+    "test:sectional:visual": "npx playwright test tests/e2e/sectional-builder-45-visual.spec.ts --project=e2e",
+    "test:sectional:visual:update": "npx playwright test tests/e2e/sectional-builder-45-visual.spec.ts --project=e2e --update-snapshots",
     "test:visual": "node scripts/run-visual-tests.mjs",
     "test:visual:update": "node scripts/run-visual-tests.mjs --update-snapshots",
     "test:visual:setup": "playwright install --with-deps chromium",
@@ -82,6 +85,7 @@
     "pg": "^8.16.3",
     "puppeteer-core": "^24.22.3",
     "sharp": "^0.34.5",
+    "three": "^0.185.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -94,6 +98,7 @@
     "@tailwindcss/cli": "^4.1.17",
     "@types/fabric": "^5.3.11",
     "@types/node": "^24.10.1",
+    "@types/three": "^0.185.4",
     "@typescript-eslint/eslint-plugin": "^8.48.0",
     "@typescript-eslint/parser": "^8.48.0",
     "@vitest/coverage-v8": "^4.1.0",

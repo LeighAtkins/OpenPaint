@@ -6,7 +6,9 @@ import { ProjectManager } from './ProjectManager.js';
 import { HistoryManager } from './HistoryManager.js';
 import { StrokeMetadataManager } from './StrokeMetadataManager.js';
 import { UploadManager } from './UploadManager.js';
+import { initExtensionImageImport } from './ui/extension-image-import';
 import { imageRegistry } from './ImageRegistry.js';
+import { splitStrokePoints, ellipseStrokePoints } from './utils/split-stroke';
 import { PathUtils } from './utils/PathUtils';
 import { initQuickMeasurementEntry } from './ui/quick-measurement-entry.js';
 
@@ -169,7 +171,10 @@ export class App {
     return localStorage.getItem('openpaint.toolbarColor') || '#3b82f6';
   }
 
-  setToolbarColor(color: string, options: { save?: boolean } = {}): void {
+  setToolbarColor(
+    color: string,
+    options: { save?: boolean; updateSelection?: boolean } = {}
+  ): void {
     const normalized = (color || '').trim();
     if (!normalized) return;
     const colorPicker = document.getElementById('colorPicker') as HTMLInputElement | null;
@@ -178,14 +183,16 @@ export class App {
     }
 
     this.toolManager?.updateSettings?.({ color: normalized });
-    this.tagManager?.setStrokeColor?.(normalized);
+    if (options.updateSelection !== false) {
+      this.tagManager?.setStrokeColor?.(normalized);
 
-    if (this.toolManager?.tools?.shape) {
-      this.toolManager.tools.shape.setFillStyle('no-fill');
+      if (this.toolManager?.tools?.shape) {
+        this.toolManager.tools.shape.setFillStyle('no-fill');
+      }
+
+      this.updateSelectedStrokes?.('color', normalized);
+      this.updateSelectedTextAndShapes?.({ color: normalized });
     }
-
-    this.updateSelectedStrokes?.('color', normalized);
-    this.updateSelectedTextAndShapes?.({ color: normalized });
 
     document.querySelectorAll<HTMLElement>('[data-color]').forEach(button => {
       const isActive =
@@ -201,11 +208,20 @@ export class App {
     }
 
     if (options.save !== false) {
-      localStorage.setItem('openpaint.toolbarColor', normalized);
+      const storageKey = document.body.classList.contains('zipper-style-active')
+        ? 'openpaint.zipperColor'
+        : 'openpaint.toolbarColor';
+      localStorage.setItem(storageKey, normalized);
     }
+    window.dispatchEvent(
+      new CustomEvent('toolbar-color-changed', { detail: { color: normalized } })
+    );
   }
 
-  renderToolbarColorPalettes(paletteName = this.getSavedToolbarPaletteName()): string {
+  renderToolbarColorPalettes(
+    paletteName = this.getSavedToolbarPaletteName(),
+    options: { updateSelection?: boolean } = {}
+  ): string {
     const palettes = this.getToolbarColorPalettes();
     const resolvedName = palettes[paletteName] ? paletteName : 'classic';
     const palette = palettes[resolvedName];
@@ -250,7 +266,10 @@ export class App {
 
     localStorage.setItem('openpaint.toolbarColorPalette', resolvedName);
     localStorage.setItem('openpaint.toolbarColor', activeColor);
-    this.setToolbarColor(activeColor, { save: false });
+    this.setToolbarColor(activeColor, {
+      save: false,
+      updateSelection: options.updateSelection,
+    });
     return resolvedName;
   }
 
@@ -304,6 +323,7 @@ export class App {
       this.historyManager.init();
       this.projectManager.init();
       this.uploadManager.init();
+      initExtensionImageImport(this.uploadManager);
 
       this.setupDeferredToolPreload();
 
@@ -337,7 +357,8 @@ export class App {
               activeTool &&
               (activeTool.constructor.name === 'LineTool' ||
                 activeTool.constructor.name === 'CurveTool' ||
-                activeTool.constructor.name === 'ArrowTool');
+                activeTool.constructor.name === 'ArrowTool' ||
+                activeTool.constructor.name === 'HighlighterTool');
 
             // Only make interactive if NOT in drawing mode
             if (!isDrawingTool) {
@@ -478,6 +499,7 @@ export class App {
       this.toolManager.preloadTools([
         'select',
         'pencil',
+        'highlighter',
         'curve',
         'arrow',
         'privacy',
@@ -641,17 +663,13 @@ export class App {
             window.currentImageLabel ||
             this.projectManager?.currentViewId;
           if (strokeLabel && imageLabel && this.tagManager?.setTagTheme) {
-            const currentStyle = this.tagManager.getResolvedTagStyle?.(
-              strokeLabel,
-              imageLabel,
-              obj
-            );
-            const nextTheme = {
-              background: currentStyle?.palette?.bg || '#ffffff',
-              border: String(value),
-              text: currentStyle?.palette?.text || '#000000',
-            };
-            this.tagManager.setTagTheme(strokeLabel, imageLabel, nextTheme);
+            // Picking a line color must NOT restyle the tag border: the outline
+            // stays on its theme default (black). Previously this wrote a
+            // per-tag override with border = line color, which is why freshly
+            // drawn tags showed the line color as their outline until a later
+            // re-render. Clearing the override also heals projects that
+            // already carry line-colored borders.
+            this.tagManager.setTagTheme(strokeLabel, imageLabel, null);
           }
         } else if (property === 'strokeWidth') {
           if (isArrowGroup && typeof obj.getObjects === 'function') {
@@ -729,6 +747,7 @@ export class App {
       'dot-dash': [5, 5, 1, 5],
       tape: [],
       stretchy: [],
+      zipper: [],
       mixed: [2, 5],
       custom: [5, 5],
     };
@@ -738,7 +757,7 @@ export class App {
   isDashDrawableObject(obj: any): boolean {
     if (!obj) return false;
     if (obj.isTag || obj.isConnectorLine) return false;
-    if (obj.type === 'line' || obj.type === 'path') return true;
+    if (['line', 'path', 'circle', 'ellipse'].includes(obj.type)) return true;
     // MOS arrow groups bundle a child line/path that carries the dash pattern.
     if (obj.type === 'group' && obj.isArrow) return true;
     return obj.strokeMetadata?.type === 'shape';
@@ -759,73 +778,62 @@ export class App {
         return;
       }
 
-      const splitRatio = Math.max(0.05, Math.min(0.95, Number(dashSettings.splitRatio ?? 0.5)));
-      const dashFirst = dashSettings.dashFirst !== false;
-
-      // Pass 1: full dashed render.
-      originalRender.call(this, ctx);
-
-      // Pass 2: overlay solid stroke on the trailing side.
-      const prevDash = this.strokeDashArray;
-      const prevFill = this.fill;
-      const dims = this._getNonTransformedDimensions
-        ? this._getNonTransformedDimensions()
-        : { x: this.width || 0, y: this.height || 0 };
-      const width = Math.max(2, Number(dims?.x || 0) + Number(this.strokeWidth || 1) * 2);
-      const height = Math.max(2, Number(dims?.y || 0) + Number(this.strokeWidth || 1) * 2);
-
-      let startX = -width / 2;
-      let endX = width / 2;
-      if (this.type === 'line') {
-        if (typeof this.x1 === 'number' && typeof this.x2 === 'number') {
-          startX = this.x1;
-          endX = this.x2;
-        } else if (typeof this.calcLinePoints === 'function') {
-          const pts = this.calcLinePoints();
-          startX = pts?.x1 ?? startX;
-          endX = pts?.x2 ?? endX;
+      const splitRatio = Math.max(0, Math.min(1, Number(dashSettings.splitRatio ?? 0.5)));
+      let points = [];
+      if (this.type === 'circle' || this.type === 'ellipse') {
+        points = ellipseStrokePoints(this.rx ?? this.radius, this.ry ?? this.radius);
+      } else if (this.type === 'line' && this.calcLinePoints) {
+        const p = this.calcLinePoints();
+        points = [
+          { x: p.x1, y: p.y1 },
+          { x: p.x2, y: p.y2 },
+        ];
+      } else if (this.type === 'path' && Array.isArray(this.path)) {
+        const d = this.path.map(command => command.join(' ')).join(' ');
+        if (this.__splitPathData !== d) {
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          path.setAttribute('d', d);
+          const length = path.getTotalLength();
+          this.__splitPathPoints = Array.from({ length: 161 }, (_, i) => {
+            const p = path.getPointAtLength((length * i) / 160);
+            return { x: p.x, y: p.y };
+          });
+          this.__splitPathData = d;
         }
-      } else if (this.type === 'path' && Array.isArray(this.path) && this.path.length > 1) {
-        const first = this.path[0];
-        const last = this.path[this.path.length - 1];
-        if (first?.[0] === 'M' && typeof first[1] === 'number') {
-          startX = first[1];
-        }
-        if (last?.[0] === 'L' && typeof last[1] === 'number') {
-          endX = last[1];
-        } else if (last?.[0] === 'C' && typeof last[5] === 'number') {
-          endX = last[5];
-        } else if (last?.[0] === 'Q' && typeof last[3] === 'number') {
-          endX = last[3];
-        }
+        points = this.__splitPathPoints.map(p => ({
+          x: p.x - (this.pathOffset?.x || 0),
+          y: p.y - (this.pathOffset?.y || 0),
+        }));
       }
-
-      const startOnLeft = startX <= endX;
-      const solidOnRight = dashFirst ? startOnLeft : !startOnLeft;
-      const splitRatioX = startOnLeft ? splitRatio : 1 - splitRatio;
-
+      if (points.length < 2) {
+        originalRender.call(this, ctx);
+        return;
+      }
+      const parts = splitStrokePoints(points, splitRatio);
+      // Preserve the normal renderer (including arrowheads), then paint the solid run.
+      const closedEllipse = this.type === 'circle' || this.type === 'ellipse';
+      if (closedEllipse) {
+        const savedStroke = this.stroke;
+        this.stroke = null;
+        try {
+          originalRender.call(this, ctx);
+        } finally {
+          this.stroke = savedStroke;
+        }
+      } else originalRender.call(this, ctx);
       ctx.save();
-      ctx.beginPath();
-      if (solidOnRight) {
-        ctx.rect(
-          -width / 2 + width * splitRatioX,
-          -height / 2 - 4,
-          width * (1 - splitRatioX) + 8,
-          height + 8
-        );
-      } else {
-        ctx.rect(-width / 2 - 8, -height / 2 - 4, width * splitRatioX + 8, height + 8);
-      }
-      ctx.clip();
-
-      this.strokeDashArray = null;
-      if (this.type !== 'line' && this.type !== 'path') {
-        this.fill = 'rgba(0,0,0,0)';
-      }
-      originalRender.call(this, ctx);
-
-      this.strokeDashArray = prevDash;
-      this.fill = prevFill;
+      ctx.strokeStyle = this.stroke;
+      ctx.lineWidth = this.strokeWidth || 1;
+      ctx.lineCap = this.strokeLineCap || 'butt';
+      ctx.lineJoin = this.strokeLineJoin || 'miter';
+      parts.forEach((part, index) => {
+        const dashed = dashSettings.dashFirst !== false ? index === 0 : index === 1;
+        if (dashed && !closedEllipse) return;
+        ctx.setLineDash(dashed ? pattern : []);
+        ctx.beginPath();
+        part.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+        ctx.stroke();
+      });
       ctx.restore();
     };
 
@@ -855,6 +863,13 @@ export class App {
     if (!this.isDashDrawableObject(obj)) return;
     if (obj.isPrivacyErase || obj.customData?.isPrivacyErase) return;
     if (window.app?.toolManager?.activeToolName === 'privacy') return;
+    if (
+      obj.isHighlighter === true ||
+      obj.customType === 'highlighter' ||
+      window.app?.toolManager?.activeToolName === 'highlighter'
+    ) {
+      return;
+    }
 
     // For MOS arrow groups the dash lives on the child line/path, not the group.
     const isArrowGroup = obj.type === 'group' && obj.isArrow;
@@ -864,7 +879,7 @@ export class App {
         : obj;
 
     const customLineStyle =
-      (style === 'tape' || style === 'stretchy') &&
+      (style === 'tape' || style === 'stretchy' || style === 'zipper') &&
       (target.type === 'line' || target.type === 'path')
         ? style
         : 'solid';
@@ -880,6 +895,12 @@ export class App {
       pattern: pattern || [],
     };
     target.lineStyle = customLineStyle;
+    target.isZipper = customLineStyle === 'zipper';
+    if (target.isZipper) {
+      target.customType = 'zipper';
+    } else if (target.customType === 'zipper') {
+      delete target.customType;
+    }
 
     // Skip the arrow-settings/arrow-rendering block for MOS overlay objects:
     // they manage their own arrows via explicit triangle objects (created in
@@ -908,6 +929,7 @@ export class App {
 
     obj.dirty = true;
     target.dirty = true;
+    target.__mosSyncEllipse?.();
   }
 
   applyDashSettingsToTools(pattern: number[], style = 'solid'): void {
@@ -1016,6 +1038,13 @@ export class App {
       return [line.p1, line.p2];
     }
 
+    if (target.type === 'circle' || target.type === 'ellipse') {
+      const matrix = target.calcTransformMatrix();
+      return ellipseStrokePoints(target.rx ?? target.radius, target.ry ?? target.radius).map(p => ({
+        x: matrix[0] * p.x + matrix[2] * p.y + matrix[4],
+        y: matrix[1] * p.x + matrix[3] * p.y + matrix[5],
+      }));
+    }
     if (target.type === 'path') {
       if (Array.isArray(target.customPoints) && target.customPoints.length >= 2) {
         return target.customPoints.map((p: any) => ({ x: p.x, y: p.y }));
@@ -1188,6 +1217,7 @@ export class App {
     ds.mixedEnabled = true;
     target.dashSettings = ds;
     target.dirty = true;
+    target.__mosSyncEllipse?.();
 
     this.currentDashSettings = {
       ...this.currentDashSettings,
@@ -1549,9 +1579,13 @@ export class App {
 
     const updateDrawingModeState = () => {
       const currentTool = this.toolManager.activeTool;
+      const highlighterStyle = this.toolManager.tools.highlighter?.getStyle?.() || 'marker';
+      const isZipper =
+        currentTool === this.toolManager.tools.line && this.currentDashSettings.style === 'zipper';
       const isDrawingMode =
         currentTool === this.toolManager.tools.line ||
         currentTool === this.toolManager.tools.curve ||
+        currentTool === this.toolManager.tools.highlighter ||
         currentTool === this.toolManager.tools.privacy ||
         currentTool === this.toolManager.tools.select ||
         currentTool === this.toolManager.tools.text ||
@@ -1571,8 +1605,12 @@ export class App {
       drawingModeOptions.forEach(option => {
         const mode = option.getAttribute('data-drawing-mode');
         const isActive =
-          (mode === 'line' && currentTool === this.toolManager.tools.line) ||
+          (mode === 'line' && currentTool === this.toolManager.tools.line && !isZipper) ||
           (mode === 'curve' && currentTool === this.toolManager.tools.curve) ||
+          (mode === 'highlighter' &&
+            currentTool === this.toolManager.tools.highlighter &&
+            highlighterStyle !== 'zipper') ||
+          (mode === 'zipper' && isZipper) ||
           (mode === 'privacy' && currentTool === this.toolManager.tools.privacy) ||
           (mode === 'select' && currentTool === this.toolManager.tools.select);
         option.classList.toggle('active', isActive);
@@ -1737,6 +1775,39 @@ export class App {
 
     const bindShapeMenu = (wrapper: HTMLElement, shouldShow?: () => boolean) => {
       let hideTimer: ReturnType<typeof setTimeout> | null = null;
+      let aimMoveHandler: ((event: MouseEvent) => void) | null = null;
+
+      const clearAimTracking = () => {
+        if (aimMoveHandler) {
+          document.removeEventListener('mousemove', aimMoveHandler, true);
+          aimMoveHandler = null;
+        }
+      };
+
+      const pointInTriangle = (
+        point: { x: number; y: number },
+        a: { x: number; y: number },
+        b: { x: number; y: number },
+        c: { x: number; y: number }
+      ) => {
+        const sign = (
+          p1: { x: number; y: number },
+          p2: { x: number; y: number },
+          p3: { x: number; y: number }
+        ) => (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
+        const d1 = sign(point, a, b);
+        const d2 = sign(point, b, c);
+        const d3 = sign(point, c, a);
+        const hasNegative = d1 < 0 || d2 < 0 || d3 < 0;
+        const hasPositive = d1 > 0 || d2 > 0 || d3 > 0;
+        return !(hasNegative && hasPositive);
+      };
+
+      const closeMenu = () => {
+        wrapper.classList.remove('shape-open');
+        clearAimTracking();
+        hideTimer = null;
+      };
 
       const showMenu = () => {
         if (shouldShow && !shouldShow()) return;
@@ -1752,19 +1823,57 @@ export class App {
           clearTimeout(hideTimer);
           hideTimer = null;
         }
+        clearAimTracking();
         wrapper.classList.add('shape-open');
       };
 
-      const scheduleHide = () => {
+      const scheduleHide = (leaveEvent?: MouseEvent) => {
         if (hideTimer) clearTimeout(hideTimer);
-        hideTimer = setTimeout(() => {
-          wrapper.classList.remove('shape-open');
-          hideTimer = null;
-        }, 200);
+        clearAimTracking();
+
+        const menu = wrapper.querySelector<HTMLElement>(':scope > .shape-menu');
+        if (!wrapper.classList.contains('tool-flyout') || !leaveEvent || !menu) {
+          hideTimer = setTimeout(closeMenu, 200);
+          return;
+        }
+
+        const menuRect = menu.getBoundingClientRect();
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const opensRight = menuRect.left >= wrapperRect.right - 2;
+        const edgeX = opensRight ? menuRect.left : menuRect.right;
+        const origin = { x: leaveEvent.clientX, y: leaveEvent.clientY };
+        const topCorner = { x: edgeX, y: menuRect.top - 10 };
+        const bottomCorner = { x: edgeX, y: menuRect.bottom + 10 };
+
+        aimMoveHandler = (moveEvent: MouseEvent) => {
+          const point = { x: moveEvent.clientX, y: moveEvent.clientY };
+          const insideMenu =
+            point.x >= menuRect.left &&
+            point.x <= menuRect.right &&
+            point.y >= menuRect.top &&
+            point.y <= menuRect.bottom;
+          if (insideMenu) {
+            showMenu();
+            return;
+          }
+          if (pointInTriangle(point, origin, topCorner, bottomCorner)) {
+            if (hideTimer) clearTimeout(hideTimer);
+            hideTimer = setTimeout(closeMenu, 500);
+            return;
+          }
+          if (hideTimer) clearTimeout(hideTimer);
+          hideTimer = setTimeout(closeMenu, 90);
+          clearAimTracking();
+        };
+        document.addEventListener('mousemove', aimMoveHandler, true);
+        hideTimer = setTimeout(closeMenu, 500);
       };
 
       wrapper.addEventListener('mouseenter', showMenu);
-      wrapper.addEventListener('mouseleave', scheduleHide);
+      wrapper.addEventListener('mouseleave', event => scheduleHide(event as MouseEvent));
+      wrapper
+        .querySelector<HTMLElement>(':scope > .shape-menu')
+        ?.addEventListener('mouseenter', showMenu);
 
       // Touch support: tap the toggle button to open/close menu on mobile
       const toggleBtn = wrapper.querySelector<HTMLElement>('.tbtn');
@@ -1814,8 +1923,21 @@ export class App {
           const rect = trigger.getBoundingClientRect();
           menu.setAttribute(FIXED_MENU_ATTR, 'true');
           menu.style.position = 'fixed';
-          menu.style.top = `${rect.bottom + 6}px`;
-          menu.style.left = `${rect.left}px`;
+          if (wrapper.classList.contains('tool-flyout')) {
+            const menuWidth = Math.max(menu.offsetWidth, 174);
+            const menuHeight = menu.offsetHeight;
+            const rightOpeningLeft = rect.right + 8;
+            const leftOpeningLeft = rect.left - menuWidth - 8;
+            const fitsRight = rightOpeningLeft + menuWidth <= window.innerWidth - 8;
+            menu.style.left = `${Math.max(8, fitsRight ? rightOpeningLeft : leftOpeningLeft)}px`;
+            menu.style.top = `${Math.max(
+              8,
+              Math.min(rect.top, window.innerHeight - menuHeight - 8)
+            )}px`;
+          } else {
+            menu.style.top = `${rect.bottom + 6}px`;
+            menu.style.left = `${rect.left}px`;
+          }
           menu.style.zIndex = '10500';
         });
 
@@ -1826,11 +1948,17 @@ export class App {
           const trigger = wrapper.querySelector<HTMLElement>(':scope > button');
           if (!trigger) return;
           const rect = trigger.getBoundingClientRect();
+          const panelWidth = Math.max(panel.offsetWidth, 260);
+          const preferredLeft = rect.right - panelWidth;
+          const clampedLeft = Math.max(
+            8,
+            Math.min(preferredLeft, window.innerWidth - panelWidth - 8)
+          );
           panel.setAttribute(FIXED_MENU_ATTR, 'true');
           panel.style.position = 'fixed';
           panel.style.top = `${rect.bottom + 6}px`;
           panel.style.right = '';
-          panel.style.left = `${rect.left}px`;
+          panel.style.left = `${clampedLeft}px`;
           panel.style.zIndex = '10500';
         });
       });
@@ -1936,12 +2064,32 @@ export class App {
       });
     };
 
+    const closeDrawingModeMenus = () => {
+      drawingModeWrappers.forEach(wrapper => wrapper.classList.remove('shape-open'));
+    };
+
     const activateCurveMode = async (repeat: boolean) => {
       if (this.preEraserBrushSize > 0) leaveEraserBrushSize();
       await setCurveRepeatMode(repeat);
       await this.toolManager.selectTool('curve');
+      if (this.currentDashSettings.style === 'zipper') {
+        this.applyDashSettingsToTools([], 'zipper');
+      }
       setActiveDrawingModeOption('curve');
       updateDrawingToggleLabels(repeat ? 'Curved Line ∞' : 'Curved Line');
+      closeDrawingModeMenus();
+    };
+
+    const activateHighlighterStyle = async (style: 'marker') => {
+      if (this.preEraserBrushSize > 0) leaveEraserBrushSize();
+      await setCurveRepeatMode(false);
+      const highlighterTool = await this.toolManager.ensureTool('highlighter');
+      highlighterTool?.setStyle?.(style);
+      await this.toolManager.selectTool('highlighter');
+      setActiveDrawingModeOption('highlighter');
+      updateDrawingToggleLabels('Highlight');
+      closeDrawingModeMenus();
+      window.dispatchEvent(new CustomEvent('highlighter-style-changed', { detail: { style } }));
     };
 
     drawingModeOptions.forEach(btn => {
@@ -1966,11 +2114,15 @@ export class App {
         if (mode === 'select') {
           void this.toolManager.selectTool('select');
           updateDrawingToggleLabels('Select');
+        } else if (mode === 'highlighter') {
+          void activateHighlighterStyle('marker');
+          return;
         } else {
           void this.toolManager.selectTool('line');
           updateDrawingToggleLabels('Straight Line');
         }
         setActiveDrawingModeOption(mode);
+        closeDrawingModeMenus();
       });
 
       btn.addEventListener('dblclick', event => {
@@ -2098,6 +2250,10 @@ export class App {
         setActiveDrawingModeOption('curve');
         const repeat = this.toolManager.tools.curve?.repeatMode === true;
         updateDrawingToggleLabels(repeat ? 'Curved Line ∞' : 'Curved Line');
+      } else if (currentTool === this.toolManager.tools.highlighter) {
+        const style = this.toolManager.tools.highlighter?.getStyle?.() || 'marker';
+        setActiveDrawingModeOption('highlighter');
+        updateDrawingToggleLabels('Highlight');
       } else if (currentTool === this.toolManager.tools.privacy) {
         updateDrawingToggleLabels('Eraser Tool');
       } else if (currentTool === this.toolManager.tools.select) {
@@ -2206,7 +2362,15 @@ export class App {
       return Math.max(0.55, Math.min(2.25, numeric));
     };
     const formatTapeTickSpacing = (value: number): string => `${Math.round(value * 100)}%`;
-    const resizableTools = new Set(['line', 'curve', 'arrow', 'pencil', 'shape', 'privacy']);
+    const resizableTools = new Set([
+      'line',
+      'curve',
+      'arrow',
+      'pencil',
+      'highlighter',
+      'shape',
+      'privacy',
+    ]);
     const getBaseLabel = (label: string | null | undefined): string =>
       typeof label === 'string' ? label.split('::tab:')[0] || label : '';
     const currentViewId = () => (window.app?.projectManager?.currentViewId as string) || '';
@@ -2481,6 +2645,7 @@ export class App {
 
     // Dash style controls (solid/dotted/partial split)
     const dashStyleSelect = document.getElementById('dashStyleSelect') as HTMLSelectElement | null;
+    let lineStylePatternSelect: HTMLSelectElement | null = null;
     const dashControls = document.getElementById('dashControls');
     let dashSplitInput = document.getElementById('dashSplitInput') as HTMLInputElement | null;
 
@@ -2510,6 +2675,7 @@ export class App {
       'dot-dash',
       'mixed',
       'tape',
+      'zipper',
     ];
     const setLineStyleIcon = (style: string) => {
       if (!dottedBtn) return;
@@ -2531,6 +2697,8 @@ export class App {
         tape: '<svg width="38" height="16" viewBox="0 0 38 16" aria-hidden="true"><defs><linearGradient id="tapeIconGradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset=".55" stop-color="#facc15"/><stop offset="1" stop-color="#b45309"/></linearGradient></defs><rect x="2" y="3" width="34" height="10" rx="1.5" fill="url(#tapeIconGradient)" stroke="#713f12" stroke-width="1"/><path d="M6 3v10M10 3v6M14 3v10M18 3v6M22 3v10M26 3v6M30 3v10" stroke="#111827" stroke-width="1"/><path d="M14 4.5h5" stroke="#b91c1c" stroke-width="1.2"/></svg>',
         stretchy:
           '<svg width="34" height="12" viewBox="0 0 34 12" aria-hidden="true"><path d="M4 5 C11.3 5.3 22.7 3 30 2.7 L30 9.3 C22.7 9 11.3 6.7 4 7 Q3.4 6 4 5Z" fill="currentColor"/></svg>',
+        zipper:
+          '<svg width="38" height="16" viewBox="0 0 38 16" aria-hidden="true"><path d="M3 5h27M3 11h27" stroke="currentColor" stroke-width="1.7"/><path d="m6 5 3 6 3-6 3 6 3-6 3 6 3-6 3 6" fill="none" stroke="currentColor" stroke-width="1.1"/><rect x="1.5" y="3" width="3" height="10" rx="1" fill="currentColor"/><path d="M29 4h4l2 4-2 4h-4z" fill="currentColor"/><rect x="34" y="6" width="3" height="4" rx="1.5" fill="none" stroke="currentColor"/></svg>',
       };
       dottedBtn.innerHTML = iconMap[style] || iconMap.solid;
     };
@@ -2557,6 +2725,9 @@ export class App {
 
       if (dashStyleSelect && dashStyleSelect.value !== normalizedStyle) {
         dashStyleSelect.value = normalizedStyle;
+      }
+      if (lineStylePatternSelect && lineStylePatternSelect.value !== normalizedStyle) {
+        lineStylePatternSelect.value = normalizedStyle;
       }
       if (dashSplitInput) {
         const wrap = document.getElementById('dashSplitWrap');
@@ -2630,6 +2801,8 @@ export class App {
       }
       const tbLeft = document.getElementById('tbLeft');
       if (!tbLeft) return;
+      let toggleUnifiedAppearance: (() => void) | null = null;
+      let closeUnifiedAppearance: (() => void) | null = null;
 
       if (!document.getElementById('lineStylePopoverStyles')) {
         const style = document.createElement('style');
@@ -2640,12 +2813,12 @@ export class App {
           .line-style-toggle-icon { display: inline-flex; width: 38px; height: 18px; align-items: center; justify-content: center; color: currentColor; }
           .line-style-toggle-label { font-weight: 700; white-space: nowrap; }
           .line-style-toggle-chip { min-width: 22px; padding: 1px 6px; border-radius: 999px; background: #eef2ff; color: #1d4ed8; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
-          #lineStylePopoverPanel { position: fixed; width: 520px; max-width: calc(100vw - 24px); background: rgba(255,255,255,0.97); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; box-shadow: 0 24px 48px rgba(2,6,23,0.18), 0 2px 8px rgba(2,6,23,0.08); padding: 14px; z-index: 10150; transform-origin: top left; transform: translateY(-4px) scale(0.98); opacity: 0; pointer-events: none; transition: opacity 120ms ease-out, transform 150ms cubic-bezier(0.2,0,0,1); }
+          #lineStylePopoverPanel { position: fixed; width: 410px; max-width: calc(100vw - 16px); background: rgba(255,255,255,0.98); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid #dbe3ef; border-radius: 8px; box-shadow: 0 18px 38px rgba(2,6,23,0.16), 0 2px 6px rgba(2,6,23,0.08); padding: 10px; z-index: 10150; transform-origin: top left; transform: translateY(-4px) scale(0.98); opacity: 0; pointer-events: none; transition: opacity 120ms ease-out, transform 150ms cubic-bezier(0.2,0,0,1); }
           #lineStylePopoverPanel.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
-          .line-style-panel-grid { display: grid; gap: 10px; }
-          .line-style-row { display: grid; grid-template-columns: 74px 1fr; align-items: center; gap: 10px; }
+          .line-style-panel-grid { display: grid; gap: 7px; }
+          .line-style-row { display: grid; grid-template-columns: 58px minmax(0,1fr); align-items: center; gap: 8px; min-width: 0; }
           .line-style-title { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: #64748b; text-transform: uppercase; }
-          .line-style-control { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+          .line-style-control { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
           .line-style-width-input { width: 62px !important; height: 30px !important; border-radius: 999px !important; text-align: center; font-weight: 700; color: #111827; background: #f8fafc; border: 1px solid #dbe3ef; }
           .line-style-arrow-buttons { display: inline-flex; align-items: center; gap: 6px; padding: 3px; border: 1px solid #e2e8f0; border-radius: 999px; background: #f8fafc; }
           .line-style-arrow-buttons .tbtn { width: 32px; height: 28px; min-width: 32px; padding: 0; border-radius: 999px; }
@@ -2657,8 +2830,28 @@ export class App {
           .line-style-scope button { border: 1px solid #e2e8f0; background: #f8fafc; color: #475569; border-radius: 999px; padding: 4px 12px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 100ms ease; }
           .line-style-scope button:hover { background: #f1f5f9; border-color: #cbd5e1; }
           .line-style-scope button.active { background: #1e40af; color: #fff; border-color: #1e40af; box-shadow: 0 1px 3px rgba(30,64,175,0.3); }
-          #lineStylePreviewWrap { width: 100%; height: 58px; background: linear-gradient(180deg,#ffffff,#f8fafc); border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
-          #lineStylePreviewCanvas { width: 100%; height: 58px; display: block; }
+          .line-style-highlighter-options { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid #dbe3ef; border-radius: 7px; background: #f8fafc; }
+          .line-style-highlighter-options button { min-height: 28px; padding: 0 12px; border: 0; border-radius: 5px; color: #475569; background: transparent; font-size: 11px; font-weight: 700; cursor: pointer; }
+          .line-style-highlighter-options button:hover { color: #0f172a; background: #eef2f7; }
+          .line-style-highlighter-options button.active { color: #fff; background: #2563eb; }
+          .line-style-segmented { display:inline-flex; gap:2px; padding:2px; border:1px solid #dbe3ef; border-radius:7px; background:#f8fafc; }
+          .line-style-segmented button { height:26px; min-width:68px; padding:0 10px; border:0; border-radius:5px; background:transparent; color:#475569; font-size:11px; font-weight:700; cursor:pointer; }
+          .line-style-segmented button.active { color:#fff; background:#2563eb; }
+          .line-style-pattern-select { height:30px; min-width:150px; max-width:100%; padding:0 28px 0 9px; border:1px solid #cbd5e1; border-radius:6px; background:#fff; color:#0f172a; font-size:12px; font-weight:600; }
+          .line-style-color-options { display:inline-flex; align-items:center; gap:6px; }
+          .line-style-color-options button { width:25px; height:25px; padding:0; border:2px solid #fff; border-radius:50%; box-shadow:0 0 0 1px #cbd5e1; cursor:pointer; }
+          .line-style-color-options button.active { box-shadow:0 0 0 2px #2563eb; }
+          #lineStylePreviewWrap { width:100%; height:28px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; overflow:hidden; }
+          #lineStylePreviewCanvas { width:100%; height:28px; display:block; }
+          #lineStylePreviewWrap > .canvas-container { position:relative !important; inset:auto !important; width:100% !important; height:28px !important; pointer-events:none !important; }
+          #lineStylePreviewWrap > .canvas-container canvas { width:100% !important; height:28px !important; pointer-events:none !important; }
+          #elementsStrokeAppearanceMount .line-style-row { grid-template-columns:1fr; gap:4px; }
+          #elementsStrokeAppearanceMount .line-style-control { width:100%; }
+          #elementsStrokeAppearanceMount .line-style-pattern-select { flex:1; min-width:0; }
+          #elementsStrokeAppearanceMount #lineStylePreviewWrap,
+          #elementsStrokeAppearanceMount #lineStylePreviewCanvas,
+          #elementsStrokeAppearanceMount #lineStylePreviewWrap > .canvas-container,
+          #elementsStrokeAppearanceMount #lineStylePreviewWrap > .canvas-container canvas { height:28px !important; }
         `;
         document.head.appendChild(style);
       }
@@ -2674,12 +2867,12 @@ export class App {
         toggle.type = 'button';
         toggle.innerHTML = `
           <span class="line-style-toggle-icon" aria-hidden="true"></span>
-          <span class="line-style-toggle-label">Line</span>
+          <span class="line-style-toggle-label">Style</span>
           <span class="line-style-toggle-chip">2</span>
         `;
         toggle.setAttribute('aria-haspopup', 'dialog');
         toggle.setAttribute('aria-expanded', 'false');
-        toggle.setAttribute('title', 'Line width, arrows, and line style');
+        toggle.setAttribute('title', 'Stroke and tag appearance');
 
         const panel = document.createElement('div');
         panel.id = 'lineStylePopoverPanel';
@@ -2687,11 +2880,14 @@ export class App {
         panel.setAttribute('aria-label', 'Line style controls');
         panel.innerHTML = `
           <div class="line-style-panel-grid">
+            <div class="line-style-row"><span class="line-style-title">Path</span><div id="lineStyleGeometryRow" class="line-style-control line-style-segmented" role="group" aria-label="Line path"><button type="button" data-line-geometry="line">Straight</button><button type="button" data-line-geometry="curve">Curved</button></div></div>
             <div class="line-style-row"><span class="line-style-title">Stroke</span><div id="lineStyleStrokeRow" class="line-style-control"></div></div>
+            <div id="lineStyleHighlighterRow" class="line-style-row" hidden><span class="line-style-title">Mark</span><div class="line-style-control line-style-highlighter-options" role="group" aria-label="Highlighter style"><button type="button" data-highlighter-style="marker" class="active">Marker</button></div></div>
             <div class="line-style-row"><span class="line-style-title">Arrow</span><div id="lineStyleArrowStyleRow" class="line-style-control"></div></div>
             <div class="line-style-row"><span class="line-style-title">Pattern</span><div id="lineStylePatternRow" class="line-style-control"></div></div>
+            <div id="lineStyleColorRow" class="line-style-row" hidden><span class="line-style-title">Color</span><div id="lineStyleZipperColors" class="line-style-control line-style-color-options" role="group" aria-label="Zipper color"></div></div>
             <div class="line-style-row line-style-scope"><span class="line-style-title">Scope</span><div class="line-style-control"><button type="button" data-scope="selection" class="active">Selection</button><button type="button" data-scope="image">Image</button><button type="button" data-scope="project">Project</button></div></div>
-            <div id="lineStylePreviewWrap" aria-hidden="true"><canvas id="lineStylePreviewCanvas" width="300" height="58"></canvas></div>
+            <div id="lineStylePreviewWrap" aria-hidden="true"><canvas id="lineStylePreviewCanvas" width="300" height="28"></canvas></div>
           </div>
         `;
 
@@ -2701,10 +2897,14 @@ export class App {
 
         toggle.addEventListener('click', e => {
           e.preventDefault();
+          if (toggleUnifiedAppearance) {
+            toggleUnifiedAppearance();
+            return;
+          }
           const open = !panel.classList.contains('open');
           if (open) {
             const rect = toggle.getBoundingClientRect();
-            const panelWidth = 520;
+            const panelWidth = 410;
             const gap = 8;
             const margin = 8;
             let left = rect.left;
@@ -2727,8 +2927,12 @@ export class App {
 
         document.addEventListener('click', e => {
           if (!wrap || wrap.contains(e.target as Node) || panel.contains(e.target as Node)) return;
-          panel.classList.remove('open');
-          toggle.setAttribute('aria-expanded', 'false');
+          if (closeUnifiedAppearance) {
+            closeUnifiedAppearance();
+          } else {
+            panel.classList.remove('open');
+            toggle.setAttribute('aria-expanded', 'false');
+          }
         });
       }
 
@@ -2737,6 +2941,10 @@ export class App {
       const strokeRow = document.getElementById('lineStyleStrokeRow');
       const arrowStyleRow = document.getElementById('lineStyleArrowStyleRow');
       const patternRow = document.getElementById('lineStylePatternRow');
+      const highlighterRow = document.getElementById('lineStyleHighlighterRow');
+      const geometryRow = document.getElementById('lineStyleGeometryRow');
+      const colorRow = document.getElementById('lineStyleColorRow');
+      const zipperColors = document.getElementById('lineStyleZipperColors');
       if (!strokeRow || !arrowStyleRow || !patternRow) return;
 
       if (!wrap.querySelector('#lineStyleQuickArrowButtons')) {
@@ -2783,7 +2991,109 @@ export class App {
         brushSizeSelect.setAttribute('aria-label', 'Line width');
         strokeRow.appendChild(brushSizeSelect);
       }
-      patternRow.appendChild(dottedBtn);
+      dottedBtn.hidden = true;
+      dottedBtn.setAttribute('aria-hidden', 'true');
+
+      lineStylePatternSelect = document.createElement('select');
+      lineStylePatternSelect.id = 'lineStylePatternSelect';
+      lineStylePatternSelect.className = 'line-style-pattern-select';
+      lineStylePatternSelect.setAttribute('aria-label', 'Line pattern');
+      lineStylePatternSelect.innerHTML = `
+        <option value="solid">Solid</option>
+        <option value="stretchy">Stretch</option>
+        <option value="dotted">Dotted</option>
+        <option value="small">Short dash</option>
+        <option value="medium">Dash</option>
+        <option value="large">Long dash</option>
+        <option value="dot-dash">Dot + dash</option>
+        <option value="mixed">Split</option>
+        <option value="tape">Measuring tape</option>
+        <option value="zipper">Zipper</option>
+        <option value="custom">Custom</option>
+      `;
+      lineStylePatternSelect.value = this.currentDashSettings.style || 'solid';
+      lineStylePatternSelect.addEventListener('change', () => {
+        applyDashStyle(lineStylePatternSelect?.value || 'solid');
+      });
+      patternRow.prepend(lineStylePatternSelect);
+
+      const zipperPalette = [
+        { name: 'Black', color: '#111827' },
+        { name: 'Gray', color: '#6b7280' },
+        { name: 'White', color: '#ffffff' },
+      ];
+      if (zipperColors) {
+        zipperColors.innerHTML = zipperPalette
+          .map(
+            item =>
+              `<button type="button" data-zipper-color="${item.color}" style="background:${item.color}" title="${item.name}" aria-label="${item.name} zipper"></button>`
+          )
+          .join('');
+      }
+
+      let zipperPaletteActive = false;
+      let preZipperPalette = this.getSavedToolbarPaletteName();
+      let preZipperColor = this.getSavedToolbarColor();
+      const renderZipperToolbarPalette = () => {
+        const activeColor = localStorage.getItem('openpaint.zipperColor') || '#111827';
+        document.querySelectorAll<HTMLElement>('.color-swatches').forEach(container => {
+          container.dataset.palette = 'zipper';
+          container.innerHTML = zipperPalette
+            .map(item => {
+              const active = item.color.toLowerCase() === activeColor.toLowerCase();
+              const border = item.color === '#ffffff' ? 'border:1px solid #cbd5e1;' : '';
+              return `<button type="button" class="tbtn${active ? ' active transform scale-110' : ''}" data-color="${item.color}" data-zipper-color="true" style="background-color:${item.color};${border}" title="${item.name} zipper" aria-label="${item.name} zipper"></button>`;
+            })
+            .join('');
+        });
+        this.setToolbarColor(activeColor, { save: false, updateSelection: !zipperPaletteActive });
+      };
+      const setZipperPaletteActive = (active: boolean) => {
+        if (active === zipperPaletteActive) return;
+        zipperPaletteActive = active;
+        if (active) {
+          preZipperPalette = this.getSavedToolbarPaletteName();
+          preZipperColor = this.getSavedToolbarColor();
+          document.body.classList.add('zipper-style-active');
+          renderZipperToolbarPalette();
+        } else {
+          document.body.classList.remove('zipper-style-active');
+          this.renderToolbarColorPalettes(preZipperPalette, { updateSelection: false });
+          this.setToolbarColor(preZipperColor, { save: false, updateSelection: false });
+        }
+      };
+
+      zipperColors?.addEventListener('click', event => {
+        const button =
+          event.target instanceof Element
+            ? event.target.closest<HTMLElement>('[data-zipper-color]')
+            : null;
+        const color = button?.dataset.zipperColor;
+        if (!color) return;
+        this.setToolbarColor(color);
+        renderZipperToolbarPalette();
+        zipperColors
+          .querySelectorAll<HTMLElement>('[data-zipper-color]')
+          .forEach(item => item.classList.toggle('active', item.dataset.zipperColor === color));
+      });
+
+      geometryRow?.querySelectorAll<HTMLButtonElement>('[data-line-geometry]').forEach(button => {
+        button.addEventListener('click', async () => {
+          const geometry = button.dataset.lineGeometry;
+          if (geometry === 'curve') {
+            await activateCurveMode(false);
+          } else {
+            await setCurveRepeatMode(false);
+            await this.toolManager.selectTool('line');
+            setActiveDrawingModeOption('line');
+            updateDrawingToggleLabels('Straight Line');
+          }
+          this.applyDashSettingsToTools(
+            this.currentDashSettings.pattern,
+            this.currentDashSettings.style
+          );
+        });
+      });
 
       if (!patternRow.querySelector('#lineStyleTapeSpacing')) {
         const spacingControl = document.createElement('label');
@@ -2873,6 +3183,19 @@ export class App {
         const button = document.getElementById('lineStylePopoverBtn');
         const icon = button?.querySelector<HTMLElement>('.line-style-toggle-icon');
         if (!button || !icon) return;
+        if (this.toolManager?.activeToolName === 'highlighter') {
+          const width = brushSizeSelect ? parseBrushWidth(brushSizeSelect.value) : 2;
+          const highlighterStyle = this.toolManager.tools.highlighter?.getStyle?.() || 'marker';
+          icon.innerHTML =
+            highlighterStyle === 'zipper'
+              ? `<svg width="38" height="18" viewBox="0 0 38 18" aria-hidden="true"><path d="M4 5h30M4 13h30" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity="0.75"></path><path d="m7 5 4 8 4-8 4 8 4-8 4 8 4-8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"></path></svg>`
+              : `<svg width="38" height="18" viewBox="0 0 38 18" aria-hidden="true"><path d="M5 9h28" fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" opacity="0.32"></path></svg>`;
+          button.setAttribute(
+            'title',
+            `${highlighterStyle === 'zipper' ? 'Zipper' : 'Highlighter'} brush width ${width}px`
+          );
+          return;
+        }
         const uiArrowSettings = window.paintApp?.uiState?.arrowSettings;
         const startArrow =
           typeof uiArrowSettings?.startArrow === 'boolean'
@@ -2893,13 +3216,16 @@ export class App {
           mixed: '2 5',
           tape: '',
           stretchy: '',
+          zipper: '',
         };
         const dash = dashMap[style] ? `stroke-dasharray="${dashMap[style]}"` : '';
         const strokeColor =
           style === 'tape' ? '#b45309' : style === 'stretchy' ? '#db2777' : 'currentColor';
         icon.innerHTML =
-          style === 'stretchy'
-            ? `
+          style === 'zipper'
+            ? `<svg width="38" height="18" viewBox="0 0 38 18" aria-hidden="true"><path d="M3 6h27M3 12h27" stroke="currentColor" stroke-width="1.7"/><path d="m6 6 3 6 3-6 3 6 3-6 3 6 3-6 3 6" fill="none" stroke="currentColor" stroke-width="1.1"/><rect x="1.5" y="4" width="3" height="10" rx="1" fill="currentColor"/><path d="M29 5h4l2 4-2 4h-4z" fill="currentColor"/><rect x="34" y="7" width="3" height="4" rx="1.5" fill="none" stroke="currentColor"/></svg>`
+            : style === 'stretchy'
+              ? `
           <svg width="38" height="18" viewBox="0 0 38 18" aria-hidden="true">
             ${(() => {
               const sx = startArrow ? 10 : 5;
@@ -2924,7 +3250,7 @@ export class App {
             ${endArrow ? '<polygon points="33,9 27,5.5 27,12.5" fill="currentColor"/>' : ''}
           </svg>
         `
-            : `
+              : `
           <svg width="38" height="18" viewBox="0 0 38 18" aria-hidden="true">
             <line x1="7" y1="9" x2="31" y2="9" stroke="${strokeColor}" stroke-width="2.4" stroke-linecap="round" ${dash}></line>
             ${
@@ -2943,6 +3269,84 @@ export class App {
           'title',
           `Line width ${brushSizeSelect ? parseBrushWidth(brushSizeSelect.value) : 2}px, arrow ${getLockedArrowSize()}px`
         );
+      };
+
+      const syncLineStyleToolMode = () => {
+        const isHighlighter = this.toolManager?.activeToolName === 'highlighter';
+        const isZipper = !isHighlighter && this.currentDashSettings.style === 'zipper';
+        const highlighterStyle = this.toolManager.tools.highlighter?.getStyle?.() || 'marker';
+        const arrowRow = arrowStyleRow.closest<HTMLElement>('.line-style-row');
+        const patternContainer = patternRow.closest<HTMLElement>('.line-style-row');
+        const scopeRow = panel.querySelector<HTMLElement>('.line-style-scope');
+        const previewWrap = document.getElementById('lineStylePreviewWrap');
+        const quickArrows = document.getElementById('lineStyleQuickArrowButtons');
+        const strokeLabel = document.getElementById('lineStyleStrokeLabel');
+        const toggleLabel = document.querySelector<HTMLElement>(
+          '#lineStylePopoverBtn .line-style-toggle-label'
+        );
+
+        if (arrowRow) {
+          arrowRow.hidden = isHighlighter || isZipper;
+          arrowRow.setAttribute('aria-hidden', String(isHighlighter || isZipper));
+        }
+        if (quickArrows) {
+          quickArrows.hidden = isHighlighter || isZipper;
+          quickArrows.setAttribute('aria-hidden', String(isHighlighter || isZipper));
+        }
+        if (highlighterRow) highlighterRow.hidden = !isHighlighter;
+        if (patternContainer) patternContainer.hidden = isHighlighter;
+        if (geometryRow)
+          geometryRow.closest<HTMLElement>('.line-style-row')!.hidden = isHighlighter;
+        if (colorRow) colorRow.hidden = !isZipper;
+        if (scopeRow) scopeRow.hidden = isHighlighter;
+        if (previewWrap) previewWrap.hidden = isHighlighter;
+        panel.querySelectorAll<HTMLElement>('[data-highlighter-style]').forEach(button => {
+          const active = button.dataset.highlighterStyle === highlighterStyle;
+          button.classList.toggle('active', active);
+          button.setAttribute('aria-pressed', String(active));
+        });
+        if (strokeLabel) {
+          strokeLabel.textContent = isZipper
+            ? 'Zipper width'
+            : isHighlighter
+              ? 'Brush width'
+              : 'Line width';
+        }
+        if (toggleLabel) {
+          toggleLabel.textContent = isZipper
+            ? 'Zipper'
+            : isHighlighter
+              ? highlighterStyle === 'zipper'
+                ? 'Zipper'
+                : 'Highlight'
+              : 'Style';
+        }
+
+        geometryRow?.querySelectorAll<HTMLElement>('[data-line-geometry]').forEach(button => {
+          const active = button.dataset.lineGeometry === this.toolManager?.activeToolName;
+          button.classList.toggle('active', active);
+          button.setAttribute('aria-pressed', String(active));
+        });
+        const zipperColor = (document.getElementById('colorPicker') as HTMLInputElement | null)
+          ?.value;
+        zipperColors?.querySelectorAll<HTMLElement>('[data-zipper-color]').forEach(button => {
+          button.classList.toggle(
+            'active',
+            button.dataset.zipperColor?.toLowerCase() === zipperColor?.toLowerCase()
+          );
+        });
+        setZipperPaletteActive(isZipper);
+
+        const button = document.getElementById('lineStylePopoverBtn');
+        if (isHighlighter || isZipper) {
+          button?.setAttribute(
+            'title',
+            isZipper ? 'Zipper width and appearance' : 'Highlighter brush width and appearance'
+          );
+          updateLineStyleToggleSummary();
+        } else {
+          updateLineStyleToggleSummary();
+        }
       };
 
       const syncArrowProxyFromSource = () => {
@@ -3002,11 +3406,25 @@ export class App {
         if (!previewCanvasElement || previewCanvas) return;
         const fabricLib = (globalThis as any).fabric;
         if (!fabricLib?.StaticCanvas || !fabricLib?.Line) return;
+        // Measure the actual rendered width of the wrap element so the canvas
+        // backing store matches the CSS size. Without this, Fabric's retina
+        // scaling doubles the backing store while CSS stretches it, producing a
+        // blurry/misaligned preview. Disable retina scaling for this small
+        // preview — it doesn't need high-DPI precision.
+        const wrap = previewCanvasElement.parentElement;
+        const cssWidth = wrap ? wrap.clientWidth : 300;
+        const cssHeight = 28;
+        previewCanvasElement.width = cssWidth;
+        previewCanvasElement.height = cssHeight;
         previewCanvas = new fabricLib.StaticCanvas(previewCanvasElement, {
           selection: false,
           renderOnAddRemove: false,
+          enableRetinaScaling: false,
         });
-        previewLine = new fabricLib.Line([30, 29, 270, 29], {
+        previewCanvas.setDimensions({ width: cssWidth, height: cssHeight });
+        const midY = Math.round(cssHeight / 2);
+        const padX = 18;
+        previewLine = new fabricLib.Line([padX, midY, cssWidth - padX, midY], {
           stroke: '#1f2937',
           strokeWidth: 2,
           strokeLineCap: 'round',
@@ -3024,39 +3442,54 @@ export class App {
         const colorInput = document.getElementById('colorPicker') as HTMLInputElement | null;
         const strokeColor = colorInput?.value || '#1f2937';
         const uiArrowSettings = window.paintApp?.uiState?.arrowSettings;
+        const style = this.currentDashSettings.style || 'solid';
         const startArrow =
-          typeof uiArrowSettings?.startArrow === 'boolean'
-            ? uiArrowSettings.startArrow
-            : previewArrowState.startArrow;
+          style === 'zipper'
+            ? false
+            : typeof uiArrowSettings?.startArrow === 'boolean'
+              ? uiArrowSettings.startArrow
+              : previewArrowState.startArrow;
         const endArrow =
-          typeof uiArrowSettings?.endArrow === 'boolean'
-            ? uiArrowSettings.endArrow
-            : previewArrowState.endArrow;
+          style === 'zipper'
+            ? false
+            : typeof uiArrowSettings?.endArrow === 'boolean'
+              ? uiArrowSettings.endArrow
+              : previewArrowState.endArrow;
         const width = Math.max(MIN_BRUSH_WIDTH, parseBrushWidth(brushSizeSelect.value));
         const arrowStyle = lineStyleArrowStyle?.value || arrowStyleTop?.value || 'triangular';
         const arrowSize = updateArrowSizeProxy({ dispatch: false });
-        const style = this.currentDashSettings.style || 'solid';
         const pattern = this.getDashPatternForStyle(style);
         const tapeTickSpacing = normalizeTapeTickSpacing(this.currentDashSettings.tapeTickSpacing);
         updateLineStyleToggleSummary();
 
+        // Use the preview canvas dimensions instead of hardcoded coords so the
+        // line spans the full width regardless of panel size. The padding grows
+        // with the arrowhead footprint (width × scale) so the arrows render
+        // fully inside the canvas instead of clipping off the edges.
+        const canvasW = previewCanvas?.width || 300;
+        const canvasH = previewCanvas?.height || 28;
+        const arrowPad = Math.min(80, Math.max(18, Math.ceil(width * arrowSize) + 10));
+        const midY = Math.round(canvasH / 2);
         previewLine.set({
-          x1: 30,
-          y1: 29,
-          x2: 270,
-          y2: 29,
+          x1: arrowPad,
+          y1: midY,
+          x2: canvasW - arrowPad,
+          y2: midY,
           stroke: strokeColor,
           strokeWidth: Math.min(14, width),
           opacity: 0.96,
           strokeDashArray: pattern.length ? pattern : null,
-          lineStyle: style === 'tape' || style === 'stretchy' ? style : 'solid',
+          lineStyle:
+            style === 'tape' || style === 'stretchy' || style === 'zipper' ? style : 'solid',
+          isZipper: style === 'zipper',
           arrowSettings: {
             ...(previewLine.arrowSettings || {}),
             startArrow,
             endArrow,
             arrowStyle,
             arrowSize,
-            lineStyle: style === 'tape' || style === 'stretchy' ? style : 'solid',
+            lineStyle:
+              style === 'tape' || style === 'stretchy' || style === 'zipper' ? style : 'solid',
             tapeTickSpacing,
           },
         });
@@ -3094,12 +3527,37 @@ export class App {
         syncPreview();
       };
 
-      panel.querySelectorAll<HTMLButtonElement>('[data-scope]').forEach(btn => {
+      const lineStyleScopeButtons = Array.from(
+        panel.querySelectorAll<HTMLButtonElement>('[data-scope]')
+      );
+      lineStyleScopeButtons.forEach(btn => {
         btn.addEventListener('click', () => {
           lineStyleScope = btn.dataset.scope as 'selection' | 'image' | 'project';
-          panel
-            .querySelectorAll<HTMLButtonElement>('[data-scope]')
-            .forEach(node => node.classList.toggle('active', node === btn));
+          lineStyleScopeButtons.forEach(node => node.classList.toggle('active', node === btn));
+        });
+      });
+
+      panel.querySelectorAll<HTMLButtonElement>('[data-highlighter-style]').forEach(button => {
+        button.addEventListener('click', async () => {
+          const style = 'marker';
+          const tool = await this.toolManager.ensureTool('highlighter');
+          tool?.setStyle?.(style);
+          if (this.toolManager.activeToolName !== 'highlighter') {
+            await this.toolManager.selectTool('highlighter');
+          }
+          document.querySelectorAll<HTMLElement>('[data-drawing-mode]').forEach(option => {
+            option.classList.toggle(
+              'active',
+              option.dataset.drawingMode === (style === 'zipper' ? 'zipper' : 'highlighter')
+            );
+          });
+          document
+            .querySelectorAll<HTMLElement>('#drawingModeToggle')
+            .forEach(toggle =>
+              this.updateToggleLabel(toggle, style === 'zipper' ? 'Zipper' : 'Highlight')
+            );
+          window.dispatchEvent(new CustomEvent('highlighter-style-changed', { detail: { style } }));
+          syncLineStyleToolMode();
         });
       });
 
@@ -3131,13 +3589,215 @@ export class App {
         'arrow-settings-updated',
         handleArrowSettingsUpdated as EventListener
       );
-      window.addEventListener('dash-style-changed', syncPreview);
+      window.addEventListener('dash-style-changed', () => {
+        syncPreview();
+        syncLineStyleToolMode();
+      });
+      window.addEventListener('toolchange', syncLineStyleToolMode);
+      window.addEventListener('highlighter-style-changed', syncLineStyleToolMode);
+      window.addEventListener('toolbar-color-changed', () => {
+        syncPreview();
+        const color = (document.getElementById('colorPicker') as HTMLInputElement | null)?.value;
+        zipperColors?.querySelectorAll<HTMLElement>('[data-zipper-color]').forEach(button => {
+          button.classList.toggle(
+            'active',
+            button.dataset.zipperColor?.toLowerCase() === color?.toLowerCase()
+          );
+        });
+      });
       syncTapeSpacingControl();
       (document.getElementById('colorPicker') as HTMLInputElement | null)?.addEventListener(
         'change',
         syncPreview
       );
       syncPreview();
+      syncLineStyleToolMode();
+
+      // Quick style bar (Width / Arrow / Tag row in the elements panel): the
+      // same predictable system as the tag stepper — live-update the selected
+      // strokes when something is selected, otherwise the whole current image,
+      // and always set the defaults for the next stroke.
+      const applyQuickWidthToObjects = (width: number) => {
+        const canvas = this.canvasManager.fabricCanvas;
+        const currentBase = currentBaseViewId();
+        canvas?.forEachObject((obj: any) => {
+          if (!obj || obj.isTag || obj.isConnectorLine) return;
+          const objectLabel = obj?.strokeMetadata?.imageLabel || obj?.imageLabel || '';
+          if (getBaseLabel(objectLabel) !== currentBase) return;
+          if (obj.type === 'line' || obj.type === 'path') {
+            obj.set('strokeWidth', width);
+            obj.dirty = true;
+          }
+        });
+        canvas?.requestRenderAll();
+        Object.values(window.vectorStrokesByImage?.[currentBase] || {}).forEach((stroke: any) => {
+          if (stroke && typeof stroke === 'object') stroke.width = width;
+        });
+      };
+      const applyQuickArrowScaleToObjects = (size: number) => {
+        const canvas = this.canvasManager.fabricCanvas;
+        const currentBase = currentBaseViewId();
+        canvas?.forEachObject((obj: any) => {
+          if (!obj || obj.isTag || obj.isConnectorLine) return;
+          const objectLabel = obj?.strokeMetadata?.imageLabel || obj?.imageLabel || '';
+          if (getBaseLabel(objectLabel) !== currentBase) return;
+          if (obj.type !== 'line' && obj.type !== 'path') return;
+          obj.arrowSettings = { ...(obj.arrowSettings || {}), arrowSize: size };
+          if (obj.strokeMetadata) {
+            obj.strokeMetadata.arrowSettings = { ...obj.arrowSettings };
+          }
+          obj.dirty = true;
+        });
+        canvas?.requestRenderAll();
+        Object.values(window.vectorStrokesByImage?.[currentBase] || {}).forEach((stroke: any) => {
+          if (!stroke || typeof stroke !== 'object') return;
+          stroke.arrowSettings = { ...(stroke.arrowSettings || {}), arrowSize: size };
+        });
+      };
+      const quickAppApi = ((window as any).paintApp = (window as any).paintApp || {});
+      quickAppApi.applyQuickStrokeWidth = (width: number) => {
+        const parsed = parseBrushWidth(String(width));
+        this.toolManager.updateSettings({ width: parsed });
+        if (brushSizeSelect) brushSizeSelect.value = formatBrushWidth(parsed);
+        const canvas = this.canvasManager.fabricCanvas;
+        const active = canvas?.getActiveObjects?.() || [];
+        if (active.length) {
+          this.updateSelectedStrokes('strokeWidth', parsed);
+          this.updateSelectedTextAndShapes({ strokeWidth: parsed });
+        } else {
+          applyQuickWidthToObjects(parsed);
+        }
+        updateArrowSizeProxy();
+        syncPreview();
+      };
+      quickAppApi.applyQuickArrowScale = (scale: number) => {
+        const clamped = clampArrowScale(scale);
+        if (lineStyleArrowScale) lineStyleArrowScale.value = String(clamped);
+        const width = parseBrushWidth(brushSizeSelect?.value || '2') || 2;
+        const size = clampArrowSize(width * clamped);
+        const canvas = this.canvasManager.fabricCanvas;
+        const active = canvas?.getActiveObjects?.() || [];
+        if (active.length) {
+          active.forEach((obj: any) => {
+            if (!obj || obj.isTag || obj.isConnectorLine) return;
+            obj.arrowSettings = { ...(obj.arrowSettings || {}), arrowSize: size };
+            if (obj.strokeMetadata) {
+              obj.strokeMetadata.arrowSettings = { ...obj.arrowSettings };
+            }
+            obj.dirty = true;
+          });
+          canvas?.requestRenderAll();
+        } else {
+          applyQuickArrowScaleToObjects(size);
+        }
+        updateArrowSizeProxy();
+        syncPreview();
+      };
+      // Tag preview/size hook for the quick bar: change size through the
+      // canonical stepper so per-scope persistence keeps working.
+      quickAppApi.applyQuickTagSizeDelta = (delta: number) => {
+        const increase = delta > 0;
+        const button = increase
+          ? document.getElementById('increaseAllTagSize')
+          : document.getElementById('decreaseAllTagSize');
+        button?.click();
+      };
+
+      const appearanceDetails = document.getElementById(
+        'elementsAppearance'
+      ) as HTMLDetailsElement | null;
+      const appearanceBody = appearanceDetails?.querySelector<HTMLElement>(
+        ':scope > .elements-appearance-body'
+      );
+      const strokeMount = document.getElementById('elementsStrokeAppearanceMount');
+      const lineStyleGrid = panel.querySelector<HTMLElement>('.line-style-panel-grid');
+      const strokePanel = document.getElementById('strokePanel');
+      const elementsBody = document.getElementById('elementsBody');
+      const toggle = document.getElementById('lineStylePopoverBtn') as HTMLButtonElement | null;
+
+      if (appearanceDetails && appearanceBody && strokeMount && lineStyleGrid && toggle) {
+        strokeMount.appendChild(lineStyleGrid);
+        panel.classList.add('unified-appearance-popover');
+
+        const isElementsInspectorOpen = () =>
+          strokePanel?.getAttribute('aria-expanded') !== 'false' &&
+          !strokePanel?.classList.contains('collapsed') &&
+          !strokePanel?.classList.contains('minimized') &&
+          elementsBody !== null &&
+          getComputedStyle(elementsBody).display !== 'none';
+
+        const restoreAppearanceBody = () => {
+          if (appearanceBody.parentElement !== appearanceDetails) {
+            appearanceDetails.appendChild(appearanceBody);
+          }
+        };
+
+        const closeFloatingAppearance = () => {
+          panel.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+          restoreAppearanceBody();
+        };
+
+        const positionFloatingAppearance = () => {
+          const rect = toggle.getBoundingClientRect();
+          const margin = 8;
+          const gap = 8;
+          const panelWidth = Math.min(410, window.innerWidth - margin * 2);
+          let left = Math.max(margin, Math.min(rect.left, window.innerWidth - panelWidth - margin));
+          let top = rect.bottom + gap;
+          const estimatedHeight = Math.min(560, window.innerHeight - margin * 2);
+          if (top + estimatedHeight > window.innerHeight - margin) {
+            top = Math.max(margin, rect.top - estimatedHeight - gap);
+          }
+          panel.style.left = `${left}px`;
+          panel.style.top = `${top}px`;
+        };
+
+        toggleUnifiedAppearance = () => {
+          if (isElementsInspectorOpen()) {
+            closeFloatingAppearance();
+            appearanceDetails.open = !appearanceDetails.open;
+            toggle.setAttribute('aria-expanded', String(appearanceDetails.open));
+            appearanceDetails.scrollIntoView({ block: 'nearest' });
+            return;
+          }
+
+          if (panel.classList.contains('open')) {
+            closeFloatingAppearance();
+            return;
+          }
+          panel.appendChild(appearanceBody);
+          positionFloatingAppearance();
+          panel.classList.add('open');
+          toggle.setAttribute('aria-expanded', 'true');
+        };
+        closeUnifiedAppearance = closeFloatingAppearance;
+
+        appearanceDetails.addEventListener('toggle', () => {
+          if (isElementsInspectorOpen()) {
+            toggle.setAttribute('aria-expanded', String(appearanceDetails.open));
+          }
+        });
+
+        const syncAppearanceLocation = () => {
+          if (!isElementsInspectorOpen()) return;
+          const wasFloating = panel.classList.contains('open');
+          closeFloatingAppearance();
+          if (wasFloating) appearanceDetails.open = true;
+        };
+        if (strokePanel) {
+          new MutationObserver(syncAppearanceLocation).observe(strokePanel, {
+            attributes: true,
+            attributeFilter: ['class', 'aria-expanded'],
+          });
+        }
+        if (elementsBody) {
+          new MutationObserver(syncAppearanceLocation).observe(elementsBody, {
+            attributes: true,
+            attributeFilter: ['class', 'style'],
+          });
+        }
+      }
     };
 
     setupLineStylePopover();
@@ -3497,7 +4157,7 @@ export class App {
     const unitToggleSecondary = document.getElementById('unitToggleBtnSecondary');
     const unitToggles = [unitToggle].filter((el): el is HTMLElement => el instanceof HTMLElement);
     const unitSegmentButtons = Array.from(
-      unitToggleSecondary?.querySelectorAll<HTMLButtonElement>('[data-unit]') || []
+      document.querySelectorAll<HTMLButtonElement>('button[data-unit], button[data-quick-unit]')
     );
     const unitSelector = document.getElementById('unitSelector') as HTMLSelectElement | null;
     const inchDisplayToggleWrap = document.getElementById('inchDisplayToggleWrap');
@@ -3591,7 +4251,8 @@ export class App {
         toggle.textContent = unitLabel;
       });
       unitSegmentButtons.forEach(toggle => {
-        toggle.setAttribute('aria-pressed', String(toggle.dataset.unit === unit));
+        const toggleUnit = toggle.dataset.unit || toggle.dataset.quickUnit;
+        toggle.setAttribute('aria-pressed', String(toggleUnit === unit));
       });
 
       if (this.measurementSystem) {
@@ -3629,7 +4290,8 @@ export class App {
     });
     unitSegmentButtons.forEach(toggle => {
       toggle.addEventListener('click', () => {
-        applyUnit(toggle.dataset.unit === 'cm' ? 'cm' : 'inch');
+        const toggleUnit = toggle.dataset.unit || toggle.dataset.quickUnit;
+        applyUnit(toggleUnit === 'cm' ? 'cm' : 'inch');
       });
     });
 
@@ -4149,6 +4811,25 @@ function initShortcutHelp(): void {
   });
 }
 
+function initGorgiasExtensionGuide(): void {
+  const dialog = document.getElementById('gorgiasExtensionDialog') as HTMLDialogElement | null;
+  const openButton = document.getElementById('gorgiasExtensionGuideBtn');
+  const closeButton = document.getElementById('gorgiasExtensionClose');
+  if (!dialog || !openButton || openButton.dataset.extensionGuideBound === 'true') return;
+
+  openButton.dataset.extensionGuideBound = 'true';
+  openButton.addEventListener('click', () => {
+    document.getElementById('projectMenuWrapper')?.classList.remove('open');
+    document.getElementById('projectMenuToggle')?.setAttribute('aria-expanded', 'false');
+    if (!dialog.open) dialog.showModal();
+  });
+
+  closeButton?.addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', event => {
+    if (event.target === dialog) dialog.close();
+  });
+}
+
 // Start the app when DOM is ready, or immediately if it already fired.
 if (document.readyState === 'loading') {
   document.addEventListener(
@@ -4157,6 +4838,7 @@ if (document.readyState === 'loading') {
       startApp();
       initWelcomeOverlay();
       initShortcutHelp();
+      initGorgiasExtensionGuide();
     },
     { once: true }
   );
@@ -4164,4 +4846,5 @@ if (document.readyState === 'loading') {
   startApp();
   initWelcomeOverlay();
   initShortcutHelp();
+  initGorgiasExtensionGuide();
 }

@@ -3,6 +3,31 @@ import { z } from 'zod';
 const measurementRowSchema = z.object({
   label: z.string().min(1).max(120),
   value: z.string().max(120).optional().default(''),
+  fieldName: z.string().max(160).optional(),
+});
+
+const reviewMeasurementSchema = z.object({
+  label: z.string().min(1).max(120),
+  value: z.string().max(120).optional().default(''),
+});
+
+const reviewViewSchema = z.object({
+  viewId: z.string().min(1).max(180),
+  title: z.string().min(1).max(180),
+  measurements: z.array(reviewMeasurementSchema).max(200).default([]),
+});
+
+const reviewManifestSchema = z.object({
+  version: z.literal(1),
+  projectName: z.string().max(160).optional().default(''),
+  views: z.array(reviewViewSchema).max(100).default([]),
+});
+
+// Measurement guide gallery diagrams embedded by the client as data URLs,
+// keyed by worksheet row shape (T, L, B, W).
+const cushionDiagramSchema = z.object({
+  src: z.string().max(200_000),
+  labels: z.array(z.string().min(1).max(8)).max(16).default([]),
 });
 
 const measurementCardSchema = z.object({
@@ -36,7 +61,10 @@ const reportSchema = z.object({
   namingLine: z.string().max(220).optional().default(''),
   unit: z.enum(['inch', 'cm']).optional().default('inch'),
   groups: z.array(groupedSectionSchema).max(100).default([]),
+  includeCushionWorksheet: z.boolean().optional().default(false),
+  cushionDiagrams: z.record(cushionDiagramSchema).optional().default({}),
   comparisonGroups: z.array(comparisonGroupSchema).max(24).default([]),
+  reviewManifest: reviewManifestSchema.optional(),
 });
 
 export const pdfRenderRequestSchema = z

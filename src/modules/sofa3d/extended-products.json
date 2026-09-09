@@ -1,0 +1,58 @@
+[
+  {
+    "id": "nammaro",
+    "title": "N\u00c4MMAR\u00d6 outdoor three-seat",
+    "url": "https://www.ikea.com/kr/en/p/naemmaroe-3-seat-sofa-outdoor-light-brown-stained-kuddarna-light-grey-beige-s49621512/",
+    "imageUrl": "",
+    "reference": "IKEA NAMMARO",
+    "dimensions": {
+      "width": 243,
+      "depth": 92,
+      "height": 86
+    },
+    "version": "Armless \u00b7 81 cm modules",
+    "brand": "IKEA"
+  },
+  {
+    "id": "soderhamn",
+    "title": "S\u00d6DERHAMN three-seat",
+    "url": "https://www.ikea.com/se/en/p/soederhamn-3-seat-sofa-blekinge-white-s29501761/",
+    "imageUrl": "https://www.ikea.com/se/en/images/products/soederhamn-3-seat-sofa-blekinge-white__1577829_pe1033575_s5.jpg",
+    "reference": "IKEA SODERHAMN",
+    "dimensions": {
+      "width": 198,
+      "depth": 99,
+      "height": 83
+    },
+    "version": "Thin arms \u00b7 loose cushions",
+    "brand": "IKEA"
+  },
+  {
+    "id": "jattebo",
+    "title": "J\u00c4TTEBO double chaise sectional",
+    "url": "https://www.ikea.com/de/en/p/jaettebo-3-5-seat-mod-sofa-w-chaise-longues-armrests-johanneshov-brown-beige-s99607655/",
+    "imageUrl": "https://www.ikea.com/de/en/images/products/jaettebo-3-5-seat-mod-sofa-w-chaise-longues-armrests-johanneshov-brown-beige__1578197_pe1033865_s5.jpg",
+    "reference": "IKEA JATTEBO",
+    "dimensions": {
+      "width": 285,
+      "depth": 160,
+      "height": 71
+    },
+    "version": "3.5-seat \u00b7 double chaise",
+    "brand": "IKEA"
+  },
+  {
+    "id": "friheten",
+    "title": "FRIHETEN corner sofa-bed",
+    "url": "https://www.ikea.com/au/en/p/friheten-corner-sofa-bed-with-storage-skiftebo-dark-grey-s09216755/",
+    "imageUrl": "https://www.ikea.com/au/en/images/products/friheten-corner-sofa-bed-with-storage-skiftebo-dark-grey__0175610_pe328883_s5.jpg",
+    "reference": "IKEA FRIHETEN",
+    "dimensions": {
+      "width": 230,
+      "depth": 151,
+      "height": 86
+    },
+    "version": "Pull-out \u00b7 204 \u00d7 140 cm bed",
+    "brand": "IKEA"
+  }
+]

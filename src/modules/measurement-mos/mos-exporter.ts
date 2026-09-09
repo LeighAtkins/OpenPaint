@@ -61,6 +61,14 @@ function exportElement(
       const p1 = element.endpoints[0].point;
       const p2 = element.endpoints[1].point;
 
+      if (element.ellipse) {
+        const cx = (p1.x + p2.x) / 2,
+          cy = (p1.y + p2.y) / 2;
+        const dash = element.style?.strokeDashArray || [];
+        const split = element.style?.splitRatio;
+        return `<g id="m${escapeAttr(element.roleToken || 'D')}cm"><ellipse cx="${round(cx)}" cy="${round(cy)}" rx="${round(Math.abs(p2.x - p1.x) / 2)}" ry="${round(Math.abs(p2.y - p1.y) / 2)}" fill="none" stroke="${escapeAttr(strokeColor)}" stroke-width="${round(strokeWidth)}" stroke-dasharray="${dash.join(' ')}" data-ellipse-angle="${element.ellipseAngle || 0}" ${split !== undefined ? `data-split-ratio="${split}" data-dash-first="${element.style?.dashFirst !== false}"` : ''}/></g>`;
+      }
+
       // Validate coordinates are in range
       if (!isValidMosPoint(p1) || !isValidMosPoint(p2)) return null;
 

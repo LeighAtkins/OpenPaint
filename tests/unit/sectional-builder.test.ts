@@ -140,6 +140,38 @@ describe('Sectional Builder vertical slice', () => {
       hasBackCushion: true,
       armSides: ['right'],
     });
+    // Two-arm single modules: standalone armchairs and double-arm chaises.
+    expect(getSectionalPieceCapabilities('armchair')).toMatchObject({
+      hasBackFrame: true,
+      hasBackCushion: true,
+      armSides: ['left', 'right'],
+    });
+    expect(getSectionalPieceCapabilities('two-arm-chaise')).toMatchObject({
+      hasBackFrame: true,
+      hasBackCushion: true,
+      armSides: ['left', 'right'],
+    });
+  });
+
+  it('renders both arms on two-arm modules with near/far paint grouping', () => {
+    const markup = sectionalProductMarkup(createSectionalPreset('armchair'), 'front-right');
+    const armFaces =
+      markup.match(/class="sb-arm-panel sb-arm-\w+|class="sb-arm-inner sb-arm-inner-\w+/g) || [];
+    expect(armFaces).toHaveLength(2);
+    expect(markup.match(/class="sb-arm-front/g) || []).toHaveLength(2);
+  });
+
+  it('curved (RB) backs are tight: no loose back cushions', () => {
+    const curved = { arm: 'round', back: 'curved', cushion: 'boxed', base: 'snug' } as const;
+    const svg = serializeSectionalProductSvg(
+      createSectionalPreset('sofa'),
+      'RB sofa',
+      'front-right',
+      undefined,
+      curved
+    );
+    expect(svg).toContain('sb-structural-back');
+    expect(svg.match(/class="sb-back-cushion"/g) || []).toHaveLength(0);
   });
 
   it('tints the exported SVG with the selected upholstery theme', () => {
@@ -147,10 +179,10 @@ describe('Sectional Builder vertical slice', () => {
     const flax = serializeSectionalSvg(pieces, 'Test', 'flax');
     const navy = serializeSectionalSvg(pieces, 'Test', 'navy');
     // Default flax body fill appears in the flax export.
-    expect(flax).toContain('#d8ddd7');
+    expect(flax).toContain('#c2c9be');
     // Navy body fill replaces it in the themed export.
-    expect(navy).toContain('#53647f');
-    expect(navy).not.toContain('#d8ddd7');
+    expect(navy).toContain('#4d5f7b');
+    expect(navy).not.toContain('#c2c9be');
   });
 
   it('separates the structural back, loose back cushion, seat cushion, and arms', () => {
@@ -477,17 +509,19 @@ describe('Sectional Builder vertical slice', () => {
   it('computes the total assembly pricing across all pieces', () => {
     const pieces = createSectionalPreset('sofa');
     const pricing = getAssemblyPricing(pieces);
-    expect(pricing.items).toHaveLength(4);
-    // US Everyday Weave: LA($559) + Seat($469) + Seat($469) + RA($559)
-    expect(pricing.total).toBe(2056);
+    // CW quotes straight runs as multi-seat units: a 4-seat two-arm sofa is a
+    // CS3B-SRA-L sofa section ($930 everyday weave) plus a CS1B-SRA-R chair
+    // section ($559), never four separate chair sections.
+    expect(pricing.items.map(item => item.product.ref)).toEqual(['CS3B-SRA-L', 'CS1B-SRA-R']);
+    expect(pricing.total).toBe(1489);
     expect(pricing.currency).toBe('USD');
   });
 
   it('uses the selected country currency and selected-fabric catalog', () => {
     const pieces = createSectionalPreset('two-seat');
     const catalog: any = {
-      'boxed-seat-left-square-arm-chair-section-cover': {
-        'care-linen': { price: 1159 },
+      'boxed-seat-left-square-arm-loveseat-section-cover': {
+        'care-linen': { price: 1459 },
       },
       'boxed-seat-right-square-arm-chair-section-cover': {
         'care-linen': { price: 1159 },
@@ -496,8 +530,10 @@ describe('Sectional Builder vertical slice', () => {
         'care-linen': { price: 969 },
       },
     };
-    const pricing = getAssemblyPricing(pieces, 'AU', 'care-linen', catalog);
-    expect(pricing.total).toBe(3287);
+    const square = { arm: 'square', back: 'high', cushion: 'boxed', base: 'snug' } as const;
+    const pricing = getAssemblyPricing(pieces, 'AU', 'care-linen', catalog, square);
+    expect(pricing.items.map(item => item.product.ref)).toEqual(['CS2B-SSA-L', 'CS1B-SSA-R']);
+    expect(pricing.total).toBe(2618);
     expect(pricing.currency).toBe('AUD');
   });
 
@@ -507,15 +543,15 @@ describe('Sectional Builder vertical slice', () => {
     const uk = getAssemblyPricing(pieces, 'GB');
     const canada = getAssemblyPricing(pieces, 'CA');
 
-    expect(japan.items[1].product.url).toBe(
-      'https://comfort-works.com/ja-jp/products/boxed-seat-armless-chair-slipcover'
+    expect(japan.items[0].product.url).toBe(
+      'https://comfort-works.com/ja-jp/products/boxed-seat-left-round-arm-loveseat-section-cover'
     );
     expect(japan.currency).toBe('JPY');
     expect(uk.items[1].product.url).toBe(
-      'https://comfort-works.co.uk/products/boxed-seat-armless-chair-slipcover'
+      'https://comfort-works.co.uk/products/boxed-seat-right-round-arm-chair-section-cover'
     );
     expect(canada.items[1].product.url).toBe(
-      'https://comfort-works.com/products/boxed-seat-armless-chair-slipcover?country=CA'
+      'https://comfort-works.com/products/boxed-seat-right-round-arm-chair-section-cover?country=CA'
     );
   });
 
@@ -722,7 +758,10 @@ describe('Sectional Builder vertical slice', () => {
     expect(round).toContain(' sb-arm-roll"');
     expect(round).toContain('class="sb-arm-front sb-arm-front-round sb-arm-roll"');
     expect(round).not.toContain('<ellipse class="sb-arm-roll"');
-    expect(slope).toContain('class="sb-arm-slope-line"');
+    // The wedge is a cross-section prism: its front face carries the concave
+    // slope edge, and the extruded slope surface carries sb-arm-slope.
+    expect(slope).toContain('sb-arm-front-wedge');
+    expect(slope).toContain('sb-wedge-slope');
     expect(round).not.toEqual(square);
     expect(slope).not.toEqual(square);
   });
@@ -1038,7 +1077,7 @@ describe('Sectional Builder vertical slice', () => {
     expect(polygonDistance(cornerBack, returnBack)).toBeLessThan(8);
   });
 
-  it('suppresses interior faces at connected joints', () => {
+  it('closes cushions with seams instead of open joints at connected edges', () => {
     const pieces = createSectionalPreset('corner');
     const markup = sectionalProductMarkup(pieces, 'front-right');
     const cornerPiece = pieces.find(piece => piece.kind === 'corner')!;
@@ -1051,10 +1090,12 @@ describe('Sectional Builder vertical slice', () => {
       )!
       .join('');
 
-    // The corner's front edge joins the return leg: no base front face and no
-    // cushion front face may hang between the two modules.
+    // The corner's front edge joins the return leg: no base front face may
+    // hang between the two modules, and the cushion front — drawn flush with
+    // the base — closes with a boundary seam rather than an open slab.
     expect(cornerMarkup).not.toContain('sb-body-front');
-    expect(cornerMarkup).not.toContain('sb-seat-cushion-front');
+    expect(cornerMarkup).toContain('sb-seat-cushion-front');
+    expect(cornerMarkup).toContain('sb-seat-cushion-boundary');
 
     // A freestanding corner still shows its front.
     const solo = sectionalProductMarkup([{ ...cornerPiece, col: 0, row: 0 }], 'front-right');
@@ -1076,17 +1117,19 @@ describe('Sectional Builder vertical slice', () => {
       base: 'snug',
     });
 
-    // The round arm's end cap must bow out in a curve (Ektorp-style roll);
-    // the square arm's stays rectilinear.
+    // The round arm's end cap is a sampled 3D circle projected through the
+    // camera (a many-segment closed ellipse, not a flat quad); the square
+    // arm's end panel stays a quadrilateral with at most rounded corners.
     const roundFront = round.match(/<path class="sb-arm-front[^"]*"[^>]*d="([^"]+)"/)!;
     const squareFront = square.match(/<path class="sb-arm-front[^"]*"[^>]*d="([^"]+)"/)!;
-    expect(roundFront[1]).toContain('Q');
-    expect(squareFront[1]).not.toContain('Q');
-    // The roll is a swept body with three shading bands per arm, and the
-    // outermost band bulges past the arm body for the letter-P profile.
+    const roundSegments = (roundFront[1].match(/L/g) || []).length;
+    expect(roundSegments).toBeGreaterThanOrEqual(12);
+    expect(squareFront[1]).not.toContain('A');
+    // The roll is a swept cylinder body plus a specular crown highlight per
+    // arm; the square arm has neither.
     expect(round.match(/sb-arm-roll-body/g) || []).toHaveLength(2);
-    expect(round.match(/sb-arm-roll-band-(?:inner|crown|outer)"/g) || []).toHaveLength(6);
-    expect(square).not.toContain('sb-arm-roll-band');
+    expect(round.match(/sb-arm-roll-highlight/g) || []).toHaveLength(2);
+    expect(square).not.toContain('sb-arm-roll');
   });
 
   it('wraps the skirt around camera-facing open edges only', () => {

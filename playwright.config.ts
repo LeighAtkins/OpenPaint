@@ -48,6 +48,18 @@ export default defineConfig({
         trace: 'retain-on-failure',
       },
     },
+    {
+      name: 'safari-e2e',
+      testDir: './tests/e2e',
+      testMatch: ['**/measurement-guide-gallery-import.spec.ts', '**/mini-stepper-sync.spec.ts'],
+      use: {
+        browserName: 'webkit',
+        baseURL: 'http://127.0.0.1:5173',
+        viewport: { width: 1280, height: 800 },
+        screenshot: 'only-on-failure',
+        trace: 'retain-on-failure',
+      },
+    },
   ],
   expect: {
     toHaveScreenshot: {

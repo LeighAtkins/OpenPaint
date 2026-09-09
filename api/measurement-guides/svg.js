@@ -44,6 +44,7 @@ function getWorkerBaseUrl() {
     ''
   )
     .toString()
+    .replace(/(?:\\r|\\n)+/g, '')
     .trim()
     .replace(/\/+$/, '');
 }
@@ -51,6 +52,7 @@ function getWorkerBaseUrl() {
 function getWorkerApiKey() {
   return (process.env.MEASUREMENT_GUIDE_WORKER_API_KEY || process.env.AI_WORKER_KEY || 'dev-secret')
     .toString()
+    .replace(/(?:\\r|\\n)+/g, '')
     .trim();
 }
 

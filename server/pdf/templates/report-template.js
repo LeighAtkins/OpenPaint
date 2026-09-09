@@ -379,6 +379,33 @@ function renderComparisonPages(report, startIndex) {
   return result.join('');
 }
 
+// One worksheet row per measurement guide gallery diagram. The client embeds
+// each gallery SVG (and its circled measurement letters) as a data URL.
+const CUSHION_WORKSHEET_ROWS = [
+  { shape: 'T', name: 'T-SHAPED', guideCode: 'CC-BK-T' },
+  { shape: 'L', name: 'L-SHAPED', guideCode: 'CC-BK-L' },
+  { shape: 'B', name: 'BOX-SHAPED', guideCode: 'CC-ST-BE' },
+  { shape: 'W', name: 'WEDGE-SHAPED', guideCode: 'CC-BK-W' },
+];
+
+function renderCushionWorksheet(report, index) {
+  const table = (shape, type, labels) =>
+    `<table class="cushion-grid" aria-label="${shape} ${type} cushions"><thead><tr><th>${shape}</th><th>TYPE 1</th><th>TYPE 2</th></tr></thead><tbody>${['Qty', ...labels].map(label => `<tr><th>${escapeHtml(label)}</th>${[1, 2].map(variant => `<td><div class="pdf-field-anchor cushion-cell" data-field-type="text" data-field-transparent="true" data-field-name="${escapeHtml(fieldName('cushions', shape, type, variant, label))}" data-field-value=""></div></td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  const figure = row => {
+    const diagram = report.cushionDiagrams?.[row.shape];
+    if (diagram?.src) {
+      return `<img src="${escapeHtml(diagram.src)}" alt="${escapeHtml(`${row.name} cushion measurement diagram (${row.guideCode})`)}" />`;
+    }
+    return `<div class="cushion-diagram-missing">Diagram unavailable<br />(${escapeHtml(row.guideCode)})</div>`;
+  };
+  return `<section class="page cushion-worksheet" data-page-index="${index}"><header class="cushion-header"><img src="${getLogoDataUrl()}" alt="Comfort Works"><h1>CUSTOM SOFA MEASURING DIAGRAM</h1></header><div class="cushion-intro"><h2>CUSHIONS</h2><p>Please provide the quantity and measure according to the diagrams below. If you have multiple sizes of the same cushion shape, please fill in TYPE 2.</p></div>${renderUnitToggle(report.unit)}<div class="cushion-rows">${CUSHION_WORKSHEET_ROWS.map(
+    row =>
+      `<section class="cushion-row"><figure>${figure(row)}<figcaption>${row.name} CUSHION</figcaption></figure><div class="cushion-table-wrap"><h3>SEAT CUSHIONS</h3>${table(row.shape, 'seat', report.cushionDiagrams?.[row.shape]?.labels || [])}</div><div class="cushion-table-wrap"><h3>BACK CUSHIONS</h3>${table(row.shape, 'back', report.cushionDiagrams?.[row.shape]?.labels || [])}</div></section>`
+  ).join(
+    ''
+  )}</div><footer class="cushion-footer">${escapeHtml(report.projectName)} <span>${index + 1}</span></footer></section>`;
+}
+
 export function renderReportTemplate(report, options = {}) {
   const pageSize = String(options.pageSize || 'letter').toLowerCase();
   const pageFormat = pageSize === 'a4' ? 'A4' : 'Letter';
@@ -428,7 +455,11 @@ export function renderReportTemplate(report, options = {}) {
       `;
     })
     .join('');
-  const pages = `${groupPages}${renderComparisonPages(report, groups.length)}`;
+  const comparisonPages = renderComparisonPages(report, groups.length);
+  const comparisonCount = Math.ceil(
+    (report.comparisonGroups || []).filter(group => group?.items?.length >= 2).length / 2
+  );
+  const pages = `${groupPages}${comparisonPages}${report.includeCushionWorksheet ? renderCushionWorksheet(report, groups.length + comparisonCount) : ''}`;
 
   return `
   <!doctype html>

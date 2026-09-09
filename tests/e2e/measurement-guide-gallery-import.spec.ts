@@ -1,4 +1,11 @@
-import { test, expect, waitForApp, selectTool, drawLine } from './fixtures';
+import {
+  test,
+  expect,
+  waitForApp,
+  waitForCanvasLayoutSettle,
+  selectTool,
+  drawLine,
+} from './fixtures';
 
 const GUIDE_SVG = (code: string, view: string) =>
   `
@@ -18,7 +25,7 @@ const GUIDE_SVG = (code: string, view: string) =>
 
 const WORKFLOW_GUIDE_SVG = (view: string) => {
   const labels =
-    view === 'front' ? ['A1', 'A2', 'A3'] : view === 'back' ? ['B1', 'B2'] : ['C1', 'C2'];
+    view === 'front' ? ['A1', 'A2', 'A3', 'D'] : view === 'back' ? ['B1', 'B2'] : ['C1', 'C2'];
   return `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 720" width="960" height="720">
       <rect x="0" y="0" width="960" height="720" fill="#f8fafc" />
@@ -43,6 +50,145 @@ const WORKFLOW_GUIDE_SVG = (view: string) => {
 };
 
 test.describe('Measurement Guide Gallery import attachment', () => {
+  test('guide import preserves a collapsed Images panel and centers the frame', async ({
+    page,
+  }) => {
+    await page.route('**/api/measurement-guides/codes', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          count: 1,
+          codes: ['CENTERED'],
+          viewsByCode: { CENTERED: ['front'] },
+        }),
+      });
+    });
+    await page.route('**/api/measurement-guides/svg**', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/svg+xml; charset=utf-8',
+        body: GUIDE_SVG('CENTERED', 'front'),
+      });
+    });
+
+    await page.goto('/');
+    await waitForApp(page);
+    await page.evaluate(() => {
+      const panel = document.getElementById('imagePanel');
+      panel?.classList.add('collapsed');
+      panel?.setAttribute('aria-expanded', 'false');
+      document.body.setAttribute('data-image-panel-state', 'collapsed');
+      window.dispatchEvent(new Event('resize'));
+    });
+    await waitForCanvasLayoutSettle(page);
+
+    await page.evaluate(() => window.openMeasurementGuideGallery?.({ mode: 'select' }));
+    await page.locator('[data-guide-quick-add="CENTERED"][data-guide-quick-view="front"]').click();
+    await expect(page.locator('.guide-gallery-overlay.visible')).toHaveCount(0);
+    await waitForCanvasLayoutSettle(page);
+
+    await expect(page.locator('#imagePanel')).toHaveClass(/collapsed/);
+    const centerDelta = await page.evaluate(() => {
+      const frame = document.getElementById('captureFrame')?.getBoundingClientRect();
+      const workspace = document.getElementById('main-canvas-wrapper')?.getBoundingClientRect();
+      if (!frame || !workspace) throw new Error('Frame or workspace unavailable');
+      return Math.abs(frame.left + frame.width / 2 - (workspace.left + workspace.width / 2));
+    });
+    expect(centerDelta).toBeLessThanOrEqual(4);
+  });
+
+  test('Safari wheel fallback scrolls and selects thumbnails after Add All import', async ({
+    page,
+  }) => {
+    await page.route('**/api/measurement-guides/codes', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          count: 1,
+          codes: ['CS1-CNR'],
+          viewsByCode: { 'CS1-CNR': ['front', 'back'] },
+        }),
+      });
+    });
+    await page.route('**/api/measurement-guides/svg**', async route => {
+      const url = new URL(route.request().url());
+      const view = String(url.searchParams.get('view') || 'front').toLowerCase();
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/svg+xml; charset=utf-8',
+        body: GUIDE_SVG('CS1-CNR', view),
+      });
+    });
+
+    await page.goto('/');
+    await waitForApp(page);
+    const imagePanel = page.locator('#imagePanel');
+    if (await imagePanel.evaluate(element => element.classList.contains('collapsed'))) {
+      await page.locator('#toggleImagePanel').click();
+      await expect(imagePanel).not.toHaveClass(/collapsed/);
+    }
+    await page.evaluate(() => window.openMeasurementGuideGallery?.({ mode: 'select' }));
+    await page.locator('[data-guide-quick-add="CS1-CNR"][data-guide-quick-view="all"]').click();
+
+    await expect(page.locator('.guide-gallery-overlay')).not.toHaveClass(/visible/);
+    await expect(page.locator('#imageList .image-container')).toHaveCount(2);
+
+    const stateBeforeWheel = await page.evaluate(() => {
+      const list = document.getElementById('imageList');
+      if (!list) throw new Error('Image list unavailable');
+      window.scrollToSelectEnabled = true;
+      window.__suppressScrollSelectUntil = Date.now() + 10_000;
+      window.__imageListProgrammaticScrollUntil = Date.now() + 10_000;
+      document.getElementById('quickMeasurementValue')?.focus();
+      list.scrollTop = 0;
+      return {
+        scrollTop: list.scrollTop,
+        firstView: window.app?.projectManager?.currentViewId || '',
+      };
+    });
+
+    // Synthetic wheel events do not receive browser-native scrolling. This
+    // reproduces Safari's observed failure mode and exercises the app fallback.
+    await page.evaluate(() => {
+      const list = document.getElementById('imageList');
+      const target = list?.querySelector('.image-container img') || list;
+      target?.dispatchEvent(
+        new WheelEvent('wheel', {
+          bubbles: true,
+          cancelable: true,
+          deltaY: 420,
+          deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+        })
+      );
+    });
+
+    await expect
+      .poll(() => page.locator('#imageList').evaluate(element => element.scrollTop))
+      .toBeGreaterThan(stateBeforeWheel.scrollTop + 20);
+    await expect
+      .poll(() => page.evaluate(() => window.app?.projectManager?.currentViewId), {
+        timeout: 3_000,
+      })
+      .not.toBe(stateBeforeWheel.firstView);
+    expect(
+      await page.evaluate(() => ({
+        suppressRemaining: Math.max(
+          0,
+          Number(window.__suppressScrollSelectUntil || 0) - Date.now()
+        ),
+        programmaticRemaining: Math.max(
+          0,
+          Number(window.__imageListProgrammaticScrollUntil || 0) - Date.now()
+        ),
+        activeTag: document.activeElement?.tagName || '',
+      }))
+    ).toMatchObject({ suppressRemaining: 0, programmaticRemaining: 0 });
+  });
+
   test('Add All reconciles guide controls after the image header moves them', async ({ page }) => {
     const indicatorErrors: string[] = [];
     page.on('console', message => {
@@ -118,13 +264,13 @@ test.describe('Measurement Guide Gallery import attachment', () => {
     expect(
       await page.evaluate(() => {
         const header = document.getElementById('imagePanelHeader');
-        const controls = header?.querySelector('.flex.items-center.gap-2');
+        const controls = header?.querySelector('.images-header-actions');
         const stack = document.getElementById('measurementGuideToggleStack');
         return stack?.parentElement === controls;
       })
     ).toBe(true);
 
-    await page.locator('.guide-gallery-overlay.visible .guide-gallery-close').click();
+    await expect(page.locator('.guide-gallery-overlay.visible')).toHaveCount(0);
     const backStep = page.locator(
       '#mini-stepper button[data-target="cs1-cnr-back"][data-step-kind="image"]'
     );
@@ -167,6 +313,10 @@ test.describe('Measurement Guide Gallery import attachment', () => {
       await expect
         .poll(() => page.evaluate(() => window.app?.projectManager?.currentViewId))
         .toBe(viewId);
+      // switchView rebuilds the Elements rows asynchronously after the view id
+      // changes. Wait for that final render so the editable span is not
+      // replaced between click and fill on slower WebKit/CI runs.
+      await page.waitForTimeout(250);
       const field = page.locator('[data-stroke="A1"] .stroke-measurement');
       await expect(field).toBeVisible();
       await field.click();
@@ -271,7 +421,7 @@ test.describe('Measurement Guide Gallery import attachment', () => {
         )
       )
       .toBe(true);
-    await page.locator('.guide-gallery-overlay.visible .guide-gallery-close').click();
+    await expect(page.locator('.guide-gallery-overlay.visible')).toHaveCount(0);
 
     const switchTo = async (viewId: string) => {
       await page.evaluate(id => window.app?.projectManager?.switchView?.(id, true), viewId);
@@ -320,9 +470,9 @@ test.describe('Measurement Guide Gallery import attachment', () => {
     await expect
       .poll(() => inspect('cs1l-ra-hb-front'))
       .toMatchObject({
-        labels: ['A1', 'A2', 'A3'],
-        rows: ['A1', 'A2', 'A3'],
-        visibleLabels: ['A1', 'A2', 'A3'],
+        labels: ['A1', 'A2', 'A3', 'D'],
+        rows: ['A1', 'A2', 'A3', 'D'],
+        visibleLabels: ['A1', 'A2', 'A3', 'D'],
       });
 
     // Hide one complete measurement and one tag only. The remaining imported
@@ -336,10 +486,10 @@ test.describe('Measurement Guide Gallery import attachment', () => {
     await expect
       .poll(() => inspect('cs1l-ra-hb-front'))
       .toMatchObject({
-        labels: ['A1', 'A2', 'A3'],
-        rows: ['A1', 'A2', 'A3'],
-        visibleLabels: ['A2', 'A3'],
-        visibleTags: ['A3'],
+        labels: ['A1', 'A2', 'A3', 'D'],
+        rows: ['A1', 'A2', 'A3', 'D'],
+        visibleLabels: ['A2', 'A3', 'D'],
+        visibleTags: ['A3', 'D'],
       });
 
     await switchTo('cs1l-ra-hb-back');
@@ -395,9 +545,9 @@ test.describe('Measurement Guide Gallery import attachment', () => {
     await expect
       .poll(() => inspect('cs1l-ra-hb-front'))
       .toMatchObject({
-        labels: ['A1', 'A2', 'A3'],
-        rows: ['A1', 'A2', 'A3'],
-        visibleLabels: ['A2', 'A3'],
+        labels: ['A1', 'A2', 'A3', 'D'],
+        rows: ['A1', 'A2', 'A3', 'D'],
+        visibleLabels: ['A2', 'A3', 'D'],
       });
     await switchTo('cs1l-ra-hb-back');
     await expect
@@ -407,6 +557,116 @@ test.describe('Measurement Guide Gallery import attachment', () => {
         rows: ['A1', 'B2'],
         visibleLabels: ['A1', 'B2'],
       });
+  });
+
+  test('CS1L-SA-HB keeps a hidden D tag hidden after switching through every imported view', async ({
+    page,
+  }) => {
+    await page.route('**/api/measurement-guides/codes', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          count: 1,
+          codes: ['CS1L-SA-HB'],
+          viewsByCode: { 'CS1L-SA-HB': ['front', 'back', 'side'] },
+        }),
+      });
+    });
+    await page.route('**/api/measurement-guides/svg**', async route => {
+      const url = new URL(route.request().url());
+      const view = String(url.searchParams.get('view') || 'front').toLowerCase();
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/svg+xml; charset=utf-8',
+        body: WORKFLOW_GUIDE_SVG(view),
+      });
+    });
+
+    await page.goto('/');
+    await waitForApp(page);
+    await page.evaluate(() => window.openMeasurementGuideGallery?.({ mode: 'select' }));
+    await page.locator('[data-guide-quick-add="CS1L-SA-HB"][data-guide-quick-view="all"]').click();
+    await expect(page.locator('.guide-gallery-overlay.visible')).toHaveCount(0);
+
+    const switchTo = async (viewId: string) => {
+      await page.evaluate(id => window.app?.projectManager?.switchView?.(id, true), viewId);
+      await expect
+        .poll(() => page.evaluate(() => window.app?.projectManager?.currentViewId))
+        .toBe(viewId);
+      await page.waitForTimeout(200);
+    };
+
+    await switchTo('cs1l-sa-hb-front');
+    const dLabelToggle = page.locator('[data-stroke="D"] .stroke-label-toggle-btn');
+    await expect(dLabelToggle).toHaveCount(1);
+    await dLabelToggle.evaluate(element => (element as HTMLButtonElement).click());
+    await expect(dLabelToggle).toHaveAttribute('aria-pressed', 'false');
+
+    for (const viewId of [
+      'cs1l-sa-hb-back',
+      'cs1l-sa-hb-side',
+      'cs1l-sa-hb-front',
+      'cs1l-sa-hb-back',
+      'cs1l-sa-hb-front',
+    ]) {
+      await switchTo(viewId);
+    }
+
+    await expect(page.locator('[data-stroke="D"] .stroke-label-toggle-btn')).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    );
+    const state = await page.evaluate(() => {
+      const viewId = 'cs1l-sa-hb-front';
+      const metadata = window.app?.metadataManager;
+      const canvas = window.app?.canvasManager?.fabricCanvas;
+      return {
+        stored: metadata?.strokeLabelVisibility?.[viewId]?.D,
+        visibleTags: (canvas?.getObjects?.() || [])
+          .filter(object => object?.isTag && object?.visible !== false)
+          .map(object => object.strokeLabel),
+      };
+    });
+    expect(state.stored).toBe(false);
+    expect(state.visibleTags).not.toContain('D');
+
+    // The dedicated review workspace must reflect the currently hidden tag,
+    // then allow a reviewer to isolate one check without deleting anything.
+    await page.locator('#measurementReviewBtn').evaluate(element => {
+      (element as HTMLButtonElement).click();
+    });
+    const review = page.locator('.measurement-review-overlay');
+    await expect(review).toBeVisible();
+    const dReviewToggle = review.locator('[data-review-label="D"]');
+    const a1ReviewToggle = review.locator('[data-review-label="A1"]');
+    await expect(dReviewToggle).not.toBeChecked();
+    await expect(a1ReviewToggle).toBeChecked();
+    await review.locator('[data-review-none]').click();
+    await a1ReviewToggle.check();
+    await review.locator('[data-review-apply]').click();
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const canvas = window.app?.canvasManager?.fabricCanvas;
+          return (canvas?.getObjects?.() || [])
+            .filter(object => object?.isTag && object?.visible !== false)
+            .map(object => object.strokeLabel)
+            .sort();
+        })
+      )
+      .toEqual(['A1']);
+
+    await review.locator('[data-review-show-all]').click();
+    await expect
+      .poll(() =>
+        page.evaluate(
+          () => window.app?.metadataManager?.strokeLabelVisibility?.['cs1l-sa-hb-front']?.D
+        )
+      )
+      .toBe(true);
+    await expect(review.locator('[data-review-label="D"]')).toBeChecked();
   });
 
   test('codes can be copied and Add Side updates the card preview', async ({ page, context }) => {
@@ -488,13 +748,12 @@ test.describe('Measurement Guide Gallery import attachment', () => {
 
     await page.goto('/');
     await waitForApp(page);
-    await page.evaluate(() => window.openMeasurementGuideGallery?.({ mode: 'select' }));
-    await expect(page.locator('.guide-gallery-overlay.visible')).toBeVisible();
-
     for (const item of [
       { code: 'PIPE-A', view: 'front', imageId: 'pipe-a-front' },
       { code: 'PIPE-B', view: 'back', imageId: 'pipe-b-back' },
     ]) {
+      await page.evaluate(() => window.openMeasurementGuideGallery?.({ mode: 'select' }));
+      await expect(page.locator('.guide-gallery-overlay.visible')).toBeVisible();
       await page
         .locator(`[data-guide-quick-add="${item.code}"][data-guide-quick-view="${item.view}"]`)
         .click();
@@ -503,6 +762,7 @@ test.describe('Measurement Guide Gallery import attachment', () => {
           page.evaluate(id => Boolean(window.app?.projectManager?.views?.[id]?.image), item.imageId)
         )
         .toBe(true);
+      await expect(page.locator('.guide-gallery-overlay.visible')).toHaveCount(0);
     }
 
     const inspect = () =>
@@ -663,7 +923,7 @@ test.describe('Measurement Guide Gallery import attachment', () => {
     });
   });
 
-  test('Bind Mode can preview and bind normal project images restored with imageUrl sources', async ({
+  test('Bind Mode directly binds a guide view to the selected photo without importing another image', async ({
     page,
   }) => {
     await page.route('**/api/measurement-guides/codes', async route => {
@@ -738,19 +998,34 @@ test.describe('Measurement Guide Gallery import attachment', () => {
       ];
     }, photoUrl);
 
+    const viewIdsBefore = await page.evaluate(() =>
+      Object.keys(window.app?.projectManager?.views || {}).sort()
+    );
+    await page.evaluate(() => {
+      const panel = document.getElementById('imagePanel');
+      panel?.classList.add('collapsed');
+      panel?.setAttribute('aria-expanded', 'false');
+      document.body.setAttribute('data-image-panel-state', 'collapsed');
+    });
+
     await page.evaluate(() => window.openMeasurementGuideGallery?.({ mode: 'bind' }));
     await expect(page.locator('.guide-gallery-overlay.visible')).toBeVisible();
-    await expect(page.locator('[data-bind-preview-image="customer-photo"]')).toBeVisible();
+    await expect(page.locator('.guide-gallery-toggle-panel')).toHaveText('Advanced');
+    await expect(page.locator('.guide-gallery-link-grid.bind-mode')).toBeHidden();
+    await expect(page.locator('.guide-gallery-bind-target-bar')).toBeVisible();
+    await expect(
+      page.locator('.guide-gallery-bind-target-option[data-bind-target-image="customer-photo"]')
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(
+      page.locator('.guide-gallery-bind-target-option[data-bind-target-image="customer-photo"]')
+    ).toBeAttached();
     await expect(page.locator('#guideGalleryBindPreviewImageEl')).toHaveAttribute('src', photoUrl);
 
-    const modelCheckbox = page.locator('[data-select-code="PHOTO-BIND"]').first();
-    if (!(await modelCheckbox.isChecked())) {
-      await modelCheckbox.check();
-    }
-    await page.locator('[data-bind-preview-image="customer-photo"]').click();
-    await page.locator('#guideGalleryBindModelView').selectOption('front');
-    await expect(page.locator('[data-link-action="bind-preview"]')).toBeEnabled();
-    await page.locator('[data-link-action="bind-preview"]').click();
+    const directBind = page.locator(
+      '[data-guide-quick-bind="PHOTO-BIND"][data-guide-quick-view="front"]'
+    );
+    await expect(directBind).toHaveText('Bind FRONT');
+    await directBind.click();
 
     await expect
       .poll(() =>
@@ -762,5 +1037,114 @@ test.describe('Measurement Guide Gallery import attachment', () => {
           variant: 'front',
         },
       });
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const metadata = window.app?.projectManager?.getProjectMetadata?.() || {};
+          return metadata.measurementGuideBindingsByScope?.['customer-photo'] || null;
+        })
+      )
+      .toMatchObject({
+        activeCode: 'PHOTO-BIND',
+        activeVariant: 'front',
+      });
+    expect(
+      await page.evaluate(() => Object.keys(window.app?.projectManager?.views || {}).sort())
+    ).toEqual(viewIdsBefore);
+    await expect(page.locator('#imagePanel')).toHaveClass(/collapsed/);
+  });
+
+  test('gallery can narrow model codes by seat count', async ({ page }) => {
+    await page.route('**/api/measurement-guides/codes', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          codes: ['CS1B-SA-HB', 'CS3B-SA-HB', 'CS3L-RA-SB', 'CS5B-SA-HB'],
+          viewsByCode: {
+            'CS1B-SA-HB': ['front'],
+            'CS3B-SA-HB': ['front', 'back'],
+            'CS3L-RA-SB': ['side'],
+            'CS5B-SA-HB': ['front'],
+          },
+        }),
+      });
+    });
+    await page.route('**/api/measurement-guides/svg**', async route => {
+      const url = new URL(route.request().url());
+      const code = String(url.searchParams.get('code') || 'CS3B-SA-HB');
+      const view = String(url.searchParams.get('view') || 'front');
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/svg+xml; charset=utf-8',
+        body: GUIDE_SVG(code, view),
+      });
+    });
+
+    await page.goto('/');
+    await waitForApp(page);
+    await page.evaluate(() => window.openMeasurementGuideGallery?.({ mode: 'select' }));
+    await page.locator('[data-gallery-seat-filter="3"]').click();
+
+    await expect(page.locator('.guide-gallery-item').first()).toBeVisible();
+    const visibleCodes = await page
+      .locator('.guide-gallery-item')
+      .evaluateAll(items => items.map(item => item.getAttribute('data-code') || ''));
+    expect(visibleCodes.length).toBeGreaterThanOrEqual(2);
+    expect(visibleCodes.every(code => /^CS3/.test(code))).toBe(true);
+    await expect(page.locator('[data-code="CS3B-SA-HB"]')).toBeVisible();
+    await expect(page.locator('[data-code="CS3L-RA-SB"]')).toBeVisible();
+    await expect(page.locator('[data-code="CS1B-SA-HB"]')).toHaveCount(0);
+    await expect(page.locator('[data-code="CS5B-SA-HB"]')).toHaveCount(0);
+  });
+
+  test('gallery separates special product types from sofa seat counts', async ({ page }) => {
+    const codes = ['CS0-CNRP', 'CS1B-SA-HB', 'CS5B-RA-SB', 'CSDC-MSKT', 'CC-BK-BE', 'CSAP-RA'];
+    await page.route('**/api/measurement-guides/codes', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          codes,
+          viewsByCode: Object.fromEntries(codes.map(code => [code, ['front']])),
+        }),
+      });
+    });
+    await page.route('**/api/measurement-guides/svg**', async route => {
+      const url = new URL(route.request().url());
+      const code = String(url.searchParams.get('code') || 'CS1B-SA-HB');
+      await route.fulfill({
+        status: 200,
+        contentType: 'image/svg+xml; charset=utf-8',
+        body: GUIDE_SVG(code, 'front'),
+      });
+    });
+
+    await page.goto('/');
+    await waitForApp(page);
+    await page.evaluate(() => window.openMeasurementGuideGallery?.({ mode: 'select' }));
+
+    await expect(page.locator('[data-gallery-seat-filter="1"]')).toBeVisible();
+    await expect(page.locator('[data-gallery-seat-filter="5"]')).toHaveCount(0);
+
+    const expectedTypes = [
+      ['ottoman', 'CS0-CNRP', 'Ottoman'],
+      ['chaise', 'CS5B-RA-SB', 'Chaise'],
+      ['dining-chair', 'CSDC-MSKT', 'Dining Chair'],
+      ['cushion', 'CC-BK-BE', 'Cushion only'],
+      ['other', 'CSAP-RA', 'Other'],
+    ] as const;
+
+    for (const [type, code, label] of expectedTypes) {
+      await page.locator(`[data-gallery-product-type-filter="${type}"]`).click();
+      const expectedCard = page.locator(`[data-code="${code}"]`);
+      await expect(expectedCard).toBeVisible();
+      await expect(expectedCard.locator('.guide-gallery-item-type')).toHaveText(label);
+      const visibleTypeLabels = await page.locator('.guide-gallery-item-type').allTextContents();
+      expect(visibleTypeLabels.length).toBeGreaterThan(0);
+      expect(visibleTypeLabels.every(value => value.trim() === label)).toBe(true);
+    }
   });
 });

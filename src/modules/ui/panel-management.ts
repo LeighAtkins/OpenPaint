@@ -42,10 +42,35 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
 
         #strokePanel.collapsed #elementsHeader,
         #imagePanel.collapsed #imagePanelHeader {
-            padding: 12px 0 !important;
+            padding: 8px 0 !important;
             justify-content: center !important;
-            height: 48px !important;
+            height: auto !important;
+            min-height: 48px;
             border-bottom: none !important;
+        }
+
+        /* Stack essential header actions vertically when collapsed */
+        #imagePanel.collapsed .images-header-actions {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 6px !important;
+        }
+
+        /* Hide non-essential controls in collapsed state */
+        #imagePanel.collapsed .images-scroll-mode,
+        #imagePanel.collapsed #compareDeselectAll {
+            display: none !important;
+        }
+
+        /* Keep the overview button visible as a compact icon */
+        #imagePanel.collapsed #openImageOverviewBtn {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            padding: 0;
         }
 
         #strokePanel.collapsed #elementsBody {
@@ -113,7 +138,7 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
         #imagePanel.collapsed::after {
             content: "Images";
             position: absolute;
-            top: 60px;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%) rotate(180deg);
             writing-mode: vertical-rl;
@@ -123,7 +148,6 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
             white-space: nowrap;
             letter-spacing: 0.05em;
             pointer-events: none;
-            margin-top: 24px;
         }
     `;
   document.head.appendChild(style);
@@ -406,6 +430,8 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
 
     if (!panel || !content || !button || !icon) return;
 
+    bindCollapsedImageRail(panelId, panel, button, content);
+
     button.addEventListener('click', e => {
       e.stopPropagation();
       // Use the specified content element
@@ -451,6 +477,7 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
         icon.style.transform = 'rotate(0deg)';
         panel.classList.remove('minimized');
         panel.setAttribute('aria-expanded', 'true');
+        syncImagePanelToggleUi(panelId, button, false);
       } else {
         // Minimize panel
         // if maxHeight is none (auto), set current height to enable smooth collapse
@@ -461,9 +488,10 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
         }
         // add hidden to animate to max-height:0 via CSS
         body.classList.add('hidden');
-        icon.style.transform = 'rotate(-90deg)';
+        icon.style.transform = panelId === 'imagePanel' ? 'rotate(180deg)' : 'rotate(-90deg)';
         panel.classList.add('minimized');
         panel.setAttribute('aria-expanded', 'false');
+        syncImagePanelToggleUi(panelId, button, true);
 
         // For imagePanel, ensure navigation stays visible after collapse
         if (panelId === 'imagePanel') {
@@ -481,6 +509,7 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
           }
         }
       }
+      requestPanelLayoutResize(panel);
     });
   }
 
@@ -499,10 +528,15 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
 
     // Define original widths based on panel ID
     // strokePanel is w-64 (16rem), imagePanel is w-72 (18rem)
+    const content = document.getElementById(contentId);
+    bindCollapsedImageRail(panelId, panel, button, content);
+
     button.addEventListener('click', e => {
       e.stopPropagation();
-      const isCollapsed = panel.classList.contains('collapsed');
-      const content = document.getElementById(contentId);
+      const isCollapsed =
+        panel.classList.contains('collapsed') ||
+        panel.classList.contains('minimized') ||
+        content?.classList.contains('hidden') === true;
 
       if (panelId === 'imagePanel') {
         setImagePanelState(
@@ -515,6 +549,7 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
         panel.classList.remove('collapsed', 'minimized');
         if (icon) icon.style.transform = 'rotate(0deg)';
         panel.setAttribute('aria-expanded', 'true');
+        syncImagePanelToggleUi(panelId, button, false);
 
         // Restore width - remove inline overrides to let CSS handle it
         panel.style.removeProperty('width');
@@ -531,6 +566,7 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
         panel.classList.add('collapsed');
         if (icon) icon.style.transform = 'rotate(180deg)';
         panel.setAttribute('aria-expanded', 'false');
+        syncImagePanelToggleUi(panelId, button, true);
 
         // Remove inline overrides to let CSS class handle it
         panel.style.removeProperty('width');
@@ -543,20 +579,85 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
         }
       }
 
-      // Trigger resize for canvas to fill space and update image list padding
-      setTimeout(() => {
+      requestPanelLayoutResize(panel);
+    });
+  }
+
+  function requestPanelLayoutResize(panel: HTMLElement) {
+    let completed = false;
+    const finish = () => {
+      if (completed) return;
+      completed = true;
+      panel.removeEventListener('transitionend', onTransitionEnd);
+      const requestResize = (window as any).__openpaintRequestPrimaryResize;
+      if (typeof requestResize === 'function') {
+        requestResize('panel-toggle');
+      } else {
         window.dispatchEvent(new Event('resize'));
-        if (typeof window.updateImageListPadding === 'function') {
-          window.updateImageListPadding();
-        }
-      }, 50);
-      window.dispatchEvent(new Event('resize'));
-      setTimeout(() => {
-        window.dispatchEvent(new Event('resize'));
-        if (typeof window.updateImageListPadding === 'function') {
-          window.updateImageListPadding();
-        }
-      }, 300);
+      }
+      window.updateImageListPadding?.();
+    };
+    const onTransitionEnd = (event: TransitionEvent) => {
+      if (
+        event.target === panel &&
+        ['width', 'min-width', 'max-width'].includes(event.propertyName)
+      ) {
+        finish();
+      }
+    };
+
+    const style = window.getComputedStyle(panel);
+    const durations = style.transitionDuration.split(',').map(value => {
+      const amount = Number.parseFloat(value);
+      return value.trim().endsWith('ms') ? amount : amount * 1000;
+    });
+    const delays = style.transitionDelay.split(',').map(value => {
+      const amount = Number.parseFloat(value);
+      return value.trim().endsWith('ms') ? amount : amount * 1000;
+    });
+    const transitionMs = durations.reduce((maximum, duration, index) => {
+      const rawDelay = delays[index] ?? delays[delays.length - 1] ?? 0;
+      const delay = Number.isFinite(rawDelay) ? rawDelay : 0;
+      return Math.max(maximum, (Number.isFinite(duration) ? duration : 0) + delay);
+    }, 0);
+
+    // The workstation shell deliberately disables inspector width animation at
+    // compact sizes. Waiting for a transitionend that cannot fire leaves the
+    // capture frame centered against the old panel width until the fallback
+    // timer runs. Let the class/style change commit, then resize immediately.
+    if (transitionMs <= 0) {
+      requestAnimationFrame(finish);
+      return;
+    }
+
+    panel.addEventListener('transitionend', onTransitionEnd);
+    setTimeout(finish, Math.ceil(transitionMs) + 40);
+  }
+
+  function syncImagePanelToggleUi(panelId: string, button: HTMLElement, collapsed: boolean) {
+    if (panelId !== 'imagePanel') return;
+    const label = collapsed ? 'Open Images panel' : 'Close Images panel';
+    button.setAttribute('aria-label', label);
+    button.setAttribute('title', label);
+    button.setAttribute('aria-expanded', String(!collapsed));
+  }
+
+  function bindCollapsedImageRail(
+    panelId: string,
+    panel: HTMLElement,
+    button: HTMLElement,
+    content: HTMLElement | null
+  ) {
+    if (panelId !== 'imagePanel' || panel.dataset['railToggleBound'] === 'true') return;
+    panel.dataset['railToggleBound'] = 'true';
+    panel.addEventListener('click', event => {
+      const collapsed =
+        panel.classList.contains('collapsed') ||
+        panel.classList.contains('minimized') ||
+        content?.classList.contains('hidden') === true;
+      if (!collapsed || (event.target as Element).closest('button, input, select, textarea'))
+        return;
+      button.click();
     });
   }
 
@@ -608,12 +709,14 @@ import { IMAGE_PANEL_STATES, setImagePanelState } from './panel-state.js';
           strokePanel.setAttribute('aria-expanded', 'false');
           imagePanel.setAttribute('aria-expanded', 'false');
           setImagePanelState(IMAGE_PANEL_STATES.collapsed);
+          syncImagePanelToggleUi('imagePanel', document.getElementById('toggleImagePanel')!, true);
         } else {
           strokePanel.classList.remove('collapsed');
           imagePanel.classList.remove('collapsed');
           strokePanel.setAttribute('aria-expanded', 'true');
           imagePanel.setAttribute('aria-expanded', 'true');
           setImagePanelState(IMAGE_PANEL_STATES.expanded);
+          syncImagePanelToggleUi('imagePanel', document.getElementById('toggleImagePanel')!, false);
         }
 
         strokePanel.setAttribute('data-mobile-state', 'expanded');

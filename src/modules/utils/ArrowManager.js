@@ -580,11 +580,17 @@ export class ArrowManager {
   }
 
   applyArrows(object) {
+    if (object?.isHighlighter === true || object?.customType === 'highlighter') return;
     // Apply current default settings to a new object
     object.arrowSettings = { ...this.defaultSettings };
     const explicitLineStyle = object.lineStyle || object.dashSettings?.style;
     if (explicitLineStyle) {
       object.arrowSettings.lineStyle = explicitLineStyle;
+    }
+    if (explicitLineStyle === 'zipper' || object?.isZipper === true) {
+      object.arrowSettings.startArrow = false;
+      object.arrowSettings.endArrow = false;
+      object.isZipper = true;
     }
     if (object.type === 'path') {
       object.arrowSettings.curveArrows = true;
@@ -651,13 +657,21 @@ export class ArrowManager {
     const ARROW_TAN_30 = Math.tan(Math.PI / 6); // ~0.577
 
     object._render = function (ctx) {
+      if (this.isHighlighter === true || this.customType === 'highlighter') {
+        originalRender.call(this, ctx);
+        return;
+      }
       const lineStyle = this.arrowSettings?.lineStyle || this.lineStyle || this.dashSettings?.style;
       const shouldRenderTapeLine = this.type === 'line' && lineStyle === 'tape';
       const shouldRenderTapePath = this.type === 'path' && lineStyle === 'tape';
       const shouldRenderStretchyLine = this.type === 'line' && lineStyle === 'stretchy';
       const shouldRenderStretchyPath = this.type === 'path' && lineStyle === 'stretchy';
-      const shouldRenderCustomLine = shouldRenderTapeLine || shouldRenderStretchyLine;
-      const shouldRenderCustomPath = shouldRenderTapePath || shouldRenderStretchyPath;
+      const shouldRenderZipperLine = this.type === 'line' && lineStyle === 'zipper';
+      const shouldRenderZipperPath = this.type === 'path' && lineStyle === 'zipper';
+      const shouldRenderCustomLine =
+        shouldRenderTapeLine || shouldRenderStretchyLine || shouldRenderZipperLine;
+      const shouldRenderCustomPath =
+        shouldRenderTapePath || shouldRenderStretchyPath || shouldRenderZipperPath;
       const shouldRenderCustom = shouldRenderCustomLine || shouldRenderCustomPath;
       const hasVisibleArrows = !!(
         this.arrowSettings &&
@@ -781,7 +795,12 @@ export class ArrowManager {
         let endX = x2;
         let endY = y2;
 
-        if (ghostBaseline && normalizedStyle === 'dimension' && this.arrowSettings?.baseLine) {
+        if (
+          ghostBaseline &&
+          normalizedStyle === 'dimension' &&
+          !shouldRenderCustomLine &&
+          this.arrowSettings?.baseLine
+        ) {
           const b = this.arrowSettings.baseLine;
           ctx.save();
           ctx.globalAlpha = 0.35;
@@ -795,7 +814,7 @@ export class ArrowManager {
           ctx.restore();
         }
 
-        if (normalizedStyle === 'dimension') {
+        if (normalizedStyle === 'dimension' && !shouldRenderCustomLine) {
           const lenSafe = Math.max(len, 1);
           const nx = -dy / lenSafe;
           const ny = dx / lenSafe;
@@ -888,7 +907,9 @@ export class ArrowManager {
           return;
         }
 
-        if (shouldRenderTapeLine) {
+        if (shouldRenderZipperLine) {
+          self.drawZipperLine(ctx, x1, y1, x2, y2, this.strokeWidth, this.stroke);
+        } else if (shouldRenderTapeLine) {
           self.drawMeasuringTapeLine(
             ctx,
             x1,
@@ -1023,7 +1044,18 @@ export class ArrowManager {
 
         let pathEffectiveArrowSize = scaledArrowSize;
 
-        if (shouldRenderTapePath) {
+        if (shouldRenderZipperPath) {
+          self.drawCurvedZipperLine(
+            ctx,
+            path,
+            offsetX,
+            offsetY,
+            this.strokeWidth,
+            this.stroke,
+            infos,
+            totalLength
+          );
+        } else if (shouldRenderTapePath) {
           self.drawCurvedMeasuringTapeLine(
             ctx,
             path,
@@ -1133,7 +1165,7 @@ export class ArrowManager {
           }
         }
 
-        if (!shouldRenderTapePath && startArrow) {
+        if (!shouldRenderTapePath && !shouldRenderZipperPath && startArrow) {
           self.drawArrowhead(
             ctx,
             startPoint.x - offsetX,
@@ -1146,7 +1178,7 @@ export class ArrowManager {
           );
         }
 
-        if (!shouldRenderTapePath && endArrow) {
+        if (!shouldRenderTapePath && !shouldRenderZipperPath && endArrow) {
           self.drawArrowhead(
             ctx,
             endPoint.x - offsetX,
@@ -1170,6 +1202,259 @@ export class ArrowManager {
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) return 1;
     return Math.max(0.55, Math.min(2.25, numeric));
+  }
+
+  getZipperWidth(strokeWidth) {
+    // A zipper needs enough visual width for the teeth and hardware to remain
+    // legible after the canvas viewport is scaled down to fit the workspace.
+    return Math.max(14, Math.min(32, Number(strokeWidth || 2) * 4.5));
+  }
+
+  decorateZipperSamples(samples) {
+    if (!Array.isArray(samples) || samples.length < 2) return [];
+    return samples.map((point, index) => {
+      const before = samples[Math.max(0, index - 1)];
+      const after = samples[Math.min(samples.length - 1, index + 1)];
+      const dx = after.x - before.x;
+      const dy = after.y - before.y;
+      const length = Math.hypot(dx, dy) || 1;
+      return {
+        x: point.x,
+        y: point.y,
+        angle: Math.atan2(dy, dx),
+        nx: -dy / length,
+        ny: dx / length,
+      };
+    });
+  }
+
+  drawZipperPolyline(ctx, samples, offset, width, color, alpha = 1) {
+    if (!samples.length) return;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.lineCap = 'butt';
+    ctx.lineJoin = 'round';
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(samples[0].x + samples[0].nx * offset, samples[0].y + samples[0].ny * offset);
+    for (let index = 1; index < samples.length; index += 1) {
+      const point = samples[index];
+      ctx.lineTo(point.x + point.nx * offset, point.y + point.ny * offset);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  drawZipperStop(ctx, point, zipperWidth) {
+    if (!point) return;
+    const stopLength = Math.max(4, zipperWidth * 0.34);
+    ctx.save();
+    ctx.translate(point.x, point.y);
+    ctx.rotate(point.angle);
+    const gradient = ctx.createLinearGradient(0, -zipperWidth / 2, 0, zipperWidth / 2);
+    gradient.addColorStop(0, '#f8fafc');
+    gradient.addColorStop(0.42, '#94a3b8');
+    gradient.addColorStop(0.58, '#e2e8f0');
+    gradient.addColorStop(1, '#64748b');
+    ctx.fillStyle = gradient;
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = Math.max(0.8, zipperWidth * 0.08);
+    this.drawRoundedRect(
+      ctx,
+      -stopLength * 0.46,
+      -zipperWidth * 0.62,
+      stopLength,
+      zipperWidth * 1.24,
+      Math.max(1, zipperWidth * 0.1)
+    );
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  drawZipperSlider(ctx, point, zipperWidth) {
+    if (!point) return;
+    const bodyLength = Math.max(9, zipperWidth * 0.9);
+    const bodyHeight = Math.max(8, zipperWidth * 0.82);
+    const pullLength = Math.max(8, zipperWidth * 0.78);
+    ctx.save();
+    ctx.translate(point.x, point.y);
+    ctx.rotate(point.angle);
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    const gradient = ctx.createLinearGradient(-bodyLength, -bodyHeight / 2, 0, bodyHeight / 2);
+    gradient.addColorStop(0, '#475569');
+    gradient.addColorStop(0.4, '#f8fafc');
+    gradient.addColorStop(0.68, '#94a3b8');
+    gradient.addColorStop(1, '#334155');
+    ctx.fillStyle = gradient;
+    ctx.strokeStyle = '#1f2937';
+    ctx.lineWidth = Math.max(1, zipperWidth * 0.09);
+    ctx.beginPath();
+    ctx.moveTo(-bodyLength, -bodyHeight * 0.42);
+    ctx.lineTo(-bodyLength * 0.08, -bodyHeight * 0.55);
+    ctx.lineTo(bodyLength * 0.2, 0);
+    ctx.lineTo(-bodyLength * 0.08, bodyHeight * 0.55);
+    ctx.lineTo(-bodyLength, bodyHeight * 0.42);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = Math.max(1.5, zipperWidth * 0.16);
+    ctx.beginPath();
+    ctx.moveTo(bodyLength * 0.08, 0);
+    ctx.lineTo(bodyLength * 0.34, 0);
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(226,232,240,0.92)';
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = Math.max(1, zipperWidth * 0.09);
+    this.drawRoundedRect(
+      ctx,
+      bodyLength * 0.26,
+      -bodyHeight * 0.31,
+      pullLength,
+      bodyHeight * 0.62,
+      bodyHeight * 0.28
+    );
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(71,85,105,0.35)';
+    this.drawRoundedRect(
+      ctx,
+      bodyLength * 0.44,
+      -bodyHeight * 0.13,
+      Math.max(3, pullLength * 0.54),
+      bodyHeight * 0.26,
+      bodyHeight * 0.12
+    );
+    ctx.fill();
+    ctx.restore();
+  }
+
+  drawZipperFromSamples(ctx, rawSamples, strokeWidth = 2, color = '#111827') {
+    const samples = this.decorateZipperSamples(rawSamples);
+    if (samples.length < 2) return;
+    const zipperWidth = this.getZipperWidth(strokeWidth);
+    const railOffset = zipperWidth * 0.31;
+    const railWidth = Math.max(1.4, zipperWidth * 0.16);
+
+    this.drawZipperPolyline(ctx, samples, -railOffset, railWidth * 1.9, '#111827', 0.92);
+    this.drawZipperPolyline(ctx, samples, railOffset, railWidth * 1.9, '#111827', 0.92);
+    this.drawZipperPolyline(ctx, samples, -railOffset, railWidth, color, 1);
+    this.drawZipperPolyline(ctx, samples, railOffset, railWidth, color, 1);
+    this.drawZipperPolyline(ctx, samples, 0, Math.max(0.9, railWidth * 0.55), '#334155', 0.88);
+
+    // Keep teeth visibly continuous at common fit-to-frame zoom levels. The
+    // sample spacing already scales with zipper width, so a short stride gives
+    // a stable zipper rhythm on both straight and curved paths.
+    const toothStride = Math.max(1, Math.round(zipperWidth / 8));
+    ctx.save();
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = Math.max(0.9, zipperWidth * 0.085);
+    ctx.lineCap = 'round';
+    ctx.setLineDash([]);
+    for (let index = toothStride; index < samples.length - toothStride; index += toothStride) {
+      const point = samples[index];
+      const side = Math.floor(index / toothStride) % 2 === 0 ? -1 : 1;
+      ctx.beginPath();
+      ctx.moveTo(point.x + point.nx * railOffset * side, point.y + point.ny * railOffset * side);
+      ctx.lineTo(
+        point.x - Math.cos(point.angle) * zipperWidth * 0.18,
+        point.y - Math.sin(point.angle) * zipperWidth * 0.18
+      );
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    this.drawZipperStop(ctx, samples[0], zipperWidth);
+    this.drawZipperSlider(ctx, samples[samples.length - 1], zipperWidth);
+  }
+
+  drawZipperLine(ctx, x1, y1, x2, y2, strokeWidth = 2, color = '#111827') {
+    const length = Math.hypot(x2 - x1, y2 - y1);
+    if (length < 2) return;
+    const step = Math.max(2.5, this.getZipperWidth(strokeWidth) * 0.26);
+    const samples = [];
+    for (let distance = 0; distance < length; distance += step) {
+      const ratio = distance / length;
+      samples.push({ x: x1 + (x2 - x1) * ratio, y: y1 + (y2 - y1) * ratio });
+    }
+    samples.push({ x: x2, y: y2 });
+    this.drawZipperFromSamples(ctx, samples, strokeWidth, color);
+  }
+
+  drawCurvedZipperLine(
+    ctx,
+    path,
+    offsetX,
+    offsetY,
+    strokeWidth = 2,
+    color = '#111827',
+    infos = null,
+    totalLength = 0
+  ) {
+    const fabricUtil = globalThis.fabric?.util;
+    if (!fabricUtil?.getPathSegmentsInfo || !fabricUtil?.getPointOnPath || !Array.isArray(path)) {
+      return;
+    }
+    const segmentInfo = infos || fabricUtil.getPathSegmentsInfo(path);
+    const pathLength =
+      totalLength || (segmentInfo.length ? segmentInfo[segmentInfo.length - 1].length : 0);
+    if (!pathLength || pathLength < 2) return;
+
+    const getCommandPoint = command =>
+      command?.length >= 3
+        ? { x: command[command.length - 2], y: command[command.length - 1] }
+        : null;
+    const startRaw = getCommandPoint(path[0]);
+    const endRaw = getCommandPoint(path[path.length - 1]);
+    const endpointIsOrigin =
+      (startRaw && Math.hypot(startRaw.x, startRaw.y) < 0.5) ||
+      (endRaw && Math.hypot(endRaw.x, endRaw.y) < 0.5);
+    const sampleStep = Math.max(2.5, this.getZipperWidth(strokeWidth) * 0.26);
+    const pointAt = distance => {
+      const clamped = Math.max(0, Math.min(pathLength, distance));
+      if (clamped === 0 && startRaw) return { x: startRaw.x - offsetX, y: startRaw.y - offsetY };
+      if (clamped === pathLength && endRaw) {
+        return { x: endRaw.x - offsetX, y: endRaw.y - offsetY };
+      }
+      const point = fabricUtil.getPointOnPath(path, clamped, segmentInfo);
+      if (!point) return null;
+      if (!endpointIsOrigin && Math.hypot(point.x, point.y) < 0.5) {
+        if (clamped <= sampleStep && startRaw) {
+          return { x: startRaw.x - offsetX, y: startRaw.y - offsetY };
+        }
+        if (pathLength - clamped <= sampleStep && endRaw) {
+          return { x: endRaw.x - offsetX, y: endRaw.y - offsetY };
+        }
+        return null;
+      }
+      return { x: point.x - offsetX, y: point.y - offsetY };
+    };
+
+    const samples = [];
+    for (let distance = 0; distance < pathLength; distance += sampleStep) {
+      const point = pointAt(distance);
+      const previous = samples[samples.length - 1];
+      if (
+        point &&
+        (!previous || Math.hypot(point.x - previous.x, point.y - previous.y) < sampleStep * 8)
+      ) {
+        samples.push(point);
+      }
+    }
+    const end = pointAt(pathLength);
+    const previous = samples[samples.length - 1];
+    if (end && (!previous || Math.hypot(end.x - previous.x, end.y - previous.y) < sampleStep * 8)) {
+      samples.push(end);
+    }
+    this.drawZipperFromSamples(ctx, samples, strokeWidth, color);
   }
 
   drawRoundedRect(ctx, x, y, width, height, radius) {

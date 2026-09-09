@@ -121,6 +121,7 @@ export async function renderPdfWithPuppeteer({ html, options }) {
               maxLength: Number.parseInt(el.getAttribute('data-field-max-length') || '', 10) || 0,
               textAlign: el.getAttribute('data-field-align') || '',
               multiline: el.getAttribute('data-field-multiline') === 'true',
+              transparent: el.getAttribute('data-field-transparent') === 'true',
               borderWidth: Number.parseFloat(el.getAttribute('data-field-border-width') || '') || 0,
               x,
               y,

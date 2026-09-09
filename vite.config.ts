@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
 import checker from 'vite-plugin-checker';
 
 export default defineConfig(({ mode }) => {
@@ -7,6 +8,37 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
+      // Auto-start the Express backend so /api proxy never 502s.
+      {
+        name: 'openpaint-express-backend',
+        configureServer(server) {
+          let backend: ReturnType<typeof spawn> | null = null;
+          const startBackend = () => {
+            backend = spawn('node', ['app.js'], {
+              stdio: ['ignore', 'pipe', 'pipe'],
+              env: { ...process.env, FORCE_COLOR: '1' },
+            });
+            backend.stdout?.on('data', (data: Buffer) => {
+              const line = data.toString().trim();
+              if (line) console.log(`\x1b[36m[api]\x1b[0m ${line}`);
+            });
+            backend.stderr?.on('data', (data: Buffer) => {
+              const line = data.toString().trim();
+              if (line) console.error(`\x1b[31m[api]\x1b[0m ${line}`);
+            });
+            backend.on('exit', code => {
+              if (code !== null && code !== 0 && !backend?.killed) {
+                console.log(
+                  `\x1b[33m[api] Express exited (code ${code}), restarting in 2s…\x1b[0m`
+                );
+                setTimeout(startBackend, 2000);
+              }
+            });
+          };
+          startBackend();
+          server.httpServer?.on('close', () => backend?.kill());
+        },
+      },
       // Disabled during migration to avoid blocking development
       // checker({
       //   typescript: {

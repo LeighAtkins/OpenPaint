@@ -260,6 +260,15 @@ export function parseProductConfiguration({
     const content = Array.isArray(group?.content) ? group.content : [];
 
     if (groupKind === 'version') {
+      const defaultVersionCode = String(
+        group?.default_value?.code ||
+          group?.default_value?.pg_code ||
+          group?.default_value_on?.code ||
+          group?.default_value_on?.pg_code ||
+          ''
+      )
+        .trim()
+        .toUpperCase();
       const dimensionOptions = [];
       const dimensionSeen = new Set();
       content.forEach(option => {
@@ -276,7 +285,8 @@ export function parseProductConfiguration({
         dimensionOptions.push({
           code,
           label: label || code || 'Default',
-          isDefault: false,
+          isDefault: Boolean(defaultVersionCode && code === defaultVersionCode),
+          source: 'cw40-product-configuration',
         });
       });
       if (dimensionOptions.length) {
@@ -298,6 +308,7 @@ export function parseProductConfiguration({
           style: style || styleCode || 'Style',
           styleCode,
           label: `${normalizedReference || 'Reference'} - ${style || styleCode || 'Style'}${styleCode ? ` (${styleCode})` : ''}`,
+          source: 'cw40-product-configuration',
         });
       });
     }
@@ -305,7 +316,7 @@ export function parseProductConfiguration({
 
   const versionOptionMap = new Map();
   if (versionDimensions.length > 0) {
-    let combinations = [{ codes: [], labels: [] }];
+    let combinations = [{ codes: [], labels: [], isDefault: true }];
     versionDimensions.forEach(dimension => {
       const next = [];
       combinations.forEach(combo => {
@@ -313,6 +324,7 @@ export function parseProductConfiguration({
           next.push({
             codes: [...combo.codes, option.code],
             labels: [...combo.labels, option.label],
+            isDefault: combo.isDefault && option.isDefault === true,
           });
         });
       });
@@ -330,7 +342,8 @@ export function parseProductConfiguration({
         code,
         label: combo.labels.filter(Boolean).join(' / ') || code || 'Default',
         scopedReference,
-        isDefault: false,
+        isDefault: combo.isDefault === true,
+        source: 'cw40-product-configuration',
       });
     });
   }

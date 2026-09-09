@@ -33,7 +33,11 @@ export async function renderPdfFromRequest(payload, rendererMode) {
     const rendered = await renderPdfWithPuppeteer({ html, options });
     const shouldInjectFormFields = options.injectFormFields !== false;
     if (mode === 'hybrid' && shouldInjectFormFields) {
-      return injectPdfFormFields(rendered.pdfBuffer, rendered.anchors || []);
+      return injectPdfFormFields(
+        rendered.pdfBuffer,
+        rendered.anchors || [],
+        reportModel?.reviewManifest || null
+      );
     }
     return rendered.pdfBuffer;
   }

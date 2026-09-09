@@ -1,6 +1,47 @@
 import { test, expect, waitForApp } from './fixtures';
 
 test.describe('Measurement field layout', () => {
+  test('shows a short centimetre value without clipping the unit', async ({ appPage: page }) => {
+    await waitForApp(page);
+
+    await page.evaluate(async () => {
+      const app = window.app;
+      const canvas = app?.canvasManager?.fabricCanvas;
+      const metadata = app?.metadataManager;
+      const fabricApi = (window as any).fabric;
+      if (!canvas || !metadata || !fabricApi) throw new Error('OpenPaint canvas is unavailable');
+
+      const viewId = app.projectManager.currentViewId || 'front';
+      const scope = metadata.resolveActiveImageLabel(viewId);
+      const line = new fabricApi.Line([80, 120, 480, 120], {
+        stroke: '#2563eb',
+        strokeWidth: 2,
+      });
+      canvas.add(line);
+      metadata.attachMetadata(line, scope, 'F3');
+      const strokePanel = document.getElementById('strokePanel');
+      const elementsBody = document.getElementById('elementsBody');
+      strokePanel?.classList.remove('minimized', 'collapsed');
+      strokePanel?.setAttribute('aria-expanded', 'true');
+      elementsBody?.classList.remove('hidden');
+      if (elementsBody) elementsBody.style.display = 'flex';
+      metadata.updateStrokeVisibilityControls();
+      const field = document.querySelector('[data-stroke="F3"] .stroke-measurement');
+      if (!(field instanceof HTMLElement)) throw new Error('Measurement field was not rendered');
+      field.textContent = '10 cm';
+    });
+
+    const field = page.locator('[data-stroke="F3"] .stroke-measurement');
+    await expect(field).toHaveText('10 cm');
+    const fit = await field.evaluate(element => ({
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+      textOverflow: getComputedStyle(element).textOverflow,
+    }));
+    expect(fit.clientWidth).toBeGreaterThanOrEqual(68);
+    expect(fit.scrollWidth).toBeLessThanOrEqual(fit.clientWidth + 1);
+  });
+
   test('value stays on one line and fills the available measurement row', async ({
     appPage: page,
   }) => {

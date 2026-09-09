@@ -1,3 +1,4 @@
+import { getGuideSeatingType, getGuideProductTypeOverride } from './guide-seating-type';
 import { parseSvgMeasurements, createCoordinateTransformer } from './svg-measurement-parser.js';
 import { CanvasManager } from '../CanvasManager';
 import { TagManager } from '../TagManager';
@@ -16,6 +17,30 @@ const GUIDE_WINDOW_PREFS_KEY = 'openpaint:guideWindowPrefs:v1';
 const GUIDE_GALLERY_SEARCH_PREF_KEY = 'gallerySearchVisible';
 const GUIDE_GALLERY_PANEL_HIDDEN_PREF_KEY = 'galleryPanelHidden';
 const FLASH_SIZE_ORDER = ['S', 'M', 'L', 'XL', 'XXL'];
+const GUIDE_PRODUCT_TYPE_LABELS = Object.freeze({
+  sofa: 'Sofa',
+  reclaim: 'Reclaim',
+  armchair: 'Armchair',
+  sectional: 'Sectional',
+  chaise: 'Chaise',
+  ottoman: 'Ottoman',
+  'dining-chair': 'Dining Chair',
+  cushion: 'Cushion only',
+  misc: 'Misc',
+  other: 'Armrest',
+});
+const GUIDE_PRODUCT_TYPE_ORDER = Object.freeze([
+  'sofa',
+  'reclaim',
+  'armchair',
+  'sectional',
+  'chaise',
+  'ottoman',
+  'dining-chair',
+  'cushion',
+  'misc',
+  'other',
+]);
 
 let flashOverlay = null;
 let galleryOverlay = null;
@@ -35,7 +60,7 @@ const guideSvgCache = new Map();
 let guideCodeListCache = null;
 let guideViewsByCodeCache = null;
 let guideCodeListPromise = null;
-const GUIDE_RASTER_CACHE_VERSION = 'v5';
+const GUIDE_RASTER_CACHE_VERSION = 'v6';
 const GUIDE_RASTER_MIN_EDGE = 2200;
 const GUIDE_RASTER_MAX_EDGE = 4096;
 const GUIDE_SPLIT_ENABLED_PREF_KEY = 'guideSplitEnabled';
@@ -47,6 +72,8 @@ let guideSplitOriginalParent = null;
 let guideSplitOriginalNextSibling = null;
 let guideSplitCaptureOverlayOriginalParent = null;
 let guideSplitCaptureOverlayOriginalNextSibling = null;
+let guideSplitCanvasControlsOriginalParent = null;
+let guideSplitCanvasControlsOriginalNextSibling = null;
 let guideSplitCompareCanvasManager = null;
 let guideSplitCompareTagManager = null;
 let guideSplitActiveTempScopeId = '';
@@ -71,6 +98,7 @@ let guideSplitLayoutRetryTimeout = null;
 let _ensureRightViewInFlight = false;
 let _bindingChangedTimeout = null;
 let _lastProcessedGuideNextTagEventKey = '';
+const guideSplitCompareMirrorByGuide = new Map();
 const guideSplitPendingGuideViews = new Map();
 const guideCompareWorkspaceState = {
   open: guideSplitEnabled,
@@ -92,6 +120,27 @@ function getGuideSplitWorkspaceMode() {
 
 function isMeasurementSplitMode() {
   return getGuideSplitWorkspaceMode() === 'measurement-edit';
+}
+
+function getGuideSplitMirrorKey(selection) {
+  const code = normalizeCode(selection?.code || '');
+  const variant = String(selection?.variant || 'front')
+    .trim()
+    .toLowerCase();
+  return code ? `${code}::${variant || 'front'}` : '';
+}
+
+function isGuideSplitCompareMirrored(selection) {
+  const key = getGuideSplitMirrorKey(selection);
+  return key ? guideSplitCompareMirrorByGuide.get(key) === true : false;
+}
+
+function setGuideSplitCompareMirrored(selection, mirrored) {
+  const key = getGuideSplitMirrorKey(selection);
+  if (!key) return false;
+  guideSplitCompareMirrorByGuide.set(key, mirrored === true);
+  resetGuideSplitCompareBackgroundVisualKey();
+  return mirrored === true;
 }
 
 function syncGuideSplitWorkspaceModeUi() {
@@ -358,7 +407,7 @@ function runGuideSplitLayoutSync() {
         });
       }
       if (frameEl) {
-        frameEl.style.visibility = '';
+        frameEl.style.visibility = guideSplitEnabled ? 'hidden' : '';
       }
     });
   });
@@ -380,7 +429,7 @@ function scheduleGuideSplitFrameSync() {
       syncGuideSplitFrameGhost();
       const frameEl = document.getElementById('captureFrame');
       if (frameEl) {
-        frameEl.style.visibility = '';
+        frameEl.style.visibility = guideSplitEnabled ? 'hidden' : '';
       }
     });
   });
@@ -589,8 +638,8 @@ function fitGuideSplitPrimaryBackgroundToFrame() {
   }
 
   const fitWorldRect =
-    getGuideSplitActiveFrameWorldRect(getCurrentViewId()) ||
-    primaryCanvasManager?.getBackgroundWorldRect?.();
+    primaryCanvasManager?.getBackgroundWorldRect?.() ||
+    getGuideSplitActiveFrameWorldRect(getCurrentViewId());
   if (
     !fitWorldRect ||
     !primaryCanvasManager?.fitViewportToBackgroundPlacementFrame ||
@@ -640,6 +689,44 @@ function fitGuideSplitCompareBackgroundToFrame() {
   return didFit;
 }
 
+function getGuideSplitPrimaryCanvasBounds(canvasManager) {
+  const host = document.getElementById('guideSplitLiveCanvasHost');
+  if (!guideSplitEnabled || !host || canvasManager !== getPrimaryCanvasManager()) {
+    return null;
+  }
+
+  const hostRect = host.getBoundingClientRect?.();
+  const hostWidth = Math.max(1, Math.floor(Number(hostRect?.width || host.clientWidth || 0)));
+  const hostHeight = Math.max(1, Math.floor(Number(hostRect?.height || host.clientHeight || 0)));
+  // The live split pane is the capture surface. Reusing captureFrame's old DOM
+  // dimensions here sizes Fabric once to the pane and then a second time to the
+  // previous frame, producing the visible frame-inside-a-frame regression.
+  return {
+    width: hostWidth,
+    height: hostHeight,
+    left: 0,
+    top: 0,
+  };
+}
+
+function positionGuideSplitPrimaryCanvas(canvasManager, bounds) {
+  const wrapper = getCanvasWrapperElement(canvasManager);
+  if (!wrapper || !bounds) {
+    return;
+  }
+
+  // The global Fabric wrapper is full-screen outside split mode. In split mode the
+  // capture frame is the canvas surface, so explicitly override those global rules.
+  wrapper.style.setProperty('position', 'absolute', 'important');
+  wrapper.style.setProperty('left', `${bounds.left}px`, 'important');
+  wrapper.style.setProperty('top', `${bounds.top}px`, 'important');
+  wrapper.style.setProperty('right', 'auto', 'important');
+  wrapper.style.setProperty('bottom', 'auto', 'important');
+  wrapper.style.setProperty('width', `${bounds.width}px`, 'important');
+  wrapper.style.setProperty('height', `${bounds.height}px`, 'important');
+  wrapper.style.setProperty('margin', '0', 'important');
+}
+
 function resizeGuideSplitCanvasManagerNow(canvasManager) {
   if (!canvasManager) {
     return false;
@@ -649,8 +736,10 @@ function resizeGuideSplitCanvasManagerNow(canvasManager) {
     typeof canvasManager.getAvailableCanvasSize === 'function' &&
     typeof canvasManager.applyResize === 'function'
   ) {
-    const { width, height } = canvasManager.getAvailableCanvasSize();
+    const splitBounds = getGuideSplitPrimaryCanvasBounds(canvasManager);
+    const { width, height } = splitBounds || canvasManager.getAvailableCanvasSize();
     canvasManager.applyResize(width, height);
+    positionGuideSplitPrimaryCanvas(canvasManager, splitBounds);
     return true;
   }
 
@@ -797,6 +886,39 @@ function normalizeCode(value) {
     .trim()
     .replace(/\s+/g, '-')
     .toUpperCase();
+}
+
+export function getGuideProductType(code, manifestCategory = '') {
+  const normalizedCode = normalizeCode(code);
+  const normalizedCategory = String(manifestCategory || '')
+    .trim()
+    .toLowerCase();
+
+  const explicitType = getGuideProductTypeOverride(normalizedCode);
+  if (explicitType) return explicitType;
+  const seatingType = getGuideSeatingType(normalizedCode);
+  if (seatingType) return seatingType;
+
+  if (normalizedCategory.includes('ottoman')) return 'ottoman';
+  if (normalizedCategory.includes('dining chair')) return 'dining-chair';
+  if (normalizedCategory.includes('cushion')) return 'cushion';
+  if (/^CS0(?:-|$)/.test(normalizedCode)) return 'ottoman';
+  if (/^CS5(?:B|L)?(?:-|$)/.test(normalizedCode)) return 'chaise';
+  if (/^CSDC(?:-|$)/.test(normalizedCode)) return 'dining-chair';
+  if (/^CC(?:-|$)/.test(normalizedCode)) return 'cushion';
+  if (/^CS[1-4](?:B|L)?(?:-|$)/.test(normalizedCode)) return 'sofa';
+  return 'other';
+}
+
+export function getGuideSeatCount(code, manifestCategory = '') {
+  if (
+    !['sofa', 'armchair', 'sectional', 'reclaim'].includes(
+      getGuideProductType(code, manifestCategory)
+    )
+  )
+    return '';
+  const match = normalizeCode(code).match(/^CS([1-4])(?:B|L)?(?:-|$)/);
+  return match ? match[1] : '';
 }
 
 function parseCodes(value) {
@@ -1325,7 +1447,11 @@ function ensureStyles() {
     .guide-gallery-overlay {
       position: fixed;
       inset: 0;
-      z-index: 13400;
+      /* Must stay above the fabric canvas: CanvasManager re-forces the canvas
+         wrapper to the top layer after imports/view switches, and when it
+         wins the gallery's buttons stop receiving clicks. Only the
+         notification center sits higher. */
+      z-index: 17000;
       background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(8px);
       opacity: 0;
@@ -1519,6 +1645,20 @@ function ensureStyles() {
       border-radius: 8px;
       overflow: hidden;
     }
+    .guide-gallery-filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .guide-gallery-filter-label {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #64748b;
+    }
     .guide-gallery-view-btn {
       border: none;
       border-right: 1px solid #cbd5e1;
@@ -1606,6 +1746,81 @@ function ensureStyles() {
       padding: 10px;
       display: grid;
       gap: 10px;
+    }
+    .guide-gallery-bind-target-bar {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 8px;
+      background: #eff6ff;
+    }
+    .guide-gallery-bind-target-current {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      min-width: 0;
+    }
+    .guide-gallery-bind-target-current img,
+    .guide-gallery-bind-target-placeholder {
+      width: 72px;
+      height: 54px;
+      object-fit: contain;
+      border: 1px solid #bfdbfe;
+      border-radius: 7px;
+      background: #fff;
+    }
+    .guide-gallery-bind-target-copy {
+      min-width: 0;
+      color: #1e3a8a;
+      font-size: 11px;
+      line-height: 1.25;
+    }
+    .guide-gallery-bind-target-copy strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #0f172a;
+      font-size: 12px;
+    }
+    .guide-gallery-bind-target-list {
+      display: flex;
+      gap: 6px;
+      min-width: 0;
+      overflow-x: auto;
+      padding: 2px;
+      scrollbar-width: thin;
+    }
+    .guide-gallery-bind-target-option {
+      flex: 0 0 auto;
+      width: 70px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      padding: 3px;
+      background: #fff;
+      color: #475569;
+      font-size: 9px;
+      cursor: pointer;
+    }
+    .guide-gallery-bind-target-option.active {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.16);
+      color: #1d4ed8;
+      font-weight: 800;
+    }
+    .guide-gallery-bind-target-option img {
+      display: block;
+      width: 62px;
+      height: 42px;
+      margin-bottom: 2px;
+      object-fit: contain;
+      border-radius: 4px;
+      background: #f8fafc;
     }
     .guide-gallery-bind-preview-main {
       display: grid;
@@ -1910,6 +2125,16 @@ function ensureStyles() {
       border: 0;
       transition: opacity 90ms ease;
     }
+    body.guide-split-workspace-active #navigation-container {
+      display: none !important;
+    }
+    body.guide-split-workspace-active #canvasControls {
+      position: absolute !important;
+      left: 50% !important;
+      right: auto !important;
+      bottom: 12px !important;
+      transform: translateX(-50%) !important;
+    }
     .guide-split-live-pane.is-transitioning {
       pointer-events: none;
       opacity: 0;
@@ -1993,6 +2218,35 @@ function ensureStyles() {
       text-transform: uppercase;
       letter-spacing: 0.04em;
     }
+    .guide-split-guide-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .guide-split-guide-title > span:first-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .guide-split-guide-title button {
+      flex: 0 0 auto;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      background: #fff;
+      color: #334155;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      cursor: pointer;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .guide-split-guide-title button[aria-pressed="true"] {
+      border-color: #2563eb;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
     .guide-split-guide-sub {
       font-size: 10px;
       font-weight: 600;
@@ -2023,6 +2277,11 @@ function ensureStyles() {
     .guide-split-guide-actions button:hover {
       border-color: #94a3b8;
       background: #f8fafc;
+    }
+    .guide-split-guide-actions button[aria-pressed="true"] {
+      border-color: #2563eb;
+      background: #eff6ff;
+      color: #1d4ed8;
     }
     .guide-split-picker-label {
       display: grid;
@@ -2308,8 +2567,16 @@ function ensureStyles() {
       border-bottom: 1px solid rgba(203, 213, 225, 0.6);
       display: flex;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: space-between;
       gap: 8px;
+    }
+    .guide-gallery-item-type {
+      flex: 0 0 auto;
+      color: #64748b;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
     .guide-gallery-item-select {
       margin-right: 6px;
@@ -2411,6 +2678,9 @@ function ensureStyles() {
         grid-template-columns: 1fr;
       }
       .guide-gallery-toolbar {
+        grid-template-columns: 1fr;
+      }
+      .guide-gallery-bind-target-bar {
         grid-template-columns: 1fr;
       }
       .guide-gallery-link-grid {
@@ -3022,19 +3292,45 @@ function isDashedSvgStroke(node, stylesByClass) {
   return Boolean(dash && dash !== 'none' && dash !== '0');
 }
 
+function isSmallGuidePolygon(node, svgRoot) {
+  const points = String(node?.getAttribute?.('points') || '')
+    .trim()
+    .split(/[\s,]+/)
+    .map(Number)
+    .filter(Number.isFinite);
+  if (points.length < 6) return false;
+
+  const xs = [];
+  const ys = [];
+  for (let index = 0; index + 1 < points.length; index += 2) {
+    xs.push(points[index]);
+    ys.push(points[index + 1]);
+  }
+  const viewBox = String(svgRoot?.getAttribute?.('viewBox') || '')
+    .trim()
+    .split(/[\s,]+/)
+    .map(Number);
+  const rootWidth = viewBox.length === 4 ? Math.abs(viewBox[2]) : 0;
+  const rootHeight = viewBox.length === 4 ? Math.abs(viewBox[3]) : 0;
+  if (!rootWidth || !rootHeight || !xs.length || !ys.length) return false;
+
+  const width = Math.max(...xs) - Math.min(...xs);
+  const height = Math.max(...ys) - Math.min(...ys);
+  return width <= rootWidth * 0.08 && height <= rootHeight * 0.08;
+}
+
 function removeGuideRasterArtifacts(svgRoot) {
   const stylesByClass = parseSvgStyleDeclarations(svgRoot);
   const selector = 'line,path,polyline,polygon,circle,ellipse,rect';
   Array.from(svgRoot.querySelectorAll(selector)).forEach(node => {
     const tagName = String(node.tagName || '').toLowerCase();
-    const stroke = resolveSvgStyleValue(node, 'stroke', stylesByClass);
     const fill = resolveSvgStyleValue(node, 'fill', stylesByClass);
-    const hasGuideStroke = isGuideArtifactColor(stroke);
     const hasGuideFill = isGuideArtifactColor(fill);
+    const id = String(node.getAttribute?.('id') || '').replace(/^mos\d+_/i, '');
+    const isNamedMeasurement = /^m.+(?:cm|mm|in)\d*(?:_|$)/i.test(id);
     const shouldRemove =
-      isDashedSvgStroke(node, stylesByClass) ||
-      hasGuideStroke ||
-      (tagName === 'polygon' && hasGuideFill);
+      isNamedMeasurement ||
+      (tagName === 'polygon' && hasGuideFill && isSmallGuidePolygon(node, svgRoot));
     if (shouldRemove) {
       node.parentNode?.removeChild(node);
     }
@@ -3062,6 +3358,74 @@ function styleGuideGroupForHighlight(group, prefix) {
   }
 }
 
+function applyHorizontalGuideRasterMirror(root, width, viewBoxMinX = 0) {
+  if (!root || !Number.isFinite(width) || width <= 0) return;
+  const namespace = root.namespaceURI || 'http://www.w3.org/2000/svg';
+  const mirrorGroup = root.ownerDocument.createElementNS(namespace, 'g');
+  mirrorGroup.setAttribute('data-guide-raster-mirror', 'true');
+  mirrorGroup.setAttribute(
+    'transform',
+    `translate(${2 * Number(viewBoxMinX || 0) + width} 0) scale(-1 1)`
+  );
+
+  // Counter-mirror text around its own anchor. The parent mirror moves the
+  // label to the matching opposite-side measurement, while this local mirror
+  // keeps characters readable instead of rendering them backwards.
+  Array.from(root.querySelectorAll('text')).forEach(textNode => {
+    const localGroup = textNode.parentElement?.localName === 'g' ? textNode.parentElement : null;
+    const circle = localGroup?.querySelector('circle[cx]') || null;
+    const rect = localGroup?.querySelector('rect[x][width]') || null;
+    const circleCenterX = Number.parseFloat(String(circle?.getAttribute('cx') || ''));
+    const rectX = Number.parseFloat(String(rect?.getAttribute('x') || ''));
+    const rectWidth = Number.parseFloat(String(rect?.getAttribute('width') || ''));
+    const visualCenterX = Number.isFinite(circleCenterX)
+      ? circleCenterX
+      : Number.isFinite(rectX) && Number.isFinite(rectWidth)
+        ? rectX + rectWidth / 2
+        : null;
+    const existingTransform = String(textNode.getAttribute('transform') || '').trim();
+    const matrixMatch = existingTransform.match(
+      /^matrix\(\s*([-+\d.eE]+)[ ,]+([-+\d.eE]+)[ ,]+([-+\d.eE]+)[ ,]+([-+\d.eE]+)[ ,]+([-+\d.eE]+)[ ,]+([-+\d.eE]+)\s*\)$/
+    );
+    if (matrixMatch) {
+      const [, a, b, c, d, e, f] = matrixMatch.map(Number);
+      const translatedX = Number.isFinite(visualCenterX) ? visualCenterX : e;
+      if (Number.isFinite(visualCenterX)) {
+        textNode.setAttribute('text-anchor', 'middle');
+      }
+      textNode.setAttribute('transform', `matrix(${-a} ${b} ${-c} ${d} ${translatedX} ${f})`);
+      return;
+    }
+    const translateMatch = existingTransform.match(
+      /^translate\(\s*([-+\d.eE]+)(?:[ ,]+([-+\d.eE]+))?\s*\)$/
+    );
+    if (translateMatch) {
+      const x = Number(translateMatch[1]);
+      const y = Number(translateMatch[2] || 0);
+      textNode.setAttribute('transform', `matrix(-1 0 0 1 ${x} ${y})`);
+      return;
+    }
+    const ownX = Number.parseFloat(String(textNode.getAttribute('x') || ''));
+    const tspanX = Number.parseFloat(
+      String(textNode.querySelector('tspan[x]')?.getAttribute('x') || '')
+    );
+    const anchorX = Number.isFinite(ownX) ? ownX : tspanX;
+    if (!Number.isFinite(anchorX)) return;
+    textNode.setAttribute(
+      'transform',
+      `matrix(-1 0 0 1 ${2 * anchorX} 0)${existingTransform ? ` ${existingTransform}` : ''}`
+    );
+  });
+
+  const retainedNames = new Set(['defs', 'style', 'title', 'desc']);
+  Array.from(root.childNodes).forEach(node => {
+    const localName = String(node.localName || '').toLowerCase();
+    if (node.nodeType === 1 && retainedNames.has(localName)) return;
+    mirrorGroup.appendChild(node);
+  });
+  root.appendChild(mirrorGroup);
+}
+
 function prepareSvgForRaster(svgText, options = {}) {
   const mode = normalizeGuideRasterMode(options);
   const activeRole = normalizeRoleToken(options.activeRole || '');
@@ -3081,6 +3445,7 @@ function prepareSvgForRaster(svgText, options = {}) {
   const viewBoxRaw = root.getAttribute('viewBox') || '';
   const vbParts = viewBoxRaw.trim().split(/\s+/).map(Number).filter(Number.isFinite);
 
+  const vbMinX = vbParts.length === 4 ? vbParts[0] : 0;
   const vbWidth = vbParts.length === 4 ? vbParts[2] : 0;
   const vbHeight = vbParts.length === 4 ? vbParts[3] : 0;
 
@@ -3149,6 +3514,10 @@ function prepareSvgForRaster(svgText, options = {}) {
     'preserveAspectRatio',
     root.getAttribute('preserveAspectRatio') || 'xMidYMid meet'
   );
+
+  if (options.flipHorizontal === true) {
+    applyHorizontalGuideRasterMirror(root, width, vbMinX);
+  }
 
   const serializer = new XMLSerializer();
   return {
@@ -3243,14 +3612,16 @@ export async function fetchGuideRasterUrl(code, view, options = {}) {
   const mode = normalizeGuideRasterMode(options);
   const activeRole = normalizeRoleToken(options.activeRole || '');
   const dimInactive = options.dimInactive !== false;
-  const key = `${GUIDE_RASTER_CACHE_VERSION}::${code}::${view}::mode:${mode}::role:${activeRole || 'none'}::dim:${dimInactive ? 'yes' : 'no'}`;
+  const stripText = options.stripText === true;
+  const flipHorizontal = options.flipHorizontal === true;
+  const key = `${GUIDE_RASTER_CACHE_VERSION}::${code}::${view}::mode:${mode}::role:${activeRole || 'none'}::dim:${dimInactive ? 'yes' : 'no'}::strip:${stripText ? 'yes' : 'no'}::flip:${flipHorizontal ? 'yes' : 'no'}`;
   if (guideRasterCache.has(key)) {
     return guideRasterCache.get(key);
   }
 
   const rawSvg = await fetchGuideSvgText(code, view);
   // Strip original SVG text labels and their background boxes from raster when requested
-  const rasterSvg = options.stripText ? stripSvgLabels(rawSvg) : rawSvg;
+  const rasterSvg = stripText ? stripSvgLabels(rawSvg) : rawSvg;
   const prepared = prepareSvgForRaster(rasterSvg, { ...options, mode, activeRole, dimInactive });
   const svgBlob = new Blob([prepared.svgText], {
     type: 'image/svg+xml;charset=utf-8',
@@ -4051,6 +4422,31 @@ export function stripSvgLabels(svgText) {
         group.parentNode?.removeChild(group);
       }
     });
+    // Single-prefix measurement groups (m-only tokens, for example when a
+    // guide exports no b/c companions) are still guide decoration: their
+    // leaders and arrowheads must not survive into the raster after the
+    // paired label group (if any) was removed above. Only ids carrying a
+    // measurement unit (cm/mm/in) qualify — furniture groups like "couch"
+    // merely start with the letter c and must survive.
+    Array.from(svgRoot.querySelectorAll('g[id]')).forEach(function (group) {
+      var normalizedId = String(group.getAttribute('id') || '')
+        .replace(/^mos\d+_/i, '')
+        .replace(/_[0-9A-Fa-f]{8,}_?$/i, '')
+        .trim();
+      if (/^[mbc][a-z0-9_-]*(?:cm|mm|in)(?:_|$)/i.test(normalizedId)) {
+        group.parentNode?.removeChild(group);
+      }
+    });
+    // Label-plate rects: guides use small rects as callout boxes behind the
+    // tag labels. Structural furniture parts drawn as rects carry an id and
+    // are large — those survive; only anonymous small plates are stripped.
+    Array.from(svgRoot.querySelectorAll('rect')).forEach(function (node) {
+      if (node.getAttribute('id')) return;
+      var width = Number(node.getAttribute('width')) || 0;
+      var height = Number(node.getAttribute('height')) || 0;
+      if (Math.max(width, height) >= 60) return;
+      node.parentNode?.removeChild(node);
+    });
     Array.from(svgRoot.querySelectorAll('line[id], path[id], polyline[id]')).forEach(
       function (node) {
         var id = String(node.getAttribute('id') || '').replace(/^mos\d+_/i, '');
@@ -4069,42 +4465,60 @@ export function stripSvgLabels(svgText) {
   }
 }
 
-function stripNonMeasurementElements(svgText) {
+export function stripNonMeasurementElements(svgText) {
   try {
     var parser = new DOMParser();
     var doc = parser.parseFromString(svgText, 'image/svg+xml');
     var svgRoot = doc.querySelector('svg');
     if (!svgRoot) return svgText;
-    // Remove top-level non-group elements (furniture outline, stray lines, etc.)
-    var keep = new Set(['g', 'defs', 'style', 'title', 'desc', 'svg']);
-    Array.from(svgRoot.childNodes).forEach(function (node) {
-      if (node.nodeType === 1 && !keep.has(node.localName?.toLowerCase())) {
-        svgRoot.removeChild(node);
-      }
+
+    // Label-callout rects (white plates + thin colored boxes) are decoration,
+    // never furniture: guides draw furniture outlines as strokes, so rects are
+    // safe to remove at any depth. Their text labels stay and become tags.
+    Array.from(svgRoot.querySelectorAll('rect')).forEach(function (r) {
+      r.parentNode?.removeChild(r);
     });
-    // Merge label text into measurement groups, remove label box groups entirely
-    var groups = Array.from(svgRoot.querySelectorAll(':scope > g'));
-    var labelGroups = new Set();
-    groups.forEach(function (g) {
-      if (g.querySelector('rect') && g.querySelector('text')) {
-        labelGroups.add(g);
-      }
-    });
-    var prevMeasurement = null;
-    groups.forEach(function (g) {
-      if (labelGroups.has(g)) {
-        var textEl = g.querySelector('text');
-        if (textEl && prevMeasurement && !prevMeasurement.querySelector('text')) {
-          prevMeasurement.appendChild(textEl.cloneNode(true));
-        }
-        g.parentNode?.removeChild(g);
-        return;
-      }
-      Array.from(g.querySelectorAll('rect')).forEach(function (r) {
-        r.parentNode?.removeChild(r);
+
+    // Arrowhead stubs: small closed polylines/polygons (3-6 points) that
+    // guide exporters draw at measurement-line ends. Left in, they import as
+    // stray square strokes. Detect by shape, not color, so any palette is
+    // handled.
+    Array.from(svgRoot.querySelectorAll('polyline, polygon')).forEach(function (p) {
+      var values = (p.getAttribute('points') || '')
+        .trim()
+        .split(/[\s,]+/)
+        .map(Number)
+        .filter(Number.isFinite);
+      var pointCount = Math.floor(values.length / 2);
+      if (pointCount < 3 || pointCount > 6) return;
+      var xs = values.filter(function (_, i) {
+        return i % 2 === 0;
       });
-      prevMeasurement = g;
+      var ys = values.filter(function (_, i) {
+        return i % 2 === 1;
+      });
+      var width = Math.max.apply(null, xs) - Math.min.apply(null, xs);
+      var height = Math.max.apply(null, ys) - Math.min.apply(null, ys);
+      if (width > 40 || height > 40) return;
+      // Arrowheads are trapezoids whose open base sits on the measurement
+      // line: first→last gap scales with the shape itself (≈ its width), so
+      // accept anything within 1.5× the bounding extent. Genuinely open small
+      // polylines have ends far outside their own bounding box.
+      var closesBack =
+        Math.hypot(values[0] - values[values.length - 2], values[1] - values[values.length - 1]) <
+        Math.max(width, height) * 1.5;
+      if (closesBack) p.parentNode?.removeChild(p);
     });
+
+    // Keep companion labels in their original groups. Reparenting text from
+    // Illustrator discards inherited transforms/styles and shifts the tag anchor.
+    // MOS reads role tokens from both measurement and label groups directly.
+    // Flat Illustrator guides (a single Layer group, no m/b/c prefixes) keep
+    // their lines, leaders, and text labels: the MOS overlay imports the
+    // colored measurement lines and the text nodes become the tag labels. The
+    // old logic removed the entire Layer group here (it matched "has rect +
+    // has text"), which wiped the real measurement lines and left an import
+    // of squares and orphaned arrows only.
     return new XMLSerializer().serializeToString(doc);
   } catch (e) {
     return svgText;
@@ -5246,6 +5660,34 @@ function restoreCaptureOverlayFromSplitPane() {
   overlay.style.height = '';
 }
 
+function relocateCanvasControlsIntoSplitPane() {
+  const controls = document.getElementById('canvasControls');
+  const livePane = document.getElementById('guideSplitLivePane');
+  if (!controls || !livePane) return;
+
+  if (!guideSplitCanvasControlsOriginalParent) {
+    guideSplitCanvasControlsOriginalParent = controls.parentElement;
+    guideSplitCanvasControlsOriginalNextSibling = controls.nextSibling;
+  }
+  if (controls.parentElement !== livePane) {
+    livePane.appendChild(controls);
+  }
+}
+
+function restoreCanvasControlsFromSplitPane() {
+  const controls = document.getElementById('canvasControls');
+  if (!controls || !guideSplitCanvasControlsOriginalParent) return;
+
+  const sibling = guideSplitCanvasControlsOriginalNextSibling;
+  if (sibling && sibling.parentElement === guideSplitCanvasControlsOriginalParent) {
+    guideSplitCanvasControlsOriginalParent.insertBefore(controls, sibling);
+  } else {
+    guideSplitCanvasControlsOriginalParent.appendChild(controls);
+  }
+  guideSplitCanvasControlsOriginalParent = null;
+  guideSplitCanvasControlsOriginalNextSibling = null;
+}
+
 function ensureGuideSplitFrameGhost() {
   const overlay = document.getElementById('captureOverlay');
   if (!overlay) return null;
@@ -5268,6 +5710,12 @@ function syncGuideSplitFrameGhost() {
   const frame = document.getElementById('captureFrame');
   const overlay = document.getElementById('captureOverlay');
   if (!ghost || !frame || !overlay) return;
+  // The split pane itself is the temporary comparison frame. Drawing the saved
+  // capture-frame mask over it creates a second, stale frame around the image.
+  if (guideSplitEnabled) {
+    ghost.style.display = 'none';
+    return;
+  }
   const frameRect = frame.getBoundingClientRect();
   const overlayRect = overlay.getBoundingClientRect();
   ghost.style.left = `${Math.round(frameRect.left - overlayRect.left)}px`;
@@ -5664,6 +6112,10 @@ async function updateGuideSplitHighlightOverlay(
       .trim()
       .toLowerCase() || 'front';
   const compareCanvas = compareCanvasManager?.fabricCanvas || null;
+  const flipHorizontal = isGuideSplitCompareMirrored({
+    code: normalizedCode,
+    variant: normalizedVariant,
+  });
   if (!normalizedCode || !compareCanvas?.backgroundImage) {
     removeGuideSplitHighlightOverlay(compareCanvas);
     return '';
@@ -5671,7 +6123,7 @@ async function updateGuideSplitHighlightOverlay(
 
   const roles = await fetchGuideRoleTokens(normalizedCode, normalizedVariant).catch(() => []);
   const activeRole = resolveGuideActiveRole(guideCompareWorkspaceState.leftViewId, roles);
-  const visualKey = `${normalizedCode}::${normalizedVariant}::${activeRole || 'none'}`;
+  const visualKey = `${normalizedCode}::${normalizedVariant}::${activeRole || 'none'}::flip:${flipHorizontal ? 'yes' : 'no'}`;
 
   syncGuideSplitReferenceTagHighlights(tempScopeId, activeRole);
   [120, 350, 700].forEach(delayMs => {
@@ -5687,9 +6139,13 @@ async function updateGuideSplitHighlightOverlay(
       return '';
     }
     const backgroundUrl = await fetchGuideRasterUrl(normalizedCode, normalizedVariant, {
-      mode: 'preview',
+      // Base mode hides recognized measurement groups while preserving the
+      // original furniture artwork. Running stripSvgLabels here used a broad
+      // artifact cleanup pass that can erase colored sofa geometry.
+      mode: 'base',
       dimInactive: false,
-      stripText: true,
+      stripText: false,
+      flipHorizontal,
     });
     await replaceGuideSplitCompareBackgroundImage(backgroundUrl, compareCanvas);
     guideSplitCompareBackgroundVisualKey = visualKey;
@@ -5710,6 +6166,7 @@ async function updateGuideSplitHighlightOverlay(
     // The highlight pass needs the measurement groups. stripSvgLabels removes
     // those groups, leaving a valid but visually blank highlight raster.
     stripText: false,
+    flipHorizontal,
   });
   await replaceGuideSplitCompareBackgroundImage(backgroundUrl, compareCanvas);
   guideSplitCompareBackgroundVisualKey = visualKey;
@@ -5941,11 +6398,19 @@ async function loadGuideIntoCompareCanvas(selection, compareCanvasManager) {
     // guide fetches over the network.
     compareCanvasManager.fabricCanvas?.clear?.();
 
+    const flipHorizontal = isGuideSplitCompareMirrored({
+      code: normalizedCode,
+      variant: normalizedVariant,
+    });
+
     const [imageUrl, guideSvgText] = await Promise.all([
       fetchGuideRasterUrl(normalizedCode, normalizedVariant, {
-        mode: 'preview',
+        // Keep the source artwork intact. prepareSvgForRaster(base) hides the
+        // measurement groups without guessing which colored shapes are furniture.
+        mode: 'base',
         dimInactive: false,
-        stripText: true,
+        stripText: false,
+        flipHorizontal,
       }),
       fetchGuideSvgText(normalizedCode, normalizedVariant),
     ]);
@@ -6287,6 +6752,7 @@ async function applyGuideSplitLayout() {
     syncGuideSplitWorkspaceModeUi();
     applyGuideSplitCollapsedPanels();
     relocateCaptureOverlayIntoSplitPane();
+    relocateCanvasControlsIntoSplitPane();
     ensureGuideSplitFrameGhost();
     if (guideSplitFrameGhost) {
       guideSplitFrameGhost.style.display = 'none';
@@ -6334,6 +6800,7 @@ async function applyGuideSplitLayout() {
       });
     }
     restoreCaptureOverlayFromSplitPane();
+    restoreCanvasControlsFromSplitPane();
     removeGuideSplitFrameGhost();
     if (splitRoot) splitRoot.remove();
     wrapper.classList.remove('guide-split-active');
@@ -6403,6 +6870,7 @@ function renderGuideSplitPane() {
   const workspaceMode = getGuideSplitWorkspaceMode();
   const measurementWorkspaceState = window.getMeasurementSplitWorkspaceState?.() || null;
   const binding = resolveModelBindingForView(leftViewId);
+  const compareMirrored = isGuideSplitCompareMirrored(binding?.selection);
   const stateKey = `${workspaceMode}::${leftViewId}::${rightViewId || '-'}::${measurementWorkspaceState?.activeImportedViewId || '-'}::${guideCompareWorkspaceState.activePane}::${guideCompareWorkspaceState.rightSourceKind}`;
   const missingMeasurementHost =
     workspaceMode === 'measurement-edit' && !pane.querySelector('#guideSplitMeasurementEditorHost');
@@ -6435,16 +6903,12 @@ function renderGuideSplitPane() {
         <span class="guide-split-guide-actions">
           <span class="guide-split-picker-label">
             <span>${workspaceLabel}</span>
-            <span class="guide-split-guide-sub">Draw on the left. Map CW rows, labels, and actions on the right.</span>
+            <span class="guide-split-guide-sub">Choose a row, then draw it on the image.</span>
           </span>
           <button type="button" data-guide-split-action="close">Close</button>
         </span>
       </header>
       <div class="guide-split-guide-body guide-split-measurement-body">
-        <div class="guide-split-pane-chip active">
-          <strong>CW Imported Rows</strong>
-          <span>Assign labels, arm Draw Next, and keep the image live on the left.</span>
-        </div>
         <div id="guideSplitMeasurementEditorHost" class="guide-split-pane-canvas-host guide-split-measurement-editor-host"></div>
       </div>
     `;
@@ -6484,7 +6948,15 @@ function renderGuideSplitPane() {
         : 'Project image';
     pane.innerHTML = `
       <header class="guide-split-guide-head">
-        <span>${rightLabel}</span>
+        <span class="guide-split-guide-title">
+          <span>${rightLabel}</span>
+          <button
+            type="button"
+            data-guide-split-action="mirror"
+            aria-pressed="${compareMirrored ? 'true' : 'false'}"
+            title="Mirror the guide horizontally while keeping labels readable"
+          >↔ Mirror</button>
+        </span>
         <span class="guide-split-guide-actions">
           <span class="guide-split-picker-label">
             <span>${rightSourceLabel}</span>
@@ -6526,6 +6998,17 @@ function renderGuideSplitPane() {
   });
   pane.querySelector('[data-guide-split-action="gallery"]')?.addEventListener('click', () => {
     showGuideGallery({ source: 'split-pane', mode: 'select' });
+  });
+  pane.querySelector('[data-guide-split-action="mirror"]')?.addEventListener('click', event => {
+    if (!binding?.selection?.code) return;
+    const button = event.currentTarget;
+    const mirrored = setGuideSplitCompareMirrored(binding.selection, !compareMirrored);
+    button?.setAttribute?.('aria-pressed', mirrored ? 'true' : 'false');
+    void updateGuideSplitHighlightOverlay(
+      binding.selection,
+      guideSplitCompareCanvasManager,
+      guideSplitActiveTempScopeId
+    );
   });
   pane.querySelectorAll('[data-guide-split-action="bound-guide"]').forEach(button => {
     button.addEventListener('click', () => {
@@ -6643,6 +7126,21 @@ function showGuideGallery(options = {}) {
     document.body.appendChild(galleryOverlay);
   }
 
+  // When the image panel is open on the right, the overlay should not cover it.
+  // Pin the overlay's right edge to the panel so gallery content centers over the
+  // visible canvas area rather than the full viewport.
+  const imagePanel = document.getElementById('imagePanel');
+  if (
+    imagePanel &&
+    imagePanel.style.display !== 'none' &&
+    !imagePanel.classList.contains('hidden')
+  ) {
+    const panelRect = imagePanel.getBoundingClientRect();
+    galleryOverlay.style.right = `${Math.round(panelRect.width)}px`;
+  } else {
+    galleryOverlay.style.right = '0';
+  }
+
   // All uploaded guide codes (Worker handles both Front_CODE.svg and CODE.svg)
   const fallbackCodes = [
     'CC-BCH-B',
@@ -6651,6 +7149,7 @@ function showGuideGallery(options = {}) {
     'CC-BK-L',
     'CC-BK-T',
     'CC-BK-W',
+    'CC-ST-BE',
     'CS1-CNR',
     'CS1-CNR-W',
     'CS1-SRA-HB-L',
@@ -6892,10 +7391,13 @@ function showGuideGallery(options = {}) {
   let selectedCode = currentCodes[0] || '';
   let selectedView = 'front';
   let bindTargetViewId = '';
+  const requestedGalleryMode = options?.mode === 'bind' ? 'bind' : 'select';
   let searchVisible = getWindowPrefs()?.[GUIDE_GALLERY_SEARCH_PREF_KEY] === true;
-  let panelHidden = getWindowPrefs()?.[GUIDE_GALLERY_PANEL_HIDDEN_PREF_KEY] === true;
+  let panelHidden =
+    requestedGalleryMode === 'bind' ||
+    getWindowPrefs()?.[GUIDE_GALLERY_PANEL_HIDDEN_PREF_KEY] === true;
   let autoCompactHeader = false;
-  let galleryMode = options?.mode === 'bind' ? 'bind' : 'select';
+  let galleryMode = requestedGalleryMode;
   let selectedModelIds = new Set();
   let bindPreviewImageId = '';
   let bindPreviewModelCode = '';
@@ -6968,7 +7470,13 @@ function showGuideGallery(options = {}) {
         ? resolveScopeIdForImage(normalizedTarget) || normalizedTarget
         : normalizedTarget;
     linkSelectionToScope(selection.id, targetScopeId);
-    saveGuideCodes([code], targetViewId, variant);
+    saveGuideSettings({
+      viewId: normalizedTarget,
+      codes: [code],
+      lockToImage: isGuideLockedToView(normalizedTarget),
+      bindingTarget: scopeMode === 'frame' ? 'frame' : 'view',
+      variant,
+    });
     tagGuideOnView(targetViewId, code, variant);
     setStatusMessage(
       `Bound ${code} to ${scopeMode === 'frame' ? `frame ${targetScopeId}` : `image ${normalizedTarget}`}.`,
@@ -7092,6 +7600,8 @@ function showGuideGallery(options = {}) {
   }
 
   let galleryViewFilter = 'all';
+  let galleryProductTypeFilter = 'all';
+  let gallerySeatFilter = 'all';
 
   const renderGallery = () => {
     const savedScrollTop = galleryOverlay ? galleryOverlay.scrollTop : 0;
@@ -7144,13 +7654,31 @@ function showGuideGallery(options = {}) {
     const bindPreviewImage = projectImages.find(image => image.id === bindPreviewImageId) || null;
 
     const queryFiltered = allCodes.filter(code => code.includes(query.toUpperCase()));
-    const filteredCodes =
+    const viewFilteredCodes =
       galleryViewFilter === 'all'
         ? queryFiltered
         : queryFiltered.filter(code => {
             const views = viewsByCode[code] || [];
             return views.includes(galleryViewFilter);
           });
+    const typeFilteredCodes =
+      galleryProductTypeFilter === 'all'
+        ? viewFilteredCodes
+        : viewFilteredCodes.filter(
+            code => getGuideProductType(code, categoriesByCode[code]) === galleryProductTypeFilter
+          );
+    const filteredCodes =
+      gallerySeatFilter === 'all'
+        ? typeFilteredCodes
+        : typeFilteredCodes.filter(
+            code => getGuideSeatCount(code, categoriesByCode[code]) === gallerySeatFilter
+          );
+    const availableProductTypes = GUIDE_PRODUCT_TYPE_ORDER.filter(type =>
+      allCodes.some(code => getGuideProductType(code, categoriesByCode[code]) === type)
+    );
+    const availableSeatCounts = Array.from(
+      new Set(allCodes.map(code => getGuideSeatCount(code, categoriesByCode[code])).filter(Boolean))
+    ).sort((a, b) => Number(a) - Number(b));
     if (selectedCode && !filteredCodes.includes(selectedCode)) {
       selectedCode = filteredCodes[0] || '';
     }
@@ -7158,6 +7686,8 @@ function showGuideGallery(options = {}) {
     const items = filteredCodes
       .map(code => {
         const selectedClass = code === selectedCode ? ' selected' : '';
+        const productType = getGuideProductType(code, categoriesByCode[code]);
+        const productTypeLabel = GUIDE_PRODUCT_TYPE_LABELS[productType] || 'Armrest';
         const views = availableViewsForCode(code, viewsByCode);
         const activeView =
           galleryViewFilter !== 'all' && views.includes(galleryViewFilter)
@@ -7169,13 +7699,14 @@ function showGuideGallery(options = {}) {
         const quickViews = ['front', 'back', 'side'].filter(view => views.includes(view));
         const fallbackViews = quickViews.length ? quickViews : views.slice(0, 3);
         const actionButtons = fallbackViews
-          .map(
-            view =>
-              `<button type="button" class="guide-gallery-item-action" data-guide-quick-add="${code}" data-guide-quick-view="${view}">Add ${view.toUpperCase()}</button>`
+          .map(view =>
+            galleryMode === 'bind'
+              ? `<button type="button" class="guide-gallery-item-action" data-guide-quick-bind="${code}" data-guide-quick-view="${view}" aria-label="Bind ${code} ${view} to selected project image">Bind ${view.toUpperCase()}</button>`
+              : `<button type="button" class="guide-gallery-item-action" data-guide-quick-add="${code}" data-guide-quick-view="${view}">Add ${view.toUpperCase()}</button>`
           )
           .join('');
         const allButton =
-          views.length > 1
+          galleryMode !== 'bind' && views.length > 1
             ? `<button type="button" class="guide-gallery-item-action primary" data-guide-quick-add="${code}" data-guide-quick-view="all">Add All</button>`
             : '';
         return `
@@ -7186,6 +7717,7 @@ function showGuideGallery(options = {}) {
                 <code class="guide-gallery-code">${code}</code>
                 <button type="button" class="guide-gallery-copy-code" data-copy-guide-code="${code}" aria-label="Copy ${code}" title="Copy code">Copy</button>
               </span>
+              <span class="guide-gallery-item-type">${productTypeLabel}</span>
             </div>
             <div class="guide-gallery-item-body">
               <img src="${buildGuidePreviewUrl(code, activeView)}" alt="${code} ${activeView} view" loading="lazy" data-guide-code="${code}" data-guide-view="${activeView}" />
@@ -7321,6 +7853,34 @@ function showGuideGallery(options = {}) {
         </div>
       </section>
     `;
+    const bindTargetBarHtml =
+      galleryMode === 'bind'
+        ? `<section class="guide-gallery-bind-target-bar" aria-label="Selected project image">
+          <div class="guide-gallery-bind-target-current">
+            ${
+              bindPreviewImage?.imageUrl
+                ? `<img src="${bindPreviewImage.imageUrl}" alt="${bindPreviewImage.displayName}" />`
+                : '<div class="guide-gallery-bind-target-placeholder"></div>'
+            }
+            <div class="guide-gallery-bind-target-copy">
+              Binding guide to
+              <strong>${bindPreviewImage?.displayName || 'No project image selected'}</strong>
+              Choose the matching model and view below.
+            </div>
+          </div>
+          <div class="guide-gallery-bind-target-list" aria-label="Choose project image">
+            ${
+              projectImages
+                .map(
+                  image =>
+                    `<button type="button" class="guide-gallery-bind-target-option ${image.id === bindPreviewImageId ? 'active' : ''}" data-bind-target-image="${image.id}" aria-pressed="${image.id === bindPreviewImageId ? 'true' : 'false'}">${image.imageUrl ? `<img src="${image.imageUrl}" alt="" />` : ''}<span>${image.displayName}</span></button>`
+                )
+                .join('') ||
+              '<span style="font-size:11px;color:#64748b;">Upload a project image first.</span>'
+            }
+          </div>
+        </section>`
+        : '';
 
     galleryOverlay.innerHTML = `
       <div class="guide-gallery-container">
@@ -7331,18 +7891,41 @@ function showGuideGallery(options = {}) {
             <div class="guide-gallery-search-wrap ${searchVisible ? '' : 'hidden'}">
               <input type="text" class="guide-gallery-search" placeholder="Search..." value="${query}" />
             </div>
-            <div class="guide-gallery-view-filter">
-              <button type="button" class="guide-gallery-view-btn ${galleryViewFilter === 'all' ? 'active' : ''}" data-gallery-view-filter="all">All</button>
-              <button type="button" class="guide-gallery-view-btn ${galleryViewFilter === 'front' ? 'active' : ''}" data-gallery-view-filter="front">Front</button>
-              <button type="button" class="guide-gallery-view-btn ${galleryViewFilter === 'back' ? 'active' : ''}" data-gallery-view-filter="back">Back</button>
-              <button type="button" class="guide-gallery-view-btn ${galleryViewFilter === 'side' ? 'active' : ''}" data-gallery-view-filter="side">Side</button>
+            <div class="guide-gallery-filter-row">
+              <span class="guide-gallery-filter-label">View</span>
+              <div class="guide-gallery-view-filter">
+                <button type="button" class="guide-gallery-view-btn ${galleryViewFilter === 'all' ? 'active' : ''}" data-gallery-view-filter="all">All</button>
+                <button type="button" class="guide-gallery-view-btn ${galleryViewFilter === 'front' ? 'active' : ''}" data-gallery-view-filter="front">Front</button>
+                <button type="button" class="guide-gallery-view-btn ${galleryViewFilter === 'back' ? 'active' : ''}" data-gallery-view-filter="back">Back</button>
+                <button type="button" class="guide-gallery-view-btn ${galleryViewFilter === 'side' ? 'active' : ''}" data-gallery-view-filter="side">Side</button>
+              </div>
+              <span class="guide-gallery-filter-label">Type</span>
+              <div class="guide-gallery-view-filter" aria-label="Filter by product type">
+                <button type="button" class="guide-gallery-view-btn ${galleryProductTypeFilter === 'all' ? 'active' : ''}" data-gallery-product-type-filter="all">All</button>
+                ${availableProductTypes
+                  .map(
+                    type =>
+                      `<button type="button" class="guide-gallery-view-btn ${galleryProductTypeFilter === type ? 'active' : ''}" data-gallery-product-type-filter="${type}">${GUIDE_PRODUCT_TYPE_LABELS[type]}</button>`
+                  )
+                  .join('')}
+              </div>
+              <span class="guide-gallery-filter-label">Seats</span>
+              <div class="guide-gallery-view-filter" aria-label="Filter by seat count">
+                <button type="button" class="guide-gallery-view-btn ${gallerySeatFilter === 'all' ? 'active' : ''}" data-gallery-seat-filter="all">All</button>
+                ${availableSeatCounts
+                  .map(
+                    count =>
+                      `<button type="button" class="guide-gallery-view-btn ${gallerySeatFilter === count ? 'active' : ''}" data-gallery-seat-filter="${count}">${count} seat</button>`
+                  )
+                  .join('')}
+              </div>
             </div>
             <div class="guide-gallery-toolbar">
               <button type="button" class="guide-gallery-mode ${galleryMode === 'select' ? 'active' : ''}" data-gallery-mode="select">Browse</button>
               <button type="button" class="guide-gallery-mode ${galleryMode === 'bind' ? 'active' : ''}" data-gallery-mode="bind">Bind</button>
               <button type="button" class="guide-gallery-mode ${galleryMode === 'library' ? 'active' : ''}" data-gallery-mode="library">Library</button>
               <button type="button" class="guide-gallery-toggle-search">${searchVisible ? 'Hide Search' : 'Show Search'}</button>
-              <button type="button" class="guide-gallery-toggle-panel">${panelHidden ? 'Show Details' : 'Hide Details'}</button>
+              <button type="button" class="guide-gallery-toggle-panel">${galleryMode === 'bind' ? (panelHidden ? 'Advanced' : 'Hide Advanced') : panelHidden ? 'Show Details' : 'Hide Details'}</button>
               ${
                 galleryMode === 'bind'
                   ? ''
@@ -7366,8 +7949,9 @@ function showGuideGallery(options = {}) {
                 <button type="button" class="guide-gallery-add-selected">Add Queued</button>
                 <button type="button" class="guide-gallery-bind">Bind Selected</button>`
               }
-              <div id="guideGalleryStatus" class="guide-gallery-status ${selectedCode ? '' : 'empty'}">${galleryMode === 'bind' ? 'Select image · Select model · Choose view · Bind' : selectedCode ? `Selected: ${selectedCode} · Variant: ${selectedView.toUpperCase()} · Queue: ${modelState.selections.length}` : `Select a model card, or use Add buttons on any card. Queue: ${modelState.selections.length}`}</div>
+              <div id="guideGalleryStatus" class="guide-gallery-status ${selectedCode ? '' : 'empty'}">${galleryMode === 'bind' ? (bindPreviewImage ? `Binding to ${bindPreviewImage.displayName}: choose FRONT, BACK or SIDE on a guide card.` : 'Add or select a project photo before binding.') : selectedCode ? `Selected: ${selectedCode} · Variant: ${selectedView.toUpperCase()} · Queue: ${modelState.selections.length}` : `Select a model card, or use Add buttons on any card. Queue: ${modelState.selections.length}`}</div>
             </div>
+            ${bindTargetBarHtml}
             ${
               galleryMode === 'bind'
                 ? `<div class="guide-gallery-link-grid bind-mode" style="display:${panelHidden ? 'none' : 'grid'};">
@@ -7413,6 +7997,28 @@ function showGuideGallery(options = {}) {
         renderGallery();
       });
     });
+    const productTypeFilterButtons = galleryOverlay.querySelectorAll(
+      '[data-gallery-product-type-filter]'
+    );
+    productTypeFilterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        galleryProductTypeFilter = btn.getAttribute('data-gallery-product-type-filter') || 'all';
+        if (galleryProductTypeFilter !== 'all' && galleryProductTypeFilter !== 'sofa') {
+          gallerySeatFilter = 'all';
+        }
+        renderGallery();
+      });
+    });
+    const seatFilterButtons = galleryOverlay.querySelectorAll('[data-gallery-seat-filter]');
+    seatFilterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        gallerySeatFilter = btn.getAttribute('data-gallery-seat-filter') || 'all';
+        if (gallerySeatFilter !== 'all') {
+          galleryProductTypeFilter = 'sofa';
+        }
+        renderGallery();
+      });
+    });
     const loadCurrentBtn = galleryOverlay.querySelector('.guide-gallery-load-current');
     const addImageBtn = galleryOverlay.querySelector('.guide-gallery-add-image');
     const addAllBtn = galleryOverlay.querySelector('.guide-gallery-add-all');
@@ -7428,7 +8034,14 @@ function showGuideGallery(options = {}) {
       const compact = panelHidden || autoCompactHeader;
       headerEl.classList.toggle('compact', compact);
       if (togglePanelBtn) {
-        togglePanelBtn.textContent = compact ? 'Show Details' : 'Hide Details';
+        togglePanelBtn.textContent =
+          galleryMode === 'bind'
+            ? compact
+              ? 'Advanced'
+              : 'Hide Advanced'
+            : compact
+              ? 'Show Details'
+              : 'Hide Details';
       }
     };
 
@@ -7500,9 +8113,16 @@ function showGuideGallery(options = {}) {
 
       if (statusEl) {
         statusEl.classList.toggle('empty', !selectedCode);
-        statusEl.textContent = selectedCode
-          ? `Selected: ${selectedCode} · Variant: ${selectedView.toUpperCase()} · Queue: ${state.selections.length}`
-          : `Select a model card, or use Add buttons on any card. Queue: ${state.selections.length}`;
+        if (galleryMode === 'bind') {
+          const targetImage = images.find(image => image.id === bindPreviewImageId) || null;
+          statusEl.textContent = targetImage
+            ? `Binding to ${targetImage.displayName}: choose FRONT, BACK or SIDE on a guide card.`
+            : 'Add or select a project photo before binding.';
+        } else {
+          statusEl.textContent = selectedCode
+            ? `Selected: ${selectedCode} · Variant: ${selectedView.toUpperCase()} · Queue: ${state.selections.length}`
+            : `Select a model card, or use Add buttons on any card. Queue: ${state.selections.length}`;
+        }
       }
 
       galleryOverlay.querySelectorAll('[data-bind-model-view]').forEach(select => {
@@ -7624,6 +8244,12 @@ function showGuideGallery(options = {}) {
         const imageId = String(button.getAttribute('data-bind-preview-image') || '').trim();
         button.classList.toggle('active', imageId === bindPreviewImageId);
       });
+      galleryOverlay.querySelectorAll('[data-bind-target-image]').forEach(button => {
+        const imageId = String(button.getAttribute('data-bind-target-image') || '').trim();
+        const active = imageId === bindPreviewImageId;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
 
       galleryOverlay.querySelectorAll('[data-bind-preview-selection]').forEach(button => {
         const modelCode = String(button.getAttribute('data-bind-preview-selection') || '').trim();
@@ -7741,6 +8367,10 @@ function showGuideGallery(options = {}) {
         const mode = String(btn.getAttribute('data-gallery-mode') || '').trim();
         if (mode !== 'select' && mode !== 'bind' && mode !== 'library') return;
         galleryMode = mode;
+        if (galleryMode === 'bind') {
+          panelHidden = true;
+          autoCompactHeader = false;
+        }
         if (galleryMode === 'bind' && selectedModelIds.size > 1) {
           selectedModelIds = new Set(Array.from(selectedModelIds).slice(0, 1));
         }
@@ -7754,7 +8384,7 @@ function showGuideGallery(options = {}) {
         autoCompactHeader = false;
       }
       setWindowPrefs({ [GUIDE_GALLERY_PANEL_HIDDEN_PREF_KEY]: panelHidden });
-      syncHeaderCompactMode();
+      renderGallery();
     });
 
     closeBtn?.addEventListener('click', hideGuideGallery);
@@ -7831,7 +8461,7 @@ function showGuideGallery(options = {}) {
       for (const view of availableViewsForCode(selectedCode, viewsByCode)) {
         try {
           // eslint-disable-next-line no-await-in-loop
-          const label = await addGuideAsNewImage(selectedCode, view, { switchToNew: false });
+          const label = await addGuideAsNewImage(selectedCode, view, { switchToNew: true });
           added.push(label);
         } catch {
           failed.push(view);
@@ -7855,6 +8485,7 @@ function showGuideGallery(options = {}) {
       }
       addAllBtn.disabled = false;
       addAllBtn.textContent = originalText || 'Add All Views';
+      finalizeGuideImport();
     });
 
     addSelectedBtn?.addEventListener('click', async event => {
@@ -7896,6 +8527,7 @@ function showGuideGallery(options = {}) {
       addSelectedBtn.disabled = false;
       addSelectedBtn.textContent = originalText || 'Add Queued';
       renderGallery();
+      finalizeGuideImport();
     });
 
     bindBtn?.addEventListener('click', event => {
@@ -8013,6 +8645,33 @@ function showGuideGallery(options = {}) {
         return;
       }
 
+      const quickBindBtn = event.target?.closest?.('[data-guide-quick-bind]');
+      if (quickBindBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+        const code = String(quickBindBtn.getAttribute('data-guide-quick-bind') || '').trim();
+        const variant = String(quickBindBtn.getAttribute('data-guide-quick-view') || '')
+          .trim()
+          .toLowerCase();
+        const targetImageId = bindPreviewImageId || getCurrentViewId();
+        const targetExists = getProjectImageRows().some(image => image.id === targetImageId);
+        if (!code || !['front', 'back', 'side'].includes(variant) || !targetExists) {
+          setStatusMessage('Select a project image before binding a guide.', 'warning');
+          return;
+        }
+
+        bindPreviewModelCode = normalizeCode(code);
+        bindVariantByCode[bindPreviewModelCode] = variant;
+        bindVariantConfirmedByCode[bindPreviewModelCode] = true;
+        // Card-level binding is intentionally image-scoped. It is the simple
+        // photo-to-guide path and should remain valid across that image's frames.
+        bindCodeToTarget(bindPreviewModelCode, targetImageId, variant, '', 'image');
+        renderSelectionLists();
+        refreshBindPreviewDom();
+        syncBindActionState();
+        return;
+      }
+
       const quickAddBtn = event.target?.closest?.('[data-guide-quick-add]');
       if (quickAddBtn) {
         event.preventDefault();
@@ -8070,6 +8729,12 @@ function showGuideGallery(options = {}) {
         quickAddBtn.disabled = false;
         quickAddBtn.textContent = originalText || (requestedView === 'all' ? 'Add All' : 'Add');
         renderGallery();
+
+        // Always close the overlay and re-enable thumbnail scroll-select once
+        // the quick-add import settles, even if some views failed. Leaving it
+        // open (or leaving suppression guards set) swallows wheel events over
+        // the image list and blocks scrolling/centering.
+        finalizeGuideImport();
         return;
       }
 
@@ -8142,13 +8807,17 @@ function showGuideGallery(options = {}) {
         }
       }
 
-      const previewImageBtn = event.target?.closest?.('[data-bind-preview-image]');
+      const previewImageBtn = event.target?.closest?.(
+        '[data-bind-preview-image], [data-bind-target-image]'
+      );
       if (previewImageBtn) {
         const imageStrip = previewImageBtn.closest('.guide-gallery-bind-strip');
         const imageStripScrollTop = imageStrip?.scrollTop || 0;
         const imageStripScrollLeft = imageStrip?.scrollLeft || 0;
         const imageId = String(
-          previewImageBtn.getAttribute('data-bind-preview-image') || ''
+          previewImageBtn.getAttribute('data-bind-preview-image') ||
+            previewImageBtn.getAttribute('data-bind-target-image') ||
+            ''
         ).trim();
         if (!imageId) return;
         bindPreviewImageId = imageId;
@@ -8207,7 +8876,7 @@ function showGuideGallery(options = {}) {
 
     galleryOverlay.onmousedown = event => {
       const stripButton = event.target?.closest?.(
-        '[data-bind-preview-image], [data-bind-preview-selection]'
+        '[data-bind-preview-image], [data-bind-target-image], [data-bind-preview-selection]'
       );
       if (!stripButton) return;
       event.preventDefault();
@@ -8217,6 +8886,7 @@ function showGuideGallery(options = {}) {
       item.addEventListener('click', event => {
         if (event.target?.closest('[data-select-code]')) return;
         if (event.target?.closest('[data-guide-quick-add]')) return;
+        if (event.target?.closest('[data-guide-quick-bind]')) return;
         if (event.target?.closest('.guide-gallery-item-label')) return;
         const code = item.getAttribute('data-code');
         if (!code) return;
@@ -8297,7 +8967,7 @@ function showGuideGallery(options = {}) {
     .then(result => {
       const codes = Array.isArray(result?.codes) ? result.codes : [];
       if (!codes.length) return;
-      allCodes = codes;
+      allCodes = Array.from(new Set(codes.map(normalizeCode).filter(Boolean)));
       viewsByCode =
         result?.viewsByCode && typeof result.viewsByCode === 'object' ? result.viewsByCode : {};
       if (galleryOverlay) {
@@ -8320,9 +8990,60 @@ function hideGuideGallery() {
   gallerySelectHandler = null;
 }
 
+// Called once a guide import (quick-add / Add All / Add Queued) settles. Closes
+// the overlay and clears any scroll-suppression guards left behind by the many
+// view switches that happen during an import. Without this, Auto scroll-select
+// can stay disabled after import, so scrolling the thumbnail list no longer
+// selects the centered image.
+function finalizeGuideImport() {
+  hideGuideGallery();
+  window.__suppressScrollSelectUntil = 0;
+  window.__imageListProgrammaticScrollUntil = 0;
+  window.__imageListUserScrollUntil = 0;
+  // A tag created during import can leave its measurement field focused (see
+  // TagManager.createTagForStroke). A focused contenteditable traps wheel
+  // events in Safari, so blur it to let the thumbnail list scroll/select.
+  const active = document.activeElement;
+  if (
+    active &&
+    (active.isContentEditable || active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')
+  ) {
+    try {
+      active.blur();
+    } catch {
+      // no-op
+    }
+  }
+  // Let the newly added thumbnails and image-panel geometry settle before
+  // recalculating padding. Do not infer or switch the active view here: a
+  // delayed centered-thumbnail sync can race a legitimate navigation made
+  // immediately after import and jump the user back to the first image.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      try {
+        window.updateImageListPadding?.();
+      } catch {
+        // no-op
+      }
+      window.__suppressScrollSelectUntil = 0;
+      window.__imageListProgrammaticScrollUntil = 0;
+      window.__imageListUserScrollUntil = 0;
+    });
+  });
+}
+
 function onKeyDown(event) {
   if (event.code !== HOTKEY) return;
-  if (isTypingContext(event.target)) return;
+  if (isTypingContext(event.target)) {
+    const quickMeasurementInput =
+      event.target instanceof HTMLElement && event.target.id === 'quickMeasurementValue'
+        ? event.target
+        : null;
+    if (!quickMeasurementInput) return;
+    // Backslash is a workspace command even when the last-drawn measurement
+    // field retained focus. Commit/blur that field first, then toggle split.
+    quickMeasurementInput.blur();
+  }
 
   event.preventDefault();
   event.stopPropagation();

@@ -10,10 +10,14 @@ import {
   TextAlignment,
 } from 'pdf-lib';
 
+// Mirrors sanitizePdfFieldPart on the client and fieldPart in
+// measurement-review.ts so exported field names can be looked up verbatim
+// when a SofaPaint PDF is re-opened for review.
 function safeFieldName(name, fallback) {
   const cleaned = String(name || '')
     .trim()
     .replace(/[^A-Za-z0-9_-]+/g, '_')
+    .replace(/^_+|_+$/g, '')
     .slice(0, 120);
   return cleaned || fallback;
 }
@@ -60,10 +64,13 @@ function createUnitRadioAppearanceProvider() {
   };
 }
 
-export async function injectPdfFormFields(pdfBuffer, anchors = []) {
-  if (!anchors.length) return pdfBuffer;
-
+export async function injectPdfFormFields(pdfBuffer, anchors = [], reviewManifest = null) {
   const pdfDoc = await PDFDocument.load(pdfBuffer);
+  if (reviewManifest) {
+    pdfDoc.setSubject(`SOFAPAINT_REVIEW_V1:${JSON.stringify(reviewManifest)}`);
+  }
+  if (!anchors.length) return Buffer.from(await pdfDoc.save());
+
   const form = pdfDoc.getForm();
   const formFont = await pdfDoc.embedFont(StandardFonts.Courier);
   const pages = pdfDoc.getPages();
@@ -157,6 +164,14 @@ export async function injectPdfFormFields(pdfBuffer, anchors = []) {
       borderWidth: Math.max(0, Number(anchor.borderWidth || 0)),
       ...(Number(anchor.borderWidth || 0) > 0 ? { borderColor: rgb(0.06, 0.09, 0.16) } : {}),
     });
+    if (anchor.transparent) {
+      // Worksheet cells already have printed rules. An opaque widget can erase
+      // those rules when a PDF viewer rounds its appearance rectangle.
+      const widgets = textField.acroField.getWidgets();
+      const appearance = widgets[widgets.length - 1].getOrCreateAppearanceCharacteristics();
+      appearance.setBackgroundColor([]);
+      appearance.setBorderColor([]);
+    }
     const requestedFontSize = Number(anchor.fontSize);
     textField.setFontSize(
       Number.isFinite(requestedFontSize) ? Math.min(24, Math.max(6, requestedFontSize)) : 10

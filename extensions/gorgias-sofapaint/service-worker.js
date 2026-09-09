@@ -83,8 +83,38 @@ function googleDriveFileId(rawUrl) {
   }
 }
 
+function originalGorgiasAttachmentUrl(rawUrl) {
+  try {
+    const url = new URL(String(rawUrl || ''));
+    if (
+      url.hostname === 'comfort-works.gorgias.com' &&
+      /\/api\/attachment\/download\//i.test(url.pathname)
+    ) {
+      [
+        'format',
+        'width',
+        'height',
+        'w',
+        'h',
+        'size',
+        'sz',
+        'quality',
+        'resize',
+        'crop',
+        'fit',
+        'dpr',
+      ].forEach(key => url.searchParams.delete(key));
+      url.hash = '';
+    }
+    return url.href;
+  } catch {
+    return String(rawUrl || '');
+  }
+}
+
 function attachmentDownloadCandidates(attachment) {
-  const originalUrl = String(attachment?.url || '');
+  const detectedUrl = String(attachment?.url || '');
+  const originalUrl = originalGorgiasAttachmentUrl(detectedUrl);
   const previewUrl = String(attachment?.previewUrl || '');
   const driveId = googleDriveFileId(originalUrl) || googleDriveFileId(previewUrl);
   const candidates = driveId
@@ -93,7 +123,7 @@ function attachmentDownloadCandidates(attachment) {
         `https://drive.usercontent.google.com/download?id=${encodeURIComponent(driveId)}&export=download&confirm=t`,
         originalUrl,
       ]
-    : [originalUrl, previewUrl];
+    : [originalUrl, detectedUrl, previewUrl];
   return [...new Set(candidates.filter(Boolean))];
 }
 
@@ -395,7 +425,7 @@ function reportImportProgress(detail) {
 }
 
 async function readAttachment(sourceTabId, attachment) {
-  const cacheKey = String(attachment?.url || '');
+  const cacheKey = originalGorgiasAttachmentUrl(String(attachment?.url || ''));
   const cached = attachmentCache.get(cacheKey);
   if (cached && cached.expiresAt > Date.now()) return cached.imagePromise;
   const imagePromise = readAttachmentUncached(sourceTabId, attachment);
@@ -452,8 +482,57 @@ function resolveAuthenticatedAttachmentRedirect(sourceTabId, rawUrl) {
 }
 
 async function readAttachmentUncached(sourceTabId, attachment) {
-  const url = String(attachment?.url || '');
+  const url = originalGorgiasAttachmentUrl(String(attachment?.url || ''));
+  const normalizedAttachment = { ...attachment, url };
   if (/\/api\/attachment\/download\//i.test(url)) {
+    // The signed-in Gorgias page is the most reliable authority for original
+    // attachments. Its attachment cards use transformed thumbnail responses,
+    // while the same query-free URL resolves to the full file in page context.
+    // Ask the page first so a previously observed thumbnail redirect can never
+    // satisfy an original-image import.
+    try {
+      const response = await chrome.tabs.sendMessage(sourceTabId, {
+        type: 'FETCH_ATTACHMENT',
+        attachment: normalizedAttachment,
+      });
+      if (response?.ok && response.image) {
+        const quietImage = response.image;
+        const quietDetails = await fingerprintImage(quietImage, attachment);
+        const quietArea = quietDetails.width * quietDetails.height;
+        const scannerLooksLikeThumbnail =
+          Math.max(Number(attachment?.width) || 0, Number(attachment?.height) || 0) <= 320;
+        const downloadLooksLikePreview =
+          Math.max(quietDetails.width, quietDetails.height) < 1600 || quietArea < 1_500_000;
+        if (scannerLooksLikeThumbnail && downloadLooksLikePreview) {
+          try {
+            const revealed = await chrome.tabs.sendMessage(sourceTabId, {
+              type: 'FETCH_ATTACHMENT_ORIGINAL',
+              attachment: normalizedAttachment,
+            });
+            if (revealed?.ok && revealed.image) {
+              const revealedDetails = await fingerprintImage(revealed.image, {
+                ...attachment,
+                width: revealed.image.width,
+                height: revealed.image.height,
+              });
+              const revealedArea = revealedDetails.width * revealedDetails.height;
+              if (
+                revealedArea > quietArea ||
+                (revealedArea === quietArea &&
+                  Number(revealed.image.size || 0) > Number(quietImage.size || 0))
+              )
+                return revealed.image;
+            }
+          } catch {
+            // The quiet image remains a usable fallback if Gorgias cannot open
+            // the attachment viewer in the current ticket render.
+          }
+        }
+        return quietImage;
+      }
+    } catch {
+      // Continue through the redirect resolver below.
+    }
     try {
       const signedUrl = await resolveAuthenticatedAttachmentRedirect(sourceTabId, url);
       if (signedUrl) {
@@ -468,19 +547,19 @@ async function readAttachmentUncached(sourceTabId, attachment) {
     }
   }
   if (googleDriveFileId(url) || /^https:\/\/images-signed\.gorgias\.io\//i.test(url)) {
-    return fetchAttachmentFallback(attachment);
+    return fetchAttachmentFallback(normalizedAttachment);
   }
   try {
     const response = await chrome.tabs.sendMessage(sourceTabId, {
       type: 'FETCH_ATTACHMENT',
-      attachment,
+      attachment: normalizedAttachment,
     });
     if (!response?.ok || !response.image) {
       throw new Error(response?.message || 'Could not read photo');
     }
     return response.image;
   } catch {
-    return fetchAttachmentFallback(attachment);
+    return fetchAttachmentFallback(normalizedAttachment);
   }
 }
 

@@ -60,6 +60,11 @@ export class TagManager {
     return `${viewId}::${strokeLabel}`;
   }
 
+  static baseScopeOf(scope) {
+    const value = String(scope || '');
+    return value.includes('::tab:') ? value.split('::tab:')[0] : value;
+  }
+
   resolveTagKey(strokeLabel, imageLabel) {
     if (typeof strokeLabel === 'string' && strokeLabel.includes('::')) {
       return strokeLabel;
@@ -68,11 +73,35 @@ export class TagManager {
     if (this.tagObjects.has(preferredKey)) return preferredKey;
 
     const viewId = this.normalizeImageLabel(imageLabel);
+    const queryBase = TagManager.baseScopeOf(viewId);
+    const queryHasTab = viewId.includes('::tab:');
     for (const [key, tagObj] of this.tagObjects.entries()) {
       if (!tagObj) continue;
       if (tagObj.strokeLabel !== strokeLabel) continue;
       const tagScope = tagObj.scopedLabel || tagObj.imageLabel;
+      // Never match a tag from a different image, and never let another
+      // capture-tab's tag satisfy a tab-scoped lookup: tabs share one canvas,
+      // so a same-label tag from frame 1B would otherwise block frame 1A from
+      // ever getting its own tag.
+      if (queryBase && TagManager.baseScopeOf(tagScope) !== queryBase) continue;
+      if (queryHasTab && tagScope.includes('::tab:') && tagScope !== viewId) continue;
       if (viewId && tagScope && tagScope !== viewId && tagObj.imageLabel !== viewId) continue;
+      return key;
+    }
+
+    // Guide imports may create the visual tag against the base view just before
+    // capture-tab scoping is established. Measurements are then saved against
+    // the scoped label. Resolve that short-lived mismatch only when the tag is
+    // actually on the current render canvas and belongs to the same image;
+    // searching the full tag map here would risk matching the same label from
+    // another image or capture frame.
+    const liveObjects = new Set(this.canvas?.getObjects?.() || []);
+    for (const [key, tagObj] of this.tagObjects.entries()) {
+      if (!tagObj || tagObj.strokeLabel !== strokeLabel) continue;
+      if (!liveObjects.has(tagObj)) continue;
+      const tagScope = tagObj.scopedLabel || tagObj.imageLabel || '';
+      if (queryBase && TagManager.baseScopeOf(tagScope) !== queryBase) continue;
+      if (queryHasTab && tagScope.includes('::tab:') && tagScope !== viewId) continue;
       return key;
     }
 
@@ -173,11 +202,21 @@ export class TagManager {
 
   // Get next tag from prediction system
   getNextTag(imageLabel) {
+    // This method is used while rendering guide previews. It must never consume
+    // a label or advance prediction state: rendering can run many times per
+    // frame and would otherwise turn one pending guide role into an event loop.
+    const isPreviewTag = tag =>
+      /^[A-Z](?:\d+)?$/.test(
+        String(tag || '')
+          .trim()
+          .toUpperCase()
+      );
+
     // Use the tag prediction system from index.html
     if (window.calculateNextTag) {
       const tag = window.calculateNextTag();
-      if (tag && this.isValidTag(tag)) {
-        return tag;
+      if (isPreviewTag(tag)) {
+        return String(tag).trim().toUpperCase();
       }
     }
 
@@ -185,13 +224,14 @@ export class TagManager {
     const nextTagDisplay = document.getElementById('nextTagDisplay');
     if (nextTagDisplay) {
       const tag = getNextTagValue().toUpperCase();
-      if (tag && this.isValidTag(tag)) {
+      if (isPreviewTag(tag)) {
         return tag;
       }
     }
 
-    // Final fallback to metadata manager's prediction
-    return this.metadataManager.getNextLabel(imageLabel, this.tagMode);
+    // A preview fallback is deliberately static. getNextLabel() is a consuming
+    // operation and must only be called by a real drawing commit.
+    return this.tagMode === 'letters' ? 'A' : 'A1';
   }
 
   isValidTag(tag) {
@@ -715,6 +755,19 @@ export class TagManager {
     return tagObj?.scopedLabel || tagObj?.imageLabel || null;
   }
 
+  getTagVisibilityScope(imageLabel, strokeObject = null) {
+    const ownerScope = String(strokeObject?.strokeMetadata?.imageLabel || '').trim();
+    if (ownerScope) return ownerScope;
+    return this.normalizeImageLabel(imageLabel);
+  }
+
+  getTagDisplayLabel(strokeLabel, imageLabel) {
+    const scopedImageLabel = this.normalizeImageLabel(imageLabel);
+    const strokeObject =
+      this.metadataManager?.vectorStrokesByImage?.[scopedImageLabel]?.[strokeLabel];
+    return String(strokeObject?.strokeMetadata?.displayLabel || strokeLabel || '').trim();
+  }
+
   // Create a draggable, resizable tag object
   createTag(strokeLabel, imageLabel, strokeObject) {
     imageLabel = this.normalizeImageLabel(imageLabel);
@@ -735,6 +788,7 @@ export class TagManager {
       return null;
     }
     const resolvedStyle = this.getResolvedTagStyle(strokeLabel, imageLabel, strokeObject);
+    const displayLabel = this.getTagDisplayLabel(strokeLabel, imageLabel);
     const tagSize = resolvedStyle.tagSize;
     const tagShape = resolvedStyle.tagShape || 'square';
     this.tagSize = tagSize;
@@ -764,7 +818,7 @@ export class TagManager {
     let tagText;
     try {
       // Text positioned at (0, 0) relative to group center
-      tagText = new fabric.IText(strokeLabel, {
+      tagText = new fabric.IText(displayLabel, {
         left: 0,
         top: 0,
         fontSize: tagSize,
@@ -785,7 +839,7 @@ export class TagManager {
     } catch (e) {
       console.error('TagManager: Error creating text object', e);
       // Fallback to the same centered baseline used by the primary tag text.
-      tagText = new fabric.Text(strokeLabel, {
+      tagText = new fabric.Text(displayLabel, {
         fontSize: tagSize,
         textBaseline: 'middle',
       });
@@ -807,14 +861,24 @@ export class TagManager {
         console.log(`Tag text changed to: ${newLabel}`);
       } else {
         // Restore original if invalid
-        tagText.set('text', strokeLabel);
+        tagText.set('text', displayLabel);
       }
     });
 
     // Create background shape
-    // Wait for text to measure properly
+    // Re-measure synchronously: a freshly constructed IText can still carry a
+    // lazy/stale width, and the old character-count heuristic overestimated
+    // wide glyphs — both left large blank margins inside the pill until the
+    // next full re-render.
+    try {
+      if (typeof tagText.initDimensions === 'function') tagText.initDimensions();
+    } catch {
+      // Measurement is best-effort; the fallback below covers failures.
+    }
     const padding = 4;
-    const textWidth = Math.max(tagText.width || 30, strokeLabel.length * (tagSize * 0.6));
+    const measuredTextWidth = Number(tagText.width) || 0;
+    const heuristicTextWidth = displayLabel.length * (tagSize * 0.6);
+    const textWidth = measuredTextWidth > 0 ? measuredTextWidth : heuristicTextWidth;
     const textHeight = tagText.height || tagSize;
 
     let background;
@@ -983,6 +1047,9 @@ export class TagManager {
       hoverCursor: 'move',
       perPixelTargetFind: false,
       excludeFromExport: true, // Don't serialize tags - they're recreated from stroke metadata
+      // Frosted-glass tags sample the live canvas behind them on every render
+      // frame, so the group cache must be disabled or the blur stays frozen.
+      objectCaching: resolvedStyle.backgroundStyle === 'frosted' ? false : true,
       // Custom properties
       isTag: true,
       isTagGroup: true, // Mark as a tag group for filtering
@@ -999,10 +1066,11 @@ export class TagManager {
     }
 
     const scopedImageLabel = this.normalizeImageLabel(imageLabel);
+    const visibilityScope = this.getTagVisibilityScope(imageLabel, strokeObject);
     const scopedStrokeVisibility =
-      this.metadataManager?.strokeVisibilityByImage?.[scopedImageLabel] || {};
+      this.metadataManager?.strokeVisibilityByImage?.[visibilityScope] || {};
     const scopedLabelVisibility =
-      this.metadataManager?.strokeLabelVisibility?.[scopedImageLabel] || {};
+      this.metadataManager?.strokeLabelVisibility?.[visibilityScope] || {};
     const tagVisible =
       scopedStrokeVisibility[strokeLabel] !== false && scopedLabelVisibility[strokeLabel] !== false;
     tagGroup.set({
@@ -1085,6 +1153,33 @@ export class TagManager {
     // Snapshot canvases intentionally do not register temporary tags in the live
     // tag map. Update the group we just created directly in that case.
     this.updateTagText(strokeLabel, scopedImageLabel, tagGroup);
+
+    // Self-correct the pill width one frame after mount: the text object's
+    // width can settle after the first layout pass (font readiness, text
+    // update from showMeasurements), and a stale width is what leaves blank
+    // space at the sides of the tag until a full re-render happened.
+    if (
+      !isRenderTarget &&
+      typeof window !== 'undefined' &&
+      typeof window.requestAnimationFrame === 'function'
+    ) {
+      window.requestAnimationFrame(() => {
+        try {
+          if (typeof tagText.initDimensions === 'function') tagText.initDimensions();
+          const liveTextWidth = Number(tagText.width) || 0;
+          if (liveTextWidth <= 0) return;
+          const nextWidth = Math.max(liveTextWidth + padding * 2, height, displayLabel.length * 10);
+          if (Math.abs(nextWidth - Number(background.width || 0)) > 1) {
+            background.set({ width: nextWidth });
+            tagGroup.dirty = true;
+            if (typeof tagGroup.setCoords === 'function') tagGroup.setCoords();
+            canvas.requestRenderAll();
+          }
+        } catch {
+          // Cosmetic correction only — never fail tag creation for it.
+        }
+      });
+    }
 
     // Register global click handler for tags (fallback if object events don't fire)
     // This ensures clicks work even when drawing tools are active
@@ -1563,23 +1658,30 @@ export class TagManager {
     if (!canvas) return;
 
     const key = this.resolveTagKey(strokeLabel, imageLabel);
-    if (!key) return;
-    const tagObj = this.tagObjects.get(key);
-    if (!tagObj) return;
-
-    // Remove connector
-    if (tagObj.connectorLine) {
-      canvas.remove(tagObj.connectorLine);
+    const scopedLabel = this.normalizeImageLabel(imageLabel);
+    const matchingTags = new Set();
+    if (key) {
+      const registered = this.tagObjects.get(key);
+      if (registered) matchingTags.add(registered);
     }
-    // Remove tag
-    canvas.remove(tagObj);
-    this.tagObjects.delete(key);
+    for (const object of canvas.getObjects()) {
+      if (!object?.isTag || object.strokeLabel !== strokeLabel) continue;
+      const objectScope = object.scopedLabel || this.normalizeImageLabel(object.imageLabel);
+      if (objectScope === scopedLabel) matchingTags.add(object);
+    }
+    for (const tagObj of matchingTags) {
+      if (tagObj.connectorLine) canvas.remove(tagObj.connectorLine);
+      canvas.remove(tagObj);
+      for (const [registeredKey, registeredTag] of this.tagObjects.entries()) {
+        if (registeredTag === tagObj) this.tagObjects.delete(registeredKey);
+      }
+    }
     if (!options.preserveStyleState) {
-      if (this.tagStyleConfig?.perTagThemes?.[key]) {
+      if (key && this.tagStyleConfig?.perTagThemes?.[key]) {
         delete this.tagStyleConfig.perTagThemes[key];
         this.persistTagStyleConfigToMetadata();
       }
-      if (this.tagStyleConfig?.highlightedTagKeys?.has(key)) {
+      if (key && this.tagStyleConfig?.highlightedTagKeys?.has(key)) {
         this.tagStyleConfig.highlightedTagKeys.delete(key);
         this.persistTagStyleConfigToMetadata();
       }
@@ -1630,9 +1732,15 @@ export class TagManager {
     const belongsToScope = obj => {
       const objectScope = obj?.scopedLabel || obj?.imageLabel || '';
       if (!objectScope || objectScope.startsWith('__guide__')) return true;
-      if (objectScope === normalizedScope) return true;
-      if (objectScope === baseScope && normalizedScope === baseScope) return true;
-      return false;
+      // Same-image tags (any capture-tab of this view) are legitimate canvas
+      // residents: tabs share one canvas per view, so switching frames must
+      // never sweep them. Only tags leaked from a *different* image are
+      // stale.
+      const objectBase =
+        typeof objectScope === 'string' && objectScope.includes('::tab:')
+          ? objectScope.split('::tab:')[0]
+          : objectScope;
+      return objectBase === baseScope;
     };
 
     // Remove tracked tags from wrong scope
@@ -1713,6 +1821,7 @@ export class TagManager {
     const measurementString = this.metadataManager.getMeasurementString(imageLabel, strokeLabel, {
       context: 'tag',
     });
+    const displayLabel = this.getTagDisplayLabel(strokeLabel, imageLabel);
 
     // Build tag text based on the current display mode:
     //   contextual:       "A1 = 24.5cm" (label + measurement)
@@ -1722,14 +1831,14 @@ export class TagManager {
     const mode = this.tagDisplayMode || 'contextual';
     switch (mode) {
       case 'measurements-only':
-        fullText = measurementString || strokeLabel;
+        fullText = measurementString || displayLabel;
         break;
       case 'labels-only':
-        fullText = strokeLabel;
+        fullText = displayLabel;
         break;
       case 'contextual':
       default:
-        fullText = measurementString ? `${strokeLabel} = ${measurementString}` : strokeLabel;
+        fullText = measurementString ? `${displayLabel} = ${measurementString}` : displayLabel;
         break;
     }
 
@@ -2032,9 +2141,10 @@ export class TagManager {
   // Create tag for a stroke when metadata is attached
   createTagForStroke(strokeLabel, imageLabel, strokeObject) {
     imageLabel = this.normalizeImageLabel(imageLabel);
+    const visibilityScope = this.getTagVisibilityScope(imageLabel, strokeObject);
     // Check if label should be visible
     const isLabelVisible =
-      this.metadataManager.strokeLabelVisibility[imageLabel]?.[strokeLabel] !== false;
+      this.metadataManager.strokeLabelVisibility[visibilityScope]?.[strokeLabel] !== false;
     if (!isLabelVisible) return;
 
     this.createTag(strokeLabel, imageLabel, strokeObject);
@@ -2044,9 +2154,12 @@ export class TagManager {
       setTimeout(() => {
         this.metadataManager.updateStrokeVisibilityControls();
 
-        // Focus the measurement input after controls are updated (skip during paste)
+        // Focus the measurement input after controls are updated (skip during paste).
+        // Clear the flag afterwards so only the first eligible tag triggers focus and
+        // a later tag created during a bulk gallery load can't steal focus/selection.
         if (this.metadataManager._shouldAutoFocus && this.metadataManager.focusMeasurementInput) {
           this.metadataManager.focusMeasurementInput(strokeLabel);
+          this.metadataManager._shouldAutoFocus = false;
         }
       }, 100); // Small delay to ensure all metadata is properly set
     }
@@ -2139,15 +2252,18 @@ export class TagManager {
   // Update tags when stroke visibility changes
   updateTagVisibility(strokeLabel, imageLabel, visible) {
     imageLabel = this.normalizeImageLabel(imageLabel);
+    const strokeObj =
+      this.metadataManager?.vectorStrokesByImage?.[imageLabel]?.[strokeLabel] ||
+      this.getTagObject(strokeLabel, imageLabel)?.tagObj?.connectedStroke;
+    const visibilityScope = this.getTagVisibilityScope(imageLabel, strokeObj);
     const strokeVisible =
-      this.metadataManager?.strokeVisibilityByImage?.[imageLabel]?.[strokeLabel] !== false;
+      this.metadataManager?.strokeVisibilityByImage?.[visibilityScope]?.[strokeLabel] !== false;
     const labelVisible =
-      this.metadataManager?.strokeLabelVisibility?.[imageLabel]?.[strokeLabel] !== false;
+      this.metadataManager?.strokeLabelVisibility?.[visibilityScope]?.[strokeLabel] !== false;
     const effectiveVisible = visible !== false && strokeVisible && labelVisible;
 
     let found = this.getTagObject(strokeLabel, imageLabel);
     if (!found && effectiveVisible) {
-      const strokeObj = this.metadataManager?.vectorStrokesByImage?.[imageLabel]?.[strokeLabel];
       if (this.isRenderableStrokeObject(strokeObj)) {
         this.createTag(strokeLabel, imageLabel, strokeObj);
         found = this.getTagObject(strokeLabel, imageLabel);

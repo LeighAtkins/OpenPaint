@@ -1,6 +1,99 @@
 import { test, expect, waitForApp } from './fixtures';
 
 test.describe('Thumbnail drag reordering', () => {
+  test('large projects collapse the stepper and can be reordered from the image overview', async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await page.goto('/');
+    await waitForApp(page);
+
+    await page.evaluate(async () => {
+      const manager = window.app?.projectManager;
+      if (!manager) throw new Error('ProjectManager unavailable');
+      for (let index = 0; index < 48; index += 1) {
+        const label = `overview-${index + 1}`;
+        const source = document.createElement('canvas');
+        source.width = 320;
+        source.height = 240;
+        const context = source.getContext('2d')!;
+        context.fillStyle = `hsl(${index * 24} 65% 78%)`;
+        context.fillRect(0, 0, source.width, source.height);
+        context.fillStyle = '#0f172a';
+        context.font = 'bold 38px sans-serif';
+        context.fillText(String(index + 1), 24, 58);
+        const url = source.toDataURL('image/png');
+        await manager.addImage(label, url, { refreshBackground: false });
+        window.addImageToSidebar?.(url, label, `${label}.png`);
+      }
+      window.updatePills?.();
+      window.updateActivePill?.({ animate: false });
+    });
+
+    await expect(page.locator('#mini-stepper')).toHaveClass(/is-compact/);
+    await expect(page.locator('#mini-stepper [data-mini-step-overview]')).toHaveText('1 / 48');
+    await expect(page.locator('#mini-stepper > ol')).toBeHidden();
+
+    await page.locator('#mini-stepper [data-mini-step-grid]').click();
+    await expect(page.locator('#imageOverviewOverlay')).toBeVisible();
+    await expect(page.locator('.image-overview-card')).toHaveCount(48);
+    await expect(page.locator('.image-overview-name').first()).toHaveText('overview-1.png');
+    const compactPreviewHeight = await page
+      .locator('.image-overview-preview')
+      .first()
+      .evaluate(element => element.getBoundingClientRect().height);
+    expect(compactPreviewHeight).toBeLessThanOrEqual(94);
+
+    await page.locator('.image-overview-search').fill('overview-48');
+    await expect(page.locator('.image-overview-card')).toHaveCount(1);
+    await expect(page.locator('.image-overview-card')).toHaveAttribute('data-label', 'overview-48');
+    await page.locator('.image-overview-search').fill('');
+    await expect(page.locator('.image-overview-card')).toHaveCount(48);
+
+    await page.locator('[data-image-overview-density]').click();
+    const comfortablePreviewHeight = await page
+      .locator('.image-overview-preview')
+      .first()
+      .evaluate(element => element.getBoundingClientRect().height);
+    expect(comfortablePreviewHeight).toBeGreaterThan(compactPreviewHeight);
+    await page.locator('[data-image-overview-density]').click();
+
+    await page.locator('.image-overview-card[data-label="overview-1"] [data-move="right"]').click();
+    await expect(page.locator('.image-overview-card').nth(0)).toHaveAttribute(
+      'data-label',
+      'overview-2'
+    );
+    await expect(page.locator('.image-overview-card').nth(1)).toHaveAttribute(
+      'data-label',
+      'overview-1'
+    );
+
+    const order = await page.evaluate(() => ({
+      gallery: (window.imageGallery?.getData?.() || []).map(
+        item => item?.original?.label || item?.label || item?.name
+      ),
+      sidebar: Array.from(document.querySelectorAll('#imageList [data-label]')).map(element =>
+        element.getAttribute('data-label')
+      ),
+      saved: window.orderedImageLabels,
+    }));
+    expect(order.gallery.slice(0, 2)).toEqual(['overview-2', 'overview-1']);
+    expect(order.sidebar.slice(0, 2)).toEqual(['overview-2', 'overview-1']);
+    expect(order.saved?.slice(0, 2)).toEqual(['overview-2', 'overview-1']);
+
+    await page
+      .locator('.image-overview-card[data-label="overview-48"] .image-overview-preview')
+      .click();
+    await expect(page.locator('#imageOverviewOverlay')).toHaveCount(0);
+    await expect
+      .poll(() => page.evaluate(() => window.app?.projectManager?.currentViewId))
+      .toBe('overview-48');
+    await expect(page.locator('#imageList [data-label="overview-48"]')).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+  });
+
   test('visible sidebar drag keeps gallery, active image, bindings, and saved order together', async ({
     page,
   }) => {

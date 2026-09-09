@@ -52,6 +52,11 @@ export class ArrowTool extends BaseTool {
 
     // Don't start drawing if this is a pan gesture (Alt, Shift, or touch gesture)
     const evt = o.e;
+    if ((window as any).canStartCwQueuedDrawing?.() === false) {
+      evt.preventDefault?.();
+      evt.stopPropagation?.();
+      return;
+    }
     if (evt.altKey || evt.shiftKey || this.canvas.isGestureActive) {
       console.log('[ArrowTool] Ignoring mousedown - pan gesture detected');
       return;

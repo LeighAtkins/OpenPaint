@@ -1937,7 +1937,19 @@ export function initToolbarController() {
         );
       }
 
-      const primaryTab = state.tabs.find(tab => tab.type !== 'master');
+      // The "primary" tab owns legacy (non-tab-scoped) content. Derive it by
+      // creation order — tab ids embed a timestamp — not array order, so a
+      // tab created later (e.g. by a PDF export context sync) landing first
+      // in the array cannot steal legacy visibility from the original frame.
+      const nonMasterTabs = state.tabs.filter(tab => tab.type !== 'master');
+      const primaryTab =
+        nonMasterTabs.slice().sort((a, b) => {
+          const stamp = id => {
+            const match = String(id || '').match(/^tab-(\d+)/);
+            return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
+          };
+          return stamp(a.id) - stamp(b.id);
+        })[0] || null;
       const activeScope = buildScopedLabel(resolved, activeTab.id);
       const showLegacyBase =
         activeTab.type !== 'master' && primaryTab && activeTab.id === primaryTab.id;
@@ -3701,7 +3713,15 @@ export function initToolbarController() {
       const baseLabel = toBaseLabel(label) || 'front';
       const state = ensureCaptureTabsForLabel(baseLabel);
       const targetTab = state.tabs.find(tab => tab.id === tabId);
-      if (!targetTab) return;
+      if (!targetTab) {
+        document.title = `[stepper] ${baseLabel}: tab ${tabId} not found (tabs: ${state.tabs.map(t => t.id).join(',')})`;
+        return;
+      }
+      document.title = `[stepper] ${baseLabel} → ${targetTab.id}`;
+      // Re-selecting the already-active frame is a no-op: without this guard,
+      // event listeners reacting to the frame-tab-changed dispatch re-enter
+      // this function and ping-pong the frame application indefinitely.
+      if (state.activeTabId === targetTab.id && !options.force) return;
       // Discard selection early so control anchors don't persist across tab switches
       const _tabCanvas = window.app?.canvasManager?.fabricCanvas;
       if (_tabCanvas) _tabCanvas.discardActiveObject();
@@ -4953,11 +4973,19 @@ export function initToolbarController() {
       const lineStrokes = window.lineStrokesByImage?.[currentImageLabel] || [];
       const existingTags = lineStrokes.filter(Boolean);
 
-      // Extract all base tags (A1, A2, etc.) and track the highest per letter
+      // Extract all base tags (A1, A2, etc.) and track the highest per letter.
+      // Letter-only tags (from a letters-only session) count as that letter at
+      // number 0 so switching modes continues the series instead of restarting.
       const letterCounts = new Map();
 
       for (const tag of existingTags) {
         // Handle both A1 and A1(1) patterns
+        const letterOnlyMatch = tag.match(/^([A-Z])$/);
+        if (letterOnlyMatch) {
+          const letter = letterOnlyMatch[1];
+          letterCounts.set(letter, Math.max(letterCounts.get(letter) || 0, 0));
+          continue;
+        }
         const match = tag.match(/^([A-Z])(\d+)(?:\((\d+)\))?$/);
         if (match) {
           const letter = match[1];
@@ -5039,6 +5067,287 @@ export function initToolbarController() {
 
     syncTagModeToggleLabel();
 
+    // Quick style bar: always-visible mirrors of the most-tuned controls
+    // (line width, arrow scale, tag size). They follow the tag stepper's
+    // predictable system — live-update the selected strokes when something is
+    // selected, otherwise the whole current image, and always set the
+    // defaults for the next stroke (via paintApp.applyQuick* APIs).
+    const bindQuickStyleMirror = () => {
+      const getCanonical = (id: string): HTMLInputElement | HTMLSelectElement | null =>
+        document.getElementById(id) as HTMLInputElement | HTMLSelectElement | null;
+      const paintApp = () => (window as any).paintApp;
+
+      const bindNumberMirror = (quickId: string, canonicalId: string) => {
+        const quick = document.getElementById(quickId) as HTMLInputElement | null;
+        if (!quick || quick.dataset.quickMirrorBound === 'true') return;
+        quick.dataset.quickMirrorBound = 'true';
+        const syncFromCanonical = () => {
+          const canonical = getCanonical(canonicalId);
+          if (canonical && document.activeElement !== quick) quick.value = canonical.value;
+        };
+        quick.addEventListener('focus', syncFromCanonical);
+        document.addEventListener('input', (event: Event) => {
+          const target = event.target as HTMLElement | null;
+          if (target?.id === canonicalId) syncFromCanonical();
+        });
+        syncFromCanonical();
+      };
+
+      bindNumberMirror('quickLineWidth', 'brushSize');
+      bindNumberMirror('quickArrowScale', 'lineStyleArrowScale');
+
+      // Width/arrow stepper buttons (−/+ on each quick field) and keyboard
+      // adjust on the inputs (ArrowUp/Down, +/−). One shared adjuster.
+      const bindQuickStepper = (
+        inputId: string,
+        apply: (value: number) => void,
+        min: number,
+        max: number,
+        step: number
+      ) => {
+        const input = document.getElementById(inputId) as HTMLInputElement | null;
+        if (!input) return;
+        const clamp = (value: number) => Math.max(min, Math.min(max, value));
+        const bump = (delta: number) => {
+          const current = parseFloat(input.value) || min;
+          const next = clamp(Math.round((current + delta) / step) * step, min, max);
+          input.value = String(next);
+          apply(next);
+        };
+        const plusBtn = input.parentElement?.querySelector<HTMLButtonElement>(
+          '[data-quick-adjust][data-delta-start="+"], [data-quick-adjust]:not([data-delta^="-"])'
+        );
+        const minusBtn = input.parentElement?.querySelector<HTMLButtonElement>(
+          '[data-quick-adjust][data-delta^="-"]'
+        );
+        plusBtn?.addEventListener('click', () => bump(step));
+        minusBtn?.addEventListener('click', () => bump(-step));
+        input.addEventListener('keydown', event => {
+          if (event.key === 'ArrowUp' || event.key === '+' || event.key === '=') {
+            event.preventDefault();
+            bump(step);
+          } else if (event.key === 'ArrowDown' || event.key === '-' || event.key === '_') {
+            event.preventDefault();
+            bump(-step);
+          }
+        });
+      };
+      bindQuickStepper(
+        'quickLineWidth',
+        value => paintApp()?.applyQuickStrokeWidth?.(value),
+        0.5,
+        100,
+        1
+      );
+      bindQuickStepper(
+        'quickArrowScale',
+        value => paintApp()?.applyQuickArrowScale?.(value),
+        2,
+        8,
+        0.5
+      );
+
+      const quickWidth = document.getElementById('quickLineWidth') as HTMLInputElement | null;
+      const quickArrow = document.getElementById('quickArrowScale') as HTMLInputElement | null;
+      quickWidth?.addEventListener('input', () => {
+        const value = Number(quickWidth.value);
+        if (!Number.isFinite(value) || value <= 0) return;
+        const canonical = getCanonical('brushSize');
+        if (canonical) canonical.value = String(value);
+        paintApp()?.applyQuickStrokeWidth?.(value);
+      });
+      quickArrow?.addEventListener('input', () => {
+        const value = Number(quickArrow.value);
+        if (!Number.isFinite(value) || value <= 0) return;
+        const canonical = getCanonical('lineStyleArrowScale');
+        if (canonical) canonical.value = String(value);
+        paintApp()?.applyQuickArrowScale?.(value);
+      });
+
+      // Hover previews: a floating line preview for Width/Arrow, a tag pill
+      // preview for Tag — rendered live from the current quick values.
+      let previewHost: HTMLDivElement | null = null;
+      let previewCanvas: HTMLCanvasElement | null = null;
+      let previewTag: HTMLDivElement | null = null;
+      let previewCaption: HTMLDivElement | null = null;
+      let previewMode: 'line' | 'tag' | null = null;
+      let previewAnchor: HTMLElement | null = null;
+
+      const hidePreview = () => {
+        if (!previewHost) return;
+        previewHost.style.display = 'none';
+        previewMode = null;
+        previewAnchor = null;
+      };
+
+      const positionPreview = (field: HTMLElement) => {
+        if (!previewHost) return;
+        const rect = field.getBoundingClientRect();
+        const hostWidth = previewHost.offsetWidth || 240;
+        const left = Math.max(
+          8,
+          Math.min(rect.left + rect.width / 2 - hostWidth / 2, window.innerWidth - hostWidth - 8)
+        );
+        previewHost.style.left = `${left}px`;
+        previewHost.style.top = `${Math.max(8, rect.top - previewHost.offsetHeight - 8)}px`;
+      };
+
+      const drawLinePreview = () => {
+        if (!previewCanvas) return;
+        const ctx = previewCanvas.getContext('2d');
+        if (!ctx) return;
+        const width = Math.min(14, Math.max(0.5, Number(quickWidth?.value) || 2));
+        const scale = Math.max(2, Math.min(8, Number(quickArrow?.value) || 5));
+        const color =
+          (document.getElementById('colorPicker') as HTMLInputElement | null)?.value || '#1f2937';
+        const arrowSize = Math.min(36, Math.max(6, width * scale));
+        const W = previewCanvas.width;
+        const H = previewCanvas.height;
+        const midY = H / 2;
+        const x1 = arrowSize + 12;
+        const x2 = W - arrowSize - 12;
+        ctx.clearRect(0, 0, W, H);
+        ctx.beginPath();
+        ctx.moveTo(x1, midY);
+        ctx.lineTo(x2, midY);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        const drawHead = (tipX: number, dir: number) => {
+          ctx.beginPath();
+          ctx.moveTo(tipX, midY);
+          ctx.lineTo(tipX - dir * arrowSize, midY - arrowSize * 0.42);
+          ctx.lineTo(tipX - dir * arrowSize, midY + arrowSize * 0.42);
+          ctx.closePath();
+          ctx.fillStyle = color;
+          ctx.fill();
+        };
+        drawHead(x1, -1);
+        drawHead(x2, 1);
+      };
+
+      const showTagPreview = (field: HTMLElement) => {
+        if (!previewHost || !previewTag) return;
+        previewMode = 'tag';
+        previewAnchor = field;
+        if (previewCanvas) previewCanvas.style.display = 'none';
+        previewTag.style.display = 'inline-flex';
+        const typedLabel = (document.getElementById('nextTagDisplay') as HTMLInputElement | null)
+          ?.value;
+        const pillLabel = /^[A-Z]\d*$/.test(typedLabel || '') ? typedLabel : 'A1';
+        previewTag.textContent = pillLabel || 'A1';
+        const size = Number(document.getElementById('currentTagSize')?.textContent || 20);
+        previewTag.style.fontSize = `${Math.max(12, Math.min(30, size || 20))}px`;
+        previewHost.style.display = 'block';
+        positionPreview(field);
+      };
+
+      const showLinePreview = (field: HTMLElement) => {
+        if (!previewHost || !previewCanvas) return;
+        previewMode = 'line';
+        previewAnchor = field;
+        previewTag.style.display = 'none';
+        previewCanvas.style.display = 'block';
+        drawLinePreview();
+        previewHost.style.display = 'block';
+        positionPreview(field);
+      };
+
+      if (!previewHost) {
+        previewHost = document.createElement('div');
+        previewHost.id = 'quickStylePreviewPopup';
+        previewHost.style.display = 'none';
+        previewCanvas = document.createElement('canvas');
+        previewCanvas.id = 'quickStylePreviewCanvas';
+        previewCanvas.width = 220;
+        previewCanvas.height = 56;
+        previewTag = document.createElement('div');
+        previewTag.id = 'quickStylePreviewTag';
+        previewTag.style.display = 'none';
+        previewCaption = document.createElement('div');
+        previewCaption.id = 'quickStylePreviewCaption';
+        previewHost.append(previewCanvas, previewTag, previewCaption);
+        document.body.appendChild(previewHost);
+        previewHost.addEventListener('mouseleave', hidePreview);
+      }
+
+      const quickDecrease = document.getElementById('quickTagDecrease');
+      const quickIncrease = document.getElementById('quickTagIncrease');
+      const widthField = quickWidth?.closest('.elements-quick-style-field') as HTMLElement | null;
+      const arrowField = quickArrow?.closest('.elements-quick-style-field') as HTMLElement | null;
+      const tagField = quickDecrease?.closest('.elements-quick-style-field') as HTMLElement | null;
+
+      const bindHover = (
+        field: HTMLElement | null,
+        show: (field: HTMLElement) => void,
+        caption: string
+      ) => {
+        if (!field || field.dataset.previewBound === 'true') return;
+        field.dataset.previewBound = 'true';
+        field.addEventListener('mouseenter', () => {
+          show(field);
+          if (previewCaption) previewCaption.textContent = caption;
+        });
+        field.addEventListener('mouseleave', () => {
+          window.setTimeout(() => {
+            if (previewAnchor === field) hidePreview();
+          }, 150);
+        });
+      };
+
+      bindHover(
+        widthField,
+        showLinePreview,
+        'Live: updates the selected lines, or all lines on this image when nothing is selected'
+      );
+      bindHover(
+        arrowField,
+        showLinePreview,
+        'Live: updates the selected arrows, or all arrows on this image when nothing is selected'
+      );
+      bindHover(tagField, showTagPreview, 'Live: resizes every tag on this image');
+
+      const refreshPreview = () => {
+        if (previewMode === 'line') drawLinePreview();
+        if (previewMode === 'tag' && tagField) showTagPreview(tagField);
+      };
+      quickWidth?.addEventListener('input', refreshPreview);
+      quickArrow?.addEventListener('input', refreshPreview);
+
+      const quickValue = document.getElementById('quickTagSizeValue');
+      const syncTagDisplay = () => {
+        const canonicalValue = document.getElementById('currentTagSize');
+        if (quickValue && canonicalValue) quickValue.textContent = canonicalValue.textContent;
+        refreshPreview();
+      };
+      const adjustTagSize = (delta: number) => {
+        // Drive the TagManager directly — the DOM-button indirection could
+        // silently no-op if the canonical steppers mount late.
+        const tagManager = (window as any).app?.tagManager;
+        if (tagManager?.normalizeTagSize && tagManager?.updateTagSize) {
+          tagManager.tagSize = tagManager.normalizeTagSize(
+            (Number(tagManager.tagSize) || 20) + delta
+          );
+          tagManager.updateTagSize();
+        } else {
+          paintApp()?.applyQuickTagSizeDelta?.(delta);
+        }
+        syncTagDisplay();
+      };
+      quickDecrease?.addEventListener('click', () => adjustTagSize(-2));
+      quickIncrease?.addEventListener('click', () => adjustTagSize(2));
+      if (quickValue && !quickValue.dataset.quickMirrorBound) {
+        quickValue.dataset.quickMirrorBound = 'true';
+        const observer = new MutationObserver(syncTagDisplay);
+        const canonicalValue = document.getElementById('currentTagSize');
+        if (canonicalValue)
+          observer.observe(canonicalValue, { childList: true, characterData: true, subtree: true });
+      }
+      syncTagDisplay();
+    };
+    bindQuickStyleMirror();
+
     // Calculate next tag based on current mode and existing tags
     function calculateNextTag() {
       console.log('[calculateNextTag] Called with tagMode:', tagMode);
@@ -5097,7 +5406,15 @@ export function initToolbarController() {
             baseTags.add(tag);
           }
         } else {
-          // Handle both A1 and A1(1), A1(2) patterns
+          // Handle A1 and A1(1), A1(2) patterns. Letter-only tags drawn in a
+          // previous letters-only session stay in the sequence: treat them as
+          // that letter at number 0 so the next tag continues from them
+          // (A,B,C,D → D1) instead of restarting at A1.
+          const letterOnlyMatch = tag.match(/^([A-Z])$/);
+          if (letterOnlyMatch) {
+            baseTags.add(`${letterOnlyMatch[1]}0`);
+            continue;
+          }
           const match = tag.match(/^([A-Z]\d+)(?:\((\d+)\))?$/);
           if (match) {
             const baseTag = match[1];
@@ -5175,9 +5492,13 @@ export function initToolbarController() {
       } else {
         // Letters + numbers mode: Check for gaps first
 
-        // Check if A1 is missing (gap at the beginning)
+        // Check if A1 is missing (gap at the beginning). Letter-only legacy
+        // tags were mapped to `X0` above; when the series has no real numbered
+        // tag yet, skip the A1 requirement and continue numbering from the
+        // last letter (A,B,C,D → D1) instead of restarting at A1.
+        const hasNumberedTag = sortedBaseTags.some(tag => /^[A-Z][1-9]/.test(tag));
         const firstTag = sortedBaseTags[0];
-        if (firstTag !== 'A1') {
+        if (hasNumberedTag && firstTag !== 'A1') {
           console.log('[calculateNextTag] Numbers mode, missing A1 at start');
           return 'A1';
         }

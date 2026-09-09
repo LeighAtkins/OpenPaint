@@ -6,6 +6,7 @@
 import { FabricControls } from './utils/FabricControls.js';
 import { PathUtils } from './utils/PathUtils.js';
 import { fitViewportToWorldRect, normalizeViewportRecord } from './utils/viewportRestore.ts';
+import { attachHighlighterRendering } from './tools/HighlighterTool.js';
 
 declare const fabric: typeof import('fabric');
 
@@ -423,11 +424,25 @@ export class CanvasManager {
           activeToolName === 'privacy' ||
           path?.customData?.isPrivacyErase === true ||
           path?.isPrivacyErase === true;
+        const isHighlighterPath =
+          activeToolName === 'highlighter' ||
+          path?.customType === 'highlighter' ||
+          path?.isHighlighter === true;
 
         if (isPrivacyPath) {
           path.set({
             selectable: false,
             evented: false,
+          });
+          return;
+        }
+
+        // Highlighting is visual markup, not a measurement. Keep it scoped and
+        // selectable, but never consume a measurement label or create a tag.
+        if (isHighlighterPath) {
+          path.set({
+            selectable: true,
+            evented: true,
           });
           return;
         }
@@ -1571,6 +1586,12 @@ export class CanvasManager {
         // Route panel layout changes through it so this does not race the window
         // resize handler with a second viewport correction.
         setTimeout(() => {
+          // Guide split has its own paired-pane geometry pipeline. Falling through
+          // to resize() here expands the Fabric surface back to the entire left pane
+          // after the split pipeline has aligned it to the capture frame.
+          if (splitActive) {
+            return;
+          }
           if (!this.requestPrimaryLayoutResize('panel-layout')) {
             this.resize();
           }
@@ -1778,6 +1799,12 @@ export class CanvasManager {
       'arrowSettings',
       'dashSettings',
       'lineStyle',
+      'customType',
+      'isZipper',
+      'isHighlighter',
+      'highlighterStyle',
+      'highlighterSourceColor',
+      'imageLabel',
     ];
     const serialized = exportable.map(obj => {
       const data = obj.toObject(customProps);
@@ -4107,6 +4134,13 @@ export class CanvasManager {
       'isPrivacyErase',
       'dashSettings',
       'lineStyle',
+      'customData',
+      'customType',
+      'isZipper',
+      'isHighlighter',
+      'highlighterStyle',
+      'highlighterSourceColor',
+      'imageLabel',
     ]);
     const exportableObjects = this.fabricCanvas.getObjects().filter(obj => !obj?.excludeFromExport);
     if (json?.objects && exportableObjects.length === json.objects.length) {
@@ -4138,8 +4172,8 @@ export class CanvasManager {
           if (object?._arrowRenderingAttached) {
             delete object._arrowRenderingAttached;
           }
-          if (object.strokeMetadata) {
-            const metaType = object.strokeMetadata.type;
+          if (object.strokeMetadata || object.isZipper || object.customType === 'zipper') {
+            const metaType = object.strokeMetadata?.type;
             const objType = object.type;
 
             // Restore controls based on object type
@@ -4148,7 +4182,7 @@ export class CanvasManager {
             } else if (objType === 'path' && metaType !== 'shape') {
               // Curves are paths but not shapes
               FabricControls.createCurveControls(object);
-            } else if (objType === 'group' && (object.isArrow || object.strokeMetadata.isArrow)) {
+            } else if (objType === 'group' && (object.isArrow || object.strokeMetadata?.isArrow)) {
               FabricControls.createArrowControls(object);
             }
           }
@@ -4156,6 +4190,9 @@ export class CanvasManager {
           if (object.arrowSettings && window.app?.arrowManager) {
             window.app.arrowManager.attachArrowRendering(object);
             object.dirty = true;
+          }
+          if (object.isHighlighter || object.customType === 'highlighter') {
+            attachHighlighterRendering(object);
           }
         });
 
@@ -4187,6 +4224,18 @@ export class CanvasManager {
           object.isPrivacyErase = o.isPrivacyErase;
           object.selectable = false;
           object.evented = false;
+        }
+        if (o.customData) {
+          object.customData = o.customData;
+        }
+        if (o.customType) object.customType = o.customType;
+        if (o.isZipper) object.isZipper = true;
+        if (o.isHighlighter) object.isHighlighter = true;
+        if (o.highlighterStyle) object.highlighterStyle = o.highlighterStyle;
+        if (o.highlighterSourceColor) object.highlighterSourceColor = o.highlighterSourceColor;
+        if (o.imageLabel) object.imageLabel = o.imageLabel;
+        if (object.isHighlighter || object.customType === 'highlighter') {
+          attachHighlighterRendering(object);
         }
         if (!object.arrowSettings && o.strokeMetadata?.arrowSettings) {
           object.arrowSettings = o.strokeMetadata.arrowSettings;

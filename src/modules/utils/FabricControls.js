@@ -200,7 +200,10 @@ export class FabricControls {
     });
 
     // Create smooth path from local points
-    const newPathString = PathUtils.createSmoothPath(localPoints);
+    const newPathString =
+      pathObj.curveInterpolation === 'linear'
+        ? localPoints.map((p, i) => `${i ? 'L' : 'M'} ${p.x} ${p.y}`).join(' ')
+        : PathUtils.createSmoothPath(localPoints);
     const pathData = fabric.util.parsePath(newPathString);
 
     // Set path and reset transforms
@@ -322,7 +325,7 @@ export class FabricControls {
       lockScalingY: true,
       lockRotation: false,
       perPixelTargetFind: true,
-      padding: 8,
+      padding: line.isZipper || line.customType === 'zipper' ? 18 : 8,
       objectCaching: false,
     });
 
@@ -518,7 +521,7 @@ export class FabricControls {
       lockScalingY: true,
       lockRotation: false,
       perPixelTargetFind: true,
-      padding: 8,
+      padding: path.isZipper || path.customType === 'zipper' ? 18 : 8,
       objectCaching: false,
     });
 

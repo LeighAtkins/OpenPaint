@@ -477,6 +477,8 @@ app.use(express.urlencoded({ extended: true, limit: '200mb' }));
 app.use('/api/storage/r2/upload', express.raw({ type: '*/*', limit: '200mb' }));
 
 registerR2Routes(app, '/api/storage/r2');
+const { registerCwLineLibraryRoutes } = await import('./server/cw-line-library.js');
+registerCwLineLibraryRoutes(app, '/api/cw-line-library');
 app.all('/api/measurement-guides/codes', (req, res) => measurementGuideCodesHandler(req, res));
 app.all('/api/measurement-guides/svg', (req, res) => measurementGuideSvgHandler(req, res));
 app.all('/api/measurement-guides/file', (req, res) => measurementGuideFileHandler(req, res));

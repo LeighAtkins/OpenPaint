@@ -94,6 +94,8 @@ const MANUAL_REFERENCE_HINTS = new Map([
   ['IK-KA-2', ['IK-KA-2']],
   ['IK-KA-3', ['IK-KA-3']],
   ['IK-KN-4', ['IK-KN-4__SV', 'IK-KN-4__LV']],
+  ['IK-NA-3', ['IK-NA-3__VH', 'IK-NA-3__VS']],
+  ['WE-HY-118', ['WE-HY-118__L']],
   ['IK-SM-3', ['IK-SM-3']],
   ['IK-ME-2', ['IK-ME-2']],
   ['IK-ME-5M', ['IK-ME-5M__L', 'IK-ME-5M__R']],
@@ -115,6 +117,867 @@ const MANUAL_REFERENCE_HINTS = new Map([
   ['PB-PRA-73M__L', ['PB-PRA-73M__L__BE', 'PB-PRA-73M__L__KE']],
   ['PB-BSC-69M__L', ['PB-BSC-69M__L__PB', 'PB-BSC-69M__L__MG']],
 ]);
+
+const COMFORT_WORKS_STOREFRONT = 'https://comfort-works.com';
+const COMFORT_WORKS_PUBLIC_MEASUREMENTS =
+  'https://measure.comfort-works.com/api/public-all-options-product-measurements/';
+const publicMeasurementCache = new Map();
+const PUBLIC_MEASUREMENT_CACHE_MS = 10 * 60 * 1000;
+let fabricSampleCatalogCache = { expiresAt: 0, items: [], promise: null };
+const FABRIC_SAMPLE_CACHE_MS = 30 * 60 * 1000;
+const exactMeasurementTupleCache = new Map();
+const EXACT_MEASUREMENT_TUPLE_CACHE_MS = 10 * 60 * 1000;
+const sectionalPricingCache = new Map();
+const SECTIONAL_PRICING_CACHE_MS = 30 * 60 * 1000;
+const SECTIONAL_FABRIC_FAMILIES = [
+  'everyday-weave',
+  'everyday-cotton',
+  'everyday-velvet',
+  'care-canvas',
+  'care-linen',
+  'care-tweed',
+  'mod-boucle',
+  'mod-chenille',
+  'signature-microfiber',
+  'signature-velvet',
+  'crypton®-chenille',
+  'sunbrella®-canvas',
+  'sunbrella®-fretwork',
+  'classic-velvet',
+];
+
+function normalizeStorefrontImageUrl(value) {
+  const url = String(value || '').trim();
+  if (!url) return '';
+  if (url.startsWith('//')) return `https:${url}`;
+  if (url.startsWith('/')) return `${COMFORT_WORKS_STOREFRONT}${url}`;
+  return url;
+}
+
+const SECTIONAL_MARKET_LINKS = {
+  US: { storefront: 'https://comfort-works.com', pathPrefix: '' },
+  AU: { storefront: 'https://comfortworks.com.au', pathPrefix: '' },
+  AT: { storefront: 'https://comfort-works.com', pathPrefix: '' },
+  BE: { storefront: 'https://comfort-works.com', pathPrefix: '' },
+  CA: { storefront: 'https://comfort-works.com', pathPrefix: '' },
+  CN: { storefront: 'https://comfort-works.cn', pathPrefix: '/zh-zh' },
+  FR: { storefront: 'https://comfort-works.com', pathPrefix: '/fr-fr' },
+  DE: { storefront: 'https://comfort-works.de', pathPrefix: '' },
+  GLOBAL: { storefront: 'https://comfort-works.com', pathPrefix: '', shopifyCountry: 'US' },
+  HK: { storefront: 'https://comfort-works.com', pathPrefix: '/en-hk' },
+  JP: { storefront: 'https://comfort-works.com', pathPrefix: '/ja-jp' },
+  MO: { storefront: 'https://comfort-works.cn', pathPrefix: '/zh-mo' },
+  MY: { storefront: 'https://comfort-works.com', pathPrefix: '' },
+  NZ: { storefront: 'https://comfort-works.com', pathPrefix: '' },
+  SG: { storefront: 'https://comfort-works.com', pathPrefix: '' },
+  ES: { storefront: 'https://comfort-works.com', pathPrefix: '/es-es' },
+  CH: { storefront: 'https://comfort-works.com', pathPrefix: '' },
+  TW: { storefront: 'https://comfort-works.cn', pathPrefix: '/zh-tw' },
+  GB: { storefront: 'https://comfort-works.co.uk', pathPrefix: '' },
+};
+
+function sectionalProductUrl(handle, country) {
+  const market = SECTIONAL_MARKET_LINKS[country] || SECTIONAL_MARKET_LINKS.US;
+  const url = `${market.storefront}${market.pathPrefix}/products/${encodeURI(String(handle))}`;
+  const needsCountryParam =
+    !market.pathPrefix &&
+    market.storefront === COMFORT_WORKS_STOREFRONT &&
+    country !== 'US' &&
+    country !== 'GLOBAL';
+  return needsCountryParam ? `${url}?country=${encodeURIComponent(country)}` : url;
+}
+
+function extractSectionalFabricPrices(html, baseHandle, country) {
+  const match = String(html || '').match(/const\s+fabricPrices\s*=\s*(\[[\s\S]*?\]);/);
+  if (!match) return {};
+  let variants = [];
+  try {
+    variants = JSON.parse(match[1]);
+  } catch {
+    return {};
+  }
+  const prices = {};
+  SECTIONAL_FABRIC_FAMILIES.forEach(fabric => {
+    const prefix = `${baseHandle}-${fabric}-`;
+    const variant = variants.find(item => String(item?.handle || '').startsWith(prefix));
+    if (!variant || !Number.isFinite(Number(variant.price))) return;
+    prices[fabric] = {
+      price: Number(variant.price) / 100,
+      url: sectionalProductUrl(variant.handle, country),
+    };
+  });
+  return prices;
+}
+
+async function fetchSectionalPricingCatalog(handles, country) {
+  const requestedCountry = String(country || '').toUpperCase();
+  const safeCountry = SECTIONAL_MARKET_LINKS[requestedCountry] ? requestedCountry : 'US';
+  const shopifyCountry =
+    SECTIONAL_MARKET_LINKS[safeCountry].shopifyCountry ||
+    (/^[A-Z]{2}$/.test(safeCountry) ? safeCountry : 'US');
+  const safeHandles = Array.from(
+    new Set(
+      (Array.isArray(handles) ? handles : [])
+        .map(value =>
+          String(value || '')
+            .trim()
+            .toLowerCase()
+        )
+        .filter(value => /^[a-z0-9-]+$/.test(value))
+    )
+  ).slice(0, 12);
+  const cacheKey = `${safeCountry}:${safeHandles.join(',')}`;
+  const cached = sectionalPricingCache.get(cacheKey);
+  if (cached && Date.now() - cached.savedAt < SECTIONAL_PRICING_CACHE_MS) {
+    return cached.value;
+  }
+
+  const products = {};
+  await Promise.all(
+    safeHandles.map(async handle => {
+      const url = `${COMFORT_WORKS_STOREFRONT}/products/${handle}?country=${shopifyCountry}`;
+      const response = await fetch(url, {
+        headers: {
+          Accept: 'text/html,application/xhtml+xml',
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/127 Safari/537.36',
+        },
+        signal: AbortSignal.timeout(10000),
+      }).catch(() => null);
+      if (!response?.ok) return;
+      products[handle] = extractSectionalFabricPrices(await response.text(), handle, safeCountry);
+    })
+  );
+  const value = { country: safeCountry, products };
+  sectionalPricingCache.set(cacheKey, { savedAt: Date.now(), value });
+  return value;
+}
+
+async function fetchStorefrontProduct(searchTerm, measurementReference = '') {
+  const rawSearch = String(searchTerm || '').trim();
+  const search = /^[A-Z0-9][A-Z0-9._-]*(?:__[A-Z0-9._-]+)+$/i.test(rawSearch)
+    ? rawSearch.replace(/__[^_]+(?:__.*)?$/i, '')
+    : rawSearch;
+  if (!search) return null;
+
+  try {
+    const publicMeasurementsPromise = measurementReference
+      ? fetchPublicProductMeasurements({ productReference: measurementReference }).catch(() => null)
+      : Promise.resolve(null);
+    const query = new URLSearchParams({
+      q: search,
+      'resources[type]': 'product',
+      'resources[limit]': '6',
+    });
+    const response = await fetch(`${COMFORT_WORKS_STOREFRONT}/search/suggest.json?${query}`, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!response.ok) return null;
+    const payload = await response.json();
+    const products = Array.isArray(payload?.resources?.results?.products)
+      ? payload.resources.results.products
+      : [];
+    if (!products.length) return null;
+
+    const normalizedSearch = search.toLowerCase();
+    const product =
+      products.find(
+        item =>
+          String(item?.title || '')
+            .trim()
+            .toLowerCase() === normalizedSearch
+      ) || products[0];
+    const path = String(product?.url || '')
+      .split('?')[0]
+      .trim();
+    const productUrl = path.startsWith('http') ? path : `${COMFORT_WORKS_STOREFRONT}${path}`;
+    let imageUrl = normalizeStorefrontImageUrl(product?.image);
+    let imageUrls = imageUrl ? [imageUrl] : [];
+
+    if (path) {
+      const productJsonResponse = await fetch(`${COMFORT_WORKS_STOREFRONT}${path}.js`, {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(6000),
+      }).catch(() => null);
+      if (productJsonResponse?.ok) {
+        const productJson = await productJsonResponse.json().catch(() => null);
+        imageUrl =
+          normalizeStorefrontImageUrl(productJson?.featured_image) ||
+          normalizeStorefrontImageUrl(productJson?.images?.[0]) ||
+          imageUrl;
+        imageUrls = Array.from(
+          new Set(
+            [imageUrl, ...(Array.isArray(productJson?.images) ? productJson.images : [])]
+              .map(value =>
+                normalizeStorefrontImageUrl(
+                  typeof value === 'string' ? value : value?.src || value?.url
+                )
+              )
+              .filter(Boolean)
+          )
+        );
+      }
+    }
+
+    const publicMeasurements =
+      (await publicMeasurementsPromise) ||
+      (await fetchPublicProductMeasurements({
+        productReference: measurementReference || search,
+      }).catch(() => null));
+
+    return {
+      title: String(product?.title || search).trim(),
+      url: productUrl,
+      imageUrl,
+      imageUrls,
+      dimensions: publicMeasurements?.data
+        ? {
+            width: publicMeasurements.data.width || null,
+            depth: publicMeasurements.data.depth || null,
+            height: publicMeasurements.data.height || null,
+          }
+        : null,
+      measurementReference: publicMeasurements?.productReference || '',
+      measurementStyle: publicMeasurements?.style || '',
+      measurementStyleCode: publicMeasurements?.styleCode || '',
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function extractStorefrontVariantCatalog(html) {
+  const source = String(html || '');
+  const variants = [];
+  const skuPattern = /"sku":"([^"]+)"/g;
+  let match;
+  while ((match = skuPattern.exec(source))) {
+    const sku = String(match[1] || '').trim();
+    if (!sku) continue;
+    const before = source.slice(Math.max(0, match.index - 1800), match.index);
+    const after = source.slice(match.index, Math.min(source.length, match.index + 2400));
+    const handleMatches = [...before.matchAll(/"handle":"([^"]+)"/g)];
+    const imageMatch = after.match(
+      /"(?:featured_image|image)":(?:null|\{[\s\S]{0,900}?"src":"([^"]+)"[\s\S]{0,900}?\})/
+    );
+    const titleMatch = after.match(/"(?:untranslatedTitle|title)":"([^"]+)"/);
+    const handle = handleMatches.at(-1)?.[1] || '';
+    const rawImage = imageMatch?.[1] || '';
+    variants.push({
+      sku,
+      handle,
+      title: String(titleMatch?.[1] || '')
+        .replace(/\\u0026/g, '&')
+        .replace(/\\\//g, '/'),
+      imageUrl: normalizeStorefrontImageUrl(
+        rawImage.replace(/\\\//g, '/').replace(/\\u0026/g, '&')
+      ),
+    });
+  }
+  return variants;
+}
+
+export function extractStorefrontProductJsonVariants(productJson, handle = '') {
+  return (Array.isArray(productJson?.variants) ? productJson.variants : [])
+    .map(variant => ({
+      sku: String(variant?.sku || '').trim(),
+      handle: String(handle || productJson?.handle || '').trim(),
+      title: String(variant?.title || '').trim(),
+      imageUrl: normalizeStorefrontImageUrl(
+        variant?.featured_image?.src || variant?.featured_image || variant?.image?.src || ''
+      ),
+    }))
+    .filter(variant => variant.sku);
+}
+
+const COMPARISON_OPTION_LABELS = {
+  L: 'Left Arm',
+  LEFT: 'Left Arm',
+  LH: 'Left Arm',
+  L1: 'Left Inward Chaise',
+  L2: 'Left Outward Chaise',
+  R: 'Right Arm',
+  RIGHT: 'Right Arm',
+  RH: 'Right Arm',
+  R1: 'Right Inward Chaise',
+  R2: 'Right Outward Chaise',
+  LV: 'The leather version',
+  SV: 'The standard version',
+  LSKT_PM: 'Signature',
+  LSKT_SI: 'Signature',
+  SHRT_SP: 'Original',
+  VELC_SP: 'Original',
+};
+
+function formatComparisonOptionLabel(code, observedLabel) {
+  return COMPARISON_OPTION_LABELS[String(code || '').toUpperCase()] || observedLabel || code;
+}
+
+function inferComparisonOptionGroupLabel(labels, codes, index) {
+  const joined = [...labels, ...codes].join(' ').toLowerCase();
+  if (codes.some(code => ['L1', 'L2', 'R1', 'R2'].includes(code))) return 'Orientation';
+  if (/\b(inward|outward|chaise)\b/.test(joined)) return 'Orientation';
+  if (codes.some(code => ['L', 'LEFT', 'LH', 'R', 'RIGHT', 'RH'].includes(code))) return 'Side';
+  if (/\b(left|right)\b/.test(joined)) return 'Side';
+  if (codes.some(code => ['LV', 'SV'].includes(code))) return 'Model';
+  if (codes.some(code => ['LSKT_PM', 'LSKT_SI', 'SHRT_SP', 'VELC_SP'].includes(code)))
+    return 'Style';
+  if (/\b(original|signature|snug fit|long skirt|short skirt)\b/.test(joined)) return 'Style';
+  if (/\b(version|leather|standard|velcro|hook|loop)\b/.test(joined)) return 'Model';
+  return `Option ${index + 1}`;
+}
+
+export function buildDirectCatalogueImageUrl(productReference, codes = []) {
+  const reference = String(productReference || '')
+    .trim()
+    .toUpperCase();
+  const parts = reference.split('-');
+  if (parts[0] !== 'IK' || parts.length < 3) return '';
+  const family = parts[1];
+  const stem = [reference, ...(Array.isArray(codes) ? codes : [])]
+    .map(value =>
+      String(value || '')
+        .trim()
+        .toUpperCase()
+    )
+    .filter(Boolean)
+    .join('_');
+  if (!stem) return '';
+  return `https://img.comfort-works.com/img/products/ikea/${family}/${reference}/${stem}.webp`;
+}
+
+async function resolveDirectCatalogueImage(productReference, codes) {
+  const imageUrl = buildDirectCatalogueImageUrl(productReference, codes);
+  if (!imageUrl) return '';
+  const response = await fetch(imageUrl, {
+    method: 'HEAD',
+    headers: { Accept: 'image/avif,image/webp,image/*' },
+    signal: AbortSignal.timeout(5000),
+  }).catch(() => null);
+  return response?.ok ? imageUrl : '';
+}
+
+export function buildComparisonConfigurationGroups(variants, productReference, fabricSamples = []) {
+  const reference = String(productReference || '')
+    .trim()
+    .toUpperCase();
+  const groups = new Map();
+  const fabricNames = new Map(
+    (Array.isArray(fabricSamples) ? fabricSamples : []).map(sample => [
+      String(sample?.code || '').toUpperCase(),
+      String(sample?.title || sample?.code || '').trim(),
+    ])
+  );
+
+  (Array.isArray(variants) ? variants : []).forEach(variant => {
+    const skuParts = String(variant?.sku || '')
+      .trim()
+      .toUpperCase()
+      .split('__');
+    if (skuParts.shift() !== reference) return;
+    const labels = String(variant?.title || '')
+      .split(/\s*\/\s*/)
+      .map(value => value.trim())
+      .filter(Boolean);
+    skuParts.forEach((rawCode, index) => {
+      const code = String(skuParts[index] || '').trim();
+      if (!code) return;
+      if (!groups.has(index)) groups.set(index, new Map());
+      groups.get(index).set(code, fabricNames.get(code) || labels[index] || code);
+    });
+  });
+
+  return Array.from(groups.entries())
+    .map(([codeIndex, options]) => {
+      const values = Array.from(options.entries()).map(([code, label]) => ({
+        code,
+        label: formatComparisonOptionLabel(code, label),
+      }));
+      return {
+        key: `configuration-${codeIndex}`,
+        // A few valid archived fabric IDs begin with digits (for example
+        // 5422-0000). They still belong in the same Fabric selector.
+        label: values.every(option => /^[A-Z0-9]{2,8}-[A-Z0-9]+$/.test(option.code))
+          ? 'Fabric'
+          : inferComparisonOptionGroupLabel(
+              values.map(option => option.label),
+              values.map(option => option.code),
+              Number(codeIndex)
+            ),
+        codeIndex: Number(codeIndex),
+        options: values,
+      };
+    })
+    .filter(group => group.options.length > 1)
+    .sort((a, b) => a.codeIndex - b.codeIndex);
+}
+
+function decodeStorefrontJsString(value) {
+  return String(value || '')
+    .replace(/\\u0026/gi, '&')
+    .replace(/\\\//g, '/')
+    .replace(/\\'/g, "'")
+    .replace(/&amp;/gi, '&');
+}
+
+export function extractFabricSampleCatalog(html) {
+  const source = String(html || '');
+  const samples = [];
+  const blockPattern =
+    /var\s+sampleData\s*=\s*\{([\s\S]*?)fabricGroupData\.fabric_samples\.push\(sampleData\);/g;
+  let match;
+  while ((match = blockPattern.exec(source))) {
+    const block = match[1] || '';
+    const handle = decodeStorefrontJsString(block.match(/\bhandle:\s*'((?:\\.|[^'])*)'/)?.[1]);
+    const title = decodeStorefrontJsString(block.match(/\btitle:\s*'((?:\\.|[^'])*)'/)?.[1]);
+    const rawImage = decodeStorefrontJsString(
+      block.match(/featured_image:\s*\{\s*url:\s*'((?:\\.|[^'])*)'/)?.[1]
+    );
+    const imageUrl = normalizeStorefrontImageUrl(rawImage);
+    const filename = decodeURIComponent(imageUrl.split('/').at(-1)?.split('?')[0] || '');
+    const code = String(filename.match(/^([A-Z][A-Z0-9]*-[A-Z0-9]+)/i)?.[1] || '')
+      .trim()
+      .toUpperCase();
+    if (!code || !title || !imageUrl) continue;
+    samples.push({
+      code,
+      title,
+      handle,
+      imageUrl,
+      productUrl: `${COMFORT_WORKS_STOREFRONT}/pages/fabric-samples`,
+    });
+  }
+  return samples.filter(
+    (sample, index) => samples.findIndex(candidate => candidate.code === sample.code) === index
+  );
+}
+
+async function fetchFabricSampleCatalog() {
+  const now = Date.now();
+  if (fabricSampleCatalogCache.items.length && fabricSampleCatalogCache.expiresAt > now) {
+    return fabricSampleCatalogCache.items;
+  }
+  if (fabricSampleCatalogCache.promise) return fabricSampleCatalogCache.promise;
+  const promise = fetch(`${COMFORT_WORKS_STOREFRONT}/pages/fabric-samples`, {
+    headers: {
+      Accept: 'text/html,application/xhtml+xml',
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/127 Safari/537.36',
+    },
+    signal: AbortSignal.timeout(10000),
+  })
+    .then(response => (response.ok ? response.text() : ''))
+    .then(extractFabricSampleCatalog)
+    .then(items => {
+      fabricSampleCatalogCache = {
+        expiresAt: Date.now() + FABRIC_SAMPLE_CACHE_MS,
+        items,
+        promise: null,
+      };
+      return items;
+    })
+    .catch(() => {
+      fabricSampleCatalogCache.promise = null;
+      return fabricSampleCatalogCache.items;
+    });
+  fabricSampleCatalogCache.promise = promise;
+  return promise;
+}
+
+export function extractStorefrontFabricImageCatalog(html) {
+  const source = String(html || '');
+  const handles = [];
+  const handlePattern = /"handle"\s*:\s*"([^"]+)"/g;
+  let match;
+  while ((match = handlePattern.exec(source))) {
+    handles.push({ index: match.index, handle: String(match[1] || '').trim() });
+  }
+
+  const images = [];
+  handles.forEach((entry, index) => {
+    const end = handles[index + 1]?.index ?? source.length;
+    const block = source.slice(entry.index, end);
+    const imagePattern = /"fabricImgUrl"\s*:\s*"([^"]+)"/g;
+    let imageMatch;
+    while ((imageMatch = imagePattern.exec(block))) {
+      const imageUrl = normalizeStorefrontImageUrl(
+        String(imageMatch[1] || '')
+          .replace(/\\\//g, '/')
+          .replace(/\\u0026/g, '&')
+      );
+      if (imageUrl) images.push({ handle: entry.handle, imageUrl });
+    }
+  });
+
+  return images.filter(
+    (entry, index) =>
+      images.findIndex(
+        candidate => candidate.handle === entry.handle && candidate.imageUrl === entry.imageUrl
+      ) === index
+  );
+}
+
+function normalizeComparisonRequestItem(value) {
+  const productReference = String(value?.productReference || value?.reference || '')
+    .trim()
+    .toUpperCase();
+  const codes = (Array.isArray(value?.codes) ? value.codes : [])
+    .map(code =>
+      String(code || '')
+        .trim()
+        .toUpperCase()
+    )
+    .filter(Boolean);
+  const suppliedFabricCode = String(value?.fabricCode || '')
+    .trim()
+    .toUpperCase();
+  const fabricCode =
+    [...codes].reverse().find(code => /^[A-Z]{2,8}-[A-Z0-9]+$/.test(code)) ||
+    (codes.includes(suppliedFabricCode) ? suppliedFabricCode : '');
+  return {
+    kind: value?.kind === 'fabric-sample' ? 'fabric-sample' : 'product',
+    productReference,
+    title: cleanStorefrontComparisonTitle(value?.title),
+    url: String(value?.url || '').trim(),
+    handle: String(value?.handle || '')
+      .trim()
+      .toLowerCase(),
+    codes,
+    fabricCode,
+    styleName: String(value?.styleName || '').trim(),
+    fabricName: String(value?.fabricName || '').trim(),
+  };
+}
+
+export function cleanStorefrontComparisonTitle(value) {
+  return String(value || '')
+    .replace(
+      /\s*(?:USD|AUD|CAD|GBP|EUR|MYR|JPY|SGD|HKD|NZD)\s*[$€£¥]?\s*[\d,.]+\s*(?:x|×)\s*\d+\s*$/i,
+      ''
+    )
+    .trim()
+    .replace(/^[\s*`_\-:]+|[\s*`_,.;:]+$/g, '');
+}
+
+function storefrontHandleFromTitle(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+export async function fetchStorefrontComparisonItem(rawItem) {
+  const item = normalizeComparisonRequestItem(rawItem);
+  if (!item.productReference) return null;
+
+  const fabricSamplesPromise = fetchFabricSampleCatalog();
+  if (item.kind === 'fabric-sample' || item.productReference === 'FABRIC-SAMPLE') {
+    const fabricSamples = await fabricSamplesPromise;
+    const requestedCode = String(item.fabricCode || item.codes.at(-1) || '').toUpperCase();
+    const requestedName = String(item.fabricName || item.title || '')
+      .trim()
+      .toLowerCase();
+    const sample =
+      fabricSamples.find(candidate => candidate.code === requestedCode) ||
+      fabricSamples.find(candidate => candidate.title.toLowerCase() === requestedName);
+    const selectedCode = sample?.code || requestedCode;
+    return {
+      ...item,
+      kind: 'fabric-sample',
+      title: sample?.title || item.fabricName || item.title || 'Fabric Sample',
+      codes: selectedCode ? [selectedCode] : item.codes,
+      fabricCode: selectedCode,
+      fabricName: sample?.title || item.fabricName,
+      imageUrl: sample?.imageUrl || '',
+      productUrl: `${COMFORT_WORKS_STOREFRONT}/pages/fabric-samples`,
+      requestedSku: requestedCode,
+      matchedSku: sample?.code || '',
+      imageMatch: sample ? 'exact' : 'unavailable',
+      note: sample ? 'Official Comfort Works fabric sample' : 'Sample image unavailable',
+      dimensions: null,
+      configurationGroups:
+        fabricSamples.length > 1
+          ? [
+              {
+                key: 'fabric',
+                label: 'Fabric',
+                codeIndex: 0,
+                options: fabricSamples.map(candidate => ({
+                  code: candidate.code,
+                  label: candidate.title,
+                })),
+              },
+            ]
+          : [],
+    };
+  }
+
+  const [generic, fabricSamples] = await Promise.all([
+    fetchStorefrontProduct(
+      item.handle || item.title || item.productReference,
+      item.productReference
+    ),
+    fabricSamplesPromise,
+  ]);
+  const genericHandle = String(generic?.url || '').match(/\/products\/([^/?#]+)/)?.[1] || '';
+  const handleCandidates = Array.from(
+    new Set(
+      [item.handle, storefrontHandleFromTitle(item.title), genericHandle]
+        .map(value => String(value || '').trim())
+        .filter(Boolean)
+    )
+  );
+  let variants = [];
+  let fabricImages = [];
+  let parentHandle = handleCandidates[0] || '';
+
+  for (const handle of handleCandidates) {
+    const pageResponse = await fetch(
+      `${COMFORT_WORKS_STOREFRONT}/products/${encodeURIComponent(handle)}`,
+      {
+        headers: {
+          Accept: 'text/html,application/xhtml+xml',
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/127 Safari/537.36',
+        },
+        signal: AbortSignal.timeout(10000),
+      }
+    ).catch(() => null);
+    if (!pageResponse?.ok) continue;
+    const pageHtml = await pageResponse.text();
+    const discovered = extractStorefrontVariantCatalog(pageHtml);
+    const discoveredFabricImages = extractStorefrontFabricImageCatalog(pageHtml);
+    const productJsonResponse = await fetch(
+      `${COMFORT_WORKS_STOREFRONT}/products/${encodeURIComponent(handle)}.js`,
+      {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(7000),
+      }
+    ).catch(() => null);
+    const productJson = productJsonResponse?.ok
+      ? await productJsonResponse.json().catch(() => null)
+      : null;
+    const exactVariants = extractStorefrontProductJsonVariants(productJson, handle);
+    if (!discovered.length && !exactVariants.length && !discoveredFabricImages.length) continue;
+    parentHandle = handle;
+    // Product JSON is appended last so its exact variant titles replace any
+    // ambiguous labels recovered from the larger storefront HTML payload.
+    variants = variants.concat(discovered, exactVariants);
+    fabricImages = fabricImages.concat(discoveredFabricImages);
+  }
+
+  const requestedSku = [item.productReference, ...item.codes].filter(Boolean).join('__');
+  const exactMatches = variants.filter(variant => variant.sku.toUpperCase() === requestedSku);
+  const exact = exactMatches.find(variant => variant.imageUrl) || exactMatches[0];
+  const structuralCodes = item.codes.length > 1 ? item.codes.slice(0, -1) : item.codes;
+  const structuralPrefix = [item.productReference, ...structuralCodes].filter(Boolean).join('__');
+  const structuralMatches = variants.filter(
+    variant =>
+      variant.sku.toUpperCase() === structuralPrefix ||
+      variant.sku.toUpperCase().startsWith(`${structuralPrefix}__`)
+  );
+  const structural = structuralMatches.find(variant => variant.imageUrl);
+
+  const requestedImageStem = [item.productReference, ...item.codes]
+    .filter(Boolean)
+    .join('_')
+    .toUpperCase();
+  const requestedFabricSlug = storefrontHandleFromTitle(item.fabricName);
+  const namedFabricImages = fabricImages.filter(
+    entry => !requestedFabricSlug || entry.handle.toLowerCase().includes(requestedFabricSlug)
+  );
+  const exactFabricImage =
+    namedFabricImages.find(entry =>
+      decodeURIComponent(entry.imageUrl).toUpperCase().includes(requestedImageStem)
+    ) ||
+    fabricImages.find(entry =>
+      decodeURIComponent(entry.imageUrl).toUpperCase().includes(requestedImageStem)
+    );
+
+  // Some newer catalogue products expose only a generic Shopify image even
+  // though the exact configured asset exists on the CW image host. Validate
+  // the deterministic SKU image before falling back to the generic photo.
+  const directConfiguredImage = exactFabricImage
+    ? ''
+    : await resolveDirectCatalogueImage(item.productReference, item.codes);
+
+  let imageUrl = exactFabricImage?.imageUrl || directConfiguredImage || exact?.imageUrl || '';
+  let imageMatch = imageUrl ? 'exact' : 'unavailable';
+  let matchedSku = exactFabricImage || directConfiguredImage ? requestedSku : exact?.sku || '';
+  let note = imageUrl ? 'Exact configuration and fabric photo' : '';
+  if (!imageUrl && structural?.imageUrl) {
+    imageUrl = structural.imageUrl;
+    imageMatch = 'configuration-fallback';
+    matchedSku = structural.sku;
+    note = 'Exact configuration; closest available fabric photo';
+  }
+  if (!imageUrl && generic?.imageUrl) {
+    imageUrl = generic.imageUrl;
+    imageMatch = 'product-fallback';
+    matchedSku = '';
+    note = 'Closest available product photo';
+  }
+  if (!imageUrl) note = 'No catalogue photo is currently available';
+
+  const exactHandle =
+    exactFabricImage?.handle ||
+    exactMatches.find(variant => variant.handle)?.handle ||
+    parentHandle;
+  const comparisonFabricSamples =
+    item.fabricCode && item.fabricName
+      ? [
+          ...fabricSamples.filter(
+            sample => String(sample?.code || '').toUpperCase() !== item.fabricCode
+          ),
+          { code: item.fabricCode, title: item.fabricName },
+        ]
+      : fabricSamples;
+  return {
+    ...item,
+    title: item.title || generic?.title || item.productReference,
+    imageUrl,
+    productUrl: exactHandle
+      ? `${COMFORT_WORKS_STOREFRONT}/products/${exactHandle}`
+      : generic?.url || item.url,
+    requestedSku,
+    matchedSku,
+    imageMatch,
+    note,
+    dimensions: generic?.dimensions || null,
+    measurementReference: generic?.measurementReference || item.productReference,
+    measurementStyle: generic?.measurementStyle || '',
+    measurementStyleCode: generic?.measurementStyleCode || '',
+    configurationGroups: buildComparisonConfigurationGroups(
+      variants,
+      item.productReference,
+      comparisonFabricSamples
+    ),
+  };
+}
+
+export async function fetchStorefrontComparison(items) {
+  const requested = (Array.isArray(items) ? items : []).slice(0, 8);
+  const resolved = await Promise.all(requested.map(fetchStorefrontComparisonItem));
+  return resolved.filter(Boolean);
+}
+
+async function fetchPublicProductMeasurementsUncached({
+  productReference,
+  style = '',
+  styleCode = '',
+}) {
+  const reference = String(productReference || '').trim();
+  if (!reference) {
+    return { ok: false, status: 400, code: 'CW_PRODUCT_REFERENCE_REQUIRED' };
+  }
+
+  const query = new URLSearchParams({ format: 'json', product_reference: reference });
+  const response = await fetch(`${COMFORT_WORKS_PUBLIC_MEASUREMENTS}?${query}`, {
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(7000),
+  });
+  const body = await response.json().catch(() => null);
+  const options = Array.isArray(body?.content?.product_options) ? body.content.product_options : [];
+  const referenceUpper = reference.toUpperCase();
+  const productOption =
+    options.find(
+      option =>
+        String(option?.product_reference || '')
+          .trim()
+          .toUpperCase() === referenceUpper
+    ) || options[0];
+  const styles = Array.isArray(productOption?.product_styles) ? productOption.product_styles : [];
+  const wantedStyle = String(style || '')
+    .trim()
+    .toLowerCase();
+  const wantedStyleCode = String(styleCode || '')
+    .trim()
+    .toUpperCase();
+  const explicitlyMatchedStyle =
+    wantedStyle || wantedStyleCode
+      ? styles.find(option => {
+          const optionStyle = String(option?.style_name || '')
+            .trim()
+            .toLowerCase();
+          const optionCode = String(option?.style_code || '')
+            .trim()
+            .toUpperCase();
+          return (
+            (!wantedStyle || optionStyle === wantedStyle) &&
+            (!wantedStyleCode || optionCode === wantedStyleCode)
+          );
+        })
+      : null;
+  const productStyle =
+    explicitlyMatchedStyle ||
+    (!wantedStyle && !wantedStyleCode && /__(?:VH|VS)$/i.test(reference)
+      ? styles.find(option => /VELC/i.test(String(option?.style_code || '')))
+      : null) ||
+    styles[0];
+
+  if (!response.ok || !productOption || !productStyle) {
+    return {
+      ok: false,
+      status: response.status,
+      code: String(body?.content || body?.code || 'CW_PUBLIC_MEASUREMENTS_NOT_FOUND').slice(0, 200),
+      body,
+    };
+  }
+
+  const resolvedReference = String(productOption.product_reference || reference).trim();
+  const resolvedStyle = String(productStyle.style_name || style || '').trim();
+  const resolvedStyleCode = String(productStyle.style_code || styleCode || '').trim();
+  return {
+    ok: true,
+    status: response.status,
+    productReference: resolvedReference,
+    style: resolvedStyle,
+    styleCode: resolvedStyleCode,
+    data: {
+      ...productStyle,
+      product_reference: resolvedReference,
+      style_name: resolvedStyle,
+      style_code: resolvedStyleCode,
+    },
+    body,
+  };
+}
+
+async function fetchPublicProductMeasurements(options = {}) {
+  const cacheKey = [
+    String(options?.productReference || '')
+      .trim()
+      .toUpperCase(),
+    String(options?.style || '')
+      .trim()
+      .toLowerCase(),
+    String(options?.styleCode || '')
+      .trim()
+      .toUpperCase(),
+  ].join('|');
+  const cached = publicMeasurementCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return await cached.value;
+  }
+
+  const value = fetchPublicProductMeasurementsUncached(options);
+  publicMeasurementCache.set(cacheKey, {
+    value,
+    expiresAt: Date.now() + PUBLIC_MEASUREMENT_CACHE_MS,
+  });
+  try {
+    const result = await value;
+    if (!result?.ok) publicMeasurementCache.delete(cacheKey);
+    return result;
+  } catch (error) {
+    publicMeasurementCache.delete(cacheKey);
+    throw error;
+  }
+}
 
 function normalizeManualReferenceHintKey(value) {
   return String(value || '')
@@ -196,6 +1059,56 @@ export function getManualReferenceHints(searchTerm) {
   const raw = MANUAL_REFERENCE_HINTS.get(key);
   if (!Array.isArray(raw) || !raw.length) return [];
   return Array.from(new Set(raw.map(item => String(item || '').trim()).filter(Boolean)));
+}
+
+export function mergeManualReferenceVersions(result, manualHintReferences = []) {
+  if (!result || typeof result !== 'object') return result;
+  const baseReference = String(result.productReference || '').trim();
+  if (!baseReference) return result;
+  const prefix = `${baseReference.toUpperCase()}__`;
+  const hintedOptions = (Array.isArray(manualHintReferences) ? manualHintReferences : [])
+    .map(reference => String(reference || '').trim())
+    .filter(reference => reference.toUpperCase().startsWith(prefix))
+    .map(reference => {
+      const code = reference.slice(baseReference.length + 2).trim();
+      return code
+        ? {
+            code,
+            label: code,
+            scopedReference: reference,
+            isDefault: manualHintReferences.length === 1,
+            source: 'manual-fallback',
+          }
+        : null;
+    })
+    .filter(Boolean);
+  if (!hintedOptions.length) return result;
+
+  const optionsByReference = new Map();
+  [
+    ...(Array.isArray(result.versionOptions) ? result.versionOptions : []),
+    ...hintedOptions,
+  ].forEach(option => {
+    const scopedReference = String(
+      option?.scopedReference || `${baseReference}__${option?.code || ''}`
+    ).trim();
+    if (!scopedReference) return;
+    optionsByReference.set(scopedReference.toUpperCase(), {
+      ...option,
+      scopedReference,
+    });
+  });
+  const versionOptions = Array.from(optionsByReference.values());
+  return {
+    ...result,
+    versionOptions,
+    derivedScopedReferences: Array.from(
+      new Set([
+        ...(Array.isArray(result.derivedScopedReferences) ? result.derivedScopedReferences : []),
+        ...versionOptions.map(option => option.scopedReference),
+      ])
+    ),
+  };
 }
 
 function isManualReferenceHintNoneTerm(searchTerm) {
@@ -1344,6 +2257,50 @@ function extractTupleRowsFromHtml(rawHtml, baseReference = '') {
   return Array.from(dedup.values());
 }
 
+export function extractExactMeasurementTuples(source, baseReference = '') {
+  const reference = stripAllScopedReferenceSuffixes(baseReference);
+  const rawText = typeof source === 'string' ? source : JSON.stringify(source || {});
+  const tuples = new Map();
+  const addTuple = (productReference, style, styleCode, sourceName) => {
+    const normalizedReference = String(productReference || '').trim();
+    const normalizedStyle = String(style || '').trim();
+    const normalizedStyleCode = String(styleCode || '')
+      .trim()
+      .toUpperCase();
+    if (!normalizedReference || !normalizedStyle || !normalizedStyleCode) return;
+    if (
+      reference &&
+      normalizedReference !== reference &&
+      !normalizedReference.startsWith(`${reference}__`)
+    ) {
+      return;
+    }
+    const key = `${normalizedReference.toUpperCase()}|${normalizedStyle.toLowerCase()}|${normalizedStyleCode}`;
+    if (!tuples.has(key)) {
+      tuples.set(key, {
+        productReference: normalizedReference,
+        style: normalizedStyle,
+        styleCode: normalizedStyleCode,
+        source: sourceName,
+      });
+    }
+  };
+
+  extractTupleRowsFromHtml(rawText, reference).forEach(row => {
+    addTuple(row.productReference, row.style, row.styleCode, 'measurement-index-table');
+  });
+  [
+    ...extractSuffixesByReferencePrefix(rawText, reference),
+    ...extractTupleSuffixesFromPayload(source, reference),
+  ].forEach(value => {
+    const [productReference = '', style = '', styleCode = ''] = String(value || '')
+      .split(',')
+      .map(part => part.trim());
+    addTuple(productReference, style, styleCode, 'measurement-index-link');
+  });
+  return Array.from(tuples.values());
+}
+
 function extractImageUrlsFromText(rawText, out = new Set()) {
   const source = String(rawText || '');
   const normalized = decodeHtmlEntities(source)
@@ -2091,14 +3048,43 @@ function normalizeSelectedItemSelection(item = {}) {
   const versionCode = String(item?.versionCode || '')
     .trim()
     .toUpperCase();
-  const style = String(item?.style || '').trim();
-  const styleCode = String(item?.styleCode || item?.style_code || '')
-    .trim()
-    .toUpperCase();
   const scopedReference =
     String(item?.scopedReference || '').trim() ||
     (productReference && versionCode ? `${productReference}__${versionCode}` : productReference);
+  const velcroVariant = /__(?:VH|VS)$/i.test(scopedReference);
+  const style = String(item?.style || (velcroVariant ? 'Urban' : '')).trim();
+  const styleCode = String(item?.styleCode || item?.style_code || (velcroVariant ? 'VELC_SP' : ''))
+    .trim()
+    .toUpperCase();
+  const styleOptions = Array.isArray(item?.styleOptions)
+    ? item.styleOptions
+        .map(option => ({
+          style: String(option?.style || '').trim(),
+          styleCode: String(option?.styleCode || option?.style_code || '')
+            .trim()
+            .toUpperCase(),
+          source: String(option?.source || '').trim(),
+        }))
+        .filter(option => option.style || option.styleCode)
+    : [];
+  const versionOptions = Array.isArray(item?.versionOptions)
+    ? item.versionOptions
+        .map(option => ({
+          code: String(option?.code || '')
+            .trim()
+            .toUpperCase(),
+          label: String(option?.label || '').trim(),
+          scopedReference: String(option?.scopedReference || '').trim(),
+          isDefault: option?.isDefault === true,
+          source: String(option?.source || '').trim(),
+        }))
+        .filter(option => option.code || option.scopedReference)
+    : [];
+  const derivedScopedReferences = Array.isArray(item?.derivedScopedReferences)
+    ? item.derivedScopedReferences.map(value => String(value || '').trim()).filter(Boolean)
+    : [];
   return {
+    productId: String(item?.productId || item?.id || '').trim(),
     selectionKey:
       String(item?.selectionKey || '').trim() ||
       makeSelectionKey({ productReference, versionCode, style, styleCode }),
@@ -2110,7 +3096,287 @@ function normalizeSelectedItemSelection(item = {}) {
     versionLabel: String(item?.versionLabel || '').trim(),
     style,
     styleCode,
+    styleOptions,
+    versionOptions,
+    derivedScopedReferences,
+    exactMeasurementTuples: Array.isArray(item?.exactMeasurementTuples)
+      ? item.exactMeasurementTuples
+      : [],
   };
+}
+
+export function mergeDiscoveredSelectionForQc(selection = {}, discoveredResult = null) {
+  if (!discoveredResult || typeof discoveredResult !== 'object') return selection;
+  const mergeUniqueBy = (left, right, getKey) => {
+    const values = new Map();
+    [...(Array.isArray(left) ? left : []), ...(Array.isArray(right) ? right : [])].forEach(
+      value => {
+        const key = getKey(value);
+        if (key && !values.has(key)) values.set(key, value);
+      }
+    );
+    return Array.from(values.values());
+  };
+  const versionOptions = mergeUniqueBy(
+    selection?.versionOptions,
+    discoveredResult?.versionOptions,
+    option =>
+      String(option?.scopedReference || option?.code || '')
+        .trim()
+        .toUpperCase()
+  );
+  const styleOptions = mergeUniqueBy(
+    selection?.styleOptions,
+    discoveredResult?.styleOptions,
+    option =>
+      `${String(option?.style || '')
+        .trim()
+        .toLowerCase()}|${String(option?.styleCode || option?.style_code || '')
+        .trim()
+        .toUpperCase()}`
+  );
+  const derivedScopedReferences = Array.from(
+    new Set(
+      [
+        ...(Array.isArray(selection?.derivedScopedReferences)
+          ? selection.derivedScopedReferences
+          : []),
+        ...(Array.isArray(discoveredResult?.derivedScopedReferences)
+          ? discoveredResult.derivedScopedReferences
+          : []),
+        ...versionOptions.map(option => option?.scopedReference),
+      ]
+        .map(value => String(value || '').trim())
+        .filter(Boolean)
+    )
+  );
+  const defaultVersion = versionOptions.find(option => option?.isDefault === true) || null;
+  const explicitScoped = String(selection?.scopedReference || '').trim();
+  const baseReference = String(
+    selection?.productReference || discoveredResult?.productReference || ''
+  ).trim();
+  const shouldReplaceBaseScope = !explicitScoped || explicitScoped === baseReference;
+  return {
+    ...selection,
+    productId: String(selection?.productId || discoveredResult?.id || '').trim(),
+    productReference: baseReference,
+    scopedReference:
+      shouldReplaceBaseScope && defaultVersion?.scopedReference
+        ? String(defaultVersion.scopedReference).trim()
+        : explicitScoped || baseReference,
+    versionCode:
+      shouldReplaceBaseScope && defaultVersion?.code
+        ? String(defaultVersion.code).trim().toUpperCase()
+        : String(selection?.versionCode || '')
+            .trim()
+            .toUpperCase(),
+    versionLabel:
+      shouldReplaceBaseScope && defaultVersion?.label
+        ? String(defaultVersion.label).trim()
+        : String(selection?.versionLabel || '').trim(),
+    versionOptions,
+    styleOptions,
+    derivedScopedReferences,
+  };
+}
+
+export function buildSelectedQcLookupCandidates(selection = {}) {
+  const scopedReference = String(selection?.scopedReference || '').trim();
+  const productReference = String(selection?.productReference || '').trim();
+  const velcroVariant = /__(?:VH|VS)$/i.test(scopedReference);
+  const baseReference = productReference || scopedReference;
+  const hasConfiguredReferenceFamily =
+    (Array.isArray(selection?.derivedScopedReferences) &&
+      selection.derivedScopedReferences.length > 0) ||
+    (Array.isArray(selection?.versionOptions) && selection.versionOptions.length > 0);
+  const hintedReferences =
+    hasConfiguredReferenceFamily || (scopedReference && scopedReference !== productReference)
+      ? []
+      : getManualReferenceHints(baseReference);
+  const discoveredReferences = [
+    ...(Array.isArray(selection?.derivedScopedReferences) ? selection.derivedScopedReferences : []),
+    ...(Array.isArray(selection?.versionOptions)
+      ? selection.versionOptions.map(option => option?.scopedReference)
+      : []),
+  ];
+  const references = Array.from(
+    new Set(
+      [
+        ...(scopedReference && scopedReference !== productReference ? [scopedReference] : []),
+        ...discoveredReferences,
+        ...hintedReferences,
+        scopedReference,
+        productReference,
+      ]
+        .map(value => String(value || '').trim())
+        .filter(Boolean)
+    )
+  );
+  const hasVelcroReference = references.some(reference => /__(?:VH|VS)$/i.test(reference));
+  const styles = [];
+  const seenStyles = new Set();
+  const addStyle = (style, styleCode) => {
+    const normalized = {
+      style: String(style || '').trim(),
+      styleCode: String(styleCode || '')
+        .trim()
+        .toUpperCase(),
+    };
+    const key = `${normalized.style.toLowerCase()}|${normalized.styleCode.toLowerCase()}`;
+    if ((!normalized.style && !normalized.styleCode) || seenStyles.has(key)) return;
+    seenStyles.add(key);
+    styles.push(normalized);
+  };
+  addStyle(
+    selection?.style || (velcroVariant || hasVelcroReference ? 'Urban' : ''),
+    selection?.styleCode || (velcroVariant || hasVelcroReference ? 'VELC_SP' : '')
+  );
+  (Array.isArray(selection?.styleOptions) ? selection.styleOptions : []).forEach(option => {
+    addStyle(option?.style, option?.styleCode || option?.style_code);
+  });
+  // Some MT records are keyed only by product reference. Keep this after all
+  // explicit style tuples so a precise variant/style always wins.
+  styles.push({ style: '', styleCode: '' });
+
+  const candidates = [];
+  const candidateKeys = new Set();
+  const addCandidate = candidate => {
+    const normalized = {
+      productReference: String(candidate?.productReference || '').trim(),
+      style: String(candidate?.style || '').trim(),
+      styleCode: String(candidate?.styleCode || candidate?.style_code || '')
+        .trim()
+        .toUpperCase(),
+    };
+    if (!normalized.productReference) return;
+    const key = `${normalized.productReference.toUpperCase()}|${normalized.style.toLowerCase()}|${normalized.styleCode}`;
+    if (candidateKeys.has(key)) return;
+    candidateKeys.add(key);
+    candidates.push(normalized);
+  };
+  (Array.isArray(selection?.exactMeasurementTuples)
+    ? selection.exactMeasurementTuples
+    : []
+  ).forEach(addCandidate);
+  references.forEach(reference => {
+    styles.forEach(option => addCandidate({ productReference: reference, ...option }));
+  });
+  return candidates;
+}
+
+export function getQcLookupCandidateSource(selection = {}, candidate = {}) {
+  const reference = String(candidate?.productReference || '')
+    .trim()
+    .toUpperCase();
+  const style = String(candidate?.style || '')
+    .trim()
+    .toLowerCase();
+  const styleCode = String(candidate?.styleCode || candidate?.style_code || '')
+    .trim()
+    .toUpperCase();
+  const tupleMatches = option =>
+    String(option?.productReference || '')
+      .trim()
+      .toUpperCase() === reference &&
+    String(option?.style || '')
+      .trim()
+      .toLowerCase() === style &&
+    String(option?.styleCode || option?.style_code || '')
+      .trim()
+      .toUpperCase() === styleCode;
+
+  if (
+    (Array.isArray(selection?.exactMeasurementTuples) ? selection.exactMeasurementTuples : []).some(
+      tupleMatches
+    )
+  ) {
+    return 'pid-measurement-index';
+  }
+
+  const configuredReference = (
+    Array.isArray(selection?.versionOptions) ? selection.versionOptions : []
+  ).some(option => {
+    const optionReference = String(option?.scopedReference || '')
+      .trim()
+      .toUpperCase();
+    return optionReference === reference && option?.source !== 'manual-fallback';
+  });
+  const configuredStyle = (
+    Array.isArray(selection?.styleOptions) ? selection.styleOptions : []
+  ).some(option => {
+    const optionStyle = String(option?.style || '')
+      .trim()
+      .toLowerCase();
+    const optionStyleCode = String(option?.styleCode || option?.style_code || '')
+      .trim()
+      .toUpperCase();
+    return (
+      optionStyle === style && optionStyleCode === styleCode && option?.source !== 'manual-fallback'
+    );
+  });
+  if (configuredReference && configuredStyle) return 'cw40-product-configuration';
+
+  const manualReference = (
+    Array.isArray(selection?.versionOptions) ? selection.versionOptions : []
+  ).some(
+    option =>
+      String(option?.scopedReference || '')
+        .trim()
+        .toUpperCase() === reference && option?.source === 'manual-fallback'
+  );
+  if (manualReference) return 'manual-fallback';
+  return 'generated-fallback';
+}
+
+async function discoverExactMeasurementTuplesForSelection({
+  selection,
+  override,
+  pidBaseUrl,
+  ensureAuthenticatedSession,
+  getAccessToken,
+}) {
+  const productId = String(selection?.productId || '').trim();
+  const baseReference = stripAllScopedReferenceSuffixes(
+    selection?.productReference || selection?.scopedReference || ''
+  );
+  if (!productId || !baseReference) return [];
+  const cacheKey = `${productId}|${baseReference}`.toUpperCase();
+  const cached = exactMeasurementTupleCache.get(cacheKey);
+  if (cached && Date.now() - cached.savedAt < EXACT_MEASUREMENT_TUPLE_CACHE_MS) {
+    return cached.tuples;
+  }
+
+  const session = await ensureAuthenticatedSession();
+  const accessToken = String(getAccessToken?.() || '').trim();
+  const measurementIds = Array.from(
+    new Set([productId, decodeCwRelayProductId(productId)].map(value => String(value || '').trim()))
+  ).filter(Boolean);
+  let bestPayload = null;
+  for (const measurementId of measurementIds) {
+    const url = `${pidBaseUrl}/product-measurements/${encodeURIComponent(measurementId)}`;
+    let result = await fetchJsonOrText(url, {
+      headers: accessToken ? { authorization: `Bearer ${accessToken}` } : {},
+    });
+    const sessionResult = await cwGetWithSession(
+      session,
+      url,
+      `${String(session.baseUrl || override?.baseUrl || '').replace(/\/+$/, '')}/dashboard/`
+    );
+    if ((sessionResult?.rawText || '').length > (result?.rawText || '').length) {
+      result = sessionResult;
+    }
+    const tupleSource = result?.rawText || result?.body;
+    const tuples = extractExactMeasurementTuples(tupleSource, baseReference);
+    if (tuples.length) {
+      bestPayload = tuples;
+      break;
+    }
+  }
+  const tuples = bestPayload || [];
+  if (tuples.length) {
+    exactMeasurementTupleCache.set(cacheKey, { savedAt: Date.now(), tuples });
+  }
+  return tuples;
 }
 
 export function buildLoadSelectedSearchBody(body = {}, selection = {}) {
@@ -2282,6 +3548,10 @@ async function handleProductSearchDiscover({ req, res, body, startedAt }) {
     searchStrategy = 'name-fast-path-fallback';
   }
 
+  if (manualHintReferences.length) {
+    results = results.map(result => mergeManualReferenceVersions(result, manualHintReferences));
+  }
+
   return res.status(results.length ? 200 : 404).json(
     buildProductSearchDiscoverResponse({
       searchTerm,
@@ -2296,7 +3566,14 @@ async function handleProductSearchDiscover({ req, res, body, startedAt }) {
   );
 }
 
-async function handleProductSearchLoadSelected({ req, res, body, startedAt }) {
+async function handleProductSearchLoadSelected({
+  req,
+  res,
+  body,
+  startedAt,
+  publicFirst = true,
+  softFailure = false,
+}) {
   const selectedItems = Array.isArray(body?.selectedItems) ? body.selectedItems : [];
   if (!selectedItems.length) {
     return res.status(400).json({
@@ -2308,14 +3585,16 @@ async function handleProductSearchLoadSelected({ req, res, body, startedAt }) {
     });
   }
 
-  const { results, loadedCount } = await loadSelectedQcItems({ body });
-  return res.status(loadedCount > 0 ? 200 : 502).json({
+  const { results, loadedCount } = await loadSelectedQcItems({ body, publicFirst });
+  const firstFailure = results.find(item => !item.success);
+  return res.status(loadedCount > 0 || softFailure ? 200 : 502).json({
     success: loadedCount > 0,
     code:
       loadedCount === results.length
         ? 'CW_SELECTED_ITEMS_LOAD_OK'
         : 'CW_SELECTED_ITEMS_LOAD_PARTIAL',
     phase: 'load-selected',
+    message: firstFailure?.message || null,
     items: results,
     summary: {
       selectedCount: selectedItems.length,
@@ -2326,7 +3605,7 @@ async function handleProductSearchLoadSelected({ req, res, body, startedAt }) {
   });
 }
 
-async function loadSelectedQcItems({ body = {} }) {
+async function loadSelectedQcItems({ body = {}, publicFirst = true }) {
   const selectedItems = Array.isArray(body?.selectedItems) ? body.selectedItems : [];
   if (!selectedItems.length) {
     return {
@@ -2352,13 +3631,19 @@ async function loadSelectedQcItems({ body = {} }) {
       'pid-storage'
   ).trim();
 
-  const session = await createCwSession(override);
-  const tokenResult = await fetchMtAccessTokenViaCwGraphql({ override });
-  const mtAccessToken = tokenResult?.accessToken || '';
+  let session = null;
+  let mtAccessToken = '';
+  const ensureAuthenticatedSession = async () => {
+    if (session) return session;
+    session = await createCwSession(override);
+    const tokenResult = await fetchMtAccessTokenViaCwGraphql({ override });
+    mtAccessToken = tokenResult?.accessToken || '';
+    return session;
+  };
   const results = [];
 
   for (const rawItem of selectedItems) {
-    const selection = normalizeSelectedItemSelection(rawItem);
+    let selection = normalizeSelectedItemSelection(rawItem);
     const productRef = String(selection?.productReference || '').trim();
     const scopedRef = String(selection?.scopedReference || '').trim();
     const style = String(selection?.style || '').trim();
@@ -2392,15 +3677,124 @@ async function loadSelectedQcItems({ body = {} }) {
     }
 
     try {
-      const qcResult = await fetchMtProductQcMeasurements({
-        session,
-        mtApiBaseUrl: pidBaseUrl,
-        productReference: lookupRef,
-        style,
-        styleCode,
-        bucketName,
-        mtAccessToken,
-      });
+      const hasDiscoveredFamily =
+        selection.derivedScopedReferences.length > 0 || selection.versionOptions.length > 0;
+      if (!hasDiscoveredFamily && productRef) {
+        try {
+          const detail = await fetchPublicProductDetailsByReference(
+            String(override.baseUrl || 'https://cw40.comfort-works.com').replace(/\/+$/, ''),
+            stripAllScopedReferenceSuffixes(productRef)
+          );
+          if (detail?.node) {
+            const discovered = buildDiscoveredProductResult({ node: detail.node });
+            selection = mergeDiscoveredSelectionForQc(selection, discovered);
+          }
+        } catch {
+          // The normal lookup candidates below remain available when discovery is offline.
+        }
+      }
+      if (selection.productId) {
+        try {
+          const exactMeasurementTuples = await discoverExactMeasurementTuplesForSelection({
+            selection,
+            override,
+            pidBaseUrl,
+            ensureAuthenticatedSession,
+            getAccessToken: () => mtAccessToken,
+          });
+          if (exactMeasurementTuples.length) {
+            selection = { ...selection, exactMeasurementTuples };
+          }
+        } catch {
+          // Product configuration candidates remain available if the private index is unavailable.
+        }
+      }
+      const lookupCandidates = buildSelectedQcLookupCandidates(selection);
+      const lookupAttempts = [];
+      let qcResult = null;
+      let resolvedLookup = null;
+
+      // Overall and component measurements are public product data. Read them
+      // before attempting the authenticated dashboard/photo pipeline so a
+      // missing or expired CW login cannot block the basic drawing workflow.
+      for (const candidate of publicFirst ? lookupCandidates : []) {
+        const publicAttempt = await fetchPublicProductMeasurements(candidate).catch(error => ({
+          ok: false,
+          status: 502,
+          code: String(error?.message || error || 'Public measurement lookup failed'),
+        }));
+        lookupAttempts.push({
+          source: 'public-measurements',
+          candidateSource: getQcLookupCandidateSource(selection, candidate),
+          productReference: candidate.productReference,
+          style: candidate.style,
+          styleCode: candidate.styleCode,
+          status: publicAttempt.status,
+          ok: Boolean(publicAttempt.ok),
+        });
+        if (publicAttempt.ok && publicAttempt.data) {
+          resolvedLookup = {
+            ...candidate,
+            candidateSource: getQcLookupCandidateSource(selection, candidate),
+            service: 'public-measurements',
+          };
+          qcResult = {
+            ok: true,
+            status: publicAttempt.status,
+            body: { content: publicAttempt.data },
+            rawText: '',
+            source: 'public-measurements',
+          };
+          break;
+        }
+      }
+
+      // The private path adds production detail images. It is a fallback for
+      // products that are not exposed by the public measurement service.
+      if (!qcResult) {
+        const authenticatedSession = await ensureAuthenticatedSession();
+        // The private endpoint requires a named style. The reference-only
+        // fallback is valid for the public service but produces a hard 400 here.
+        for (const candidate of lookupCandidates.filter(candidate => candidate.style)) {
+          const attempt = await fetchMtProductQcMeasurements({
+            session: authenticatedSession,
+            mtApiBaseUrl: pidBaseUrl,
+            productReference: candidate.productReference,
+            style: candidate.style,
+            styleCode: candidate.styleCode,
+            bucketName,
+            mtAccessToken,
+          });
+          const candidateData = attempt.body?.content || attempt.body || null;
+          const candidateOk =
+            attempt.ok &&
+            candidateData &&
+            typeof candidateData === 'object' &&
+            !candidateData.detail;
+          lookupAttempts.push({
+            source: 'authenticated-qc',
+            candidateSource: getQcLookupCandidateSource(selection, candidate),
+            productReference: candidate.productReference,
+            style: candidate.style,
+            styleCode: candidate.styleCode,
+            status: attempt.status,
+            ok: Boolean(candidateOk),
+          });
+          qcResult = attempt;
+          if (candidateOk) {
+            resolvedLookup = {
+              ...candidate,
+              candidateSource: getQcLookupCandidateSource(selection, candidate),
+              service: 'authenticated-qc',
+            };
+            break;
+          }
+        }
+      }
+
+      if (!qcResult) {
+        throw new Error('No valid product measurement lookup could be constructed');
+      }
 
       const qcData = qcResult.body?.content || qcResult.body || null;
       const ok = qcResult.ok && qcData && typeof qcData === 'object' && !qcData.detail;
@@ -2434,6 +3828,8 @@ async function loadSelectedQcItems({ body = {} }) {
           summary: {
             qcMeasurementsFound: Boolean(ok),
             imageCount: images.length,
+            resolvedLookup,
+            lookupAttempts,
           },
         },
       });
@@ -3054,6 +4450,20 @@ async function handleProductSearch({ req, res, body, startedAt }) {
           gqlVersionOptions.push({ code, label, scopedReference: scopedRef });
         });
       }
+
+      // A few CW40 products use a scoped measurement reference that is not
+      // represented in the public product option groups. Surface those known
+      // scopes as normal version options so the UI can preserve the exact MT
+      // reference while the storefront continues to use the base PID.
+      const productReferenceUpper = productReference.toUpperCase();
+      manualHintReferences.forEach(hintedReference => {
+        const hinted = String(hintedReference || '').trim();
+        const prefix = `${productReferenceUpper}__`;
+        if (!hinted.toUpperCase().startsWith(prefix)) return;
+        const code = hinted.slice(productReference.length + 2).trim();
+        if (!code || gqlVersionOptions.some(option => option.code === code)) return;
+        gqlVersionOptions.push({ code, label: code, scopedReference: hinted });
+      });
     } catch {
       // Non-critical — style/version discovery is best-effort
     }
@@ -4743,11 +6153,63 @@ export default async function handler(req, res) {
       const phase = String(body?.phase || '')
         .trim()
         .toLowerCase();
+      if (phase === 'storefront-product') {
+        const product = await fetchStorefrontProduct(
+          body?.search,
+          body?.productReference || body?.product_reference
+        );
+        return res.status(200).json({ success: true, product });
+      }
+      if (phase === 'storefront-comparison') {
+        const items = await fetchStorefrontComparison(body?.comparisonItems || body?.items);
+        return res.status(200).json({ success: true, items });
+      }
+      if (phase === 'sectional-pricing') {
+        const catalog = await fetchSectionalPricingCatalog(body?.handles, body?.country);
+        return res.status(200).json({ success: true, ...catalog });
+      }
+      if (phase === 'public-measurements') {
+        const result = await fetchPublicProductMeasurements({
+          productReference: body?.productReference || body?.product_reference || body?.search,
+          style: body?.style,
+          styleCode: body?.styleCode,
+        }).catch(error => ({
+          ok: false,
+          status: 502,
+          code: String(error?.message || error || 'Public measurement lookup failed'),
+        }));
+        return res.status(result?.ok ? 200 : result?.status || 404).json({
+          success: Boolean(result?.ok),
+          code: result?.ok
+            ? 'CW_PUBLIC_MEASUREMENTS_OK'
+            : result?.code || 'CW_PUBLIC_MEASUREMENTS_NOT_FOUND',
+          measurements: result?.ok
+            ? {
+                width: result.data?.width || null,
+                depth: result.data?.depth || null,
+                height: result.data?.height || null,
+              }
+            : null,
+          productReference: result?.productReference || '',
+          style: result?.style || '',
+          styleCode: result?.styleCode || '',
+        });
+      }
       if (phase === 'discover') {
         return await handleProductSearchDiscover({ req, res, body, startedAt });
       }
       if (phase === 'load-selected') {
         return await handleProductSearchLoadSelected({ req, res, body, startedAt });
+      }
+      if (phase === 'load-selected-details') {
+        return await handleProductSearchLoadSelected({
+          req,
+          res,
+          body,
+          startedAt,
+          publicFirst: false,
+          softFailure: true,
+        });
       }
       return await handleProductSearch({ req, res, body, startedAt });
     }

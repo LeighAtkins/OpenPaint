@@ -398,7 +398,7 @@ body {
 }
 
 /* Top edge on the first row */
-.measurement-grid.two-col .measurement-item:nth-child(-n+2) {
+.measurement-grid.two-col .measurement-item:nth-child(-n + 2) {
   border-top: 1.3px solid var(--ink);
 }
 
@@ -721,3 +721,142 @@ body {
   font-size: 8.8px;
   line-height: 1.25;
 }
+
+/* Reference-style cushion worksheet: diagrams and two quiet ruled tables. */
+.cushion-worksheet {
+  color: #738094;
+  font-family: Arial, sans-serif;
+}
+.cushion-header {
+  display: flex;
+  align-items: center;
+  gap: 12mm;
+  border-bottom: 0.3mm solid #a6a8ab;
+  padding: 2mm 0 3mm;
+}
+.cushion-header img {
+  width: 39mm;
+  height: 12mm;
+  object-fit: contain;
+}
+.cushion-header h1 {
+  font-size: 15pt;
+  font-weight: 400;
+  margin: 0;
+  color: #939eac;
+}
+.cushion-intro {
+  display: flex;
+  gap: 6mm;
+  padding: 4mm 0 2mm;
+}
+.cushion-intro h2 {
+  font-size: 12pt;
+  font-weight: 400;
+  margin: 0;
+  padding-right: 6mm;
+  border-right: 0.25mm solid #aaa;
+}
+.cushion-intro p {
+  margin: 0;
+  font-size: 9pt;
+  line-height: 1.5;
+  color: #999da4;
+}
+/* Reuse the standard unit toggle on the worksheet, with tighter spacing. */
+.cushion-worksheet .unit-block {
+  margin: 0 0 3mm;
+}
+.cushion-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4mm;
+}
+.cushion-row {
+  display: grid;
+  grid-template-columns: minmax(0, 31fr) minmax(0, 34.5fr) minmax(0, 34.5fr);
+  gap: 4mm;
+  height: 43mm;
+  break-inside: avoid;
+}
+.cushion-row figure {
+  margin: 0;
+}
+.cushion-row img {
+  width: 100%;
+  height: 39mm;
+  object-fit: contain;
+}
+.cushion-diagram-missing {
+  width: 100%;
+  height: 43mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border: 0.25mm dashed #c6c9cd;
+  color: #999da4;
+  font-size: 8pt;
+}
+.cushion-row figcaption {
+  font-size: 7pt;
+  color: #999da4;
+  text-align: center;
+}
+.cushion-table-wrap h3 {
+  font-size: 8pt;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  margin: 0 0 1mm;
+}
+.cushion-grid {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+  font-size: 8pt;
+}
+.cushion-grid th,
+.cushion-grid td {
+  border: 0.35mm solid #83898f;
+  padding: 0;
+  height: 4.6mm;
+  text-align: center;
+  font-weight: 400;
+}
+.cushion-grid th:first-child {
+  width: 18%;
+}
+.cushion-grid thead th:first-child {
+  background: #83898f;
+  color: white;
+}
+.cushion-cell {
+  width: 100%;
+  height: 5mm;
+}
+.cushion-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-top: 0.25mm solid #bbb;
+  padding-top: 2mm;
+  font-size: 8pt;
+  color: #999da4;
+}
+.cushion-footer span {
+  float: right;
+}
+
+/* Keep the unit control subordinate to the worksheet and reserve footer space. */
+.cushion-worksheet .unit-block { display:flex; align-items:center; justify-content:flex-end; gap:3mm; width:auto; margin:0 0 3mm; }
+.cushion-worksheet .unit-heading { margin:0; font-size:8pt; color:#738094; text-transform:none; }
+.cushion-worksheet .unit-toggle { width:48mm; height:6mm; border-color:#a5a7aa; border-width:0.25mm; }
+.cushion-worksheet .unit-pill { font-size:8pt; padding:0 8mm 0 2mm; border-color:#a5a7aa; border-width:0.25mm; }
+.cushion-worksheet .unit-checkbox { width:3.5mm; height:3.5mm; right:2mm; }
+.cushion-rows { width:calc(100% - 0.8mm); }
+.cushion-table-wrap { min-width:0; }
+.cushion-grid { border:0.25mm solid #9ca1a7; }
+.cushion-grid th,.cushion-grid td { border-width:0.25mm; border-color:#9ca1a7; }
+.cushion-grid thead th:not(:first-child) { background:#f5f6f7; }
+.cushion-cell { width:calc(100% - 1mm); height:3.8mm; margin:0.2mm 0.5mm; font-size:8pt; }

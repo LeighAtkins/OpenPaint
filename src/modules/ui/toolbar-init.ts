@@ -511,6 +511,9 @@
       return;
     }
     quickSave.__quickSaveBound = true;
+    quickSaveBtn.setAttribute('aria-haspopup', 'menu');
+    quickSaveBtn.setAttribute('aria-controls', 'quickSaveMenu');
+    quickSaveBtn.setAttribute('aria-expanded', 'false');
 
     const triggerSaveOnce = () => {
       const saveButton = document.getElementById('save');
@@ -529,17 +532,37 @@
     });
 
     let hideTimer = null;
+    const positionMenu = () => {
+      if (quickSaveMenu.parentElement !== document.body) {
+        document.body.appendChild(quickSaveMenu);
+      }
+      const triggerRect = quickSaveBtn.getBoundingClientRect();
+      const menuWidth = Math.max(quickSaveMenu.offsetWidth || 0, 160);
+      const left = Math.min(
+        Math.max(8, triggerRect.left),
+        Math.max(8, window.innerWidth - menuWidth - 8)
+      );
+      quickSaveMenu.style.position = 'fixed';
+      quickSaveMenu.style.left = `${left}px`;
+      quickSaveMenu.style.right = 'auto';
+      quickSaveMenu.style.top = 'auto';
+      quickSaveMenu.style.bottom = `${Math.max(8, window.innerHeight - triggerRect.top + 6)}px`;
+      quickSaveMenu.style.zIndex = '15000';
+    };
     const showMenu = () => {
       if (hideTimer) {
         clearTimeout(hideTimer);
         hideTimer = null;
       }
+      positionMenu();
       quickSaveMenu.classList.remove('hidden');
+      quickSaveBtn.setAttribute('aria-expanded', 'true');
     };
     const scheduleHide = () => {
       if (hideTimer) clearTimeout(hideTimer);
       hideTimer = setTimeout(() => {
         quickSaveMenu.classList.add('hidden');
+        quickSaveBtn.setAttribute('aria-expanded', 'false');
         hideTimer = null;
       }, 200);
     };
@@ -548,6 +571,24 @@
     quickSave.addEventListener('mouseleave', scheduleHide);
     quickSaveMenu.addEventListener('mouseenter', showMenu);
     quickSaveMenu.addEventListener('mouseleave', scheduleHide);
+    quickSaveBtn.addEventListener('focus', showMenu);
+    quickSaveBtn.addEventListener('keydown', event => {
+      if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        showMenu();
+        quickSaveMenu.querySelector('[data-action]')?.focus();
+      } else if (event.key === 'Escape') {
+        quickSaveMenu.classList.add('hidden');
+        quickSaveBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+    quickSaveMenu.addEventListener('focusin', showMenu);
+    quickSaveMenu.addEventListener('focusout', event => {
+      if (!quickSaveMenu.contains(event.relatedTarget)) scheduleHide();
+    });
+    window.addEventListener('resize', () => {
+      if (!quickSaveMenu.classList.contains('hidden')) positionMenu();
+    });
 
     quickSaveMenu.addEventListener('click', e => {
       const item = e.target.closest('[data-action]');
@@ -577,6 +618,7 @@
 
       // Hide menu after selection
       quickSaveMenu.classList.add('hidden');
+      quickSaveBtn.setAttribute('aria-expanded', 'false');
     });
   }
 
@@ -584,14 +626,21 @@
   window.initializeTopToolbar = initializeTopToolbar;
   window.setupQuickSaveHover = setupQuickSaveHover;
 
-  // Auto-initialize when DOM is ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
+  const safelyInitializeToolbar = () => {
+    try {
       initializeTopToolbar();
-      setupQuickSaveHover();
-    });
+    } catch (error) {
+      // The app bootstrap owns critical controls. A legacy toolbar enhancement
+      // must never prevent the canvas, importers, or save controls from loading.
+      console.error('[Toolbar] Optional toolbar initialization failed', error);
+    }
+  };
+
+  // Auto-initialize when DOM is ready. Quick Save is initialized by src/main.ts
+  // so it still works even when an optional legacy enhancement above fails.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', safelyInitializeToolbar);
   } else {
-    initializeTopToolbar();
-    setupQuickSaveHover();
+    safelyInitializeToolbar();
   }
 })();

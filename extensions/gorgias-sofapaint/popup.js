@@ -16,7 +16,7 @@ let existingProjectStatus = null;
 let currentScanCache = null;
 const selectionOverrides = new Map();
 const SCAN_CACHE_TTL_MS = 15 * 60_000;
-const SCAN_CACHE_PREFIX = 'gorgiasSofaPaintScan:v4:';
+const SCAN_CACHE_PREFIX = 'gorgiasSofaPaintScan:v11:';
 
 function ticketIdFromUrl(url) {
   try {
