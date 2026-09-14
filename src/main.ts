@@ -110,6 +110,7 @@ import { initQuickSaveMenu } from './modules/ui/quick-save-menu';
 import { initSofa3dStudio } from './modules/ui/sofa3d-entry';
 import { initSectionalBuilder } from './modules/ui/sectional-builder';
 import { initMeasurementReview } from './modules/ui/measurement-review';
+import { initMeasurementCheckRequest } from './modules/ui/measurement-check-request';
 
 // ── 5. Standalone UI modules ─────────────────────────────────────────────────
 import './modules/ui/toolbar-init.js';
@@ -209,6 +210,7 @@ async function bootstrap(): Promise<void> {
   initSectionalBuilder();
   initSofa3dStudio();
   initMeasurementReview();
+  initMeasurementCheckRequest();
 
   // Initialize coins HUD + pixel pets system
   const { initCoinsHud } = await import('./modules/ui/coins-hud');
