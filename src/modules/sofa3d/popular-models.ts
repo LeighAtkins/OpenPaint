@@ -59,37 +59,51 @@ export function createPopularModel(id: string): SofaDocument {
         softness: 0.5,
         loft: 0.65,
         taper: pb ? -0.06 : -0.025,
+        outline: i === 0 ? 'rl-left' : i === 2 ? 'rl-right' : 'rect',
+        notchDrop: doc.dimensions.seatHeight + (pb ? 49 : 44) - doc.dimensions.armHeight - 5,
+        width: (doc.dimensions.width - doc.dimensions.armWidth * 2 - 4.8) / 3 + (i === 1 ? 0 : 12),
+        offset: { x: i === 0 ? -6 : i === 2 ? 6 : 0, y: 0, z: 0 },
       });
       set(`main:seat-${i}`, {
-        loft: 0.45,
-        softness: 0.3,
-        outline: i === 0 ? 't-left' : i === 2 ? 't-right' : 'rect',
+        loft: 0.7,
+        height: pb ? 17 : 16,
+        softness: 0.45,
+        outline: 'rect',
       });
     }
   }
   if (id === 'harmony') {
-    Object.assign(doc.construction, { legStyle: 'block', legWidth: 24, backCushionHeight: 41 });
+    Object.assign(doc.construction, { legStyle: 'square', legWidth: 6.5, backCushionHeight: 43 });
+    doc.fabric.colour = '#c5b8a4';
+    Object.assign(doc.dimensions, {
+      armHeight: 55,
+      seatHeight: 48,
+      seatThickness: 21,
+      legHeight: 11,
+    });
+    for (let i = 0; i < 2; i++) set(`main:seat-${i}`, { loft: 0.9, softness: 0.65, piping: true });
     for (let i = 0; i < 2; i++)
       set(`main:back-${i}`, {
-        height: 41,
-        depth: 20,
+        height: 43,
+        depth: 18,
         shape: 'knife',
         softness: 0.55,
         loft: 0.75,
         piping: false,
-        rotation: { x: -13, y: 0, z: i === 0 ? -3 : 3 },
+        rotation: { x: -9, y: 0, z: i === 0 ? -1 : 1 },
+        offset: { x: 0, y: 2, z: 12 },
       });
     for (let i = 0; i < 4; i++) {
       const side = i % 2 === 0 ? -1 : 1;
       set(`main:pillow-${i}`, {
-        width: i < 2 ? 43 : 42,
-        height: i < 2 ? 38 : 35,
-        depth: 17,
+        width: i < 2 ? 39 : 70,
+        height: i < 2 ? 42 : 29,
+        depth: i < 2 ? 18 : 17,
         softness: 0.55,
         loft: 0.85,
         piping: false,
-        rotation: { x: -18, y: side * (i < 2 ? 30 : 4), z: side * (i < 2 ? -24 : 4) },
-        offset: { x: side * (i < 2 ? 7 : -7), y: i < 2 ? -8 : -6, z: i < 2 ? 18 : 26 },
+        rotation: { x: -10, y: side * (i < 2 ? 78 : 0), z: side * (i < 2 ? -14 : 1) },
+        offset: { x: side * (i < 2 ? 20 : 11), y: i < 2 ? -6 : -11, z: i < 2 ? 15 : 22 },
       });
     }
   }

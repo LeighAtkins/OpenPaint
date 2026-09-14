@@ -31,6 +31,105 @@ export function createExtendedModel(id: string): SofaDocument {
     rotation: 0,
     seats: 1,
   });
+  if (id === 'pb-english-sleeper') {
+    Object.assign(doc.dimensions, {
+      depth: 116.7,
+      armWidth: 21,
+      armHeight: 60,
+      seatHeight: 46,
+      seatThickness: 15,
+      backThickness: 15,
+      legHeight: 4,
+      seatCount: 2,
+    });
+    Object.assign(doc.construction, {
+      armRollRadius: 9,
+      armStemWidth: 15,
+      armFlare: 1,
+      armSetback: 7,
+      backCushionHeight: 44,
+      skirtPleatDepth: 2,
+      skirtFlare: 0.5,
+      frameHeight: 81.8,
+    });
+    doc.style.arm = 'square';
+    doc.style.base = 'long-skirt';
+    doc.fabric.colour = '#d2c3af';
+    doc.sleeper = { open: false, moduleId: 'main', extension: 100 };
+    for (let i = 0; i < 2; i++) {
+      doc.overrides[`main:seat-${i}`] = {
+        outline: i === 0 ? 'rl-left' : 'rl-right',
+        width: 110.5,
+        depth: 81,
+        offset: { x: 0, y: 0, z: -4 },
+        loft: 0.6,
+        piping: true,
+      };
+      doc.overrides[`main:back-${i}`] = {
+        height: 44,
+        depth: 16,
+        shape: 'knife',
+        outline: i === 0 ? 'rl-left' : 'rl-right',
+        width: 99,
+        notchDrop: 27,
+        offset: { x: i === 0 ? -5 : 5, y: -2, z: 10 },
+        softness: 0.6,
+        piping: true,
+        rotation: { x: -14, y: 0, z: i ? -1 : 1 },
+      };
+    }
+  }
+  if (id === 'pb-charleston') {
+    Object.assign(doc.dimensions, {
+      armWidth: 25,
+      armHeight: 64,
+      seatHeight: 48,
+      seatThickness: 16,
+      backThickness: 13,
+      legHeight: 3,
+      seatCount: 2,
+    });
+    Object.assign(doc.construction, {
+      armRollRadius: 12,
+      armStemWidth: 12,
+      armFlare: 5,
+      backCushionHeight: 48,
+      skirtPleatDepth: 3,
+      skirtFlare: 2,
+      frameHeight: 77,
+    });
+    doc.style.arm = 'round';
+    doc.style.base = 'long-skirt';
+    doc.fabric.colour = '#d5cdbc';
+    doc.pillows = 4;
+    for (let i = 0; i < 2; i++) {
+      doc.overrides[`main:seat-${i}`] = { loft: 0.6, softness: 0.5, piping: true };
+      doc.overrides[`main:back-${i}`] = {
+        width: 72,
+        height: 49,
+        depth: 15,
+        shape: 'knife',
+        softness: 0.7,
+        piping: true,
+        rotation: { x: -12, y: 0, z: i ? -7 : 7 },
+        offset: { x: 0, y: 0, z: -2 },
+      };
+    }
+    for (let i = 0; i < 4; i++) {
+      const side = i % 2 ? 1 : -1;
+      doc.overrides[`main:pillow-${i}`] = {
+        width: i < 2 ? 35 : 57,
+        height: i < 2 ? 42 : 53,
+        depth: 14,
+        shape: 'knife',
+        piping: true,
+        softness: 0.7,
+        loft: 0.8,
+        rotation: { x: -12, y: i < 2 ? side * 65 : 0, z: side * (i < 2 ? -10 : -5) },
+        offset: { x: side * (i < 2 ? 10 : 6), y: i < 2 ? -4 : 3, z: i < 2 ? 9 : 13 },
+      };
+    }
+  }
   if (id === 'nammaro') {
     Object.assign(doc.dimensions, {
       armWidth: 4,
@@ -164,7 +263,7 @@ export function createExtendedModel(id: string): SofaDocument {
     kind: 'manufacturer',
     reference: product.reference,
     notes: [
-      `IKEA reference dimensions: ${product.dimensions.width} × ${product.dimensions.depth} × ${product.dimensions.height} cm. ${product.version}.`,
+      `${product.brand} reference dimensions: ${product.dimensions.width} × ${product.dimensions.depth} × ${product.dimensions.height} cm. ${product.version}.`,
       'Manufacturer overall dimensions; component geometry is an adjustable visual estimate. This reference preset does not imply a verified Comfort Works cover match.',
       ...(id === 'friheten'
         ? [
@@ -173,5 +272,15 @@ export function createExtendedModel(id: string): SofaDocument {
         : []),
     ],
   };
+  if (id === 'pb-english-sleeper')
+    doc.source = {
+      kind: 'cw',
+      reference: product.reference,
+      notes: [
+        'Actual photogrammetry frame mesh, aligned to the front; loose cushions remain separately editable.',
+        'Scan proportions preserved at an estimated 221 cm width. Absolute scale is not verified.',
+        'Open bed is a simplified extended surface; the folding mechanism is not reconstructed.',
+      ],
+    };
   return doc;
 }

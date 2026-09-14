@@ -122,7 +122,7 @@ describe('Popular sofa refinements', () => {
         .filter(p => p.role === 'leg')
         .every(p => p.shape === 'square')
     ).toBe(true);
-    expect(buildSofaParts(hy).filter(p => p.role === 'leg')).toHaveLength(2);
+    expect(buildSofaParts(hy).filter(p => p.role === 'leg')).toHaveLength(4);
     expect(pb.construction.armFlare).toBeGreaterThan(ep.construction.armFlare);
     const skirt = buildSofaParts(pb).find(p => p.role === 'skirt')!;
     const geometry = skirtGeometry(skirt, pb.construction);

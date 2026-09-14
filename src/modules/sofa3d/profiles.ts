@@ -26,18 +26,28 @@ export function rolledArmOutline(
 }
 export function extrudeArm(
   part: SofaPart,
-  construction: SofaConstruction = DEFAULT_CONSTRUCTION
+  construction: SofaConstruction = DEFAULT_CONSTRUCTION,
+  rearRise = 0
 ): THREE.BufferGeometry {
   const { x: w, y: h, z: d } = part.size;
   const geometry = new THREE.ExtrudeGeometry(rolledArmOutline(w, h, construction), {
     depth: d,
     bevelEnabled: false,
     curveSegments: 24,
-    steps: 1,
+    steps: 32,
   });
   geometry.translate(0, 0, -d / 2);
   if (part.id.endsWith('arm-right')) {
     geometry.rotateY(Math.PI);
+    geometry.computeVertexNormals();
+  }
+  if (rearRise) {
+    const positions = geometry.getAttribute('position');
+    for (let i = 0; i < positions.count; i++) {
+      const t = Math.max(0, Math.min(1, 0.5 - positions.getZ(i) / d));
+      const upper = Math.max(0, Math.min(1, positions.getY(i) / h + 0.5));
+      positions.setY(i, positions.getY(i) + rearRise * t * t * (3 - 2 * t) * upper);
+    }
     geometry.computeVertexNormals();
   }
   return geometry;
