@@ -69,7 +69,15 @@ export interface SofaModule {
   back: boolean;
   seats: number;
 }
-export type CushionOutline = 'rect' | 't' | 't-left' | 't-right' | 'miter-left' | 'miter-right';
+export type CushionOutline =
+  | 'rect'
+  | 't'
+  | 't-left'
+  | 't-right'
+  | 'miter-left'
+  | 'miter-right'
+  | 'rl-left'
+  | 'rl-right';
 export interface PartOverride {
   rotation?: Vec3;
   loft?: number;
@@ -77,6 +85,7 @@ export interface PartOverride {
   softness?: number;
   piping?: boolean;
   outline?: CushionOutline;
+  notchDrop?: number;
   width?: number;
   height?: number;
   depth?: number;
@@ -132,6 +141,7 @@ export interface SofaPart {
   softness: number;
   piping: boolean;
   outline: CushionOutline;
+  notchDrop?: number;
 }
 export const SOFA_PRESETS: Record<
   SofaPreset,
@@ -277,6 +287,8 @@ export function parseSofaDocument(raw: unknown): SofaDocument {
   for (const override of Object.values(doc.overrides)) {
     for (const k of ['width', 'height', 'depth'] as const)
       if (override[k] !== undefined) override[k] = validateDimension(override[k]);
+    if (override.notchDrop !== undefined)
+      override.notchDrop = validateDimension(override.notchDrop, 0, 500);
     if (override.rotation)
       for (const k of ['x', 'y', 'z'] as const)
         override.rotation[k] = validateDimension(override.rotation[k], -180, 180);
@@ -287,7 +299,16 @@ export function parseSofaDocument(raw: unknown): SofaDocument {
       throw new Error('Invalid piping setting.');
     if (
       override.outline &&
-      !['rect', 't', 't-left', 't-right', 'miter-left', 'miter-right'].includes(override.outline)
+      ![
+        'rect',
+        't',
+        't-left',
+        't-right',
+        'miter-left',
+        'miter-right',
+        'rl-left',
+        'rl-right',
+      ].includes(override.outline)
     )
       throw new Error('Invalid cushion outline.');
     if (override.offset)
@@ -457,6 +478,7 @@ export function buildSofaParts(doc: SofaDocument): SofaPart[] {
       softness: override?.softness ?? (role === 'pillow' ? 0.7 : 0.25),
       piping: override?.piping ?? true,
       outline: override?.outline ?? 'rect',
+      notchDrop: override?.notchDrop,
       profile,
       shape: override?.shape || shape,
       guide,
@@ -584,8 +606,14 @@ export function buildSofaParts(doc: SofaDocument): SofaPart[] {
     let cursor = -m.width / 2 + left + 1;
     for (let i = 0; i < m.seats; i++) {
       const actualWidth = doc.overrides[`${m.id}:seat-${i}`]?.width ?? seatWidth;
-      const cx = cursor + actualWidth / 2;
-      const seatDepth = m.depth - (m.back ? d.backThickness : 0) - 3;
+      const seatDepth =
+        doc.overrides[`${m.id}:seat-${i}`]?.depth ?? m.depth - (m.back ? d.backThickness : 0) - 3;
+      const outline = doc.overrides[`${m.id}:seat-${i}`]?.outline;
+      const inset = outline?.startsWith('rl-') ? Math.min(actualWidth * 0.23, seatDepth * 0.28) : 0;
+      const occupiedWidth = actualWidth - inset;
+      const cx = cursor + occupiedWidth / 2;
+      const seatX =
+        cx + (outline === 'rl-left' ? -inset / 2 : outline === 'rl-right' ? inset / 2 : 0);
       if (construction.looseCushions)
         add(
           m,
@@ -593,7 +621,7 @@ export function buildSofaParts(doc: SofaDocument): SofaPart[] {
           m.corner ? 'Corner seat cushion' : `Seat cushion ${i + 1}`,
           'seat',
           { x: seatWidth, y: d.seatThickness, z: seatDepth },
-          { x: cx, y: d.seatHeight - d.seatThickness / 2, z: m.back ? d.backThickness / 2 : 0 },
+          { x: seatX, y: d.seatHeight - d.seatThickness / 2, z: m.back ? d.backThickness / 2 : 0 },
           doc.style.cushion,
           'CC-BE'
         );
@@ -611,7 +639,7 @@ export function buildSofaParts(doc: SofaDocument): SofaPart[] {
           -0.1
         );
       }
-      cursor += actualWidth + gap;
+      cursor += occupiedWidth + gap;
     }
     if (m.corner && construction.looseCushions && construction.backCushions && !doc.sleeper?.open) {
       const bh = construction.backCushionHeight || Math.max(15, d.height - d.seatHeight + 3);
@@ -810,7 +838,15 @@ export function sofaFitNotes(doc: SofaDocument): string[] {
           ? doc.dimensions.backThickness
           : 0) -
       2;
-    const used = seats.reduce((sum, p) => sum + p.size.x, 0) + Math.max(0, seats.length - 1) * 1.4;
+    const used =
+      seats.reduce(
+        (sum, p) =>
+          sum +
+          p.size.x -
+          (p.outline.startsWith('rl-') ? Math.min(p.size.x * 0.23, p.size.z * 0.28) : 0),
+        0
+      ) +
+      Math.max(0, seats.length - 1) * 1.4;
     if (used > available + 0.5)
       notes.push(
         `Seat cushions overlap the available width by ${(used - available).toFixed(1)} cm.`

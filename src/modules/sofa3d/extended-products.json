@@ -54,5 +54,33 @@
     },
     "version": "Pull-out \u00b7 204 \u00d7 140 cm bed",
     "brand": "IKEA"
+  },
+  {
+    "id": "pb-charleston",
+    "title": "PB Charleston Sofa Cover",
+    "url": "https://comfort-works.com/products/pb-charleston-sofa-cover",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CN-86_MLTP_PM_CVC-01.jpg?v=1741320176",
+    "reference": "PB-CN-86",
+    "dimensions": {
+      "width": 218.44,
+      "depth": 91.44,
+      "height": 93.98
+    },
+    "version": "86 inch \u00b7 curved back \u00b7 scatter cushions",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-english-sleeper",
+    "title": "PB English Arm Sleeper Sofa",
+    "url": "https://comfort-works.com/products/pb-english-arm-sleeper-sofa-slipcover",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-EH-87B_KE_SHRT_PM_CVC-01.jpg?v=1741656901",
+    "reference": "PB-EH-87B",
+    "dimensions": {
+      "width": 221,
+      "depth": 97,
+      "height": 91
+    },
+    "version": "Scan-informed frame \u00b7 estimated dimensions",
+    "brand": "Pottery Barn"
   }
 ]

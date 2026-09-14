@@ -1,3 +1,11 @@
+import { scannedFrameReady, loadScannedFrame, scannedFrameGeometry } from './scanned-frame';
+import {
+  roundedFrameGeometry,
+  englishArmGeometry,
+  flushBackToSkirt,
+  backCrownSeam,
+} from './frame-upholstery';
+import { fitCushionToSeats } from './cushion-contact';
 import * as THREE from 'three';
 import { cushionGeometry, skirtGeometry, cushionPiping } from './upholstery';
 import { extrudeArm, extrudeBack, backProfile, rolledArmOutline } from './profiles';
@@ -250,6 +258,13 @@ export class SofaRenderer {
     group.clear();
   }
   update(doc: SofaDocument, selected: string | null = this.selected) {
+    if (doc.catalogueModel === 'pb-english-sleeper' && !scannedFrameReady()) {
+      void loadScannedFrame()
+        .then(() => {
+          if (this.doc?.catalogueModel === 'pb-english-sleeper') this.update(this.doc);
+        })
+        .catch(error => console.error(error));
+    }
     const oldFamily = this.doc?.fabric.family;
     this.doc = doc;
     this.selected = selected;
@@ -284,6 +299,14 @@ export class SofaRenderer {
     this.geometryMaterials.push(material, accent, piping, legMaterial, clothMaterial);
     const parts = buildSofaParts(doc);
     for (const part of parts) {
+      const scanned = doc.catalogueModel === 'pb-english-sleeper' && scannedFrameReady();
+      if (
+        scanned &&
+        ['frame', 'arm', 'skirt', 'leg'].includes(part.role) &&
+        part.id !== 'main:frame' &&
+        !part.id.includes('bed-')
+      )
+        continue;
       const group = new THREE.Group();
       group.name = part.name;
       group.userData.partId = part.id;
@@ -291,13 +314,36 @@ export class SofaRenderer {
       group.rotation.set(part.rotation.x, part.rotation.y, part.rotation.z, 'YXZ');
       const { x: w, y: h, z: d } = part.size;
       let geometry: THREE.BufferGeometry;
-      if (part.role === 'skirt') geometry = skirtGeometry(part, doc.construction);
+      if (scanned && part.id === 'main:frame') {
+        geometry = scannedFrameGeometry(
+          doc.dimensions.width,
+          doc.construction.frameHeight,
+          doc.dimensions.depth
+        );
+        group.position.set(0, 0, 0);
+      } else if (part.role === 'skirt') geometry = skirtGeometry(part, doc.construction);
       else if (['seat', 'back', 'pillow'].includes(part.role)) geometry = cushionGeometry(part);
       else if (part.role === 'leg' && part.shape === 'round')
         geometry = new THREE.CylinderGeometry(w * 0.43, w * 0.34, h, 12);
+      else if (part.role === 'arm' && doc.catalogueModel === 'pb-english-sleeper')
+        geometry = englishArmGeometry(part);
       else if (part.role === 'arm' && part.shape === 'round')
-        geometry = extrudeArm(part, doc.construction);
-      else if (part.profile === 'raised-back') geometry = extrudeBack(part, doc.construction);
+        geometry = extrudeArm(
+          part,
+          doc.construction,
+          doc.catalogueModel === 'pb-charleston' ? 13 : 0
+        );
+      else if (doc.catalogueModel === 'pb-charleston' && part.id.endsWith('back-frame')) {
+        geometry = roundedFrameGeometry(w, h, d, 5);
+        const positions = geometry.getAttribute('position');
+        for (let i = 0; i < positions.count; i++) {
+          const u = positions.getX(i) / (w / 2);
+          const upper = Math.max(0, positions.getY(i) / h + 0.5);
+          positions.setY(i, positions.getY(i) + 6 * (1 - u * u) * upper);
+          positions.setZ(i, positions.getZ(i) + 4 * u * u * upper);
+        }
+        geometry.computeVertexNormals();
+      } else if (part.profile === 'raised-back') geometry = extrudeBack(part, doc.construction);
       else if (part.shape === 'knife' || part.shape === 'half-knife') {
         geometry = new THREE.SphereGeometry(1, 48, 32);
         const a = geometry.getAttribute('position');
@@ -332,6 +378,8 @@ export class SofaRenderer {
           geometry.computeVertexNormals();
         }
       }
+      if (part.id.endsWith('back-frame') && doc.style.base !== 'snug')
+        flushBackToSkirt(geometry, part);
       const mesh = new THREE.Mesh(
         geometry,
         part.role === 'leg' || part.profile === 'timber'
@@ -345,11 +393,26 @@ export class SofaRenderer {
       mesh.castShadow = mesh.receiveShadow = true;
       mesh.userData.partId = part.id;
       group.add(mesh);
-      if (['seat', 'back', 'pillow'].includes(part.role) && part.piping) {
+      if (
+        part.id.endsWith('back-frame') &&
+        ['pb-charleston', 'pb-english-sleeper'].includes(doc.catalogueModel || '')
+      ) {
+        const seam = backCrownSeam(geometry, part);
+        if (seam) group.add(new THREE.Mesh(seam, piping));
+      }
+      if (
+        ['seat', 'back', 'pillow'].includes(part.role) &&
+        (part.piping || part.shape === 'knife' || part.shape === 'half-knife')
+      ) {
         const seam = cushionPiping(part, geometry);
         if (seam) group.add(new THREE.Mesh(seam, piping));
       }
-      if (part.role === 'arm' && part.shape === 'round' && part.piping) {
+      if (
+        part.role === 'arm' &&
+        part.shape === 'round' &&
+        part.piping &&
+        doc.catalogueModel !== 'pb-english-sleeper'
+      ) {
         const points = rolledArmOutline(w, h, doc.construction)
           .getPoints(80)
           .map(p => new THREE.Vector3(p.x, p.y, d / 2 + 0.12));
@@ -372,6 +435,18 @@ export class SofaRenderer {
       this.parts.set(part.id, { mesh: group, part });
     }
     this.model.updateMatrixWorld(true);
+    if (!this.exploded) {
+      const seats = [...this.parts.values()].filter(p => p.part.role === 'seat');
+      for (const item of this.parts.values()) {
+        if (!['back', 'pillow'].includes(item.part.role)) continue;
+        const moduleId = item.part.id.split(':')[0];
+        fitCushionToSeats(
+          item.mesh,
+          seats.filter(s => s.part.id.split(':')[0] === moduleId).map(s => s.mesh)
+        );
+        item.part.position.y = item.mesh.position.y;
+      }
+    }
     this.refreshSelection();
     this.buildDimensions();
   }

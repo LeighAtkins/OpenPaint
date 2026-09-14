@@ -243,7 +243,7 @@ export async function openSofaStudio(request?: StudioOpenRequest): Promise<void>
                 )
                 .join(
                   ''
-                )}<label class="s3d-field">Edge style<select data-part-property="shape">${['boxed', 'rounded', 'knife', 'half-knife'].map(v => `<option ${part.shape === v ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label class="s3d-field">Outline<select data-part-property="outline">${['rect', 't', 't-left', 't-right', 'miter-left', 'miter-right'].map(v => `<option ${part.outline === v ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label class="s3d-field">Piping<input data-part-property="piping" type="checkbox" ${part.piping ? 'checked' : ''}></label>`
+                )}<label class="s3d-field">Edge style<select data-part-property="shape">${['boxed', 'rounded', 'knife', 'half-knife'].map(v => `<option ${part.shape === v ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label class="s3d-field">Outline<select data-part-property="outline">${['rect', 't', 't-left', 't-right', 'rl-left', 'rl-right', 'miter-left', 'miter-right'].map(v => `<option ${part.outline === v ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label class="s3d-field">Piping<input data-part-property="piping" type="checkbox" ${part.piping ? 'checked' : ''}></label>`
             : ''
         }${[
           ['x', 'Lean'],
