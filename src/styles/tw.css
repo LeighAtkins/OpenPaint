@@ -239,3 +239,176 @@
   .measurement-review-summary .measurement-review-kicker { display: none; }
   .measurement-review-summary strong { font-size: 22px; }
 }
+
+/* Measurement check request dialog — reuses the Measurement Review shell and
+   button styling; only the layout-specific pieces live here. */
+.measurement-check-shell { grid-template-rows: auto minmax(0, 1fr) auto; }
+
+.measurement-check-body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+}
+
+.measurement-check-inputs {
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+}
+
+.measurement-check-label {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.measurement-check-inputs textarea {
+  min-height: 180px;
+  resize: vertical;
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #0f172a;
+  background: #fff;
+}
+
+.measurement-check-inputs textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.measurement-check-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.measurement-check-secondary { color: #334155; background: #fff; border-color: #cbd5e1; }
+.measurement-check-secondary.loaded { color: #166534; border-color: #4ade80; }
+
+.measurement-check-save { color: #fff; background: #16a34a; border-color: #16a34a; }
+.measurement-check-save:hover { background: #15803d; }
+
+.measurement-check-hint { margin: 0; color: #64748b; font-size: 11px; line-height: 1.5; }
+.measurement-check-hint code {
+  padding: 1px 4px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+.measurement-check-main {
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 18px 20px;
+}
+
+.measurement-check-summary {
+  margin-bottom: 12px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.measurement-check-page {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.measurement-check-page header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.measurement-check-page header span { color: #64748b; font-size: 11px; }
+
+.measurement-check-note {
+  margin: 8px 0 0;
+  color: #334155;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.measurement-check-table { width: 100%; margin-top: 10px; border-collapse: collapse; }
+.measurement-check-table th,
+.measurement-check-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #edf0f4;
+  font-size: 12px;
+  text-align: left;
+}
+.measurement-check-table th {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.measurement-check-table td:first-child { width: 80px; font-weight: 750; color: #1d4ed8; }
+
+.measurement-check-no-value { color: #b45309; font-size: 11px; }
+
+.measurement-check-issue {
+  margin-top: 8px;
+  padding: 7px 10px;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.measurement-check-issues { margin-top: 4px; }
+
+.measurement-check-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.measurement-check-status { color: #475569; font-size: 12px; }
+.measurement-check-status.error { color: #b91c1c; font-weight: 650; }
+
+.measurement-check-footer-actions { display: flex; gap: 8px; }
+
+.measurement-check-footer button {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  background: #fff;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.measurement-check-footer button.primary {
+  color: #fff;
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.measurement-check-footer button:disabled { opacity: 0.55; cursor: default; }
+
+@media (max-width: 820px) {
+  .measurement-check-body { grid-template-columns: minmax(0, 1fr); }
+  .measurement-check-inputs { border-right: 0; border-bottom: 1px solid #e2e8f0; }
+}

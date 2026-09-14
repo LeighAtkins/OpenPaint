@@ -4,7 +4,18 @@
 // @ts-nocheck
 // Extracted from index.html inline scripts
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import JSZip from 'jszip';
 import { buildImageExportFilename, sanitizeFilenamePart } from '../utils/naming-utils.js';
+import {
+  buildCheckContextFromApp,
+  buildCheckReviewManifest,
+  checkRequestSchema,
+  getCheckObjectStrokeLabel,
+  mergePdfValuesIntoContext,
+  normalizeCheckRequest,
+  resolveCheckRequest,
+  withOnlyLabelsVisible,
+} from './measurement-check-request';
 import { cloudSaveService } from '@/services/cloud/cloudSaveService';
 import { walletService } from '@/services/wallet/walletService';
 import { getNoRewardMessage, showRewardAchievement } from './reward-achievement';
@@ -779,72 +790,14 @@ function showRepeatedComparisonApprovalDialog(comparisonGroups) {
 }
 
 function getPdfObjectStrokeLabel(obj) {
-  const sources = [
-    obj?.strokeMetadata?.strokeLabel,
-    obj?.strokeMetadata?.label,
-    obj?.customData?.strokeLabel,
-    obj?.customData?.label,
-    obj?.strokeLabel,
-    obj?.label,
-    obj?.connectedStroke?.strokeMetadata?.strokeLabel,
-    obj?.connectedStroke?.strokeMetadata?.label,
-    obj?.connectedStroke?.customData?.strokeLabel,
-    obj?.connectedStroke?.customData?.label,
-    obj?.connectorLine?.strokeLabel,
-    obj?.connectorLine?.strokeMetadata?.strokeLabel,
-  ];
-  const value = sources.find(source => String(source || '').trim());
-  return value ? String(value).trim() : '';
+  return getCheckObjectStrokeLabel(obj);
 }
 
-function isPdfLabeledMeasurementObject(obj) {
-  if (!obj) return false;
-  if (getPdfObjectStrokeLabel(obj)) return true;
-  return (
-    obj.isTag === true ||
-    obj.isTagText === true ||
-    obj.isTagBackground === true ||
-    obj.isTagGroup === true ||
-    obj.isConnectorLine === true ||
-    obj.connectorLine ||
-    obj.connectedStroke
-  );
-}
-
+// Single-source implementation lives in measurement-check-request.ts and is
+// unit-tested there; this wrapper keeps single-label call sites working and
+// also accepts a Set/array of labels.
 async function withOnlyPdfLabelVisible(canvas, strokeLabel, callback) {
-  if (!canvas?.getObjects || !strokeLabel) {
-    return callback();
-  }
-
-  const objects = canvas.getObjects();
-  const states = new Map(objects.map(obj => [obj, obj.visible !== false]));
-  try {
-    objects.forEach(obj => {
-      if (!isPdfLabeledMeasurementObject(obj)) return;
-      const label = getPdfObjectStrokeLabel(obj);
-      const shouldShow = label === strokeLabel;
-      if (typeof obj.set === 'function') {
-        obj.set('visible', shouldShow);
-      } else {
-        obj.visible = shouldShow;
-      }
-    });
-    canvas.requestRenderAll?.();
-    await waitForCanvasRenderStability(canvas);
-    return await callback();
-  } finally {
-    objects.forEach(obj => {
-      const visible = states.get(obj);
-      if (typeof visible !== 'boolean') return;
-      if (typeof obj.set === 'function') {
-        obj.set('visible', visible);
-      } else {
-        obj.visible = visible;
-      }
-    });
-    canvas.requestRenderAll?.();
-    await waitForCanvasRenderStability(canvas);
-  }
+  return withOnlyLabelsVisible(canvas, strokeLabel, callback);
 }
 
 function sanitizePdfFieldPart(value, fallback) {
@@ -1670,6 +1623,217 @@ function triggerPdfDownload(blob, filename) {
     a.remove();
     URL.revokeObjectURL(url);
   }, 30000);
+}
+
+// ── Measurement check request exports ───────────────────────────────
+
+// Crop the capture frame out of the canvas like captureViewImage, but return
+// both a JPEG data URL (for the server PDF) and a PNG blob (for downloads).
+async function captureCheckFrameImage(scale = 2) {
+  const canvas = window.app?.canvasManager?.fabricCanvas;
+  const captureFrame = document.getElementById('captureFrame');
+  if (!canvas || !captureFrame) return null;
+
+  const frameRect = captureFrame.getBoundingClientRect();
+  const canvasEl = canvas.lowerCanvasEl;
+  const scaleX = canvasEl.width / canvasEl.offsetWidth;
+  const scaleY = canvasEl.height / canvasEl.offsetHeight;
+  const canvasRect = canvasEl.getBoundingClientRect();
+  const left = (frameRect.left - canvasRect.left) * scaleX;
+  const top = (frameRect.top - canvasRect.top) * scaleY;
+  const width = frameRect.width * scaleX;
+  const height = frameRect.height * scaleY;
+  if (!(width > 2 && height > 2)) return null;
+
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = Math.max(1, Math.round(width * scale));
+  tempCanvas.height = Math.max(1, Math.round(height * scale));
+  const ctx = tempCanvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.scale(scale, scale);
+  ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
+
+  const jpegDataUrl = tempCanvas.toDataURL('image/jpeg', 0.92);
+  const pngBlob = await new Promise((resolve, reject) => {
+    try {
+      tempCanvas.toBlob(
+        blob => (blob ? resolve(blob) : reject(new Error('PNG encoding failed'))),
+        'image/png'
+      );
+    } catch (error) {
+      reject(error instanceof Error ? error : new Error(String(error)));
+    }
+  });
+  return { jpegDataUrl, pngBlob };
+}
+
+// Resolve a JSON request against the open project, capture each page with
+// ONLY its requested measurement groups visible, and produce PNG / PDF / ZIP
+// outputs. Runs inside a PDF export session so autosave, history and editor
+// state are suppressed during capture and fully restored afterwards.
+export async function exportMeasurementCheckRequest(
+  request,
+  { onProgress, pdfManifest, output } = {}
+) {
+  const parsed = checkRequestSchema.safeParse(request);
+  if (!parsed.success) {
+    const first = parsed.error.issues
+      .map(issue => `${issue.path.join('.') || 'request'}: ${issue.message}`)
+      .slice(0, 3)
+      .join('; ');
+    throw new Error(`Request does not match the spec: ${first}`);
+  }
+  const normalized = normalizeCheckRequest(parsed.data);
+
+  const context = buildCheckContextFromApp();
+  const resolved = resolveCheckRequest(
+    normalized,
+    pdfManifest ? mergePdfValuesIntoContext(context, pdfManifest) : context
+  );
+  const fatal = resolved.issues.filter(issue =>
+    ['unknown-view', 'unknown-tab', 'missing-code'].includes(issue.kind)
+  );
+  if (fatal.length) {
+    const error = new Error(
+      `${fatal.length} unresolved item(s) — open the Measurement check dialog for the list.`
+    );
+    error.issues = resolved.issues;
+    throw error;
+  }
+  if (!resolved.pages.length) throw new Error('The request resolved to no pages.');
+
+  const projectManager = window.app?.projectManager;
+  if (!projectManager?.switchView) throw new Error('No project is open.');
+  if (!resolved.pages.some(page => projectManager.views?.[page.viewId])) {
+    throw new Error('None of the requested views exist in the open project.');
+  }
+
+  const effectiveOutput = { ...resolved.output, ...(output || {}) };
+  const baseName = sanitizeFilenamePart(resolved.title, 'measurement-checks');
+
+  const captures = [];
+  const state = beginPdfExportSession();
+  try {
+    for (let index = 0; index < resolved.pages.length; index += 1) {
+      const page = resolved.pages[index];
+      onProgress?.(`Capturing ${page.title} (${index + 1}/${resolved.pages.length})…`);
+      const capture = await withTemporaryCaptureTarget(page.viewId, page.tabId, async () => {
+        const canvas = window.app?.canvasManager?.fabricCanvas;
+        return withOnlyLabelsVisible(canvas, page.codes, () =>
+          captureCheckFrameImage(effectiveOutput.scale)
+        );
+      });
+      if (!capture) {
+        throw new Error(
+          `Could not capture "${page.title}". Make sure the capture frame is visible on the canvas.`
+        );
+      }
+      captures.push({ page, ...capture });
+    }
+  } finally {
+    await restorePdfExportSession(state);
+  }
+
+  onProgress?.('Building outputs…');
+
+  const pngName = index =>
+    `${baseName}-check-${String(index + 1).padStart(2, '0')}-${sanitizeFilenamePart(
+      captures[index].page.viewId,
+      'view'
+    )}.png`;
+  const safeNote = note => {
+    const text = String(note || '').trim();
+    return text.length > 90 ? `${text.slice(0, 89)}…` : text;
+  };
+
+  const wantPng = effectiveOutput.png || effectiveOutput.zip;
+  const wantPdf = effectiveOutput.pdf || effectiveOutput.zip;
+
+  if (wantPng && !effectiveOutput.zip) {
+    captures.forEach((capture, index) => triggerPdfDownload(capture.pngBlob, pngName(index)));
+  }
+
+  let pdfBlob = null;
+  if (wantPdf) {
+    onProgress?.('Rendering PDF…');
+    const reportGroups = captures.map((capture, index) => ({
+      title: `${index + 1}. ${capture.page.title}`.slice(0, 120),
+      subtitle: '',
+      mainImage: { title: capture.page.title.slice(0, 120), src: capture.jpegDataUrl },
+      mainMeasurements: capture.page.rows.map(row => ({
+        label: row.label.slice(0, 120),
+        value: (row.value || '—').slice(0, 120),
+        fieldName: row.fieldName,
+      })),
+      customerNote: safeNote(capture.page.note),
+    }));
+    const reportUnit = captures.some(capture =>
+      capture.page.rows.some(row => row.value.endsWith('"'))
+    )
+      ? 'inch'
+      : 'cm';
+    const response = await requestServerRenderedPdf({
+      source: 'report',
+      report: {
+        projectName: resolved.title.slice(0, 160),
+        namingLine: buildPdfNamingLine(),
+        unit: reportUnit,
+        groups: reportGroups,
+        reviewManifest: buildCheckReviewManifest(resolved),
+      },
+      options: {
+        renderer: 'hybrid',
+        pageSize: 'letter',
+        landscape: false,
+        injectFormFields: true,
+        filename: `${baseName}.pdf`,
+      },
+    });
+    pdfBlob = await response.blob();
+    if (!effectiveOutput.zip) triggerPdfDownload(pdfBlob, `${baseName}.pdf`);
+  }
+
+  if (effectiveOutput.zip) {
+    onProgress?.('Packaging ZIP…');
+    const zip = new JSZip();
+    const manifestPages = [];
+    captures.forEach((capture, index) => {
+      const name = pngName(index);
+      zip.file(`checks/${name}`, capture.pngBlob);
+      manifestPages.push({
+        index: index + 1,
+        view: capture.page.viewId,
+        tabId: capture.page.tabId,
+        title: capture.page.title,
+        codes: capture.page.codes,
+        image: `checks/${name}`,
+      });
+    });
+    if (pdfBlob) zip.file(`checks/${baseName}.pdf`, pdfBlob);
+    zip.file('check-request.json', JSON.stringify(normalized, null, 2));
+    zip.file(
+      'check-export-manifest.json',
+      JSON.stringify(
+        {
+          generatedAt: new Date().toISOString(),
+          projectName: resolved.title,
+          unit: resolved.unit,
+          pages: manifestPages,
+        },
+        null,
+        2
+      )
+    );
+    const zipBlob = await zip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 },
+    });
+    triggerPdfDownload(zipBlob, `${baseName}.zip`);
+  }
+
+  return { pages: captures.length, issues: resolved.issues };
 }
 
 export function initPdfExport() {
