@@ -58,6 +58,8 @@ export const DEFAULT_CONSTRUCTION: SofaConstruction = {
 export interface SofaModule {
   corner?: boolean;
   cornerSide?: 'left' | 'right';
+  /** Standalone arm volume (Norsborg-style armrest section): no seats or back. */
+  armOnly?: boolean;
   id: string;
   width: number;
   depth: number;
@@ -69,6 +71,18 @@ export interface SofaModule {
   back: boolean;
   seats: number;
 }
+export type NorsborgSectionKind = 'armrest' | 'two-seat' | 'three-seat' | 'corner' | 'chaise';
+export const NORSBORG_SECTION_KINDS: readonly NorsborgSectionKind[] = [
+  'armrest',
+  'two-seat',
+  'three-seat',
+  'corner',
+  'chaise',
+];
+export interface NorsborgSection {
+  id: string;
+  kind: NorsborgSectionKind;
+}
 export type CushionOutline =
   | 'rect'
   | 't'
@@ -77,7 +91,9 @@ export type CushionOutline =
   | 'miter-left'
   | 'miter-right'
   | 'rl-left'
-  | 'rl-right';
+  | 'rl-right'
+  | 'wedge-left'
+  | 'wedge-right';
 export interface PartOverride {
   rotation?: Vec3;
   loft?: number;
@@ -119,6 +135,8 @@ export interface SofaDocument {
   fabric: { family: 'linen' | 'boucle' | 'velvet' | 'weave'; colour: string };
   overrides: Record<string, PartOverride>;
   modules?: SofaModule[];
+  /** Norsborg section chain driving `modules`; kept so the studio can reconfigure it. */
+  norsborg?: { sections: NorsborgSection[] };
   pillows: number;
   labelOffsets: Record<string, { x: number; y: number }>;
   customDimensions: CustomDimension[];
@@ -308,6 +326,8 @@ export function parseSofaDocument(raw: unknown): SofaDocument {
         'miter-right',
         'rl-left',
         'rl-right',
+        'wedge-left',
+        'wedge-right',
       ].includes(override.outline)
     )
       throw new Error('Invalid cushion outline.');
@@ -331,6 +351,14 @@ export function parseSofaDocument(raw: unknown): SofaDocument {
       m.rotation = validateDimension(m.rotation, -360, 360);
       m.seats = Math.round(validateDimension(m.seats, 1, 8));
     }
+  }
+  if (doc.norsborg) {
+    const sections = doc.norsborg.sections;
+    if (!Array.isArray(sections) || sections.length < 1 || sections.length > 60)
+      throw new Error('Invalid Norsborg configuration.');
+    for (const s of sections)
+      if (typeof s?.id !== 'string' || !NORSBORG_SECTION_KINDS.includes(s?.kind))
+        throw new Error('Invalid Norsborg section.');
   }
   for (const dimension of doc.customDimensions)
     for (const anchor of [dimension.a, dimension.b]) {
@@ -586,7 +614,7 @@ export function buildSofaParts(doc: SofaDocument): SofaPart[] {
         add(
           m,
           `arm-${side}`,
-          `${side === 'left' ? 'Left' : 'Right'} arm`,
+          m.armOnly ? 'Armrest' : `${side === 'left' ? 'Left' : 'Right'} arm`,
           'arm',
           {
             x: aw,
@@ -603,15 +631,20 @@ export function buildSofaParts(doc: SofaDocument): SofaPart[] {
         );
     const gap = 1.4;
     const seatWidth = Math.max(10, (inner - (m.seats - 1) * gap - 2) / m.seats);
-    let cursor = -m.width / 2 + left + 1;
-    for (let i = 0; i < m.seats; i++) {
+    const rowStart = -m.width / 2 + left + 1;
+    let cursor = rowStart;
+    for (let i = 0; i < (m.armOnly ? 0 : m.seats); i++) {
       const actualWidth = doc.overrides[`${m.id}:seat-${i}`]?.width ?? seatWidth;
       const seatDepth =
         doc.overrides[`${m.id}:seat-${i}`]?.depth ?? m.depth - (m.back ? d.backThickness : 0) - 3;
       const outline = doc.overrides[`${m.id}:seat-${i}`]?.outline;
       const inset = outline?.startsWith('rl-') ? Math.min(actualWidth * 0.23, seatDepth * 0.28) : 0;
       const occupiedWidth = actualWidth - inset;
-      const cx = cursor + occupiedWidth / 2;
+      // Norsborg cushions keep their PID width and stay centred on their slot;
+      // the regular layout reflows neighbours around edited widths.
+      const cx = doc.norsborg
+        ? rowStart + gap * i + seatWidth * (i + 0.5)
+        : cursor + occupiedWidth / 2;
       const seatX =
         cx + (outline === 'rl-left' ? -inset / 2 : outline === 'rl-right' ? inset / 2 : 0);
       if (construction.looseCushions)
@@ -821,10 +854,12 @@ export function buildSofaParts(doc: SofaDocument): SofaPart[] {
   return parts;
 }
 export function sofaFitNotes(doc: SofaDocument): string[] {
+  if (doc.norsborg) return []; // cushion sizes follow the manufacturer PID spec and are designed to touch
   const notes: string[] = [];
   const parts = buildSofaParts(doc);
   for (const m of modulesFor(doc)) {
     const seats = parts.filter(p => p.role === 'seat' && p.id.startsWith(`${m.id}:`));
+    if (!seats.length) continue; // armrest-style modules carry no cushions to fit
     const available =
       m.width -
       (m.leftArm
