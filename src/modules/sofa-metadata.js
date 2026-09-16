@@ -163,6 +163,8 @@ export function createDefaultSofaMetadata() {
     tagStyleByScope: {},
     pieceGroups: [],
     imagePartLabels: {},
+    measurementNotes: {},
+    checkSessions: [],
     externalSources: {
       gorgiasTickets: {},
     },
@@ -494,6 +496,13 @@ export function normalizeSofaMetadata(input) {
     source.imagePartLabels && typeof source.imagePartLabels === 'object'
       ? safeClone(source.imagePartLabels, {})
       : {};
+  const measurementNotes =
+    source.measurementNotes && typeof source.measurementNotes === 'object'
+      ? safeClone(source.measurementNotes, {})
+      : {};
+  const checkSessions = Array.isArray(source.checkSessions)
+    ? safeClone(source.checkSessions, []).slice(0, 10)
+    : [];
   const rawGorgiasTickets =
     source.externalSources?.gorgiasTickets &&
     typeof source.externalSources.gorgiasTickets === 'object'
@@ -571,6 +580,8 @@ export function normalizeSofaMetadata(input) {
     tagStyleByScope,
     pieceGroups,
     imagePartLabels,
+    measurementNotes,
+    checkSessions,
     externalSources: { gorgiasTickets },
     sectionalAssemblies: normalizeSectionalAssemblies(source.sectionalAssemblies),
     naming,

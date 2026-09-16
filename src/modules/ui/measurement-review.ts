@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { PDFDocument, PDFTextField } from 'pdf-lib';
+import { PDFDocument, PDFTextField, PDFRadioGroup } from 'pdf-lib';
 
 const MANIFEST_PREFIX = 'SOFAPAINT_REVIEW_V1:';
 
@@ -45,6 +45,30 @@ export async function parseSofaPaintReviewPdf(bytes: ArrayBuffer | Uint8Array) {
     console.warn('[Measurement Review] Could not read PDF form values:', error);
   }
 
+  // The unit toggle per rendered page is a radio group named unit_measurement_N.
+  // Bare field values ("83.75") are meaningless without it.
+  const unitSelections = new Set();
+  try {
+    pdf
+      .getForm()
+      .getFields()
+      .forEach(field => {
+        if (!(field instanceof PDFRadioGroup)) return;
+        if (!/^unit_measurement/i.test(field.getName())) return;
+        const selected = field.getSelected();
+        if (!selected) return;
+        // Older templates used Y/N toggles here; only real unit values count.
+        const normalized = selected.toLowerCase();
+        if (normalized === 'inch' || normalized === 'inches' || normalized === 'cm') {
+          unitSelections.add(normalized);
+        }
+      });
+  } catch (error) {
+    console.warn('[Measurement Review] Could not read PDF unit selection:', error);
+  }
+  const detectedUnit =
+    unitSelections.size === 1 ? (unitSelections.has('inch') ? 'inch' : 'cm') : null;
+
   if (!manifest?.views?.length) {
     const grouped = new Map();
     fields.forEach(({ name, value }) => {
@@ -66,17 +90,32 @@ export async function parseSofaPaintReviewPdf(bytes: ArrayBuffer | Uint8Array) {
   }
 
   const valueByField = new Map(fields.map(field => [field.name, field.value]));
+  // A manifest may list the same viewId once per capture frame; the writer
+  // disambiguates duplicate fields with _2/_3 suffixes in that order, so the
+  // k-th occurrence of a viewId must read its values from `_<k+1>` fields —
+  // otherwise every frame would repeat frame 1's values.
+  const viewFrameCounts = new Map();
   manifest.views.forEach(view => {
+    const frameKey = fieldPart(view.viewId);
+    const frameIndex = viewFrameCounts.get(frameKey) ?? 0;
+    viewFrameCounts.set(frameKey, frameIndex + 1);
     view.measurements = (view.measurements || []).map(row => {
-      const key = `m_${fieldPart(view.viewId)}_${fieldPart(row.label)}`;
-      const exactValue = valueByField.get(key);
-      const suffixedValue = fields.find(field => {
-        if (!field.name.startsWith(`${key}_`)) return false;
-        return /^\d+$/.test(field.name.slice(key.length + 1));
-      })?.value;
-      return { ...row, value: exactValue ?? suffixedValue ?? row.value ?? '' };
+      const key = `m_${frameKey}_${fieldPart(row.label)}`;
+      let value;
+      if (frameIndex > 0) {
+        value = valueByField.get(`${key}_${frameIndex + 1}`) ?? row.value ?? '';
+      } else {
+        const exactValue = valueByField.get(key);
+        const suffixedValue = fields.find(field => {
+          if (!field.name.startsWith(`${key}_`)) return false;
+          return /^\d+$/.test(field.name.slice(key.length + 1));
+        })?.value;
+        value = exactValue ?? suffixedValue ?? row.value ?? '';
+      }
+      return { ...row, value };
     });
   });
+  manifest.unit = manifest.unit || detectedUnit;
   return manifest;
 }
 

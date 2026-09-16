@@ -9,10 +9,9 @@ import { buildImageExportFilename, sanitizeFilenamePart } from '../utils/naming-
 import {
   buildCheckContextFromApp,
   buildCheckReviewManifest,
-  checkRequestSchema,
   getCheckObjectStrokeLabel,
   mergePdfValuesIntoContext,
-  normalizeCheckRequest,
+  parseCheckRequest,
   resolveCheckRequest,
   withOnlyLabelsVisible,
 } from './measurement-check-request';
@@ -1674,25 +1673,23 @@ async function captureCheckFrameImage(scale = 2) {
 // state are suppressed during capture and fully restored afterwards.
 export async function exportMeasurementCheckRequest(
   request,
-  { onProgress, pdfManifest, output } = {}
+  { onProgress, pdfManifest, pdfUnit, output } = {}
 ) {
-  const parsed = checkRequestSchema.safeParse(request);
-  if (!parsed.success) {
-    const first = parsed.error.issues
-      .map(issue => `${issue.path.join('.') || 'request'}: ${issue.message}`)
-      .slice(0, 3)
-      .join('; ');
-    throw new Error(`Request does not match the spec: ${first}`);
+  const parsedRequest = parseCheckRequest(request);
+  if (!parsedRequest.ok) {
+    throw new Error(parsedRequest.error);
   }
-  const normalized = normalizeCheckRequest(parsed.data);
+  const normalized = parsedRequest.request;
 
   const context = buildCheckContextFromApp();
   const resolved = resolveCheckRequest(
     normalized,
-    pdfManifest ? mergePdfValuesIntoContext(context, pdfManifest) : context
+    pdfManifest ? mergePdfValuesIntoContext(context, pdfManifest, pdfUnit) : context
   );
-  const fatal = resolved.issues.filter(issue =>
-    ['unknown-view', 'unknown-tab', 'missing-code'].includes(issue.kind)
+  const fatal = resolved.issues.filter(
+    issue =>
+      ['unknown-view', 'unknown-tab', 'unknown-frame', 'missing-code'].includes(issue.kind) ||
+      (issue.kind === 'ambiguous-frame' && resolved.specVersion >= 2)
   );
   if (fatal.length) {
     const error = new Error(
@@ -1737,11 +1734,22 @@ export async function exportMeasurementCheckRequest(
 
   onProgress?.('Building outputs…');
 
-  const pngName = index =>
-    `${baseName}-check-${String(index + 1).padStart(2, '0')}-${sanitizeFilenamePart(
-      captures[index].page.viewId,
+  const pngName = index => {
+    const page = captures[index].page;
+    // v2 requests with questions name images after the question so GPT and
+    // the reply manifest can reference them unambiguously.
+    if (page.questionIds?.length) {
+      const framePart = page.frameLabel && page.frameLabel !== 'f1' ? `-${page.frameLabel}` : '';
+      return `q${sanitizeFilenamePart(page.questionIds[0], 'q')}-${sanitizeFilenamePart(
+        page.viewId,
+        'view'
+      )}${framePart}.png`;
+    }
+    return `${baseName}-check-${String(index + 1).padStart(2, '0')}-${sanitizeFilenamePart(
+      page.viewId,
       'view'
     )}.png`;
+  };
   const safeNote = note => {
     const text = String(note || '').trim();
     return text.length > 90 ? `${text.slice(0, 89)}…` : text;
@@ -1780,7 +1788,7 @@ export async function exportMeasurementCheckRequest(
         namingLine: buildPdfNamingLine(),
         unit: reportUnit,
         groups: reportGroups,
-        reviewManifest: buildCheckReviewManifest(resolved),
+        reviewManifest: buildCheckReviewManifest(resolved, reportUnit),
       },
       options: {
         renderer: 'hybrid',
@@ -1833,7 +1841,26 @@ export async function exportMeasurementCheckRequest(
     triggerPdfDownload(zipBlob, `${baseName}.zip`);
   }
 
-  return { pages: captures.length, issues: resolved.issues };
+  return {
+    pages: captures.length,
+    issues: resolved.issues,
+    projectName: resolved.title,
+    request: normalized,
+    resolved,
+    captures: captures.map((capture, index) => ({
+      pageIndex: capture.page.pageIndex,
+      viewId: capture.page.viewId,
+      viewTitle: capture.page.title,
+      scopeKey: capture.page.scopeKey,
+      tabId: capture.page.tabId,
+      frameLabel: capture.page.frameLabel,
+      codes: capture.page.codes,
+      questionIds: capture.page.questionIds ?? [],
+      pngName: pngName(index),
+      pngBlob: capture.pngBlob,
+      jpegDataUrl: capture.jpegDataUrl,
+    })),
+  };
 }
 
 export function initPdfExport() {
@@ -2318,6 +2345,7 @@ export function initPdfExport() {
     const reviewManifest = {
       version: 1,
       projectName,
+      unit: currentUnit,
       views: pageTargets.map(target => ({
         viewId: target.viewId,
         title: formatTargetDisplayName(target),
@@ -2569,6 +2597,7 @@ export function initPdfExport() {
       `SOFAPAINT_REVIEW_V1:${JSON.stringify({
         version: 1,
         projectName,
+        unit: document.getElementById('unitSelector')?.value || 'inch',
         views: pageTargets.map(target => ({
           viewId: target.viewId,
           title: partLabels[target.viewId] || target.viewId,

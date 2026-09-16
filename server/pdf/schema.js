@@ -20,6 +20,7 @@ const reviewViewSchema = z.object({
 const reviewManifestSchema = z.object({
   version: z.literal(1),
   projectName: z.string().max(160).optional().default(''),
+  unit: z.enum(['inch', 'cm']).optional(),
   views: z.array(reviewViewSchema).max(100).default([]),
 });
 
