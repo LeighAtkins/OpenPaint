@@ -1,5 +1,11 @@
 import { EXTENDED_MODELS, createExtendedModel } from './extended-models';
 import { BENCHMARK_PRODUCTS, createBenchmarkDocument } from './benchmarks';
+import {
+  NORSBORG_PRODUCTS,
+  NORSBORG_CHAISE_CONFIGURATION,
+  createNorsborgDocument,
+  isNorsborgModel,
+} from './norsborg';
 import { buildSofaParts, type SofaDocument, type PartOverride } from './model';
 export const POPULAR_MODELS = [
   ...BENCHMARK_PRODUCTS.map(p => ({
@@ -14,9 +20,17 @@ export const POPULAR_MODELS = [
             : 'IKEA',
   })),
   ...EXTENDED_MODELS,
+  ...NORSBORG_PRODUCTS,
 ];
 export function createPopularModel(id: string): SofaDocument {
   if (EXTENDED_MODELS.some(p => p.id === id)) return createExtendedModel(id);
+  if (isNorsborgModel(id)) {
+    const doc = createNorsborgDocument(
+      id === 'norsborg-chaise' ? [...NORSBORG_CHAISE_CONFIGURATION] : undefined
+    );
+    doc.catalogueModel = id;
+    return doc;
+  }
   const doc = createBenchmarkDocument(id);
   doc.catalogueModel = id;
   doc.fabric.colour = '#cec9bd';

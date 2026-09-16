@@ -89,7 +89,17 @@ export function cushionGeometry(part: SofaPart): THREE.BufferGeometry {
         const side = part.outline === 'miter-left' ? -1 : 1;
         positions.setZ(i, z + notch * rear * (0.5 - (side * x) / w));
       }
-      positions.setX(i, -w / 2 + left + (x / w + 0.5) * (w - left - right));
+      if (part.outline.startsWith('wedge')) {
+        // One vertical edge, one edge sloping in from the full crown width to the
+        // narrower base (Norsborg corner back cushions meet in a V at the top).
+        const dir = part.outline === 'wedge-left' ? -1 : 1;
+        const s = positions.getY(i) / h + 0.5;
+        const inset = w * (part.taper / (1 + part.taper)) * (1 - s);
+        const x2 = -w / 2 + left + (x / w + 0.5) * (w - left - right);
+        positions.setX(i, x2 * dir > 0 ? x2 * (1 - (2 * inset) / w) : x2);
+      } else {
+        positions.setX(i, -w / 2 + left + (x / w + 0.5) * (w - left - right));
+      }
     }
   } else if (part.shape === 'knife' || part.shape === 'half-knife') {
     // Sewn panels meet at a narrow perimeter; the centre carries the filling.
@@ -163,7 +173,8 @@ export function cushionGeometry(part: SofaPart): THREE.BufferGeometry {
       // Keep the underside supported; the crown takes most of the thickness.
       y = -h / 2 + h * t * (0.65 + 0.35 * crown);
       const bulge = 1 + 0.018 * Math.sin(t * Math.PI);
-      positions.setXYZ(i, x * bulge, y, z * bulge);
+      // Wedge plan: Norsborg-style covers measure the top face wider than the base.
+      positions.setXYZ(i, x * bulge * (1 + part.taper * t), y, z * bulge);
     }
   } else {
     geometry = roundedFrameGeometry(w, h, d, Math.min(w, h, d) * (0.1 + part.softness * 0.3));

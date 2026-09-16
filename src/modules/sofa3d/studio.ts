@@ -12,16 +12,65 @@ import {
   sofaFitNotes,
   SOFA_PRESETS,
   SOFA_SWATCHES,
+  type NorsborgSectionKind,
   type SofaDocument,
   type SofaPreset,
 } from './model';
 import { fromCw, fromSectional, type StudioOpenRequest } from './adapters';
+import {
+  NORSBORG_SECTIONS,
+  applyNorsborgLayout,
+  insertNorsborgSection,
+  norsborgCoverSummary,
+  norsborgCoverTotal,
+} from './norsborg';
 let launch: ((request?: StudioOpenRequest) => void) | undefined;
 const escape = (s: string) =>
   s.replace(
     /[&<>"']/g,
     c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!
   );
+const norsborgPanel = (doc: SofaDocument): string => {
+  const state = doc.norsborg!;
+  const corners = state.sections.filter(s => s.kind === 'corner').length;
+  const lines = norsborgCoverSummary(state.sections);
+  const total = norsborgCoverTotal(lines);
+  return `<section class="s3d-section"><h2 class="s3d-section-title">Norsborg sections</h2><p class="s3d-size-help">Official IKEA Norsborg sections, 88 cm deep. Sections join into a chain; a corner turns it and armrests end it.</p><div class="s3d-families" style="margin-top:12px">${(
+    Object.keys(NORSBORG_SECTIONS) as NorsborgSectionKind[]
+  )
+    .map(kind => {
+      const spec = NORSBORG_SECTIONS[kind];
+      const blocked = kind === 'corner' && corners >= 2;
+      return `<button class="s3d-family" data-norsborg-add="${kind}" ${
+        blocked ? 'disabled title="Two corners already form a U"' : ''
+      }>＋ ${spec.name}<i style="height:8px;background:none;display:block;font-size:9px;color:#9aa38f;margin:4px 0 0">${spec.width}×${spec.depth} cm</i></button>`;
+    })
+    .join('')}</div><div class="s3d-component-list" style="margin-top:10px">${state.sections
+    .map(
+      s =>
+        `<button class="s3d-component" data-norsborg-remove="${escape(
+          s.id
+        )}" title="Remove this section">✕ ${escape(NORSBORG_SECTIONS[s.kind].name)}</button>`
+    )
+    .join('')}</div>${
+    lines.length
+      ? `<div class="s3d-source" style="margin-top:14px"><strong>Covers for this configuration</strong>${lines
+          .map(
+            l =>
+              `${l.code ? `${escape(l.code)} · ` : ''}${escape(l.name)}${
+                l.unitPrice
+                  ? ` — USD ${l.unitPrice} × ${l.quantity} = USD ${l.lineTotal}`
+                  : ` × ${l.quantity}`
+              }<br><span style="color:#a8b09b">${escape(l.unitLabel)}</span>`
+          )
+          .join('<br>')}${
+          total !== undefined
+            ? `<strong style="margin-top:8px">Cover total USD ${total}</strong>`
+            : ''
+        }</div>`
+      : ''
+  }</section>`;
+};
 export async function openSofaStudio(request?: StudioOpenRequest): Promise<void> {
   if (launch) {
     launch(request);
@@ -164,7 +213,7 @@ export async function openSofaStudio(request?: StudioOpenRequest): Promise<void>
     const part = parts.find(p => p.id === selected);
     if (selected && !part) selected = null;
     $('.left').innerHTML =
-      `<div class="s3d-tabs"><button aria-selected="true">Model & material</button></div><section class="s3d-section s3d-gallery-picker"><h2 class="s3d-section-title">Popular sofas</h2><select data-popular aria-label="Popular sofa model"><option value="">Choose a sofa…</option>${POPULAR_MODELS.map(p => `<option value="${p.id}" ${doc.catalogueModel === p.id ? 'selected' : ''}>${escape(p.brand)} · ${escape(p.title)}</option>`).join('')}</select>${product ? `${product.imageUrl ? `<img class="s3d-product-thumb" src="${escape(product.imageUrl)}" alt="${escape(product.title)} reference">` : ''}<p class="s3d-size-help">${escape(product.version)} · <a href="${escape(product.url)}" target="_blank" rel="noopener">View original</a></p>` : ''}</section>${doc.sleeper ? `<section class="s3d-section"><h2 class="s3d-section-title">Sofa bed</h2><label class="s3d-field">Open bed<input aria-label="Open sofa bed" data-sleeper="open" type="checkbox" ${doc.sleeper.open ? 'checked' : ''}></label><label class="s3d-field">Pull-out depth · cm<input aria-label="Pull-out depth" data-sleeper="extension" type="number" min="1" max="300" value="${doc.sleeper.extension}"></label><p class="s3d-size-help">${doc.sleeper.open ? 'Bed open · back cushions removed' : 'Sofa closed · cushions in place'}</p></section>` : ''}<section class="s3d-section s3d-gallery-picker"><h2 class="s3d-section-title">Measurement guide model</h2><select data-guide aria-label="Measurement guide model"><option value="">Choose gallery construction…</option>${STUDIO_GUIDES.map(([code, name]) => `<option value="${code}" ${doc.guideCode === code ? 'selected' : ''}>${code} · ${name}</option>`).join('')}</select></section><section class="s3d-section"><h2 class="s3d-section-title">Start with a shape</h2><div class="s3d-presets">${Object.entries(
+      `<div class="s3d-tabs"><button aria-selected="true">Model & material</button></div><section class="s3d-section s3d-gallery-picker"><h2 class="s3d-section-title">Popular sofas</h2><select data-popular aria-label="Popular sofa model"><option value="">Choose a sofa…</option>${POPULAR_MODELS.map(p => `<option value="${p.id}" ${doc.catalogueModel === p.id ? 'selected' : ''}>${escape(p.brand)} · ${escape(p.title)}</option>`).join('')}</select>${product ? `${product.imageUrl ? `<img class="s3d-product-thumb" src="${escape(product.imageUrl)}" alt="${escape(product.title)} reference">` : ''}<p class="s3d-size-help">${escape(product.version)} · <a href="${escape(product.url)}" target="_blank" rel="noopener">View original</a></p>` : ''}</section>${doc.sleeper ? `<section class="s3d-section"><h2 class="s3d-section-title">Sofa bed</h2><label class="s3d-field">Open bed<input aria-label="Open sofa bed" data-sleeper="open" type="checkbox" ${doc.sleeper.open ? 'checked' : ''}></label><label class="s3d-field">Pull-out depth · cm<input aria-label="Pull-out depth" data-sleeper="extension" type="number" min="1" max="300" value="${doc.sleeper.extension}"></label><p class="s3d-size-help">${doc.sleeper.open ? 'Bed open · back cushions removed' : 'Sofa closed · cushions in place'}</p></section>` : ''}${doc.norsborg ? norsborgPanel(doc) : ''}<section class="s3d-section s3d-gallery-picker"><h2 class="s3d-section-title">Measurement guide model</h2><select data-guide aria-label="Measurement guide model"><option value="">Choose gallery construction…</option>${STUDIO_GUIDES.map(([code, name]) => `<option value="${code}" ${doc.guideCode === code ? 'selected' : ''}>${code} · ${name}</option>`).join('')}</select></section><section class="s3d-section"><h2 class="s3d-section-title">Start with a shape</h2><div class="s3d-presets">${Object.entries(
         SOFA_PRESETS
       )
         .map(
@@ -243,7 +292,7 @@ export async function openSofaStudio(request?: StudioOpenRequest): Promise<void>
                 )
                 .join(
                   ''
-                )}<label class="s3d-field">Edge style<select data-part-property="shape">${['boxed', 'rounded', 'knife', 'half-knife'].map(v => `<option ${part.shape === v ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label class="s3d-field">Outline<select data-part-property="outline">${['rect', 't', 't-left', 't-right', 'rl-left', 'rl-right', 'miter-left', 'miter-right'].map(v => `<option ${part.outline === v ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label class="s3d-field">Piping<input data-part-property="piping" type="checkbox" ${part.piping ? 'checked' : ''}></label>`
+                )}<label class="s3d-field">Edge style<select data-part-property="shape">${['boxed', 'rounded', 'knife', 'half-knife'].map(v => `<option ${part.shape === v ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label class="s3d-field">Outline<select data-part-property="outline">${['rect', 't', 't-left', 't-right', 'rl-left', 'rl-right', 'miter-left', 'miter-right', 'wedge-left', 'wedge-right'].map(v => `<option ${part.outline === v ? 'selected' : ''}>${v}</option>`).join('')}</select></label><label class="s3d-field">Piping<input data-part-property="piping" type="checkbox" ${part.piping ? 'checked' : ''}></label>`
             : ''
         }${[
           ['x', 'Lean'],
@@ -380,6 +429,24 @@ export async function openSofaStudio(request?: StudioOpenRequest): Promise<void>
           selected = null;
           commit(createSofaDocument(el.dataset.preset as SofaPreset));
           renderer.view('perspective');
+        }
+        if (el.dataset.norsborgAdd && doc.norsborg) {
+          const next = cloneSofa(doc);
+          insertNorsborgSection(next, el.dataset.norsborgAdd as NorsborgSectionKind);
+          selected = null;
+          commit(next);
+          renderer.view('perspective');
+        }
+        if (el.dataset.norsborgRemove && doc.norsborg) {
+          const next = cloneSofa(doc);
+          if (next.norsborg!.sections.length <= 1)
+            throw new Error('Keep at least one Norsborg section.');
+          next.norsborg!.sections = next.norsborg!.sections.filter(
+            s => s.id !== el.dataset.norsborgRemove
+          );
+          applyNorsborgLayout(next);
+          selected = null;
+          commit(next);
         }
         if (el.hasAttribute('data-part')) {
           selected = el.dataset.part || null;
