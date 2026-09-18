@@ -38,7 +38,7 @@ export const NORSBORG_SECTIONS: Record<NorsborgSectionKind, NorsborgSectionSpec>
     name: 'Armrest',
     width: 16,
     depth: 88,
-    seats: 1,
+    seats: 1, // schema floor: parseSofaDocument requires ≥1; armOnly builds no seats
     armOnly: true,
     frameHeight: 52,
     seat: { width: 0, depth: 0, thickness: 0 },
@@ -248,7 +248,11 @@ export function applyNorsborgLayout(doc: SofaDocument): SofaDocument {
   doc.dimensions.depth = Math.max(50, Math.round((maxZ - minZ) * 10) / 10);
   doc.dimensions.seatCount = Math.min(
     8,
-    sections.reduce((sum, s) => sum + NORSBORG_SECTIONS[s.kind].seats, 0)
+    // Arm-only sections carry no seat cushions — excluded from the declared count.
+    sections.reduce(
+      (sum, s) => sum + (NORSBORG_SECTIONS[s.kind].armOnly ? 0 : NORSBORG_SECTIONS[s.kind].seats),
+      0
+    )
   );
   return doc;
 }

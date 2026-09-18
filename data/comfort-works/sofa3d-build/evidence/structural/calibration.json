@@ -1,0 +1,1451 @@
+{
+  "karlstad": {
+    "declared": {
+      "width": 205,
+      "depth": 93,
+      "height": 80,
+      "armWidth": 12,
+      "armHeight": 60,
+      "seatHeight": 45,
+      "seatThickness": 12,
+      "backThickness": 16,
+      "legHeight": 16,
+      "seatCount": 2
+    },
+    "renderedSize": [205, 81.86079749943391, 93],
+    "counts": {
+      "seats": 2,
+      "backs": 2,
+      "arms": 2,
+      "pillows": 0,
+      "legs": 4,
+      "skirts": 0,
+      "frames": 2
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "12 parts, 12 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "12 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": true,
+        "detail": "target 205.0 cm, rendered 205.0 cm, tolerance ±2.0 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": true,
+        "detail": "target 93.0 cm, rendered 93.0 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": false,
+        "detail": "target 80.0 cm, rendered 81.9 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y 0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "2 seat cushions, spec 2"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "2 arms (L 1 / R 1) on implicit main module"
+      }
+    ],
+    "ok": false
+  },
+  "ektorp": {
+    "declared": {
+      "width": 218,
+      "depth": 88,
+      "height": 88,
+      "armWidth": 23,
+      "armHeight": 63,
+      "seatHeight": 45,
+      "seatThickness": 13,
+      "backThickness": 17,
+      "legHeight": 4,
+      "seatCount": 3
+    },
+    "renderedSize": [218, 88.36473310443992, 90.23997497558594],
+    "counts": {
+      "seats": 3,
+      "backs": 3,
+      "arms": 2,
+      "pillows": 0,
+      "legs": 4,
+      "skirts": 1,
+      "frames": 2
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "15 parts, 15 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "15 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": true,
+        "detail": "target 218.0 cm, rendered 218.0 cm, tolerance ±2.2 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": false,
+        "detail": "target 88.0 cm, rendered 90.2 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": true,
+        "detail": "target 88.0 cm, rendered 88.4 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y 0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "3 seat cushions, spec 3"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "2 arms (L 1 / R 1) on implicit main module"
+      }
+    ],
+    "ok": false
+  },
+  "pb-basic": {
+    "declared": {
+      "width": 209.5,
+      "depth": 90,
+      "height": 96.5,
+      "armWidth": 23,
+      "armHeight": 63,
+      "seatHeight": 48,
+      "seatThickness": 13,
+      "backThickness": 18,
+      "legHeight": 3,
+      "seatCount": 3
+    },
+    "renderedSize": [209.5, 96.5, 96.2397689819336],
+    "counts": {
+      "seats": 3,
+      "backs": 3,
+      "arms": 2,
+      "pillows": 0,
+      "legs": 4,
+      "skirts": 1,
+      "frames": 2
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "15 parts, 15 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "15 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": true,
+        "detail": "target 209.5 cm, rendered 209.5 cm, tolerance ±2.1 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": false,
+        "detail": "target 90.0 cm, rendered 96.2 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": true,
+        "detail": "target 96.5 cm, rendered 96.5 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y 0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "3 seat cushions, spec 3"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "2 arms (L 1 / R 1) on implicit main module"
+      }
+    ],
+    "ok": false
+  },
+  "harmony": {
+    "declared": {
+      "width": 208.28,
+      "depth": 119.38,
+      "height": 86.36,
+      "armWidth": 13,
+      "armHeight": 55,
+      "seatHeight": 48,
+      "seatThickness": 21,
+      "backThickness": 16,
+      "legHeight": 11,
+      "seatCount": 2
+    },
+    "renderedSize": [208.28, 87.27529132097212, 119.37999862670898],
+    "counts": {
+      "seats": 2,
+      "backs": 2,
+      "arms": 2,
+      "pillows": 4,
+      "legs": 4,
+      "skirts": 0,
+      "frames": 2
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "16 parts, 16 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "16 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": true,
+        "detail": "target 208.3 cm, rendered 208.3 cm, tolerance ±2.1 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": true,
+        "detail": "target 119.4 cm, rendered 119.4 cm, tolerance ±1.2 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": true,
+        "detail": "target 86.4 cm, rendered 87.3 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y 0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "2 seat cushions, spec 2"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "2 arms (L 1 / R 1) on implicit main module"
+      }
+    ],
+    "ok": true
+  },
+  "cloud-corner": {
+    "declared": {
+      "width": 114.3,
+      "depth": 114.3,
+      "height": 80,
+      "armWidth": 15,
+      "armHeight": 46.99,
+      "seatHeight": 43,
+      "seatThickness": 14,
+      "backThickness": 15,
+      "legHeight": 1,
+      "seatCount": 1
+    },
+    "renderedSize": [114.30000305175781, 83.31372926949709, 122.6500015258789],
+    "counts": {
+      "seats": 1,
+      "backs": 2,
+      "arms": 0,
+      "pillows": 1,
+      "legs": 1,
+      "skirts": 0,
+      "frames": 3
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "8 parts, 8 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "8 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": true,
+        "detail": "target 114.3 cm, rendered 114.3 cm, tolerance ±1.1 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": false,
+        "detail": "target 114.3 cm, rendered 122.7 cm, tolerance ±1.1 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": false,
+        "detail": "target 80.0 cm, rendered 83.3 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y 0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "1 seat cushions, spec 1"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "0 arms for 0 armed modules"
+      }
+    ],
+    "ok": false
+  },
+  "nammaro": {
+    "declared": {
+      "width": 243,
+      "depth": 92,
+      "height": 86,
+      "armWidth": 4,
+      "armHeight": 70,
+      "seatHeight": 38,
+      "seatThickness": 8,
+      "backThickness": 12,
+      "legHeight": 24,
+      "seatCount": 3
+    },
+    "renderedSize": [243.5, 88.67441058198308, 93.71433851878808],
+    "counts": {
+      "seats": 3,
+      "backs": 3,
+      "arms": 0,
+      "pillows": 0,
+      "legs": 12,
+      "skirts": 0,
+      "frames": 63
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "81 parts, 81 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "81 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": true,
+        "detail": "target 243.0 cm, rendered 243.5 cm, tolerance ±2.4 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": false,
+        "detail": "target 92.0 cm, rendered 93.7 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": false,
+        "detail": "target 86.0 cm, rendered 88.7 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y 0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "3 seat cushions, spec 3"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "0 arms for 0 armed modules"
+      },
+      {
+        "name": "module-overlap",
+        "pass": true,
+        "detail": "main vs module-1: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+      },
+      {
+        "name": "module-overlap",
+        "pass": true,
+        "detail": "main vs module-2: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+      },
+      {
+        "name": "module-overlap",
+        "pass": true,
+        "detail": "module-1 vs module-2: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+      }
+    ],
+    "ok": false
+  },
+  "soderhamn": {
+    "declared": {
+      "width": 198,
+      "depth": 99,
+      "height": 83,
+      "armWidth": 6,
+      "armHeight": 69,
+      "seatHeight": 40,
+      "seatThickness": 9,
+      "backThickness": 8,
+      "legHeight": 14,
+      "seatCount": 2
+    },
+    "renderedSize": [198, 82.07858489727693, 99],
+    "counts": {
+      "seats": 2,
+      "backs": 2,
+      "arms": 2,
+      "pillows": 2,
+      "legs": 4,
+      "skirts": 0,
+      "frames": 2
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "14 parts, 14 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "14 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": true,
+        "detail": "target 198.0 cm, rendered 198.0 cm, tolerance ±2.0 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": true,
+        "detail": "target 99.0 cm, rendered 99.0 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": true,
+        "detail": "target 83.0 cm, rendered 82.1 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y 0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "2 seat cushions, spec 2"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "2 arms (L 1 / R 1) on implicit main module"
+      }
+    ],
+    "ok": true
+  },
+  "jattebo": {
+    "declared": {
+      "width": 285,
+      "depth": 160,
+      "height": 71,
+      "armWidth": 25,
+      "armHeight": 71,
+      "seatHeight": 46,
+      "seatThickness": 18,
+      "backThickness": 25,
+      "legHeight": 2,
+      "seatCount": 3
+    },
+    "renderedSize": [285, 71, 160],
+    "counts": {
+      "seats": 3,
+      "backs": 0,
+      "arms": 2,
+      "pillows": 0,
+      "legs": 3,
+      "skirts": 0,
+      "frames": 6
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "14 parts, 14 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "14 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": true,
+        "detail": "target 285.0 cm, rendered 285.0 cm, tolerance ±2.9 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": true,
+        "detail": "target 160.0 cm, rendered 160.0 cm, tolerance ±1.6 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": true,
+        "detail": "target 71.0 cm, rendered 71.0 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y 0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "3 seat cushions, spec 3"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "2 arms for 2 armed modules"
+      },
+      {
+        "name": "module-overlap",
+        "pass": true,
+        "detail": "main vs middle: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+      },
+      {
+        "name": "module-overlap",
+        "pass": true,
+        "detail": "main vs chaise: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+      },
+      {
+        "name": "module-overlap",
+        "pass": true,
+        "detail": "middle vs chaise: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+      }
+    ],
+    "ok": true
+  },
+  "friheten": {
+    "declared": {
+      "width": 230,
+      "depth": 151,
+      "height": 86,
+      "armWidth": 13,
+      "armHeight": 66,
+      "seatHeight": 44,
+      "seatThickness": 12,
+      "backThickness": 11,
+      "legHeight": 3,
+      "seatCount": 3
+    },
+    "renderedSize": [230, 86.38676080198972, 151],
+    "counts": {
+      "seats": 3,
+      "backs": 3,
+      "arms": 2,
+      "pillows": 0,
+      "legs": 8,
+      "skirts": 0,
+      "frames": 4
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "20 parts, 20 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "20 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": true,
+        "detail": "target 230.0 cm, rendered 230.0 cm, tolerance ±2.3 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": true,
+        "detail": "target 151.0 cm, rendered 151.0 cm, tolerance ±1.5 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": true,
+        "detail": "target 86.0 cm, rendered 86.4 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y 0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "3 seat cushions, spec 3"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "2 arms for 2 armed modules"
+      },
+      {
+        "name": "chaise-handedness",
+        "pass": true,
+        "detail": "doc places chaise right of base, rendered right"
+      },
+      {
+        "name": "module-overlap",
+        "pass": true,
+        "detail": "main vs chaise: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+      }
+    ],
+    "ok": true
+  },
+  "pb-charleston": {
+    "declared": {
+      "width": 218.44,
+      "depth": 91.44,
+      "height": 93.98,
+      "armWidth": 25,
+      "armHeight": 64,
+      "seatHeight": 48,
+      "seatThickness": 16,
+      "backThickness": 13,
+      "legHeight": 3,
+      "seatCount": 2
+    },
+    "renderedSize": [218.44, 99.70731315168864, 95.6797103881836],
+    "counts": {
+      "seats": 2,
+      "backs": 2,
+      "arms": 2,
+      "pillows": 4,
+      "legs": 4,
+      "skirts": 1,
+      "frames": 2
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "17 parts, 17 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "17 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": true,
+        "detail": "target 218.4 cm, rendered 218.4 cm, tolerance ±2.2 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": false,
+        "detail": "target 91.4 cm, rendered 95.7 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": false,
+        "detail": "target 94.0 cm, rendered 99.7 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y 0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "2 seat cushions, spec 2"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "2 arms (L 1 / R 1) on implicit main module"
+      }
+    ],
+    "ok": false
+  },
+  "pb-english-sleeper": {
+    "declared": {
+      "width": 221,
+      "depth": 116.7,
+      "height": 91,
+      "armWidth": 21,
+      "armHeight": 60,
+      "seatHeight": 46,
+      "seatThickness": 15,
+      "backThickness": 15,
+      "legHeight": 4,
+      "seatCount": 2
+    },
+    "renderedSize": [222.4, 91, 117.93980407714844],
+    "counts": {
+      "seats": 2,
+      "backs": 2,
+      "arms": 2,
+      "pillows": 0,
+      "legs": 4,
+      "skirts": 1,
+      "frames": 2
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "13 parts, 13 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "13 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": true,
+        "detail": "target 221.0 cm, rendered 222.4 cm, tolerance ±2.2 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": false,
+        "detail": "target 116.7 cm, rendered 117.9 cm, tolerance ±1.2 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": true,
+        "detail": "target 91.0 cm, rendered 91.0 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y 0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "2 seat cushions, spec 2"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "2 arms (L 1 / R 1) on implicit main module"
+      }
+    ],
+    "ok": false
+  },
+  "pb-york-slope-95-1s2b": {
+    "declared": {
+      "width": 240.1,
+      "depth": 96.5,
+      "height": 91.4,
+      "armWidth": 15.2,
+      "armHeight": 62.2,
+      "seatHeight": 45.7,
+      "seatThickness": 14.5,
+      "backThickness": 18,
+      "legHeight": 6.4,
+      "seatCount": 1
+    },
+    "renderedSize": [242.7399444580078, 94.77398025971438, 99.1399917602539],
+    "counts": {
+      "seats": 1,
+      "backs": 2,
+      "arms": 2,
+      "pillows": 0,
+      "legs": 4,
+      "skirts": 1,
+      "frames": 2
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "12 parts, 12 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "12 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": false,
+        "detail": "target 240.1 cm, rendered 242.7 cm, tolerance ±2.4 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": false,
+        "detail": "target 96.5 cm, rendered 99.1 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": false,
+        "detail": "target 91.4 cm, rendered 94.8 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y -0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=-0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "1 seat cushions, spec 1"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "2 arms (L 1 / R 1) on implicit main module"
+      }
+    ],
+    "ok": false
+  },
+  "pb-york-slope-95-1s3b": {
+    "declared": {
+      "width": 240.1,
+      "depth": 96.5,
+      "height": 91.4,
+      "armWidth": 15.2,
+      "armHeight": 62.2,
+      "seatHeight": 45.7,
+      "seatThickness": 14.5,
+      "backThickness": 18,
+      "legHeight": 6.4,
+      "seatCount": 1
+    },
+    "renderedSize": [242.7399444580078, 94.77398025971438, 99.1399917602539],
+    "counts": {
+      "seats": 1,
+      "backs": 3,
+      "arms": 2,
+      "pillows": 0,
+      "legs": 4,
+      "skirts": 1,
+      "frames": 2
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "13 parts, 13 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "13 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": false,
+        "detail": "target 240.1 cm, rendered 242.7 cm, tolerance ±2.4 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": false,
+        "detail": "target 96.5 cm, rendered 99.1 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": false,
+        "detail": "target 91.4 cm, rendered 94.8 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y -0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=-0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "1 seat cushions, spec 1"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "2 arms (L 1 / R 1) on implicit main module"
+      }
+    ],
+    "ok": false
+  },
+  "pb-york-slope-95-2s2b": {
+    "declared": {
+      "width": 240.1,
+      "depth": 96.5,
+      "height": 91.4,
+      "armWidth": 15.2,
+      "armHeight": 62.2,
+      "seatHeight": 45.7,
+      "seatThickness": 14.5,
+      "backThickness": 18,
+      "legHeight": 6.4,
+      "seatCount": 2
+    },
+    "renderedSize": [242.7399444580078, 94.77398025971438, 99.1399917602539],
+    "counts": {
+      "seats": 2,
+      "backs": 2,
+      "arms": 2,
+      "pillows": 0,
+      "legs": 4,
+      "skirts": 1,
+      "frames": 2
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "13 parts, 13 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "13 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": false,
+        "detail": "target 240.1 cm, rendered 242.7 cm, tolerance ±2.4 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": false,
+        "detail": "target 96.5 cm, rendered 99.1 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": false,
+        "detail": "target 91.4 cm, rendered 94.8 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y -0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=-0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "2 seat cushions, spec 2"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "2 arms (L 1 / R 1) on implicit main module"
+      }
+    ],
+    "ok": false
+  },
+  "pb-york-slope-95-3s3b": {
+    "declared": {
+      "width": 240.1,
+      "depth": 96.5,
+      "height": 91.4,
+      "armWidth": 15.2,
+      "armHeight": 62.2,
+      "seatHeight": 45.7,
+      "seatThickness": 14.5,
+      "backThickness": 18,
+      "legHeight": 6.4,
+      "seatCount": 3
+    },
+    "renderedSize": [242.7399444580078, 94.77398025971438, 99.1399917602539],
+    "counts": {
+      "seats": 3,
+      "backs": 3,
+      "arms": 2,
+      "pillows": 0,
+      "legs": 4,
+      "skirts": 1,
+      "frames": 2
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "15 parts, 15 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "15 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": false,
+        "detail": "target 240.1 cm, rendered 242.7 cm, tolerance ±2.4 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": false,
+        "detail": "target 96.5 cm, rendered 99.1 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": false,
+        "detail": "target 91.4 cm, rendered 94.8 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y -0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=-0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "3 seat cushions, spec 3"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "2 arms (L 1 / R 1) on implicit main module"
+      }
+    ],
+    "ok": false
+  },
+  "norsborg": {
+    "declared": {
+      "width": 285,
+      "depth": 285,
+      "height": 85,
+      "armWidth": 16,
+      "armHeight": 52,
+      "seatHeight": 43,
+      "seatThickness": 12,
+      "backThickness": 15,
+      "legHeight": 18,
+      "seatCount": 7
+    },
+    "renderedSize": [285.13360894954303, 88.69520482763696, 285.133608949543],
+    "counts": {
+      "seats": 7,
+      "backs": 8,
+      "arms": 2,
+      "pillows": 0,
+      "legs": 20,
+      "skirts": 0,
+      "frames": 9
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "46 parts, 46 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "46 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": true,
+        "detail": "target 285.0 cm, rendered 285.1 cm, tolerance ±2.9 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": true,
+        "detail": "target 285.0 cm, rendered 285.1 cm, tolerance ±2.9 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": false,
+        "detail": "target 85.0 cm, rendered 88.7 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y 0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "7 seat cushions, spec 7"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "2 arms for 2 armed modules"
+      },
+      {
+        "name": "module-overlap",
+        "pass": true,
+        "detail": "norsborg-mu74edc6-1 vs norsborg-mu74edc6-3: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+      }
+    ],
+    "ok": false
+  },
+  "norsborg-chaise": {
+    "declared": {
+      "width": 293,
+      "depth": 157,
+      "height": 85,
+      "armWidth": 16,
+      "armHeight": 52,
+      "seatHeight": 43,
+      "seatThickness": 12,
+      "backThickness": 15,
+      "legHeight": 18,
+      "seatCount": 4
+    },
+    "renderedSize": [293, 88.22535851724399, 157],
+    "counts": {
+      "seats": 4,
+      "backs": 4,
+      "arms": 2,
+      "pillows": 0,
+      "legs": 16,
+      "skirts": 0,
+      "frames": 6
+    },
+    "results": [
+      {
+        "name": "finite-transforms",
+        "pass": true,
+        "detail": "0 parts with non-finite transforms"
+      },
+      {
+        "name": "positive-sizes",
+        "pass": true,
+        "detail": "0 parts with non-positive sizes"
+      },
+      {
+        "name": "unique-part-ids",
+        "pass": true,
+        "detail": "32 parts, 32 unique ids"
+      },
+      {
+        "name": "non-empty-geometry",
+        "pass": true,
+        "detail": "32 meshes, 0 empty"
+      },
+      {
+        "name": "overall-width",
+        "pass": true,
+        "detail": "target 293.0 cm, rendered 293.0 cm, tolerance ±2.9 cm"
+      },
+      {
+        "name": "overall-depth",
+        "pass": true,
+        "detail": "target 157.0 cm, rendered 157.0 cm, tolerance ±1.6 cm"
+      },
+      {
+        "name": "overall-height",
+        "pass": false,
+        "detail": "target 85.0 cm, rendered 88.2 cm, tolerance ±1.0 cm"
+      },
+      {
+        "name": "no-below-floor",
+        "pass": true,
+        "detail": "min y 0.00 cm"
+      },
+      {
+        "name": "floor-contact",
+        "pass": true,
+        "detail": "model rests at y=0.00 cm (0 = floor)"
+      },
+      {
+        "name": "seat-count",
+        "pass": true,
+        "detail": "4 seat cushions, spec 4"
+      },
+      {
+        "name": "arm-count",
+        "pass": true,
+        "detail": "2 arms for 2 armed modules"
+      },
+      {
+        "name": "chaise-handedness",
+        "pass": true,
+        "detail": "doc places norsborg-mu74eddz-6 right of base, rendered right"
+      },
+      {
+        "name": "module-overlap",
+        "pass": true,
+        "detail": "norsborg-mu74eddz-6 vs norsborg-mu74eddz-7: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+      }
+    ],
+    "ok": false
+  }
+}
