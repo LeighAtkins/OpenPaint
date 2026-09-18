@@ -1,0 +1,510 @@
+{
+ "handle": "sofa-bed-covers-maison-du-monde",
+ "fetchedAt": "2026-09-18T05:38:21.934Z",
+ "count": 8,
+ "products": [
+  {
+   "handle": "milano-3-seater-sofa-bed-slipcover",
+   "title": "Milano 3 Seater Sofa Bed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-MO-73B",
+   "price": "439.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-MO-73B_VELC_PM_CVC-01.jpg?v=1741320168",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-MO-73B_VELC_PM_CVC-01.jpg?v=1741320168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_570_Maison_du_Monde_Milano_sofa.jpg?v=1741320168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_625_Maison_du_Monde_Milano_sofa.jpg?v=1741320168"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:CS",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-MO",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-MO-73B",
+    "FLT___Product_Ref__Old____MDM_MO_3B",
+    "FLT___Series_Code___MO",
+    "FLT___Series_Name___Milano",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MDM-MO-73B",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Milano",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-MO-73B",
+     "price": "439.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "roma-3-seater-sofa-bed-slipcover",
+   "title": "Roma 3 Seater Sofa Bed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-RA-89B",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RA-89B_CNRP_PM_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RA-89B_CNRP_PM_CVC-01.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_543_Maison_du_Monde_Roma_sofa_b330af2a-e227-4967-b284-1936609dd95c.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_544_Maison_du_Monde_Roma_sofa.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular Straight",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:CS",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-RA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-RA-89B",
+    "FLT___Product_Ref__Old____MDM_RA_3B",
+    "FLT___Series_Code___RA",
+    "FLT___Series_Name___Roma",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MDM-RA-89B",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Roma",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-RA-89B",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "barcelone-3-4-seater-sofa-bed-slipcover",
+   "title": "Barcelone 3/4 Seater Sofa Bed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-BE-80B",
+   "price": "479.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BE-80B_LSKT_SI_CVC-01.jpg?v=1741320167",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BE-80B_LSKT_SI_CVC-01.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_548_Maison_du_Monde_Barcelone_sofa.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_549_Maison_du_Monde_Barcelone_sofa_e66006eb-347f-49a3-8f2f-66cfffcf21e7.jpg?v=1741320167"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-BE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-BE-80B",
+    "FLT___Product_Ref__Old____MDM_BE_35B",
+    "FLT___Series_Code___BE",
+    "FLT___Series_Name___Barcelone",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "MDM-BE-80B",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Barcelone",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:5",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-BE-80B",
+     "price": "479.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bastide-3-seater-sofa-bed-slipcover",
+   "title": "Bastide 3 Seater Sofa Bed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-BDE-81B",
+   "price": "489.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BDE-81B_CNRP_PM_CVC-01.jpg?v=1741320166",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BDE-81B_CNRP_PM_CVC-01.jpg?v=1741320166",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_535_Maison_du_Monde_Bastide_sofa.jpg?v=1741320166"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-BDE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-BDE-81B",
+    "FLT___Product_Ref__Old____MDM_BDE_3B",
+    "FLT___Series_Code___BDE",
+    "FLT___Series_Name___Bastide",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "MDM-BDE-81B",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Bastide",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No",
+    "throw_pillows:4"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-BDE-81B",
+     "price": "489.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "balthazar-3-seater-sofa-bed-slipcover",
+   "title": "Balthazar 3 Seater Sofa Bed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-BZR-66B",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BZR-66B_SHRT_SP_CVC-01.jpg?v=1741320168",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BZR-66B_SHRT_SP_CVC-01.jpg?v=1741320168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_538_Maison_du_Monde_Balthazar_sofa.jpg?v=1741320168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_537_Maison_du_Monde_Balthazar_sofa.jpg?v=1741320168"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp Straight",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-BZR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-BZR-66B",
+    "FLT___Product_Ref__Old____MDM_BZR_3B",
+    "FLT___Series_Code___BZR",
+    "FLT___Series_Name___Balthazar",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MDM-BZR-66B",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Balthazar",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-BZR-66B",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "royan-2-seater-sofabed-slipcover",
+   "title": "Royan 2 Seater Sofabed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-RN-73B",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RN-73B_MLTP_PM_CVC-01.jpg?v=1741320179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RN-73B_MLTP_PM_CVC-01.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_539_Maison_du_Monde_Roma_sofa.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_540_Maison_du_Monde_Roma_sofa.jpg?v=1741320179"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-RN",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-RN-73B",
+    "FLT___Product_Ref__Old____MDM_RN_2B",
+    "FLT___Series_Code___RN",
+    "FLT___Series_Name___Roma",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "MDM-RN-73B",
+    "series:Royan"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-RN-73B",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "louvain-2-seater-sofa-bed-slipcover",
+   "title": "Louvain 2 seater sofa bed slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-LV-64B",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-64B_LSKT_SI_CVC-01.jpg?v=1741320167",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-64B_LSKT_SI_CVC-01.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_623_Maison_du_Monde_Louvain_sofa_20a8d6d9-3ddd-4724-8a71-0fa00bc49cd8.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_553_Maison_du_Monde_Louvain_sofa_c08a348b-c066-40ad-b287-0ff0e853c1c8.jpg?v=1741320167"
+   ],
+   "tags": [
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-LV",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-LV-64B",
+    "FLT___Product_Ref__Old____MDM_LV_2B",
+    "FLT___Series_Code___LV",
+    "FLT___Series_Name___Louvain",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "MDM-LV-64B",
+    "series:Louvre (Louvain)"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-LV-64B",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "louvain-3-4-seater-sofa-bed-slipcover",
+   "title": "Louvain 3/4 seater sofa bed slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-LV-80B",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-80B_LSKT_SI_CVC-01.jpg?v=1741320167",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-80B_LSKT_SI_CVC-01.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_623_Maison_du_Monde_Louvain_sofa.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_554_Maison_du_Monde_Louvain_sofa_03547888-0eca-4872-9076-3ba0c876efbb.jpg?v=1741320167"
+   ],
+   "tags": [
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-LV",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-LV-80B",
+    "FLT___Product_Ref__Old____MDM_LV_3B",
+    "FLT___Series_Code___LV",
+    "FLT___Series_Name___Louvain",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "MDM-LV-80B",
+    "series:Louvre (Louvain)"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-LV-80B",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

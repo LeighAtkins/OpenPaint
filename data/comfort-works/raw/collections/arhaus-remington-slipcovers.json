@@ -1,0 +1,97 @@
+{
+ "handle": "arhaus-remington-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:45.202Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "remington-two-over-two-96-sofa-slipcover",
+   "title": "Remington Two Over Two 96\" Sofa Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-RN-96",
+   "price": "729.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-RN-96_LV_EXD_VELC_SP_CVC-01.jpg?v=1741741758",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-RN-96_LV_EXD_VELC_SP_CVC-01.jpg?v=1741741758"
+   ],
+   "tags": [
+    "AS-RN-96",
+    "categoryproducts:AS",
+    "categoryproducts:AS-Chair",
+    "categoryproducts:AS-RN",
+    "categoryproducts:AS-Sofa",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Remington"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-RN-96",
+     "price": "729.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "remington-chair-slipcover",
+   "title": "Remington Chair Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-RN-42",
+   "price": "419.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-RN-42_EXD_VELC_PM_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-RN-42_EXD_VELC_PM_CVC-01.jpg?v=1744676697",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-RN-42-EXD_VELC_SP_TC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "Arhaus",
+    "AS-RN-42",
+    "categoryproducts:AS",
+    "categoryproducts:AS-Chair",
+    "categoryproducts:AS-RN",
+    "categoryproducts:AS-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Remington"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-RN-42",
+     "price": "419.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

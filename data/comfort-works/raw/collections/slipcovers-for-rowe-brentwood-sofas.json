@@ -1,0 +1,89 @@
+{
+ "handle": "slipcovers-for-rowe-brentwood-sofas",
+ "fetchedAt": "2026-09-18T05:38:19.211Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "brentwood-sectional-2-seat-9252-lse-rse-sofa-slipcover",
+   "title": "Brentwood Sectional 2-Seat (9252-LSE/RSE) Sofa Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-BD-54M",
+   "price": "579.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-BD-54M_R_LSKT_PM_CVC-01.webp?v=1784600754",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-BD-54M_R_LSKT_PM_CVC-01.webp?v=1784600754"
+   ],
+   "tags": [
+    "categoryproducts:RE",
+    "categoryproducts:RE-Sofa",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "RE-BD-54M",
+    "Rowe",
+    "series:Brentwood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-BD-54M",
+     "price": "579.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "brentwood-sectional-3-seat-corner-9258-lse-rse-sofa-slipcover",
+   "title": "Brentwood Sectional 3-Seat Corner (9258-LSE/RSE) Sofa Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-BD-94",
+   "price": "859.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-BD-94_L_LSKT_PM_CVC-01.webp?v=1784539162",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-BD-94_L_LSKT_PM_CVC-01.webp?v=1784539162"
+   ],
+   "tags": [
+    "categoryproducts:RE",
+    "categoryproducts:RE-Sofa",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "RE-BD-94",
+    "Rowe",
+    "series:Brentwood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-BD-94",
+     "price": "859.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

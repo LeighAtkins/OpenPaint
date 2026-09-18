@@ -1,0 +1,303 @@
+{
+ "handle": "pottery-barn-townsend-slipcovers",
+ "fetchedAt": "2026-09-18T05:37:57.185Z",
+ "count": 7,
+ "products": [
+  {
+   "handle": "townsend-square-arm-100-5-grand-sofa-slipcover",
+   "title": "Townsend Square Arm 100.5\" Grand Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TDS-101",
+   "price": "639.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TDS-101_LV_SHRT_SP_CVC-01.jpg?v=1741741769",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TDS-101_LV_SHRT_SP_CVC-01.jpg?v=1741741769"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TDS",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-TDS-101",
+    "series:Townsend Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TDS-101",
+     "price": "639.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "townsend-square-arm-86-5-sofa-slipcover",
+   "title": "Townsend Square Arm 86.5\" Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TDS-87",
+   "price": "639.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TDS-87_LV_SHRT_SP_CVC-01.jpg?v=1741741759",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TDS-87_LV_SHRT_SP_CVC-01.jpg?v=1741741759"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TDS",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "PB-TDS-87",
+    "series:Townsend Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TDS-87",
+     "price": "639.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "townsend-square-arm-chair-slipcover",
+   "title": "Townsend Square Arm Chair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TDS-39",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TDS-39_LV_SHRT_SP_CVC-01.jpg?v=1741741767",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TDS-39_LV_SHRT_SP_CVC-01.jpg?v=1741741767"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TDS",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "PB-TDS-39",
+    "series:Townsend Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TDS-39",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "townsend-roll-arm-101-5-grand-sofa-slipcover",
+   "title": "Townsend Roll Arm 101.5\" Grand Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TDR-102",
+   "price": "789.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TDR-102_LV_SHRT_SP_CVC-01.jpg?v=1741741768",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TDR-102_LV_SHRT_SP_CVC-01.jpg?v=1741741768"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TDR",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-TDR-102",
+    "series:Townsend Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TDR-102",
+     "price": "789.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "townsend-roll-arm-chair-slipcover",
+   "title": "Townsend Roll Arm Chair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TDR-40",
+   "price": "369.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TDR-40_LV_SHRT_SP_CVC-01.jpg?v=1741741763",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TDR-40_LV_SHRT_SP_CVC-01.jpg?v=1741741763"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TDR",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-TDR-40",
+    "series:Townsend Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TDR-40",
+     "price": "369.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "townsend-roll-arm-79-loveseat-slipcover",
+   "title": "Townsend Roll Arm 79\" Loveseat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TDR-79",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TDR-79_LV_SHRT_SP_CVC-01.jpg?v=1741741767",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TDR-79_LV_SHRT_SP_CVC-01.jpg?v=1741741767"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TDR",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-TDR-79",
+    "series:Townsend Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TDR-79",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "townsend-roll-arm-87-sofa-slipcover",
+   "title": "Townsend Roll Arm 87\" Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TDR-86",
+   "price": "759.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TDR-86_LV_SHRT_SP_CVC-01.jpg?v=1741741767",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TDR-86_LV_SHRT_SP_CVC-01.jpg?v=1741741767"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TDR",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-TDR-86",
+    "series:Townsend Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TDR-86",
+     "price": "759.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

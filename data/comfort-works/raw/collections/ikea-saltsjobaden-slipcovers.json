@@ -1,0 +1,179 @@
+{
+ "handle": "ikea-saltsjobaden-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:05.506Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "saltsjobaden-armchair-cover",
+   "title": "Saltsjobaden Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SJN-1",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-1.jpg?v=1787302883",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-1.jpg?v=1787302883",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-1_087901d3-dc05-41e4-bf74-c069b9768f5d.jpg?v=1787302891"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SJN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-SJN-1",
+    "installation:579",
+    "series:Saltsjobaden"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SJN-1",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "saltsjobaden-2-seater-sofa-cover",
+   "title": "Saltsjobaden 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SJN-2",
+   "price": "259.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-2.jpg?v=1787302667",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-2.jpg?v=1787302667",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-2_8c3e842c-f181-46ab-9c4f-d4c8516bfb16.jpg?v=1787302675"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SJN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-SJN-2",
+    "installation:579",
+    "series:Saltsjobaden"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SJN-2",
+     "price": "259.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "saltsjobaden-3-seater-sofa-cover",
+   "title": "Saltsjobaden 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SJN-3",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-3_b840202a-8efc-4d7e-92e9-f61fadc09dd2.jpg?v=1787302577",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-3_b840202a-8efc-4d7e-92e9-f61fadc09dd2.jpg?v=1787302577",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-3_45e13ef0-ba5e-44ee-9588-dbb962669828.jpg?v=1787302587"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SJN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-SJN-3",
+    "installation:579",
+    "series:Saltsjobaden"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SJN-3",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "saltsjobaden-2-seater-sofa-bed-cover",
+   "title": "Saltsjobaden 2 Seater Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SJN-2B",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-2B.jpg?v=1787301346",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-2B.jpg?v=1787301346",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-2B_a2547354-9b45-4ec5-9d6c-acea52534982.jpg?v=1787301353"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SJN",
+    "description:",
+    "features:575",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Size___Sofa_Bed",
+    "FLT__MAIN",
+    "IK-SJN-2B",
+    "installation:579",
+    "series:Saltsjobaden"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SJN-2B",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

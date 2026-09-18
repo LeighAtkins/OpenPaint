@@ -1,0 +1,263 @@
+{
+ "handle": "muji-feather-pocket-coil-2019-2020-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:32.388Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "2019-2020-feather-pocket-coil-sofa-couch-type-slipcover-with-chaise",
+   "title": "2019/2020 Feather Pocket Coil Sofa Couch Type Slipcover with Chaise",
+   "vendor": "MUJI",
+   "sku": "MJ-FPC-25-2019",
+   "price": "369.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-25-2019_L_VELC_WR_CVC-01.jpg?v=1741320177",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-25-2019_L_VELC_WR_CVC-01.jpg?v=1741320177",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_480_Muji_Wide_Arm_sofa.jpg?v=1741320177",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_491_Muji_Wide_Arm_sofa.jpg?v=1741320177"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-UPC",
+    "chaise_lounge:Yes",
+    "chaise_lounge_position:Left",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FPC-25-2019",
+    "FLT___Product_Ref__Old____MJ_PF19_4L",
+    "FLT___Series_Code___FPC",
+    "FLT___Series_Name___Wide_arm_sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_seat_cushion:1",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-FPC-25-2019",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FPC-25-2019",
+     "price": "369.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2019-2020-feather-pocket-coil-ottoman-cover",
+   "title": "2019/2020 Feather Pocket Coil Ottoman Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-FPC-0-2019",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-0-2019_VELC_SP_CVC-01.jpg?v=1741320174",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-0-2019_VELC_SP_CVC-01.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_491_Muji_Wide_Arm_sofa_88db0f43-25de-4e78-91b8-949b4c4ccab0.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_480_Muji_Wide_Arm_sofa_24aff8ef-1f88-401d-b054-843a89b11b9c.jpg?v=1741320174"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-UPC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FPC-0-2019",
+    "FLT___Product_Ref__Old____MJ_PU19_0",
+    "FLT___Series_Code___FPC",
+    "FLT___Series_Name___Wide_arm_sofa",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-FPC-0-2019",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FPC-0-2019",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2019-2020-wide-arm-feather-pocket-coil-2-seater-slipcover",
+   "title": "2019/2020 Wide Arm Feather Pocket Coil 2 Seater Slipcover",
+   "vendor": "MUJI",
+   "sku": "MJ-FPC-2-2019",
+   "price": "349.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-2-2019_VELC_WR_CVC-01.jpg?v=1741320183",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-2-2019_VELC_WR_CVC-01.jpg?v=1741320183",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_166_Muji_Wide_Arm_sofa.jpg?v=1741320183",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_174_Muji_Wide_Arm_sofa_5ca66777-8d59-4677-910f-c4c73ba6d5cf.jpg?v=1741320183"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-UPC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FPC-2-2019",
+    "FLT___Product_Ref__Old____MJ_PF19_2",
+    "FLT___Series_Code___FPC",
+    "FLT___Series_Name___Wide_arm_sofa",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-FPC-2-2019",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FPC-2-2019",
+     "price": "349.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2019-2020-wide-arm-feather-pocket-coil-high-back-slipcover",
+   "title": "2019/2020 Wide Arm Feather Pocket Coil High Back Slipcover",
+   "vendor": "MUJI",
+   "sku": "MJ-FPC-3P-2019",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-3P-2019_VELC_WR_CVC-01.jpg?v=1741320171",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-3P-2019_VELC_WR_CVC-01.jpg?v=1741320171",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_167_Muji_Feather_Pocket_Coil_sofa.jpg?v=1741320171",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_174_Muji_Wide_Arm_sofa.jpg?v=1741320171"
+   ],
+   "tags": [
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-UPC",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FPC-3P-2019",
+    "FLT___Product_Ref__Old____MJ_PF19_25H",
+    "FLT___Series_Code___FPC",
+    "FLT___Series_Name___Feather_Pocket_Coil",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "MJ-FPC-3P-2019",
+    "series:Wide Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FPC-3P-2019",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

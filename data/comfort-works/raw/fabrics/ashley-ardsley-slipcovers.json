@@ -1,0 +1,24 @@
+{
+ "handle": "ashley-ardsley-slipcovers",
+ "representative": "ardsley-left-right-arm-loveseat-slipcover",
+ "hubLinks": [
+  "\\/pages\\/fabrics-hypoallergenic-collection-everyday-cotton",
+  "\\/pages\\/fabrics-cozy-collection-everyday-velvet",
+  "\\/pages\\/fabrics-starter-collection-everyday-weave",
+  "\\/pages\\/fabrics-performance-collection-signature-velvet",
+  "\\/pages\\/fabrics-pet-friendly-collection-signature-microfiber",
+  "\\/pages\\/fabrics-performance-collection-sunbrella"
+ ],
+ "fabricCount": 1,
+ "fabrics": [
+  {
+   "fabric": null,
+   "handle": "ardsley-left-right-arm-loveseat-slipcover",
+   "url": "https://comfort-works.com/products/ardsley-left-right-arm-loveseat-slipcover",
+   "sku": "AY-AY-61M",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/AY-AY-61M_L_VELC_PM_CVC-01.jpg?v=1741320090"
+  }
+ ]
+}

@@ -1,0 +1,355 @@
+{
+ "handle": "arhaus-baldwin-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:41.627Z",
+ "count": 6,
+ "products": [
+  {
+   "handle": "baldwin-sofa-slipcover",
+   "title": "Baldwin Sofa Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-BWN-89",
+   "price": "929.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-BWN-89_MLTP_PM_CVC-01.jpg?v=1741320089",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-BWN-89_MLTP_PM_CVC-01.jpg?v=1741320089"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "Arhaus",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "AS-BWN-89",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:AS-BWN",
+    "categoryproducts:AS-Sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Baldwin",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-BWN-89",
+     "price": "929.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "baldwin-89-queen-air-sleeper-sofa-slipcover",
+   "title": "Baldwin 89\" Queen Air Sleeper Sofa Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-BWN-89B",
+   "price": "1069.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-BWN-89B_MLTP_PM_CVC-01.jpg?v=1741320086",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-BWN-89B_MLTP_PM_CVC-01.jpg?v=1741320086"
+   ],
+   "tags": [
+    "Arhaus",
+    "AS-BWN-89B",
+    "categoryproducts:AS-BWN",
+    "categoryproducts:AS-Sofa",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Baldwin"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-BWN-89B",
+     "price": "1069.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "baldwin-swivel-chair-slipcover",
+   "title": "Baldwin Swivel Chair Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-BWN-44SC",
+   "price": "539.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-BWN-44SC_CNRP_PM_CVC-01.jpg?v=1741320089",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-BWN-44SC_CNRP_PM_CVC-01.jpg?v=1741320089"
+   ],
+   "tags": [
+    "Arhaus",
+    "AS-BWN-44SC",
+    "categoryproducts:AS-BWN",
+    "categoryproducts:AS-Chair",
+    "categoryproducts:AS-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "series:Baldwin"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-BWN-44SC",
+     "price": "539.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "baldwin-slipcovered-76-sofa-slipcover",
+   "title": "Baldwin Slipcovered 76\" Sofa Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-BWN-76",
+   "price": "789.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-BWN-76_MLTP_PM_CVC-01.jpg?v=1741320089",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-BWN-76_MLTP_PM_CVC-01.jpg?v=1741320089"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "AS-BWN-76",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:AS-BWN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Baldwin",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No",
+    "throw_pillows:4"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-BWN-76",
+     "price": "789.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "baldwin-slipcovered-chair-slipcover",
+   "title": "Baldwin Slipcovered Chair Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-BWN-50",
+   "price": "559.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-BWN-50_CNRP_PM_CVC-01.jpg?v=1741320088",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-BWN-50_CNRP_PM_CVC-01.jpg?v=1741320088",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_557_Arhaus_Baldwin_sofa_7dbad0b8-ef6f-4088-a9d0-5807ff35e1ea.jpg?v=1741320088",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_556_Arhaus_Baldwin_sofa.jpg?v=1741320088"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "AS-BWN-50",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:AS-BWN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Arhaus",
+    "FLT___Product_Ref__New____AS-BWN-50",
+    "FLT___Series_Code___BWN",
+    "FLT___Series_Name___Baldwin",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Baldwin",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No",
+    "t_shaped_back_cushion:1",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-BWN-50",
+     "price": "559.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "baldwin-slipcovered-32x26x17-ottoman-slipcover",
+   "title": "Baldwin Slipcovered 32x26x17 Ottoman Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-BWN-32F",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-BWN-32F_CNRP_PM_CVC-01.jpg?v=1741320086",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-BWN-32F_CNRP_PM_CVC-01.jpg?v=1741320086"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "Arhaus",
+    "AS-BWN-32F",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:AS-0",
+    "categoryproducts:AS-BWN",
+    "categoryproducts:AS-Sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Baldwin",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:0",
+    "square_rectangle_back_cushion:0",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-BWN-32F",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,369 @@
+{
+ "handle": "ikea-vaxholm-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:14.481Z",
+ "count": 6,
+ "products": [
+  {
+   "handle": "vaxholm-chaise-lounge-section-cover",
+   "title": "Vaxholm Chaise Lounge Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VXM-5X",
+   "price": "209.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-5X_VELC_SP_CVC-01.jpg?v=1741320152",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-5X_VELC_SP_CVC-01.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_380_IKEA_Vaxholm_sofa_8d47c181-db5b-4562-b044-85844acde25f.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_379_IKEA_Vaxholm_sofa.jpg?v=1741320152"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:VXM",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VXM-5X",
+    "FLT___Product_Ref__Old____VXM5_N",
+    "FLT___Series_Code___VXM",
+    "FLT___Series_Name___Vaxholm",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-VXM-5X",
+    "installation:579",
+    "series:Vaxholm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VXM-5X",
+     "price": "209.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vaxholm-bed-section-cover-with-storage",
+   "title": "Vaxholm Bed Section Cover with storage",
+   "vendor": "IKEA",
+   "sku": "IK-VXM-5BX",
+   "price": "239.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-5BX_VELC_SP_CVC-01.jpg?v=1741320149",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-5BX_VELC_SP_CVC-01.jpg?v=1741320149",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_380_IKEA_Vaxholm_sofa.jpg?v=1741320149",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_379_IKEA_Vaxholm_sofa_0b2c43c0-7184-46ef-84f5-34699f617331.jpg?v=1741320149"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:VXM",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VXM-5BX",
+    "FLT___Product_Ref__Old____VXM5_BN",
+    "FLT___Series_Code___VXM",
+    "FLT___Series_Name___Vaxholm",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-VXM-5BX",
+    "installation:579",
+    "series:Vaxholm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VXM-5BX",
+     "price": "239.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vaxholm-one-seat-section-cover",
+   "title": "Vaxholm One-Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VXM-1X",
+   "price": "159.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-1X_VELC_SP_CVC-01.jpg?v=1741320144",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-1X_VELC_SP_CVC-01.jpg?v=1741320144",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_378_IKEA_Vaxholm_sofa_723d6d01-f422-4ed3-9c71-2bb165738de8.jpg?v=1741320144",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_380_IKEA_Vaxholm_sofa_28d5a4df-c832-4ee8-a15a-999c2e5ee677.jpg?v=1741320144"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:VXM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VXM-1X",
+    "FLT___Product_Ref__Old____VXM1_N",
+    "FLT___Series_Code___VXM",
+    "FLT___Series_Name___Vaxholm",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VXM-1X",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vaxholm",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VXM-1X",
+     "price": "159.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vaxholm-footstool-cover",
+   "title": "Vaxholm Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VXM-0",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-0_VELC_SP_CVC-01.jpg?v=1741320148",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-0_VELC_SP_CVC-01.jpg?v=1741320148",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_378_IKEA_Vaxholm_sofa_ae9ebc61-4d3b-443f-8e20-b18441902358.jpg?v=1741320148",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_376_IKEA_Vaxholm_sofa.jpg?v=1741320148"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:VXM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VXM-0",
+    "FLT___Product_Ref__Old____VXM0",
+    "FLT___Series_Code___VXM",
+    "FLT___Series_Name___Vaxholm",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-VXM-0",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Vaxholm",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VXM-0",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vaxholm-two-seat-section-cover",
+   "title": "Vaxholm Two-Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VXM-2X",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-2X_VELC_SP_CVC-01.jpg?v=1741320146",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-2X_VELC_SP_CVC-01.jpg?v=1741320146",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_378_IKEA_Vaxholm_sofa.jpg?v=1741320146",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_376_IKEA_Vaxholm_sofa_aac84f61-455a-43c1-a2ce-8ab42f543517.jpg?v=1741320146"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VXM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VXM-2X",
+    "FLT___Product_Ref__Old____VXM2_N",
+    "FLT___Series_Code___VXM",
+    "FLT___Series_Name___Vaxholm",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VXM-2X",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vaxholm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VXM-2X",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vaxholm-armrest-cover",
+   "title": "Vaxholm Armrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VXM-8",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-8_VELC_SP_CVC-01.jpg?v=1741320144",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-8_VELC_SP_CVC-01.jpg?v=1741320144",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_378_IKEA_Vaxholm_sofa_284a32aa-a4f8-432f-8608-d39ee08197d7.jpg?v=1741320144",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_380_IKEA_Vaxholm_sofa_00d4f297-278d-4e03-8387-4f63790af764.jpg?v=1741320144"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:VXM",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VXM-8",
+    "FLT___Product_Ref__Old____VXM9",
+    "FLT___Series_Code___VXM",
+    "FLT___Series_Name___Vaxholm",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-VXM-8",
+    "series:Vaxholm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VXM-8",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

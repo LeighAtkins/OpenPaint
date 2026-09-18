@@ -1,0 +1,152 @@
+{
+ "handle": "ikea-sandbacken-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:06.074Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "sandbacken-3-seater-sofa-cover",
+   "title": "Sandbacken 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SBN-3",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SBN-3_CNRP_SP_CVC-01.jpg?v=1741320148",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SBN-3_CNRP_SP_CVC-01.jpg?v=1741320148",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_346_IKEA_Sandbacken_sofa.jpg?v=1741320148",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_496_IKEA_Sandbacken_sofa.jpg?v=1741320148"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:SBN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SBN-3",
+    "FLT___Product_Ref__Old____SBN3",
+    "FLT___Series_Code___SBN",
+    "FLT___Series_Name___Sandbacken",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SBN-3",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Sandbacken",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SBN-3",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sandbacken-corner-sofabed-covers",
+   "title": "Sandbacken Corner Sofabed Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SBN-25B",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SBN-25B_CNRP_SP_CVC-01.jpg?v=1764118503",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SBN-25B_CNRP_SP_CVC-01.jpg?v=1764118503",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_495_IKEA_Sandbacken_sofa.jpg?v=1764118503",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_347_IKEA_Sandbacken_sofa.jpg?v=1764118503"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:SBN",
+    "chaise_lounge:yes",
+    "chaise_lounge_position:Both",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SBN-25B",
+    "FLT___Product_Ref__Old____SBN7",
+    "FLT___Series_Code___SBN",
+    "FLT___Series_Name___Sandbacken",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SBN-25B",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Sandbacken",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SBN-25B",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

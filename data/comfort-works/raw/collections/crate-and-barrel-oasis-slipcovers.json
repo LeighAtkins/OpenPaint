@@ -1,0 +1,51 @@
+{
+ "handle": "crate-and-barrel-oasis-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:12.793Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "the-oasis-85-sofa-slipcover",
+   "title": "The Oasis 85\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-OS-85",
+   "price": "889.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-OS-85_LSKT_SI_CVC-01.jpg?v=1741741757",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-OS-85_LSKT_SI_CVC-01.jpg?v=1741741757"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-OS",
+    "categoryproducts:CB-Slipcover",
+    "CB-OS-85",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Oasis",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-OS-85",
+     "price": "889.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

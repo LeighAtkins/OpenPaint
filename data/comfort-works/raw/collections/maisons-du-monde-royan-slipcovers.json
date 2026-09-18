@@ -1,0 +1,59 @@
+{
+ "handle": "maisons-du-monde-royan-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:25.208Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "royan-2-seater-sofabed-slipcover",
+   "title": "Royan 2 Seater Sofabed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-RN-73B",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RN-73B_MLTP_PM_CVC-01.jpg?v=1741320179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RN-73B_MLTP_PM_CVC-01.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_539_Maison_du_Monde_Roma_sofa.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_540_Maison_du_Monde_Roma_sofa.jpg?v=1741320179"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-RN",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-RN-73B",
+    "FLT___Product_Ref__Old____MDM_RN_2B",
+    "FLT___Series_Code___RN",
+    "FLT___Series_Name___Roma",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "MDM-RN-73B",
+    "series:Royan"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-RN-73B",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

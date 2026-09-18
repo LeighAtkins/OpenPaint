@@ -1,0 +1,47 @@
+{
+ "handle": "ballard-designs-graham-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:52.727Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "graham-twin-sleeper-slipcover",
+   "title": "Graham Twin Sleeper Slipcover",
+   "vendor": "Ballard Designs",
+   "sku": "BS-GM-56B",
+   "price": "839.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_BS_BS-GM_BS-GM-56B_BS-GM-56B_CNRP_SP_CVC-01.jpg?v=1744940088",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_BS_BS-GM_BS-GM-56B_BS-GM-56B_CNRP_SP_CVC-01.jpg?v=1744940088"
+   ],
+   "tags": [
+    "BS-GM-56B",
+    "categoryproducts:BS",
+    "categoryproducts:BS-GM",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Graham"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BS-GM-56B",
+     "price": "839.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

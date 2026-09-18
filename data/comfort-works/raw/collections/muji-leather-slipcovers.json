@@ -1,0 +1,143 @@
+{
+ "handle": "muji-leather-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:34.235Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "leather-2-5p-sofa-cover",
+   "title": "Leather 2.5P Sofa Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-LS-3P",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-LS-3P_SHRT_SP_CVC-01.jpg?v=1741320175",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-LS-3P_SHRT_SP_CVC-01.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_632_Muji_Leather_Sofa.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_631_Muji_Leather_Sofa_42e20183-671e-4d8b-abe3-5558fd4f02ff.jpg?v=1741320175"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-LS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-LS-3P",
+    "FLT___Product_Ref__Old____MJ_L2_5P",
+    "FLT___Series_Code___LS",
+    "FLT___Series_Name___Leather_Sofa",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-LS-3P",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Leather Sofa Cover",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-LS-3P",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "leather-2p-sofa-cover",
+   "title": "Leather 2P Sofa Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-LS-2B",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-LS-2B_SHRT_SP_CVC-01.jpg?v=1741320172",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-LS-2B_SHRT_SP_CVC-01.jpg?v=1741320172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_477_Muji_Leather_Sofa.jpg?v=1741320172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_631_Muji_Leather_Sofa.jpg?v=1741320172"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-LS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-LS-2B",
+    "FLT___Product_Ref__Old____MJ_L2P",
+    "FLT___Series_Code___LS",
+    "FLT___Series_Name___Leather_Sofa",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-LS-2B",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Leather Sofa Cover",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-LS-2B",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

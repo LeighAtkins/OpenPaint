@@ -1,0 +1,61 @@
+{
+ "handle": "sectional-covers-arhaus",
+ "fetchedAt": "2026-09-18T05:38:10.585Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "emory-2-piece-sectional-slipcover",
+   "title": "Emory 2 Piece Sectional Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-EMY-134",
+   "price": "1019.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-EMY-134_L_MLTP_SP_CVC-01.jpg?v=1741320089",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-EMY-134_L_MLTP_SP_CVC-01.jpg?v=1741320089",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_081_Arhaus_Emory_sofa.jpg?v=1741320089",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_079_Arhaus_Emory_sofa.jpg?v=1741320089"
+   ],
+   "tags": [
+    "AS-EMY-134",
+    "categoryproducts:AS-EMY",
+    "categoryproducts:AS-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Arhaus",
+    "FLT___Product_Ref__New____AS-EMY-134",
+    "FLT___Series_Code___EMY",
+    "FLT___Series_Name___Emory",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT___Variant_1_Name___Left_Chaise",
+    "FLT___Variant_1_Name___Right_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "series:Emory"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-EMY-134",
+     "price": "1019.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

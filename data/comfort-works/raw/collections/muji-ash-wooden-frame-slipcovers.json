@@ -1,0 +1,211 @@
+{
+ "handle": "muji-ash-wooden-frame-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:30.584Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "2-seater-ash-sofa-cover",
+   "title": "2 Seater Ash Sofa Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-ASH-2",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-ASH-2_VELC_PM_CVC-01.jpg?v=1741320173",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-ASH-2_VELC_PM_CVC-01.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_468_Muji_Ash_Sofa_3cb32af9-f0f3-42b5-b94e-960af6825ba9.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_467_Muji_Ash_Sofa_b2e056df-1949-4934-a7d5-c45927425caf.jpg?v=1741320173"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Wooden frame arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Frame Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-ASH",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-ASH-2",
+    "FLT___Product_Ref__Old____MJ_ASH_2",
+    "FLT___Series_Code___ASH",
+    "FLT___Series_Name___Ash_Sofa",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-ASH-2",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ash Wooden Frame",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-ASH-2",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "1-seater-ash-sofa-cover",
+   "title": "1 Seater Ash Sofa Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-ASH-1",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-ASH-1_VELC_PM_CVC-01.jpg?v=1741320175",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-ASH-1_VELC_PM_CVC-01.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_467_Muji_Ash_Sofa.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_468_Muji_Ash_Sofa.jpg?v=1741320175"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Wooden frame arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Frame Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-ASH",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-ASH-1",
+    "FLT___Product_Ref__Old____MJ_ASH_1",
+    "FLT___Series_Code___ASH",
+    "FLT___Series_Name___Ash_Sofa",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-ASH-1",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ash Wooden Frame",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-ASH-1",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "3-seater-ash-sofa-cover",
+   "title": "3 Seater Ash Sofa Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-ASH-3",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-ASH-3_VELC_PM_CVC-01.jpg?v=1741320178",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-ASH-3_VELC_PM_CVC-01.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_469_Muji_Ash_Sofa.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_467_Muji_Ash_Sofa_c6f4f659-8ec7-4ba9-83f3-3cc1917cd029.jpg?v=1741320178"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Wooden frame arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Frame Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-ASH",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-ASH-3",
+    "FLT___Product_Ref__Old____MJ_ASH_3",
+    "FLT___Series_Code___ASH",
+    "FLT___Series_Name___Ash_Sofa",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-ASH-3",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ash Wooden Frame",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-ASH-3",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

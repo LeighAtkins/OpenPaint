@@ -1,0 +1,151 @@
+{
+ "handle": "ikea-brathult-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:35.007Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "brathult-3-seat-sofabed-covers",
+   "title": "Brathult 3-seat Sofabed Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BHT-3B",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHT-3B_LSKT_SP_CVC-01.jpg?v=1741320117",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHT-3B_LSKT_SP_CVC-01.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_237_IKEA_Brathult_sofa.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_598_IKEA_Brathult_sofa.jpg?v=1741320117"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular High",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:BHT",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BHT-3B",
+    "FLT___Product_Ref__Old____BHT3",
+    "FLT___Series_Code___BHT",
+    "FLT___Series_Name___Brathult",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-BHT-3B",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Brathult",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BHT-3B",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "brathult-corner-sofabed-covers",
+   "title": "Brathult Corner Sofabed Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BHT-25B",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHT-25B_LSKT_SP_CVC-01.jpg?v=1764118428",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHT-25B_LSKT_SP_CVC-01.jpg?v=1764118428",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_238_IKEA_Brathult_sofa.jpg?v=1764118428",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_237_IKEA_Brathult_sofa_12acab65-88d8-4f17-b81b-f6591c55db22.jpg?v=1764118428"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular High",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:BHT",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BHT-25B",
+    "FLT___Product_Ref__Old____BHT7",
+    "FLT___Series_Code___BHT",
+    "FLT___Series_Name___Brathult",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-BHT-25B",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Brathult",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BHT-25B",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

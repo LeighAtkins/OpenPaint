@@ -1,0 +1,712 @@
+{
+ "handle": "west-elm-harmony-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:39.356Z",
+ "count": 14,
+ "products": [
+  {
+   "handle": "harmony-modular-82-sofa-slipcover",
+   "title": "Harmony Modular 82\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HM-82",
+   "price": "549.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HM-82_LV_VELC_SP_CVC-01.webp?v=1787902119",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HM-82_LV_VELC_SP_CVC-01.webp?v=1787902119"
+   ],
+   "tags": [
+    "categoryproducts:WE-HY",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Harmony Modular",
+    "WE-HM-82"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HM-82",
+     "price": "549.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-modular-armless-single-sofa-slipcover",
+   "title": "Harmony Modular Armless Single Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HM-34X",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HM-34X_SV_STD_VELC_SP_CVC-01.webp?v=1787902011",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HM-34X_SV_STD_VELC_SP_CVC-01.webp?v=1787902011"
+   ],
+   "tags": [
+    "categoryproducts:WE-HY",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Harmony Modular",
+    "WE-HM-34X"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HM-34X",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-76-sofa-slipcover",
+   "title": "Harmony 76\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HY-76",
+   "price": "539.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-76_EXD_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-76_EXD_VELC_SP_CVC-01.jpg?v=1741320197"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HY",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "series:Harmony",
+    "WE-HY-76"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HY-76",
+     "price": "539.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-92-sofa-slipcover",
+   "title": "Harmony 92\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HY-92",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-92_EXD_VELC_SP_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-92_EXD_VELC_SP_CVC-01.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_510_West_20Elm_Harmony_sofa.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_655_West_Elm_Harmony_sofa.jpg?v=1741320196"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:WE-HY",
+    "categoryproducts:WE-sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HY-92",
+    "FLT___Series_Code___HY",
+    "FLT___Series_Name___Harmony",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___36in_Depth",
+    "FLT___Variant_1_Name___42in_Depth",
+    "FLT___Variant_1_Name___47in_Depth",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Harmony",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:4",
+    "WE-HY-92"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HY-92",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-chair-slipcover",
+   "title": "Harmony Chair Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HY-45",
+   "price": "419.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-45_VELC_SP_CVC-01.jpg?v=1741320195",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-45_VELC_SP_CVC-01.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_509_West_20Elm_Harmony_sofa.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_654_West_Elm_Harmony_sofa_29318599-7e67-4d78-b50b-9f1cf3f543b4.jpg?v=1741320195"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:WE-chair",
+    "categoryproducts:WE-HY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HY-45",
+    "FLT___Product_Ref__Old____WE_HY_1",
+    "FLT___Series_Code___HY",
+    "FLT___Series_Name___Harmony",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Harmony",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:2",
+    "WE-HY-45"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HY-45",
+     "price": "419.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-82-sofa-slipcover",
+   "title": "Harmony 82\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HY-82",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-82_EXD_VELC_SP_CVC-01.jpg?v=1741320195",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-82_EXD_VELC_SP_CVC-01.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_510_West_20Elm_Harmony_sofa_e1456ffb-f5d3-4f67-b299-c826ef228979.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_654_West_Elm_Harmony_sofa.jpg?v=1741320195"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:WE-HY",
+    "categoryproducts:WE-sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HY-82",
+    "FLT___Series_Code___HY",
+    "FLT___Series_Name___Harmony",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___36in_Depth",
+    "FLT___Variant_1_Name___42in_Depth",
+    "FLT___Variant_1_Name___47in_Depth",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Harmony",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:4",
+    "WE-HY-82"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HY-82",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-2-piece-chaise-sectional-slipcover",
+   "title": "Harmony 2-Piece Chaise Sectional Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HY-118",
+   "price": "799.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-118_L_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-118_L_VELC_SP_CVC-01.jpg?v=1741320197",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_509_West_20Elm_Harmony_sofa_00615578-b2a2-4060-a7a3-f0e7b4e69981.jpg?v=1741320197",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_655_West_Elm_Harmony_sofa_5f798eef-0481-4aa5-a5e1-5eb326fc56b8.jpg?v=1741320197"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HY",
+    "categoryproducts:WE-S",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HY-118",
+    "FLT___Series_Code___HY",
+    "FLT___Series_Name___Harmony",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Chaise",
+    "FLT___Variant_1_Name___Right_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "series:Harmony",
+    "WE-HY-118"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HY-118",
+     "price": "799.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-modular-92-sofa-slipcover",
+   "title": "Harmony Modular 92\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HM-92",
+   "price": "699.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HM-92_LV_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HM-92_LV_VELC_SP_CVC-01.jpg?v=1741320197"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HY",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Harmony Modular",
+    "WE-HM-92"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HM-92",
+     "price": "699.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-modular-sectional-left-right-arm-2-seater-79-sofa-slipcover",
+   "title": "Harmony Modular Sectional Left/Right-Arm 2 Seater 79\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HM-79M",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HM-79M_L_LV_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HM-79M_L_LV_VELC_SP_CVC-01.jpg?v=1741320197"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HY",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Harmony Modular",
+    "WE-HM-79M"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HM-79M",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-modular-sectional-43-corner-slipcover",
+   "title": "Harmony Modular Sectional 43\" Corner Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HM-43X",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HM-43X_LV_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HM-43X_LV_VELC_SP_CVC-01.jpg?v=1741320197"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-chair",
+    "categoryproducts:WE-HY",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Harmony Modular",
+    "WE-HM-43X"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HM-43X",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-modular-85-sleeper-sofa-slipcover",
+   "title": "Harmony Modular 85\" Sleeper Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HY-85B",
+   "price": "529.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-85B_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-85B_VELC_SP_CVC-01.jpg?v=1741320197"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HY",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Harmony Modular",
+    "WE-HY-85B"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HY-85B",
+     "price": "529.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-modular-43-5-ottoman-slipcover",
+   "title": "Harmony Modular 43.5\" Ottoman Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HY-44FM",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-44FM_LV_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-44FM_LV_VELC_SP_CVC-01.jpg?v=1741320197"
+   ],
+   "tags": [
+    "categoryproducts:WE-0",
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HY",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Harmony Modular",
+    "WE-HY-44FM",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HY-44FM",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-left-right-arm-2-5-seater-sofa-slipcover",
+   "title": "Harmony Left/Right Arm 2.5 Seater Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HY-76M",
+   "price": "479.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-76M_L_LV_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-76M_L_LV_VELC_SP_CVC-01.jpg?v=1741320197"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HY",
+    "categoryproducts:WE-S",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Harmony",
+    "WE-HY-76M",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HY-76M",
+     "price": "479.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-corner-slipcover",
+   "title": "Harmony Corner Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HY-41X",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-41X_LV_VELC_SP_CVC-01.jpg?v=1741320198",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-41X_LV_VELC_SP_CVC-01.jpg?v=1741320198"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HY",
+    "categoryproducts:WE-S",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Harmony",
+    "WE-HY-41X",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HY-41X",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

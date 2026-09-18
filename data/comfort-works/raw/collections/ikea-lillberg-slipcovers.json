@@ -1,0 +1,279 @@
+{
+ "handle": "ikea-lillberg-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:58.041Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "lillberg-sofa-bed-cover",
+   "title": "Lillberg Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LG-3B",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-3B_PM_CVC-01.jpg?v=1741320116",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-3B_PM_CVC-01.jpg?v=1741320116",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_313_IKEA_Lillberg_sofa_70797f84-b8f0-4558-bc90-f2b35c8dbc61.jpg?v=1741320116",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_315_IKEA_Lillberg_sofa_69c83399-532f-4522-966c-ec09e787a3e5.jpg?v=1741320116"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin Frame",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Frame High",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LG-3B",
+    "FLT___Product_Ref__Old____LG3_B",
+    "FLT___Series_Code___LG",
+    "FLT___Series_Name___Lillberg",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LG-3B",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lillberg",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LG-3B",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lillberg-3-seater-sofa-cover",
+   "title": "Lillberg 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LG-3",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-3_PM_CVC-01.jpg?v=1741320110",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-3_PM_CVC-01.jpg?v=1741320110",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_315_IKEA_Lillberg_sofa.jpg?v=1741320110",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_313_IKEA_Lillberg_sofa_b7991cfd-366f-4312-9166-3174cd3bbea1.jpg?v=1741320110"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin Frame",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Frame High",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LG-3",
+    "FLT___Product_Ref__Old____LG3",
+    "FLT___Series_Code___LG",
+    "FLT___Series_Name___Lillberg",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LG-3",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lillberg",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LG-3",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lillberg-2-seater-sofa-cover",
+   "title": "Lillberg 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LG-2",
+   "price": "199.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-2_PM_CVC-01.jpg?v=1741320111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-2_PM_CVC-01.jpg?v=1741320111",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_314_IKEA_Lillberg_sofa.jpg?v=1741320111"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin Frame",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Frame High",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LG-2",
+    "FLT___Product_Ref__Old____LG2",
+    "FLT___Series_Code___LG",
+    "FLT___Series_Name___Lillberg",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LG-2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lillberg",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LG-2",
+     "price": "199.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lillberg-armchair-cover",
+   "title": "Lillberg Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LG-1",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-1_PM_CVC-01.jpg?v=1741660252",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-1_PM_CVC-01.jpg?v=1741660252",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_313_IKEA_Lillberg_sofa.jpg?v=1741320112",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_315_IKEA_Lillberg_sofa_b452942f-a6f9-47a4-be75-b960c1f18567.jpg?v=1741320112"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin Frame",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Frame High",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:LG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LG-1",
+    "FLT___Product_Ref__Old____LG1",
+    "FLT___Series_Code___LG",
+    "FLT___Series_Name___Lillberg",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LG-1",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lillberg",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LG-1",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

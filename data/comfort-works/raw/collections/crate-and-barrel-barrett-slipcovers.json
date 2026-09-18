@@ -1,0 +1,306 @@
+{
+ "handle": "crate-and-barrel-barrett-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:07.336Z",
+ "count": 5,
+ "products": [
+  {
+   "handle": "barrett-track-arm-chair-slipcover",
+   "title": "Barrett Track Arm Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BT-35",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-35_VELC_SP_CVC-01.jpg?v=1741320091",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-35_VELC_SP_CVC-01.jpg?v=1741320091",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_088_Crate_and_Barrel_Barrett_sofa_33373525-a49b-4d7c-a9ad-9ffcc801cbce.jpg?v=1741320091",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_441_Crate_and_Barrel_Barrett_sofa.jpg?v=1741320091"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:CB-BT",
+    "CB-BT-35",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-BT-35",
+    "FLT___Series_Code___BT",
+    "FLT___Series_Name___Barrett_Track_Arm",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Barrett",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BT-35",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "barrett-track-arm-chair-and-a-half-slipcover",
+   "title": "Barrett Track Arm Chair and a Half Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BT-53",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-53_VELC_SP_CVC-01.jpg?v=1741320093",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-53_VELC_SP_CVC-01.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_088_Crate_and_Barrel_Barrett_sofa.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_442_Crate_and_Barrel_Barrett_sofa.jpg?v=1741320093"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:CB-BT",
+    "CB-BT-53",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-BT-53",
+    "FLT___Series_Code___BT",
+    "FLT___Series_Name___Barrett_Track_Arm",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Barrett",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BT-53",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "barrett-queen-sleeper-sofa-slipcover",
+   "title": "Barrett Queen Sleeper Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BT-78B",
+   "price": "509.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-78B_VELC_SP_CVC-01.jpg?v=1741320092",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-78B_VELC_SP_CVC-01.jpg?v=1741320092",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_416_Crate_and_Barrel_Barrett_sofa.jpg?v=1741320092",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_101_Crate_and_Barrel_Barrett_sofa_19819cb5-970f-4212-b495-12705c3e9517.jpg?v=1741320092"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-BT",
+    "CB-BT-78B",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-BT-78B",
+    "FLT___Series_Code___BT",
+    "FLT___Series_Name___Barrett",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Barrett",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BT-78B",
+     "price": "509.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "barrett-reversible-sectional-sofa-slipcover",
+   "title": "Barrett Reversible Sectional Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BT-90",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-90_VELC_SP_CVC-01.jpg?v=1741320093",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-90_VELC_SP_CVC-01.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_101_Crate_and_Barrel_Barrett_sofa.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_102_Crate_and_Barrel_Barrett_sofa.jpg?v=1741320093"
+   ],
+   "tags": [
+    "categoryproducts:CB-BT",
+    "categoryproducts:CB-Sectional",
+    "CB-BT-90",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-BT-90",
+    "FLT___Series_Code___BT",
+    "FLT___Series_Name___Barrett_Track",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "series:Barrett"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BT-90",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "barrett-ii-track-arm-91-sofa-slipcover",
+   "title": "Barrett II Track Arm 91\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BT-91",
+   "price": "569.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-91_LV_VELC_SP_CVC-01.jpg?v=1741320096",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-91_LV_VELC_SP_CVC-01.jpg?v=1741320096"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-BT",
+    "categoryproducts:CB-Slipcover",
+    "CB-BT-91",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Barrett"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BT-91",
+     "price": "569.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

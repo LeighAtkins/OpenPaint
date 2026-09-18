@@ -1,0 +1,5144 @@
+{
+ "handle": "sofa-bed-covers",
+ "fetchedAt": "2026-09-18T05:38:20.718Z",
+ "count": 79,
+ "products": [
+  {
+   "handle": "alex-ii-79-queen-sleeper-sofa-slipcover",
+   "title": "Alex II 79\" Queen Sleeper Sofa Slipcover",
+   "vendor": "Mitchell Gold + Bob Williams",
+   "sku": "MG-AX-79B",
+   "price": "799.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-AX-79B_MLTP_PM_CVC-01.jpg?v=1741320169",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-AX-79B_MLTP_PM_CVC-01.jpg?v=1741320169",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_578_Mitchell_Gold___Bob_Williams_Alex_II_sofa_204ae6a5-27fa-4190-8d75-231a23b58402.jpg?v=1741320169",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_579_Mitchell_Gold___Bob_Williams_Alex_II_sofa_137d9444-115b-4467-bf74-81c9e8b73edd.jpg?v=1741320169"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MG",
+    "categoryproducts:MG-AX",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Mitchell_Gold___Bob_Williams",
+    "FLT___Product_Ref__New____MG-AX-79B",
+    "FLT___Series_Code___AX",
+    "FLT___Series_Name___Alex_II",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "MG-AX-79B",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Alex II",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MG-AX-79B",
+     "price": "799.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "axis-ii-2-seat-queen-sleeper-sofa-slipcover",
+   "title": "Axis II 2-Seat Queen Sleeper Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-AS-88B",
+   "price": "789.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-88B_VELC_PM_CVC-01.jpg?v=1741674172",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-88B_VELC_PM_CVC-01.jpg?v=1741674172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_421_Crate_and_Barrel_Axis_II_sofa.jpg?v=1741674172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_422_Crate_and_Barrel_Axis_II_sofa.jpg?v=1741674172"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-AS",
+    "CB-AS-88B",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-AS-88B",
+    "FLT___Series_Code___AS",
+    "FLT___Series_Name___Axis_II",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Axis II",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-AS-88B",
+     "price": "789.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backabro-2-seater-sofa-bed-cover",
+   "title": "Backabro 2 Seater Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BRO-2B",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-2B_CNRP_PM_CVC-01.jpg?v=1741320124",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-2B_CNRP_PM_CVC-01.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_219_IKEA_Backabro_sofa.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_221_IKEA_Backabro_sofa_582852ed-0005-4a74-85d5-d6fd3b882a0c.jpg?v=1741320124"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:BRO",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BRO-2B",
+    "FLT___Product_Ref__Old____BRO2",
+    "FLT___Series_Code___BRO",
+    "FLT___Series_Name___Backabro",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-BRO-2B",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Backabro",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BRO-2B",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backabro-3-seater-sofa-bed-cover",
+   "title": "Backabro 3 Seater Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BRO-3B",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-3B_CNRP_PM_CVC-01.jpg?v=1741320131",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-3B_CNRP_PM_CVC-01.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_220_IKEA_Backabro_sofa.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_219_IKEA_Backabro_sofa_fe8cec49-1540-46c0-a5b8-9f3cd8f79032.jpg?v=1741320131"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:BRO",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BRO-3B",
+    "FLT___Product_Ref__Old____BRO3",
+    "FLT___Series_Code___BRO",
+    "FLT___Series_Name___Backabro",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-BRO-3B",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Backabro",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BRO-3B",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backabro-sofa-bed-with-chaise-cover",
+   "title": "Backabro Sofa Bed with Chaise Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BRO-35B",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-35B_L_CNRP_PM_CVC-01.jpg?v=1741320126",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-35B_L_CNRP_PM_CVC-01.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_221_IKEA_Backabro_sofa.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_599_IKEA_Backabro_sofa.jpg?v=1741320126"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:BRO",
+    "categoryproducts:IK",
+    "chaise_lounge:Yes",
+    "chaise_lounge_position:Both",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BRO-35B",
+    "FLT___Product_Ref__Old____BRO7",
+    "FLT___Series_Code___BRO",
+    "FLT___Series_Name___Backabro",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-BRO-35B",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Backabro",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BRO-35B",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "balthazar-3-seater-sofa-bed-slipcover",
+   "title": "Balthazar 3 Seater Sofa Bed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-BZR-66B",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BZR-66B_SHRT_SP_CVC-01.jpg?v=1741320168",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BZR-66B_SHRT_SP_CVC-01.jpg?v=1741320168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_538_Maison_du_Monde_Balthazar_sofa.jpg?v=1741320168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_537_Maison_du_Monde_Balthazar_sofa.jpg?v=1741320168"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp Straight",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-BZR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-BZR-66B",
+    "FLT___Product_Ref__Old____MDM_BZR_3B",
+    "FLT___Series_Code___BZR",
+    "FLT___Series_Name___Balthazar",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MDM-BZR-66B",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Balthazar",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-BZR-66B",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "barcelone-3-4-seater-sofa-bed-slipcover",
+   "title": "Barcelone 3/4 Seater Sofa Bed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-BE-80B",
+   "price": "479.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BE-80B_LSKT_SI_CVC-01.jpg?v=1741320167",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BE-80B_LSKT_SI_CVC-01.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_548_Maison_du_Monde_Barcelone_sofa.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_549_Maison_du_Monde_Barcelone_sofa_e66006eb-347f-49a3-8f2f-66cfffcf21e7.jpg?v=1741320167"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-BE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-BE-80B",
+    "FLT___Product_Ref__Old____MDM_BE_35B",
+    "FLT___Series_Code___BE",
+    "FLT___Series_Name___Barcelone",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "MDM-BE-80B",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Barcelone",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:5",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-BE-80B",
+     "price": "479.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "barrett-queen-sleeper-sofa-slipcover",
+   "title": "Barrett Queen Sleeper Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BT-78B",
+   "price": "509.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-78B_VELC_SP_CVC-01.jpg?v=1741320092",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-78B_VELC_SP_CVC-01.jpg?v=1741320092",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_416_Crate_and_Barrel_Barrett_sofa.jpg?v=1741320092",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_101_Crate_and_Barrel_Barrett_sofa_19819cb5-970f-4212-b495-12705c3e9517.jpg?v=1741320092"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-BT",
+    "CB-BT-78B",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-BT-78B",
+    "FLT___Series_Code___BT",
+    "FLT___Series_Name___Barrett",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Barrett",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BT-78B",
+     "price": "509.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bastide-3-seater-sofa-bed-slipcover",
+   "title": "Bastide 3 Seater Sofa Bed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-BDE-81B",
+   "price": "489.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BDE-81B_CNRP_PM_CVC-01.jpg?v=1741320166",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BDE-81B_CNRP_PM_CVC-01.jpg?v=1741320166",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_535_Maison_du_Monde_Bastide_sofa.jpg?v=1741320166"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-BDE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-BDE-81B",
+    "FLT___Product_Ref__Old____MDM_BDE_3B",
+    "FLT___Series_Code___BDE",
+    "FLT___Series_Name___Bastide",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "MDM-BDE-81B",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Bastide",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No",
+    "throw_pillows:4"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-BDE-81B",
+     "price": "489.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "beddinge-sofa-bed-loose-fit-slipcover",
+   "title": "Beddinge Sofa Bed Loose Fit Slipcover",
+   "vendor": "IKEA",
+   "sku": "IK-BE-3BX",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BE-3BX_SHRT_SP_CVC-01.jpg?v=1741320126",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BE-3BX_SHRT_SP_CVC-01.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_229_IKEA_Beddinge_sofa.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_230_IKEA_Beddinge_sofa.jpg?v=1741320126"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:BE",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BE-3BX",
+    "FLT___Product_Ref__Old____BE_B",
+    "FLT___Series_Code___BE",
+    "FLT___Series_Name___Beddinge",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-BE-3BX",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Beddinge",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BE-3BX",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bloomsbury-queen-sleeper-sofa-slipcover",
+   "title": "Bloomsbury Queen Sleeper Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BY-89B",
+   "price": "709.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BY-89B_MLTP_PM_CVC-01.jpg?v=1741320094",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BY-89B_MLTP_PM_CVC-01.jpg?v=1741320094",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_437_Crate_and_Barrel_Bloomsbury_sofa.jpg?v=1741320094",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_438_Crate_and_Barrel_Bloomsbury_sofa.jpg?v=1741320094"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge Straight",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-BY",
+    "categoryproducts:CB-Slipcover",
+    "CB-BY-89B",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-BY-89B",
+    "FLT___Series_Code___BY",
+    "FLT___Series_Name___Bloomsbury",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Bloomsbury",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BY-89B",
+     "price": "709.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "brathult-3-seat-sofabed-covers",
+   "title": "Brathult 3-seat Sofabed Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BHT-3B",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHT-3B_LSKT_SP_CVC-01.jpg?v=1741320117",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHT-3B_LSKT_SP_CVC-01.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_237_IKEA_Brathult_sofa.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_598_IKEA_Brathult_sofa.jpg?v=1741320117"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular High",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:BHT",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BHT-3B",
+    "FLT___Product_Ref__Old____BHT3",
+    "FLT___Series_Code___BHT",
+    "FLT___Series_Name___Brathult",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-BHT-3B",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Brathult",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BHT-3B",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "brathult-corner-sofabed-covers",
+   "title": "Brathult Corner Sofabed Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BHT-25B",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHT-25B_LSKT_SP_CVC-01.jpg?v=1764118428",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHT-25B_LSKT_SP_CVC-01.jpg?v=1764118428",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_238_IKEA_Brathult_sofa.jpg?v=1764118428",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_237_IKEA_Brathult_sofa_12acab65-88d8-4f17-b81b-f6591c55db22.jpg?v=1764118428"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular High",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:BHT",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BHT-25B",
+    "FLT___Product_Ref__Old____BHT7",
+    "FLT___Series_Code___BHT",
+    "FLT___Series_Name___Brathult",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-BHT-25B",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Brathult",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BHT-25B",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "buchanan-square-arm-sleeper-sofa-slipcover",
+   "title": "Buchanan Square Arm Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSA-84B",
+   "price": "739.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-84B_CNRP_PM_CVC-01.jpg?v=1741320177",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-84B_CNRP_PM_CVC-01.jpg?v=1741320177"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSA-84B",
+    "FLT___Product_Ref__Old____PB_BSA_83B",
+    "FLT___Series_Code___BSA",
+    "FLT___Series_Name___Buchanan_Square_Arm",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "PB-BSA-84B",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Buchanan Square Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSA-84B",
+     "price": "739.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cameron-square-arm-86-sleeper-sofa-slipcover",
+   "title": "Cameron Square Arm 86\" Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CSA-86B",
+   "price": "699.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CSA-86B_3S-3B_LSKT_PM_CVC-01.jpg?v=1744678213",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CSA-86B_3S-3B_LSKT_PM_CVC-01.jpg?v=1744678213"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CSA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-CSA-86B",
+    "series:Cameron Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CSA-86B",
+     "price": "699.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ekeskog-sofa-bed-cover",
+   "title": "Ekeskog Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EG-3B",
+   "price": "419.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-3B_MLTP_PM_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-3B_MLTP_PM_CVC-01.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_245_IKEA_Ekeskog_sofa_8d80201d-b611-41c3-971c-4e4bf2cd3229.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_246_IKEA_Ekeskog_sofa_07da8d35-cee7-49f2-a408-ce48e5c0be1c.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:EG",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EG-3B",
+    "FLT___Product_Ref__Old____EG3_B",
+    "FLT___Series_Code___EG",
+    "FLT___Series_Name___Ekeskog",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EG-3B",
+    "installation:579",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ekeskog",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EG-3B",
+     "price": "419.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ektorp-2-seat-sofa-bed-cover",
+   "title": "Ektorp 2 Seat Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EP-2B",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-2B_CNRP_PM_CVC-01.jpg?v=1741320115",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-2B_CNRP_PM_CVC-01.jpg?v=1741320115"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:EP",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EP-2B",
+    "FLT___Product_Ref__Old____EP2_B",
+    "FLT___Series_Code___EP",
+    "FLT___Series_Name___Ektorp",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EP-2B",
+    "installation:586",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ektorp",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EP-2B",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ektorp-3-seater-sofa-bed-cover",
+   "title": "Ektorp 3 Seater Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EP-3B",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-3B_CNRP_PM_CVC-01.jpg?v=1741320108",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-3B_CNRP_PM_CVC-01.jpg?v=1741320108"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:EP",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EP-3B",
+    "FLT___Product_Ref__Old____EP3_B",
+    "FLT___Series_Code___EP",
+    "FLT___Series_Name___Ektorp",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EP-3B",
+    "installation:586",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ektorp",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EP-3B",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ektorp-corner-sofa-bed-2-2-cover",
+   "title": "Ektorp Corner Sofa Bed (2+2) Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EP-262B",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-262B_CNRP_PM_CVC-01.jpg?v=1741320109",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-262B_CNRP_PM_CVC-01.jpg?v=1741320109"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Corner Section",
+    "categoryproducts:EP",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EP-262B",
+    "FLT___Product_Ref__Old____EP4_B",
+    "FLT___Series_Code___EP",
+    "FLT___Series_Name___Ektorp",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EP-262B",
+    "installation:586",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ektorp",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:5",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EP-262B",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "fagelbo-bed-compartment-cover",
+   "title": "Fagelbo Bed Compartment Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FO-CCB",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FO-CCB_PM_CVC-01.jpg?v=1741320115",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FO-CCB_PM_CVC-01.jpg?v=1741320115",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_250_IKEA_Fagelbo_sofa_4b4fe760-9695-4b3f-bf4c-531706518f2b.jpg?v=1741320115",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_249_IKEA_Fagelbo_sofa_4c155bdc-dd63-4200-9975-feaf4348293d.jpg?v=1741320115"
+   ],
+   "tags": [
+    "categoryproducts:FO",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FO-CCB",
+    "FLT___Product_Ref__Old____FO0",
+    "FLT___Series_Code___FO",
+    "FLT___Series_Name___Fagelbo",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "IK-FO-CCB",
+    "series:Fagelbo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FO-CCB",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "farlov-2-seater-sofa-bed-cover",
+   "title": "Farlov 2 Seater Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FV-2B",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FV-2B_PTD_CNRP_SP_CVC-01.jpg?v=1741741757",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FV-2B_PTD_CNRP_SP_CVC-01.jpg?v=1741741757",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_055_IKEA_Farlov_sofa_63a60798-2a9f-4270-adcc-fc8fbecf7160.jpg?v=1741741757",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_057_IKEA_Farlov_sofa_ca8af527-38a1-4740-b883-55b6ef175ac5.jpg?v=1741741757"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Sloped Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Round Wedge Straight",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:FV",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FV-2B",
+    "FLT___Product_Ref__Old____FV2_B",
+    "FLT___Series_Code___FV",
+    "FLT___Series_Name___Farlov",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Variant_1_Name___EU_Version",
+    "FLT___Variant_1_Name___US___CA_Version",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-FV-2B",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Farlov",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FV-2B",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-loveseat-sleeper-section-cover",
+   "title": "Finnala Loveseat Sleeper Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-2BX",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-2BX_VELC_WR_CVC-01.jpg?v=1741320131",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-2BX_VELC_WR_CVC-01.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_121_IKEA_Finnala_sofa_3cd213ec-677f-4b97-afcf-450d7f74037f.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_118_IKEA_Finnala_sofa.jpg?v=1741320131"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-2BX",
+    "FLT___Product_Ref__Old____FNA2B_N",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-2BX",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-2BX",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "flottebo-sofa-bed-cover-120cm",
+   "title": "Flottebo Sofa Bed Cover (120cm)",
+   "vendor": "IKEA",
+   "sku": "IK-FLO-3BX-3C",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FLO-3BX-3C_VELC_SP_CVC-01.jpg?v=1741678946",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FLO-3BX-3C_VELC_SP_CVC-01.jpg?v=1741678946",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_193_IKEA_Flottebo_sofa.jpg?v=1741678946",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_106_IKEA_Flottebo_sofa_24d86819-7372-456b-bbef-adb45b803f92.jpg?v=1741678946"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa bed",
+    "categoryproducts:FLO",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FLO-3BX-3C",
+    "FLT___Product_Ref__Old____FLO3",
+    "FLT___Series_Code___FLO",
+    "FLT___Series_Name___Flottebo",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-FLO-3BX-3C",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Flottebo",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FLO-3BX-3C",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "flottebo-sofa-bed-cover-90cm",
+   "title": "Flottebo Sofa Bed Cover (90cm)",
+   "vendor": "IKEA",
+   "sku": "IK-FLO-3BX-2C",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FLO-3BX-2C_VELC_SP_CVC-01.jpg?v=1741678946",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FLO-3BX-2C_VELC_SP_CVC-01.jpg?v=1741678946",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_106_IKEA_Flottebo_sofa.jpg?v=1741678946",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_195_IKEA_Flottebo_sofa.jpg?v=1741678946"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa bed",
+    "categoryproducts:FLO",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FLO-3BX-2C",
+    "FLT___Product_Ref__Old____FLO2",
+    "FLT___Series_Code___FLO",
+    "FLT___Series_Name___Flottebo",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-FLO-3BX-2C",
+    "important_notes:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Flottebo",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FLO-3BX-2C",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "friheten-3-seater-sofa-bed-cover-loose-fit",
+   "title": "Friheten 3-Seater Sofa-Bed Cover (Loose Fit)",
+   "vendor": "IKEA",
+   "sku": "IK-FN-3B",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FN-3B_SHRT_SP_CVC-01_2X_5833a534-ad06-47d7-97d0-c30017e542d8.jpg?v=1749199078",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FN-3B_SHRT_SP_CVC-01_2X_5833a534-ad06-47d7-97d0-c30017e542d8.jpg?v=1749199078"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:CS",
+    "categoryproducts:FN",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FN-3B",
+    "FLT___Product_Ref__Old____FNX_B",
+    "FLT___Series_Code___FN",
+    "FLT___Series_Name___Friheten",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-FN-3B",
+    "installation:616",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Friheten",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FN-3B",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "friheten-corner-sofa-bed-cover",
+   "title": "Friheten Corner Sofa-Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FN-25BM",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FN-25BM_R_SV_SHRT_SP_CVC-01_2X_c0dc0e02-5e98-4a7e-bbe6-071c25b8619e.jpg?v=1749199532",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FN-25BM_R_SV_SHRT_SP_CVC-01_2X_c0dc0e02-5e98-4a7e-bbe6-071c25b8619e.jpg?v=1749199532"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:FN",
+    "categoryproducts:IK",
+    "chaise_lounge:Yes",
+    "chaise_lounge_position:Left",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FN-25BM",
+    "FLT___Product_Ref__Old____FN3",
+    "FLT___Series_Code___FN",
+    "FLT___Series_Name___Friheten",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT___Variant_2_Name___The_fabric_version",
+    "FLT___Variant_2_Name___The_leather_version",
+    "FLT___Variant_2_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-FN-25BM",
+    "installation:616",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:One Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Friheten",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FN-25BM",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gralviken-3-seat-sofa-bed-cover",
+   "title": "Gralviken 3 Seat Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-GVK-3B",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GVK-3B_SHRT_SP_CVC-01.webp?v=1758095645",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GVK-3B_SHRT_SP_CVC-01.webp?v=1758095645",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_604_IKEA_Gralviken_sofa.jpg?v=1758095645"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:GVK",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-GVK-3B",
+    "FLT___Product_Ref__Old____GVK_B",
+    "FLT___Series_Code___GVK",
+    "FLT___Series_Name___Gralviken",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-GVK-3B",
+    "important_notes:643",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:Gralviken",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-GVK-3B",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gronlid-2-seater-sofa-bed-cover",
+   "title": "Gronlid 2-seater Sofa-Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-GRD-3B",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-3B_PTD_SHRT_PM_CVC-01.jpg?v=1741320150",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-3B_PTD_SHRT_PM_CVC-01.jpg?v=1741320150",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_253_IKEA_Gronlid_sofa_a3334ab5-85d9-4489-867d-a76e88ee2ef4.jpg?v=1741320150",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_256_IKEA_Gronlid_sofa_a5eacc5e-0673-4334-9a5f-bd441554babe.jpg?v=1741320150"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular Straight",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:GRD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-GRD-3B",
+    "FLT___Product_Ref__Old____GRD2_B",
+    "FLT___Series_Code___GRD",
+    "FLT___Series_Name___Gronlid",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_WR",
+    "FLT___Variant_1_Name___140cm_mattress_size",
+    "FLT___Variant_1_Name___153cm_or_60in_mattress_size",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-GRD-3B",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Gronlid",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-GRD-3B",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gronlid-two-seat-sofa-bed-section-cover",
+   "title": "Gronlid Two-Seat Sofa-Bed Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-GRD-2BX",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-2BX_PTD_SHRT_PM_CVC-01.jpg?v=1741320149",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-2BX_PTD_SHRT_PM_CVC-01.jpg?v=1741320149",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_258_IKEA_Gronlid_sofa.jpg?v=1741320149",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_259_IKEA_Gronlid_sofa_29674b1a-ce55-427b-a2e6-e2d1ac32e051.jpg?v=1741320149"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:GRD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-GRD-2BX",
+    "FLT___Product_Ref__Old____GRD2_BN",
+    "FLT___Series_Code___GRD",
+    "FLT___Series_Name___Gronlid",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_WR",
+    "FLT___Variant_1_Name___140cm_mattress_size",
+    "FLT___Variant_1_Name___153cm_or_60in_mattress_size",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-GRD-2BX",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Gronlid",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-GRD-2BX",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hagalund-2-seater-sofa-bed-cover",
+   "title": "Hagalund 2 Seater Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HGD-2B",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HGD-2B_CNRP_PM_CVC-01.jpg?v=1741320117",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HGD-2B_CNRP_PM_CVC-01.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_261_IKEA_Hagalund_sofa.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_262_IKEA_Hagalund_sofa.jpg?v=1741320117"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:HGD",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HGD-2B",
+    "FLT___Product_Ref__Old____HD2_B",
+    "FLT___Series_Code___HGD",
+    "FLT___Series_Name___Hagalund",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HGD-2B",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Hagalund",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No",
+    "t_shaped_back_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HGD-2B",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-loveseat-sleeper-section-cover",
+   "title": "Harlanda Loveseat Sleeper Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-2BX",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-2BX_SHRT_PM_CVC-01.jpg?v=1741320132",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-2BX_SHRT_PM_CVC-01.jpg?v=1741320132"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-2BX",
+    "FLT___Product_Ref__Old____HLD2B_N",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-2BX",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-2BX",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-modular-85-sleeper-sofa-slipcover",
+   "title": "Harmony Modular 85\" Sleeper Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HY-85B",
+   "price": "529.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-85B_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-85B_VELC_SP_CVC-01.jpg?v=1741320197"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HY",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Harmony Modular",
+    "WE-HY-85B"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HY-85B",
+     "price": "529.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harris-74-queen-sleeper-sofa-slipcover",
+   "title": "Harris 74\" Queen Sleeper Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HS-74B",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HS-74B_1S-2B_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HS-74B_1S-2B_VELC_SP_CVC-01.jpg?v=1741320197"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HS",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Harris",
+    "WE-HS-74B",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HS-74B",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "henry-queen-sleeper-sofa-slipcover",
+   "title": "Henry Queen Sleeper Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HE-79B",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-79B_LSKT_PM_CVC-01.jpg?v=1741320195",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-79B_LSKT_PM_CVC-01.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_515_West_Elm_Henry_sofa_f2f12ee8-787a-45e5-bc6d-729ea1e56331.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_653_West_Elm_Henry_sofa.jpg?v=1741320195"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:WE-HE",
+    "categoryproducts:WE-sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HE-79B",
+    "FLT___Series_Code___HE",
+    "FLT___Series_Name___Henry",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Henry",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "WE-HE-79B"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HE-79B",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "holmsund-3-seat-sofa-bed-cover",
+   "title": "Holmsund 3-Seat Sofa-Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HM-3B",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HM-3B_LSKT_SI_CVC-01.jpg?v=1741320141",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HM-3B_LSKT_SI_CVC-01.jpg?v=1741320141",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_276_IKEA_Holmsund_sofa.jpg?v=1741320141",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_277_IKEA_Holmsund_sofa.jpg?v=1741320141"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Pointed Straight",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:HM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HM-3B",
+    "FLT___Product_Ref__Old____HM3_B",
+    "FLT___Series_Code___HM",
+    "FLT___Series_Name___Holmsund",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HM-3B",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Holmsund",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:5",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HM-3B",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "holmsund-corner-sofa-bed-cover",
+   "title": "Holmsund Corner Sofa-Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HM-25B",
+   "price": "409.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HM-25B_L_LSKT_SI_CVC-01.jpg?v=1741320142",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HM-25B_L_LSKT_SI_CVC-01.jpg?v=1741320142",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_278_IKEA_Holmsund_sofa.jpg?v=1741320142",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_279_IKEA_Holmsund_sofa.jpg?v=1741320142"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Pointed Straight",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:HM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HM-25B",
+    "FLT___Product_Ref__Old____HM7",
+    "FLT___Series_Code___HM",
+    "FLT___Series_Name___Holmsund",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HM-25B",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Holmsund",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:5",
+    "storage:Yes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HM-25B",
+     "price": "409.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jamie-daybed-queen-slipcover",
+   "title": "Jamie Daybed Queen Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-JE-67B",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-JE-67B_CNRP_SP_CVC-01.jpg?v=1741320190",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-JE-67B_CNRP_SP_CVC-01.jpg?v=1741320190"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TJE",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-JE-67B",
+    "series:Jamie",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-JE-67B",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jamie-daybed-twin-slipcover",
+   "title": "Jamie Daybed Twin Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-JE-44B",
+   "price": "559.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-JE-44B_CNRP_SP_CVC-01.jpg?v=1741320186",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-JE-44B_CNRP_SP_CVC-01.jpg?v=1741320186"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TJE",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-JE-44B",
+    "series:Jamie",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-JE-44B",
+     "price": "559.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlaby-sofa-bed-cover",
+   "title": "Karlaby Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KY-3BX",
+   "price": "229.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KY-3BX_120CM_SHRT_SP_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KY-3BX_120CM_SHRT_SP_CVC-01.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_295_IKEA_Karlaby_sofa.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_294_IKEA_Karlaby_sofa.jpg?v=1741575836"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:KY",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KY-3BX",
+    "FLT___Product_Ref__Old____KY2B",
+    "FLT___Series_Code___KY",
+    "FLT___Series_Name___Karlaby",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Variant_1_Name___120_cm_or_47in_mattress_size",
+    "FLT___Variant_1_Name___140_cm_or_55in_mattress_size",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "IK-KY-3BX",
+    "important_notes:643",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Karlaby"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KY-3BX",
+     "price": "229.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlanda-2-seater-sofa-bed-cover",
+   "title": "Karlanda 2 Seater Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KA-2B",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-2B_VELC_PM_CVC-01.jpg?v=1741320109",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-2B_VELC_PM_CVC-01.jpg?v=1741320109",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_296_IKEA_Karlanda_sofa.jpg?v=1741320109",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_606_IKEA_Karlanda_sofa_ef3ce2f6-a6e1-4565-9515-573a6a074fd5.jpg?v=1741320109"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KA-2B",
+    "FLT___Product_Ref__Old____KA2_B",
+    "FLT___Series_Code___KA",
+    "FLT___Series_Name___Karlanda",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KA-2B",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlanda",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KA-2B",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-sofa-bed-cover",
+   "title": "Karlstad Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-3B",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-3B_VELC_SP_CVC-01.jpg?v=1741678941",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-3B_VELC_SP_CVC-01.jpg?v=1741678941",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_08_PJ1703.jpg?v=1741678941",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_04_RS.jpg?v=1741678941"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Rounded Square",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-3B",
+    "FLT___Product_Ref__Old____KD3_B",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KD-3B",
+    "installation:578",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-3B",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kivik-sofa-bed-cover",
+   "title": "Kivik Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KK-4B",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KK-4B_VELC_SI_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KK-4B_VELC_SI_CVC-01.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KK2_06_E204_e25ef789-9ed8-4a9a-83af-8710c3ca5cad.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KK2_07_17207B_29263292-4c72-4017-9cc6-ef4aa3d22d07.jpg?v=1741678943"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KK-4B",
+    "FLT___Product_Ref__Old____KK3_B",
+    "FLT___Series_Code___KK",
+    "FLT___Series_Name___Kivik",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KK-4B",
+    "installation:587",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Kivik",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KK-4B",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kramfors-corner-unit-seat-cushion-cover-only",
+   "title": "Kramfors Corner Unit, Seat Cushion Cover Only",
+   "vendor": "IKEA",
+   "sku": "IK-KS-CC-6",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-CC-6_LV_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-CC-6_LV_SP_CVC-01.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_042_IKEA_Kramfors_sofa_5df9415d-3257-4a99-9053-b0e61acb830a.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_044_IKEA_Kramfors_sofa.jpg?v=1741678943"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:KS",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KS-CC-6",
+    "FLT___Product_Ref__Old____KS1_CC",
+    "FLT___Series_Code___KS",
+    "FLT___Series_Name___Kramfors",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Cushion_Only",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___The_leather_version",
+    "FLT___Variant_1_Name___The_standard_version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-KS-CC-6",
+    "installation:579",
+    "series:Kramfors"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KS-CC-6",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lidhult-2-seat-sofa-bed-section-cover",
+   "title": "Lidhult 2 Seat Sofa Bed Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LT-2BX",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-2BX_VELC_SP_CVC-01.jpg?v=1741320139",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-2BX_VELC_SP_CVC-01.jpg?v=1741320139",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_307_IKEA_Lidhult_sofa_7913e281-22ed-4ddc-ac9c-2ac8deb6a162.jpg?v=1741320139",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_308_IKEA_Lidhult_sofa_b4aeb881-bdab-42ae-a3c2-6103d53ca856.jpg?v=1741320139"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:LT",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LT-2BX",
+    "FLT___Product_Ref__Old____LT2_BN",
+    "FLT___Series_Code___LT",
+    "FLT___Series_Name___Lidhult",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-LT-2BX",
+    "installation:579",
+    "series:Lidhult"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LT-2BX",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lillberg-sofa-bed-cover",
+   "title": "Lillberg Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LG-3B",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-3B_PM_CVC-01.jpg?v=1741320116",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-3B_PM_CVC-01.jpg?v=1741320116",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_313_IKEA_Lillberg_sofa_70797f84-b8f0-4558-bc90-f2b35c8dbc61.jpg?v=1741320116",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_315_IKEA_Lillberg_sofa_69c83399-532f-4522-966c-ec09e787a3e5.jpg?v=1741320116"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin Frame",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Frame High",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LG-3B",
+    "FLT___Product_Ref__Old____LG3_B",
+    "FLT___Series_Code___LG",
+    "FLT___Series_Name___Lillberg",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LG-3B",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lillberg",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LG-3B",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "louvain-2-seater-sofa-bed-slipcover",
+   "title": "Louvain 2 seater sofa bed slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-LV-64B",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-64B_LSKT_SI_CVC-01.jpg?v=1741320167",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-64B_LSKT_SI_CVC-01.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_623_Maison_du_Monde_Louvain_sofa_20a8d6d9-3ddd-4724-8a71-0fa00bc49cd8.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_553_Maison_du_Monde_Louvain_sofa_c08a348b-c066-40ad-b287-0ff0e853c1c8.jpg?v=1741320167"
+   ],
+   "tags": [
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-LV",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-LV-64B",
+    "FLT___Product_Ref__Old____MDM_LV_2B",
+    "FLT___Series_Code___LV",
+    "FLT___Series_Name___Louvain",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "MDM-LV-64B",
+    "series:Louvre (Louvain)"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-LV-64B",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "louvain-3-4-seater-sofa-bed-slipcover",
+   "title": "Louvain 3/4 seater sofa bed slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-LV-80B",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-80B_LSKT_SI_CVC-01.jpg?v=1741320167",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-80B_LSKT_SI_CVC-01.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_623_Maison_du_Monde_Louvain_sofa.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_554_Maison_du_Monde_Louvain_sofa_03547888-0eca-4872-9076-3ba0c876efbb.jpg?v=1741320167"
+   ],
+   "tags": [
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-LV",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-LV-80B",
+    "FLT___Product_Ref__Old____MDM_LV_3B",
+    "FLT___Series_Code___LV",
+    "FLT___Series_Name___Louvain",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "MDM-LV-80B",
+    "series:Louvre (Louvain)"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-LV-80B",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lugnvik-sofa-bed-cover-with-chaise",
+   "title": "Lugnvik Sofa Bed Cover with Chaise",
+   "vendor": "IKEA",
+   "sku": "IK-LK-25B",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LK-25B_L_LSKT_PM_CVC-01.jpg?v=1741320145",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LK-25B_L_LSKT_PM_CVC-01.jpg?v=1741320145",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_317_IKEA_Lugnvik_sofa.jpg?v=1741320145",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_316_IKEA_Lugnvik_sofa_91d8d242-1768-4b6f-a13b-fed2411cee35.jpg?v=1741320145"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LK-25B",
+    "FLT___Product_Ref__Old____LK2_R",
+    "FLT___Series_Code___LK",
+    "FLT___Series_Name___Lugnvik",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Variant_1_Name___Left_Chaise",
+    "FLT___Variant_1_Name___Right_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LK-25B",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:Lugnvik",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LK-25B",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lycksele-2-seater-sofa-bed-cover",
+   "title": "Lycksele 2 Seater Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LE-2BX",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LE-2BX_LSKT_SP_CVC-01.jpg?v=1741678944",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LE-2BX_LSKT_SP_CVC-01.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_318_IKEA_Lycksele_sofa.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_319_IKEA_Lycksele_sofa_73751cd3-bdba-4f83-b0f6-f4ff6a1c98e4.jpg?v=1741678944"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LE-2BX",
+    "FLT___Product_Ref__Old____LE2",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lycksele",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LE-2BX",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Lycksele",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LE-2BX",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lycksele-chair-bed-cover",
+   "title": "Lycksele Chair Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LE-1BX",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LE-1BX_LSKT_SP_CVC-01.jpg?v=1741678944",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LE-1BX_LSKT_SP_CVC-01.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_423_IKEA_Lycksele_sofa.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_319_IKEA_Lycksele_sofa.jpg?v=1741678944"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:LE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LE-1BX",
+    "FLT___Product_Ref__Old____LE1",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lycksele",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LE-1BX",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Lycksele",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LE-1BX",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "milano-3-seater-sofa-bed-slipcover",
+   "title": "Milano 3 Seater Sofa Bed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-MO-73B",
+   "price": "439.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-MO-73B_VELC_PM_CVC-01.jpg?v=1741320168",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-MO-73B_VELC_PM_CVC-01.jpg?v=1741320168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_570_Maison_du_Monde_Milano_sofa.jpg?v=1741320168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_625_Maison_du_Monde_Milano_sofa.jpg?v=1741320168"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:CS",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-MO",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-MO-73B",
+    "FLT___Product_Ref__Old____MDM_MO_3B",
+    "FLT___Series_Code___MO",
+    "FLT___Series_Name___Milano",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MDM-MO-73B",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Milano",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-MO-73B",
+     "price": "439.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "moheda-sofa-bed-chaise-cover",
+   "title": "Moheda Sofa Bed Chaise Cover",
+   "vendor": "IKEA",
+   "sku": "IK-MA-25B",
+   "price": "459.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MA-25B_L_CNRP_PM_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MA-25B_L_CNRP_PM_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_323_IKEA_Moheda_sofa.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_322_IKEA_Moheda_sofa_0580af17-d452-4ea2-927d-87d43a388eb3.jpg?v=1741320130"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular Straight",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:MA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MA-25B",
+    "FLT___Product_Ref__Old____MA2_R",
+    "FLT___Series_Code___MA",
+    "FLT___Series_Name___Moheda",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Variant_1_Name___Left_Chaise",
+    "FLT___Variant_1_Name___Right_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-MA-25B",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Moheda",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:6",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MA-25B",
+     "price": "459.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "muji-3-seater-sofa-bed-slipcover-eu-version",
+   "title": "Muji 3 Seater Sofa Bed Slipcover [EU version]",
+   "vendor": "MUJI",
+   "sku": "MJ-MJS-3BX",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-MJS-3BX_VELC_PM_CVC-01.jpg?v=1741320180",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-MJS-3BX_VELC_PM_CVC-01.jpg?v=1741320180",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_482_Muji_Bench_sofa_b64cde65-e5f6-4ca8-a5fb-24e5225d673a.jpg?v=1741320180",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_484_Muji_Bed_sofa_a81e1a65-9274-4bb9-8dbc-1754d9cf764c.jpg?v=1741320180"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-MJS",
+    "categoryproducts:MJ-SB",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-MJS-3BX",
+    "FLT___Product_Ref__Old____MJ_SB_3",
+    "FLT___Series_Code___MJS",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-MJS-3BX",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-MJS-3BX",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nyhamn-3-seat-sofa-bed-section-cover",
+   "title": "Nyhamn 3 Seat Sofa Bed Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-NN-3BX",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NN-3BX_ELAS_SP_CVC-01.jpg?v=1741320136",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NN-3BX_ELAS_SP_CVC-01.jpg?v=1741320136",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_335_IKEA_Nyhamn_sofa.jpg?v=1741320136",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_336_IKEA_Nyhamn_sofa.jpg?v=1741320136"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:NN",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NN-3BX",
+    "FLT___Product_Ref__Old____NN3_B",
+    "FLT___Series_Code___NN",
+    "FLT___Series_Name___Nyhamn",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___ELAS_SP",
+    "FLT__MAIN",
+    "IK-NN-3BX",
+    "installation:579",
+    "series:Nyhamn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NN-3BX",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-sleeper-sofa-slipcover",
+   "title": "PB Basic Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-82B",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-82B_MG_CNRP_PM_CVC-01.jpg?v=1741320178",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-82B_MG_CNRP_PM_CVC-01.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_089_Pottery_Barn_PB_Basic_sofa.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_092_Pottery_Barn_PB_Basic_sofa.jpg?v=1741320178"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-82B",
+    "FLT___Product_Ref__Old____PB_BSC_3B",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_1_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-BSC-82B",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Basic",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-82B",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Manufacturer Version",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-comfort-roll-arm-sleeper-sofa-slipcover",
+   "title": "PB Comfort Roll Arm Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CRA-89B",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CRA-89B_BE_CNRP_PM_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CRA-89B_BE_CNRP_PM_CVC-01.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_018_IKEA_Ektorp_sofa_690a5549-8de7-4f90-aef1-f5ab43e4a32f.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_013_IKEA_Ektorp_sofa_5f107269-da0f-4f35-be8a-b2f92894625c.jpg?v=1741575836"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-CRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-CRA-89B",
+    "FLT___Product_Ref__Old____PB_CRA_3B",
+    "FLT___Series_Code___CRA",
+    "FLT___Series_Name___PB_Comfort",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Variant_1_Name___Box_edge_cushions",
+    "FLT___Variant_1_Name___Knife_edge_cushions",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "PB-CRA-89B",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Comfort Roll Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CRA-89B",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-comfort-square-arm-sleeper-sofa-slipcover",
+   "title": "PB Comfort Square Arm Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CSQ-81B",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_PB_PB-CSQ_PB-CSQ-81B_PB-CSQ-81B_2S-2B_BE_CNRP_PM_CVC-01.jpg?v=1746585685",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_PB_PB-CSQ_PB-CSQ-81B_PB-CSQ-81B_2S-2B_BE_CNRP_PM_CVC-01.jpg?v=1746585685"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CSQ",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "PB-CSQ-81B",
+    "series:PB Comfort Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CSQ-81B",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-english-arm-sleeper-sofa-slipcover",
+   "title": "PB English Arm Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-EH-87B",
+   "price": "739.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-EH-87B_KE_SHRT_PM_CVC-01.jpg?v=1741656901",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-EH-87B_KE_SHRT_PM_CVC-01.jpg?v=1741656901"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-EH",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-EH-87B",
+    "Pottery Barn",
+    "series:PB English Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-EH-87B",
+     "price": "739.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-charleston-queen-sleeper-sofa-slipcover",
+   "title": "PB-Charleston Queen Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CN-91B",
+   "price": "739.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CN-91B_MLTP_PM_CVC-01.jpg?v=1741320179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CN-91B_MLTP_PM_CVC-01.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_189_Pottery_Barn_Charleston_sofa.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_191_Pottery_Barn_Charleston_sofa.jpg?v=1741320179"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge High",
+    "back_type:High Rounded Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-CN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-CN-91B",
+    "FLT___Product_Ref__Old____PB_CN_3B",
+    "FLT___Series_Code___CN",
+    "FLT___Series_Name___Charleston",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-CN-91B",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Charleston",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CN-91B",
+     "price": "739.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pearce-square-arm-83-sleeper-sofa-slipcover",
+   "title": "Pearce Square Arm 83\" Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PSA-83B",
+   "price": "749.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-83B_2S-2B_LSKT_PM_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-83B_2S-2B_LSKT_PM_CVC-01.jpg?v=1741575837"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-PSA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-PSA-83B",
+    "series:Pearce Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PSA-83B",
+     "price": "749.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "potomac-90-queen-sleeper-sofa-slipcover",
+   "title": "Potomac 90\" Queen Sleeper Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PC-90B",
+   "price": "679.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-90B_MLTP_PM_CVC-01.jpg?v=1741741766",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-90B_MLTP_PM_CVC-01.jpg?v=1741741766"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-PC",
+    "categoryproducts:CB-Slipcover",
+    "CB-PC-90B",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Potomac",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PC-90B",
+     "price": "679.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "roma-3-seater-sofa-bed-slipcover",
+   "title": "Roma 3 Seater Sofa Bed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-RA-89B",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RA-89B_CNRP_PM_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RA-89B_CNRP_PM_CVC-01.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_543_Maison_du_Monde_Roma_sofa_b330af2a-e227-4967-b284-1936609dd95c.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_544_Maison_du_Monde_Roma_sofa.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular Straight",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:CS",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-RA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-RA-89B",
+    "FLT___Product_Ref__Old____MDM_RA_3B",
+    "FLT___Series_Code___RA",
+    "FLT___Series_Name___Roma",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MDM-RA-89B",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Roma",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-RA-89B",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "royan-2-seater-sofabed-slipcover",
+   "title": "Royan 2 Seater Sofabed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-RN-73B",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RN-73B_MLTP_PM_CVC-01.jpg?v=1741320179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RN-73B_MLTP_PM_CVC-01.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_539_Maison_du_Monde_Roma_sofa.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_540_Maison_du_Monde_Roma_sofa.jpg?v=1741320179"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-RN",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-RN-73B",
+    "FLT___Product_Ref__Old____MDM_RN_2B",
+    "FLT___Series_Code___RN",
+    "FLT___Series_Name___Roma",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "MDM-RN-73B",
+    "series:Royan"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-RN-73B",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sandbacken-corner-sofabed-covers",
+   "title": "Sandbacken Corner Sofabed Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SBN-25B",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SBN-25B_CNRP_SP_CVC-01.jpg?v=1764118503",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SBN-25B_CNRP_SP_CVC-01.jpg?v=1764118503",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_495_IKEA_Sandbacken_sofa.jpg?v=1764118503",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_347_IKEA_Sandbacken_sofa.jpg?v=1764118503"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:SBN",
+    "chaise_lounge:yes",
+    "chaise_lounge_position:Both",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SBN-25B",
+    "FLT___Product_Ref__Old____SBN7",
+    "FLT___Series_Code___SBN",
+    "FLT___Series_Name___Sandbacken",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SBN-25B",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Sandbacken",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SBN-25B",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "shelter-84-5-queen-sleeper-sofa-slipcover",
+   "title": "Shelter 84.5\" Queen Sleeper Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-SHR-85B",
+   "price": "509.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-SHR-85B_SHRT_SP_CVC-01.jpg?v=1741741770",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-SHR-85B_SHRT_SP_CVC-01.jpg?v=1741741770"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-SHR",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Shelter",
+    "WE-SHR-85B"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-SHR-85B",
+     "price": "509.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "soderhamn-sofa-bed-section-cover",
+   "title": "Soderhamn Sofa-Bed Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SN-3BX",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-3BX_VELC_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-3BX_VELC_SP_CVC-01.jpg?v=1741678943"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SN-3BX",
+    "FLT___Product_Ref__Old____SN3_B",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Soderhamn",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SN-3BX",
+    "installation:585",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Soderhamn",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SN-3BX",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "solsta-sofa-bed-cover",
+   "title": "Solsta Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SA-2B",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-2B_SHRT_SP_CVC-01.jpg?v=1741320113",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-2B_SHRT_SP_CVC-01.jpg?v=1741320113",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_365_IKEA_Solsta_sofa.jpg?v=1741320113",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_364_IKEA_Solsta_sofa_4e24afa7-1083-45f2-8ec9-909c87df5017.jpg?v=1741320113"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SA-2B",
+    "FLT___Product_Ref__Old____SA_B",
+    "FLT___Series_Code___SA",
+    "FLT___Series_Name___Solsta",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SA-2B",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Solsta",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SA-2B",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "t2-sofa-bed-cover",
+   "title": "T2 Sofa Bed Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-T2-3X",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-T2-3X_WR_CVC-01.jpg?v=1741320175",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-T2-3X_WR_CVC-01.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_466_Muji_T2_Sofabed_sofa.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_465_Muji_T2_Sofabed_sofa_0003e730-5220-4771-9f31-35e92a61edbe.jpg?v=1741320175"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-RSB",
+    "categoryproducts:MJ-T2",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-T2-3X",
+    "FLT___Product_Ref__Old____MJ_RSB",
+    "FLT___Series_Code___T2",
+    "FLT___Series_Name___T2_Sofabed",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___WR",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-T2-3X",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:T2",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-T2-3X",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tomelilla-sofa-bed-cover",
+   "title": "Tomelilla Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TA-2B",
+   "price": "349.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-2B_PTD_LSKT_SP_CVC-01.jpg?v=1741320137",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-2B_PTD_LSKT_SP_CVC-01.jpg?v=1741320137",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_372_IKEA_Tomelilla_sofa.jpg?v=1741320137",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_373_IKEA_Tomelilla_sofa_ea88ae8c-5e74-4ff9-8db9-1f35182beead.jpg?v=1741320137"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Pointed High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:TA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TA-2B",
+    "FLT___Product_Ref__Old____TA3_BN",
+    "FLT___Series_Code___TA",
+    "FLT___Series_Name___Tomelilla",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Tomelilla_Sofa_Bed__Regular_",
+    "FLT___Variant_1_Name___Tomelilla_Sofa_Bed__Slim_",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-TA-2B",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Tomelilla",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:5",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TA-2B",
+     "price": "349.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tylosand-sofa-bed-cover",
+   "title": "Tylosand Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TD-3B",
+   "price": "469.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-3B_VELC_SP_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-3B_VELC_SP_CVC-01.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin arm",
+    "arm_type:Thin Regular Straight",
+    "back_type:Metal Back",
+    "bed:Yes",
+    "categories:Sofa bed",
+    "categoryproducts:IK",
+    "categoryproducts:TD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TD-3B",
+    "FLT___Product_Ref__Old____TD3_B",
+    "FLT___Series_Code___TD",
+    "FLT___Series_Name___Tylosand",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-TD-3B",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:Two Arms",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Tylosand",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:6"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TD-3B",
+     "price": "469.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vallentuna-seat-module-with-bed-cover",
+   "title": "Vallentuna Seat Module with Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VA-1BX",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-1BX_VELC_SI_CVC-01.jpg?v=1741320151",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-1BX_VELC_SI_CVC-01.jpg?v=1741320151"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Footstool",
+    "categoryproducts:VA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VA-1BX",
+    "FLT___Product_Ref__Old____VA1_B",
+    "FLT___Series_Code___VA",
+    "FLT___Series_Name___Vallentuna",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-VA-1BX",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Vallentuna",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VA-1BX",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vaxholm-bed-section-cover-with-storage",
+   "title": "Vaxholm Bed Section Cover with storage",
+   "vendor": "IKEA",
+   "sku": "IK-VXM-5BX",
+   "price": "239.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-5BX_VELC_SP_CVC-01.jpg?v=1741320149",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-5BX_VELC_SP_CVC-01.jpg?v=1741320149",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_380_IKEA_Vaxholm_sofa.jpg?v=1741320149",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_379_IKEA_Vaxholm_sofa_0b2c43c0-7184-46ef-84f5-34699f617331.jpg?v=1741320149"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:VXM",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VXM-5BX",
+    "FLT___Product_Ref__Old____VXM5_BN",
+    "FLT___Series_Code___VXM",
+    "FLT___Series_Name___Vaxholm",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-VXM-5BX",
+    "installation:579",
+    "series:Vaxholm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VXM-5BX",
+     "price": "239.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vilasund-sofa-bed-cover",
+   "title": "Vilasund Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VD-3B",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VD-3B_VELC_SI_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VD-3B_VELC_SI_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_382_IKEA_Vilasund_sofa.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_619_IKEA_Vilasund_sofa.jpg?v=1741320129"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VD-3B",
+    "FLT___Product_Ref__Old____VD3",
+    "FLT___Series_Code___VD",
+    "FLT___Series_Name___Vilasund",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VD-3B",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vilasund",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VD-3B",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vilasund-sofa-bed-with-chaise-cover",
+   "title": "Vilasund Sofa Bed with Chaise Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VD-25B",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VD-25B_L_VELC_SI_CVC-01.jpg?v=1741320127",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VD-25B_L_VELC_SI_CVC-01.jpg?v=1741320127",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_381_IKEA_Vilasund_sofa.jpg?v=1741320127",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_618_IKEA_Vilasund_sofa.jpg?v=1741320127"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VD-25B",
+    "FLT___Product_Ref__Old____VD7",
+    "FLT___Series_Code___VD",
+    "FLT___Series_Name___Vilasund",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VD-25B",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vilasund",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VD-25B",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-sofa-bed-cover-section",
+   "title": "Vimle Sofa Bed Cover Section",
+   "vendor": "IKEA",
+   "sku": "IK-VE-2BX",
+   "price": "259.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-2BX_IK-VE-2BX_PTD_VELC_SP_CVC-01_2X_47ceffea-52d0-43b8-86a9-72628a8718d6.webp?v=1771902371",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-2BX_IK-VE-2BX_PTD_VELC_SP_CVC-01_2X_47ceffea-52d0-43b8-86a9-72628a8718d6.webp?v=1771902371",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_121_IKEA_Finnala_sofa_5d8d4fb4-6dc6-45fa-abf1-ceb61019ec8f.jpg?v=1771902371",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_118_IKEA_Finnala_sofa_04d6cba2-e48a-4eae-aed1-68a95d61be2c.jpg?v=1771902371"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-2BX",
+    "FLT___Product_Ref__Old____VE2_BN",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___140cm_mattress_size",
+    "FLT___Variant_1_Name___153cm_or_60in_mattress_size",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-2BX",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-2BX",
+     "price": "259.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-sofa-bed-cover",
+   "title": "Vimle Sofa-Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-2B",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-2B_PTD_REG_VELC_SP_CVC-01.webp?v=1771900566",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-2B_PTD_REG_VELC_SP_CVC-01.webp?v=1771900566",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_118_IKEA_Finnala_sofa_63ad23fb-f27c-4845-90b7-70296b113106.jpg?v=1771900566",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_121_IKEA_Finnala_sofa_56a4104b-152e-4e3d-a2b8-ed78b485a7bf.jpg?v=1771900566"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-2B",
+    "FLT___Product_Ref__Old____VE2_B",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___140cm_mattress_size",
+    "FLT___Variant_1_Name___153cm_or_60in_mattress_size",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-2B",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-2B",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vretstorp-3-seat-sofa-bed-cover",
+   "title": "Vretstorp 3 Seat Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VP-3B",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VP-3B_CNRP_PM_CVC-01.jpg?v=1741320139",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VP-3B_CNRP_PM_CVC-01.jpg?v=1741320139",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_385_IKEA_Vretstorp_sofa.jpg?v=1741320139",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_386_IKEA_Vretstorp_sofa.jpg?v=1741320139"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:VP",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VP-3B",
+    "FLT___Product_Ref__Old____VP3_B",
+    "FLT___Series_Code___VP",
+    "FLT___Series_Name___Vretstorp",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "IK-VP-3B",
+    "installation:579",
+    "series:Vretstorp"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VP-3B",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "willow-modern-queen-sleeper-sofa-slipcover",
+   "title": "Willow Modern Queen Sleeper Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-WW-84B",
+   "price": "639.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-84B_MLTP_PM_CVC-01.jpg?v=1741320091",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-84B_MLTP_PM_CVC-01.jpg?v=1741320091",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_430_Crate_and_Barrel_Willow_sofa_d058e026-9d99-466a-b5b8-6ded4b38f26c.jpg?v=1741320091",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_431_Crate_and_Barrel_Willow_sofa_b210cc55-b826-4928-bd0e-8ff05b54e54b.jpg?v=1741320091"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:CB-WW",
+    "CB-WW-84B",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-WW-84B",
+    "FLT___Series_Code___WW",
+    "FLT___Series_Name___Willow_Modern",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Willow",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-WW-84B",
+     "price": "639.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "wooden-sofa-bed-cover",
+   "title": "Wooden Sofa Bed Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-OTH-3BX",
+   "price": "209.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-OTH-3BX_LV_SP_CVC-01.jpg?v=1741320174",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-OTH-3BX_LV_SP_CVC-01.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_470_Muji_Wooden_Bed_sofa.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_637_Muji_Wooden_Bed_sofa.jpg?v=1741320174"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-OTH",
+    "categoryproducts:MJ-SB",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-OTH-3BX",
+    "FLT___Product_Ref__Old____MJ_SB_2B",
+    "FLT___Series_Code___OTH",
+    "FLT___Series_Name___Wooden_Sofa_Bed",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-OTH-3BX",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:Wooden",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-OTH-3BX",
+     "price": "209.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

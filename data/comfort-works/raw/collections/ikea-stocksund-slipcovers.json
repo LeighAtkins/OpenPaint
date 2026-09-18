@@ -1,0 +1,477 @@
+{
+ "handle": "ikea-stocksund-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:10.398Z",
+ "count": 7,
+ "products": [
+  {
+   "handle": "stocksund-3-5-seater-cover",
+   "title": "Stocksund 3.5 Seater Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SU-4",
+   "price": "469.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-4_VELC_SP_CVC-01.jpg?v=1741676097",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-4_VELC_SP_CVC-01.jpg?v=1741676097",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/SU3_02_1003_787a34dd-2b0e-4749-a260-028529471f3e.jpg?v=1741676097",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/SU35_01_JH_e5d3c155-43dd-4b31-9cf9-9f588796050e.jpg?v=1741676097"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Roll arm (English roll arm)",
+    "arm_shape_categories:Round",
+    "arm_type:Round English Roll",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:SU",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SU-4",
+    "FLT___Product_Ref__Old____SU35",
+    "FLT___Series_Code___SU",
+    "FLT___Series_Name___Stocksund",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SU-4",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Stocksund",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SU-4",
+     "price": "469.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stocksund-armrest-protector-covers",
+   "title": "Stocksund Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SU-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-AP_SP_CVC-01.jpg?v=1741676281",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-AP_SP_CVC-01.jpg?v=1741676281"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SU-AP",
+    "FLT___Product_Ref__Old____SU_AP",
+    "FLT___Series_Code___SU",
+    "FLT___Series_Name___Stocksund",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-SU-AP",
+    "series:Stocksund"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SU-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stocksund-3-seater-sofa-cover",
+   "title": "Stocksund 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SU-3",
+   "price": "439.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-3_VELC_SP_CVC-01.jpg?v=1741676069",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-3_VELC_SP_CVC-01.jpg?v=1741676069",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_060_IKEA_Stocksund_sofa_604c4c25-71c3-417f-9f0c-b57d54d6fc93.jpg?v=1741676069",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_063_IKEA_Stocksund_sofa.jpg?v=1741676069"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Roll arm (English roll arm)",
+    "arm_shape_categories:Round",
+    "arm_type:Round English Roll",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:SU",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SU-3",
+    "FLT___Product_Ref__Old____SU3",
+    "FLT___Series_Code___SU",
+    "FLT___Series_Name___Stocksund",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SU-3",
+    "installation:579",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Stocksund",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SU-3",
+     "price": "439.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stocksund-bench-sofa-cover",
+   "title": "Stocksund Bench Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SU-9",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-9_VELC_SP_CVC-01.jpg?v=1741676124",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-9_VELC_SP_CVC-01.jpg?v=1741676124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_062_IKEA_Stocksund_sofa.jpg?v=1741676124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_065_IKEA_Stocksund_sofa.jpg?v=1741676124"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:SU",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SU-9",
+    "FLT___Product_Ref__Old____SU5",
+    "FLT___Series_Code___SU",
+    "FLT___Series_Name___Stocksund",
+    "FLT___Size___Bench",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-SU-9",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Stocksund",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:Yes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SU-9",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stocksund-2-seater-sofa-cover",
+   "title": "Stocksund 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SU-2",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-2_VELC_SP_CVC-01.jpg?v=1741676041",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-2_VELC_SP_CVC-01.jpg?v=1741676041",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_060_IKEA_Stocksund_sofa_55d108cf-9ab8-424d-a690-cccd1aaf2c0c.jpg?v=1741676041",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_062_IKEA_Stocksund_sofa_cb753654-4d47-43f8-89c3-b88d82bb416a.jpg?v=1741676041"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Roll arm (English roll arm)",
+    "arm_shape_categories:Round",
+    "arm_type:Round English Roll",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:SU",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SU-2",
+    "FLT___Product_Ref__Old____SU2",
+    "FLT___Series_Code___SU",
+    "FLT___Series_Name___Stocksund",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SU-2",
+    "installation:579",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Stocksund",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SU-2",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stocksund-armchair-cover",
+   "title": "Stocksund Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SU-1",
+   "price": "209.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-1_VELC_SP_CVC-01.jpg?v=1741675998",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-1_VELC_SP_CVC-01.jpg?v=1741675998",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_060_IKEA_Stocksund_sofa_78594751-856d-4958-91e1-08aeb29494c8.jpg?v=1741675998",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_062_IKEA_Stocksund_sofa_165f185a-c15b-45db-a898-dee6170dfbcc.jpg?v=1741675998"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Roll arm (English roll arm)",
+    "arm_shape_categories:Round",
+    "arm_type:Round English Roll",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:SU",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SU-1",
+    "FLT___Product_Ref__Old____SU1",
+    "FLT___Series_Code___SU",
+    "FLT___Series_Name___Stocksund",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SU-1",
+    "installation:579",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Stocksund",
+    "size:1 Seater",
+    "storage:No",
+    "t_shaped_back_cushion:1",
+    "t_shaped_seat_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SU-1",
+     "price": "209.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stocksund-footstool-cover",
+   "title": "Stocksund Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SU-0",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-0_VELC_SP_CVC-01.jpg?v=1741675958",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-0_VELC_SP_CVC-01.jpg?v=1741675958",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_066_IKEA_Stocksund_sofa.jpg?v=1741675958",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_060_IKEA_Stocksund_sofa.jpg?v=1741675958"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:SU",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SU-0",
+    "FLT___Product_Ref__Old____SU0",
+    "FLT___Series_Code___SU",
+    "FLT___Series_Name___Stocksund",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-SU-0",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Stocksund",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SU-0",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

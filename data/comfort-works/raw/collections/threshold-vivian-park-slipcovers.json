@@ -1,0 +1,47 @@
+{
+ "handle": "threshold-vivian-park-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:33.934Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "vivian-park-72-sofa-slipcover",
+   "title": "Vivian Park 72\" Sofa Slipcover",
+   "vendor": "Threshold",
+   "sku": "TH-VP-72",
+   "price": "409.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/TH-VP-72_CNRP_SP_CVC-01.webp?v=1786957807",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/TH-VP-72_CNRP_SP_CVC-01.webp?v=1786957807"
+   ],
+   "tags": [
+    "categoryproducts:TH",
+    "categoryproducts:TH-VP",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Vivian Park",
+    "TH-VP-72"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "TH-VP-72",
+     "price": "409.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

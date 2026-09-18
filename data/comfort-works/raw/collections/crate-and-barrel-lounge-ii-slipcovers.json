@@ -1,0 +1,758 @@
+{
+ "handle": "crate-and-barrel-lounge-ii-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:12.009Z",
+ "count": 13,
+ "products": [
+  {
+   "handle": "lounge-105-grande-sofa-slipcover",
+   "title": "Lounge 105\" Grande Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-105",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-105_SV_STD_3S-3B_VELC_SP_CVC-01.webp?v=1763084830",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-105_SV_STD_3S-3B_VELC_SP_CVC-01.webp?v=1763084830"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-105",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Lounge",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-105",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-ii-37-ottoman-slipcover",
+   "title": "Lounge II 37\" Ottoman Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-37F",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-37F_LSKT_SP_CVC-01.jpg?v=1741320090",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-37F_LSKT_SP_CVC-01.jpg?v=1741320090",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_075_Crate_and_Barrel_Lounge_II_sofa.jpg?v=1741320090",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_080_Crate_and_Barrel_Lounge_II_sofa.jpg?v=1741320090"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-37F",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-LE-37F",
+    "FLT___Product_Ref__Old____CB_LE_0",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lounge_II",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Lounge II",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-37F",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-left-right-arm-extra-wide-chaise-lounge-slipcover",
+   "title": "Lounge Left/Right-Arm Extra Wide Chaise Lounge Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-60M",
+   "price": "529.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_CB_CB-LE_CB-LE-60M_CB-LE-60M_R_LV_VELC_SP_CVC-01.jpg?v=1744958604",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_CB_CB-LE_CB-LE-60M_CB-LE-60M_R_LV_VELC_SP_CVC-01.jpg?v=1744958604"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Sectional",
+    "CB-LE-60M",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Lounge",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-60M",
+     "price": "529.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-left-right-arm-chair-slipcover",
+   "title": "Lounge Left/Right Arm Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-42M",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_CB_CB-LE_CB-LE-42M_CB-LE-42M_R_LV_EXD_VELC_SP_CVC-01.jpg?v=1744959354",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_CB_CB-LE_CB-LE-42M_CB-LE-42M_R_LV_EXD_VELC_SP_CVC-01.jpg?v=1744959354"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Sectional",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-42M",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Lounge",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-42M",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-deep-corner-chair-slipcover",
+   "title": "Lounge Deep Corner Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-46X",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-46X.jpg?v=1751339542",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-46X.jpg?v=1751339542",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-46X_d56d1bf8-0e81-4492-bac7-1fdbd2fe4057.jpg?v=1751339542"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-46X",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Lounge",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-46X",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-73-apartment-sofa-slipcover",
+   "title": "Lounge 73\" Apartment Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-73",
+   "price": "529.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-73_SV_PTD_2S-2B_VELC_SP_CVC-01.webp?v=1762310561",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-73_SV_PTD_2S-2B_VELC_SP_CVC-01.webp?v=1762310561",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-73_SV_PTD_2S-2B_VELC_SP_CVC-01_ec9154a8-3bfa-47e1-96f8-6421429af310.webp?v=1762310622"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-73",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Lounge",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-73",
+     "price": "529.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-83-sofa-slipcover",
+   "title": "Lounge 83\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-83",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-83.jpg?v=1751338574",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-83.jpg?v=1751338574",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-83_68202f9b-63fc-49e3-9cbc-d6ddf5d71561.jpg?v=1751338574",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_078_Crate_and_Barrel_Lounge_II_sofa_93c6ba0a-066b-4c25-839f-1aaf95d3760b.jpg?v=1751338574"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-83",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Lounge",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-83",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-ii-93-sofa-slipcover",
+   "title": "Lounge II 93\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-93-STD",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-93-STD_d03b0086-5246-4b02-a20d-2a7e20e03979.jpg?v=1750673601",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-93-STD_d03b0086-5246-4b02-a20d-2a7e20e03979.jpg?v=1750673601",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-93-STD.jpg?v=1750673601",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_075_Crate_and_Barrel_Lounge_II_sofa_f3f233b5-28ed-4d13-91a2-deab321b9e4e.jpg?v=1750673601"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-93-STD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-LE-93-STD",
+    "FLT___Product_Ref__Old____CB_LE_93",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lounge_II",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lounge II",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:4"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-93-STD",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-ii-left-right-arm-loveseat-slipcover",
+   "title": "Lounge II Left/Right Arm Loveseat Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-79M",
+   "price": "479.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-79M_L_LSKT_SP_CVC-01.jpg?v=1741320091",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-79M_L_LSKT_SP_CVC-01.jpg?v=1741320091",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_087_Crate_and_Barrel_Lounge_II_sofa_0ba92311-1265-4083-97d2-0004f4f7c70d.jpg?v=1741320091",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_080_Crate_and_Barrel_Lounge_II_sofa_df4e14a3-408b-4487-b344-02f90683b11c.jpg?v=1741320091"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB-LE",
+    "CB-LE-79M",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-LE-79M",
+    "FLT___Product_Ref__Old____CB_LE_79L",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lounge_II",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_seat_cushion:1",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:One Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lounge II",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-79M",
+     "price": "479.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-ii-chair-and-a-half-slipcover",
+   "title": "Lounge II Chair and a Half Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-49",
+   "price": "369.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-49.jpg?v=1751336212",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-49.jpg?v=1751336212",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-49_5c770f03-e59f-4ed5-8b7f-b634634cef7e.jpg?v=1751336212",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_087_Crate_and_Barrel_Lounge_II_sofa.jpg?v=1751336212"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-49",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-LE-49",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lounge_II",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lounge II",
+    "size:1 Seater",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "t_shaped_seat_cushion:1",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-49",
+     "price": "369.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-ii-left-right-arm-chaise-slipcover",
+   "title": "Lounge II Left/Right Arm Chaise Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-46M",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-46M_L_LSKT_SP_CVC-01.jpg?v=1741320093",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-46M_L_LSKT_SP_CVC-01.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_087_Crate_and_Barrel_Lounge_II_sofa_2a95de98-426f-4ccd-a88e-f45f1c83758b.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_080_Crate_and_Barrel_Lounge_II_sofa_465295ae-4875-4b5b-9c89-1df259222d3f.jpg?v=1741320093"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Chaise Lounge",
+    "categoryproducts:CB-LE",
+    "CB-LE-46M",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-LE-46M",
+    "FLT___Product_Ref__Old____CB_LE_46R",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lounge_II",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_seat_cushion:1",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:One Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lounge II",
+    "size:1 Seater",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-46M",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-ii-petite-93-sofa-slipcover",
+   "title": "Lounge II Petite 93\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-93-PTD",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-93-PTD_9157503b-7d56-4a7a-97ed-ce36e8e1510f.jpg?v=1750674059",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-93-PTD_9157503b-7d56-4a7a-97ed-ce36e8e1510f.jpg?v=1750674059",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-93-PTD_d7500e84-f486-401a-8582-2e302dcef750.jpg?v=1750674059",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_075_Crate_and_Barrel_Lounge_II_sofa_dd4ee972-9f06-464c-b1dd-5ae487b3ac1e.jpg?v=1750674059"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-93-PTD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-LE-93-PTD",
+    "FLT___Product_Ref__Old____CB_LE_93P",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lounge_II",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lounge II",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-93-PTD",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-storage-ottoman-slipcover",
+   "title": "Lounge Storage Ottoman Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-43F",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-43F_SV_VELC_SP_CVC-01.webp?v=1778554793",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-43F_SV_VELC_SP_CVC-01.webp?v=1778554793"
+   ],
+   "tags": [
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:PB-Ottoman",
+    "CB-LE-43F",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Lounge"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-43F",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

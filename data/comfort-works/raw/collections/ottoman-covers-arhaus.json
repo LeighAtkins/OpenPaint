@@ -1,0 +1,142 @@
+{
+ "handle": "ottoman-covers-arhaus",
+ "fetchedAt": "2026-09-18T05:37:45.389Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "cooper-ottoman-slipcover",
+   "title": "Cooper Ottoman Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-CR-40F",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-CR-40F_VELC_SP_CVC-01.jpg?v=1741320091",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-CR-40F_VELC_SP_CVC-01.jpg?v=1741320091"
+   ],
+   "tags": [
+    "Arhaus",
+    "AS-CR-40F",
+    "categoryproducts:AS",
+    "categoryproducts:AS-Chair",
+    "categoryproducts:AS-CR",
+    "categoryproducts:AS-Sofa",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Cooper"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-CR-40F",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "emory-ottoman-slipcover",
+   "title": "Emory Ottoman Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-EMY-45F",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-EMY-45F_SHRT_SP_CVC-01.jpg?v=1741741757",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-EMY-45F_SHRT_SP_CVC-01.jpg?v=1741741757"
+   ],
+   "tags": [
+    "Arhaus",
+    "AS-EMY-45F",
+    "categoryproducts:AS",
+    "categoryproducts:AS-0",
+    "categoryproducts:AS-EMY",
+    "categoryproducts:AS-Sofa",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Emory"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-EMY-45F",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "dune-32-ottoman-slipcover",
+   "title": "Dune 32\" Ottoman Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-DNE-32F",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-DNE-32F_VELC_PM_CVC-01.jpg?v=1741320085",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-DNE-32F_VELC_PM_CVC-01.jpg?v=1741320085"
+   ],
+   "tags": [
+    "Arhaus",
+    "AS-DNE-32F",
+    "categoryproducts:AS",
+    "categoryproducts:AS-0",
+    "categoryproducts:AS-DNE",
+    "categoryproducts:AS-Sofa",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Dune"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-DNE-32F",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

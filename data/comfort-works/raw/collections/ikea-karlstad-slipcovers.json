@@ -1,0 +1,835 @@
+{
+ "handle": "ikea-karlstad-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:53.959Z",
+ "count": 12,
+ "products": [
+  {
+   "handle": "karlstad-2-seater-sofa-cover",
+   "title": "Karlstad 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-2",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-2_STD_VELC_SP_CVC-01.jpg?v=1741741761",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-2_STD_VELC_SP_CVC-01.jpg?v=1741741761",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_06_1003.jpg?v=1741741761",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_04_1003.jpg?v=1741741761"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Rounded Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-2",
+    "FLT___Product_Ref__Old____KD2",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Karlstad_2_Seater",
+    "FLT___Variant_1_Name___Karlstad_Compact_2_Seater__Japan_",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KD-2",
+    "installation:578",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-2",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-3-seater-sofa-cover",
+   "title": "Karlstad 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-3",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-3_VELC_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-3_VELC_SP_CVC-01.jpg?v=1741678943"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Rounded Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-3",
+    "FLT___Product_Ref__Old____KD3",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KD-3",
+    "installation:578",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-3",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-armchair-small-cover",
+   "title": "Karlstad Armchair (Small) Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-1-PTD",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-1-PTD_SHRT_SP_CVC-01.jpg?v=1741675373",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-1-PTD_SHRT_SP_CVC-01.jpg?v=1741675373",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_05_1003_c0138c85-546a-446e-a7fe-564cc5adb90b.jpg?v=1741675373",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD1_15_RS_20_1_ba055909-a8a6-4094-adda-f3a91d6d4801.jpg?v=1741675373"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Thin Regular High",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-1-PTD",
+    "FLT___Product_Ref__Old____KD7",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KD-1-PTD",
+    "installation:578",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-1-PTD",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-armchair-cover",
+   "title": "Karlstad Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-1",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-1_VELC_SP_CVC-01.jpg?v=1741678941",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-1_VELC_SP_CVC-01.jpg?v=1741678941",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_05_1003.jpg?v=1741678941",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD1_15_RS_20_1.jpg?v=1741678941"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Rounded Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-1",
+    "FLT___Product_Ref__Old____KD1",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KD-1",
+    "installation:578",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-1",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-armrest-protector-covers",
+   "title": "Karlstad Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-KD-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-AP_PTD_SP_CVC-01.jpg?v=1741745444",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-AP_PTD_SP_CVC-01.jpg?v=1741745444",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-AP_STD_SP_CVC-01.jpg?v=1741745444"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-AP",
+    "FLT___Product_Ref__Old____KD_AP",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___SI",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Small_Armchair_Armrest_Protector",
+    "FLT___Variant_1_Name___Standard_Armrest_Protector",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "IK-KD-AP",
+    "series:Karlstad"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-chaise-lounge-stand-alone-cover",
+   "title": "Karlstad Chaise Lounge Stand Alone Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-5X",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-5X_VELC_SP_CVC-01.jpg?v=1741678945",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-5X_VELC_SP_CVC-01.jpg?v=1741678945",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD4_03_S610_f375563b-c465-4c6e-9b0b-f60d51f121fb.jpg?v=1741678945",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_13_L132.jpg?v=1741678945"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Chaise Lounge",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-5X",
+    "FLT___Product_Ref__Old____KD5",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KD-5X",
+    "installation:578",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-5X",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-chaise-lounge-add-on-unit-cover",
+   "title": "Karlstad Chaise Lounge, Add-On Unit Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-5",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-5_VELC_SP_CVC-01.jpg?v=1741678941",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-5_VELC_SP_CVC-01.jpg?v=1741678941",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD4_03_S610_a851791e-0aae-476f-929c-fee832532aa0.jpg?v=1741678941",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_10_S610.jpg?v=1741678941"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-5",
+    "FLT___Product_Ref__Old____KD5_0",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-KD-5",
+    "installation:578",
+    "series:Karlstad"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-5",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-corner-sofa-cover",
+   "title": "Karlstad Corner Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-362",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-362_L_VELC_SP_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-362_L_VELC_SP_CVC-01.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD4_09_L331.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD4_03_S610.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Rounded Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-362",
+    "FLT___Product_Ref__Old____KD4",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___3_Seater_Left_Side__282cm_",
+    "FLT___Variant_1_Name___3_Seater_Right_Side__282cm_",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KD-362",
+    "installation:578",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:6",
+    "square_rectangle_back_cushion:7",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-362",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-footstool-cover",
+   "title": "Karlstad Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-0",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-0_VELC_SP_CVC-01.jpg?v=1741678941",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-0_VELC_SP_CVC-01.jpg?v=1741678941",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_13_L132_4d5b0c8e-24ab-4e27-8b17-8c1c3ef77cf7.jpg?v=1741678941"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-0",
+    "FLT___Product_Ref__Old____KD0",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-KD-0",
+    "installation:578",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-0",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-loveseat-with-chaise-cover",
+   "title": "Karlstad Loveseat with Chaise Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-25",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-25_L_VELC_SP_CVC-01.jpg?v=1741678947",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-25_L_VELC_SP_CVC-01.jpg?v=1741678947"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Rounded Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:Yes",
+    "chaise_lounge_position:Both",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-25",
+    "FLT___Product_Ref__Old____KD_25",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Side_Chaise",
+    "FLT___Variant_1_Name___Right_Side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KD-25",
+    "installation:578",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-25",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-sofa-bed-cover",
+   "title": "Karlstad Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-3B",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-3B_VELC_SP_CVC-01.jpg?v=1741678941",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-3B_VELC_SP_CVC-01.jpg?v=1741678941",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_08_PJ1703.jpg?v=1741678941",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_04_RS.jpg?v=1741678941"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Rounded Square",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-3B",
+    "FLT___Product_Ref__Old____KD3_B",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KD-3B",
+    "installation:578",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-3B",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-sofa-with-chaise-cover",
+   "title": "Karlstad Sofa with Chaise Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-35",
+   "price": "439.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-35_L_VELC_SP_CVC-01.jpg?v=1741678946",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-35_L_VELC_SP_CVC-01.jpg?v=1741678946"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Rounded Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:Yes",
+    "chaise_lounge_position:Both",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-35",
+    "FLT___Product_Ref__Old____KD_35",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Side_Chaise",
+    "FLT___Variant_1_Name___Right_Side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KD-35",
+    "installation:578",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-35",
+     "price": "439.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

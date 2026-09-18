@@ -1,0 +1,48 @@
+{
+ "handle": "maisons-du-monde-toronto-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:25.375Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "toronto-4-seats-corner-sofa-bed-slipcover",
+   "title": "Toronto 4 Seats Corner Sofa Bed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-TO-84B",
+   "price": "369.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-TO-84B_L_SHRT_SP_CVC-01.jpg?v=1741741766",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-TO-84B_L_SHRT_SP_CVC-01.jpg?v=1741741766"
+   ],
+   "tags": [
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-TO",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "Maisons Du Monde",
+    "MDM-TO-84B",
+    "series:Toronto"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-TO-84B",
+     "price": "369.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

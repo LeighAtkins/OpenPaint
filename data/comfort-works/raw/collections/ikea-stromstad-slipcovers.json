@@ -1,0 +1,188 @@
+{
+ "handle": "ikea-stromstad-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:11.384Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "stromstad-2-seater-sofa-cover",
+   "title": "Stromstad 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SD-2",
+   "price": "229.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SD-2_VELC_SP_CVC-01.jpg?v=1741320134",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SD-2_VELC_SP_CVC-01.jpg?v=1741320134",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_369_IKEA_Stromstad_sofa.jpg?v=1741320134",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_368_IKEA_Stromstad_sofa.jpg?v=1741320134"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Pointed Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SD-2",
+    "FLT___Product_Ref__Old____SD2",
+    "FLT___Series_Code___SD",
+    "FLT___Series_Name___Stromstad",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SD-2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Stromstad",
+    "size:2+ Seater",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SD-2",
+     "price": "229.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stromstad-3-seater-sofa-cover",
+   "title": "Stromstad 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SD-3",
+   "price": "279.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SD-3_VELC_SP_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SD-3_VELC_SP_CVC-01.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_369_IKEA_Stromstad_sofa_39f39006-5a51-4bdc-9d55-56079e63035d.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_612_IKEA_Stromstad_sofa.jpg?v=1741575836"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Pointed Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SD-3",
+    "FLT___Product_Ref__Old____SD3",
+    "FLT___Series_Code___SD",
+    "FLT___Series_Name___Stromstad",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SD-3",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Stromstad",
+    "size:2+ Seater",
+    "storage:No",
+    "throw_pillows:3"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SD-3",
+     "price": "279.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stromstad-armrest-protector-covers",
+   "title": "Stromstad Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SD-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SD-AP_SP_CVC-01.webp?v=1780887726",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SD-AP_SP_CVC-01.webp?v=1780887726"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SD",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SD-AP",
+    "FLT___Product_Ref__Old____SD_AP",
+    "FLT___Series_Code___SD",
+    "FLT___Series_Name___Stromstad",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-SD-AP",
+    "series:Stromstad"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SD-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,74 @@
+{
+ "handle": "ikea-harry-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:50.291Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "harry-dining-chair-slipcover",
+   "title": "Harry Dining Chair Slipcover",
+   "vendor": "IKEA",
+   "sku": "IK-HY-DCX",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HY-DCX_34CM_VELC_SP_CVC-01.jpg?v=1741657465",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HY-DCX_34CM_VELC_SP_CVC-01.jpg?v=1741657465"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Dining Chair",
+    "categoryproducts:HY",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HY-DCX",
+    "FLT___Product_Ref__Old____HY1",
+    "FLT___Series_Code___HY",
+    "FLT___Series_Name___Harry",
+    "FLT___Size___Dining_Chair",
+    "FLT___Style_Name___Long_Skirt",
+    "FLT___Style_Name___No_Skirt",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___13_5_inches_or_34_5cm",
+    "FLT___Variant_1_Name___17_inches_or_43cm",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HY-DCX",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Harry",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HY-DCX",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

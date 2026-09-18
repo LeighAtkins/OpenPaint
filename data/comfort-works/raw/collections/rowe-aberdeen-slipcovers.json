@@ -1,0 +1,118 @@
+{
+ "handle": "rowe-aberdeen-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:08.333Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "aberdeen-88-bench-cushion-sofa-slipcover",
+   "title": "Aberdeen 88\" Bench Cushion Sofa Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-AN-88-1C",
+   "price": "749.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-AN-88-1C_VELC_SP_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-AN-88-1C_VELC_SP_CVC-01.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RE",
+    "categoryproducts:RE-AN",
+    "categoryproducts:RE-Sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "RE-AN-88-1C",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Aberdeen",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-AN-88-1C",
+     "price": "749.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "aberdeen-transitional-ottoman-slipcover",
+   "title": "Aberdeen Transitional Ottoman Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-AN-41F",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-AN-41F_VELC_SP_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-AN-41F_VELC_SP_CVC-01.jpg?v=1741575837"
+   ],
+   "tags": [
+    "categoryproducts:RE",
+    "categoryproducts:RE-AN",
+    "categoryproducts:RE-Ottoman",
+    "categoryproducts:RE-Sofa",
+    "description:",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "RE-AN-41F",
+    "series:Aberdeen"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-AN-41F",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

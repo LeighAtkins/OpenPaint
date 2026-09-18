@@ -1,0 +1,145 @@
+{
+ "handle": "ikea-strandmon-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:10.666Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "strandmon-footstool-loose-fit-cover",
+   "title": "Strandmon Footstool Loose Fit Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SR-0",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SR-0_SHRT_PM_CVC-01.jpg?v=1741320152",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SR-0_SHRT_PM_CVC-01.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_367_IKEA_Strandmon_sofa_f709418b-94fc-43c9-a2ec-068d15b50e44.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_366_IKEA_Strandmon_sofa.jpg?v=1741320152"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:SR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SR-0",
+    "FLT___Product_Ref__Old____SR0",
+    "FLT___Series_Code___SR",
+    "FLT___Series_Name___Strandmon",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-SR-0",
+    "important_notes:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Strandmon",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SR-0",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "strandmon-armchair-cover-loose-fit",
+   "title": "Strandmon Armchair Cover (Loose Fit)",
+   "vendor": "IKEA",
+   "sku": "IK-SR-1",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SR-1_SHRT_PM_CVC-01.jpg?v=1741320149",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SR-1_SHRT_PM_CVC-01.jpg?v=1741320149",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_367_IKEA_Strandmon_sofa.jpg?v=1741320149",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_366_IKEA_Strandmon_sofa_a3452631-6562-4b95-aa73-10374d3dcd94.jpg?v=1741320149"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round English Roll",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:SR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SR-1",
+    "FLT___Product_Ref__Old____SR1",
+    "FLT___Series_Code___SR",
+    "FLT___Series_Name___Strandmon",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SR-1",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Strandmon",
+    "size:1 Seater",
+    "storage:No",
+    "t_shaped_seat_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SR-1",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

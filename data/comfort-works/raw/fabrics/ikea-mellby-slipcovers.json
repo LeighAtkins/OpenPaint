@@ -1,0 +1,1203 @@
+{
+ "handle": "ikea-mellby-slipcovers",
+ "representative": "mellby-armchair-cover",
+ "hubLinks": [
+  "\\/pages\\/fabrics-hypoallergenic-collection-everyday-cotton",
+  "\\/pages\\/fabrics-cozy-collection-everyday-velvet",
+  "\\/pages\\/fabrics-starter-collection-everyday-weave",
+  "\\/pages\\/fabrics-performance-collection-signature-velvet",
+  "\\/pages\\/fabrics-pet-friendly-collection-signature-microfiber",
+  "\\/pages\\/fabrics-performance-collection-sunbrella"
+ ],
+ "fabricCount": 132,
+ "fabrics": [
+  {
+   "fabric": null,
+   "handle": "mellby-armchair-cover",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover",
+   "sku": "IK-MY-1",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_CVC-01.jpg?v=1741320108"
+  },
+  {
+   "fabric": "Care+ Canvas Ash",
+   "handle": "mellby-armchair-cover-care-canvas-ash",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-care-canvas-ash",
+   "sku": "IK-MY-1__VELC_SI__SUN-C13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_SUN-C13_0d346aca-31ef-4630-bf34-1b579beb1fc6.jpg?v=1727235025"
+  },
+  {
+   "fabric": "Care+ Canvas Beige",
+   "handle": "mellby-armchair-cover-care-canvas-beige",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-care-canvas-beige",
+   "sku": "IK-MY-1__VELC_SI__SUN-C38",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Canvas Sage",
+   "handle": "mellby-armchair-cover-care-canvas-sage",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-care-canvas-sage",
+   "sku": "IK-MY-1__VELC_SI__SUN-C10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_79c6773c-1e8f-450c-8f64-9eb3221d8f17.jpg?v=1727235559"
+  },
+  {
+   "fabric": "Care+ Canvas Snow",
+   "handle": "mellby-armchair-cover-care-canvas-snow",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-care-canvas-snow",
+   "sku": "IK-MY-1__VELC_SI__SUN-C31",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen Cream",
+   "handle": "mellby-armchair-cover-care-linen-cream",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-care-linen-cream",
+   "sku": "IK-MY-1__VELC_SI__COS-103",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen Natural",
+   "handle": "mellby-armchair-cover-care-linen-natural",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-care-linen-natural",
+   "sku": "IK-MY-1__VELC_SI__COS-105",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen White",
+   "handle": "mellby-armchair-cover-care-linen-white",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-care-linen-white",
+   "sku": "IK-MY-1__VELC_SI__COS-101",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Tweed Amber",
+   "handle": "mellby-armchair-cover-care-tweed-amber",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-care-tweed-amber",
+   "sku": "IK-MY-1__VELC_SI__SUN-T04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_SUN-T04_a5a729a3-9732-435c-ae80-2cc462a03a91.jpg?v=1727235034"
+  },
+  {
+   "fabric": "Care+ Tweed Mineral Blue",
+   "handle": "mellby-armchair-cover-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-care-tweed-mineral-blue",
+   "sku": "IK-MY-1__VELC_SI__SUN-T10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_SUN-T10_79b46d73-7eec-47f3-8600-54eef98075a5.jpg?v=1727235027"
+  },
+  {
+   "fabric": "Care+ Tweed Sunset",
+   "handle": "mellby-armchair-cover-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-care-tweed-sunset",
+   "sku": "IK-MY-1__VELC_SI__SUN-T06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_SUN-T06_41a9a33c-0c91-43a9-8b46-149c055f5c12.jpg?v=1727235039"
+  },
+  {
+   "fabric": "Care+ Tweed Teal",
+   "handle": "mellby-armchair-cover-care-tweed-teal",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-care-tweed-teal",
+   "sku": "IK-MY-1__VELC_SI__SUN-T12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_SUN-T12_6cd38773-a281-40f7-bf75-b7afc488bf63.jpg?v=1727235031"
+  },
+  {
+   "fabric": "Classic Velvet Peach",
+   "handle": "mellby-armchair-cover-classic-velvet-peach",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-classic-velvet-peach",
+   "sku": "IK-MY-1__VELC_SI__FM-02P",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_FM-02P.jpg?v=1725344084"
+  },
+  {
+   "fabric": "Crypton® Chenille Burnt Orange",
+   "handle": "mellby-armchair-cover-crypton®-chenille-burnt-orange",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-crypton®-chenille-burnt-orange",
+   "sku": "IK-MY-1__VELC_SI__BEN-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Cream",
+   "handle": "mellby-armchair-cover-crypton®-chenille-cream",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-crypton®-chenille-cream",
+   "sku": "IK-MY-1__VELC_SI__BEN-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Dark Teal",
+   "handle": "mellby-armchair-cover-crypton®-chenille-dark-teal",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-crypton®-chenille-dark-teal",
+   "sku": "IK-MY-1__VELC_SI__BEN-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Snow",
+   "handle": "mellby-armchair-cover-crypton®-chenille-snow",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-crypton®-chenille-snow",
+   "sku": "IK-MY-1__VELC_SI__BEN-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Charcoal",
+   "handle": "mellby-armchair-cover-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-cotton-charcoal",
+   "sku": "IK-MY-1__VELC_SI__CVC-07",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Forest Green",
+   "handle": "mellby-armchair-cover-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-cotton-forest-green",
+   "sku": "IK-MY-1__VELC_SI__CVC-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Khaki",
+   "handle": "mellby-armchair-cover-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-cotton-khaki",
+   "sku": "IK-MY-1__VELC_SI__CVC-08",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Pebble",
+   "handle": "mellby-armchair-cover-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-cotton-pebble",
+   "sku": "IK-MY-1__VELC_SI__CVC-06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_CVC-06_1b73678e-6dc7-4be1-aceb-d8fce8720c15.jpg?v=1743076898"
+  },
+  {
+   "fabric": "Everyday Cotton Sand",
+   "handle": "mellby-armchair-cover-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-cotton-sand",
+   "sku": "IK-MY-1__VELC_SI__CVC-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Silver Sage",
+   "handle": "mellby-armchair-cover-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-cotton-silver-sage",
+   "sku": "IK-MY-1__VELC_SI__CVC-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton White",
+   "handle": "mellby-armchair-cover-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-cotton-white",
+   "sku": "IK-MY-1__VELC_SI__CVC-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Cacao",
+   "handle": "mellby-armchair-cover-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-velvet-cacao",
+   "sku": "IK-MY-1__VELC_SI__ROYAL-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Dark Teal",
+   "handle": "mellby-armchair-cover-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-velvet-dark-teal",
+   "sku": "IK-MY-1__VELC_SI__ROYAL-13",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Navy",
+   "handle": "mellby-armchair-cover-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-velvet-navy",
+   "sku": "IK-MY-1__VELC_SI__ROYAL-14",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Sand",
+   "handle": "mellby-armchair-cover-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-velvet-sand",
+   "sku": "IK-MY-1__VELC_SI__ROYAL-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Storm",
+   "handle": "mellby-armchair-cover-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-velvet-storm",
+   "sku": "IK-MY-1__VELC_SI__ROYAL-20",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Weave Basil Green",
+   "handle": "mellby-armchair-cover-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-weave-basil-green",
+   "sku": "IK-MY-1__VELC_SI__EYL-47",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_EYL-47.jpg?v=1725344055"
+  },
+  {
+   "fabric": "Everyday Weave Cream",
+   "handle": "mellby-armchair-cover-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-weave-cream",
+   "sku": "IK-MY-1__VELC_SI__EYL-35",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_EYL-35.jpg?v=1725344049"
+  },
+  {
+   "fabric": "Everyday Weave Maroon",
+   "handle": "mellby-armchair-cover-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-weave-maroon",
+   "sku": "IK-MY-1__VELC_SI__EYL-38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_EYL-38.jpg?v=1725344058"
+  },
+  {
+   "fabric": "Everyday Weave Navy",
+   "handle": "mellby-armchair-cover-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-weave-navy",
+   "sku": "IK-MY-1__VELC_SI__EYL-44",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_EYL-44.jpg?v=1725344064"
+  },
+  {
+   "fabric": "Everyday Weave Pebble",
+   "handle": "mellby-armchair-cover-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-weave-pebble",
+   "sku": "IK-MY-1__VELC_SI__EYL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_EYL-20.jpg?v=1725344044"
+  },
+  {
+   "fabric": "Everyday Weave Rust",
+   "handle": "mellby-armchair-cover-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-weave-rust",
+   "sku": "IK-MY-1__VELC_SI__EYL-39",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_EYL-39.jpg?v=1725344061"
+  },
+  {
+   "fabric": "Everyday Weave Storm",
+   "handle": "mellby-armchair-cover-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-weave-storm",
+   "sku": "IK-MY-1__VELC_SI__EYL-24",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_EYL-24.jpg?v=1725344047"
+  },
+  {
+   "fabric": "Everyday Weave Teal",
+   "handle": "mellby-armchair-cover-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-everyday-weave-teal",
+   "sku": "IK-MY-1__VELC_SI__EYL-43",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_EYL-43.jpg?v=1725344052"
+  },
+  {
+   "fabric": "Mod Boucle Amber",
+   "handle": "mellby-armchair-cover-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-mod-boucle-amber",
+   "sku": "IK-MY-1__VELC_SI__MOSS-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_MOSS-09_323c32d6-9536-4a60-903f-da9507a59c4f.jpg?v=1725343899"
+  },
+  {
+   "fabric": "Mod Boucle Charcoal",
+   "handle": "mellby-armchair-cover-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-mod-boucle-charcoal",
+   "sku": "IK-MY-1__VELC_SI__MOSS-97",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_MOSS-97_e291b890-5819-45cd-89c3-18617264e24d.jpg?v=1725343905"
+  },
+  {
+   "fabric": "Mod Boucle Cream",
+   "handle": "mellby-armchair-cover-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-mod-boucle-cream",
+   "sku": "IK-MY-1__VELC_SI__MOSS-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_MOSS-01_881e5218-263e-467d-bc5c-935ce5ab2ddc.jpg?v=1725343896"
+  },
+  {
+   "fabric": "Mod Boucle Oatmeal",
+   "handle": "mellby-armchair-cover-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-mod-boucle-oatmeal",
+   "sku": "IK-MY-1__VELC_SI__MOSS-40",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_MOSS-40_8dd16c16-d3d3-436c-87cf-f97f5053b90c.jpg?v=1725343902"
+  },
+  {
+   "fabric": "Mod Chenille Beige",
+   "handle": "mellby-armchair-cover-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-mod-chenille-beige",
+   "sku": "IK-MY-1__VELC_SI__ESTE-52",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_ESTE-52_00ab01f6-7318-455c-887b-603f25639611.jpg?v=1725343872"
+  },
+  {
+   "fabric": "Mod Chenille Denim",
+   "handle": "mellby-armchair-cover-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-mod-chenille-denim",
+   "sku": "IK-MY-1__VELC_SI__ESTE-78",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_ESTE-78_f356dfff-014c-48a1-b8ec-01a62b3021cb.jpg?v=1725343882"
+  },
+  {
+   "fabric": "Mod Chenille Espresso",
+   "handle": "mellby-armchair-cover-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-mod-chenille-espresso",
+   "sku": "IK-MY-1__VELC_SI__ESTE-57",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_ESTE-57_a0998d74-65cf-4e68-af2f-26709c99ed81.jpg?v=1725343879"
+  },
+  {
+   "fabric": "Mod Chenille Mist",
+   "handle": "mellby-armchair-cover-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-mod-chenille-mist",
+   "sku": "IK-MY-1__VELC_SI__ESTE-92",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_ESTE-92_b305f7f7-94ac-4fe7-a9ff-f505247414c2.jpg?v=1725343885"
+  },
+  {
+   "fabric": "Signature Microfiber Caramel",
+   "handle": "mellby-armchair-cover-signature-microfiber-caramel",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-microfiber-caramel",
+   "sku": "IK-MY-1__VELC_SI__FA-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_FA-09_79d7a01f-dc4c-47a2-9af9-ab8c877892c3.jpg?v=1725343913"
+  },
+  {
+   "fabric": "Signature Microfiber Coral",
+   "handle": "mellby-armchair-cover-signature-microfiber-coral",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-microfiber-coral",
+   "sku": "IK-MY-1__VELC_SI__FA-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_FA-14_19de4cd1-1196-4e59-a724-107d291c493b.jpg?v=1725343923"
+  },
+  {
+   "fabric": "Signature Microfiber Cream",
+   "handle": "mellby-armchair-cover-signature-microfiber-cream",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-microfiber-cream",
+   "sku": "IK-MY-1__VELC_SI__FA-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_FA-01_e95d2538-87b2-471e-9a93-cb669d8c55f0.jpg?v=1725343910"
+  },
+  {
+   "fabric": "Signature Microfiber Dark Coral",
+   "handle": "mellby-armchair-cover-signature-microfiber-dark-coral",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-microfiber-dark-coral",
+   "sku": "IK-MY-1__VELC_SI__FA-54",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_FA-54_68036b9e-9537-446c-8eaa-961f96ba4581.jpg?v=1725343926"
+  },
+  {
+   "fabric": "Signature Microfiber Forest Green",
+   "handle": "mellby-armchair-cover-signature-microfiber-forest-green",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-microfiber-forest-green",
+   "sku": "IK-MY-1__VELC_SI__FA-63",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_FA-63_c7d5e98c-1506-41ac-bdec-e9ee9c922fb7.jpg?v=1725343920"
+  },
+  {
+   "fabric": "Signature Microfiber Sand",
+   "handle": "mellby-armchair-cover-signature-microfiber-sand",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-microfiber-sand",
+   "sku": "IK-MY-1__VELC_SI__FA-45",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_FA-45_28c32176-f658-4128-a5cc-9d63e175538c.jpg?v=1725343908"
+  },
+  {
+   "fabric": "Signature Microfiber Silver Sage",
+   "handle": "mellby-armchair-cover-signature-microfiber-silver-sage",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-microfiber-silver-sage",
+   "sku": "IK-MY-1__VELC_SI__FA-67",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_FA-67_368b6ea7-0c64-4f4b-bf1b-dcd7ae4963f7.jpg?v=1725343917"
+  },
+  {
+   "fabric": "Signature Velvet Bayleaf",
+   "handle": "mellby-armchair-cover-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-velvet-bayleaf",
+   "sku": "IK-MY-1__VELC_SI__PAL-11",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Caramel",
+   "handle": "mellby-armchair-cover-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-velvet-caramel",
+   "sku": "IK-MY-1__VELC_SI__PAL-09",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Cream",
+   "handle": "mellby-armchair-cover-signature-velvet-cream",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-velvet-cream",
+   "sku": "IK-MY-1__VELC_SI__PAL-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Eucalyptus",
+   "handle": "mellby-armchair-cover-signature-velvet-eucalyptus",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-velvet-eucalyptus",
+   "sku": "IK-MY-1__VELC_SI__PAL-14",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Hazel",
+   "handle": "mellby-armchair-cover-signature-velvet-hazel",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-velvet-hazel",
+   "sku": "IK-MY-1__VELC_SI__PAL-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Midnight",
+   "handle": "mellby-armchair-cover-signature-velvet-midnight",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-velvet-midnight",
+   "sku": "IK-MY-1__VELC_SI__PAL-12",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Natural",
+   "handle": "mellby-armchair-cover-signature-velvet-natural",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-velvet-natural",
+   "sku": "IK-MY-1__VELC_SI__PAL-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Sand",
+   "handle": "mellby-armchair-cover-signature-velvet-sand",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-velvet-sand",
+   "sku": "IK-MY-1__VELC_SI__PAL-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Sunset",
+   "handle": "mellby-armchair-cover-signature-velvet-sunset",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-signature-velvet-sunset",
+   "sku": "IK-MY-1__VELC_SI__PAL-07",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Sunbrella® Canvas Flax",
+   "handle": "mellby-armchair-cover-sunbrella®-canvas-flax",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-sunbrella®-canvas-flax",
+   "sku": "IK-MY-1__VELC_SI__5492-0000",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_5492-0000.jpg?v=1725344011"
+  },
+  {
+   "fabric": "Sunbrella® Fretwork Flax",
+   "handle": "mellby-armchair-cover-sunbrella®-fretwork-flax",
+   "url": "https://comfort-works.com/products/mellby-armchair-cover-sunbrella®-fretwork-flax",
+   "sku": "IK-MY-1__VELC_SI__45991-0001",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-MY-1_VELC_SI_45991-0001.jpg?v=1725343999"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-teal",
+   "sku": "swatch__EYL-43",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-43_Everyday_Weave_Teal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-storm",
+   "sku": "swatch__EYL-24",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-24_Everyday_Weave_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-rust",
+   "sku": "swatch__EYL-39",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-39_Everyday_Weave_Rust.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-pebble",
+   "sku": "swatch__EYL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-20_Everyday_Weave_Pebble.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-navy",
+   "sku": "swatch__EYL-44",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-44_Everyday_Weave_Navy.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-maroon",
+   "sku": "swatch__EYL-38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-38_Everyday_Weave_Maroon.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-cream",
+   "sku": "swatch__EYL-35",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-35_Everyday_Weave_Cream.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-basil-green",
+   "sku": "swatch__EYL-47",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-47_Everyday_Weave_Basil_Green.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-white",
+   "sku": "swatch__CVC-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/TC-01_Everyday_Cotton_White_1X_1.jpg?v=1718092472"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-sand",
+   "sku": "swatch__CVC-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-02_Everyday_Cotton_Sand.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-silver-sage",
+   "sku": "swatch__CVC-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-03_Everyday_Cotton_Silver_Sage.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-forest-green",
+   "sku": "swatch__CVC-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-04_Everyday_Cotton_Forest_Green.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-navy",
+   "sku": "swatch__CVC-05",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-05.jpg?v=1785723660"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-pebble",
+   "sku": "swatch__CVC-06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-06_Everyday_Cotton_Pebble.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-charcoal",
+   "sku": "swatch__CVC-07",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-07_Everyday_Cotton_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-khaki",
+   "sku": "swatch__CVC-08",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-08_Everyday_Cotton_Khaki.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-cacao",
+   "sku": "swatch__ROYAL-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-04_Everyday_Velvet_Cacao.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-dark-teal",
+   "sku": "swatch__ROYAL-13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-13_Everyday_Velvet_Dark_Teal.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-navy",
+   "sku": "swatch__ROYAL-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-14_Everyday_Velvet_Navy.avif?v=1777425396"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-sand",
+   "sku": "swatch__ROYAL-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-03_Everyday_Velvet_Sand.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-storm",
+   "sku": "swatch__ROYAL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-20_Everyday_Velvet_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-sage",
+   "sku": "swatch__SUN-C10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/SUN-C10_Performance-Canvas-Sage_1080x1080_22f090cb-fce4-4f4f-bc62-d6af2bb93957.png?v=1702022331"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-ash",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-ash",
+   "sku": "swatch__SUN-C13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C13_Care_Canvas_Ash.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-beige",
+   "sku": "swatch__SUN-C38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C38_Care_Canvas_Beige.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-snow",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-snow",
+   "sku": "swatch__SUN-C31",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C31_Care_Canvas_Snow.avif?v=1777425376"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-teal",
+   "sku": "swatch__SUN-T12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T12_Care_Tweed_Teal.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-sunset",
+   "sku": "swatch__SUN-T06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T06_Care_Tweed_Sunset.avif?v=1777425402"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-mineral-blue",
+   "sku": "swatch__SUN-T10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T10_Care_Tweed_Mineral_Blue.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-amber",
+   "sku": "swatch__SUN-T04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T04_Care_Tweed_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-mist",
+   "sku": "swatch__ESTE-92",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-92_Mod_Chenille_Mist.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-espresso",
+   "sku": "swatch__ESTE-57",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-57ModChenilleCacao_1X_dac9a2ae-b3ad-4656-a8be-dd44b643f5d5.jpg?v=1723009282"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-denim",
+   "sku": "swatch__ESTE-78",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-78_Mod_Chenille_Denim.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-beige",
+   "sku": "swatch__ESTE-52",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-52_Mod_Chenille_Beige.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-amber",
+   "sku": "swatch__MOSS-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-09_Mod_Boucle_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-charcoal",
+   "sku": "swatch__MOSS-97",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-97_Mod_Boucle_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-cream",
+   "sku": "swatch__MOSS-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-01_Mod_Boucle_Cream.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-oatmeal",
+   "sku": "swatch__MOSS-40",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-40_Mod_Boucle_Oatmeal.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-white",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-white",
+   "sku": "swatch__COS-101",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-101_Care_Linen_White.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-cream",
+   "sku": "swatch__COS-103",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-103_Care_Linen_Cream.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-natural",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-natural",
+   "sku": "swatch__COS-105",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-105_Care_Linen_Natural.avif?v=1777425397"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-bayleaf",
+   "sku": "swatch__PAL-11",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-11_Signature_Velvet_Bayleaf.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-caramel",
+   "sku": "swatch__PAL-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-09_Signature_Velvet_Caramel.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-cream",
+   "sku": "swatch__PAL-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-01_Signature_Velvet_Cream.avif?v=1777425379"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-eucalyptus",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-eucalyptus",
+   "sku": "swatch__PAL-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-14_Signature_Velvet_Eucalyptus.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-hazel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-hazel",
+   "sku": "swatch__PAL-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-04_Signature_Velvet_Hazel.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-natural",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-natural",
+   "sku": "swatch__PAL-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-02_Signature_Velvet_Natural.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-sand",
+   "sku": "swatch__PAL-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-03_Signature_Velvet_Sand.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-sunset",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-sunset",
+   "sku": "swatch__PAL-07",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-07_Signature_Velvet_Sunset.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-midnight",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-midnight",
+   "sku": "swatch__PAL-12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-12_Signature_Velvet_Midnight.avif?v=1777425381"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-caramel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-caramel",
+   "sku": "swatch__FA-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-09_Signature_Microfibre_Caramel.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-coral",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-coral",
+   "sku": "swatch__FA-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-14_Signature_Microfibre_Coral.avif?v=1777425387"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-cream",
+   "sku": "swatch__FA-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-01_Signature_Microfibre_Cream.avif?v=1777425377"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-dark-coral",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-dark-coral",
+   "sku": "swatch__FA-54",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-54_Signature_Microfibre_Dark_Coral.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-forest-green",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-forest-green",
+   "sku": "swatch__FA-63",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-63_Signature_Microfibre_Forest_Green.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-sand",
+   "sku": "swatch__FA-45",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-45_Signature_Microfibre_Sand.avif?v=1777425392"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-silver-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-silver-sage",
+   "sku": "swatch__FA-67",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-67_Signature_Microfibre_Silver_Sage.avif?v=1777425397"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-snow",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-snow",
+   "sku": "swatch__BEN-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-01_Crypton_Chenille_Snow_1X_93dcac9d-c70d-4433-ab9b-d2c9e77c41d9.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-cream",
+   "sku": "swatch__BEN-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-02_Crypton_Chenille_Cream_1X_64152f0a-1efa-4d2c-8d3a-82b8ac99dcba.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-dark-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-dark-teal",
+   "sku": "swatch__BEN-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-03_Crypton_Chenille_Dark_Teal_1X_297f2e4e-538a-4a15-9984-6f1db09d32a0.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-burnt-orange",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-burnt-orange",
+   "sku": "swatch__BEN-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-04_Crypton_Chenille_Burnt_Orange_1X_5022eba9-da20-4396-ac22-c4bd47bdb6f0.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-sunbrella®-canvas-flax",
+   "url": "https://comfort-works.com/products/fabric-samples-sunbrella®-canvas-flax",
+   "sku": "swatch__5492-0000",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/5492-0000_Sunbrella_Canvas_Flax.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-sunbrella®-fretwork-flax",
+   "url": "https://comfort-works.com/products/fabric-samples-sunbrella®-fretwork-flax",
+   "sku": "swatch__45991-0001",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/45991-0001_Sunbrella_Fretwork_Flax.avif?v=1777425394"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-classic-velvet-peach",
+   "url": "https://comfort-works.com/products/fabric-samples-classic-velvet-peach",
+   "sku": "swatch__FM-02P",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FM-02P_20Classic_20Velvet_20Peach_1X_1371728e-ddee-4af9-9e08-9e7b95f0d79b.jpg?v=1710488070"
+  },
+  {
+   "fabric": "USB1-CBL",
+   "handle": "smart-sofa-accessories-usb1-cbl",
+   "url": "https://comfort-works.com/products/smart-sofa-accessories-usb1-cbl",
+   "sku": "NOUSB",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/1_default_attaching-USB-port_f6887085-cc2d-42c5-bc84-b06604a01715.jpg?v=1689216295"
+  },
+  {
+   "fabric": null,
+   "handle": "cooper-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/cooper-wooden-sofa-leg",
+   "sku": "LEG-CR__BK",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-CR__BK.jpg?v=1683617841"
+  },
+  {
+   "fabric": null,
+   "handle": "bailey-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/bailey-wooden-sofa-leg",
+   "sku": "BY__ch",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/bailey_wooden_sofa_leg_cherry_BY__ch.jpg?v=1718327199"
+  },
+  {
+   "fabric": null,
+   "handle": "stella-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/stella-wooden-sofa-leg",
+   "sku": "LEG-SA__WH",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-SA__WH.webp?v=1689910066"
+  },
+  {
+   "fabric": null,
+   "handle": "peroni-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/peroni-wooden-sofa-leg",
+   "sku": "LEG-PN__WH",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-PN__WH.webp?v=1689910053"
+  },
+  {
+   "fabric": null,
+   "handle": "flexifit-universal-couch-cushion-covers",
+   "url": "https://comfort-works.com/products/flexifit-universal-couch-cushion-covers",
+   "sku": "CW-FF-CC",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CW-FF-CC_SQ_8396_SP_EYL-35.webp?v=1755762125"
+  }
+ ]
+}

@@ -1,0 +1,177 @@
+{
+ "handle": "ikea-fagelbo-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:44.859Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "fagelbo-chaise-sofa-cover",
+   "title": "Fagelbo Chaise Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FO-25B",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FO-25B_L_LSKT_PM_CVC-01.jpg?v=1741320113",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FO-25B_L_LSKT_PM_CVC-01.jpg?v=1741320113",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_249_IKEA_Fagelbo_sofa.jpg?v=1741320113",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_250_IKEA_Fagelbo_sofa.jpg?v=1741320113"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:FO",
+    "categoryproducts:IK",
+    "chaise_lounge:Yes",
+    "chaise_lounge_position:Left",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FO-25B",
+    "FLT___Product_Ref__Old____FO_L",
+    "FLT___Series_Code___FO",
+    "FLT___Series_Name___Fagelbo",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-FO-25B",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Fagelbo",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:5",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FO-25B",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "fagelbo-bed-compartment-cover",
+   "title": "Fagelbo Bed Compartment Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FO-CCB",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FO-CCB_PM_CVC-01.jpg?v=1741320115",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FO-CCB_PM_CVC-01.jpg?v=1741320115",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_250_IKEA_Fagelbo_sofa_4b4fe760-9695-4b3f-bf4c-531706518f2b.jpg?v=1741320115",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_249_IKEA_Fagelbo_sofa_4c155bdc-dd63-4200-9975-feaf4348293d.jpg?v=1741320115"
+   ],
+   "tags": [
+    "categoryproducts:FO",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FO-CCB",
+    "FLT___Product_Ref__Old____FO0",
+    "FLT___Series_Code___FO",
+    "FLT___Series_Name___Fagelbo",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "IK-FO-CCB",
+    "series:Fagelbo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FO-CCB",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "fagelbo-chaise-armrest-protector-covers",
+   "title": "Fagelbo Chaise Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-FO-APM",
+   "price": "69.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FO-APM_L_PM_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FO-APM_L_PM_CVC-01.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FO-APM",
+    "FLT___Product_Ref__Old____FOL_AP",
+    "FLT___Series_Code___FO",
+    "FLT___Series_Name___Fagelbo",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-FO-APM",
+    "series:Fagelbo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FO-APM",
+     "price": "69.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

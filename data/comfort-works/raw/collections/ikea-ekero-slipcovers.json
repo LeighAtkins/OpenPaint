@@ -1,0 +1,74 @@
+{
+ "handle": "ikea-ekero-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:36.553Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "ekero-armchair-cover",
+   "title": "Ekero Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EK-1",
+   "price": "139.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EK-1_VELC_SP_CVC-01.jpg?v=1741320151",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EK-1_VELC_SP_CVC-01.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_243_IKEA_Ekero_sofa.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_244_IKEA_Ekero_sofa.jpg?v=1741320151"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:EK",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EK-1",
+    "FLT___Product_Ref__Old____EK1",
+    "FLT___Series_Code___EK",
+    "FLT___Series_Name___Ekero",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EK-1",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:Ekero",
+    "size:1 Seater",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EK-1",
+     "price": "139.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

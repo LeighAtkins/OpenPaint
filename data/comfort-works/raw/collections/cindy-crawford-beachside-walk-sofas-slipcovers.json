@@ -1,0 +1,48 @@
+{
+ "handle": "cindy-crawford-beachside-walk-sofas-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:05.834Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "beachside-walk-sleeper-sofa-slipcover",
+   "title": "Beachside Walk Sleeper Sofa Slipcover",
+   "vendor": "Cindy Crawford",
+   "sku": "CY-BW-87B",
+   "price": "509.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_CY_CY-BW_CY-BW-87B_CY-BW-87B_MLTP_PM_CVC-01.jpg?v=1744940766",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_CY_CY-BW_CY-BW-87B_CY-BW-87B_MLTP_PM_CVC-01.jpg?v=1744940766"
+   ],
+   "tags": [
+    "categoryproducts:CY",
+    "categoryproducts:CY-BW",
+    "Cindy Crawford",
+    "CY-BW-87B",
+    "description:",
+    "features:575",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Beachside Walk"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CY-BW-87B",
+     "price": "509.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

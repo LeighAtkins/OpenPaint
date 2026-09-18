@@ -1,0 +1,48 @@
+{
+ "handle": "ikea-ragunda-sofa-covers",
+ "fetchedAt": "2026-09-18T05:35:04.553Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "ragunda-corner-sofa-bed-cover",
+   "title": "Ragunda Corner Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-RA-25BM",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-RA-25BM_R_VELC_SP_CVC-01.webp?v=1783393941",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-RA-25BM_R_VELC_SP_CVC-01.webp?v=1783393941"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-RA-25BM",
+    "installation:579",
+    "series:Ragunda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-RA-25BM",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

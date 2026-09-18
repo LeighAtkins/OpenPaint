@@ -473,7 +473,6 @@ function ensureStyles(): void {
     .cw-measure-value-input { width: 100%; min-width: 62px; height: 32px; padding: 5px 42px 5px 7px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #0f172a; font: inherit; font-weight: 700; }
     .cw-measure-value-input:focus { border-color: #2563eb; outline: 2px solid rgba(37,99,235,.14); outline-offset: 0; }
     .cw-measure-value-input[aria-invalid="true"] { border-color: #dc2626; background: #fef2f2; }
-    .cw-measure-source { display: flex; align-items: center; min-height: 16px; margin-top: 3px; overflow: visible; color: #64748b; font-size: 9px; font-weight: 600; line-height: 1.2; white-space: nowrap; }
     .cw-measure-reset { position: absolute; top: 7px; right: 5px; z-index: 1; padding: 2px 3px; border: 0; background: #fff; color: #2563eb; font-size: 9px; font-weight: 700; line-height: 1.2; cursor: pointer; }
     .cw-split-measure-wrap { margin-top: 0; width: 100%; height: 100%; min-width: 0; min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; border-radius: 18px; border: 1px solid rgba(203, 213, 225, 0.85); background: rgba(255,255,255,0.98); box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08); overflow: hidden; }
     .cw-split-measure-wrap .cw-measure-head { position: sticky; top: 0; z-index: 2; padding: 12px 14px; background: linear-gradient(180deg, #f8fafc 0%, #eef4ff 100%); border-bottom-color: rgba(203, 213, 225, 0.9); }
@@ -3948,11 +3947,6 @@ function createModal(): HTMLElement {
       valueInput.dataset.cwValueInput = row.rowKey;
       valueInput.setAttribute('aria-label', `Value for ${row.sourceLabel} in centimetres`);
       valueInput.value = getEffectiveRowValue(row);
-      const source = document.createElement('div');
-      source.className = 'cw-measure-source';
-      source.dataset.cwSource = row.rowKey;
-      source.textContent = `CW · original ${originalValue} cm`;
-      source.title = `${row.itemLabel} · ${row.sectionName || 'Measurements'} · ${row.sourceLabel} · original ${originalValue} cm`;
       const resetValue = document.createElement('button');
       resetValue.type = 'button';
       resetValue.className = 'cw-measure-reset';
@@ -4009,7 +4003,7 @@ function createModal(): HTMLElement {
         resetValue.hidden = true;
         renderProductOverview();
       });
-      valueEl.append(valueInput, source, resetValue);
+      valueEl.append(valueInput, resetValue);
 
       const selectWrap = document.createElement('div');
       if (library) selectWrap.className = 'cw-library-label';

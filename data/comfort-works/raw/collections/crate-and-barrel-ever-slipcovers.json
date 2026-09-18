@@ -1,0 +1,51 @@
+{
+ "handle": "crate-and-barrel-ever-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:09.799Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "ever-44-chair-by-leanne-ford-slipcover",
+   "title": "Ever 44\" Chair by Leanne Ford Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-ER-44",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-ER-44_LSKT_SP_CVC-01.jpg?v=1741320104",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-ER-44_LSKT_SP_CVC-01.jpg?v=1741320104"
+   ],
+   "tags": [
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-ER",
+    "categoryproducts:CB-Slipcover",
+    "CB-ER-44",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Ever"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-ER-44",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

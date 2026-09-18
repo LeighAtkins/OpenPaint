@@ -1,0 +1,298 @@
+{
+ "handle": "ikea-vallentuna-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:13.695Z",
+ "count": 5,
+ "products": [
+  {
+   "handle": "vallentuna-seat-module-cover",
+   "title": "Vallentuna Seat Module Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VA-1X",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-1X_STD_VELC_SI_CVC-01.jpg?v=1741741765",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-1X_STD_VELC_SI_CVC-01.jpg?v=1741741765"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:VA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VA-1X",
+    "FLT___Product_Ref__New____IK-VAX",
+    "FLT___Product_Ref__Old____VA1_S",
+    "FLT___Series_Code___VA",
+    "FLT___Series_Name___Vallentuna",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT___Variant_1_Name___With_Storage",
+    "FLT___Variant_1_Name___Without_Storage",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-VA-1X",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Vallentuna",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:Yes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VA-1X",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vallentuna-back-cushion-cover",
+   "title": "Vallentuna Back Cushion Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VA-CC",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-CC_SI_CVC-01.jpg?v=1741320146",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-CC_SI_CVC-01.jpg?v=1741320146"
+   ],
+   "tags": [
+    "categoryproducts:VA",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VA-CC",
+    "FLT___Product_Ref__Old____VA_CC",
+    "FLT___Series_Code___VA",
+    "FLT___Series_Name___Vallentuna",
+    "FLT___Size___Cushion_Only",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SI",
+    "FLT__MAIN",
+    "IK-VA-CC",
+    "important_notes:579",
+    "installation:630",
+    "series:Vallentuna"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VA-CC",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vallentuna-backrest-cover",
+   "title": "Vallentuna Backrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VA-8",
+   "price": "39.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-8_100x80_VELC_SI_CVC-01.jpg?v=1741679951",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-8_100x80_VELC_SI_CVC-01.jpg?v=1741679951"
+   ],
+   "tags": [
+    "categoryproducts:VA",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VA-8",
+    "FLT___Product_Ref__Old____VA9",
+    "FLT___Series_Code___VA",
+    "FLT___Series_Name___Vallentuna",
+    "FLT___Size___Backrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT___Variant_1_Name___Rectangle___W_100cm_x_H_80cm",
+    "FLT___Variant_1_Name___Rectangle___W_80cm_x_H_100cm",
+    "FLT___Variant_1_Name___Square___W_80cm_x_H_80cm",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "IK-VA-8",
+    "important_notes:579",
+    "installation:630",
+    "series:Vallentuna"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VA-8",
+     "price": "39.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vallentuna-seat-module-with-bed-cover",
+   "title": "Vallentuna Seat Module with Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VA-1BX",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-1BX_VELC_SI_CVC-01.jpg?v=1741320151",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-1BX_VELC_SI_CVC-01.jpg?v=1741320151"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Footstool",
+    "categoryproducts:VA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VA-1BX",
+    "FLT___Product_Ref__Old____VA1_B",
+    "FLT___Series_Code___VA",
+    "FLT___Series_Name___Vallentuna",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-VA-1BX",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Vallentuna",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VA-1BX",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vallentuna-armrest-cover-single",
+   "title": "Vallentuna Armrest Cover (Single)",
+   "vendor": "IKEA",
+   "sku": "IK-VA-8M",
+   "price": "39.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-8M_VELC_SI_CVC-01.jpg?v=1741320145",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-8M_VELC_SI_CVC-01.jpg?v=1741320145"
+   ],
+   "tags": [
+    "categoryproducts:VA",
+    "features:575",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VA-8M",
+    "FLT___Product_Ref__Old____VA8",
+    "FLT___Series_Code___VA",
+    "FLT___Series_Name___Vallentuna",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "IK-VA-8M",
+    "important_notes:579",
+    "installation:630",
+    "series:Vallentuna"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VA-8M",
+     "price": "39.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,47 @@
+{
+ "handle": "slipcovers-for-pottery-barn-trevor-sofas",
+ "fetchedAt": "2026-09-18T05:38:18.226Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "trevor-chair-slipcover",
+   "title": "Trevor Chair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TR-27X",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TR-27X_SV_SHRT_SP_CVC-01.webp?v=1776918747",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TR-27X_SV_SHRT_SP_CVC-01.webp?v=1776918747"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TR",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-TR-27X",
+    "series:Trevor"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TR-27X",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

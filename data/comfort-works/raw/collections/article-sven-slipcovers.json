@@ -1,0 +1,308 @@
+{
+ "handle": "article-sven-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:49.756Z",
+ "count": 5,
+ "products": [
+  {
+   "handle": "sven-42-chair-slipcover",
+   "title": "Sven 42\" Chair Slipcover",
+   "vendor": "Article",
+   "sku": "AE-SN-42",
+   "price": "409.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-SN-42_VELC_PM_CVC-01.jpg?v=1741320086",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-SN-42_VELC_PM_CVC-01.jpg?v=1741320086",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_175_Article_Sven_sofa.jpg?v=1741320086",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_177_Article_Sven_sofa_73ca9b95-388f-40a0-8ae2-0e3b0973b4f9.jpg?v=1741320086"
+   ],
+   "tags": [
+    "AE-SN-42",
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:AE-SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Article",
+    "FLT___Product_Ref__New____AE-SN-42",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Sven",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Sven",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AE-SN-42",
+     "price": "409.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sven-72-2-5-seater-loveseat-slipcover",
+   "title": "Sven 72\" 2.5 Seater Loveseat Slipcover",
+   "vendor": "Article",
+   "sku": "AE-SN-72",
+   "price": "509.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-SN-72_VELC_PM_CVC-01.jpg?v=1741320089",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-SN-72_VELC_PM_CVC-01.jpg?v=1741320089",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_142_Article_Sven_sofa.jpg?v=1741320089",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_177_Article_Sven_sofa.jpg?v=1741320089"
+   ],
+   "tags": [
+    "AE-SN-72",
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:AE-SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Article",
+    "FLT___Product_Ref__New____AE-SN-72",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Sven",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Sven",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AE-SN-72",
+     "price": "509.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sven-88-sofa-slipcover",
+   "title": "Sven 88\" Sofa Slipcover",
+   "vendor": "Article",
+   "sku": "AE-SN-88",
+   "price": "639.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-SN-88_VELC_PM_CVC-01.jpg?v=1741320093",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-SN-88_VELC_PM_CVC-01.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_175_Article_Sven_sofa_4361fad9-4b42-4efc-bd01-8f6be1f2ade1.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_176_Article_Sven_sofa.jpg?v=1741320093"
+   ],
+   "tags": [
+    "AE-SN-88",
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:AE-SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Article",
+    "FLT___Product_Ref__New____AE-SN-88",
+    "FLT___Product_Ref__Old____AE_SN_3",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Sven",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Sven",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AE-SN-88",
+     "price": "639.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sven-ottoman-slipcover",
+   "title": "Sven Ottoman Slipcover",
+   "vendor": "Article",
+   "sku": "AE-SN-30F",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-SN-30F_LV_VELC_PM_CVC-01.jpg?v=1741320091",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-SN-30F_LV_VELC_PM_CVC-01.jpg?v=1741320091"
+   ],
+   "tags": [
+    "AE-SN-30F",
+    "Article",
+    "categoryproducts:AE-SN",
+    "categoryproducts:AE-Sofa",
+    "description:",
+    "features:539",
+    "FLT___Series_Name___Sven",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Sven"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AE-SN-30F",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sven-sectional-sofa-cover",
+   "title": "Sven Sectional Sofa Cover",
+   "vendor": "Article",
+   "sku": "AE-SN-100",
+   "price": "759.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-SN-100_L_VELC_PM_CVC-01.jpg?v=1741320087",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-SN-100_L_VELC_PM_CVC-01.jpg?v=1741320087",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_047_Article_Sven_sofa.jpg?v=1741320087",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_076_Article_Sven_sofa.jpg?v=1741320087"
+   ],
+   "tags": [
+    "AE-SN-100",
+    "categoryproducts:AE-SN",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Article",
+    "FLT___Product_Ref__New____AE-SN-100",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Sven",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Variant_1_Name___Left_Chaise",
+    "FLT___Variant_1_Name___Right_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "important_notes:643",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Sven"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AE-SN-100",
+     "price": "759.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

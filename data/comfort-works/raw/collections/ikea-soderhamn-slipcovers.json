@@ -1,0 +1,620 @@
+{
+ "handle": "ikea-soderhamn-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:07.810Z",
+ "count": 9,
+ "products": [
+  {
+   "handle": "soderhamn-4-seat-corner-open-end-sofa-cover",
+   "title": "Soderhamn 4-seat Corner (Open End) Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SN-35",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-35_L_VELC_SP_CVC-01.jpg?v=1741741761",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-35_L_VELC_SP_CVC-01.jpg?v=1741741761"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SN-35",
+    "FLT___Product_Ref__Old____SN_123",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Soderhamn",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___1_Seater_Open_End_Left_Side",
+    "FLT___Variant_1_Name___1_Seater_Open_End_Right_Side",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SN-35",
+    "installation:585",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Soderhamn",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:4",
+    "square_rectangle_back_cushion:5",
+    "storage:No",
+    "throw_pillows:4"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SN-35",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "soderhamn-3-seater-sofa-cover",
+   "title": "Soderhamn 3-seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SN-3",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-3_VELC_SP_CVC-01.jpg?v=1741678946",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-3_VELC_SP_CVC-01.jpg?v=1741678946"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SN-3",
+    "FLT___Product_Ref__Old____SN3",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Soderhamn",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SN-3",
+    "installation:585",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Soderhamn",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SN-3",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "soderhamn-sofa-bed-section-cover",
+   "title": "Soderhamn Sofa-Bed Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SN-3BX",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-3BX_VELC_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-3BX_VELC_SP_CVC-01.jpg?v=1741678943"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SN-3BX",
+    "FLT___Product_Ref__Old____SN3_B",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Soderhamn",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SN-3BX",
+    "installation:585",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Soderhamn",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SN-3BX",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "soderhamn-armrest-cover-pair",
+   "title": "Soderhamn Armrest Cover (Pair)",
+   "vendor": "IKEA",
+   "sku": "IK-SN-8",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-8_VELC_SP_CVC-01.jpg?v=1741678944",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-8_VELC_SP_CVC-01.jpg?v=1741678944"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SN",
+    "features:575",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SN-8",
+    "FLT___Product_Ref__Old____SN8",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Soderhamn",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-SN-8",
+    "installation:585",
+    "series:Soderhamn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SN-8",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "soderhamn-chaise-longue-cover",
+   "title": "Soderhamn Chaise Longue Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SN-5X",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-5X_VELC_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-5X_VELC_SP_CVC-01.jpg?v=1741678943"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Chaise Lounge",
+    "categoryproducts:IK",
+    "categoryproducts:SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SN-5X",
+    "FLT___Product_Ref__Old____SN5",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Soderhamn",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SN-5X",
+    "installation:585",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Soderhamn",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SN-5X",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "soderhamn-3-seat-section-sofa-cover",
+   "title": "Soderhamn 3 Seat Section Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SN-2X",
+   "price": "349.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-2X_STD_VELC_SP_CVC-01.jpg?v=1741741760",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-2X_STD_VELC_SP_CVC-01.jpg?v=1741741760"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin arm",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SN-2X",
+    "FLT___Product_Ref__Old____SN3_N",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Soderhamn",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Soderhamn_3_Seat_Section",
+    "FLT___Variant_1_Name___Soderhamn_Compact_3_Seat_Section",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SN-2X",
+    "installation:585",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Soderhamn",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SN-2X",
+     "price": "349.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "soderhamn-corner-section-sofa-cover",
+   "title": "Soderhamn Corner Section Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SN-6",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-6_VELC_SP_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-6_VELC_SP_CVC-01.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Corner Section",
+    "categoryproducts:IK",
+    "categoryproducts:SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SN-6",
+    "FLT___Product_Ref__Old____SN2",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Soderhamn",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SN-6",
+    "installation:585",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:One Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Soderhamn",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SN-6",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "soderhamn-one-seat-section-cover",
+   "title": "Soderhamn One Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SN-1X",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-1X_VELC_SP_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-1X_VELC_SP_CVC-01.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Corner Section",
+    "categoryproducts:IK",
+    "categoryproducts:SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SN-1X",
+    "FLT___Product_Ref__Old____SN1_N",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Soderhamn",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SN-1X",
+    "installation:585",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Soderhamn",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SN-1X",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "soderhamn-footstool-cover",
+   "title": "Soderhamn Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SN-0",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-0_VELC_SP_CVC-01.jpg?v=1741678945",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-0_VELC_SP_CVC-01.jpg?v=1741678945"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SN-0",
+    "FLT___Product_Ref__Old____SN0",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Soderhamn",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-SN-0",
+    "installation:585",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Soderhamn",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SN-0",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

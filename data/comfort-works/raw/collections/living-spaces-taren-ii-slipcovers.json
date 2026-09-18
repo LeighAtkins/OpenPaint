@@ -1,0 +1,47 @@
+{
+ "handle": "living-spaces-taren-ii-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:20.702Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "taren-ii-reversible-93-sofa-chaise-sleeper-with-storage-ottoman-slipcover",
+   "title": "Taren II Reversible 93\" Sofa / Chaise Sleeper With Storage Ottoman Slipcover",
+   "vendor": "Living Spaces",
+   "sku": "LS-TN-93B-S",
+   "price": "629.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/LS-TN-93B-S.jpg?v=1788239352",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/LS-TN-93B-S.jpg?v=1788239352",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/LS-TN-93B-S_da469863-4503-4629-8109-abbc9c8ab0b4.jpg?v=1788239361"
+   ],
+   "tags": [
+    "categoryproducts:LS",
+    "description:",
+    "features:575",
+    "FLT__MAIN",
+    "installation:579",
+    "LS-TN-93B-S",
+    "series:Taren II"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "LS-TN-93B-S",
+     "price": "629.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

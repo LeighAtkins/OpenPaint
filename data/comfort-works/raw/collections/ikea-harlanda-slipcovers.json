@@ -1,0 +1,553 @@
+{
+ "handle": "ikea-harlanda-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:49.264Z",
+ "count": 11,
+ "products": [
+  {
+   "handle": "harlanda-2-seat-sofa-with-chaise-cover",
+   "title": "Harlanda 2 Seat Sofa with Chaise Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-25",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-25_L_SHRT_PM_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-25_L_SHRT_PM_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_265_IKEA_Harlanda_sofa.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_269_IKEA_Harnosand_sofa_f8987235-987d-4751-b927-d7eba9fbce26.jpg?v=1741320129"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-25",
+    "FLT___Product_Ref__Old____HLD7",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-HLD-25",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-25",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-3-seat-sofa-cover",
+   "title": "Harlanda 3 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-4",
+   "price": "419.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-4_SHRT_PM_CVC-01.jpg?v=1741320133",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-4_SHRT_PM_CVC-01.jpg?v=1741320133",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_266_IKEA_Harlanda_sofa.jpg?v=1741320133",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_201_IKEA_Harlanda_sofa_0df5236a-99b9-4338-8a65-75753b5d4b6e.jpg?v=1741320133"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-4",
+    "FLT___Product_Ref__Old____HLD3",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-4",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-4",
+     "price": "419.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-chaise-section-cover",
+   "title": "Harlanda Chaise Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-5X",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-5X_SHRT_PM_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-5X_SHRT_PM_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_265_IKEA_Harlanda_sofa_b4c3fa54-1e81-4eb5-83b6-f3362f9e6470.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_269_IKEA_Harnosand_sofa_a2e5c340-90ec-4690-ab0a-dcdd0c19f5b2.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-5X",
+    "FLT___Product_Ref__Old____HLD5_N",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-5X",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-5X",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-1-seat-section-cover",
+   "title": "Harlanda 1 Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-1X",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-1X_SHRT_PM_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-1X_SHRT_PM_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_264_IKEA_Harlanda_sofa_24a70a91-d2e5-47bd-98a4-16c49a06f8c7.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_263_IKEA_Harlanda_sofa.jpg?v=1741320129"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-1X",
+    "FLT___Product_Ref__Old____HLD1_N",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-1X",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-1X",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-footstool-cover",
+   "title": "Harlanda Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-0",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-0_SHRT_PM_CVC-01.jpg?v=1741320131",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-0_SHRT_PM_CVC-01.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_268_IKEA_Harlanda_sofa.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_263_IKEA_Harlanda_sofa_33876367-6590-4086-bb8e-11df9b3feabe.jpg?v=1741320131"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-0",
+    "FLT___Product_Ref__Old____HLD0",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-0",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-0",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-2-seat-sofa-cover",
+   "title": "Harlanda 2 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-2",
+   "price": "349.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-2_SHRT_PM_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-2_SHRT_PM_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_264_IKEA_Harlanda_sofa_fb7d8742-3916-4cb3-a633-8f99781b3c78.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_271_IKEA_Harnosand_sofa_9c4c52dd-f5ab-45d7-94f0-a3985c8d24f5.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-2",
+    "FLT___Product_Ref__Old____HLD2",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-2",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-2",
+     "price": "349.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-3-seat-section-cover",
+   "title": "Harlanda 3 Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-4X",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-4X_SHRT_PM_CVC-01.jpg?v=1741320131",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-4X_SHRT_PM_CVC-01.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_266_IKEA_Harlanda_sofa_19a4cd45-2e3c-476a-b906-720a2972e88a.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_201_IKEA_Harlanda_sofa_f98df542-b714-4673-997d-46a94a82dde0.jpg?v=1741320131"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-4X",
+    "FLT___Product_Ref__Old____HLD3_N",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-4X",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-4X",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-corner-seat-section-cover",
+   "title": "Harlanda Corner Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-6",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-6_SHRT_PM_CVC-01.jpg?v=1741320128",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-6_SHRT_PM_CVC-01.jpg?v=1741320128",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_267_IKEA_Harlanda_sofa.jpg?v=1741320128",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_201_IKEA_Harlanda_sofa.jpg?v=1741320128"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-6",
+    "FLT___Product_Ref__Old____HLD4_N",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-6",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-6",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-2-seat-section-cover",
+   "title": "Harlanda 2 Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-2X",
+   "price": "259.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-2X_SHRT_PM_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-2X_SHRT_PM_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_264_IKEA_Harlanda_sofa_c14d4d20-0b73-410c-9174-157d9db0eeef.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_263_IKEA_Harlanda_sofa_60d36175-6b4c-4325-af50-7b1f61eed232.jpg?v=1741320129"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-2X",
+    "FLT___Product_Ref__Old____HLD2_N",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-2X",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-2X",
+     "price": "259.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-armrest-cover",
+   "title": "Harlanda Armrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-8",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-8_SHRT_PM_CVC-01.jpg?v=1741320131",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-8_SHRT_PM_CVC-01.jpg?v=1741320131"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-8",
+    "FLT___Product_Ref__Old____HLD8",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-8",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-8",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-loveseat-sleeper-section-cover",
+   "title": "Harlanda Loveseat Sleeper Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-2BX",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-2BX_SHRT_PM_CVC-01.jpg?v=1741320132",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-2BX_SHRT_PM_CVC-01.jpg?v=1741320132"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-2BX",
+    "FLT___Product_Ref__Old____HLD2B_N",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-2BX",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-2BX",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

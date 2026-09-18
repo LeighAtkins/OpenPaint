@@ -1,0 +1,348 @@
+{
+ "handle": "ikea-stockholm-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:10.026Z",
+ "count": 5,
+ "products": [
+  {
+   "handle": "stockholm-3-5-seater-sofa-cover",
+   "title": "Stockholm 3.5 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SM-4",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-4_SV_VELC_SP_CVC-01.jpg?v=1741741756",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-4_SV_VELC_SP_CVC-01.jpg?v=1741741756",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_136_IKEA_Stockholm_sofa.jpg?v=1741741756",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_139_IKEA_Stockholm_sofa.jpg?v=1741741756"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SM-4",
+    "FLT___Product_Ref__Old____SM35",
+    "FLT___Series_Code___SM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_leather_version",
+    "FLT___Variant_1_Name___The_standard_version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SM-4",
+    "installation:580",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Stockholm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SM-4",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stockholm-1-5-seater-sofa-cover",
+   "title": "Stockholm 1.5 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SM-1",
+   "price": "229.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-1_VELC_SP_CVC-01.jpg?v=1741678944",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-1_VELC_SP_CVC-01.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_136_IKEA_Stockholm_sofa_f41294bb-c56c-43b5-aae1-badb2887f269.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_140_IKEA_Stockholm_sofa_f8837544-4add-4058-94f8-8929d87ead32.jpg?v=1741678944"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:SM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SM-1",
+    "FLT___Product_Ref__Old____SM15",
+    "FLT___Series_Code___SM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SM-1",
+    "installation:580",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Stockholm",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SM-1",
+     "price": "229.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stockholm-easy-chair-sofa-cover",
+   "title": "Stockholm Easy Chair Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SM-1X",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-1X_VELC_SP_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-1X_VELC_SP_CVC-01.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_136_IKEA_Stockholm_sofa_3d99f8d6-bcf7-4315-8add-cf11791cbe5a.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_140_IKEA_Stockholm_sofa.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:SM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SM-1X",
+    "FLT___Product_Ref__Old____SM1",
+    "FLT___Series_Code___SM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SM-1X",
+    "installation:580",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Stockholm",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SM-1X",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stockholm-3-seater-sofa-cover",
+   "title": "Stockholm 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SM-3",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-3_SV_VELC_SP_CVC-01.jpg?v=1741741763",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-3_SV_VELC_SP_CVC-01.jpg?v=1741741763",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_138_IKEA_Stockholm_sofa.jpg?v=1741741763",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_140_IKEA_Stockholm_sofa_378801af-2deb-45aa-8e36-d2dd54aecf03.jpg?v=1741741763"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SM-3",
+    "FLT___Product_Ref__Old____SM4",
+    "FLT___Series_Code___SM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___has_existing_fabric_covers",
+    "FLT___Variant_1_Name___is_leather_upholstered",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SM-3",
+    "installation:580",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Stockholm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SM-3",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stockholm-armrest-protector-covers",
+   "title": "Stockholm Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SM-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-AP_SP_CVC-01.jpg?v=1741320128",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-AP_SP_CVC-01.jpg?v=1741320128"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SM-AP",
+    "FLT___Product_Ref__Old____SM_AP",
+    "FLT___Series_Code___SM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___SP",
+    "FLT___Styles_Code___WR",
+    "FLT__MAIN",
+    "IK-SM-AP",
+    "series:Stockholm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SM-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

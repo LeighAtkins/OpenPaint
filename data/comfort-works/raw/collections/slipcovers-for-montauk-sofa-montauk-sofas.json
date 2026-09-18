@@ -1,0 +1,89 @@
+{
+ "handle": "slipcovers-for-montauk-sofa-montauk-sofas",
+ "fetchedAt": "2026-09-18T05:38:17.566Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "montauk-55-chair-slipcover",
+   "title": "Montauk 55\" Chair Slipcover",
+   "vendor": "Montauk Sofa",
+   "sku": "MS-MK-55",
+   "price": "569.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MS-MK-55.png?v=1788226503",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MS-MK-55.png?v=1788226503",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MS-MK-55_7ebd5d19-1e82-4f38-af96-4f84b54b4e93.png?v=1788226510"
+   ],
+   "tags": [
+    "categoryproducts:MS",
+    "categoryproducts:MS-MK",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "MS-MK-55",
+    "series:Montauk"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MS-MK-55",
+     "price": "569.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "montauk-102-sofa-slipcover",
+   "title": "Montauk 102\" Sofa Slipcover",
+   "vendor": "Montauk Sofa",
+   "sku": "MS-MK-102",
+   "price": "919.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MS-MK-102_51c13a21-e20a-4ff2-b6ab-270db325883e.png?v=1788224818",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MS-MK-102_51c13a21-e20a-4ff2-b6ab-270db325883e.png?v=1788224818",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MS-MK-102_6f23b610-c1f7-4024-aa67-b0303e86045f.png?v=1788224829"
+   ],
+   "tags": [
+    "categoryproducts:MS",
+    "categoryproducts:MS-MK",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "MS-MK-102",
+    "series:Montauk"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MS-MK-102",
+     "price": "919.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,564 @@
+{
+ "handle": "sofa-bed-covers-pottery-barn",
+ "fetchedAt": "2026-09-18T05:38:23.384Z",
+ "count": 10,
+ "products": [
+  {
+   "handle": "buchanan-square-arm-sleeper-sofa-slipcover",
+   "title": "Buchanan Square Arm Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSA-84B",
+   "price": "739.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-84B_CNRP_PM_CVC-01.jpg?v=1741320177",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-84B_CNRP_PM_CVC-01.jpg?v=1741320177"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSA-84B",
+    "FLT___Product_Ref__Old____PB_BSA_83B",
+    "FLT___Series_Code___BSA",
+    "FLT___Series_Name___Buchanan_Square_Arm",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "PB-BSA-84B",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Buchanan Square Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSA-84B",
+     "price": "739.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cameron-square-arm-86-sleeper-sofa-slipcover",
+   "title": "Cameron Square Arm 86\" Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CSA-86B",
+   "price": "699.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CSA-86B_3S-3B_LSKT_PM_CVC-01.jpg?v=1744678213",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CSA-86B_3S-3B_LSKT_PM_CVC-01.jpg?v=1744678213"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CSA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-CSA-86B",
+    "series:Cameron Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CSA-86B",
+     "price": "699.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jamie-daybed-queen-slipcover",
+   "title": "Jamie Daybed Queen Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-JE-67B",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-JE-67B_CNRP_SP_CVC-01.jpg?v=1741320190",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-JE-67B_CNRP_SP_CVC-01.jpg?v=1741320190"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TJE",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-JE-67B",
+    "series:Jamie",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-JE-67B",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jamie-daybed-twin-slipcover",
+   "title": "Jamie Daybed Twin Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-JE-44B",
+   "price": "559.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-JE-44B_CNRP_SP_CVC-01.jpg?v=1741320186",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-JE-44B_CNRP_SP_CVC-01.jpg?v=1741320186"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TJE",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-JE-44B",
+    "series:Jamie",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-JE-44B",
+     "price": "559.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-sleeper-sofa-slipcover",
+   "title": "PB Basic Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-82B",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-82B_MG_CNRP_PM_CVC-01.jpg?v=1741320178",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-82B_MG_CNRP_PM_CVC-01.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_089_Pottery_Barn_PB_Basic_sofa.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_092_Pottery_Barn_PB_Basic_sofa.jpg?v=1741320178"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-82B",
+    "FLT___Product_Ref__Old____PB_BSC_3B",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_1_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-BSC-82B",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Basic",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-82B",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Manufacturer Version",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-comfort-roll-arm-sleeper-sofa-slipcover",
+   "title": "PB Comfort Roll Arm Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CRA-89B",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CRA-89B_BE_CNRP_PM_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CRA-89B_BE_CNRP_PM_CVC-01.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_018_IKEA_Ektorp_sofa_690a5549-8de7-4f90-aef1-f5ab43e4a32f.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_013_IKEA_Ektorp_sofa_5f107269-da0f-4f35-be8a-b2f92894625c.jpg?v=1741575836"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-CRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-CRA-89B",
+    "FLT___Product_Ref__Old____PB_CRA_3B",
+    "FLT___Series_Code___CRA",
+    "FLT___Series_Name___PB_Comfort",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Variant_1_Name___Box_edge_cushions",
+    "FLT___Variant_1_Name___Knife_edge_cushions",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "PB-CRA-89B",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Comfort Roll Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CRA-89B",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-comfort-square-arm-sleeper-sofa-slipcover",
+   "title": "PB Comfort Square Arm Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CSQ-81B",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_PB_PB-CSQ_PB-CSQ-81B_PB-CSQ-81B_2S-2B_BE_CNRP_PM_CVC-01.jpg?v=1746585685",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_PB_PB-CSQ_PB-CSQ-81B_PB-CSQ-81B_2S-2B_BE_CNRP_PM_CVC-01.jpg?v=1746585685"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CSQ",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "PB-CSQ-81B",
+    "series:PB Comfort Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CSQ-81B",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-english-arm-sleeper-sofa-slipcover",
+   "title": "PB English Arm Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-EH-87B",
+   "price": "739.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-EH-87B_KE_SHRT_PM_CVC-01.jpg?v=1741656901",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-EH-87B_KE_SHRT_PM_CVC-01.jpg?v=1741656901"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-EH",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-EH-87B",
+    "Pottery Barn",
+    "series:PB English Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-EH-87B",
+     "price": "739.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-charleston-queen-sleeper-sofa-slipcover",
+   "title": "PB-Charleston Queen Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CN-91B",
+   "price": "739.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CN-91B_MLTP_PM_CVC-01.jpg?v=1741320179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CN-91B_MLTP_PM_CVC-01.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_189_Pottery_Barn_Charleston_sofa.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_191_Pottery_Barn_Charleston_sofa.jpg?v=1741320179"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge High",
+    "back_type:High Rounded Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-CN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-CN-91B",
+    "FLT___Product_Ref__Old____PB_CN_3B",
+    "FLT___Series_Code___CN",
+    "FLT___Series_Name___Charleston",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-CN-91B",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Charleston",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CN-91B",
+     "price": "739.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pearce-square-arm-83-sleeper-sofa-slipcover",
+   "title": "Pearce Square Arm 83\" Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PSA-83B",
+   "price": "749.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-83B_2S-2B_LSKT_PM_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-83B_2S-2B_LSKT_PM_CVC-01.jpg?v=1741575837"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-PSA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-PSA-83B",
+    "series:Pearce Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PSA-83B",
+     "price": "749.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

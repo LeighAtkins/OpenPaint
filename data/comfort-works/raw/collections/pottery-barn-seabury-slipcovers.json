@@ -1,0 +1,326 @@
+{
+ "handle": "pottery-barn-seabury-slipcovers",
+ "fetchedAt": "2026-09-18T05:37:55.440Z",
+ "count": 5,
+ "products": [
+  {
+   "handle": "seabury-93-grand-sofa-slipcover",
+   "title": "Seabury 93\" Grand Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-SY-93",
+   "price": "739.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-SY-93_SHRT_PM_CVC-01.webp?v=1776917958",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-SY-93_SHRT_PM_CVC-01.webp?v=1776917958"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-SY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "installation:579",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "PB-SY-93",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Seabury",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:0",
+    "square_rectangle_back_cushion:0",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-SY-93",
+     "price": "739.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "seabury-armchair-slipcover",
+   "title": "Seabury Armchair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-SY-36",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-SY-36_CNRP_PM_CVC-01.jpg?v=1741320176",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-SY-36_CNRP_PM_CVC-01.jpg?v=1741320176",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_391_Pottery_Barn_Seabury_sofa.jpg?v=1741320176",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_392_Pottery_Barn_Seabury_sofa.jpg?v=1741320176"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:PB",
+    "categoryproducts:PB-SY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-SY-36",
+    "FLT___Product_Ref__Old____PB_SY_1",
+    "FLT___Series_Code___SY",
+    "FLT___Series_Name___Seabury",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "PB-SY-36",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Seabury",
+    "size:1 Seater",
+    "storage:No",
+    "t_shaped_back_cushion:1",
+    "t_shaped_seat_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-SY-36",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "seabury-79-sofa-bed-slipcover",
+   "title": "Seabury 79\" Sofa Bed Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-SY-90B",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-SY-90B_SHRT_SP_CVC-01.jpg?v=1741741764",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-SY-90B_SHRT_SP_CVC-01.jpg?v=1741741764"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-SY",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-SY-90B",
+    "series:Seabury",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-SY-90B",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "seabury-79-sofa-slipcover",
+   "title": "Seabury 79\" Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-SY-79",
+   "price": "559.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-SY-79_CNRP_PM_CVC-01.jpg?v=1741320179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-SY-79_CNRP_PM_CVC-01.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_391_Pottery_Barn_Seabury_sofa_f98f95a2-c2a8-4508-aabc-0e5aa48379a0.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_392_Pottery_Barn_Seabury_sofa_857637ce-1637-4e3a-9323-0ed114a11be2.jpg?v=1741320179"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB-SY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "PB-SY-79",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Seabury",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:0",
+    "square_rectangle_back_cushion:0",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-SY-79",
+     "price": "559.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "seabury-ottoman-slipcover",
+   "title": "Seabury Ottoman Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-SY-36F",
+   "price": "159.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-SY-36F_SHRT_PM_CVC-01.webp?v=1776917464",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-SY-36F_SHRT_PM_CVC-01.webp?v=1776917464"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:PB",
+    "categoryproducts:PB-SY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "installation:579",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:N/A",
+    "next_steps:648",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "PB-SY-36F",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Seabury",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:0",
+    "square_rectangle_back_cushion:0",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-SY-36F",
+     "price": "159.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

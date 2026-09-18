@@ -1,0 +1,48 @@
+{
+ "handle": "westwing-lennon-slipcovers",
+ "fetchedAt": "2026-09-18T05:40:49.409Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "lennon-chair-slipcover",
+   "title": "Lennon Chair Slipcover",
+   "vendor": "Westwing",
+   "sku": "WW-LN-51",
+   "price": "259.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_WW_WW-LN_WW-LN-51_WW-LN-51_LV_SHRT_SP_CVC-01.jpg?v=1744958232",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_WW_WW-LN_WW-LN-51_WW-LN-51_LV_SHRT_SP_CVC-01.jpg?v=1744958232"
+   ],
+   "tags": [
+    "categoryproducts:WW",
+    "categoryproducts:WW-LN",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Lennon",
+    "Westwing",
+    "WW-LN-51"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WW-LN-51",
+     "price": "259.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

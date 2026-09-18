@@ -1,0 +1,93 @@
+{
+ "handle": "mitchell-gold-bob-williams-alexa-ii-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:27.036Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "alexa-ii-ottoman-slipcover",
+   "title": "Alexa II Ottoman Slipcover",
+   "vendor": "Mitchell Gold + Bob Williams",
+   "sku": "MG-AA-28F",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-AA-28F_CNRP_PM_CVC-01.jpg?v=1741320172",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-AA-28F_CNRP_PM_CVC-01.jpg?v=1741320172"
+   ],
+   "tags": [
+    "categoryproducts:MG",
+    "categoryproducts:MG-AA",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "MG-AA-28F",
+    "series:Alexa II",
+    "vendor:Mitchell Gold + Bob Williams"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MG-AA-28F",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "alexa-ii-61-loveseat-slipcover",
+   "title": "Alexa II 61\" Loveseat Slipcover",
+   "vendor": "Mitchell Gold + Bob Williams",
+   "sku": "MG-AA-61",
+   "price": "699.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-AA-61_MLTP_PM_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-AA-61_MLTP_PM_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:MG",
+    "categoryproducts:MG-AA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "MG-AA-61",
+    "Mitchell Gold + Bob Williams",
+    "series:Alexa II",
+    "vendor:Mitchell Gold + Bob Williams"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MG-AA-61",
+     "price": "699.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,52 @@
+{
+ "handle": "slipcovers-for-ethan-allen-conor-sofas",
+ "fetchedAt": "2026-09-18T05:38:16.723Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "conor-87-three-seat-sofa-slipcover",
+   "title": "Conor 87\" Three Seat Sofa Slipcover",
+   "vendor": "Ethan Allen",
+   "sku": "EA-CR-87",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-CR-87.jpg?v=1787291933",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-CR-87.jpg?v=1787291933",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-CR-87_4a1a7387-c3c9-49a0-b31a-4aa70f74d282.jpg?v=1787291944"
+   ],
+   "tags": [
+    "categoryproducts:EA",
+    "categoryproducts:EA-CR",
+    "categoryproducts:EA-Sofa",
+    "description:",
+    "EA-CR-87",
+    "Ethan Allen",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Conor"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EA-CR-87",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,201 @@
+{
+ "handle": "crate-and-barrel-bloomsbury-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:08.293Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "bloomsbury-queen-sleeper-sofa-slipcover",
+   "title": "Bloomsbury Queen Sleeper Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BY-89B",
+   "price": "709.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BY-89B_MLTP_PM_CVC-01.jpg?v=1741320094",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BY-89B_MLTP_PM_CVC-01.jpg?v=1741320094",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_437_Crate_and_Barrel_Bloomsbury_sofa.jpg?v=1741320094",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_438_Crate_and_Barrel_Bloomsbury_sofa.jpg?v=1741320094"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge Straight",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-BY",
+    "categoryproducts:CB-Slipcover",
+    "CB-BY-89B",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-BY-89B",
+    "FLT___Series_Code___BY",
+    "FLT___Series_Name___Bloomsbury",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Bloomsbury",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BY-89B",
+     "price": "709.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bloomsbury-chair-slipcover",
+   "title": "Bloomsbury Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BY-56",
+   "price": "429.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BY-56_CNRP_PM_CVC-01.jpg?v=1741320090",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BY-56_CNRP_PM_CVC-01.jpg?v=1741320090"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-BY",
+    "CB-BY-56",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Round Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Bloomsbury",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BY-56",
+     "price": "429.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bloomsbury-sofa-slipcover",
+   "title": "Bloomsbury Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BY-90",
+   "price": "699.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BY-90_MLTP_PM_CVC-01.jpg?v=1741320099",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BY-90_MLTP_PM_CVC-01.jpg?v=1741320099"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-BY",
+    "CB-BY-90",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Round Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Bloomsbury",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BY-90",
+     "price": "699.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

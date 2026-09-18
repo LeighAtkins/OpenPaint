@@ -1,0 +1,52 @@
+{
+ "handle": "west-elm-crosby-mid-century-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:37.416Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "crosby-mid-century-armchair-slipcover",
+   "title": "Crosby Mid-Century Armchair Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-CY-34",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-CY-34_LV_VELC_PM_CVC-01.jpg?v=1744676699",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-CY-34_LV_VELC_PM_CVC-01.jpg?v=1744676699"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-chair",
+    "categoryproducts:WE-CY",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Crosby Mid-Century",
+    "WE-CY-34",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-CY-34",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

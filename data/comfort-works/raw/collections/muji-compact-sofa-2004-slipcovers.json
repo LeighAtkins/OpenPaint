@@ -1,0 +1,71 @@
+{
+ "handle": "muji-compact-sofa-2004-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:31.517Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "2004-compact-sofa-cover",
+   "title": "2004 Compact Sofa Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-COM-2X-2004",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-COM-2X-2004_VELC_SP_CVC-01.jpg?v=1741320176",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-COM-2X-2004_VELC_SP_CVC-01.jpg?v=1741320176",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_489_Muji_Compact_2004_sofa.jpg?v=1741320176",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_626_Muji_Compact_2004_sofa.jpg?v=1741320176"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-COM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-COM-2X-2004",
+    "FLT___Product_Ref__Old____MJ_COM_2004",
+    "FLT___Series_Code___COM",
+    "FLT___Series_Name___Compact_Sofa_2004",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-COM-2X-2004",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Compact sofa 2004",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-COM-2X-2004",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

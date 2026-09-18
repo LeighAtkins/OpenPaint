@@ -1,0 +1,322 @@
+{
+ "handle": "ikea-sandby-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:06.317Z",
+ "count": 5,
+ "products": [
+  {
+   "handle": "sandby-2-seater-sofa-cover",
+   "title": "Sandby 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SY-2",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-2_CNRP_PM_CVC-01.jpg?v=1741320126",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-2_CNRP_PM_CVC-01.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_350_IKEA_Sandby_sofa.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_348_IKEA_Sandby_sofa_fa0f8b22-2e30-4eaa-b0ac-891b656494eb.jpg?v=1741320126"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SY-2",
+    "FLT___Product_Ref__Old____SY2",
+    "FLT___Series_Code___SY",
+    "FLT___Series_Name___Sandby",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SY-2",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Sandby",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SY-2",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sandby-footstool-cover",
+   "title": "Sandby Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SY-0",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-0_CNRP_PM_CVC-01.jpg?v=1741320124",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-0_CNRP_PM_CVC-01.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_351_IKEA_Sandby_sofa.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_348_IKEA_Sandby_sofa.jpg?v=1741320124"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:SY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SY-0",
+    "FLT___Product_Ref__Old____SY0",
+    "FLT___Series_Code___SY",
+    "FLT___Series_Name___Sandby",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-SY-0",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Sandby",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SY-0",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sandby-armchair-cover",
+   "title": "Sandby Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SY-1X",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-1X_CNRP_PM_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-1X_CNRP_PM_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_349_IKEA_Sandby_sofa_b995e9fb-4202-4164-a637-dcb9536497d6.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_350_IKEA_Sandby_sofa_91e8e09f-5a2a-4c43-8182-790a039b3146.jpg?v=1741320129"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:SY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SY-1X",
+    "FLT___Product_Ref__Old____SY1",
+    "FLT___Series_Code___SY",
+    "FLT___Series_Name___Sandby",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SY-1X",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Sandby",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SY-1X",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sandby-3-seater-sofa-cover",
+   "title": "Sandby 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SY-3",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-3_CNRP_PM_CVC-01.jpg?v=1741320125",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-3_CNRP_PM_CVC-01.jpg?v=1741320125",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_351_IKEA_Sandby_sofa_131dd3a2-ee77-410c-8850-4be90fac6fb5.jpg?v=1741320125",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_349_IKEA_Sandby_sofa.jpg?v=1741320125"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SY-3",
+    "FLT___Product_Ref__Old____SY3",
+    "FLT___Series_Code___SY",
+    "FLT___Series_Name___Sandby",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SY-3",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Sandby",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SY-3",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sandby-armrest-protector-covers",
+   "title": "Sandby Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SY-AP",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-AP_PM_CVC-01.jpg?v=1741320127",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-AP_PM_CVC-01.jpg?v=1741320127"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SY",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SY-AP",
+    "FLT___Product_Ref__Old____SY_AP",
+    "FLT___Series_Code___SY",
+    "FLT___Series_Name___Sandby",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "IK-SY-AP",
+    "series:Sandby"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SY-AP",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

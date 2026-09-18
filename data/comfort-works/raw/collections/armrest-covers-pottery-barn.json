@@ -1,0 +1,95 @@
+{
+ "handle": "armrest-covers-pottery-barn",
+ "fetchedAt": "2026-09-18T05:31:46.893Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "catalina-armrest-protector-covers",
+   "title": "Catalina Armrest Protector Covers",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CAT-AP",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_PB_PB-CAT_PB-CAT-AP_PB-CAT-AP_SP_CVC-01.jpg?v=1744884031",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_PB_PB-CAT_PB-CAT-AP_PB-CAT-AP_SP_CVC-01.jpg?v=1744884031"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CAT",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Armrest",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-CAT-AP",
+    "Pottery Barn",
+    "series:Catalina"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CAT-AP",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-armrest-protector-covers",
+   "title": "PB Basic Armrest Protector Covers",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-AP",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-AP_PM_CVC-01.jpg?v=1741320179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-AP_PM_CVC-01.jpg?v=1741320179"
+   ],
+   "tags": [
+    "categoryproducts:PB-BSC",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-AP",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "PB-BSC-AP",
+    "series:PB Basic"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-AP",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

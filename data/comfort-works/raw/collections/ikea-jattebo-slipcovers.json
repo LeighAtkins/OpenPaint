@@ -1,0 +1,682 @@
+{
+ "handle": "ikea-jattebo-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:53.148Z",
+ "count": 13,
+ "products": [
+  {
+   "handle": "jattebo-6-seat-corner-modular-cover",
+   "title": "Jattebo 6-seat Corner Modular Cover",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-363",
+   "price": "679.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-363_VELC_SP_CVC-01.jpg?v=1741320156",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-363_VELC_SP_CVC-01.jpg?v=1741320156",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_292_IKEA_Jattebo_sofa_2ef513b2-36f4-4c5c-8b4a-0dd1de846679.jpg?v=1741320156",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_610_IKEA_Jattebo_sofa.jpg?v=1741320156"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-363",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-JTO-363",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-363",
+     "price": "679.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jattebo-4-seat-modular-sofa-with-chaise-longue-cover",
+   "title": "Jattebo 4-seat Modular Sofa with Chaise Longue Cover",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-35",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-35_L_VELC_SP_CVC-01.jpg?v=1741320157",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-35_L_VELC_SP_CVC-01.jpg?v=1741320157",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_290_IKEA_Jattebo_sofa.jpg?v=1741320157",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_291_IKEA_Jattebo_sofa.jpg?v=1741320157"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-35",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_arm_Chaise",
+    "FLT___Variant_1_Name___Right_arm_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-JTO-35",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-35",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jattebo-3-5-seat-modular-sofa-with-chaise-longues-cover",
+   "title": "Jattebo 3.5-seat Modular Sofa with Chaise Longues Cover",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-515",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-515_VELC_SP_CVC-01.jpg?v=1741320155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-515_VELC_SP_CVC-01.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_611_IKEA_Jattebo_sofa.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_289_IKEA_Jattebo_sofa.jpg?v=1741320155"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-515",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-JTO-515",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-515",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jattebo-1-seat-storage-module-cover",
+   "title": "Jattebo 1-Seat Storage Module Cover",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-1XP",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-1XP_VELC_SP_CVC-01.jpg?v=1741320154",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-1XP_VELC_SP_CVC-01.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_290_IKEA_Jattebo_sofa_cd0624dc-a3f2-482c-86ea-d031c178647a.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_292_IKEA_Jattebo_sofa.jpg?v=1741320154"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-1XP",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-JTO-1XP",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-1XP",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jattebo-chaise-longue-module-cover-without-armrest",
+   "title": "Jattebo Chaise Longue Module Cover (Without Armrest)",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-5X",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-5X_L_VELC_SP_CVC-01.jpg?v=1741320156",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-5X_L_VELC_SP_CVC-01.jpg?v=1741320156",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_290_IKEA_Jattebo_sofa_2b37e885-4138-4b34-af84-406136aafe67.jpg?v=1741320156",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_293_IKEA_Jattebo_sofa_4392965a-38a4-4db6-882e-1bb65a7a0e48.jpg?v=1741320156"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-5X",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_arm_Chaise",
+    "FLT___Variant_1_Name___Right_arm_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-JTO-5X",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-5X",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jattebo-1-5-seat-storage-module-cover",
+   "title": "Jattebo 1.5-Seat Storage Module Cover",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-1X",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-1X_VELC_SP_CVC-01.jpg?v=1741320157",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-1X_VELC_SP_CVC-01.jpg?v=1741320157",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_287_IKEA_Jattebo_sofa.jpg?v=1741320157",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_285_IKEA_Jattebo_sofa.jpg?v=1741320157"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-1X",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-JTO-1X",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-1X",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jattebo-armrest-cover",
+   "title": "Jattebo Armrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-8M",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-8_VELC_SP_CVC-01.jpg?v=1741320162",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-8_VELC_SP_CVC-01.jpg?v=1741320162"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-8M",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-JTO-8M",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-8M",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jattebo-2-seat-modular-sofa-cover",
+   "title": "Jattebo 2-seat Modular Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-2",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-2_VELC_SP_CVC-01.jpg?v=1741320156",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-2_VELC_SP_CVC-01.jpg?v=1741320156",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_199_IKEA_Jattebo_sofa.jpg?v=1741320156",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_286_IKEA_Jattebo_sofa.jpg?v=1741320156"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-2",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_skirt_the_original:No",
+    "IK-JTO-2",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-2",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jattebo-2-5-seat-modular-sofa-with-chaise-longue-cover",
+   "title": "Jattebo 2.5-seat Modular Sofa with Chaise Longue Cover",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-15",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-15_L_VELC_SP_CVC-01.jpg?v=1741320153",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-15_L_VELC_SP_CVC-01.jpg?v=1741320153",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_287_IKEA_Jattebo_sofa_f5458398-7706-4f5f-a91d-eb74349498c6.jpg?v=1741320153",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_286_IKEA_Jattebo_sofa_e85becd7-c7d3-47a6-831c-732081256378.jpg?v=1741320153"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-15",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_arm_Chaise",
+    "FLT___Variant_1_Name___Right_arm_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-JTO-15",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-15",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jattebo-3-seat-modular-sofa-cover",
+   "title": "Jattebo 3-seat Modular Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-3",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-3_VELC_SP_CVC-01.jpg?v=1741320154",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-3_VELC_SP_CVC-01.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_288_IKEA_Jattebo_sofa.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_289_IKEA_Jattebo_sofa_de67ed53-f96a-42d6-b5f2-1b9b8f34297f.jpg?v=1741320154"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-3",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-JTO-3",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-3",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jattebo-chaise-longue-module-cover-with-armrest",
+   "title": "Jattebo Chaise Longue Module Cover (With Armrest)",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-5M",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-5M_L_VELC_SP_CVC-01.jpg?v=1741320154",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-5M_L_VELC_SP_CVC-01.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_290_IKEA_Jattebo_sofa_91ac760c-e299-4d1e-9b8b-c1c24dad8402.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_293_IKEA_Jattebo_sofa.jpg?v=1741320154"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-5M",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_arm_Chaise",
+    "FLT___Variant_1_Name___Right_arm_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-JTO-5M",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-5M",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jattebo-4-5-seat-modular-sofa-cover",
+   "title": "Jattebo 4.5-seat Modular Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-1P15",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-1P15_L_VELC_SP_CVC-01.jpg?v=1741320151",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-1P15_L_VELC_SP_CVC-01.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_291_IKEA_Jattebo_sofa_f55266cb-c839-4088-954f-9b3753ebd082.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_609_IKEA_Jattebo_sofa.jpg?v=1741320151"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-1P15",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_arm_Chaise",
+    "FLT___Variant_1_Name___Right_arm_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-JTO-1P15",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-1P15",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jattebo-2-5-seat-corner-modular-sofa-with-chaise-longue-cover",
+   "title": "Jattebo  2.5-seat Corner Modular Sofa with Chaise Longue Cover",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-11P5",
+   "price": "419.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-11P5_L_VELC_SP_CVC-01.jpg?v=1741320156",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-11P5_L_VELC_SP_CVC-01.jpg?v=1741320156",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_283_IKEA_Jattebo_sofa.jpg?v=1741320156",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_608_IKEA_Jattebo_sofa.jpg?v=1741320156"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-11P5",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_arm_Chaise",
+    "FLT___Variant_1_Name___Right_arm_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-JTO-11P5",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-11P5",
+     "price": "419.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

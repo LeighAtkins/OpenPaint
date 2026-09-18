@@ -1,0 +1,73 @@
+{
+ "handle": "west-elm-tillary-slipcovers",
+ "fetchedAt": "2026-09-18T05:40:48.492Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "tillary-74-5-sofa-slipcover",
+   "title": "Tillary 74.5\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-TY-75X",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-TY-75X_VELC_SP_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-TY-75X_VELC_SP_CVC-01.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_517_West_Elm_Tillary_sofa.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_518_West_Elm_Tillary_sofa.jpg?v=1741320196"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:WE-sofa",
+    "categoryproducts:WE-TY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-TY-75X",
+    "FLT___Product_Ref__Old____WE_TY_74",
+    "FLT___Series_Code___TY",
+    "FLT___Series_Name___Tillary",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:Tillary",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "WE-TY-75X"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-TY-75X",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

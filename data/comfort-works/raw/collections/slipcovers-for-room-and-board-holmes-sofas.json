@@ -1,0 +1,49 @@
+{
+ "handle": "slipcovers-for-room-and-board-holmes-sofas",
+ "fetchedAt": "2026-09-18T05:38:18.943Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "holmes-79-sofa-slipcover",
+   "title": "Holmes 79\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-HO-79",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-HO-79_SV_SHRT_PM_CVC-01.webp?v=1784250945",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-HO-79_SV_SHRT_PM_CVC-01.webp?v=1784250945"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-HO",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-HO-79",
+    "Room and Board",
+    "series:Holmes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-HO-79",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

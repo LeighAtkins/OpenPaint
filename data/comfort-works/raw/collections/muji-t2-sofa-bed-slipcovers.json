@@ -1,0 +1,143 @@
+{
+ "handle": "muji-t2-sofa-bed-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:38.153Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "t2-footstool-cover",
+   "title": "T2 Footstool Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-T2-0",
+   "price": "69.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-T2-0_LV_ELAS_SP_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-T2-0_LV_ELAS_SP_CVC-01.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_465_Muji_T2_Sofabed_sofa.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-RSB",
+    "categoryproducts:MJ-T2",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-T2-0",
+    "FLT___Product_Ref__Old____MJ_RSB_0",
+    "FLT___Series_Code___T2",
+    "FLT___Series_Name___T2_Sofabed",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___ELAS_SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-T2-0",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:T2",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-T2-0",
+     "price": "69.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "t2-sofa-bed-cover",
+   "title": "T2 Sofa Bed Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-T2-3X",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-T2-3X_WR_CVC-01.jpg?v=1741320175",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-T2-3X_WR_CVC-01.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_466_Muji_T2_Sofabed_sofa.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_465_Muji_T2_Sofabed_sofa_0003e730-5220-4771-9f31-35e92a61edbe.jpg?v=1741320175"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-RSB",
+    "categoryproducts:MJ-T2",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-T2-3X",
+    "FLT___Product_Ref__Old____MJ_RSB",
+    "FLT___Series_Code___T2",
+    "FLT___Series_Name___T2_Sofabed",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___WR",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-T2-3X",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:T2",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-T2-3X",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,48 @@
+{
+ "handle": "leolux-fayalobi-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:19.883Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "faya-lobi-104-sectional-slipcover",
+   "title": "Faya Lobi 104\" Sectional Slipcover",
+   "vendor": "Leolux",
+   "sku": "LX-FL-104",
+   "price": "779.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/LX-FL-104_L_VELC_SP_CVC-01.jpg?v=1741320161",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/LX-FL-104_L_VELC_SP_CVC-01.jpg?v=1741320161"
+   ],
+   "tags": [
+    "categoryproducts:LX",
+    "categoryproducts:LX-FL",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "Leolux",
+    "LX-FL-104",
+    "series:Faya Lobi"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "LX-FL-104",
+     "price": "779.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

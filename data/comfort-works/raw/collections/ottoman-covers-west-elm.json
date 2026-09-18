@@ -1,0 +1,545 @@
+{
+ "handle": "ottoman-covers-west-elm",
+ "fetchedAt": "2026-09-18T05:37:49.126Z",
+ "count": 11,
+ "products": [
+  {
+   "handle": "andes-ottoman-slipcover",
+   "title": "Andes Ottoman Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-AS-39F",
+   "price": "109.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-76F_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-76F_VELC_SP_CVC-01.jpg?v=1741320197",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_501_West_20Elm_Andes_sofa_dd08c585-ee84-457f-a0ba-72c045158309.jpg?v=1741320197",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_497_West_Elm_Andes_sofa.jpg?v=1741320197"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:WE-0",
+    "categoryproducts:WE-AS",
+    "categoryproducts:WE-S",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-AS-39F",
+    "FLT___Product_Ref__Old____WE_AS_0",
+    "FLT___Series_Code___AS",
+    "FLT___Series_Name___Andes",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Andes",
+    "size:1 Seater",
+    "storage:No",
+    "WE-AS-39F"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-AS-39F",
+     "price": "109.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "drake-76-sofa-slipcover",
+   "title": "Drake 76\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-DE-76",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-DE-76_LV_VELC_PM_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-DE-76_LV_VELC_PM_CVC-01.jpg?v=1741320196"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-DE",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Drake",
+    "WE-DE-76",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-DE-76",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-modular-43-5-ottoman-slipcover",
+   "title": "Harmony Modular 43.5\" Ottoman Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HY-44FM",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-44FM_LV_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-44FM_LV_VELC_SP_CVC-01.jpg?v=1741320197"
+   ],
+   "tags": [
+    "categoryproducts:WE-0",
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HY",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Harmony Modular",
+    "WE-HY-44FM",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HY-44FM",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harris-66-sofa-slipcover",
+   "title": "Harris 66\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HS-66",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HS-66_LV_2S-2B_VELC_SP_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HS-66_LV_2S-2B_VELC_SP_CVC-01.jpg?v=1741575837"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HS",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Harris",
+    "WE-HS-66",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HS-66",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harris-96-sofa-slipcover",
+   "title": "Harris 96\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HS-96",
+   "price": "549.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HS-96_SV_STD_2S-2B_VELC_SP_CVC-01.jpg?v=1744678563",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HS-96_SV_STD_2S-2B_VELC_SP_CVC-01.jpg?v=1744678563"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HS",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Harris",
+    "WE-HS-96",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HS-96",
+     "price": "549.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harris-loft-86-sofa-slipcover",
+   "title": "Harris Loft 86\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HSL-86",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HSL-86_LV_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HSL-86_LV_VELC_SP_CVC-01.jpg?v=1741320197"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HS",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Harris",
+    "WE-HSL-86",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HSL-86",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "haven-loft-86-sofa-slipcover",
+   "title": "Haven Loft 86\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HL-86",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HL-86_LV_3S-3B_SHRT_SP_CVC-01.jpg?v=1741741771",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HL-86_LV_3S-3B_SHRT_SP_CVC-01.jpg?v=1741741771"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HN",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Haven",
+    "WE-HL-86",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HL-86",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "haven-ottoman-slipcover",
+   "title": "Haven Ottoman Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HN-39F",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HN-39F_LV_SHRT_SP_CVC-01.jpg?v=1741741770",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HN-39F_LV_SHRT_SP_CVC-01.jpg?v=1741741770"
+   ],
+   "tags": [
+    "categoryproducts:WE-0",
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HN",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Haven",
+    "WE-HN-39F",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HN-39F",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "henry-ottoman-slipcover",
+   "title": "Henry Ottoman Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HE-30F",
+   "price": "109.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-30F_LSKT_PM_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-30F_LSKT_PM_CVC-01.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_516_West_20Elm_Henry_sofa_ec18a663-6b91-4e57-ad23-01513649ce34.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_513_West_Elm_Henry_sofa.jpg?v=1741320196"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:WE-0",
+    "categoryproducts:WE-HE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HE-30F",
+    "FLT___Product_Ref__Old____WE_HE_23",
+    "FLT___Series_Code___HE",
+    "FLT___Series_Name___Henry",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Henry",
+    "size:1 Seater",
+    "storage:No",
+    "WE-HE-30F"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HE-30F",
+     "price": "109.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "shelter-72-sofa-slipcover",
+   "title": "Shelter 72\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-SHR-72",
+   "price": "459.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-SHR-72_SHRT_SP_CVC-01.jpg?v=1741741769",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-SHR-72_SHRT_SP_CVC-01.jpg?v=1741741769"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-SHR",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Shelter",
+    "WE-SHR-72"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-SHR-72",
+     "price": "459.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "urban-ottoman-slipcover",
+   "title": "Urban Ottoman Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-UN-39F",
+   "price": "109.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-UN-39F_LV_VELC_SP_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-UN-39F_LV_VELC_SP_CVC-01.jpg?v=1741320196"
+   ],
+   "tags": [
+    "categoryproducts:WE-0",
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-UN",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Urban",
+    "WE-UN-39F",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-UN-39F",
+     "price": "109.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

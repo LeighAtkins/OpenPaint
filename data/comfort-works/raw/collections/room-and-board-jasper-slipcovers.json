@@ -1,0 +1,395 @@
+{
+ "handle": "room-and-board-jasper-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:05.958Z",
+ "count": 7,
+ "products": [
+  {
+   "handle": "jasper-71-daybed-slipcover",
+   "title": "Jasper 71\" Daybed Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-JR-71B",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-71B_SV_VELC_SP_CVC-01.webp?v=1784265736",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-71B_SV_VELC_SP_CVC-01.webp?v=1784265736"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-JR",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:575",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-JR-71B",
+    "Room and Board",
+    "series:Jasper"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-JR-71B",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jasper-104-sofa-with-left-right-arm-chaise-slipcover",
+   "title": "Jasper 104\" Sofa with Left/Right Arm Chaise Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-JR-104",
+   "price": "759.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-104_L_LV_VELC_SP_CVC-01.jpg?v=1741741768",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-104_L_LV_VELC_SP_CVC-01.jpg?v=1741741768"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-JR",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "next_steps:648",
+    "RB-JR-104",
+    "Room and Board",
+    "series:Jasper"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-JR-104",
+     "price": "759.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jasper-96-sofa-slipcover",
+   "title": "Jasper 96\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-JR-96",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-96_LV_2S-2B_VELC_SP_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-96_LV_2S-2B_VELC_SP_CVC-01.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_577_Room_20and_20Board_Jasper_sofa_ae5c52a6-b301-4b31-8f0a-ee141fbc583e.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_576_Room_and_Board_Jasper_sofa_5a78200f-d34a-4ba7-ba09-27a665d81d94.jpg?v=1741320196"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-JR",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "RB-JR-96",
+    "Room and Board",
+    "series:Jasper"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-JR-96",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jasper-square-ottoman-slipcover",
+   "title": "Jasper Square Ottoman Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-JR-36F",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-36F_LV_VELC_SP_CVC-01.jpg?v=1741320192",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-36F_LV_VELC_SP_CVC-01.jpg?v=1741320192"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-JR",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-JR-36F",
+    "Room and Board",
+    "series:Jasper"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-JR-36F",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jasper-71-loveseat-slipcover",
+   "title": "Jasper 71\" Loveseat Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-JR-71",
+   "price": "549.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-71_VELC_SP_CVC-01.jpg?v=1741320194",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-71_VELC_SP_CVC-01.jpg?v=1741320194",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_575_Room_and_Board_Jasper_sofa_2db7fa7f-6780-446b-a8ee-8115785d60a6.jpg?v=1741320194",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_576_Room_and_Board_Jasper_sofa_ac94e50a-6574-47ac-9612-cf0978bd2d9e.jpg?v=1741320194"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RB-JR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Room_and_Board",
+    "FLT___Product_Ref__New____RB-JR-71",
+    "FLT___Series_Code___JR",
+    "FLT___Series_Name___Jasper",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "RB-JR-71",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Jasper",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-JR-71",
+     "price": "549.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jasper-slipcovered-35-chair-slipcover",
+   "title": "Jasper Slipcovered 35\" Chair Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-JR-35",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-35_VELC_SP_CVC-01.jpg?v=1741320192",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-35_VELC_SP_CVC-01.jpg?v=1741320192",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_577_Room_20and_20Board_Jasper_sofa_cc6c2496-c49f-44d0-af0d-a04419847ea5.jpg?v=1741320192",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_575_Room_and_Board_Jasper_sofa_b4b25b90-0fe3-4700-a046-30b93e4e6c01.jpg?v=1741320192"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:RB-JR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Room_and_Board",
+    "FLT___Product_Ref__New____RB-JR-35",
+    "FLT___Series_Code___JR",
+    "FLT___Series_Name___Jasper",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "RB-JR-35",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Jasper",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-JR-35",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jasper-slipcovered-86-sofa-slipcover",
+   "title": "Jasper Slipcovered 86\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-JR-86",
+   "price": "579.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-86_VELC_SP_CVC-01.jpg?v=1741320193",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-86_VELC_SP_CVC-01.jpg?v=1741320193",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_576_Room_and_Board_Jasper_sofa_576e0a60-7426-49e7-9447-268082ec32ad.jpg?v=1741320193",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_575_Room_and_Board_Jasper_sofa.jpg?v=1741320193"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RB-JR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Room_and_Board",
+    "FLT___Product_Ref__New____RB-JR-86",
+    "FLT___Series_Code___JR",
+    "FLT___Series_Name___Jasper",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "RB-JR-86",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Jasper",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-JR-86",
+     "price": "579.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

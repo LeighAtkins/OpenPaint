@@ -1,0 +1,10 @@
+{
+  "run": 1,
+  "startedAt": "2026-09-18",
+  "phase": "preflight-complete",
+  "activeItem": null,
+  "nextItem": "geometry-harness",
+  "completed": ["preflight", "reconcile", "queue"],
+  "deadlinePolicy": "8h per run; reserve final 45min",
+  "notes": "Baseline validate fails on 180 legacy lint errors (pre-existing, logged). Gate for executor changes: type-check + vitest + no NEW eslint errors in touched files."
+}

@@ -1,0 +1,1164 @@
+{
+ "handle": "muji-wide-arm-slipcovers",
+ "fetchedAt": "2026-09-18T05:42:29.561Z",
+ "count": 17,
+ "products": [
+  {
+   "handle": "2015-wide-arm-2-5-seater-feather-pocket-coil-slipcover",
+   "title": "2015 Wide Arm 2.5 Seater Feather Pocket Coil Slipcover",
+   "vendor": "MUJI",
+   "sku": "MJ-FPC-3P-2015",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-3P-2015_VELC_WR_CVC-01.jpg?v=1741741761",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-3P-2015_VELC_WR_CVC-01.jpg?v=1741741761",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_163_Muji_Wide_Arm_sofa.jpg?v=1741741761",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_169_Muji_Wide_Arm_sofa_4fca601f-8cf5-4964-8525-c02a4edbd636.jpg?v=1741741761"
+   ],
+   "tags": [
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-WDE",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FPC-3P-2015",
+    "FLT___Product_Ref__Old____MJ_WDE_25_2015",
+    "FLT___Series_Code___FPC",
+    "FLT___Series_Name___Wide_Arm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "MJ-FPC-3P-2015",
+    "series:Wide Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FPC-3P-2015",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2011-wide-arm-2-5-seater-down-feather-slipcover",
+   "title": "2011 Wide Arm 2.5 Seater Down Feather Slipcover",
+   "vendor": "MUJI",
+   "sku": "MJ-FPC-3P-2011",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-3P-2011_VELC_WR_CVC-01.jpg?v=1741741763",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-3P-2011_VELC_WR_CVC-01.jpg?v=1741741763",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_162_Muji_Wide_Arm_sofa.jpg?v=1741741763",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_170_Muji_Wide_Arm_sofa_a105a21c-f9d6-48d3-96a3-afe605d25d66.jpg?v=1741741763"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FPC-3P-2011",
+    "FLT___Product_Ref__Old____MJ_WDE_25_2011",
+    "FLT___Series_Code___FPC",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-FPC-3P-2011",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FPC-3P-2011",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2019-2020-wide-arm-urethane-pocket-coil-2-5-seater-slipcover",
+   "title": "2019/2020 Wide Arm Urethane Pocket Coil 2.5 Seater Slipcover",
+   "vendor": "MUJI",
+   "sku": "MJ-UPC-3P-2019",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-3P-2019_VELC_WR_CVC-01.jpg?v=1741320178",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-3P-2019_VELC_WR_CVC-01.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_161_Muji_Wide_Arm_sofa.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_172_Muji_Wide_Arm_sofa.jpg?v=1741320178"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-UPC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-UPC-3P-2019",
+    "FLT___Product_Ref__Old____MJ_WDE_25_PU19",
+    "FLT___Series_Code___UPC",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-UPC-3P-2019",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-UPC-3P-2019",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2-5-seater-wide-arm-sofa-cover-2007",
+   "title": "2.5 Seater Wide Arm Sofa Cover 2007",
+   "vendor": "MUJI",
+   "sku": "MJ-OWA-3P-2007",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-OWA-3P-2007_VELC_WR_CVC-01.jpg?v=1741320181",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-OWA-3P-2007_VELC_WR_CVC-01.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_158_Muji_Wide_Arm_sofa.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_171_Muji_Wide_Arm_sofa_8cdb5865-4f75-4072-964a-093236f75616.jpg?v=1741320181"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-OWA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-OWA-3P-2007",
+    "FLT___Product_Ref__Old____MJ_WDE_25_2007",
+    "FLT___Series_Code___OWA",
+    "FLT___Series_Name___Wide_Arm_Sofa_2007",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-OWA-3P-2007",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-OWA-3P-2007",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2-seater-wide-arm-sofa-cover-polyurethane-insert",
+   "title": "2 Seater Wide Arm Sofa Cover Polyurethane Insert",
+   "vendor": "MUJI",
+   "sku": "MJ-UPC-2",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-2_VELC_WR_CVC-01.jpg?v=1741741762",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-2_VELC_WR_CVC-01.jpg?v=1741741762",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_159_Muji_Wide_Arm_sofa.jpg?v=1741741762",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_168_Muji_Wide_Arm_sofa_0bead2da-36f1-4311-81db-ca2f77121241.jpg?v=1741741762"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-WDE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-UPC-2",
+    "FLT___Product_Ref__Old____MJ_WDE_2_UFFC",
+    "FLT___Series_Code___UPC",
+    "FLT___Series_Name___Wide_Arm_Sofa",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-UPC-2",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-UPC-2",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2-5-seater-wide-arm-sofa-cover-polyurethane-insert",
+   "title": "2.5 Seater Wide Arm Sofa Cover Polyurethane Insert",
+   "vendor": "MUJI",
+   "sku": "MJ-UPC-3P",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-3P_VELC_WR_CVC-01.jpg?v=1741741758",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-3P_VELC_WR_CVC-01.jpg?v=1741741758",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_157_Muji_Wide_Arm_sofa.jpg?v=1741741758",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_168_Muji_Wide_Arm_sofa.jpg?v=1741741758"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-WDE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-UPC-3P",
+    "FLT___Product_Ref__Old____MJ_WDE_25_UFFC",
+    "FLT___Series_Code___UPC",
+    "FLT___Series_Name___Wide_Arm_Sofa",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-UPC-3P",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-UPC-3P",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2-seater-wide-arm-sofa-cover-2007",
+   "title": "2 Seater Wide Arm Sofa Cover 2007",
+   "vendor": "MUJI",
+   "sku": "MJ-OWA-2-2007",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-OWA-2-2007_CW-CC_VELC_SP_CVC-01.jpg?v=1741575838",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-OWA-2-2007_CW-CC_VELC_SP_CVC-01.jpg?v=1741575838",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_160_Muji_Wide_Arm_sofa.jpg?v=1741575838",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_171_Muji_Wide_Arm_sofa.jpg?v=1741575838"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-OWA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-OWA-2-2007",
+    "FLT___Product_Ref__Old____MJ_WDE_2_2007",
+    "FLT___Series_Code___OWA",
+    "FLT___Series_Name___Wide_Arm_Sofa_2007",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Comfort_Works_original_seams",
+    "FLT___Variant_1_Name___Muji_original_seams",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-OWA-2-2007",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-OWA-2-2007",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2019-wide-arm-urethane-pocket-coil-ottoman-slipcover",
+   "title": "2019 Wide Arm Urethane Pocket Coil Ottoman Slipcover",
+   "vendor": "MUJI",
+   "sku": "MJ-UPC-0-2019",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-0-2019_VELC_PM_CVC-01.jpg?v=1741320173",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-0-2019_VELC_PM_CVC-01.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_152_Muji_Wide_Arm_sofa.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_156_Muji_Wide_Arm_sofa_374e3c13-84a2-4586-840f-bb26b12e8233.jpg?v=1741320173"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-UPC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-UPC-0-2019",
+    "FLT___Product_Ref__Old____MJ_WDE_0_PU19",
+    "FLT___Series_Code___UPC",
+    "FLT___Series_Name___Wide_arm_sofa",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-UPC-0-2019",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-UPC-0-2019",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2019-2020-wide-arm-urethane-pocket-coil-3-seater-slipcover",
+   "title": "2019/2020 Wide Arm Urethane Pocket Coil 3 Seater Slipcover",
+   "vendor": "MUJI",
+   "sku": "MJ-UPC-3-2019",
+   "price": "369.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-3-2019_VELC_WR_CVC-01.jpg?v=1741320175",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-3-2019_VELC_WR_CVC-01.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_164_Muji_Wide_Arm_sofa.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_173_Muji_Wide_Arm_sofa_e6fb919e-a775-48e9-a47a-1163e9c03397.jpg?v=1741320175"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-UPC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-UPC-3-2019",
+    "FLT___Product_Ref__Old____MJ_WDE_3_PU19",
+    "FLT___Series_Code___UPC",
+    "FLT___Series_Name___Wide_arm_sofa",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-UPC-3-2019",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-UPC-3-2019",
+     "price": "369.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "wide-arm-sectional-sofa-cover",
+   "title": "Wide Arm Sectional Sofa Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-FPC-15",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-15_LV_VELC_SP_CVC-01.jpg?v=1741320174",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-15_LV_VELC_SP_CVC-01.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_155_Muji_Wide_20Arm_sofa.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_169_Muji_Wide_Arm_sofa.jpg?v=1741320174"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-WDE",
+    "chaise_lounge:Yes",
+    "chaise_lounge_position:Right",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FPC-15",
+    "FLT___Product_Ref__Old____MJ_WDE_6",
+    "FLT___Series_Code___FPC",
+    "FLT___Series_Name___Wide_Arm_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-FPC-15",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FPC-15",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2019-2020-wide-arm-urethane-pocket-coil-2-seater-slipcover",
+   "title": "2019/2020 Wide Arm Urethane Pocket Coil 2 Seater Slipcover",
+   "vendor": "MUJI",
+   "sku": "MJ-UPC-2-2019",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-2-2019_VELC_WR_CVC-01.jpg?v=1741320176",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-2-2019_VELC_WR_CVC-01.jpg?v=1741320176",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_165_Muji_Wide_Arm_sofa.jpg?v=1741320176",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_173_Muji_Wide_Arm_sofa.jpg?v=1741320176"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-UPC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-UPC-2-2019",
+    "FLT___Product_Ref__Old____MJ_PU19_2",
+    "FLT___Series_Code___UPC",
+    "FLT___Series_Name___Wide_arm_sofa",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-UPC-2-2019",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-UPC-2-2019",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2019-2020-wide-arm-feather-pocket-coil-2-seater-slipcover",
+   "title": "2019/2020 Wide Arm Feather Pocket Coil 2 Seater Slipcover",
+   "vendor": "MUJI",
+   "sku": "MJ-FPC-2-2019",
+   "price": "349.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-2-2019_VELC_WR_CVC-01.jpg?v=1741320183",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-2-2019_VELC_WR_CVC-01.jpg?v=1741320183",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_166_Muji_Wide_Arm_sofa.jpg?v=1741320183",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_174_Muji_Wide_Arm_sofa_5ca66777-8d59-4677-910f-c4c73ba6d5cf.jpg?v=1741320183"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-UPC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FPC-2-2019",
+    "FLT___Product_Ref__Old____MJ_PF19_2",
+    "FLT___Series_Code___FPC",
+    "FLT___Series_Name___Wide_arm_sofa",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-FPC-2-2019",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FPC-2-2019",
+     "price": "349.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2-5-seater-wide-arm-sofa-cover-feather-insert",
+   "title": "2.5 Seater Wide Arm Sofa Cover Feather Insert",
+   "vendor": "MUJI",
+   "sku": "MJ-FPC-3P-2010",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-3P-2010_VELC_WR_CVC-01.jpg?v=1741741766",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-3P-2010_VELC_WR_CVC-01.jpg?v=1741741766",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_153_Muji_Wide_Arm_sofa.jpg?v=1741741766",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_156_Muji_Wide_Arm_sofa.jpg?v=1741741766"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FPC-3P-2010",
+    "FLT___Product_Ref__Old____MJ_WDE_25_DFTF",
+    "FLT___Series_Code___FPC",
+    "FLT___Series_Name___Wide_Arm_Sofa",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-FPC-3P-2010",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FPC-3P-2010",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "3-seater-wide-arm-sofa-cover",
+   "title": "3 Seater Wide Arm Sofa Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-FPC-3",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-3_CW-CC_VELC_SP_CVC-01.jpg?v=1741320170",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-3_CW-CC_VELC_SP_CVC-01.jpg?v=1741320170",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_151_Muji_Wide_Arm_sofa.jpg?v=1741320170",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_152_Muji_Wide_Arm_sofa_8e33745d-8476-4e43-833b-4203834bea3a.jpg?v=1741320170"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-WDE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FPC-3",
+    "FLT___Product_Ref__Old____MJ_WDE_3",
+    "FLT___Series_Code___FPC",
+    "FLT___Series_Name___Wide_Arm_Sofa",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Comfort_Works_original_seams",
+    "FLT___Variant_1_Name___Muji_original_seams",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-FPC-3",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FPC-3",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2-seater-wide-arm-sofa-cover-feather-insert",
+   "title": "2 Seater Wide Arm Sofa Cover Feather Insert",
+   "vendor": "MUJI",
+   "sku": "MJ-FPC-2-2010",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-2-2010_VELC_WR_CVC-01.jpg?v=1741741766",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-2-2010_VELC_WR_CVC-01.jpg?v=1741741766",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_154_Muji_Wide_Arm_sofa.jpg?v=1741741766",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_170_Muji_Wide_Arm_sofa.jpg?v=1741741766"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FPC-2-2010",
+    "FLT___Product_Ref__Old____MJ_WDE_2_DFTF",
+    "FLT___Series_Code___FPC",
+    "FLT___Series_Name___Wide_Arm_Sofa",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-FPC-2-2010",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FPC-2-2010",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ottoman-large-feather-pocketed-coil-cushion-cover",
+   "title": "Ottoman (Large Feather Pocketed Coil) Cushion Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-FPC-0",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-0_VELC_SP_CVC-01.jpg?v=1741320173",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-0_VELC_SP_CVC-01.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_490_Muji_Feather_Pocket_Coil_Ottoman.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_491_Muji_Wide_Arm_sofa_79a23a9b-9d1f-4cff-8596-13cd9596da29.jpg?v=1741320173"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-SLM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FPC-0",
+    "FLT___Product_Ref__Old____MJ_FTR_0",
+    "FLT___Series_Code___FPC",
+    "FLT___Series_Name___Feather_Pocket_Coil_Ottoman",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-FPC-0",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FPC-0",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2019-2020-wide-arm-feather-pocket-coil-high-back-slipcover",
+   "title": "2019/2020 Wide Arm Feather Pocket Coil High Back Slipcover",
+   "vendor": "MUJI",
+   "sku": "MJ-FPC-3P-2019",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-3P-2019_VELC_WR_CVC-01.jpg?v=1741320171",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-3P-2019_VELC_WR_CVC-01.jpg?v=1741320171",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_167_Muji_Feather_Pocket_Coil_sofa.jpg?v=1741320171",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_174_Muji_Wide_Arm_sofa.jpg?v=1741320171"
+   ],
+   "tags": [
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-UPC",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FPC-3P-2019",
+    "FLT___Product_Ref__Old____MJ_PF19_25H",
+    "FLT___Series_Code___FPC",
+    "FLT___Series_Name___Feather_Pocket_Coil",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "MJ-FPC-3P-2019",
+    "series:Wide Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FPC-3P-2019",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

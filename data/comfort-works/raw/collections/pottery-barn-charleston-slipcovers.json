@@ -1,0 +1,337 @@
+{
+ "handle": "pottery-barn-charleston-slipcovers",
+ "fetchedAt": "2026-09-18T05:37:53.280Z",
+ "count": 5,
+ "products": [
+  {
+   "handle": "pb-charleston-loveseat-71-slipcover",
+   "title": "PB Charleston Loveseat 71\" Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CN-71",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CN-71_MLTP_PM_CVC-01.jpg?v=1741320182",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CN-71_MLTP_PM_CVC-01.jpg?v=1741320182",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_192_Pottery_Barn_Charleston_sofa_007f78c6-cced-4fab-b9ad-da46225fdb0d.jpg?v=1741320182",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_188_Pottery_Barn_Charleston_sofa_8236cda9-35ea-46ab-b76e-5a377bc6f0cc.jpg?v=1741320182"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge High",
+    "back_type:High Rounded Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB-CN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-CN-71",
+    "FLT___Product_Ref__Old____PB_CN_2",
+    "FLT___Series_Code___CN",
+    "FLT___Series_Name___Charleston",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-CN-71",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Charleston",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CN-71",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-charleston-grand-sofa-slipcover",
+   "title": "PB Charleston Grand Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CN-96",
+   "price": "739.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CN-96_MLTP_PM_CVC-01.jpg?v=1741320181",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CN-96_MLTP_PM_CVC-01.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_187_Pottery_Barn_Charleston_sofa_007d4314-2767-434e-840f-d1d1a0aea1a2.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_188_Pottery_Barn_Charleston_sofa.jpg?v=1741320181"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge High",
+    "back_type:High Rounded Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-CN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-CN-96",
+    "FLT___Product_Ref__Old____PB_CN_35",
+    "FLT___Series_Code___CN",
+    "FLT___Series_Name___Buchanan_Square_Arm",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-CN-96",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Charleston",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CN-96",
+     "price": "739.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-charleston-queen-sleeper-sofa-slipcover",
+   "title": "PB-Charleston Queen Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CN-91B",
+   "price": "739.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CN-91B_MLTP_PM_CVC-01.jpg?v=1741320179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CN-91B_MLTP_PM_CVC-01.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_189_Pottery_Barn_Charleston_sofa.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_191_Pottery_Barn_Charleston_sofa.jpg?v=1741320179"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge High",
+    "back_type:High Rounded Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-CN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-CN-91B",
+    "FLT___Product_Ref__Old____PB_CN_3B",
+    "FLT___Series_Code___CN",
+    "FLT___Series_Name___Charleston",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-CN-91B",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Charleston",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CN-91B",
+     "price": "739.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-charleston-chair-and-a-half-slipcover",
+   "title": "PB Charleston Chair-and-a-Half Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CN-52",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CN-52_CNRP_PM_CVC-01.jpg?v=1741320179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CN-52_CNRP_PM_CVC-01.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_187_Pottery_Barn_Charleston_sofa.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_191_Pottery_Barn_Charleston_sofa_db2d431b-da24-4f87-af21-d2c6a5b88884.jpg?v=1741320179"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge High",
+    "back_type:High Rounded Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:PB",
+    "categoryproducts:PB-CN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-CN-52",
+    "FLT___Product_Ref__Old____PB_CN_1",
+    "FLT___Series_Code___CN",
+    "FLT___Series_Name___Charleston",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-CN-52",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Charleston",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CN-52",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-charleston-sofa-cover",
+   "title": "PB Charleston Sofa Cover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CN-86",
+   "price": "729.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CN-86_MLTP_PM_CVC-01.jpg?v=1741320176",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CN-86_MLTP_PM_CVC-01.jpg?v=1741320176",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_192_Pottery_Barn_Charleston_sofa.jpg?v=1741320176",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_190_Pottery_Barn_Charleston_sofa.jpg?v=1741320176"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CN",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-CN-86",
+    "FLT___Product_Ref__Old____PB_CN_3",
+    "FLT___Series_Code___CN",
+    "FLT___Series_Name___Charleston",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-CN-86",
+    "series:PB Charleston"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CN-86",
+     "price": "729.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

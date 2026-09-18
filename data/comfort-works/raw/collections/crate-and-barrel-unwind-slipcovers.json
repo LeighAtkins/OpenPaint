@@ -1,0 +1,133 @@
+{
+ "handle": "crate-and-barrel-unwind-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:15.319Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "unwind-corner-chair-slipcover",
+   "title": "Unwind Corner Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-UD-45CR",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-UD-45CR_CNRP_SP_CVC-01.jpg?v=1741320104",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-UD-45CR_CNRP_SP_CVC-01.jpg?v=1741320104"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-Sectional",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:CB-UD",
+    "CB-UD-45CR",
+    "description:",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "series:Unwind"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-UD-45CR",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "unwind-left-right-arm-chair-slipcover",
+   "title": "Unwind Left/Right Arm Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-UD-50M",
+   "price": "419.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-UD-50M_L_CNRP_SP_CVC-01.jpg?v=1741320092",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-UD-50M_L_CNRP_SP_CVC-01.jpg?v=1741320092"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-Sectional",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:CB-UD",
+    "CB-UD-50M",
+    "description:",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "series:Unwind"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-UD-50M",
+     "price": "419.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "unwind-armless-chair-slipcover",
+   "title": "Unwind Armless Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-UD-47X",
+   "price": "369.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-UD-47X_CNRP_SP_CVC-01.jpg?v=1741320093",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-UD-47X_CNRP_SP_CVC-01.jpg?v=1741320093"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-Sectional",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:CB-UD",
+    "CB-UD-47X",
+    "description:",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "series:Unwind"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-UD-47X",
+     "price": "369.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

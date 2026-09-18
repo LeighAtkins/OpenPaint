@@ -1,0 +1,222 @@
+{
+ "handle": "ikea-bondholmen-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:34.196Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "bondholmen-loveseat-cushion-covers",
+   "title": "Bondholmen Loveseat Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BHN-2",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-2_DVN_SP_CVC-01.jpg?v=1741320152",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-2_DVN_SP_CVC-01.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_235_IKEA_Bondholmen_sofa.jpg?v=1741320152"
+   ],
+   "tags": [
+    "categoryproducts:BHN",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BHN-2",
+    "FLT___Series_Code___BHN",
+    "FLT___Series_Name___Bondholmen",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-BHN-2",
+    "series:Bondholmen"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BHN-2",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bondholmen-armchair-cushion-covers",
+   "title": "Bondholmen Armchair Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BHN-1",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-1_DVN_DC_SP_CVC-01.jpg?v=1741320152",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-1_DVN_DC_SP_CVC-01.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_233_IKEA_Bondholmen_sofa.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_235_IKEA_Bondholmen_sofa_47e19802-09d7-4684-b314-af81003481b1.jpg?v=1741320152"
+   ],
+   "tags": [
+    "categoryproducts:BHN",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Outdoor",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BHN-1",
+    "FLT___Series_Code___BHN",
+    "FLT___Series_Name___Bondholmen",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT___Variant_2_Name___55_9W_x_54D_x_83_5H_cm",
+    "FLT___Variant_2_Name___77_2W_x_75_8D_x_78_1H_cm",
+    "FLT___Variant_2_Type___Size",
+    "FLT__MAIN",
+    "IK-BHN-1",
+    "series:Bondholmen"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BHN-1",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bondholmen-reclining-chair-cushion-covers",
+   "title": "Bondholmen Reclining Chair Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BHN-1RC",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-1RC_DVN_SP_CVC-01.jpg?v=1741320152",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-1RC_DVN_SP_CVC-01.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_236_IKEA_Bondholmen_sofa.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_596_IKEA_Bondholmen_sofa.jpg?v=1741320152"
+   ],
+   "tags": [
+    "categoryproducts:BHN",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Outdoor",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BHN-1RC",
+    "FLT___Series_Code___BHN",
+    "FLT___Series_Name___Bondholmen",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-BHN-1RC",
+    "series:Bondholmen"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BHN-1RC",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bondholmen-bar-stool-cushion-covers",
+   "title": "Bondholmen Bar Stool Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BHN-BS",
+   "price": "29.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-BS_DVN_SP_CVC-01.jpg?v=1741320155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-BS_DVN_SP_CVC-01.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_234_IKEA_Bondholmen_sofa.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_597_IKEA_Bondholmen_sofa.jpg?v=1741320155"
+   ],
+   "tags": [
+    "categoryproducts:BHN",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Outdoor",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BHN-BS",
+    "FLT___Series_Code___BHN",
+    "FLT___Series_Name___Bondholmen",
+    "FLT___Size___Bar_Stool",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-BHN-BS",
+    "series:Bondholmen"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BHN-BS",
+     "price": "29.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

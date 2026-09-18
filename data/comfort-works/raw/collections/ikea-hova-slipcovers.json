@@ -1,0 +1,50 @@
+{
+ "handle": "ikea-hova-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:51.878Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "hova-chair-cover",
+   "title": "Hova Chair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HA-1",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HA-1_VELC_SP_CVC-01.webp?v=1767664971",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HA-1_VELC_SP_CVC-01.webp?v=1767664971"
+   ],
+   "tags": [
+    "categoryproducts:HA",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-HA-1",
+    "IKEA",
+    "installation:579",
+    "series:Hova"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HA-1",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

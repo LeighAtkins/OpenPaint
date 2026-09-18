@@ -1,0 +1,175 @@
+{
+ "handle": "custom-back-cushion-covers",
+ "fetchedAt": "2026-09-18T05:32:17.115Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "custom-box-back-cushion-cover",
+   "title": "Custom Box Back Cushion Cover",
+   "vendor": "Made to Measure",
+   "sku": "CC-BK-BE",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-BK-BE_SP_RS-07_5ab632aa-00c7-4cb3-91a9-24efcb8bda30.jpg?v=1710298220",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-BK-BE_SP_RS-07_5ab632aa-00c7-4cb3-91a9-24efcb8bda30.jpg?v=1710298220",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-BK-B_c946c214-5503-458a-beec-7b271e04e748.jpg?v=1710313767"
+   ],
+   "tags": [
+    "categoryproducts:CS-BK",
+    "CC-BK-BE",
+    "description:",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "series:Custom Back Cushion Covers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CC-BK-BE",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "custom-knife-edge-back-cushion-cover",
+   "title": "Custom Knife Edge Back Cushion Cover",
+   "vendor": "Made to Measure",
+   "sku": "CC-BK-KE",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-BK-KE_SP_RS-07_bc1c656c-fea8-4e26-9732-b6fa3857851c.jpg?v=1710298573",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-BK-KE_SP_RS-07_bc1c656c-fea8-4e26-9732-b6fa3857851c.jpg?v=1710298573",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-BK-K_a71e3c1e-34dc-4950-96bc-274ac341e120.jpg?v=1710313835"
+   ],
+   "tags": [
+    "categoryproducts:CC-BK",
+    "CC-BK-KE",
+    "description:",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "series:Custom Back Cushion Covers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CC-BK-KE",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "custom-t-shape-back-cushion-cover",
+   "title": "Custom T-Shape Back Cushion Cover",
+   "vendor": "Made to Measure",
+   "sku": "CC-BK-T",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-BK-T_SP_RS-07_c11e0bbe-a446-4afa-b525-d0ccf42217e4.jpg?v=1741577576",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-BK-T_SP_RS-07_c11e0bbe-a446-4afa-b525-d0ccf42217e4.jpg?v=1741577576",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-BK-T.jpg?v=1741577576"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CC-BK-T",
+    "discount: -22%",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CC-BK-T",
+    "FLT___Series_Code___BK",
+    "FLT___Size___Cushion_Only",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "series:Custom Back Cushion Covers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CC-BK-T",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "custom-l-shape-back-cushion-cover",
+   "title": "Custom L-Shape Back Cushion Cover",
+   "vendor": "Made to Measure",
+   "sku": "CC-BK-L",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-BK-L_SP_RS-07_c18db621-2628-4810-a6c4-f668b249823b.jpg?v=1713514713",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-BK-L_SP_RS-07_c18db621-2628-4810-a6c4-f668b249823b.jpg?v=1713514713",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-BK-L.jpg?v=1713514713"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CC-BK-L",
+    "discount: -22%",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CC-BK-L",
+    "FLT___Series_Code___BK",
+    "FLT___Size___Cushion_Only",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "series:Custom Back Cushion Covers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CC-BK-L",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,197 @@
+{
+ "handle": "ikea-backsalen-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:32.748Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "backsalen-1-5-seat-armchair-cover",
+   "title": "Backsalen 1.5 seat Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BSN-1",
+   "price": "239.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BSN-1_LSKT_SI_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BSN-1_LSKT_SI_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_225_IKEA_Backsalen_sofa_ca90606c-eac3-4ad0-89e1-823822ac1678.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_224_IKEA_Backsalen_sofa.jpg?v=1741320129"
+   ],
+   "tags": [
+    "5 seat Armchair",
+    "be:1",
+    "be_-_back:1",
+    "be_-_throw:2",
+    "categories:Armchair",
+    "categoryproducts:BSN",
+    "features:515",
+    "features:539",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BSN-1",
+    "FLT___Product_Ref__Old____BSN15",
+    "FLT___Series_Code___BSN",
+    "FLT___Series_Name___Backsalen",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:YES",
+    "has_back:YES",
+    "IK-BSN-1",
+    "number_of_arms:Two Arms",
+    "original_cover_with_skirt:YES",
+    "product_name:Backsalen 1",
+    "removable_back_cushion:YES",
+    "removable_seat_cushion:YES",
+    "series:Backsalen",
+    "size:1 Seater",
+    "throw_-_total:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BSN-1",
+     "price": "239.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backsalen-2-seat-sofa-cover",
+   "title": "Backsalen 2-seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BSN-2",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BSN-2_LSKT_SI_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BSN-2_LSKT_SI_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_225_IKEA_Backsalen_sofa.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_226_IKEA_Backsalen_sofa_9a0450d2-5c8f-44ca-a8ac-75c539b6dddc.jpg?v=1741320130"
+   ],
+   "tags": [
+    "be:2",
+    "be_-_back:2",
+    "be_-_throw:2",
+    "categories:Sofa",
+    "categoryproducts:BSN",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BSN-2",
+    "FLT___Product_Ref__Old____BSN2",
+    "FLT___Series_Code___BSN",
+    "FLT___Series_Name___Backsalen",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:YES",
+    "has_back:YES",
+    "IK-BSN-2",
+    "number_of_arms:Two Arms",
+    "original_cover_with_skirt:YES",
+    "product_name:Backsalen 2-seat Sofa",
+    "removable_back_cushion:YES",
+    "removable_seat_cushion:YES",
+    "series:Backsalen",
+    "size:2+ Seater",
+    "throw_-_total:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BSN-2",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backsalen-3-seat-sofa-cover",
+   "title": "Backsalen 3-seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BSN-3",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BSN-3_LSKT_SI_CVC-01.jpg?v=1741320132",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BSN-3_LSKT_SI_CVC-01.jpg?v=1741320132",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_226_IKEA_Backsalen_sofa.jpg?v=1741320132",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_600_IKEA_Backsalen_sofa.jpg?v=1741320132"
+   ],
+   "tags": [
+    "be:2",
+    "be_-_back:2",
+    "be_-_throw:2",
+    "categories:Sofa",
+    "categoryproducts:BSN",
+    "categoryproducts:CS",
+    "categoryproducts:IK",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BSN-3",
+    "FLT___Product_Ref__Old____BSN3",
+    "FLT___Series_Code___BSN",
+    "FLT___Series_Name___Backsalen",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:YES",
+    "has_back:YES",
+    "IK-BSN-3",
+    "number_of_arms:Two Arms",
+    "original_cover_with_skirt:YES",
+    "product_name:Backsalen 3-seat Sofa",
+    "removable_back_cushion:YES",
+    "removable_seat_cushion:YES",
+    "series:Backsalen",
+    "size:2+ Seater",
+    "throw_-_total:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BSN-3",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

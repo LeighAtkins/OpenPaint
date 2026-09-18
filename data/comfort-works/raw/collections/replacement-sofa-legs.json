@@ -1,0 +1,251 @@
+{
+ "handle": "replacement-sofa-legs",
+ "fetchedAt": "2026-09-18T05:38:00.583Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "bailey-wooden-sofa-leg",
+   "title": "Bailey Wooden Sofa Leg",
+   "vendor": "Comfort Works",
+   "sku": "BY__ch",
+   "price": "8.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/552-2001-category_wide.jpg?v=1710898370",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/552-2001-category_wide.jpg?v=1710898370",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/BY_Ikea-Replacement-Sofa-Legs-2.jpg?v=1710898370",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BY_Ikea-Replacement-Sofa-Legs-1.jpg?v=1718327827"
+   ],
+   "tags": [
+    "BY",
+    "categoryproducts:CW",
+    "no fabric",
+    "series:Replacement IKEA Sofa Legs",
+    "type:legs"
+   ],
+   "variants": [
+    {
+     "title": "Cherry",
+     "sku": "BY__ch",
+     "price": "8.00",
+     "option1": "Cherry",
+     "available": true
+    },
+    {
+     "title": "Beech",
+     "sku": "BY__bh",
+     "price": "8.00",
+     "option1": "Beech",
+     "available": true
+    },
+    {
+     "title": "White",
+     "sku": "BY__wh",
+     "price": "8.00",
+     "option1": "White",
+     "available": true
+    },
+    {
+     "title": "Black",
+     "sku": "BY__bk",
+     "price": "8.00",
+     "option1": "Black",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Wood Type",
+     "position": 1,
+     "values": [
+      "Cherry",
+      "Beech",
+      "White",
+      "Black"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stella-wooden-sofa-leg",
+   "title": "Stella Wooden Sofa Leg",
+   "vendor": "Comfort Works",
+   "sku": "LEG-SA__WH",
+   "price": "8.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1138-2002-category_wide.jpg?v=1678810698",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1138-2002-category_wide.jpg?v=1678810698",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/LEG-SA_wooden-ikea-replacement-sofa-legs-by-comfort-works-bailey-cooper-stella-peroni-cherry-rubberwood-black-white-2.jpg?v=1689910066",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/LEG-SA_IKEA-Norsborg-3-Seater-Sofa-Covers-Rouge-Indigo-Velvet-Blends-Couch-Slipcover-with-White-Stella-IKEA-Replacement-Sofa-Legs-1.jpg?v=1689910066"
+   ],
+   "tags": [
+    "categoryproducts:CW",
+    "LEG-SA",
+    "no fabric",
+    "series:Replacement IKEA Sofa Legs",
+    "type:legs"
+   ],
+   "variants": [
+    {
+     "title": "White",
+     "sku": "LEG-SA__WH",
+     "price": "8.00",
+     "option1": "White",
+     "available": true
+    },
+    {
+     "title": "Beech",
+     "sku": "LEG-SA__BH",
+     "price": "8.00",
+     "option1": "Beech",
+     "available": true
+    },
+    {
+     "title": "Cherry",
+     "sku": "LEG-SA__CH",
+     "price": "8.00",
+     "option1": "Cherry",
+     "available": true
+    },
+    {
+     "title": "Black",
+     "sku": "LEG-SA__BK",
+     "price": "8.00",
+     "option1": "Black",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Wood Type",
+     "position": 1,
+     "values": [
+      "White",
+      "Beech",
+      "Cherry",
+      "Black"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "peroni-wooden-sofa-leg",
+   "title": "Peroni Wooden Sofa Leg",
+   "vendor": "Comfort Works",
+   "sku": "LEG-PN__WH",
+   "price": "8.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1139-2003-category_wide.jpg?v=1677634655",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1139-2003-category_wide.jpg?v=1677634655",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/LEG-PN_wooden-ikea-replacement-sofa-legs-by-comfort-works-bailey-cooper-stella-peroni-cherry-rubberwood-black-white-2_6a7892f1-615c-44b1-81c6-f8a20590f562.jpg?v=1689910053",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/LEG-PN_IKEA-Norsborg-3-Seater-Sofa-Covers-Gaia-Charcoal-Panama-Cotton-Couch-Slipcover-with-Cherry-Peroni-IKEA-Replacement-Sofa-Legs-1.jpg?v=1689910053"
+   ],
+   "tags": [
+    "categoryproducts:CW",
+    "LEG-PN",
+    "no fabric",
+    "series:Replacement IKEA Sofa Legs",
+    "type:legs"
+   ],
+   "variants": [
+    {
+     "title": "White",
+     "sku": "LEG-PN__WH",
+     "price": "8.00",
+     "option1": "White",
+     "available": true
+    },
+    {
+     "title": "Beech",
+     "sku": "LEG-PN__BH",
+     "price": "8.00",
+     "option1": "Beech",
+     "available": true
+    },
+    {
+     "title": "Cherry",
+     "sku": "LEG-PN__CH",
+     "price": "8.00",
+     "option1": "Cherry",
+     "available": true
+    },
+    {
+     "title": "Black",
+     "sku": "LEG-PN__BK",
+     "price": "8.00",
+     "option1": "Black",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Wood Type",
+     "position": 1,
+     "values": [
+      "White",
+      "Beech",
+      "Cherry",
+      "Black"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cooper-wooden-sofa-leg",
+   "title": "Cooper Wooden Sofa Leg",
+   "vendor": "Comfort Works",
+   "sku": "LEG-CR__BK",
+   "price": "8.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1140-2004-category_wide.jpg?v=1678813382",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1140-2004-category_wide.jpg?v=1678813382",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/LEG-CR_IKEA-Norsborg-3-Seater-Sofa-Covers-Madison-Mist-Panama-Cotton-Couch-Slipcover-with-Rubberwood-Cooper-IKEA-Replacement-Sofa-Legs-1.jpg?v=1678813382",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/LEG-CR_wooden-ikea-replacement-sofa-legs-by-comfort-works-bailey-cooper-stella-peroni-cherry-rubberwood-black-white-2.jpg?v=1678813382"
+   ],
+   "tags": [
+    "categoryproducts:CW",
+    "LEG-CR",
+    "no fabric",
+    "series:Replacement IKEA Sofa Legs",
+    "type:legs"
+   ],
+   "variants": [
+    {
+     "title": "Black",
+     "sku": "LEG-CR__BK",
+     "price": "8.00",
+     "option1": "Black",
+     "available": true
+    },
+    {
+     "title": "Natural",
+     "sku": "LEG-CR__NL",
+     "price": "8.00",
+     "option1": "Natural",
+     "available": true
+    },
+    {
+     "title": "White",
+     "sku": "LEG-CR__WH",
+     "price": "8.00",
+     "option1": "White",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Wood Type",
+     "position": 1,
+     "values": [
+      "Black",
+      "Natural",
+      "White"
+     ]
+    }
+   ]
+  }
+ ]
+}

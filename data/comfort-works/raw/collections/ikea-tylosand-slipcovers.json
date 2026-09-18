@@ -1,0 +1,449 @@
+{
+ "handle": "ikea-tylosand-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:12.254Z",
+ "count": 6,
+ "products": [
+  {
+   "handle": "tylosand-chaise-lounge-cover",
+   "title": "Tylosand Chaise Lounge Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TD-5X",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-5X_L_VELC_SP_CVC-01.jpg?v=1741678944",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-5X_L_VELC_SP_CVC-01.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_181_IKEA_Tylosand_sofa_5b1cd455-5295-4728-b039-87d7277a1566.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_179_IKEA_Tylosand_sofa.jpg?v=1741678944"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin arm",
+    "arm_type:Thin Regular Straight",
+    "back_type:Metal Back",
+    "bed:No",
+    "categories:Chaise Lounge",
+    "categoryproducts:IK",
+    "categoryproducts:TD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TD-5X",
+    "FLT___Product_Ref__Old____TD5_L",
+    "FLT___Series_Code___TD",
+    "FLT___Series_Name___Tylosand",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Chaise",
+    "FLT___Variant_1_Name___Right_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-TD-5X",
+    "installation:579",
+    "l_shaped_seat_cushion:1",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:One Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Tylosand",
+    "size:1 Seater",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TD-5X",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tylosand-footstool-cover",
+   "title": "Tylosand Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TD-0",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-0_VELC_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-0_VELC_SP_CVC-01.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_181_IKEA_Tylosand_sofa.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_178_IKEA_Tylosand_sofa_26861704-8310-4f20-9ba7-28cf75a51181.jpg?v=1741678943"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:TD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TD-0",
+    "FLT___Product_Ref__Old____TD0",
+    "FLT___Series_Code___TD",
+    "FLT___Series_Name___Tylosand",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-TD-0",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Tylosand",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TD-0",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tylosand-sofa-bed-cover",
+   "title": "Tylosand Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TD-3B",
+   "price": "469.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-3B_VELC_SP_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-3B_VELC_SP_CVC-01.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin arm",
+    "arm_type:Thin Regular Straight",
+    "back_type:Metal Back",
+    "bed:Yes",
+    "categories:Sofa bed",
+    "categoryproducts:IK",
+    "categoryproducts:TD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TD-3B",
+    "FLT___Product_Ref__Old____TD3_B",
+    "FLT___Series_Code___TD",
+    "FLT___Series_Name___Tylosand",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-TD-3B",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:Two Arms",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Tylosand",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:6"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TD-3B",
+     "price": "469.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tylosand-3-seater-sofa-cover",
+   "title": "Tylosand 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TD-3",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-3_VELC_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-3_VELC_SP_CVC-01.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_178_IKEA_Tylosand_sofa_4d10fc16-3d16-425f-b1fd-42f62fbdf2ba.jpg?v=1741678943"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin arm",
+    "arm_type:Thin Regular Straight",
+    "back_type:Metal Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:TD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TD-3",
+    "FLT___Product_Ref__Old____TD3",
+    "FLT___Series_Code___TD",
+    "FLT___Series_Name___Tylosand",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-TD-3",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:Two Arms",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Tylosand",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:6"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TD-3",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tylosand-2-seat-right-left-arm-sofa-cover",
+   "title": "Tylosand 2 Seat Right/Left Arm Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TD-2M",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-2M_L_VELC_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-2M_L_VELC_SP_CVC-01.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_179_IKEA_Tylosand_sofa_fb212d5a-b724-4af3-b7cf-e7ae18c7fc85.jpg?v=1741678943"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin arm",
+    "arm_type:Thin Regular Straight",
+    "back_type:Metal Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:TD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TD-2M",
+    "FLT___Product_Ref__Old____TD2",
+    "FLT___Series_Code___TD",
+    "FLT___Series_Name___Tylosand",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-TD-2M",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:One Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Tylosand",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:3"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TD-2M",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tylosand-1-seat-section-sofa-cover",
+   "title": "Tylosand 1 Seat Section Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TD-1X",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-1X_VELC_SP_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-1X_VELC_SP_CVC-01.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_180_IKEA_Tylosand_sofa.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_178_IKEA_Tylosand_sofa.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin arm",
+    "arm_type:Thin Regular Straight",
+    "back_type:Metal Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:TD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TD-1X",
+    "FLT___Product_Ref__Old____TD1",
+    "FLT___Series_Code___TD",
+    "FLT___Series_Name___Tylosand",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-TD-1X",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Tylosand",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TD-1X",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

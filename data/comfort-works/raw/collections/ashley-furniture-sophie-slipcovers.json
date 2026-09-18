@@ -1,0 +1,129 @@
+{
+ "handle": "ashley-furniture-sophie-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:51.804Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "sophie-left-right-arm-facing-corner-chair-slipcover",
+   "title": "Sophie Left/Right-Arm Facing Corner Chair Slipcover",
+   "vendor": "Ashley Furniture",
+   "sku": "AY-SE-46M",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AY-SE-46M_L_VELC_SP_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AY-SE-46M_L_VELC_SP_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "AY-SE-46M",
+    "categoryproducts:AY",
+    "categoryproducts:AY-SE",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Sophie"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AY-SE-46M",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sophie-left-right-arm-facing-corner-chaise-slipcover",
+   "title": "Sophie Left/Right-Arm Facing Corner Chaise Slipcover",
+   "vendor": "Ashley Furniture",
+   "sku": "AY-SE-46CM",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AY-SE-46CM_L_VELC_SP_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AY-SE-46CM_L_VELC_SP_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "AY-SE-46CM",
+    "categoryproducts:AY",
+    "categoryproducts:AY-SE",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Sophie"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AY-SE-46CM",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sophie-armless-chair-slipcover",
+   "title": "Sophie Armless Chair Slipcover",
+   "vendor": "Ashley Furniture",
+   "sku": "AY-SE-40X",
+   "price": "259.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AY-SE-40X_VELC_SP_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AY-SE-40X_VELC_SP_CVC-01.jpg?v=1744676697",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AY-SE-40X_f38557fe-fbd8-487a-9b32-37c50cdcfdfc.jpg?v=1744676697",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AY-SE-40X_8900176b-1bb3-4943-832c-054c7b2b9166.jpg?v=1744676697"
+   ],
+   "tags": [
+    "AY-SE-40X",
+    "categoryproducts:AY",
+    "categoryproducts:AY-SE",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Sophie"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AY-SE-40X",
+     "price": "259.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

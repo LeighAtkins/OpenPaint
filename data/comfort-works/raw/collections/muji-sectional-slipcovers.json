@@ -1,0 +1,147 @@
+{
+ "handle": "muji-sectional-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:35.395Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "sectional-sofa-2009-cover",
+   "title": "Sectional Sofa (2009) Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-MSS-3-2009",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-MSS-3-2009_LV_VELC_SP_CVC-01.jpg?v=1741320174",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-MSS-3-2009_LV_VELC_SP_CVC-01.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_479_Muji_Sectional_20Sofa_sofa.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_636_Muji_Sectional_Sofa_1b99fe04-a6c1-457c-906c-b0d41378a1f2.jpg?v=1741320174"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-MSS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-MSS-3-2009",
+    "FLT___Product_Ref__Old____MJ_CS_6",
+    "FLT___Series_Code___MSS",
+    "FLT___Series_Name___Sectional_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-MSS-3-2009",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Sectional Sofa",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-MSS-3-2009",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sectional-sofa-2007-cover",
+   "title": "Sectional Sofa (2007) Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-MSS-3-2007",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-MSS-3-2007_LV_VELC_SP_CVC-01.jpg?v=1741320173",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-MSS-3-2007_LV_VELC_SP_CVC-01.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_635_Muji_Sectional_Sofa.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_636_Muji_Sectional_Sofa.jpg?v=1741320173"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-MSS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-MSS-3-2007",
+    "FLT___Product_Ref__Old____MJ_CS_7",
+    "FLT___Series_Code___MSS",
+    "FLT___Series_Name___Sectional_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-MSS-3-2007",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Sectional Sofa",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-MSS-3-2007",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

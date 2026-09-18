@@ -1,0 +1,5711 @@
+{
+ "handle": "sofa-covers-ikea",
+ "fetchedAt": "2026-09-18T05:38:27.821Z",
+ "count": 88,
+ "products": [
+  {
+   "handle": "angby-2-seater-sofa-cover",
+   "title": "Angby 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-AY-2",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AY-2_SHRT_SP_CVC-01.jpg?v=1741314431",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AY-2_SHRT_SP_CVC-01.jpg?v=1741314431",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_211_IKEA_Angby_sofa_e0c142e4-705d-4a46-b05a-201983acf1e1.jpg?v=1741329019",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_212_IKEA_Angby_sofa.jpg?v=1741329050"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:AY",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-AY-2",
+    "FLT___Product_Ref__Old____AY2",
+    "FLT___Series_Code___AY",
+    "FLT___Series_Name___Angby",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-AY-2",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Angby",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-AY-2",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backa-2-5-seater-sofa-cover",
+   "title": "Backa 2.5 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BA-3",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BA-3_VELC_PM_CVC-01.jpg?v=1741320123",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BA-3_VELC_PM_CVC-01.jpg?v=1741320123",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_217_IKEA_Backa_sofa.jpg?v=1741320123",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_218_IKEA_Backa_sofa.jpg?v=1741320123"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:BA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BA-3",
+    "FLT___Product_Ref__Old____BA25",
+    "FLT___Series_Code___BA",
+    "FLT___Series_Name___Backa",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-BA-3",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Backa",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No",
+    "throw_pillows:4"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BA-3",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backamo-3-seater-sofa-cover",
+   "title": "Backamo 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BO-3",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BO-3_MLTP_PM_CVC-01.jpg?v=1741320111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BO-3_MLTP_PM_CVC-01.jpg?v=1741320111",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_223_IKEA_Backamo_sofa.jpg?v=1741320111",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_222_IKEA_Backamo_sofa.jpg?v=1741320111"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:BO",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BO-3",
+    "FLT___Product_Ref__Old____BO3",
+    "FLT___Series_Code___BO",
+    "FLT___Series_Name___Backamo",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-BO-3",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Backamo",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BO-3",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backsalen-2-seat-sofa-cover",
+   "title": "Backsalen 2-seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BSN-2",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BSN-2_LSKT_SI_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BSN-2_LSKT_SI_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_225_IKEA_Backsalen_sofa.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_226_IKEA_Backsalen_sofa_9a0450d2-5c8f-44ca-a8ac-75c539b6dddc.jpg?v=1741320130"
+   ],
+   "tags": [
+    "be:2",
+    "be_-_back:2",
+    "be_-_throw:2",
+    "categories:Sofa",
+    "categoryproducts:BSN",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BSN-2",
+    "FLT___Product_Ref__Old____BSN2",
+    "FLT___Series_Code___BSN",
+    "FLT___Series_Name___Backsalen",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:YES",
+    "has_back:YES",
+    "IK-BSN-2",
+    "number_of_arms:Two Arms",
+    "original_cover_with_skirt:YES",
+    "product_name:Backsalen 2-seat Sofa",
+    "removable_back_cushion:YES",
+    "removable_seat_cushion:YES",
+    "series:Backsalen",
+    "size:2+ Seater",
+    "throw_-_total:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BSN-2",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backsalen-3-seat-sofa-cover",
+   "title": "Backsalen 3-seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BSN-3",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BSN-3_LSKT_SI_CVC-01.jpg?v=1741320132",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BSN-3_LSKT_SI_CVC-01.jpg?v=1741320132",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_226_IKEA_Backsalen_sofa.jpg?v=1741320132",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_600_IKEA_Backsalen_sofa.jpg?v=1741320132"
+   ],
+   "tags": [
+    "be:2",
+    "be_-_back:2",
+    "be_-_throw:2",
+    "categories:Sofa",
+    "categoryproducts:BSN",
+    "categoryproducts:CS",
+    "categoryproducts:IK",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BSN-3",
+    "FLT___Product_Ref__Old____BSN3",
+    "FLT___Series_Code___BSN",
+    "FLT___Series_Name___Backsalen",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:YES",
+    "has_back:YES",
+    "IK-BSN-3",
+    "number_of_arms:Two Arms",
+    "original_cover_with_skirt:YES",
+    "product_name:Backsalen 3-seat Sofa",
+    "removable_back_cushion:YES",
+    "removable_seat_cushion:YES",
+    "series:Backsalen",
+    "size:2+ Seater",
+    "throw_-_total:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BSN-3",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bondholmen-loveseat-cushion-covers",
+   "title": "Bondholmen Loveseat Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BHN-2",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-2_DVN_SP_CVC-01.jpg?v=1741320152",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-2_DVN_SP_CVC-01.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_235_IKEA_Bondholmen_sofa.jpg?v=1741320152"
+   ],
+   "tags": [
+    "categoryproducts:BHN",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BHN-2",
+    "FLT___Series_Code___BHN",
+    "FLT___Series_Name___Bondholmen",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-BHN-2",
+    "series:Bondholmen"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BHN-2",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ekeskog-3-seater-sofa-cover",
+   "title": "Ekeskog 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EG-3",
+   "price": "439.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-3_MLTP_PM_CVC-01.jpg?v=1741658498",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-3_MLTP_PM_CVC-01.jpg?v=1741658498",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_245_IKEA_Ekeskog_sofa_a87b8123-b382-466d-a407-d53d7f70ebb2.jpg?v=1741658498",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_246_IKEA_Ekeskog_sofa_9e0df392-173d-4e24-b6b3-5a231d293cb7.jpg?v=1741658498"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:EG",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EG-3",
+    "FLT___Product_Ref__Old____EG3",
+    "FLT___Series_Code___EG",
+    "FLT___Series_Name___Ekeskog",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EG-3",
+    "installation:579",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ekeskog",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EG-3",
+     "price": "439.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ektorp-2-seater-sofa-cover",
+   "title": "Ektorp 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EP-2",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-2_CNRP_PM_CVC-01.jpg?v=1754451412",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-2_CNRP_PM_CVC-01.jpg?v=1754451412"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:EP",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EP-2",
+    "FLT___Product_Ref__Old____EP2",
+    "FLT___Series_Code___EP",
+    "FLT___Series_Name___Ektorp",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EP-2",
+    "installation:586",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ektorp",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EP-2",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ektorp-3-seater-sofa-cover",
+   "title": "Ektorp 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EP-3",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-3_CNRP_PM_CVC-01.jpg?v=1741320115",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-3_CNRP_PM_CVC-01.jpg?v=1741320115"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:EP",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EP-3",
+    "FLT___Product_Ref__Old____EP3",
+    "FLT___Series_Code___EP",
+    "FLT___Series_Name___Ektorp",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EP-3",
+    "installation:586",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ektorp",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EP-3",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "farlov-2-seater-sofa-cover",
+   "title": "Farlov 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FV-2",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FV-2_CNRP_SP_CVC-01.jpg?v=1741320142",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FV-2_CNRP_SP_CVC-01.jpg?v=1741320142",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_055_IKEA_Farlov_sofa_dd387d8c-9d2c-4396-8e38-419a40b498cc.jpg?v=1741320142",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_057_IKEA_Farlov_sofa.jpg?v=1741320142"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Sloped Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Round Wedge Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:FV",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FV-2",
+    "FLT___Product_Ref__Old____FV2",
+    "FLT___Series_Code___FV",
+    "FLT___Series_Name___Farlov",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-FV-2",
+    "installation:617",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Farlov",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FV-2",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "farlov-3-seater-sofa-cover",
+   "title": "Farlov 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FV-3",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FV-3_CNRP_SP_CVC-01.jpg?v=1741320142",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FV-3_CNRP_SP_CVC-01.jpg?v=1741320142",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_054_IKEA_Farlov_sofa_62914317-bbf0-4033-a587-5e851a477ed8.jpg?v=1741320142",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_058_IKEA_Farlov_sofa.jpg?v=1741320142"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Sloped Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Round Wedge Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:FV",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FV-3",
+    "FLT___Product_Ref__Old____FV3",
+    "FLT___Series_Code___FV",
+    "FLT___Series_Name___Farlov",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-FV-3",
+    "installation:617",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Farlov",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FV-3",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-2-seat-sofa-cover",
+   "title": "Finnala 2 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-2",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-2_VELC_WR_CVC-01.jpg?v=1741320134",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-2_VELC_WR_CVC-01.jpg?v=1741320134",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_121_IKEA_Finnala_sofa.jpg?v=1741320134",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_118_IKEA_Finnala_sofa_2f8cd0a5-00ab-4967-980e-314cd51336a6.jpg?v=1741320134"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-2",
+    "FLT___Product_Ref__Old____FNA2",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-2",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-2",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-3-seat-sofa-cover",
+   "title": "Finnala 3 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-3",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-3_VELC_WR_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-3_VELC_WR_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_117_IKEA_Finnala_sofa_0e78f4f4-c362-420b-ae4a-9b87487d864e.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_120_IKEA_Finnala_sofa_895ccf1f-8f1a-43c7-aa9f-1270769968e6.jpg?v=1741320129"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-3",
+    "FLT___Product_Ref__Old____FNA3",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-3",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-3",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "goteborg-3-seater-sofa-cover",
+   "title": "Goteborg 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-GG-3",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GG-3_VELC_PM_CVC-01.jpg?v=1741320116",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GG-3_VELC_PM_CVC-01.jpg?v=1741320116",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_251_IKEA_Goteborg_sofa.jpg?v=1741320116",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_252_IKEA_Goteborg_sofa.jpg?v=1741320116"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:GG",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-GG-3",
+    "FLT___Product_Ref__Old____GG3",
+    "FLT___Series_Code___GG",
+    "FLT___Series_Name___Goteborg",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-GG-3",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Goteborg",
+    "size:2+ Seater",
+    "storage:No",
+    "throw_pillows:4"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-GG-3",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gronlid-chaise-lounge-cover",
+   "title": "Gronlid Chaise Lounge Cover",
+   "vendor": "IKEA",
+   "sku": "IK-GRD-5",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-5_SHRT_PM_CVC-01.jpg?v=1741320151",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-5_SHRT_PM_CVC-01.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_260_IKEA_Gronlid_sofa_4d146c2a-ed20-4cb8-bb64-1319a8c31399.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_256_IKEA_Gronlid_sofa.jpg?v=1741320151"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Chaise Lounge",
+    "categoryproducts:GRD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-GRD-5",
+    "FLT___Product_Ref__Old____GRD5",
+    "FLT___Series_Code___GRD",
+    "FLT___Series_Name___Gronlid",
+    "FLT___Size___Chaise",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-GRD-5",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Gronlid",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:Yes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-GRD-5",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gronlid-loveseat-or-2-seater-sofa-cover",
+   "title": "Gronlid Loveseat or 2-seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-GRD-2",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-2_SHRT_PM_CVC-01.jpg?v=1741320147",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-2_SHRT_PM_CVC-01.jpg?v=1741320147",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_260_IKEA_Gronlid_sofa_2b7c1b28-ab65-43c9-8e43-84b3a3731f86.jpg?v=1741320147",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_258_IKEA_Gronlid_sofa_0e35f7cd-b03b-498e-90bb-29b5fd0687c7.jpg?v=1741320147"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:GRD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-GRD-2",
+    "FLT___Product_Ref__Old____GRD2",
+    "FLT___Series_Code___GRD",
+    "FLT___Series_Name___Gronlid",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-GRD-2",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Gronlid",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-GRD-2",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gronlid-sofa-cover",
+   "title": "Gronlid Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-GRD-4",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-4_SHRT_PM_CVC-01.jpg?v=1741320146",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-4_SHRT_PM_CVC-01.jpg?v=1741320146",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_257_IKEA_Gronlid_sofa.jpg?v=1741320146",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_259_IKEA_Gronlid_sofa_133f5f2e-1438-46d0-b9dc-944f8d7cbd72.jpg?v=1741320146"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular Straight",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:GRD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-GRD-4",
+    "FLT___Product_Ref__Old____GRD3",
+    "FLT___Series_Code___GRD",
+    "FLT___Series_Name___Gronlid",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-GRD-4",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Gronlid",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:5",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-GRD-4",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-2-seat-sofa-cover",
+   "title": "Harlanda 2 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-2",
+   "price": "349.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-2_SHRT_PM_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-2_SHRT_PM_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_264_IKEA_Harlanda_sofa_fb7d8742-3916-4cb3-a633-8f99781b3c78.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_271_IKEA_Harnosand_sofa_9c4c52dd-f5ab-45d7-94f0-a3985c8d24f5.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-2",
+    "FLT___Product_Ref__Old____HLD2",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-2",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-2",
+     "price": "349.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-3-seat-sofa-cover",
+   "title": "Harlanda 3 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-4",
+   "price": "419.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-4_SHRT_PM_CVC-01.jpg?v=1741320133",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-4_SHRT_PM_CVC-01.jpg?v=1741320133",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_266_IKEA_Harlanda_sofa.jpg?v=1741320133",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_201_IKEA_Harlanda_sofa_0df5236a-99b9-4338-8a65-75753b5d4b6e.jpg?v=1741320133"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-4",
+    "FLT___Product_Ref__Old____HLD3",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-4",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-4",
+     "price": "419.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harnosand-3-seater-sofa-cover",
+   "title": "Harnosand 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HD-2",
+   "price": "279.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HD-2_LSKT_SI_CVC-01.jpg?v=1741320116",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HD-2_LSKT_SI_CVC-01.jpg?v=1741320116",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_271_IKEA_Harnosand_sofa.jpg?v=1741320116",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_264_IKEA_Harlanda_sofa_7ce0a84c-142d-437e-b7c7-42f1fd81a81b.jpg?v=1741320116"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Thin Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:HD",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HD-2",
+    "FLT___Product_Ref__Old____HD3",
+    "FLT___Series_Code___HD",
+    "FLT___Series_Name___Harnosand",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HD-2",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Harnosand",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HD-2",
+     "price": "279.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hovas-3-seater-cover",
+   "title": "Hovas 3 Seater Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HS-3",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HS-3_MLTP_SP_CVC-01.jpg?v=1741320124",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HS-3_MLTP_SP_CVC-01.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_280_IKEA_Hovas_sofa_0231342e-edf6-416d-b30b-1ba46a4ac459.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_281_IKEA_Hovas_sofa_d576c6af-b5f0-4a7c-a9a7-45b7fb24d3de.jpg?v=1741320124"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:HS",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HS-3",
+    "FLT___Product_Ref__Old____HS3",
+    "FLT___Series_Code___HS",
+    "FLT___Series_Name___Hovas",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HS-3",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Hovas",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HS-3",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hyltarp-2-seater-sofa-cover",
+   "title": "Hyltarp 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HP-2",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HP-2_f14120e8-0097-43af-abef-3ae3fed22d3f.jpg?v=1787297200",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HP-2_f14120e8-0097-43af-abef-3ae3fed22d3f.jpg?v=1787297200",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HP-2_575dab1c-63e2-41b8-baf0-14fd2ea01c3d.jpg?v=1787297266"
+   ],
+   "tags": [
+    "categoryproducts:HP",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-HP-2",
+    "installation:579",
+    "series:Hyltarp"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HP-2",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hyltarp-3-seater-sofa-cover",
+   "title": "Hyltarp 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HP-3",
+   "price": "349.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HP-3.jpg?v=1787300800",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HP-3.jpg?v=1787300800",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HP-3_8cfb239b-a613-4253-9ae4-0455b6ef7bef.jpg?v=1787300809"
+   ],
+   "tags": [
+    "categoryproducts:HP",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-HP-3",
+    "installation:579",
+    "series:Hyltarp"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HP-3",
+     "price": "349.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlanda-2-seater-sofa-cover",
+   "title": "Karlanda 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KA-2",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-2_LSKT_WR_CVC-01.jpg?v=1741320113",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-2_LSKT_WR_CVC-01.jpg?v=1741320113",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_296_IKEA_Karlanda_sofa_3c9faba9-8fe1-4760-a3dd-0d58991b81b6.jpg?v=1741320113",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_606_IKEA_Karlanda_sofa_b879b927-4bae-4549-8976-66c71d2c09c8.jpg?v=1741320113"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KA-2",
+    "FLT___Product_Ref__Old____KA2",
+    "FLT___Series_Code___KA",
+    "FLT___Series_Name___Karlanda",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KA-2",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlanda",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KA-2",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlanda-3-seater-sofa-cover",
+   "title": "Karlanda 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KA-3",
+   "price": "409.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-3_LSKT_WR_CVC-01.jpg?v=1741320126",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-3_LSKT_WR_CVC-01.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_301_IKEA_Karlanda_sofa_98991999-e79f-409a-bfd6-5609b832af00.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_297_IKEA_Karlanda_sofa.jpg?v=1741320126"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KA-3",
+    "FLT___Product_Ref__Old____KA3",
+    "FLT___Series_Code___KA",
+    "FLT___Series_Name___Karlanda",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KA-3",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlanda",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KA-3",
+     "price": "409.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-2-seater-sofa-cover",
+   "title": "Karlstad 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-2",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-2_STD_VELC_SP_CVC-01.jpg?v=1741741761",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-2_STD_VELC_SP_CVC-01.jpg?v=1741741761",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_06_1003.jpg?v=1741741761",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_04_1003.jpg?v=1741741761"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Rounded Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-2",
+    "FLT___Product_Ref__Old____KD2",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Karlstad_2_Seater",
+    "FLT___Variant_1_Name___Karlstad_Compact_2_Seater__Japan_",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KD-2",
+    "installation:578",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-2",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-3-seater-sofa-cover",
+   "title": "Karlstad 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-3",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-3_VELC_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-3_VELC_SP_CVC-01.jpg?v=1741678943"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Rounded Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-3",
+    "FLT___Product_Ref__Old____KD3",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KD-3",
+    "installation:578",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-3",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kivik-2-seater-sofa-cover",
+   "title": "Kivik 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KK-2",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KK-2_VELC_SI_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KK-2_VELC_SI_CVC-01.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KK2_06_E204.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KK2_07_17207B.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KK-2",
+    "FLT___Product_Ref__Old____KK2",
+    "FLT___Series_Code___KK",
+    "FLT___Series_Name___Kivik",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KK-2",
+    "installation:587",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Kivik",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KK-2",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kivik-3-seater-sofa-cover",
+   "title": "Kivik 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KK-3",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KK-3_VELC_SI_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KK-3_VELC_SI_CVC-01.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KK2_06_E204_edab8f6b-b2c6-4830-8d16-9fa8a7f66880.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KK2_07_17207B_524f19c4-3f35-49c4-a77c-6bf24706fd7d.jpg?v=1741678943"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KK-3",
+    "FLT___Product_Ref__Old____KK3",
+    "FLT___Series_Code___KK",
+    "FLT___Series_Name___Kivik",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KK-3",
+    "installation:587",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Kivik",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KK-3",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kivik-3-5-seater-sofa-cover",
+   "title": "Kivik 3.5 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KK-4",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KK-4_VELC_SI_CVC-01.jpg?v=1741678946",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KK-4_VELC_SI_CVC-01.jpg?v=1741678946"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:KK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KK-4",
+    "FLT___Product_Ref__Old____KK35",
+    "FLT___Series_Code___KK",
+    "FLT___Series_Name___Kivik",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KK-4",
+    "installation:587",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Kivik",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KK-4",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "klippan-2-seater-sofa-cover",
+   "title": "Klippan 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KN-2",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-2_STD_SV_VELC_SP_CVC-01.jpg?v=1741741755",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-2_STD_SV_VELC_SP_CVC-01.jpg?v=1741741755"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KN-2",
+    "FLT___Product_Ref__Old____KN2",
+    "FLT___Series_Code___KN",
+    "FLT___Series_Name___Klippan",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___SDPT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Klippan_2_Seater_Version",
+    "FLT___Variant_1_Name___Klippan_Compact_2_Seater_Version",
+    "FLT___Variant_1_Type___Size",
+    "FLT___Variant_2_Name___The_fabric_version",
+    "FLT___Variant_2_Name___The_leather_version",
+    "FLT___Variant_2_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KN-2",
+    "important_notes:643",
+    "installation:618",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Klippan",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KN-2",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "klippan-4-seater-sofa-cover",
+   "title": "Klippan 4 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KN-4",
+   "price": "209.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-4_SV_VELC_SP_CVC-01.jpg?v=1741741756",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-4_SV_VELC_SP_CVC-01.jpg?v=1741741756",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KN2_02_E204.jpg?v=1741741756",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KN2_01_E204.jpg?v=1741741756"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KN-4",
+    "FLT___Product_Ref__Old____KN4",
+    "FLT___Series_Code___KN",
+    "FLT___Series_Name___Klippan",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___SDPT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_fabric_version",
+    "FLT___Variant_1_Name___The_leather_version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KN-4",
+    "important_notes:643",
+    "installation:618",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Klippan",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KN-4",
+     "price": "209.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "klobo-2-seater-sofa-cover",
+   "title": "Klobo 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KO-2",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KO-2_LSKT_SP_CVC-01.jpg?v=1741320117",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KO-2_LSKT_SP_CVC-01.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_591_IKEA_Klobo_sofa.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_590_IKEA_Klobo_sofa.jpg?v=1741320117"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:KO",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KO-2",
+    "FLT___Product_Ref__Old____KO",
+    "FLT___Series_Code___KO",
+    "FLT___Series_Name___Klobo",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KO-2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Klobo",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KO-2",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kramfors-2-seat-left-right-armrest-seat-cushion-cover-only",
+   "title": "Kramfors 2 Seat Left/Right-Armrest, Seat Cushion Cover Only",
+   "vendor": "IKEA",
+   "sku": "IK-KS-CC-2M",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-CC-2M_L_LV_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-CC-2M_L_LV_SP_CVC-01.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_041_IKEA_Kramfors_sofa.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_045_IKEA_Kramfors_sofa.jpg?v=1741678943"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:KS",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KS-CC-2M",
+    "FLT___Product_Ref__Old____KS4_L_CC",
+    "FLT___Series_Code___KS",
+    "FLT___Series_Name___Kramfors",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT___Variant_2_Name___The_leather_version",
+    "FLT___Variant_2_Name___The_standard_version",
+    "FLT___Variant_2_Type___Version",
+    "FLT__MAIN",
+    "IK-KS-CC-2M",
+    "installation:579",
+    "series:Kramfors"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KS-CC-2M",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kramfors-2-seater-loveseat-sofa-cover",
+   "title": "Kramfors 2 Seater (Loveseat) Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KS-2",
+   "price": "239.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-2_LV_SHRT_SP_CVC-01.jpg?v=1741675543",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-2_LV_SHRT_SP_CVC-01.jpg?v=1741675543",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_038_IKEA_Kramfors_sofa_c71f5005-851b-4c10-914b-4f9710d163b9.jpg?v=1741675543",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_045_IKEA_Kramfors_sofa_71a55c36-5717-4ad8-bec5-0d9ec4650004.jpg?v=1741675543"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KS-2",
+    "FLT___Product_Ref__Old____KS2",
+    "FLT___Series_Code___KS",
+    "FLT___Series_Name___Kramfors",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Variant_1_Name___The_leather_version",
+    "FLT___Variant_1_Name___The_standard_version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KS-2",
+    "installation:579",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Kramfors",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KS-2",
+     "price": "239.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kramfors-2-seater-sofa-seat-cushion-cover-only",
+   "title": "Kramfors 2 Seater Sofa, Seat Cushion Cover Only",
+   "vendor": "IKEA",
+   "sku": "IK-KS-CC-2",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-CC-2_LV_SP_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-CC-2_LV_SP_CVC-01.jpg?v=1741678942"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:KS",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KS-CC-2",
+    "FLT___Product_Ref__Old____KS2_CC",
+    "FLT___Series_Code___KS",
+    "FLT___Series_Name___Kramfors",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___The_leather_version",
+    "FLT___Variant_1_Name___The_standard_version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-KS-CC-2",
+    "installation:579",
+    "series:Kramfors"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KS-CC-2",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kramfors-3-seater-sofa-cover",
+   "title": "Kramfors 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KS-3",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-3_LV_SHRT_SP_CVC-01.jpg?v=1741675648",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-3_LV_SHRT_SP_CVC-01.jpg?v=1741675648",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_039_IKEA_Kramfors_sofa_c5083e41-3d2d-486d-87da-e67ae90fa871.jpg?v=1741675648",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_040_IKEA_Kramfors_sofa_0076e894-875e-4b63-a51d-bc8170021efd.jpg?v=1741675648"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KS-3",
+    "FLT___Product_Ref__Old____KS3",
+    "FLT___Series_Code___KS",
+    "FLT___Series_Name___Kramfors",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Variant_1_Name___The_leather_version",
+    "FLT___Variant_1_Name___The_standard_version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KS-3",
+    "installation:579",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Kramfors",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KS-3",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kramfors-3-seater-sofa-seat-cushion-covers-only",
+   "title": "Kramfors 3 Seater Sofa, Seat Cushion Covers Only",
+   "vendor": "IKEA",
+   "sku": "IK-KS-CC-3",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-CC-3_LV_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-CC-3_LV_SP_CVC-01.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_039_IKEA_Kramfors_sofa_52c1296e-19a4-45b1-9948-5733406aa7a1.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_040_IKEA_Kramfors_sofa_50c3f021-2f72-460b-b1f0-c4ae15ce5178.jpg?v=1741678943"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:KS",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KS-CC-3",
+    "FLT___Product_Ref__Old____KS3_CC",
+    "FLT___Series_Code___KS",
+    "FLT___Series_Name___Kramfors",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___The_leather_version",
+    "FLT___Variant_1_Name___The_standard_version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-KS-CC-3",
+    "installation:579",
+    "series:Kramfors"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KS-CC-3",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kramfors-chaise-lounge-left-right-seat-cushion-cover-only",
+   "title": "Kramfors Chaise Lounge Left/Right, Seat Cushion Cover Only",
+   "vendor": "IKEA",
+   "sku": "IK-KS-CC-5",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-CC-5_L_LV_SP_CVC-01.jpg?v=1741678944",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-CC-5_L_LV_SP_CVC-01.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_042_IKEA_Kramfors_sofa_4dac0cf0-062b-4b94-9435-9d9aad2a810b.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_045_IKEA_Kramfors_sofa_1add2f72-204a-4101-bbed-aadaa09b54c6.jpg?v=1741678944"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:KS",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KS-CC-5",
+    "FLT___Product_Ref__Old____KS5_L_CC",
+    "FLT___Series_Code___KS",
+    "FLT___Series_Name___Kramfors",
+    "FLT___Size___Chaise",
+    "FLT___Size___Cushion_Only",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT___Variant_2_Name___The_leather_version",
+    "FLT___Variant_2_Name___The_standard_version",
+    "FLT___Variant_2_Type___Version",
+    "FLT__MAIN",
+    "IK-KS-CC-5",
+    "installation:579",
+    "series:Kramfors"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KS-CC-5",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kramfors-corner-unit-seat-cushion-cover-only",
+   "title": "Kramfors Corner Unit, Seat Cushion Cover Only",
+   "vendor": "IKEA",
+   "sku": "IK-KS-CC-6",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-CC-6_LV_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-CC-6_LV_SP_CVC-01.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_042_IKEA_Kramfors_sofa_5df9415d-3257-4a99-9053-b0e61acb830a.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_044_IKEA_Kramfors_sofa.jpg?v=1741678943"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:KS",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KS-CC-6",
+    "FLT___Product_Ref__Old____KS1_CC",
+    "FLT___Series_Code___KS",
+    "FLT___Series_Name___Kramfors",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Cushion_Only",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___The_leather_version",
+    "FLT___Variant_1_Name___The_standard_version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-KS-CC-6",
+    "installation:579",
+    "series:Kramfors"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KS-CC-6",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "landskrona-2-seat-sofa-cover",
+   "title": "Landskrona 2-seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LSA-2",
+   "price": "229.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-2_SHRT_SP_CVC-01.jpg?v=1741320154",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-2_SHRT_SP_CVC-01.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_069_IKEA_Landskrona_sofa.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_068_IKEA_Landskrona_sofa_a638b0e7-71bd-4fd5-a6d7-23ca9ceafa71.jpg?v=1741320154"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LSA-2",
+    "FLT___Product_Ref__Old____LSA2",
+    "FLT___Series_Code___LSA",
+    "FLT___Series_Name___Landskrona",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LSA-2",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Landskrona",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LSA-2",
+     "price": "229.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "landskrona-3-seat-sofa-cover",
+   "title": "Landskrona 3-seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LSA-3",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-3_SHRT_SP_CVC-01.jpg?v=1741320154",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-3_SHRT_SP_CVC-01.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_067_IKEA_Landskrona_sofa_af9ee12a-07b7-4e05-bd6a-26e41cd92097.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_070_IKEA_Landskrona_sofa.jpg?v=1741320154"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LSA-3",
+    "FLT___Product_Ref__Old____LSA3",
+    "FLT___Series_Code___LSA",
+    "FLT___Series_Name___Landskrona",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LSA-3",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Landskrona",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LSA-3",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lillberg-2-seater-sofa-cover",
+   "title": "Lillberg 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LG-2",
+   "price": "199.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-2_PM_CVC-01.jpg?v=1741320111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-2_PM_CVC-01.jpg?v=1741320111",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_314_IKEA_Lillberg_sofa.jpg?v=1741320111"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin Frame",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Frame High",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LG-2",
+    "FLT___Product_Ref__Old____LG2",
+    "FLT___Series_Code___LG",
+    "FLT___Series_Name___Lillberg",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LG-2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lillberg",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LG-2",
+     "price": "199.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lillberg-3-seater-sofa-cover",
+   "title": "Lillberg 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LG-3",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-3_PM_CVC-01.jpg?v=1741320110",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-3_PM_CVC-01.jpg?v=1741320110",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_315_IKEA_Lillberg_sofa.jpg?v=1741320110",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_313_IKEA_Lillberg_sofa_b7991cfd-366f-4312-9166-3174cd3bbea1.jpg?v=1741320110"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin Frame",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Frame High",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LG-3",
+    "FLT___Product_Ref__Old____LG3",
+    "FLT___Series_Code___LG",
+    "FLT___Series_Name___Lillberg",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LG-3",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lillberg",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LG-3",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "manstad-sofa-bed-cover",
+   "title": "Manstad Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-MD-25BM",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MD-3_L_SHRT_PM_CVC-01.jpg?v=1741742651",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MD-3_L_SHRT_PM_CVC-01.jpg?v=1741742651",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_051_IKEA_Friheten_sofa_b0dbd13f-b4b8-43a7-ada3-c21a584c289d.jpg?v=1741742651",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/md3_manstad-slipcover_1.jpg?v=1741742651"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:MD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MD-25BM",
+    "FLT___Product_Ref__Old____MD3",
+    "FLT___Series_Code___MD",
+    "FLT___Series_Name___Manstad",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-MD-25BM",
+    "installation:588",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:Manstad",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MD-25BM",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morabo-loveseat-cover",
+   "title": "Morabo Loveseat Cover",
+   "vendor": "IKEA",
+   "sku": "IK-MRO-2",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-2_SHRT_SP_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-2_SHRT_SP_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_148_IKEA_Morabo_sofa_e3d22430-f40d-40c8-bf9b-b0d2923c8f14.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_146_IKEA_Morabo_sofa.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:MRO",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MRO-2",
+    "FLT___Product_Ref__Old____MRO2",
+    "FLT___Series_Code___MRO",
+    "FLT___Series_Name___Morabo",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-MRO-2",
+    "series:Morabo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MRO-2",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morabo-sofa-cover",
+   "title": "Morabo Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-MRO-3",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-3_SHRT_SP_CVC-01.jpg?v=1741320126",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-3_SHRT_SP_CVC-01.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_149_IKEA_Morabo_sofa.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_145_IKEA_Morabo_sofa.jpg?v=1741320126"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:MRO",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MRO-3",
+    "FLT___Product_Ref__Old____MRO3",
+    "FLT___Series_Code___MRO",
+    "FLT___Series_Name___Morabo",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-MRO-3",
+    "series:Morabo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MRO-3",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "mysinge-2-seater-sofa-cover",
+   "title": "Mysinge 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-ME-2",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-ME-2_VELC_SP_CVC-01.jpg?v=1741320111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-ME-2_VELC_SP_CVC-01.jpg?v=1741320111",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_325_IKEA_Mysinge_sofa_d57763e0-7e88-4662-8be4-83a6ea2751b8.jpg?v=1741320111",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_473_IKEA_Mysinge_sofa_1f171bc3-336b-4b5b-881e-ae5e73c44aad.jpg?v=1741320111"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:??",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:ME",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-ME-2",
+    "FLT___Product_Ref__Old____ME2",
+    "FLT___Series_Code___ME",
+    "FLT___Series_Name___Mysinge",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-ME-2",
+    "installation:579",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:Mysinge",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-ME-2",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "mysinge-corner-module-sofa-cover",
+   "title": "Mysinge Corner Module Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-ME-6",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-ME-6_VELC_SP_CVC-01.jpg?v=1741320115",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-ME-6_VELC_SP_CVC-01.jpg?v=1741320115",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_327_IKEA_Mysinge_sofa.jpg?v=1741320115",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_473_IKEA_Mysinge_sofa_1c3fde54-8168-4ab2-9160-980a0f21a8c7.jpg?v=1741320115"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Corner Section",
+    "categoryproducts:IK",
+    "categoryproducts:ME",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-ME-6",
+    "FLT___Product_Ref__Old____ME6",
+    "FLT___Series_Code___ME",
+    "FLT___Series_Name___Mysinge",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-ME-6",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:Mysinge",
+    "size:1 Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-ME-6",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nikkala-3-seater-sofa-cover",
+   "title": "Nikkala 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-NA-3",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NA-3_VH_VELC_SP_CVC-01.jpg?v=1741675916",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NA-3_VH_VELC_SP_CVC-01.jpg?v=1741675916",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_331_IKEA_Nikkala_sofa.jpg?v=1741675916",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_332_IKEA_Nikkala_sofa.jpg?v=1741675916"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:NA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NA-3",
+    "FLT___Product_Ref__Old____NA3H",
+    "FLT___Series_Code___NA",
+    "FLT___Series_Name___Nikkala",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___My_sofa_has_the_Hard_Hook_Velcro",
+    "FLT___Variant_1_Name___My_sofa_has_the_Soft_Loop_Velcro",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-NA-3",
+    "installation:579",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Nikkala",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NA-3",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nockeby-2-seater-sofa-cover",
+   "title": "Nockeby 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-NY-3",
+   "price": "369.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NY-3_VELC_WR_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NY-3_VELC_WR_CVC-01.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_116_IKEA_Nockeby_sofa_a0884d97-41ec-48a7-a0bb-fdfc87cea6ef.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_115_IKEA_Nockeby_sofa.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:NY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NY-3",
+    "FLT___Product_Ref__Old____NY2",
+    "FLT___Series_Code___NY",
+    "FLT___Series_Name___Nockeby",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-NY-3",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Nockeby",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NY-3",
+     "price": "369.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nockeby-3-seater-sofa-cover",
+   "title": "Nockeby 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-NY-4",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NY-4_VELC_WR_CVC-01.jpg?v=1741678946",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NY-4_VELC_WR_CVC-01.jpg?v=1741678946",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_116_IKEA_Nockeby_sofa.jpg?v=1741678946",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_115_IKEA_Nockeby_sofa_d0abd5b1-62e7-47cc-a756-4b09c02d157d.jpg?v=1741678946"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:NY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NY-4",
+    "FLT___Product_Ref__Old____NY3",
+    "FLT___Series_Code___NY",
+    "FLT___Series_Name___Nockeby",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-NY-4",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Nockeby",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NY-4",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "norsborg-chaise-cover",
+   "title": "Norsborg Chaise Cover",
+   "vendor": "IKEA",
+   "sku": "IK-NG-5",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-5_LSKT_SI_CVC-01.jpg?v=1741320139",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-5_LSKT_SI_CVC-01.jpg?v=1741320139",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_110_IKEA_Norsborg_sofa.jpg?v=1741320139"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Chaise Lounge",
+    "categoryproducts:IK",
+    "categoryproducts:NG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NG-5",
+    "FLT___Product_Ref__Old____NG5",
+    "FLT___Series_Code___NG",
+    "FLT___Series_Name___Norsborg",
+    "FLT___Size___Chaise",
+    "FLT___Style_Name___Original__With_Arm_Pockets_",
+    "FLT___Style_Name___Original__Without_Arm_Pockets_",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR_NARM",
+    "FLT___Styles_Code___VELC_WR_YARM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-NG-5",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Norsborg",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NG-5",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "norsborg-three-seat-sofa-cover",
+   "title": "Norsborg Three-seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-NG-3",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-3_LSKT_SI_CVC-01.jpg?v=1741320138",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-3_LSKT_SI_CVC-01.jpg?v=1741320138",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_108_IKEA_Norsborg_sofa.jpg?v=1741320138",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_107_IKEA_Norsborg_sofa.jpg?v=1741320138"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:NG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NG-3",
+    "FLT___Product_Ref__Old____NG3",
+    "FLT___Series_Code___NG",
+    "FLT___Series_Name___Norsborg",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original__With_Arm_Pockets_",
+    "FLT___Style_Name___Original__Without_Arm_Pockets_",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR_NARM",
+    "FLT___Styles_Code___VELC_WR_YARM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-NG-3",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Norsborg",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NG-3",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "norsborg-two-seat-sofa-cover",
+   "title": "Norsborg Two-seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-NG-2",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-2_LSKT_SI_CVC-01.jpg?v=1741320137",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-2_LSKT_SI_CVC-01.jpg?v=1741320137",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_108_IKEA_Norsborg_sofa_d8af59b7-d20d-435b-b2c8-b7713ac0eeba.jpg?v=1741320137",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_110_IKEA_Norsborg_sofa_35741092-bfa8-44ba-b0cf-54e01ae974f3.jpg?v=1741320137"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:NG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NG-2",
+    "FLT___Product_Ref__Old____NG2",
+    "FLT___Series_Code___NG",
+    "FLT___Series_Name___Norsborg",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original__With_Arm_Pockets_",
+    "FLT___Style_Name___Original__Without_Arm_Pockets_",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR_NARM",
+    "FLT___Styles_Code___VELC_WR_YARM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-NG-2",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Norsborg",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NG-2",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "parup-loveseat-cover",
+   "title": "Parup Loveseat Cover",
+   "vendor": "IKEA",
+   "sku": "IK-PRP-2",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-PRP-2_VELC_PM_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-PRP-2_VELC_PM_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_337_IKEA_Parup_sofa_e8ebd3a9-09ac-48ba-b254-97a2be4dea9b.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_338_IKEA_Parup_sofa_0f57caf9-918f-4358-86a9-e54ed9659d81.jpg?v=1741320129"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:PRP",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-PRP-2",
+    "FLT___Product_Ref__Old____PRP2",
+    "FLT___Series_Code___PRP",
+    "FLT___Series_Name___Parup",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-PRP-2",
+    "series:Parup"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-PRP-2",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "parup-sofa-cover",
+   "title": "Parup Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-PRP-3",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-PRP-3_VELC_PM_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-PRP-3_VELC_PM_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_338_IKEA_Parup_sofa.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_492_IKEA_Parup_sofa.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:PRP",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-PRP-3",
+    "FLT___Product_Ref__Old____PRP3",
+    "FLT___Series_Code___PRP",
+    "FLT___Series_Name___Parup",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-PRP-3",
+    "series:Parup"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-PRP-3",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ps-2012-sofa-cover",
+   "title": "PS 2012 Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-IPS-3X",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-IPS-3X_SI_CVC-01.jpg?v=1741320137",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-IPS-3X_SI_CVC-01.jpg?v=1741320137",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_342_IKEA_PS_sofa.jpg?v=1741320137",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_343_IKEA_PS_sofa.jpg?v=1741320137"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:IPS",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-IPS-3X",
+    "FLT___Product_Ref__Old____IPS3",
+    "FLT___Series_Code___IPS",
+    "FLT___Series_Name___PS",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SI",
+    "FLT__MAIN",
+    "IK-IPS-3X",
+    "series:PS 2012"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-IPS-3X",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "saltsjobaden-2-seater-sofa-cover",
+   "title": "Saltsjobaden 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SJN-2",
+   "price": "259.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-2.jpg?v=1787302667",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-2.jpg?v=1787302667",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-2_8c3e842c-f181-46ab-9c4f-d4c8516bfb16.jpg?v=1787302675"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SJN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-SJN-2",
+    "installation:579",
+    "series:Saltsjobaden"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SJN-2",
+     "price": "259.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "saltsjobaden-3-seater-sofa-cover",
+   "title": "Saltsjobaden 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SJN-3",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-3_b840202a-8efc-4d7e-92e9-f61fadc09dd2.jpg?v=1787302577",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-3_b840202a-8efc-4d7e-92e9-f61fadc09dd2.jpg?v=1787302577",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-3_45e13ef0-ba5e-44ee-9588-dbb962669828.jpg?v=1787302587"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SJN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-SJN-3",
+    "installation:579",
+    "series:Saltsjobaden"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SJN-3",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sandbacken-3-seater-sofa-cover",
+   "title": "Sandbacken 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SBN-3",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SBN-3_CNRP_SP_CVC-01.jpg?v=1741320148",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SBN-3_CNRP_SP_CVC-01.jpg?v=1741320148",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_346_IKEA_Sandbacken_sofa.jpg?v=1741320148",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_496_IKEA_Sandbacken_sofa.jpg?v=1741320148"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:SBN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SBN-3",
+    "FLT___Product_Ref__Old____SBN3",
+    "FLT___Series_Code___SBN",
+    "FLT___Series_Name___Sandbacken",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SBN-3",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Sandbacken",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SBN-3",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sandby-2-seater-sofa-cover",
+   "title": "Sandby 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SY-2",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-2_CNRP_PM_CVC-01.jpg?v=1741320126",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-2_CNRP_PM_CVC-01.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_350_IKEA_Sandby_sofa.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_348_IKEA_Sandby_sofa_fa0f8b22-2e30-4eaa-b0ac-891b656494eb.jpg?v=1741320126"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SY-2",
+    "FLT___Product_Ref__Old____SY2",
+    "FLT___Series_Code___SY",
+    "FLT___Series_Name___Sandby",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SY-2",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Sandby",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SY-2",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sandby-3-seater-sofa-cover",
+   "title": "Sandby 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SY-3",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-3_CNRP_PM_CVC-01.jpg?v=1741320125",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-3_CNRP_PM_CVC-01.jpg?v=1741320125",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_351_IKEA_Sandby_sofa_131dd3a2-ee77-410c-8850-4be90fac6fb5.jpg?v=1741320125",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_349_IKEA_Sandby_sofa.jpg?v=1741320125"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SY-3",
+    "FLT___Product_Ref__Old____SY3",
+    "FLT___Series_Code___SY",
+    "FLT___Series_Name___Sandby",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SY-3",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Sandby",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SY-3",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "segeron-loveseat-cushion-covers",
+   "title": "Segeron Loveseat Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SGN-2",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SGN-2_DVN_SP_CVC-01.jpg?v=1741320151",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SGN-2_DVN_SP_CVC-01.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_352_IKEA_Segeron_sofa_862ee5d9-1fd9-4355-adba-ba1f9aba4668.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_353_IKEA_Segeron_sofa.jpg?v=1741320151"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SGN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SGN-2",
+    "FLT___Series_Code___SGN",
+    "FLT___Series_Name___Segeron",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-SGN-2",
+    "series:Segeron"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SGN-2",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "segeron-sun-lounger-cushion-covers",
+   "title": "Segeron Sun Lounger Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SGN-SL",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SGN-SL_DVN_SP_CVC-01.jpg?v=1741320156",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SGN-SL_DVN_SP_CVC-01.jpg?v=1741320156",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_592_IKEA_Segeron_sofa.jpg?v=1741320156",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_614_IKEA_Segeron_sofa.jpg?v=1741320156"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SGN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SGN-SL",
+    "FLT___Series_Code___SGN",
+    "FLT___Series_Name___Segeron",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Sun_Lounger",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-SGN-SL",
+    "series:Segeron"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SGN-SL",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "smedstorp-3-seat-sofa-cover",
+   "title": "Smedstorp 3-Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-STP-3",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-STP-81_VELC_SP_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-STP-81_VELC_SP_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:STP",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-STP-3",
+    "installation:579",
+    "series:Smedstorp"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-STP-3",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "soderhamn-3-seater-sofa-cover",
+   "title": "Soderhamn 3-seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SN-3",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-3_VELC_SP_CVC-01.jpg?v=1741678946",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-3_VELC_SP_CVC-01.jpg?v=1741678946"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SN-3",
+    "FLT___Product_Ref__Old____SN3",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Soderhamn",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SN-3",
+    "installation:585",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Soderhamn",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SN-3",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "soderhamn-corner-section-sofa-cover",
+   "title": "Soderhamn Corner Section Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SN-6",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-6_VELC_SP_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-6_VELC_SP_CVC-01.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Corner Section",
+    "categoryproducts:IK",
+    "categoryproducts:SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SN-6",
+    "FLT___Product_Ref__Old____SN2",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Soderhamn",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SN-6",
+    "installation:585",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:One Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Soderhamn",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SN-6",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sorvallen-2-seat-sofa-cover",
+   "title": "Sorvallen 2 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SVN-2",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-3_VELC_SP_CVC-01.jpg?v=1741320147",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-3_VELC_SP_CVC-01.jpg?v=1741320147",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_666_IKEA_Sorvallen_sofa.jpg?v=1741320147",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_665_IKEA_Sorvallen_sofa.jpg?v=1741320147"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SVN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SVN-2",
+    "FLT___Product_Ref__Old____SVN2",
+    "FLT___Series_Code___SVN",
+    "FLT___Series_Name___Sorvallen",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SVN-2",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:Sorvallen",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SVN-2",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stockholm-2017-2-seater-sofa-cover",
+   "title": "Stockholm 2017 2-Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-STM-2",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-STM-2_VELC_WR_CVC-01.jpg?v=1741742125",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-STM-2_VELC_WR_CVC-01.jpg?v=1741742125",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_143_IKEA_Stockholm_sofa.jpg?v=1741742125",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_141_IKEA_Stockholm_sofa_559d3ca7-7d53-416d-94e5-c941d3dd887b.jpg?v=1741742125"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:SM",
+    "categoryproducts:STM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-STM-2",
+    "FLT___Product_Ref__Old____STM2",
+    "FLT___Series_Code___STM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-STM-2",
+    "important_notes:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Stockholm 2017",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No",
+    "throw_pillows:7"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-STM-2",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stockholm-2017-3-seater-sofa-cover",
+   "title": "Stockholm 2017 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-STM-3",
+   "price": "489.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-STM-3_VELC_WR_CVC-01.jpg?v=1741742168",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-STM-3_VELC_WR_CVC-01.jpg?v=1741742168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_144_IKEA_Stockholm_sofa_4b4fb459-a5fe-4f29-8523-e75babf81255.jpg?v=1741742168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_141_IKEA_Stockholm_sofa.jpg?v=1741742168"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SM",
+    "categoryproducts:STM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-STM-3",
+    "FLT___Product_Ref__Old____STM3",
+    "FLT___Series_Code___STM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-STM-3",
+    "installation:580",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Stockholm 2017",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No",
+    "throw_pillows:10"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-STM-3",
+     "price": "489.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stockholm-3-seater-sofa-cover",
+   "title": "Stockholm 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SM-3",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-3_SV_VELC_SP_CVC-01.jpg?v=1741741763",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-3_SV_VELC_SP_CVC-01.jpg?v=1741741763",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_138_IKEA_Stockholm_sofa.jpg?v=1741741763",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_140_IKEA_Stockholm_sofa_378801af-2deb-45aa-8e36-d2dd54aecf03.jpg?v=1741741763"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SM-3",
+    "FLT___Product_Ref__Old____SM4",
+    "FLT___Series_Code___SM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___has_existing_fabric_covers",
+    "FLT___Variant_1_Name___is_leather_upholstered",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SM-3",
+    "installation:580",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Stockholm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SM-3",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stockholm-3-5-seater-sofa-cover",
+   "title": "Stockholm 3.5 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SM-4",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-4_SV_VELC_SP_CVC-01.jpg?v=1741741756",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-4_SV_VELC_SP_CVC-01.jpg?v=1741741756",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_136_IKEA_Stockholm_sofa.jpg?v=1741741756",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_139_IKEA_Stockholm_sofa.jpg?v=1741741756"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SM-4",
+    "FLT___Product_Ref__Old____SM35",
+    "FLT___Series_Code___SM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_leather_version",
+    "FLT___Variant_1_Name___The_standard_version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SM-4",
+    "installation:580",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Stockholm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SM-4",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stocksund-2-seater-sofa-cover",
+   "title": "Stocksund 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SU-2",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-2_VELC_SP_CVC-01.jpg?v=1741676041",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-2_VELC_SP_CVC-01.jpg?v=1741676041",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_060_IKEA_Stocksund_sofa_55d108cf-9ab8-424d-a690-cccd1aaf2c0c.jpg?v=1741676041",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_062_IKEA_Stocksund_sofa_cb753654-4d47-43f8-89c3-b88d82bb416a.jpg?v=1741676041"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Roll arm (English roll arm)",
+    "arm_shape_categories:Round",
+    "arm_type:Round English Roll",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:SU",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SU-2",
+    "FLT___Product_Ref__Old____SU2",
+    "FLT___Series_Code___SU",
+    "FLT___Series_Name___Stocksund",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SU-2",
+    "installation:579",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Stocksund",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SU-2",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stocksund-3-seater-sofa-cover",
+   "title": "Stocksund 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SU-3",
+   "price": "439.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-3_VELC_SP_CVC-01.jpg?v=1741676069",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-3_VELC_SP_CVC-01.jpg?v=1741676069",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_060_IKEA_Stocksund_sofa_604c4c25-71c3-417f-9f0c-b57d54d6fc93.jpg?v=1741676069",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_063_IKEA_Stocksund_sofa.jpg?v=1741676069"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Roll arm (English roll arm)",
+    "arm_shape_categories:Round",
+    "arm_type:Round English Roll",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:SU",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SU-3",
+    "FLT___Product_Ref__Old____SU3",
+    "FLT___Series_Code___SU",
+    "FLT___Series_Name___Stocksund",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SU-3",
+    "installation:579",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Stocksund",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SU-3",
+     "price": "439.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stocksund-3-5-seater-cover",
+   "title": "Stocksund 3.5 Seater Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SU-4",
+   "price": "469.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-4_VELC_SP_CVC-01.jpg?v=1741676097",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-4_VELC_SP_CVC-01.jpg?v=1741676097",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/SU3_02_1003_787a34dd-2b0e-4749-a260-028529471f3e.jpg?v=1741676097",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/SU35_01_JH_e5d3c155-43dd-4b31-9cf9-9f588796050e.jpg?v=1741676097"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Roll arm (English roll arm)",
+    "arm_shape_categories:Round",
+    "arm_type:Round English Roll",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:SU",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SU-4",
+    "FLT___Product_Ref__Old____SU35",
+    "FLT___Series_Code___SU",
+    "FLT___Series_Name___Stocksund",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SU-4",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Stocksund",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SU-4",
+     "price": "469.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stromstad-2-seater-sofa-cover",
+   "title": "Stromstad 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SD-2",
+   "price": "229.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SD-2_VELC_SP_CVC-01.jpg?v=1741320134",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SD-2_VELC_SP_CVC-01.jpg?v=1741320134",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_369_IKEA_Stromstad_sofa.jpg?v=1741320134",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_368_IKEA_Stromstad_sofa.jpg?v=1741320134"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Pointed Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SD-2",
+    "FLT___Product_Ref__Old____SD2",
+    "FLT___Series_Code___SD",
+    "FLT___Series_Name___Stromstad",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SD-2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Stromstad",
+    "size:2+ Seater",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SD-2",
+     "price": "229.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stromstad-3-seater-sofa-cover",
+   "title": "Stromstad 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SD-3",
+   "price": "279.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SD-3_VELC_SP_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SD-3_VELC_SP_CVC-01.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_369_IKEA_Stromstad_sofa_39f39006-5a51-4bdc-9d55-56079e63035d.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_612_IKEA_Stromstad_sofa.jpg?v=1741575836"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Pointed Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SD-3",
+    "FLT___Product_Ref__Old____SD3",
+    "FLT___Series_Code___SD",
+    "FLT___Series_Name___Stromstad",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SD-3",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Stromstad",
+    "size:2+ Seater",
+    "storage:No",
+    "throw_pillows:3"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SD-3",
+     "price": "279.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tomelilla-2-seater-sofa-cover",
+   "title": "Tomelilla 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TA-2",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-2_LSKT_SP_CVC-01.jpg?v=1741320116",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-2_LSKT_SP_CVC-01.jpg?v=1741320116",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_372_IKEA_Tomelilla_sofa_77fc5a4a-603c-4e34-b50a-04aaf0a9d0f1.jpg?v=1741320116",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_373_IKEA_Tomelilla_sofa_8b18dfce-3f28-42b8-acfa-bd561a5f106b.jpg?v=1741320116"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Pointed High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:TA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TA-2",
+    "FLT___Product_Ref__Old____TA2",
+    "FLT___Series_Code___TA",
+    "FLT___Series_Name___Tomelilla",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-TA-2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Tomelilla",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TA-2",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tomelilla-3-seater-sofa-cover",
+   "title": "Tomelilla 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TA-3",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-3_LSKT_SP_CVC-01.jpg?v=1741320115",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-3_LSKT_SP_CVC-01.jpg?v=1741320115",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_373_IKEA_Tomelilla_sofa.jpg?v=1741320115",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_370_IKEA_Tomelilla_sofa_2262f2a7-4439-43a9-ab17-584885d4be0c.jpg?v=1741320115"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Pointed High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:TA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TA-3",
+    "FLT___Product_Ref__Old____TA3",
+    "FLT___Series_Code___TA",
+    "FLT___Series_Name___Tomelilla",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-TA-3",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Tomelilla",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:5",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TA-3",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tylosand-3-seater-sofa-cover",
+   "title": "Tylosand 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TD-3",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-3_VELC_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-3_VELC_SP_CVC-01.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_178_IKEA_Tylosand_sofa_4d10fc16-3d16-425f-b1fd-42f62fbdf2ba.jpg?v=1741678943"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin arm",
+    "arm_type:Thin Regular Straight",
+    "back_type:Metal Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:TD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TD-3",
+    "FLT___Product_Ref__Old____TD3",
+    "FLT___Series_Code___TD",
+    "FLT___Series_Name___Tylosand",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-TD-3",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:Two Arms",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Tylosand",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:6"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TD-3",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "uppland-2-seater-sofa-cover",
+   "title": "Uppland 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-UD-2",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UD-2_CNRP_PM_CVC-01.jpg?v=1741320146",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UD-2_CNRP_PM_CVC-01.jpg?v=1741320146",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_015_IKEA_Ektorp_sofa_710b9212-3e5f-4b5d-b4ee-d638e7acb5df.jpg?v=1741320146",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_014_IKEA_Ektorp_sofa_cdb62e21-8cd2-411e-8a35-bfaab318bf53.jpg?v=1741320146"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:UD",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-UD-2",
+    "FLT___Product_Ref__Old____UD2",
+    "FLT___Series_Code___UD",
+    "FLT___Series_Name___Uppland",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "IK-UD-2",
+    "installation:579",
+    "series:Uppland"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-UD-2",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "uppland-3-seater-sofa-cover",
+   "title": "Uppland 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-UD-3",
+   "price": "429.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UD-3_CNRP_PM_CVC-01.jpg?v=1741320144",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UD-3_CNRP_PM_CVC-01.jpg?v=1741320144",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_015_IKEA_Ektorp_sofa_622dbca6-8a28-4d92-9f0a-613d953cc4fe.jpg?v=1741320144",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_018_IKEA_Ektorp_sofa_98ee8496-1d59-46c1-9c98-05fe9b891fbe.jpg?v=1741320144"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:UD",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-UD-3",
+    "FLT___Product_Ref__Old____UD3",
+    "FLT___Series_Code___UD",
+    "FLT___Series_Name___Uppland",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "IK-UD-3",
+    "installation:579",
+    "series:Uppland"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-UD-3",
+     "price": "429.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "varnamo-sofa-covers",
+   "title": "Varnamo Sofa Covers",
+   "vendor": "IKEA",
+   "sku": "IK-VO-3",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VO-3_VELC_PM_CVC-01.jpg?v=1741320151",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VO-3_VELC_PM_CVC-01.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_375_IKEA_Varnamo_sofa.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_374_IKEA_Varnamo_sofa.jpg?v=1741320151"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular Straight",
+    "back_type:High Rounded Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:VO",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VO-3",
+    "FLT___Product_Ref__Old____VO3",
+    "FLT___Series_Code___VO",
+    "FLT___Series_Name___Varnamo",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VO-3",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Varnamo",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VO-3",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-loveseat-cover",
+   "title": "Vimle Loveseat Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-2",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-2_REG_VELC_SP_CVC-01.webp?v=1771899743",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-2_REG_VELC_SP_CVC-01.webp?v=1771899743",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_121_IKEA_Finnala_sofa_78ee53ec-28ac-481a-90fd-3b161fcab2fe.jpg?v=1771899743",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_118_IKEA_Finnala_sofa_8298718a-d133-4c8d-aa8d-de812fddebb2.jpg?v=1771899743"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-2",
+    "FLT___Product_Ref__Old____VE2",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-2",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-2",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-sofa-cover",
+   "title": "Vimle Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-3",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-3_REG_VELC_SP_CVC-01.webp?v=1771899781",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-3_REG_VELC_SP_CVC-01.webp?v=1771899781",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_117_IKEA_Finnala_sofa_a878337e-570b-492a-aa86-61f8f592d831.jpg?v=1771899781",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_120_IKEA_Finnala_sofa_491615e6-f04c-4980-9489-39da7510d52f.jpg?v=1771899781"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-3",
+    "FLT___Product_Ref__Old____VE3",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-3",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-3",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vinliden-2-seat-sofa-cover",
+   "title": "Vinliden 2 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VN-2",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VN-2_VELC_WR_CVC-01.jpg?v=1741320137",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VN-2_VELC_WR_CVC-01.jpg?v=1741320137",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_383_IKEA_Vinliden_sofa_637a74d7-f94b-4bb5-aa0f-46dd2c278084.jpg?v=1741320137",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_384_IKEA_Vinliden_sofa_497a052e-ae68-410c-a284-4e5cb73f9a29.jpg?v=1741320137"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:VN",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VN-2",
+    "FLT___Product_Ref__Old____VN2",
+    "FLT___Series_Code___VN",
+    "FLT___Series_Name___Vinliden",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-VN-2",
+    "installation:579",
+    "series:Vinliden"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VN-2",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vinliden-3-seat-sofa-cover",
+   "title": "Vinliden 3 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VN-3",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VN-3_VELC_WR_CVC-01.jpg?v=1741320140",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VN-3_VELC_WR_CVC-01.jpg?v=1741320140",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_383_IKEA_Vinliden_sofa.jpg?v=1741320140",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_384_IKEA_Vinliden_sofa.jpg?v=1741320140"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:VN",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VN-3",
+    "FLT___Product_Ref__Old____VN3",
+    "FLT___Series_Code___VN",
+    "FLT___Series_Name___Vinliden",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-VN-3",
+    "installation:579",
+    "series:Vinliden"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VN-3",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

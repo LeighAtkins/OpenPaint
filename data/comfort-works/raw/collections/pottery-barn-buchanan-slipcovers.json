@@ -1,0 +1,810 @@
+{
+ "handle": "pottery-barn-buchanan-slipcovers",
+ "fetchedAt": "2026-09-18T05:37:51.207Z",
+ "count": 13,
+ "products": [
+  {
+   "handle": "buchanan-square-arm-curved-wedge-slipcover",
+   "title": "Buchanan Square Arm Curved Wedge Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSA-44X",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-44X_SV_CNRP_PM_CVC-01.webp?v=1779151791",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-44X_SV_CNRP_PM_CVC-01.webp?v=1779151791"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSA",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-BSA-44X",
+    "series:Buchanan",
+    "series:Buchanan Roll Arm",
+    "series:Buchanan Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSA-44X",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "buchanan-square-arm-left-right-loveseat-slipcover",
+   "title": "Buchanan Square Arm Left/Right Loveseat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSA-54M",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-54M_L_SV_CNRP_PM_CVC-01.webp?v=1779152637",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-54M_L_SV_CNRP_PM_CVC-01.webp?v=1779152637"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSA",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-BSA-54M",
+    "series:Buchanan",
+    "series:Buchanan Roll Arm",
+    "series:Buchanan Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSA-54M",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "buchanan-square-arm-left-right-armchair-slipcover",
+   "title": "Buchanan Square Arm Left/Right Armchair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSA-38M",
+   "price": "369.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-38M_L_SV_CNRP_PM_CVC-01.webp?v=1778658814",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-38M_L_SV_CNRP_PM_CVC-01.webp?v=1778658814"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSA",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-BSA-38M",
+    "series:Buchanan",
+    "series:Buchanan Roll Arm",
+    "series:Buchanan Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSA-38M",
+     "price": "369.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "buchanan-square-arm-83-5-sofa-slipcover",
+   "title": "Buchanan Square Arm 83.5\" Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSA-84",
+   "price": "799.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-84_LV_3S-3B_CNRP_PM_CVC-01.jpg?v=1741576853",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-84_LV_3S-3B_CNRP_PM_CVC-01.jpg?v=1741576853"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-BSA-84",
+    "series:Buchanan Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSA-84",
+     "price": "799.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "buchanan-roll-arm-93-5-sofa-slipcover",
+   "title": "Buchanan Roll Arm 93.5\" Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BRA-94",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BRA-94_CNRP_PM_CVC-01.jpg?v=1741320181",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BRA-94_CNRP_PM_CVC-01.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_274_Pottery_Barn_Buchanan_Roll_Arm_sofa.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_333_Pottery_Barn_Buchanan_Roll_Arm_sofa.jpg?v=1741320181"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB-BRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BRA-94",
+    "FLT___Product_Ref__Old____PB_BRA_35",
+    "FLT___Series_Code___BRA",
+    "FLT___Series_Name___Buchanan_Roll_Arm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "PB-BRA-94",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Buchanan Roll Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BRA-94",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-buchanan-roll-arm-sofa-slipcover",
+   "title": "PB Buchanan Roll Arm Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BRA-87",
+   "price": "669.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BRA-87_CNRP_PM_CVC-01.jpg?v=1741320179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BRA-87_CNRP_PM_CVC-01.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_406_Pottery_Barn_Buchanan_Roll_Arm_sofa.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_333_Pottery_Barn_Buchanan_Roll_Arm_sofa_a884d9c2-7552-4269-a399-d4eaa8b1bae1.jpg?v=1741320179"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BRA-87",
+    "FLT___Product_Ref__Old____PB_BRA_3",
+    "FLT___Series_Code___BRA",
+    "FLT___Series_Name___Buchanan_Roll_Arm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-BRA-87",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Buchanan Roll Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BRA-87",
+     "price": "669.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-buchanan-roll-arm-loveseat-slipcover",
+   "title": "PB Buchanan Roll Arm Loveseat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BRA-79",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BRA-79_CNRP_PM_CVC-01.jpg?v=1741575838",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BRA-79_CNRP_PM_CVC-01.jpg?v=1741575838",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_405_Pottery_Barn_Buchanan_Roll_Arm_sofa_d26a60d4-4c1e-4aef-a4d4-67989c7ae369.jpg?v=1741575838",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_407_Pottery_Barn_Buchanan_Roll_Arm_sofa.jpg?v=1741575838"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BRA-79",
+    "FLT___Product_Ref__Old____PB_BRA_2",
+    "FLT___Series_Code___BRA",
+    "FLT___Series_Name___Buchanan_Roll_Arm",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-BRA-79",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Buchanan Roll Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BRA-79",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-buchanan-roll-arm-armchair-slipcover",
+   "title": "PB Buchanan Roll Arm Armchair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BRA-39",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BRA-39_CNRP_PM_CVC-01.jpg?v=1741320181",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BRA-39_CNRP_PM_CVC-01.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_448_Pottery_Barn_Buchanan_Roll_Arm_sofa_f6bd155a-e3df-4bbf-8e76-7fe52c1a90e5.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_405_Pottery_Barn_Buchanan_Roll_Arm_sofa.jpg?v=1741320181"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BRA-39",
+    "FLT___Product_Ref__Old____PB_BRA_1",
+    "FLT___Series_Code___BRA",
+    "FLT___Series_Name___Buchanan_Roll_Arm",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-BRA-39",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Buchanan Roll Arm",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No",
+    "t_shaped_back_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BRA-39",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "buchanan-roll-arm-swivel-armchair-slipcover",
+   "title": "Buchanan Roll Arm Swivel Armchair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BRA-35SC",
+   "price": "369.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BRA-35SC_CNRP_PM_CVC-01.jpg?v=1741320176",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BRA-35SC_CNRP_PM_CVC-01.jpg?v=1741320176",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_448_Pottery_Barn_Buchanan_Roll_Arm_sofa.jpg?v=1741320176",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_128_Pottery_Barn_Buchanan_Roll_Arm_sofa_58fe1e80-5a5f-432c-93d2-703bb7dd9114.jpg?v=1741320176"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:PB-BRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BRA-35SC",
+    "FLT___Product_Ref__Old____PB_BRA_1S",
+    "FLT___Series_Code___BRA",
+    "FLT___Series_Name___Buchanan_Roll_Arm",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Round Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "PB-BRA-35SC",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Buchanan Roll Arm",
+    "size:1 Seater",
+    "storage:No",
+    "t_shaped_back_cushion:1",
+    "t_shaped_seat_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BRA-35SC",
+     "price": "369.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "buchanan-square-arm-sleeper-sofa-slipcover",
+   "title": "Buchanan Square Arm Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSA-84B",
+   "price": "739.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-84B_CNRP_PM_CVC-01.jpg?v=1741320177",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-84B_CNRP_PM_CVC-01.jpg?v=1741320177"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSA-84B",
+    "FLT___Product_Ref__Old____PB_BSA_83B",
+    "FLT___Series_Code___BSA",
+    "FLT___Series_Name___Buchanan_Square_Arm",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "PB-BSA-84B",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Buchanan Square Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSA-84B",
+     "price": "739.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "buchanan-roll-arm-reversible-chaise-sectional-slipcover",
+   "title": "Buchanan Roll Arm Reversible Chaise Sectional Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BRA-84",
+   "price": "879.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BRA-84_CNRP_PM_CVC-01.jpg?v=1741320180",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BRA-84_CNRP_PM_CVC-01.jpg?v=1741320180",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_448_Pottery_Barn_Buchanan_Roll_Arm_sofa_bf0225f0-6a63-45fb-961d-282f42d4957a.jpg?v=1741320180",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_128_Pottery_Barn_Buchanan_Roll_Arm_sofa_fd008a2a-bf94-42b9-95d1-e6ab2b085481.jpg?v=1741320180"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-BRA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BRA-84",
+    "FLT___Product_Ref__Old____PB_BRA_83",
+    "FLT___Series_Code___BRA",
+    "FLT___Series_Name___Buchanan_Roll_Arm",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "PB-BRA-84",
+    "series:Buchanan Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BRA-84",
+     "price": "879.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "buchanan-square-arm-89-5-sofa-slipcover",
+   "title": "Buchanan Square Arm 89.5\" Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSA-90",
+   "price": "779.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-90_CNRP_PM_CVC-01.jpg?v=1741320182",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSA-90_CNRP_PM_CVC-01.jpg?v=1741320182",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_274_Pottery_Barn_Buchanan_Roll_Arm_sofa_f7976ba2-cb72-4a7b-a9ec-d4e77e19b3b8.jpg?v=1741320182",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_128_Pottery_Barn_Buchanan_Roll_Arm_sofa_ba11f28b-ebfb-405b-8162-9e0aa6b4edb8.jpg?v=1741320182"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB-BSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSA-90",
+    "FLT___Product_Ref__Old____PB_BSA_35",
+    "FLT___Series_Code___BSA",
+    "FLT___Series_Name___Buchanan_Square_Arm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "PB-BSA-90",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Buchanan Square Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSA-90",
+     "price": "779.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "buchanan-ottoman-slipcover",
+   "title": "Buchanan Ottoman Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BN-27F",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BN-27F_CNRP_PM_CVC-01.jpg?v=1741320180",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BN-27F_CNRP_PM_CVC-01.jpg?v=1741320180",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_330_Pottery_Barn_Buchanan_sofa.jpg?v=1741320180",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_447_Pottery_Barn_Buchanan_sofa.jpg?v=1741320180"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BN",
+    "categoryproducts:PB-BRA",
+    "categoryproducts:PB-BSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BN-27F",
+    "FLT___Product_Ref__Old____PB_BN_0",
+    "FLT___Series_Code___BN",
+    "FLT___Series_Name___Buchanan",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "PB-BN-27F",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Buchanan",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:0",
+    "square_rectangle_back_cushion:0",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BN-27F",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

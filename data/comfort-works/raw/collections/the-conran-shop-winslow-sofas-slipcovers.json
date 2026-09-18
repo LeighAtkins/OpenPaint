@@ -1,0 +1,48 @@
+{
+ "handle": "the-conran-shop-winslow-sofas-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:33.320Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "winslow-1-5s-fabric-x3-slipcover",
+   "title": "Winslow 1.5S Fabric X3 Slipcover",
+   "vendor": "The Conran Shop",
+   "sku": "CN-WW-58",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_CN_CN-WW_CN-WW-58_CN-WW-58_VELC_PM_CVC-01.jpg?v=1744956315",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_CN_CN-WW_CN-WW-58_CN-WW-58_VELC_PM_CVC-01.jpg?v=1744956315"
+   ],
+   "tags": [
+    "categoryproducts:CN",
+    "categoryproducts:CN-WW",
+    "CN-WW-58",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Winslow",
+    "The Conran Shop"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CN-WW-58",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

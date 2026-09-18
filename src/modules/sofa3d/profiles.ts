@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { DEFAULT_CONSTRUCTION, type SofaConstruction, type SofaPart } from './model';
+import { roundedFrameGeometry } from './frame-upholstery';
 
 /** Cross-sections follow the gallery: RA has a roll overhanging an inset upright. */
 export function rolledArmOutline(
@@ -52,9 +53,57 @@ export function extrudeArm(
   }
   return geometry;
 }
+/**
+ * PB York slope arm: the cap runs from a rounded front nose up a long
+ * diagonal to a gentle crest, then the tail curls upward into the backrest
+ * (factor > 1) so the arm blends into the back frame instead of butting it.
+ */
+const SLOPE_NOSE = 0.74;
+const SLOPE_CURL_START = 0.62;
+const SLOPE_CURL = 1.5;
+const slopeFactor = (t: number) => {
+  const ramp =
+    SLOPE_NOSE + (1 - SLOPE_NOSE) * THREE.MathUtils.smoothstep(t / SLOPE_CURL_START, 0, 1);
+  return (
+    ramp +
+    (SLOPE_CURL - 1) *
+      THREE.MathUtils.smoothstep((t - SLOPE_CURL_START) / (1 - SLOPE_CURL_START), 0, 1)
+  );
+};
+
+export function slopeArmGeometry(part: SofaPart): THREE.BufferGeometry {
+  const { x: w, y: h, z: d } = part.size;
+  const geometry = roundedFrameGeometry(w, h, d, Math.min(w, h, d) * 0.16);
+  const positions = geometry.getAttribute('position');
+  for (let i = 0; i < positions.count; i++) {
+    // t reads 0 at the front nose → 1 at the back crest; the sofa's back sits at -z.
+    const t = THREE.MathUtils.clamp((d / 2 - positions.getZ(i)) / d, 0, 1);
+    positions.setY(i, -h / 2 + (positions.getY(i) + h / 2) * slopeFactor(t));
+  }
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+/** Welt tracing the arm-cap slope on the outer face, inset like the sewn seam. */
+export function slopeArmWelt(part: SofaPart): THREE.BufferGeometry {
+  const { x: w, y: h, z: d } = part.size;
+  const side = part.id.endsWith('arm-right') ? -1 : 1;
+  const points: THREE.Vector3[] = [];
+  for (let i = 0; i <= 36; i++) {
+    const t = 0.05 + (0.9 * i) / 36;
+    points.push(
+      new THREE.Vector3(
+        side * (w / 2 + 0.04),
+        -h / 2 + h * slopeFactor(t) - h * 0.05,
+        d / 2 - t * d
+      )
+    );
+  }
+  return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 96, 0.12, 4, false);
+}
+
 /** Coordinates in the upper back's yz cross section, ordered around its perimeter. */
-export function backProfile(depth: number, rise: number, construction: SofaConstruction) {
-  const topDepth = Math.min(depth, construction.backTopThickness);
+export function backProfile(depth: number, rise: number, construction: SofaConstruction) {  const topDepth = Math.min(depth, construction.backTopThickness);
   const rake = Math.min(depth - topDepth, construction.backRake);
   const rear = -depth / 2,
     front = depth / 2;

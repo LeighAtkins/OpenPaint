@@ -1,0 +1,537 @@
+{
+ "handle": "ikea-karlanda-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:53.781Z",
+ "count": 8,
+ "products": [
+  {
+   "handle": "karlanda-3-seater-sofa-cover",
+   "title": "Karlanda 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KA-3",
+   "price": "409.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-3_LSKT_WR_CVC-01.jpg?v=1741320126",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-3_LSKT_WR_CVC-01.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_301_IKEA_Karlanda_sofa_98991999-e79f-409a-bfd6-5609b832af00.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_297_IKEA_Karlanda_sofa.jpg?v=1741320126"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KA-3",
+    "FLT___Product_Ref__Old____KA3",
+    "FLT___Series_Code___KA",
+    "FLT___Series_Name___Karlanda",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KA-3",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlanda",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KA-3",
+     "price": "409.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlanda-armchair-cover",
+   "title": "Karlanda Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KA-1",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-1_LSKT_WR_CVC-01.jpg?v=1741320110",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-1_LSKT_WR_CVC-01.jpg?v=1741320110",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_301_IKEA_Karlanda_sofa_34c0b692-37c7-4556-a360-bea84e713af9.jpg?v=1741320110",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_298_IKEA_Karlanda_sofa.jpg?v=1741320110"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:KA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KA-1",
+    "FLT___Product_Ref__Old____KA1",
+    "FLT___Series_Code___KA",
+    "FLT___Series_Name___Karlanda",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KA-1",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlanda",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KA-1",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlanda-2-seater-sofa-cover",
+   "title": "Karlanda 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KA-2",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-2_LSKT_WR_CVC-01.jpg?v=1741320113",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-2_LSKT_WR_CVC-01.jpg?v=1741320113",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_296_IKEA_Karlanda_sofa_3c9faba9-8fe1-4760-a3dd-0d58991b81b6.jpg?v=1741320113",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_606_IKEA_Karlanda_sofa_b879b927-4bae-4549-8976-66c71d2c09c8.jpg?v=1741320113"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KA-2",
+    "FLT___Product_Ref__Old____KA2",
+    "FLT___Series_Code___KA",
+    "FLT___Series_Name___Karlanda",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KA-2",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlanda",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KA-2",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlanda-2-seater-sofa-bed-cover",
+   "title": "Karlanda 2 Seater Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KA-2B",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-2B_VELC_PM_CVC-01.jpg?v=1741320109",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-2B_VELC_PM_CVC-01.jpg?v=1741320109",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_296_IKEA_Karlanda_sofa.jpg?v=1741320109",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_606_IKEA_Karlanda_sofa_ef3ce2f6-a6e1-4565-9515-573a6a074fd5.jpg?v=1741320109"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KA-2B",
+    "FLT___Product_Ref__Old____KA2_B",
+    "FLT___Series_Code___KA",
+    "FLT___Series_Name___Karlanda",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KA-2B",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlanda",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KA-2B",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlanda-corner-sofa-cover",
+   "title": "Karlanda Corner Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KA-362",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-362_L_LSKT_WR_CVC-01.jpg?v=1741320117",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-362_L_LSKT_WR_CVC-01.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_301_IKEA_Karlanda_sofa.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_607_IKEA_Karlanda_sofa.jpg?v=1741320117"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KA-362",
+    "FLT___Product_Ref__Old____KA4",
+    "FLT___Series_Code___KA",
+    "FLT___Series_Name___Karlanda",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Variant_1_Name___3_Seater_Left_Side__282cm_",
+    "FLT___Variant_1_Name___3_Seater_Right_Side__282cm_",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KA-362",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlanda",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:6",
+    "square_rectangle_back_cushion:7",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KA-362",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlanda-bench-cover",
+   "title": "Karlanda Bench Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KA-9",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-9_VELC_PM_CVC-01.jpg?v=1741320124",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-9_VELC_PM_CVC-01.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_606_IKEA_Karlanda_sofa.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_299_IKEA_Karlanda_sofa.jpg?v=1741320124"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:KA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KA-9",
+    "FLT___Product_Ref__Old____KA6",
+    "FLT___Series_Code___KA",
+    "FLT___Series_Name___Karlanda",
+    "FLT___Size___Bench",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-KA-9",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Karlanda",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KA-9",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlanda-chaise-lounge-add-on-unit-cover",
+   "title": "Karlanda Chaise Lounge Add On Unit Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KA-5X",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-5X_VELC_PM_CVC-01.jpg?v=1741320127",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-5X_VELC_PM_CVC-01.jpg?v=1741320127",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_300_IKEA_Karlanda_sofa.jpg?v=1741320127",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_616_IKEA_Karlanda_sofa.jpg?v=1741320127"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:KA",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KA-5X",
+    "FLT___Product_Ref__Old____KA5",
+    "FLT___Series_Code___KA",
+    "FLT___Series_Name___Karlanda",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-KA-5X",
+    "installation:579",
+    "series:Karlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KA-5X",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlanda-armrest-protector-covers",
+   "title": "Karlanda Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-KA-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-AP_PM_CVC-01.jpg?v=1741320117",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-AP_PM_CVC-01.jpg?v=1741320117"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KA-AP",
+    "FLT___Product_Ref__Old____KA_AP",
+    "FLT___Series_Code___KA",
+    "FLT___Series_Name___Karlanda",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___WR",
+    "FLT__MAIN",
+    "IK-KA-AP",
+    "series:Karlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KA-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

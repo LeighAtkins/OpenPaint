@@ -1,0 +1,126 @@
+{
+ "handle": "slipcovers-for-pottery-barn-kids-comfort-sofas",
+ "fetchedAt": "2026-09-18T05:38:17.907Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "pb-kids-comfort-grand-swivel-glider-slipcover",
+   "title": "PB Kids Comfort Grand Swivel Glider Slipcover",
+   "vendor": "Pottery Barn Kids",
+   "sku": "PBK-CT-41",
+   "price": "369.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PBK-CT-41_CNRP_PM_CVC-01.webp?v=1773110191",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PBK-CT-41_CNRP_PM_CVC-01.webp?v=1773110191"
+   ],
+   "tags": [
+    "categoryproducts:PBK",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "PBK-CT-41",
+    "series:Comfort"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PBK-CT-41",
+     "price": "369.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-kids-comfort-small-swivel-glider-slipcover",
+   "title": "PB Kids Comfort Small Swivel Glider Slipcover",
+   "vendor": "Pottery Barn Kids",
+   "sku": "PBK-CT-33",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PBK-CT-33_CNRP_PM_CVC-01.webp?v=1773110467",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PBK-CT-33_CNRP_PM_CVC-01.webp?v=1773110467"
+   ],
+   "tags": [
+    "categoryproducts:PBK",
+    "categoryproducts:PBK-CT",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "PBK-CT-33",
+    "series:Comfort"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PBK-CT-33",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-kids-comfort-ottoman-slipcover",
+   "title": "PB Kids Comfort Ottoman Slipcover",
+   "vendor": "Pottery Barn Kids",
+   "sku": "PBK-CT-24F",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PBK-CT-24F_CNRP_PM_CVC-01.webp?v=1773109446",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PBK-CT-24F_CNRP_PM_CVC-01.webp?v=1773109446"
+   ],
+   "tags": [
+    "categoryproducts:PBK",
+    "categoryproducts:PBK-CT",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "PBK-CT-24F",
+    "series:Comfort"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PBK-CT-24F",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

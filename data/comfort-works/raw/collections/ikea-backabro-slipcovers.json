@@ -1,0 +1,314 @@
+{
+ "handle": "ikea-backabro-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:31.740Z",
+ "count": 5,
+ "products": [
+  {
+   "handle": "backabro-3-seater-sofa-bed-cover",
+   "title": "Backabro 3 Seater Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BRO-3B",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-3B_CNRP_PM_CVC-01.jpg?v=1741320131",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-3B_CNRP_PM_CVC-01.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_220_IKEA_Backabro_sofa.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_219_IKEA_Backabro_sofa_fe8cec49-1540-46c0-a5b8-9f3cd8f79032.jpg?v=1741320131"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:BRO",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BRO-3B",
+    "FLT___Product_Ref__Old____BRO3",
+    "FLT___Series_Code___BRO",
+    "FLT___Series_Name___Backabro",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-BRO-3B",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Backabro",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BRO-3B",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backabro-2-seater-sofa-bed-cover",
+   "title": "Backabro 2 Seater Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BRO-2B",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-2B_CNRP_PM_CVC-01.jpg?v=1741320124",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-2B_CNRP_PM_CVC-01.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_219_IKEA_Backabro_sofa.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_221_IKEA_Backabro_sofa_582852ed-0005-4a74-85d5-d6fd3b882a0c.jpg?v=1741320124"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:BRO",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BRO-2B",
+    "FLT___Product_Ref__Old____BRO2",
+    "FLT___Series_Code___BRO",
+    "FLT___Series_Name___Backabro",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-BRO-2B",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Backabro",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BRO-2B",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backabro-sofa-bed-with-chaise-cover",
+   "title": "Backabro Sofa Bed with Chaise Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BRO-35B",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-35B_L_CNRP_PM_CVC-01.jpg?v=1741320126",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-35B_L_CNRP_PM_CVC-01.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_221_IKEA_Backabro_sofa.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_599_IKEA_Backabro_sofa.jpg?v=1741320126"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:BRO",
+    "categoryproducts:IK",
+    "chaise_lounge:Yes",
+    "chaise_lounge_position:Both",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BRO-35B",
+    "FLT___Product_Ref__Old____BRO7",
+    "FLT___Series_Code___BRO",
+    "FLT___Series_Name___Backabro",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-BRO-35B",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Backabro",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BRO-35B",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backabro-chaise-armrest-protector-covers",
+   "title": "Backabro Chaise Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BRO-APM",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-APM_L_PM_CVC-01.jpg?v=1741320138",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-APM_L_PM_CVC-01.jpg?v=1741320138"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BRO-APM",
+    "FLT___Product_Ref__Old____BRO7R_AP",
+    "FLT___Series_Code___BRO",
+    "FLT___Series_Name___Backabro",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-BRO-APM",
+    "series:Backabro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BRO-APM",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backabro-armrest-protector-covers",
+   "title": "Backabro Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BRO-AP",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-AP_PM_CVC-01.jpg?v=1741320134",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-AP_PM_CVC-01.jpg?v=1741320134"
+   ],
+   "tags": [
+    "categoryproducts:BRO",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BRO-AP",
+    "FLT___Product_Ref__Old____BRO_AP",
+    "FLT___Series_Code___BRO",
+    "FLT___Series_Name___Backabro",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "IK-BRO-AP",
+    "series:Backabro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BRO-AP",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

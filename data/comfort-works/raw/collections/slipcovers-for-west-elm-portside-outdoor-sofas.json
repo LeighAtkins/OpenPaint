@@ -1,0 +1,58 @@
+{
+ "handle": "slipcovers-for-west-elm-portside-outdoor-sofas",
+ "fetchedAt": "2026-09-18T05:38:19.602Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "portside-outdoor-sofa-cushion-cover",
+   "title": "Portside Outdoor Sofa Cushion Cover",
+   "vendor": "West Elm",
+   "sku": "WE-PSE-65",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-PSE-65_SP_CVC-01.jpg?v=1741320198",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-PSE-65_SP_CVC-01.jpg?v=1741320198",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_658_West_Elm_West_Elm_Portside_Outdoor_Slipcover_sofa.jpg?v=1741320198",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_659_West_Elm_West_Elm_Portside_Outdoor_Slipcover_sofa.jpg?v=1741320198"
+   ],
+   "tags": [
+    "categoryproducts:WE-PSE",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-PSE-65",
+    "FLT___Series_Code___PSE",
+    "FLT___Series_Name___West_Elm_Portside_Outdoor_Sofa_Slipcover",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "series:Portside Outdoor",
+    "WE-PSE-65"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-PSE-65",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

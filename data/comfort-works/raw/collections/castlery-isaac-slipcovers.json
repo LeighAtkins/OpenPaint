@@ -1,0 +1,48 @@
+{
+ "handle": "castlery-isaac-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:57.526Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "isaac-reversible-sectional-sofa-slipcover",
+   "title": "Isaac Reversible Sectional Sofa Slipcover",
+   "vendor": "Castlery",
+   "sku": "CA-IC-86",
+   "price": "549.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CA-IC-86_R_LV_VELC_SP_CVC-01.jpg?v=1741741761",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CA-IC-86_R_LV_VELC_SP_CVC-01.jpg?v=1741741761"
+   ],
+   "tags": [
+    "CA-IC-86",
+    "Castlery",
+    "categoryproducts:CA",
+    "categoryproducts:CA-IC",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Isaac"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CA-IC-86",
+     "price": "549.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

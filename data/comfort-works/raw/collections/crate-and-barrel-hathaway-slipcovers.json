@@ -1,0 +1,93 @@
+{
+ "handle": "crate-and-barrel-hathaway-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:11.295Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "hathaway-swivel-glider-slipcover",
+   "title": "Hathaway Swivel Glider Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-HY-29SC",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-HY-29SC_CNRP_SP_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-HY-29SC_CNRP_SP_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-HY",
+    "categoryproducts:CB-Slipcover",
+    "CB-HY-29SC",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Hathaway"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-HY-29SC",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hathaway-armrest-protector-covers",
+   "title": "Hathaway Armrest Protector Covers",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-HY-AP",
+   "price": "69.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-HY-AP_SP_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-HY-AP_SP_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-HY",
+    "categoryproducts:CB-Slipcover",
+    "CB-HY-AP",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Hathaway"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-HY-AP",
+     "price": "69.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

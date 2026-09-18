@@ -82,5 +82,61 @@
     },
     "version": "Scan-informed frame \u00b7 estimated dimensions",
     "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-slope-95-1s2b",
+    "title": "York Slope Arm 95\" Cover \u00b7 Bench + 2 Back Cushions",
+    "url": "https://comfort-works.com/products/york-slope-arm-95-sofa-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YSLA-95 \u00b7 1S-2B",
+    "dimensions": {
+      "width": 240.1,
+      "depth": 96.5,
+      "height": 91.4
+    },
+    "version": "Bench cushion + 2 back cushions \u00b7 Original style",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-slope-95-1s3b",
+    "title": "York Slope Arm 95\" Cover \u00b7 Bench + 3 Back Cushions",
+    "url": "https://comfort-works.com/products/york-slope-arm-95-sofa-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YSLA-95 \u00b7 1S-3B",
+    "dimensions": {
+      "width": 240.1,
+      "depth": 96.5,
+      "height": 91.4
+    },
+    "version": "Bench cushion + 3 back cushions \u00b7 Original style",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-slope-95-2s2b",
+    "title": "York Slope Arm 95\" Cover \u00b7 2 Seat + 2 Back Cushions",
+    "url": "https://comfort-works.com/products/york-slope-arm-95-sofa-slipcover",
+    "imageUrl": "https://comfort-works.com/cdn/shop/files/PB-YSLA-95_LV_2S-2B_CNRP_SP_CVC-01.jpg?v=1744676699",
+    "reference": "PB-YSLA-95 \u00b7 2S-2B",
+    "dimensions": {
+      "width": 240.1,
+      "depth": 96.5,
+      "height": 91.4
+    },
+    "version": "2 seat cushions + 2 back cushions \u00b7 Original style",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-slope-95-3s3b",
+    "title": "York Slope Arm 95\" Cover \u00b7 3 Seat + 3 Back Cushions",
+    "url": "https://comfort-works.com/products/york-slope-arm-95-sofa-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YSLA-95 \u00b7 3S-3B",
+    "dimensions": {
+      "width": 240.1,
+      "depth": 96.5,
+      "height": 91.4
+    },
+    "version": "3 seat cushions + 3 back cushions \u00b7 Original style",
+    "brand": "Pottery Barn"
   }
 ]

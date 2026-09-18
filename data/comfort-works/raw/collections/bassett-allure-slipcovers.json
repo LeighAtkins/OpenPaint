@@ -1,0 +1,132 @@
+{
+ "handle": "bassett-allure-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:53.612Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "allure-track-arm-chair-slipcover",
+   "title": "Allure Track Arm Chair Slipcover",
+   "vendor": "Bassett",
+   "sku": "BA-AE-42",
+   "price": "509.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BA-AE-42_SHRT_SP_CVC-01.jpg?v=1741673972",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BA-AE-42_SHRT_SP_CVC-01.jpg?v=1741673972",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BA-AE-42.jpg?v=1741673972"
+   ],
+   "tags": [
+    "BA-AE-42",
+    "categoryproducts:BA",
+    "categoryproducts:BA-AE",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Allure"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BA-AE-42",
+     "price": "509.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "allure-ottoman-slipcover",
+   "title": "Allure Ottoman Slipcover",
+   "vendor": "Bassett",
+   "sku": "BA-AE-36F",
+   "price": "199.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BA-AE-36F_SHRT_SP_CVC-01.jpg?v=1741673902",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BA-AE-36F_SHRT_SP_CVC-01.jpg?v=1741673902",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BA-AE-36F.jpg?v=1741673902"
+   ],
+   "tags": [
+    "BA-AE-36F",
+    "categoryproducts:BA",
+    "categoryproducts:BA-AE",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Allure"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BA-AE-36F",
+     "price": "199.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "allure-track-arm-left-right-chaise-sectional-slipcover",
+   "title": "Allure Track Arm Left/Right Chaise Sectional Slipcover",
+   "vendor": "Bassett",
+   "sku": "BA-AE-122",
+   "price": "1029.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BA-AE-122_L_2S-3B_CNRP_PM_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BA-AE-122_L_2S-3B_CNRP_PM_CVC-01.jpg?v=1744676697",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BA-AE-122_6ad333a4-242e-4d44-a287-b447ef14b737.jpg?v=1744676697",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BA-AE-122_7ca75463-7d75-49f0-aece-a1088113dfea.jpg?v=1744676697"
+   ],
+   "tags": [
+    "BA-AE-122",
+    "categoryproducts:BA",
+    "categoryproducts:BA-AE",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Allure"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BA-AE-122",
+     "price": "1029.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

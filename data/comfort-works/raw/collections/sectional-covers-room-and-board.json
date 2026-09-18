@@ -1,0 +1,194 @@
+{
+ "handle": "sectional-covers-room-and-board",
+ "fetchedAt": "2026-09-18T05:38:15.354Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "york-98-sofa-with-reversible-chaise-slipcover",
+   "title": "York 98\" Sofa with Reversible Chaise Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-YK-98-S",
+   "price": "819.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-98-S_L_LV_LSKT_SP_CVC-01.jpg?v=1744676699",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-98-S_L_LV_LSKT_SP_CVC-01.jpg?v=1744676699"
+   ],
+   "tags": [
+    "categoryproducts:RB-Sofa",
+    "categoryproducts:RB-YK",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-YK-98-S",
+    "Room and Board",
+    "series:York"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-YK-98-S",
+     "price": "819.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jasper-104-sofa-with-left-right-arm-chaise-slipcover",
+   "title": "Jasper 104\" Sofa with Left/Right Arm Chaise Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-JR-104",
+   "price": "759.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-104_L_LV_VELC_SP_CVC-01.jpg?v=1741741768",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-104_L_LV_VELC_SP_CVC-01.jpg?v=1741741768"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-JR",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "next_steps:648",
+    "RB-JR-104",
+    "Room and Board",
+    "series:Jasper"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-JR-104",
+     "price": "759.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harding-106-chaise-sectional-slipcover",
+   "title": "Harding 106\" Chaise Sectional Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-HG-106",
+   "price": "769.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-HG-106_R_SHRT_SP_CVC-01.jpg?v=1744679169",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-HG-106_R_SHRT_SP_CVC-01.jpg?v=1744679169"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-HG",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-HG-106",
+    "Room and Board",
+    "series:Harding"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-HG-106",
+     "price": "769.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "metro-104-chaise-sectional-slipcover",
+   "title": "Metro 104\" Chaise Sectional Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MO-104",
+   "price": "849.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-104_L_VELC_SP_CVC-01.jpg?v=1741320195",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-104_L_VELC_SP_CVC-01.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_452_Room_20and_20Board_Metro_sofa.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_413_Room_and_Board_Metro_sofa.jpg?v=1741320195"
+   ],
+   "tags": [
+    "categoryproducts:RB-MO",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Room_and_Board",
+    "FLT___Product_Ref__New____RB-MO-104",
+    "FLT___Series_Code___MO",
+    "FLT___Series_Name___Metro",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Chaise",
+    "FLT___Variant_1_Name___Right_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "important_notes:643",
+    "measurementsrequired",
+    "next_steps:648",
+    "RB-MO-104",
+    "series:Metro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MO-104",
+     "price": "849.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

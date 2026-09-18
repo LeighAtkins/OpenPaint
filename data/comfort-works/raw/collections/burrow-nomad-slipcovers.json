@@ -1,0 +1,128 @@
+{
+ "handle": "burrow-nomad-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:57.347Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "nomad-left-right-sofa-sectional-slipcover",
+   "title": "Nomad Left/Right Sofa Sectional Slipcover",
+   "vendor": "Burrow",
+   "sku": "BW-ND-81M",
+   "price": "469.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BW-ND-81M_R_SV_SQA_SHRT_SP_CVC-01.webp?v=1770300911",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BW-ND-81M_R_SV_SQA_SHRT_SP_CVC-01.webp?v=1770300911"
+   ],
+   "tags": [
+    "BW-ND-81M",
+    "categoryproducts:BW",
+    "categoryproducts:BW-ND",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Nomad"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BW-ND-81M",
+     "price": "469.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nomad-left-right-loveseat-sectional-slipcover",
+   "title": "Nomad Left/Right Loveseat Sectional Slipcover",
+   "vendor": "Burrow",
+   "sku": "BW-ND-54M",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BW-ND-54M_R_SV_SQA_SHRT_SP_CVC-01.webp?v=1770297306",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BW-ND-54M_R_SV_SQA_SHRT_SP_CVC-01.webp?v=1770297306"
+   ],
+   "tags": [
+    "BW-ND-54M",
+    "categoryproducts:BW",
+    "categoryproducts:BW-ND",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Nomad"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BW-ND-54M",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nomad-corner-chair-sectional-slipcover",
+   "title": "Nomad Corner Chair Sectional Slipcover",
+   "vendor": "Burrow",
+   "sku": "BW-ND-32X",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BW-ND-32X_SV_SHRT_SP_CVC-01.webp?v=1770266797",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BW-ND-32X_SV_SHRT_SP_CVC-01.webp?v=1770266797"
+   ],
+   "tags": [
+    "BW-ND-32X",
+    "categoryproducts:BW",
+    "categoryproducts:BW-ND",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Nomad"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BW-ND-32X",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

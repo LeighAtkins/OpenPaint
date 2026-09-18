@@ -1,0 +1,48 @@
+{
+ "handle": "providence-wells-slipcovers",
+ "fetchedAt": "2026-09-18T05:37:58.118Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "wells-68-sofa-slipcover",
+   "title": "Wells 68\" Sofa Slipcover",
+   "vendor": "Providence",
+   "sku": "PE-WS-68",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PE-WS-68_VELC_PM_CVC-01.jpg?v=1744676699",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PE-WS-68_VELC_PM_CVC-01.jpg?v=1744676699"
+   ],
+   "tags": [
+    "categoryproducts:PE",
+    "categoryproducts:PE-WS",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "PE-WS-68",
+    "Providence",
+    "series:Wells"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PE-WS-68",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

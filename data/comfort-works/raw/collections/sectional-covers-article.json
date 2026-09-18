@@ -1,0 +1,61 @@
+{
+ "handle": "sectional-covers-article",
+ "fetchedAt": "2026-09-18T05:38:11.213Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "sven-sectional-sofa-cover",
+   "title": "Sven Sectional Sofa Cover",
+   "vendor": "Article",
+   "sku": "AE-SN-100",
+   "price": "759.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-SN-100_L_VELC_PM_CVC-01.jpg?v=1741320087",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-SN-100_L_VELC_PM_CVC-01.jpg?v=1741320087",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_047_Article_Sven_sofa.jpg?v=1741320087",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_076_Article_Sven_sofa.jpg?v=1741320087"
+   ],
+   "tags": [
+    "AE-SN-100",
+    "categoryproducts:AE-SN",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Article",
+    "FLT___Product_Ref__New____AE-SN-100",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Sven",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Variant_1_Name___Left_Chaise",
+    "FLT___Variant_1_Name___Right_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "important_notes:643",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Sven"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AE-SN-100",
+     "price": "759.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,424 @@
+{
+ "handle": "custom-sofa-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:19.404Z",
+ "count": 8,
+ "products": [
+  {
+   "handle": "boxed-cushion-covers-only-for-sofa",
+   "title": "Boxed Cushion Covers ONLY for Sofa",
+   "vendor": "Made to Measure",
+   "sku": "CS3X-CC-SNUG",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/IK-LG-3_YH1918-2.jpg?v=1741659192",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/IK-LG-3_YH1918-2.jpg?v=1741659192"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS3X-CC-SNUG",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS3X-CC-SNUG",
+    "FLT___Series_Code___CS3X",
+    "FLT___Size___Sofa",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sofa Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS3X-CC-SNUG",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pre-order-only-boxed-seat-long-skirt-square-arm-sofa-slipcover",
+   "title": "[PRE-ORDER ONLY] Boxed Seat Long Skirt Square Arm Sofa Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS3B-SA-SKIRT",
+   "price": "819.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-BSA-35_CNRP_PM_YH1918-2.jpg?v=1678682098",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-BSA-35_CNRP_PM_YH1918-2.jpg?v=1678682098"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS3B-SA-SKIRT",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS3B-SA-SKIRT",
+    "FLT___Series_Code___CS3B",
+    "FLT___Size___Sofa",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sofa Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS3B-SA-SKIRT",
+     "price": "819.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pre-order-only-boxed-seats-long-skirt-round-arm-sofa-slipcover",
+   "title": "[PRE-ORDER ONLY] Boxed Seats Long Skirt Round Arm Sofa Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS3B-RA-SKIRT",
+   "price": "819.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-BSC-3_CNRP_PM_YH1918-2.jpg?v=1678684926",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-BSC-3_CNRP_PM_YH1918-2.jpg?v=1678684926",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50366526581_b59d4654ab_o_9848616e-707d-4ea8-a613-62a4fd309cc2.jpg?v=1678684926",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/49959351507_3cd225ca3a_k_76ee32d4-a7b0-4b2c-9532-06b322d25274.jpg?v=1678684926"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS3B-RA-SKIRT",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS3B-RA-SKIRT",
+    "FLT___Series_Code___CS3B",
+    "FLT___Size___Sofa",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sofa Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS3B-RA-SKIRT",
+     "price": "819.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pre-order-only-boxed-seats-snug-fit-round-arm-sofa-slipcover",
+   "title": "[PRE-ORDER ONLY] Boxed Seats Snug Fit Round Arm Sofa Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS3B-RA-SHORT",
+   "price": "869.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-CR-3_SHRT_PM_YH1918-2.jpg?v=1673437749",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-CR-3_SHRT_PM_YH1918-2.jpg?v=1673437749",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365832178_3b139cda67_k.jpg?v=1673437749",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365831678_07f89f6996_o.jpg?v=1673437749"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS3B-RA-SHORT",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS3B-RA-SHORT",
+    "FLT___Series_Code___CS3B",
+    "FLT___Size___Sofa",
+    "FLT___Styles_Code___SHRT_PC",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___SNUG_PC",
+    "FLT___Styles_Code___SNUG_PM",
+    "FLT___Styles_Code___SNUG_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sofa Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS3B-RA-SHORT",
+     "price": "869.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pre-order-only-boxed-seats-snug-fit-square-arm-sofa-slipcover",
+   "title": "[PRE-ORDER ONLY] Boxed Seats Snug Fit Square Arm Sofa Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS3B-SA-SHORT",
+   "price": "869.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/CB-RMM-86_SHRT_PM_YH1918-2.jpg?v=1678682097",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/CB-RMM-86_SHRT_PM_YH1918-2.jpg?v=1678682097",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365832178_3b139cda67_k_5b9f16e5-689f-462b-bfcb-bd86a7285da0.jpg?v=1678682097",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365831678_07f89f6996_o_e6cc022d-0dcf-420c-b54f-bc173ff3710c.jpg?v=1678682097"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS3B-SA-SHORT",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS3B-SA-SHORT",
+    "FLT___Series_Code___CS3B",
+    "FLT___Size___Sofa",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___SNUG_PC",
+    "FLT___Styles_Code___SNUG_PM",
+    "FLT___Styles_Code___SNUG_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sofa Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS3B-SA-SHORT",
+     "price": "869.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pre-order-only-boxed-seats-snug-fit-wedge-arm-sofa-slipcover",
+   "title": "[PRE-ORDER ONLY] Boxed Seats Snug Fit Wedge Arm Sofa Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS3B-WA-SHORT",
+   "price": "869.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-GH-3_SHRT_PM_YH1918-2_c50a747f-bbdf-43cd-8bf8-671f282f10bc.jpg?v=1678682098",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-GH-3_SHRT_PM_YH1918-2_c50a747f-bbdf-43cd-8bf8-671f282f10bc.jpg?v=1678682098",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365832178_3b139cda67_k_e9a8c97a-8523-4564-8b3f-f22e7c878633.jpg?v=1678682098",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365831678_07f89f6996_o_5b2d9334-0a2c-4119-a316-578fb5aa30db.jpg?v=1678682098"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS3B-WA-SHORT",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS3B-WA-SHORT",
+    "FLT___Series_Code___CS3B",
+    "FLT___Size___Sofa",
+    "FLT___Styles_Code___SHRT_PC",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___SNUG_PC",
+    "FLT___Styles_Code___SNUG_PM",
+    "FLT___Styles_Code___SNUG_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sofa Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS3B-WA-SHORT",
+     "price": "869.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pre-order-only-l-seats-long-skirt-round-arm-sofa-slipcover",
+   "title": "[PRE-ORDER ONLY] L-seats Long Skirt Round Arm Sofa Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS3L-RA-SKIRT",
+   "price": "819.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-3_MLTP_PM_YH1918-2.jpg?v=1741660006",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-3_MLTP_PM_YH1918-2.jpg?v=1741660006",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50366526581_b59d4654ab_o_974b7f55-f6da-4aed-b789-1247d8ffb3a6.jpg?v=1741658414",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/49959351507_3cd225ca3a_k_97466284-4cbb-4dcb-b34b-d580b4e07bad.jpg?v=1741658414"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS3L-RA-SKIRT",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS3L-RA-SKIRT",
+    "FLT___Series_Code___CS3L",
+    "FLT___Size___Sofa",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sofa Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS3L-RA-SKIRT",
+     "price": "819.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pre-order-only-l-seats-snug-fit-square-arm-sofa-slipcover",
+   "title": "[PRE-ORDER ONLY] L-seats Snug Fit Square Arm Sofa Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS3L-SA-SHORT",
+   "price": "869.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GG-3_YH1918-2.jpg?v=1741659782",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GG-3_YH1918-2.jpg?v=1741659782",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365832178_3b139cda67_k_e17c46b6-fea7-43c5-ae47-792cd503335a.jpg?v=1741659297",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365831678_07f89f6996_o_ab5ca45c-6702-418c-b241-2d67a6ba0588.jpg?v=1741659297"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS3L-SA-SHORT",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS3L-SA-SHORT",
+    "FLT___Series_Code___CS3L",
+    "FLT___Size___Sofa",
+    "FLT___Styles_Code___SHRT_PC",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___SNUG_PC",
+    "FLT___Styles_Code___SNUG_PM",
+    "FLT___Styles_Code___SNUG_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sofa Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS3L-SA-SHORT",
+     "price": "869.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

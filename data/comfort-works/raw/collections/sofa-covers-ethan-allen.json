@@ -1,0 +1,577 @@
+{
+ "handle": "sofa-covers-ethan-allen",
+ "fetchedAt": "2026-09-18T05:38:26.722Z",
+ "count": 11,
+ "products": [
+  {
+   "handle": "conor-87-three-seat-sofa-slipcover",
+   "title": "Conor 87\" Three Seat Sofa Slipcover",
+   "vendor": "Ethan Allen",
+   "sku": "EA-CR-87",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-CR-87.jpg?v=1787291933",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-CR-87.jpg?v=1787291933",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-CR-87_4a1a7387-c3c9-49a0-b31a-4aa70f74d282.jpg?v=1787291944"
+   ],
+   "tags": [
+    "categoryproducts:EA",
+    "categoryproducts:EA-CR",
+    "categoryproducts:EA-Sofa",
+    "description:",
+    "EA-CR-87",
+    "Ethan Allen",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Conor"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EA-CR-87",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "retreat-roll-arm-sofa-93-slipcover",
+   "title": "Retreat Roll-Arm Sofa 93\" Slipcover",
+   "vendor": "Ethan Allen",
+   "sku": "EA-RRA-93",
+   "price": "769.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-RRA-93_SHRT_PM_CVC-01.jpg?v=1741320104",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-RRA-93_SHRT_PM_CVC-01.jpg?v=1741320104"
+   ],
+   "tags": [
+    "categoryproducts:EA",
+    "categoryproducts:EA-RRA",
+    "categoryproducts:EA-Sofa",
+    "description:",
+    "EA-RRA-93",
+    "Ethan Allen",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "series:Retreat Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EA-RRA-93",
+     "price": "769.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bennett-roll-arm-two-seat-63-loveseat-slipcover",
+   "title": "Bennett Roll-Arm Two-Seat 63\" Loveseat Slipcover",
+   "vendor": "Ethan Allen",
+   "sku": "EA-BR-63",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BR-63_LV_SHRT_PM_CVC-01.jpg?v=1741674780",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BR-63_LV_SHRT_PM_CVC-01.jpg?v=1741674780"
+   ],
+   "tags": [
+    "categoryproducts:EA",
+    "categoryproducts:EA-BR",
+    "categoryproducts:EA-Sofa",
+    "description:",
+    "EA-BR-63",
+    "Ethan Allen",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "series:Bennett Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EA-BR-63",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bennett-roll-arm-two-seat-70-sofa-slipcover",
+   "title": "Bennett Roll-Arm Two-Seat 70\" Sofa Slipcover",
+   "vendor": "Ethan Allen",
+   "sku": "EA-BR-70",
+   "price": "569.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BR-70_LV_SHRT_PM_CVC-01.jpg?v=1741674822",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BR-70_LV_SHRT_PM_CVC-01.jpg?v=1741674822"
+   ],
+   "tags": [
+    "categoryproducts:EA",
+    "categoryproducts:EA-BR",
+    "categoryproducts:EA-Sofa",
+    "description:",
+    "EA-BR-70",
+    "Ethan Allen",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "series:Bennett Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EA-BR-70",
+     "price": "569.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "wyndam-tall-sofa-slipcover",
+   "title": "Wyndam Tall Sofa Slipcover",
+   "vendor": "Ethan Allen",
+   "sku": "EA-WM-85",
+   "price": "629.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-WM-85_SHRT_PM_CVC-01.jpg?v=1741675118",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-WM-85_SHRT_PM_CVC-01.jpg?v=1741675118"
+   ],
+   "tags": [
+    "categoryproducts:EA",
+    "categoryproducts:EA-WM",
+    "description:",
+    "EA-WM-85",
+    "Ethan Allen",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Wyndam"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EA-WM-85",
+     "price": "629.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bennett-roll-arm-78-sofa-slipcover",
+   "title": "Bennett Roll-Arm 78\" Sofa Slipcover",
+   "vendor": "Ethan Allen",
+   "sku": "EA-BR-78",
+   "price": "599.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BR-78_LV_SHRT_PM_CVC-01.jpg?v=1741674854",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BR-78_LV_SHRT_PM_CVC-01.jpg?v=1741674854"
+   ],
+   "tags": [
+    "categoryproducts:EA",
+    "categoryproducts:EA-BR",
+    "categoryproducts:EA-Sofa",
+    "description:",
+    "EA-BR-78",
+    "Ethan Allen",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Bennett Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EA-BR-78",
+     "price": "599.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bennett-roll-arm-94-three-seat-sofa-slipcover",
+   "title": "Bennett Roll-Arm 94\" Three-Seat Sofa Slipcover",
+   "vendor": "Ethan Allen",
+   "sku": "EA-BR-94",
+   "price": "749.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BR-94_LV_SHRT_PM_CVC-01.jpg?v=1741674924",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BR-94_LV_SHRT_PM_CVC-01.jpg?v=1741674924"
+   ],
+   "tags": [
+    "categoryproducts:EA",
+    "categoryproducts:EA-BR",
+    "categoryproducts:EA-Sofa",
+    "description:",
+    "EA-BR-94",
+    "Ethan Allen",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Bennett Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EA-BR-94",
+     "price": "749.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bennett-track-arm-78-sofa-slipcover",
+   "title": "Bennett Track-Arm 78\" Sofa Slipcover",
+   "vendor": "Ethan Allen",
+   "sku": "EA-BT-78",
+   "price": "599.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BT-78_LV_2S-2B_VELC_PM_CVC-01.jpg?v=1741320105",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BT-78_LV_2S-2B_VELC_PM_CVC-01.jpg?v=1741320105"
+   ],
+   "tags": [
+    "categoryproducts:EA",
+    "categoryproducts:EA-BT",
+    "categoryproducts:EA-Sofa",
+    "description:",
+    "EA-BT-78",
+    "Ethan Allen",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Bennett Track Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EA-BT-78",
+     "price": "599.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bennett-roll-arm-86-two-seat-sofa-slipcover",
+   "title": "Bennett Roll Arm 86\" Two Seat Sofa Slipcover",
+   "vendor": "Ethan Allen",
+   "sku": "EA-BR-86-2C",
+   "price": "639.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BR-86-2C_LSKT_SP_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BR-86-2C_LSKT_SP_CVC-01.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_134_Ethan_Allen_Bennett_Roll-Arm_sofa.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_133_Ethan_Allen_Bennett_Roll-Arm_sofa.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:EA-BR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "EA-BR-86-2C",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Ethan_Allen",
+    "FLT___Product_Ref__New____EA-BR-86-2C",
+    "FLT___Series_Code___BR",
+    "FLT___Series_Name___Bennett_Roll",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Bennett Roll Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:0",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EA-BR-86-2C",
+     "price": "639.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bennett-roll-arm-86-three-seat-sofa-slipcover",
+   "title": "Bennett Roll Arm 86\" Three Seat Sofa Slipcover",
+   "vendor": "Ethan Allen",
+   "sku": "EA-BR-86-3C",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BR-86-3C_LSKT_SP_CVC-01.jpg?v=1741575835",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BR-86-3C_LSKT_SP_CVC-01.jpg?v=1741575835",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_560_Ethan_Allen_Bennett_Roll-Arm_sofa.jpg?v=1741575835",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_561_Ethan_Allen_Bennett_Roll-Arm_sofa.jpg?v=1741575835"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:EA-BR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "EA-BR-86-3C",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Ethan_Allen",
+    "FLT___Product_Ref__New____EA-BR-86-3C",
+    "FLT___Series_Code___BR",
+    "FLT___Series_Name___Bennett_Roll_Arm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Bennett Roll Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EA-BR-86-3C",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bennett-track-arm-86-sofa-slipcover",
+   "title": "Bennett Track Arm 86\" Sofa Slipcover",
+   "vendor": "Ethan Allen",
+   "sku": "EA-BT-86",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BT-86_VELC_PM_CVC-01.jpg?v=1741320098",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-BT-86_VELC_PM_CVC-01.jpg?v=1741320098",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_562_Ethan_Allen_Bennett_Track_Arm_sofa.jpg?v=1741320098",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_563_Ethan_Allen_Bennett_Track_Arm_sofa.jpg?v=1741320098"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:EA-BT",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "EA-BT-86",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Ethan_Allen",
+    "FLT___Product_Ref__New____EA-BT-86",
+    "FLT___Series_Code___BT",
+    "FLT___Series_Name___Bennett_Track_Arm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Bennett Track Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EA-BT-86",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

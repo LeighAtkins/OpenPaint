@@ -1,0 +1,212 @@
+{
+ "handle": "ikea-uppakra-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:12.714Z",
+ "count": 5,
+ "products": [
+  {
+   "handle": "uppakra-4-5-seat-modular-sofa-cover",
+   "title": "Uppakra 4.5-seat Modular Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-UA-4",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UA-4.jpg?v=1788001449",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UA-4.jpg?v=1788001449",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UA-4_f727fc00-7c0a-4fb0-86a9-c4830cbeecce.jpg?v=1788001467"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:UA",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "IK-UA-4",
+    "installation:579",
+    "series:Uppakra"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-UA-4",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "uppakra-3-seat-modular-sofa-cover",
+   "title": "Uppakra 3-seat Modular Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-UA-3",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UA-3_2e564f3e-4428-4ccc-be48-a9902ba3bf1c.jpg?v=1788001375",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UA-3_2e564f3e-4428-4ccc-be48-a9902ba3bf1c.jpg?v=1788001375",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UA-3_ca6d77fe-f003-46c2-9396-64f2455faca6.jpg?v=1788001396"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:UA",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "IK-UA-3",
+    "installation:579",
+    "series:Uppakra"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-UA-3",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "uppakra-footstool-cover",
+   "title": "Uppakra Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-UA-0",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UA-0.jpg?v=1788001237",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UA-0.jpg?v=1788001237",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UA-0_b2be98dc-9ee4-4f4c-8f0d-2bfdca22431b.jpg?v=1788001241"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:UA",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "IK-UA-0",
+    "installation:579",
+    "series:Uppakra"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-UA-0",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "uppakra-left-right-arm-1-5-seat-module-chair-cover",
+   "title": "Uppakra Left/Right Arm 1.5-seat Module Chair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-UA-1M",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UA-1M.jpg?v=1788001151",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UA-1M.jpg?v=1788001151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UA-1M_3227f70c-48a9-40fd-9a91-6029c326ed03.jpg?v=1788001160"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:UA",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "IK-UA-1M",
+    "installation:579",
+    "series:Uppakra"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-UA-1M",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "uppakra-armless-1-5-seat-module-chair-cover",
+   "title": "Uppakra Armless 1.5-seat Module Chair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-UA-1X",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UA-1X.jpg?v=1788001035",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UA-1X.jpg?v=1788001035",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UA-1X_7f212745-2886-4c09-bea4-976ee3f321bf.jpg?v=1788001045"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:UA",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "IK-UA-1X",
+    "installation:579",
+    "series:Uppakra"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-UA-1X",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

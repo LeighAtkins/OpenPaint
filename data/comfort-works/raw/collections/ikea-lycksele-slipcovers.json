@@ -1,0 +1,146 @@
+{
+ "handle": "ikea-lycksele-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:58.787Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "lycksele-chair-bed-cover",
+   "title": "Lycksele Chair Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LE-1BX",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LE-1BX_LSKT_SP_CVC-01.jpg?v=1741678944",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LE-1BX_LSKT_SP_CVC-01.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_423_IKEA_Lycksele_sofa.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_319_IKEA_Lycksele_sofa.jpg?v=1741678944"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:LE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LE-1BX",
+    "FLT___Product_Ref__Old____LE1",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lycksele",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LE-1BX",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Lycksele",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LE-1BX",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lycksele-2-seater-sofa-bed-cover",
+   "title": "Lycksele 2 Seater Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LE-2BX",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LE-2BX_LSKT_SP_CVC-01.jpg?v=1741678944",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LE-2BX_LSKT_SP_CVC-01.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_318_IKEA_Lycksele_sofa.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_319_IKEA_Lycksele_sofa_73751cd3-bdba-4f83-b0f6-f4ff6a1c98e4.jpg?v=1741678944"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LE-2BX",
+    "FLT___Product_Ref__Old____LE2",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lycksele",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LE-2BX",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Lycksele",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LE-2BX",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

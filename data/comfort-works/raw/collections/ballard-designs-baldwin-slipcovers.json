@@ -1,0 +1,47 @@
+{
+ "handle": "ballard-designs-baldwin-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:51.805Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "baldwin-2-piece-left-right-arm-chaise-sectional-slipcover",
+   "title": "Baldwin 2-Piece Left/Right-Arm Chaise Sectional Slipcover",
+   "vendor": "Ballard Designs",
+   "sku": "BS-BWN-101",
+   "price": "1349.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_BS_BS-BWN_BS-BWN-101_BS-BWN-101_R_MLTP_PM_CVC-01.jpg?v=1744940189",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_BS_BS-BWN_BS-BWN-101_BS-BWN-101_R_MLTP_PM_CVC-01.jpg?v=1744940189"
+   ],
+   "tags": [
+    "BS-BWN-101",
+    "categoryproducts:BS",
+    "categoryproducts:BS-BWN",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Baldwin"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BS-BWN-101",
+     "price": "1349.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,47 @@
+{
+ "handle": "arhaus-kipton-sofas",
+ "fetchedAt": "2026-09-18T05:31:44.236Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "kipton-94-sofa-slipcover",
+   "title": "Kipton 94\" Sofa Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-KN-94",
+   "price": "749.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_Arhaus_AS-KN_AS-KN-94_AS-KN-94_SV_EXD_VELC_SP_CVC-01.jpg?v=1744939974",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_Arhaus_AS-KN_AS-KN-94_AS-KN-94_SV_EXD_VELC_SP_CVC-01.jpg?v=1744939974"
+   ],
+   "tags": [
+    "AS-KN-94",
+    "categoryproducts:AS",
+    "categoryproducts:AS-KN",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Kipton"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-KN-94",
+     "price": "749.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

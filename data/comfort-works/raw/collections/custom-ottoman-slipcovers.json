@@ -1,0 +1,264 @@
+{
+ "handle": "custom-ottoman-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:18.191Z",
+ "count": 5,
+ "products": [
+  {
+   "handle": "two-piece-ottoman-slipcover",
+   "title": "Two-piece Ottoman Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS0-SNUG-2",
+   "price": "259.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/two-piece-ottoman-slipcover.jpg?v=1678615155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/two-piece-ottoman-slipcover.jpg?v=1678615155"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS0-SNUG-2",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS0-SNUG-2",
+    "FLT___Series_Code___CS0",
+    "FLT___Size___Ottoman",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Ottoman Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS0-SNUG-2",
+     "price": "259.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "two-piece-straight-skirt-ottoman-slipcover",
+   "title": "Two-piece Straight Skirt Ottoman Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS0-SSKT",
+   "price": "259.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/two-piece-straight-skirt-ottoman-slipcover.jpg?v=1678615155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/two-piece-straight-skirt-ottoman-slipcover.jpg?v=1678615155"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS0-SSKT",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS0-SSKT",
+    "FLT___Series_Code___CS0",
+    "FLT___Size___Ottoman",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Ottoman Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS0-SSKT",
+     "price": "259.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "one-piece-long-skirt-ottoman-slipcover",
+   "title": "One-piece Long Skirt Ottoman Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS0-CNRP-1",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/one-piece-long-skirt-ottoman-slipcover.jpg?v=1678615155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/one-piece-long-skirt-ottoman-slipcover.jpg?v=1678615155"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS0-CNRP-1",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS0-CNRP-1",
+    "FLT___Series_Code___CS0",
+    "FLT___Size___Ottoman",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Ottoman Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS0-CNRP-1",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "one-piece-ottoman-slipcover",
+   "title": "One-piece Ottoman Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS0-SNUG-1",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/one-piece-ottoman-slipcover.jpg?v=1678615155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/one-piece-ottoman-slipcover.jpg?v=1678615155"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS0-SNUG-1",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS0-SNUG-1",
+    "FLT___Series_Code___CS0",
+    "FLT___Size___Ottoman",
+    "FLT___Styles_Code___SHRT_PC",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___SNUG_PC",
+    "FLT___Styles_Code___SNUG_PM",
+    "FLT___Styles_Code___SNUG_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Ottoman Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS0-SNUG-1",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "two-piece-long-skirt-ottoman-slipcover",
+   "title": "Two-piece Long Skirt Ottoman Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS0-CNRP-2",
+   "price": "259.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/two-piece-long-skirt-ottoman-slipcover.jpg?v=1678615155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/two-piece-long-skirt-ottoman-slipcover.jpg?v=1678615155"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS0-CNRP-2",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS0-CNRP-2",
+    "FLT___Series_Code___CS0",
+    "FLT___Size___Ottoman",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Ottoman Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS0-CNRP-2",
+     "price": "259.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,48 @@
+{
+ "handle": "ikea-dalarna-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:34.936Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "dalarna-2-seat-sofa-cover",
+   "title": "Dalarna 2 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-DA-2",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_DA_IK-DA-60_IK-DA-60_VELC_SP_CVC-01.jpg?v=1744695312",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_DA_IK-DA-60_IK-DA-60_VELC_SP_CVC-01.jpg?v=1744695312"
+   ],
+   "tags": [
+    "categoryproducts:DA",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "IK-DA-2",
+    "IKEA",
+    "installation:579",
+    "series:Dalarna"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-DA-2",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

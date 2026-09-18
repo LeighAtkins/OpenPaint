@@ -1,0 +1,143 @@
+{
+ "handle": "muji-sofa-bench-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:37.453Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "sofa-bench-ottoman-cover",
+   "title": "Sofa Bench Ottoman Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-MJS-0B",
+   "price": "69.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-MJS-0B_LV_VELC_SP_CVC-01.jpg?v=1741320172",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-MJS-0B_LV_VELC_SP_CVC-01.jpg?v=1741320172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_482_Muji_Bench_sofa.jpg?v=1741320172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_484_Muji_Bed_sofa.jpg?v=1741320172"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-MJS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-MJS-0B",
+    "FLT___Product_Ref__Old____MJ_SBC_0",
+    "FLT___Series_Code___MJS",
+    "FLT___Series_Name___Sofa_Bench",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-MJS-0B",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Sofa Bench",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-MJS-0B",
+     "price": "69.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sofa-bench-cover",
+   "title": "Sofa Bench Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-MJS-9",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-MJS-9_VELC_PM_CVC-01.jpg?v=1741320173",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-MJS-9_VELC_PM_CVC-01.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_483_Muji_Bench_sofa.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_634_Muji_Bench_sofa.jpg?v=1741320173"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-MJS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-MJS-9",
+    "FLT___Product_Ref__Old____MJ_SBC_6",
+    "FLT___Series_Code___MJS",
+    "FLT___Series_Name___Sofa_Bench",
+    "FLT___Size___Bench",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-MJS-9",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Sofa Bench",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-MJS-9",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

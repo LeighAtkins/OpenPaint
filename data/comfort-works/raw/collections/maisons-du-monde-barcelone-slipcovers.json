@@ -1,0 +1,214 @@
+{
+ "handle": "maisons-du-monde-barcelone-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:22.593Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "barcelone-5-seater-sofa-slipcover",
+   "title": "Barcelone 5 Seater Sofa Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-BE-98",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BE-98_LSKT_SI_CVC-01.jpg?v=1741320172",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BE-98_LSKT_SI_CVC-01.jpg?v=1741320172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_549_Maison_du_Monde_Barcelone_sofa_4c03b83f-3aeb-417e-bc90-ba088d7049ae.jpg?v=1741320172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_622_Maison_du_Monde_Barcelone_sofa.jpg?v=1741320172"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-BE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-BE-98",
+    "FLT___Product_Ref__Old____MDM_BE_5",
+    "FLT___Series_Code___BE",
+    "FLT___Series_Name___Barcelone",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "MDM-BE-98",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Barcelone",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:5",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-BE-98",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "barcelone-3-4-seater-sofa-slipcover",
+   "title": "Barcelone 3/4 Seater Sofa Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-BE-80",
+   "price": "429.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BE-80_LSKT_SI_CVC-01.jpg?v=1741320169",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BE-80_LSKT_SI_CVC-01.jpg?v=1741320169",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_549_Maison_du_Monde_Barcelone_sofa.jpg?v=1741320169",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_548_Maison_du_Monde_Barcelone_sofa_284cf330-7517-45aa-9330-572f4c9719e8.jpg?v=1741320169"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-BE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-BE-80",
+    "FLT___Product_Ref__Old____MDM_BE_35",
+    "FLT___Series_Code___BE",
+    "FLT___Series_Name___Barcelone",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "MDM-BE-80",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Barcelone",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:5",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-BE-80",
+     "price": "429.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "barcelone-3-4-seater-sofa-bed-slipcover",
+   "title": "Barcelone 3/4 Seater Sofa Bed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-BE-80B",
+   "price": "479.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BE-80B_LSKT_SI_CVC-01.jpg?v=1741320167",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BE-80B_LSKT_SI_CVC-01.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_548_Maison_du_Monde_Barcelone_sofa.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_549_Maison_du_Monde_Barcelone_sofa_e66006eb-347f-49a3-8f2f-66cfffcf21e7.jpg?v=1741320167"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-BE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-BE-80B",
+    "FLT___Product_Ref__Old____MDM_BE_35B",
+    "FLT___Series_Code___BE",
+    "FLT___Series_Name___Barcelone",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "MDM-BE-80B",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Barcelone",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:5",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-BE-80B",
+     "price": "479.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

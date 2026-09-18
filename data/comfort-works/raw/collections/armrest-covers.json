@@ -1,0 +1,2292 @@
+{
+ "handle": "armrest-covers",
+ "fetchedAt": "2026-09-18T05:31:46.149Z",
+ "count": 47,
+ "products": [
+  {
+   "handle": "angby-armrest-protector-covers",
+   "title": "Angby Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-AY-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AY-AP_SP_CVC-01.jpg?v=1741320126",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AY-AP_SP_CVC-01.jpg?v=1741320126"
+   ],
+   "tags": [
+    "categoryproducts:AY",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-AY-AP",
+    "FLT___Product_Ref__Old____AY_AP",
+    "FLT___Series_Code___AY",
+    "FLT___Series_Name___Angby",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-AY-AP",
+    "series:Angby"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-AY-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backa-armrest-protector-covers",
+   "title": "Backa Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BA-AP",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BA-AP_PM_CVC-01.jpg?v=1741320127",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BA-AP_PM_CVC-01.jpg?v=1741320127"
+   ],
+   "tags": [
+    "categoryproducts:BA",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BA-AP",
+    "FLT___Product_Ref__Old____BA_AP",
+    "FLT___Series_Code___BA",
+    "FLT___Series_Name___Backa",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "IK-BA-AP",
+    "series:Backa"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BA-AP",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backabro-armrest-protector-covers",
+   "title": "Backabro Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BRO-AP",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-AP_PM_CVC-01.jpg?v=1741320134",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-AP_PM_CVC-01.jpg?v=1741320134"
+   ],
+   "tags": [
+    "categoryproducts:BRO",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BRO-AP",
+    "FLT___Product_Ref__Old____BRO_AP",
+    "FLT___Series_Code___BRO",
+    "FLT___Series_Name___Backabro",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "IK-BRO-AP",
+    "series:Backabro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BRO-AP",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backabro-chaise-armrest-protector-covers",
+   "title": "Backabro Chaise Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BRO-APM",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-APM_L_PM_CVC-01.jpg?v=1741320138",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BRO-APM_L_PM_CVC-01.jpg?v=1741320138"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BRO-APM",
+    "FLT___Product_Ref__Old____BRO7R_AP",
+    "FLT___Series_Code___BRO",
+    "FLT___Series_Name___Backabro",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-BRO-APM",
+    "series:Backabro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BRO-APM",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backamo-armrest-protector-covers",
+   "title": "Backamo Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BO-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BO-AP_PM_CVC-01.jpg?v=1741320128",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BO-AP_PM_CVC-01.jpg?v=1741320128"
+   ],
+   "tags": [
+    "categoryproducts:BO",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BO-AP",
+    "FLT___Product_Ref__Old____BO3_AP",
+    "FLT___Series_Code___BO",
+    "FLT___Series_Name___Backamo",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "IK-BO-AP",
+    "series:Backamo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BO-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "barkaby-armrest-protector-covers",
+   "title": "Barkaby Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BY-AP",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BY-AP_PM_CVC-01.jpg?v=1741320127",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BY-AP_PM_CVC-01.jpg?v=1741320127"
+   ],
+   "tags": [
+    "categoryproducts:BY",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BY-AP",
+    "FLT___Product_Ref__Old____BY1_AP",
+    "FLT___Series_Code___BY",
+    "FLT___Series_Name___Barkaby",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "IK-BY-AP",
+    "series:Barkaby"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BY-AP",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "catalina-armrest-protector-covers",
+   "title": "Catalina Armrest Protector Covers",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CAT-AP",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_PB_PB-CAT_PB-CAT-AP_PB-CAT-AP_SP_CVC-01.jpg?v=1744884031",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_PB_PB-CAT_PB-CAT-AP_PB-CAT-AP_SP_CVC-01.jpg?v=1744884031"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CAT",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Armrest",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-CAT-AP",
+    "Pottery Barn",
+    "series:Catalina"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CAT-AP",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ekeskog-armrest-protector-covers",
+   "title": "Ekeskog Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-EG-AP",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-AP_PM_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-AP_PM_CVC-01.jpg?v=1741320129"
+   ],
+   "tags": [
+    "categoryproducts:EG",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EG-AP",
+    "FLT___Product_Ref__Old____EG_AP",
+    "FLT___Series_Code___EG",
+    "FLT___Series_Name___Ekeskog",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-EG-AP",
+    "series:Ekeskog"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EG-AP",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ektorp-armrest-protector-covers",
+   "title": "Ektorp Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-EP-AP",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-AP_PM_CVC-01.jpg?v=1741320128",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-AP_PM_CVC-01.jpg?v=1741320128"
+   ],
+   "tags": [
+    "categoryproducts:EP",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EP-AP",
+    "FLT___Product_Ref__Old____EP_AP",
+    "FLT___Series_Code___EP",
+    "FLT___Series_Name___Ektorp",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-EP-AP",
+    "series:Ektorp"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EP-AP",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ektorp-chaise-armrest-protector-cover",
+   "title": "Ektorp Chaise Armrest Protector Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EP-APM",
+   "price": "39.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-APM_L_PM_CVC-01.jpg?v=1741320138",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-APM_L_PM_CVC-01.jpg?v=1741320138"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EP-APM",
+    "FLT___Product_Ref__Old____EPL_AP",
+    "FLT___Series_Code___EP",
+    "FLT___Series_Name___Ektorp",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-EP-APM",
+    "installation:586",
+    "series:Ektorp"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EP-APM",
+     "price": "39.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ektorp-jennylund-armrest-protector-covers",
+   "title": "Ektorp Jennylund Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-EP-JDAP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-JDAP_PM_CVC-01.jpg?v=1741320132",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-JDAP_PM_CVC-01.jpg?v=1741320132"
+   ],
+   "tags": [
+    "categoryproducts:EP",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EP-JDAP",
+    "FLT___Product_Ref__Old____JD1_AP",
+    "FLT___Series_Code___EP",
+    "FLT___Series_Name___Ektorp",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-EP-JDAP",
+    "series:Ektorp"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EP-JDAP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "fagelbo-chaise-armrest-protector-covers",
+   "title": "Fagelbo Chaise Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-FO-APM",
+   "price": "69.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FO-APM_L_PM_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FO-APM_L_PM_CVC-01.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FO-APM",
+    "FLT___Product_Ref__Old____FOL_AP",
+    "FLT___Series_Code___FO",
+    "FLT___Series_Name___Fagelbo",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-FO-APM",
+    "series:Fagelbo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FO-APM",
+     "price": "69.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-armrest-cover",
+   "title": "Finnala Armrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-8",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-8_VELC_WR_CVC-01.jpg?v=1741320136",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-8_VELC_WR_CVC-01.jpg?v=1741320136",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_123_IKEA_Finnala_sofa_716caaae-f1fc-438b-a71e-0d0b76525713.jpg?v=1741320136",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_117_IKEA_Finnala_sofa.jpg?v=1741320136"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-8",
+    "FLT___Product_Ref__Old____FNA8",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-8",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-8",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "friheten-chaise-armrest-protector-covers",
+   "title": "Friheten Chaise Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-FN-APM",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FN-APM_L_SP_CVC-01.jpg?v=1741320134",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FN-APM_L_SP_CVC-01.jpg?v=1741320134"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FN-APM",
+    "FLT___Product_Ref__Old____FNR_AP",
+    "FLT___Series_Code___FN",
+    "FLT___Series_Name___Friheten",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-FN-APM",
+    "series:Friheten"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FN-APM",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "goteborg-armrest-protector-covers",
+   "title": "Goteborg Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-GG-AP",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GG-AP_PM_CVC-01.jpg?v=1741320128",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GG-AP_PM_CVC-01.jpg?v=1741320128"
+   ],
+   "tags": [
+    "categoryproducts:GG",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-GG-AP",
+    "FLT___Product_Ref__Old____GG3_AP",
+    "FLT___Series_Code___GG",
+    "FLT___Series_Name___Goteborg",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "IK-GG-AP",
+    "series:Goteborg"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-GG-AP",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gronlid-armrest-covers-one-pair",
+   "title": "Gronlid Armrest Covers (One Pair)",
+   "vendor": "IKEA",
+   "sku": "IK-GRD-8",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-8_SHRT_PM_CVC-01.jpg?v=1741320153",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-8_SHRT_PM_CVC-01.jpg?v=1741320153"
+   ],
+   "tags": [
+    "categoryproducts:GRD",
+    "categoryproducts:IK",
+    "features:575",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-GRD-8",
+    "FLT___Product_Ref__Old____GRD8",
+    "FLT___Series_Code___GRD",
+    "FLT___Series_Name___Gronlid",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_WR",
+    "FLT__MAIN",
+    "IK-GRD-8",
+    "important_notes:579",
+    "installation:630",
+    "series:Gronlid"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-GRD-8",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hagalund-armrest-protector-covers",
+   "title": "Hagalund Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-HGD-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HGD-AP_PM_CVC-01.jpg?v=1741320131",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HGD-AP_PM_CVC-01.jpg?v=1741320131"
+   ],
+   "tags": [
+    "categoryproducts:HGD",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HGD-AP",
+    "FLT___Product_Ref__Old____HD2B_AP",
+    "FLT___Series_Code___HGD",
+    "FLT___Series_Name___Hagalund",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-HGD-AP",
+    "series:Hagalund"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HGD-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-armrest-cover",
+   "title": "Harlanda Armrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-8",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-8_SHRT_PM_CVC-01.jpg?v=1741320131",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-8_SHRT_PM_CVC-01.jpg?v=1741320131"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-8",
+    "FLT___Product_Ref__Old____HLD8",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-8",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-8",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harnosand-armrest-protector-covers",
+   "title": "Harnosand Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-HD-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HD-AP_SI_CVC-01.jpg?v=1741320137",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HD-AP_SI_CVC-01.jpg?v=1741320137"
+   ],
+   "tags": [
+    "categoryproducts:HD",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HD-AP",
+    "FLT___Product_Ref__Old____HD1_AP",
+    "FLT___Series_Code___HD",
+    "FLT___Series_Name___Harnosand",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___IK_HD_AP",
+    "FLT___Styles_Code___SI",
+    "FLT__MAIN",
+    "IK-HD-AP",
+    "series:Harnosand"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HD-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hovas-armrest-protector-covers",
+   "title": "Hovas Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-HS-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HS-AP_SP_CVC-01.jpg?v=1741320128",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HS-AP_SP_CVC-01.jpg?v=1741320128"
+   ],
+   "tags": [
+    "categoryproducts:HS",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HS-AP",
+    "FLT___Product_Ref__Old____HS_AP",
+    "FLT___Series_Code___HS",
+    "FLT___Series_Name___Hovas",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-HS-AP",
+    "series:Hovas"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HS-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jattebo-armrest-cover",
+   "title": "Jattebo Armrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-8M",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-8_VELC_SP_CVC-01.jpg?v=1741320162",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-8_VELC_SP_CVC-01.jpg?v=1741320162"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-8M",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-JTO-8M",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-8M",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlanda-armrest-protector-covers",
+   "title": "Karlanda Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-KA-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-AP_PM_CVC-01.jpg?v=1741320117",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-AP_PM_CVC-01.jpg?v=1741320117"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KA-AP",
+    "FLT___Product_Ref__Old____KA_AP",
+    "FLT___Series_Code___KA",
+    "FLT___Series_Name___Karlanda",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___WR",
+    "FLT__MAIN",
+    "IK-KA-AP",
+    "series:Karlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KA-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-armrest-protector-covers",
+   "title": "Karlstad Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-KD-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-AP_PTD_SP_CVC-01.jpg?v=1741745444",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-AP_PTD_SP_CVC-01.jpg?v=1741745444",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-AP_STD_SP_CVC-01.jpg?v=1741745444"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-AP",
+    "FLT___Product_Ref__Old____KD_AP",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___SI",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Small_Armchair_Armrest_Protector",
+    "FLT___Variant_1_Name___Standard_Armrest_Protector",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "IK-KD-AP",
+    "series:Karlstad"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kivik-armrest-protector-covers",
+   "title": "Kivik Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-KK-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KK-AP_VELC_SI_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KK-AP_VELC_SI_CVC-01.jpg?v=1741678943"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KK-AP",
+    "FLT___Product_Ref__Old____KK_AP",
+    "FLT___Series_Code___KK",
+    "FLT___Series_Name___Kivik",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "IK-KK-AP",
+    "series:Kivik"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KK-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "klippan-armrest-protector-covers",
+   "title": "Klippan Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-KN-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-AP_SP_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-AP_SP_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KN-IKEA-Sofa-Cover-Klippan-Rouge-Emerald-Velvet-Blends-Couch-Slipcovers-2_d5ecc0be-5d9f-40b5-a334-4fea7402f5b7.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KN-IKEA-Sofa-Cover-Klippan-Shire-Mustard-Wool-Blends-Couch-Slipcovers-3_744ba130-de3e-4152-aca3-f594911e6e64.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:KN",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KN-AP",
+    "FLT___Product_Ref__Old____KN_AP",
+    "FLT___Series_Code___KN",
+    "FLT___Series_Name___Klippan",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-KN-AP",
+    "series:Klippan"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KN-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "klobo-armrest-protector-covers",
+   "title": "Klobo Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-KO-AP",
+   "price": "39.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KO-AP_SP_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KO-AP_SP_CVC-01.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:KO",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KO-AP",
+    "FLT___Product_Ref__Old____KO_AP",
+    "FLT___Series_Code___KO",
+    "FLT___Series_Name___Klobo",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-KO-AP",
+    "series:Klobo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KO-AP",
+     "price": "39.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kramfors-armrest-protector-cover",
+   "title": "Kramfors Armrest Protector Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KS-APM",
+   "price": "39.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-APM_L_SP_CVC-01.jpg?v=1741678944",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-APM_L_SP_CVC-01.jpg?v=1741678944"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KS-APM",
+    "FLT___Product_Ref__Old____KSR_AP",
+    "FLT___Series_Code___KS",
+    "FLT___Series_Name___Kramfors",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Style_Name___Signature_Style",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-KS-APM",
+    "installation:579",
+    "series:Kramfors"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KS-APM",
+     "price": "39.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kramfors-armrest-protector-covers",
+   "title": "Kramfors Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-KS-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-AP_SP_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-AP_SP_CVC-01.jpg?v=1741678942"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KS-AP",
+    "FLT___Product_Ref__Old____KS_AP",
+    "FLT___Series_Code___KS",
+    "FLT___Series_Name___Kramfors",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-KS-AP",
+    "installation:579",
+    "series:Kramfors"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KS-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lidhult-armrest-cover",
+   "title": "Lidhult Armrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LT-8",
+   "price": "109.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-8_VELC_SP_CVC-01.jpg?v=1741320141",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-8_VELC_SP_CVC-01.jpg?v=1741320141",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_312_IKEA_Lidhult_sofa_93b42241-e592-4a84-a44d-83dd4d696360.jpg?v=1741320141",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_424_IKEA_Lidhult_sofa.jpg?v=1741320141"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:LT",
+    "features:575",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LT-8",
+    "FLT___Product_Ref__Old____LT8_AP",
+    "FLT___Series_Code___LT",
+    "FLT___Series_Name___Lidhult",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-LT-8",
+    "installation:579",
+    "series:Lidhult"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LT-8",
+     "price": "109.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "manstad-chaise-armrest-protector-covers",
+   "title": "Manstad Chaise Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-MD-APM",
+   "price": "69.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MD-APM_L_PM_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MD-APM_L_PM_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/md3_manstad-slipcover_1_574004d6-4535-473e-baff-3251c35d80e4.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/md3_manstad-slipcover_2_9a3beece-d886-43f2-a83b-85297f6aec17.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MD-APM",
+    "FLT___Product_Ref__Old____MDR_AP",
+    "FLT___Series_Code___MD",
+    "FLT___Series_Name___Manstad",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SI",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-MD-APM",
+    "series:Manstad"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MD-APM",
+     "price": "69.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "mellby-armrest-protector-covers",
+   "title": "Mellby Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-MY-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MY-AP_SI_CVC-01.jpg?v=1741320128",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MY-AP_SI_CVC-01.jpg?v=1741320128"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:MY",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MY-AP",
+    "FLT___Product_Ref__Old____MY1_AP",
+    "FLT___Series_Code___MY",
+    "FLT___Series_Name___Mellby",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SI",
+    "FLT__MAIN",
+    "IK-MY-AP",
+    "series:Mellby"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MY-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "moheda-chaise-armrest-protector-covers",
+   "title": "Moheda Chaise Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-MA-APM",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MA-APM_L_PM_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MA-APM_L_PM_CVC-01.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:MA",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MA-APM",
+    "FLT___Product_Ref__Old____MAL_AP",
+    "FLT___Series_Code___MA",
+    "FLT___Series_Name___Moheda",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-MA-APM",
+    "series:Moheda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MA-APM",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "mysinge-armrest-protector-covers",
+   "title": "Mysinge Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-ME-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-ME-AP_SP_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-ME-AP_SP_CVC-01.jpg?v=1741320129"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-ME-AP",
+    "FLT___Product_Ref__Old____ME_AP",
+    "FLT___Series_Code___ME",
+    "FLT___Series_Name___Mysinge",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-ME-AP",
+    "series:Mysinge"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-ME-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nikkala-armrest-protector-covers",
+   "title": "Nikkala Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-NA-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NA-AP_PM_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NA-AP_PM_CVC-01.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NA-AP",
+    "FLT___Product_Ref__Old____NA3_AP",
+    "FLT___Series_Code___NA",
+    "FLT___Series_Name___Nikkala",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-NA-AP",
+    "series:Nikkala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NA-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "norsborg-armrest-covers-pair",
+   "title": "Norsborg Armrest Covers (Pair)",
+   "vendor": "IKEA",
+   "sku": "IK-NG-8",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-8_LSKT_SI_CVC-01.jpg?v=1741320135",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-8_LSKT_SI_CVC-01.jpg?v=1741320135",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_109_IKEA_Norsborg_sofa.jpg?v=1741320135"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:NG",
+    "features:575",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NG-8",
+    "FLT___Product_Ref__Old____NG8",
+    "FLT___Series_Code___NG",
+    "FLT___Series_Name___Norsborg",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Original__With_Arm_Pockets_",
+    "FLT___Style_Name___Original__Without_Arm_Pockets_",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR_NARM",
+    "FLT___Styles_Code___VELC_WR_YARM",
+    "FLT__MAIN",
+    "IK-NG-8",
+    "installation:579",
+    "series:Norsborg"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NG-8",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-armrest-protector-covers",
+   "title": "PB Basic Armrest Protector Covers",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-AP",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-AP_PM_CVC-01.jpg?v=1741320179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-AP_PM_CVC-01.jpg?v=1741320179"
+   ],
+   "tags": [
+    "categoryproducts:PB-BSC",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-AP",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "PB-BSC-AP",
+    "series:PB Basic"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-AP",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sandby-armrest-protector-covers",
+   "title": "Sandby Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SY-AP",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-AP_PM_CVC-01.jpg?v=1741320127",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-AP_PM_CVC-01.jpg?v=1741320127"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SY",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SY-AP",
+    "FLT___Product_Ref__Old____SY_AP",
+    "FLT___Series_Code___SY",
+    "FLT___Series_Name___Sandby",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "IK-SY-AP",
+    "series:Sandby"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SY-AP",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "soderhamn-armrest-cover-pair",
+   "title": "Soderhamn Armrest Cover (Pair)",
+   "vendor": "IKEA",
+   "sku": "IK-SN-8",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-8_VELC_SP_CVC-01.jpg?v=1741678944",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-8_VELC_SP_CVC-01.jpg?v=1741678944"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SN",
+    "features:575",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SN-8",
+    "FLT___Product_Ref__Old____SN8",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Soderhamn",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-SN-8",
+    "installation:585",
+    "series:Soderhamn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SN-8",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "solsta-armrest-protector-covers",
+   "title": "Solsta Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SA-AP",
+   "price": "39.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-AP_SP_CVC-01_2X_ac3f03bd-4ae4-4e66-9a6d-b195bc4c685a.jpg?v=1754285943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-AP_SP_CVC-01_2X_ac3f03bd-4ae4-4e66-9a6d-b195bc4c685a.jpg?v=1754285943"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SA",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SA-AP",
+    "FLT___Product_Ref__Old____SA_AP",
+    "FLT___Series_Code___SA",
+    "FLT___Series_Name___Solsta",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "IK-SA-AP",
+    "series:Solsta"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SA-AP",
+     "price": "39.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stockholm-armrest-protector-covers",
+   "title": "Stockholm Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SM-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-AP_SP_CVC-01.jpg?v=1741320128",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-AP_SP_CVC-01.jpg?v=1741320128"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SM-AP",
+    "FLT___Product_Ref__Old____SM_AP",
+    "FLT___Series_Code___SM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___SP",
+    "FLT___Styles_Code___WR",
+    "FLT__MAIN",
+    "IK-SM-AP",
+    "series:Stockholm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SM-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stocksund-armrest-protector-covers",
+   "title": "Stocksund Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SU-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-AP_SP_CVC-01.jpg?v=1741676281",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-AP_SP_CVC-01.jpg?v=1741676281"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SU-AP",
+    "FLT___Product_Ref__Old____SU_AP",
+    "FLT___Series_Code___SU",
+    "FLT___Series_Name___Stocksund",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-SU-AP",
+    "series:Stocksund"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SU-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stromstad-armrest-protector-covers",
+   "title": "Stromstad Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SD-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SD-AP_SP_CVC-01.webp?v=1780887726",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SD-AP_SP_CVC-01.webp?v=1780887726"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SD",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SD-AP",
+    "FLT___Product_Ref__Old____SD_AP",
+    "FLT___Series_Code___SD",
+    "FLT___Series_Name___Stromstad",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-SD-AP",
+    "series:Stromstad"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SD-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tomelilla-armrest-protector-covers",
+   "title": "Tomelilla Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-TA-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-AP_1_SP_CVC-01_2X_f3f907f4-a7eb-402f-a125-f1bbbe962289.jpg?v=1748918453",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-AP_1_SP_CVC-01_2X_f3f907f4-a7eb-402f-a125-f1bbbe962289.jpg?v=1748918453"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TA-AP",
+    "FLT___Product_Ref__Old____TA_AP",
+    "FLT___Series_Code___TA",
+    "FLT___Series_Name___Tomelilla",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-TA-AP",
+    "series:Tomelilla"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TA-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vallentuna-armrest-cover-single",
+   "title": "Vallentuna Armrest Cover (Single)",
+   "vendor": "IKEA",
+   "sku": "IK-VA-8M",
+   "price": "39.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-8M_VELC_SI_CVC-01.jpg?v=1741320145",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-8M_VELC_SI_CVC-01.jpg?v=1741320145"
+   ],
+   "tags": [
+    "categoryproducts:VA",
+    "features:575",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VA-8M",
+    "FLT___Product_Ref__Old____VA8",
+    "FLT___Series_Code___VA",
+    "FLT___Series_Name___Vallentuna",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "IK-VA-8M",
+    "important_notes:579",
+    "installation:630",
+    "series:Vallentuna"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VA-8M",
+     "price": "39.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vaxholm-armrest-cover",
+   "title": "Vaxholm Armrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VXM-8",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-8_VELC_SP_CVC-01.jpg?v=1741320144",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-8_VELC_SP_CVC-01.jpg?v=1741320144",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_378_IKEA_Vaxholm_sofa_284a32aa-a4f8-432f-8608-d39ee08197d7.jpg?v=1741320144",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_380_IKEA_Vaxholm_sofa_00d4f297-278d-4e03-8387-4f63790af764.jpg?v=1741320144"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:VXM",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VXM-8",
+    "FLT___Product_Ref__Old____VXM9",
+    "FLT___Series_Code___VXM",
+    "FLT___Series_Name___Vaxholm",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-VXM-8",
+    "series:Vaxholm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VXM-8",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vilasund-armrest-protector-covers",
+   "title": "Vilasund Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-VD-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VD-AP_SI_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VD-AP_SI_CVC-01.jpg?v=1741320129"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:VD",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VD-AP",
+    "FLT___Product_Ref__Old____VD_AP",
+    "FLT___Series_Code___VD",
+    "FLT___Series_Name___Vilasund",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SI",
+    "FLT__MAIN",
+    "IK-VD-AP",
+    "series:Vilasund"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VD-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-armrest-covers-one-pair",
+   "title": "Vimle Armrest Covers (One Pair)",
+   "vendor": "IKEA",
+   "sku": "IK-VE-8",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-8_IK-VE-8_EXD_VELC_SP_CVC-01_2X_3af2f685-c976-48a1-8f24-99e8112c5548.webp?v=1771904148",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-8_IK-VE-8_EXD_VELC_SP_CVC-01_2X_3af2f685-c976-48a1-8f24-99e8112c5548.webp?v=1771904148",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_200_IKEA_Vimle_sofa.jpg?v=1771904148"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "features:575",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-8",
+    "FLT___Product_Ref__Old____VE8",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Regular__15cm",
+    "FLT___Variant_1_Name___Wide__22cm",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "IK-VE-8",
+    "important_notes:579",
+    "installation:630",
+    "series:Vimle"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-8",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,58 @@
+{
+ "handle": "ikea-ekolsund-slipcovers",
+ "fetchedAt": "2026-09-18T05:41:55.247Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "ekolsund-recliner-cover",
+   "title": "Ekolsund Recliner Cover",
+   "vendor": "IKEA",
+   "sku": "IK-ED-1",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-ED-1_VELC_SP_CVC-01.jpg?v=1741320140",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-ED-1_VELC_SP_CVC-01.jpg?v=1741320140",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_248_IKEA_Ekolsund_sofa.jpg?v=1741320140",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_247_IKEA_Ekolsund_sofa.jpg?v=1741320140"
+   ],
+   "tags": [
+    "categoryproducts:ED",
+    "categoryproducts:IK",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-ED-1",
+    "FLT___Product_Ref__Old____ED1",
+    "FLT___Series_Code___ED",
+    "FLT___Series_Name___Ekolsund",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-ED-1",
+    "installation:579",
+    "series:Ekolsund"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-ED-1",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

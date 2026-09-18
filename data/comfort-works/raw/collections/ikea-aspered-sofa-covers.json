@@ -1,0 +1,48 @@
+{
+ "handle": "ikea-aspered-sofa-covers",
+ "fetchedAt": "2026-09-18T05:32:30.973Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "aspered-headrest-cover",
+   "title": "Aspered Headrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-AD-HRX",
+   "price": "199.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AD-HRX_SI_CVC-01.webp?v=1783394198",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AD-HRX_SI_CVC-01.webp?v=1783394198"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Headrest",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-AD-HRX",
+    "installation:579",
+    "series:Aspered"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-AD-HRX",
+     "price": "199.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,350 @@
+{
+ "handle": "room-and-board-york-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:07.675Z",
+ "count": 8,
+ "products": [
+  {
+   "handle": "york-98-sofa-with-reversible-chaise-slipcover",
+   "title": "York 98\" Sofa with Reversible Chaise Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-YK-98-S",
+   "price": "819.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-98-S_L_LV_LSKT_SP_CVC-01.jpg?v=1744676699",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-98-S_L_LV_LSKT_SP_CVC-01.jpg?v=1744676699"
+   ],
+   "tags": [
+    "categoryproducts:RB-Sofa",
+    "categoryproducts:RB-YK",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-YK-98-S",
+    "Room and Board",
+    "series:York"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-YK-98-S",
+     "price": "819.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "york-87-guest-sleeper-sofa-slipcover",
+   "title": "York 87\" Guest Sleeper Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-YK-87B",
+   "price": "629.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-87B_LSKT_SP_CVC-01.jpg?v=1741320193",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-87B_LSKT_SP_CVC-01.jpg?v=1741320193"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-Sofa",
+    "categoryproducts:RB-YK",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-YK-87B",
+    "Room and Board",
+    "series:York"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-YK-87B",
+     "price": "629.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "york-87-sofa-slipcover",
+   "title": "York 87\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-YK-87",
+   "price": "709.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-87_LV_SHRT_PM_CVC-01.jpg?v=1741741769",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-87_LV_SHRT_PM_CVC-01.jpg?v=1741741769"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-Sofa",
+    "categoryproducts:RB-YK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-YK-87",
+    "Room and Board",
+    "series:York"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-YK-87",
+     "price": "709.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "york-71-guest-select-full-sleeper-sofa-slipcover",
+   "title": "York 71\" Guest Select Full Sleeper Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-YK-71B",
+   "price": "599.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-71B_SHRT_PM_CVC-01.jpg?v=1741741770",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-71B_SHRT_PM_CVC-01.jpg?v=1741741770"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-Sofa",
+    "categoryproducts:RB-YK",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-YK-71B",
+    "Room and Board",
+    "series:York"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-YK-71B",
+     "price": "599.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "york-71-sofa-slipcover",
+   "title": "York 71\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-YK-71",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-71_LV_SHRT_PM_CVC-01.jpg?v=1741741765",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-71_LV_SHRT_PM_CVC-01.jpg?v=1741741765"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-Sofa",
+    "categoryproducts:RB-YK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-YK-71",
+    "Room and Board",
+    "series:York"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-YK-71",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "york-storage-ottoman-slipcover",
+   "title": "York Storage Ottoman Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-YK-45F",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-45F_LV_SHRT_PM_CVC-01.jpg?v=1741741770",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-45F_LV_SHRT_PM_CVC-01.jpg?v=1741741770"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-YK",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-YK-45F",
+    "Room and Board",
+    "series:York"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-YK-45F",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "york-chair-and-a-half-slipcover",
+   "title": "York Chair and a Half Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-YK-56",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-56_LV_SHRT_PM_CVC-01.jpg?v=1741741766",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-56_LV_SHRT_PM_CVC-01.jpg?v=1741741766"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-Sofa",
+    "categoryproducts:RB-YK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-YK-56",
+    "Room and Board",
+    "series:York"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-YK-56",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "york-98-sofa-slipcover",
+   "title": "York 98\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-YK-98",
+   "price": "709.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-98_LV_LSKT_SP_CVC-01.jpg?v=1744676699",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-98_LV_LSKT_SP_CVC-01.jpg?v=1744676699"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-Sofa",
+    "categoryproducts:RB-YK",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "RB-YK-98",
+    "Room and Board",
+    "series:York"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-YK-98",
+     "price": "709.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

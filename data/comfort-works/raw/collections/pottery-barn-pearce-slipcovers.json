@@ -1,0 +1,925 @@
+{
+ "handle": "pottery-barn-pearce-slipcovers",
+ "fetchedAt": "2026-09-18T05:37:54.750Z",
+ "count": 16,
+ "products": [
+  {
+   "handle": "pb-pearce-roll-arm-grand-sofa-slipcover",
+   "title": "PB Pearce Roll Arm Grand Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PRA-90",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-90_CNRP_PM_CVC-01.jpg?v=1741320181",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-90_CNRP_PM_CVC-01.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_394_Pottery_20Barn_Pearce_20Roll_20Arm_sofa_7d5c79ac-cea1-4d50-811d-02d13d6816d3.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_395_Pottery_20Barn_Pearce_20Roll_20Arm_sofa_f07f4bde-8130-42d6-8cd1-00b026850e28.jpg?v=1741320181"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB-PRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-PRA-90",
+    "FLT___Product_Ref__Old____PB_PRA_4",
+    "FLT___Series_Code___PRA",
+    "FLT___Series_Name___Pearce_Roll_Arm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-PRA-90",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Pearce Roll Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PRA-90",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-pearce-roll-arm-left-right-arm-loveseat-slipcover",
+   "title": "PB Pearce Roll Arm Left/Right Arm Loveseat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PRA-73M",
+   "price": "579.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-73M_L_BE_CNRP_PM_CVC-01.jpg?v=1741320180",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-73M_L_BE_CNRP_PM_CVC-01.jpg?v=1741320180",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_397_Pottery_20Barn_Pearce_20Roll_20Arm_sofa_d16c9fbc-e4cd-4f87-ac41-c01fb7b0e5fb.jpg?v=1741320180",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_398_Pottery_20Barn_Pearce_20Roll_20Arm_sofa_14e43b0e-9337-49f3-9ead-4db22e96a74f.jpg?v=1741320180"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-PRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-PRA-73M",
+    "FLT___Product_Ref__Old____PB_PRA_2L",
+    "FLT___Series_Code___PRA",
+    "FLT___Series_Name___Pearce_Roll_Arm",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT___Variant_2_Name___Box_edge_cushions",
+    "FLT___Variant_2_Name___Knife_edge_cushions",
+    "FLT___Variant_2_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:1",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:One Arm",
+    "PB-PRA-73M",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Pearce Roll Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PRA-73M",
+     "price": "579.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-pearce-roll-arm-wedge-seat-slipcover",
+   "title": "PB Pearce Roll Arm Wedge Seat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PRA-48X",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-48X_CNRP_PM_CVC-01.jpg?v=1741320181",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-48X_CNRP_PM_CVC-01.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_398_Pottery_20Barn_Pearce_20Roll_20Arm_sofa.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_397_Pottery_20Barn_Pearce_20Roll_20Arm_sofa.jpg?v=1741320181"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:PB",
+    "categoryproducts:PB-PRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-PRA-48X",
+    "FLT___Product_Ref__Old____PB_PRA_6W",
+    "FLT___Series_Code___PRA",
+    "FLT___Series_Name___Pearce_Roll_Arm",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "other_shaped_back_cushion:2",
+    "other_shaped_seat_cushion:1",
+    "PB-PRA-48X",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Pearce Roll Arm",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PRA-48X",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pearce-roll-arm-72-sofa-slipcover",
+   "title": "Pearce Roll Arm 72\" Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PRA-73",
+   "price": "579.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-73_CNRP_PM_CVC-01.jpg?v=1741320179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-73_CNRP_PM_CVC-01.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_646_Pottery_Barn_Pearce_Roll_Arm_sofa_5380bf64-1f21-4bb1-aad5-192dd58f073a.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_647_Pottery_Barn_Pearce_Roll_Arm_sofa_2183f102-b803-41cc-8908-e91f3e868e5a.jpg?v=1741320179"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB-PRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-PRA-73",
+    "FLT___Product_Ref__Old____PB_PRA_2",
+    "FLT___Series_Code___PRA",
+    "FLT___Series_Name___Pearce_Roll_Arm",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "PB-PRA-73",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Pearce Roll Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:0",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PRA-73",
+     "price": "579.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pearce-roll-arm-81-sofa-slipcover",
+   "title": "Pearce Roll Arm 81\" Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PRA-81",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_PB_PB-PRA_PB-PRA-81_PB-PRA-81_SV_2S-2B_CNRP_PM_CVC-01.jpg?v=1758075137",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_PB_PB-PRA_PB-PRA-81_PB-PRA-81_SV_2S-2B_CNRP_PM_CVC-01.jpg?v=1758075137"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-PRA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Series_Code___PRA",
+    "FLT___Series_Name___Pearce_Roll_Arm",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "PB-PRA-81",
+    "series:Pearce Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PRA-81",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pearce-roll-arm-armchair-slipcover",
+   "title": "Pearce Roll Arm Armchair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PRA-46",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-46_CNRP_PM_CVC-01.jpg?v=1741320175",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-46_CNRP_PM_CVC-01.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_395_Pottery_20Barn_Pearce_20Roll_20Arm_sofa.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_394_Pottery_20Barn_Pearce_20Roll_20Arm_sofa.jpg?v=1741320175"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:PB",
+    "categoryproducts:PB-PRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-PRA-46",
+    "FLT___Product_Ref__Old____PB_PRA_1",
+    "FLT___Series_Code___PRA",
+    "FLT___Series_Name___Pearce_Roll_Arm",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-PRA-46",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Pearce Roll Arm",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No",
+    "t_shaped_back_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PRA-46",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pearce-roll-arm-armless-loveseat-slipcover",
+   "title": "Pearce Roll Arm Armless Loveseat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PRA-63X",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-63X_CNRP_PM_CVC-01.jpg?v=1741320178",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-63X_CNRP_PM_CVC-01.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_646_Pottery_Barn_Pearce_Roll_Arm_sofa_dc1e7a76-3d8b-4d71-969d-ebf99db9f7f0.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_647_Pottery_Barn_Pearce_Roll_Arm_sofa_41c83829-87ae-4eb5-b5c1-36c59609a414.jpg?v=1741320178"
+   ],
+   "tags": [
+    "categoryproducts:PB-PRA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-PRA-63X",
+    "FLT___Product_Ref__Old____PB_PRA_2X",
+    "FLT___Series_Code___PRA",
+    "FLT___Series_Name___Pearce_Roll_Arm",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "PB-PRA-63X",
+    "series:Pearce Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PRA-63X",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pearce-roll-arm-left-right-arm-chair-slipcover",
+   "title": "Pearce Roll Arm Left/Right Arm Chair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PRA-42M",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-42M_L_CNRP_PM_CVC-01.jpg?v=1741320177",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-42M_L_CNRP_PM_CVC-01.jpg?v=1741320177",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_398_Pottery_20Barn_Pearce_20Roll_20Arm_sofa_8a2e565a-63ef-4d19-85b8-2618c99f9011.jpg?v=1741320177",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_396_Pottery_Barn_Pearce_Roll_Arm_sofa.jpg?v=1741320177"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:PB",
+    "categoryproducts:PB-PRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-PRA-42M",
+    "FLT___Product_Ref__Old____PB_PRA_1R",
+    "FLT___Series_Code___PRA",
+    "FLT___Series_Name___Pearce_Roll_Arm",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:1",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:One Arm",
+    "PB-PRA-42M",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Pearce Roll Arm",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PRA-42M",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pearce-roll-arm-left-right-arm-chaise-slipcover",
+   "title": "Pearce Roll Arm Left/Right Arm Chaise Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PRA-35M",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-35M_L_CNRP_PM_CVC-01.jpg?v=1741320181",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-35M_L_CNRP_PM_CVC-01.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_646_Pottery_Barn_Pearce_Roll_Arm_sofa.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_647_Pottery_Barn_Pearce_Roll_Arm_sofa.jpg?v=1741320181"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Chaise Lounge",
+    "categoryproducts:PB-PRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-PRA-35M",
+    "FLT___Product_Ref__Old____PB_PRA_5L",
+    "FLT___Series_Code___PRA",
+    "FLT___Series_Name___Pearce_Roll_Arm",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "l_shaped_back_cushion:1",
+    "l_shaped_seat_cushion:1",
+    "main_arm_shape_categories:Round Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:One Arm",
+    "PB-PRA-35M",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Pearce Roll Arm",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PRA-35M",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pearce-roll-armless-chair-slipcover",
+   "title": "Pearce Roll Armless Chair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PRA-41X",
+   "price": "369.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-41X_CNRP_PM_CVC-01.jpg?v=1741320178",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PRA-41X_CNRP_PM_CVC-01.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_398_Pottery_20Barn_Pearce_20Roll_20Arm_sofa_5791420c-6055-4518-bb4c-4e8590a36c6b.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_397_Pottery_20Barn_Pearce_20Roll_20Arm_sofa_7be33f94-da21-42eb-b319-ca0d76beee3a.jpg?v=1741320178"
+   ],
+   "tags": [
+    "categoryproducts:PB-PRA",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-PRA-41X",
+    "FLT___Product_Ref__Old____PB_PRA_1X",
+    "FLT___Series_Code___PRA",
+    "FLT___Series_Name___Pearce_Roll_Arm",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "important_notes:643",
+    "PB-PRA-41X",
+    "series:Pearce Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PRA-41X",
+     "price": "369.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pearce-square-arm-3-piece-sectional-with-wedge-slipcover",
+   "title": "Pearce Square Arm 3-Piece Sectional with Wedge Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PSA-118",
+   "price": "1379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-118_L_CNRP_PM_CVC-01.jpg?v=1741320182",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-118_L_CNRP_PM_CVC-01.jpg?v=1741320182"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-PSA",
+    "description:",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "PB-PSA-118",
+    "series:Pearce Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PSA-118",
+     "price": "1379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pearce-square-arm-83-sleeper-sofa-slipcover",
+   "title": "Pearce Square Arm 83\" Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PSA-83B",
+   "price": "749.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-83B_2S-2B_LSKT_PM_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-83B_2S-2B_LSKT_PM_CVC-01.jpg?v=1741575837"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-PSA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-PSA-83B",
+    "series:Pearce Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PSA-83B",
+     "price": "749.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pearce-square-arm-83-sofa-slipcover",
+   "title": "Pearce Square Arm 83\" Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PSA-83",
+   "price": "729.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-83_LV_2S-2B_LSKT_PM_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-83_LV_2S-2B_LSKT_PM_CVC-01.jpg?v=1741575836"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-PSA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-PSA-83",
+    "series:Pearce Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PSA-83",
+     "price": "729.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pearce-square-arm-corner-wedge-sofa-slipcover",
+   "title": "Pearce Square Arm Corner Wedge Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PSA-48X",
+   "price": "509.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-48X.jpg?v=1774923489",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-48X.jpg?v=1774923489",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-48X_b4efd21d-c0e7-47d2-a776-044bcba3d45b.jpg?v=1774923502"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-PSA",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-PSA-48X",
+    "series:Pearce Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PSA-48X",
+     "price": "509.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pearce-square-arm-left-right-70-loveseat-sectional-slipcover",
+   "title": "Pearce Square Arm Left/Right 70\" Loveseat Sectional Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PSA-70M",
+   "price": "539.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-70M_L_LV_2S-2B_LSKT_PM_CVC-01.jpg?v=1741741761",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-70M_L_LV_2S-2B_LSKT_PM_CVC-01.jpg?v=1741741761"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-PSA",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "PB-PSA-70M",
+    "series:Pearce Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PSA-70M",
+     "price": "539.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pearce-square-arm-left-right-armchair-sectional-slipcover",
+   "title": "Pearce Square Arm Left/Right Armchair Sectional Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-PSA-39M",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-39M_L_LV_LSKT_PM_CVC-01.jpg?v=1741741763",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-PSA-39M_L_LV_LSKT_PM_CVC-01.jpg?v=1741741763"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-PSA",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-PSA-39M",
+    "series:Pearce Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-PSA-39M",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

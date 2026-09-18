@@ -1,0 +1,47 @@
+{
+ "handle": "ashley-alesandra-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:50.412Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "alesandra-loveseat-slipcover",
+   "title": "Alesandra Loveseat Slipcover",
+   "vendor": "Ashley Furniture Homestore",
+   "sku": "AY-AA-68",
+   "price": "559.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AY-AA-68_SHRT_PM_CVC-01.jpg?v=1741320087",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AY-AA-68_SHRT_PM_CVC-01.jpg?v=1741320087"
+   ],
+   "tags": [
+    "AY-AA-68",
+    "categoryproducts:AY",
+    "categoryproducts:AY-AA",
+    "description:",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "series:Alesandra"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AY-AA-68",
+     "price": "559.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

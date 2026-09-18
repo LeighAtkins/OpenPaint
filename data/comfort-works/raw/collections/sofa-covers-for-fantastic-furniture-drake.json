@@ -1,0 +1,48 @@
+{
+ "handle": "sofa-covers-for-fantastic-furniture-drake",
+ "fetchedAt": "2026-09-18T05:38:27.061Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "drake-3-seater-76-sofa-bed-slipcover",
+   "title": "Drake 3 Seater 76\" Sofa Bed Slipcover",
+   "vendor": "Fantastic Furniture",
+   "sku": "FC-DE-76B",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/FC-DE-76B_SHRT_SP_CVC-01.jpg?v=1741675290",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/FC-DE-76B_SHRT_SP_CVC-01.jpg?v=1741675290"
+   ],
+   "tags": [
+    "categoryproducts:FC",
+    "categoryproducts:FC-DE",
+    "description:",
+    "Fantastic Furniture",
+    "FC-DE-76B",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Drake"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "FC-DE-76B",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

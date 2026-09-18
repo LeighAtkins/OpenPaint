@@ -1,0 +1,50 @@
+{
+ "handle": "west-elm-dalton-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:37.416Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "dalton-92-sofa-slipcover",
+   "title": "Dalton 92\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-DN-92",
+   "price": "469.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-DN-92_WE-DN-92_4676a76c-5130-4143-9ddd-d82766e1f80c.jpg?v=1733380118",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-DN-92_WE-DN-92_4676a76c-5130-4143-9ddd-d82766e1f80c.jpg?v=1733380118",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-DN-92_WE-DN-92_8f012039-ae40-4579-905a-fde7a71d358f.jpg?v=1733380125"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-DN",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Dalton",
+    "WE-DN-92",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-DN-92",
+     "price": "469.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

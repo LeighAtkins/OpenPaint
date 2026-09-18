@@ -1,0 +1,449 @@
+{
+ "handle": "west-elm-andes-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:35.638Z",
+ "count": 7,
+ "products": [
+  {
+   "handle": "andes-76-5-sofa-slipcover",
+   "title": "Andes 76.5 Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-AS-76",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-76_VELC_SP_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-76_VELC_SP_CVC-01.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_497_West_Elm_Andes_sofa_3c7f9280-9119-43e3-89a3-15246a6c4c42.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_502_West_Elm_Andes_sofa_dc081e0f-6aa0-4270-b70e-0078351d0e15.jpg?v=1741320196"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CS",
+    "categoryproducts:WE-AS",
+    "categoryproducts:WE-sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-AS-76",
+    "FLT___Series_Code___AS",
+    "FLT___Series_Name___Andes",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Andes",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "WE-AS-76"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-AS-76",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "andes-ottoman-slipcover",
+   "title": "Andes Ottoman Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-AS-39F",
+   "price": "109.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-76F_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-76F_VELC_SP_CVC-01.jpg?v=1741320197",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_501_West_20Elm_Andes_sofa_dd08c585-ee84-457f-a0ba-72c045158309.jpg?v=1741320197",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_497_West_Elm_Andes_sofa.jpg?v=1741320197"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:WE-0",
+    "categoryproducts:WE-AS",
+    "categoryproducts:WE-S",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-AS-39F",
+    "FLT___Product_Ref__Old____WE_AS_0",
+    "FLT___Series_Code___AS",
+    "FLT___Series_Name___Andes",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Andes",
+    "size:1 Seater",
+    "storage:No",
+    "WE-AS-39F"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-AS-39F",
+     "price": "109.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "andes-left-right-arm-2-5-seater-sofa-slipcover",
+   "title": "Andes Left/Right Arm 2.5 Seater Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-AS-66M",
+   "price": "439.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-76M_L_VELC_SP_CVC-01.jpg?v=1741320195",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-76M_L_VELC_SP_CVC-01.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_501_West_20Elm_Andes_sofa_0d47ec62-648b-4872-b20e-bd765ae78431.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_500_West_Elm_Andes_sofa.jpg?v=1741320195"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:WE-AS",
+    "categoryproducts:WE-S",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-AS-66M",
+    "FLT___Product_Ref__Old____WE_AS_2R",
+    "FLT___Series_Code___AS",
+    "FLT___Series_Name___Andes",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_seat_cushion:1",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:One Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Andes",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "WE-AS-66M"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-AS-66M",
+     "price": "439.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "andes-corner-seat-sofa-slipcover",
+   "title": "Andes Corner Seat Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-AS-39CR",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-76CR_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-76CR_VELC_SP_CVC-01.jpg?v=1741320197",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_499_West_Elm_Andes_sofa.jpg?v=1741320197",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_500_West_Elm_Andes_sofa_65ffd51e-9949-4b17-ab95-31d1b36826e9.jpg?v=1741320197"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Corner Section",
+    "categoryproducts:WE-AS",
+    "categoryproducts:WE-S",
+    "categoryproducts:WE-sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-AS-76CR",
+    "FLT___Product_Ref__Old____WE_AS_6",
+    "FLT___Series_Code___AS",
+    "FLT___Series_Name___Andes",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Andes",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "WE-AS-39CR"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-AS-39CR",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "andes-86-sofa-slipcover",
+   "title": "Andes 86\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-AS-86",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-86_VELC_SP_CVC-01.jpg?v=1741320192",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-86_VELC_SP_CVC-01.jpg?v=1741320192",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_498_West_20Elm_Andes_sofa.jpg?v=1741320192",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_502_West_Elm_Andes_sofa.jpg?v=1741320192"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:WE-AS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-AS-86",
+    "FLT___Series_Code___AS",
+    "FLT___Series_Name___Andes",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Andes",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "WE-AS-86"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-AS-86",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "andes-left-right-arm-terminal-chaise-slipcover",
+   "title": "Andes Left/Right Arm Terminal Chaise Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-AS-40M",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-40M_L_VELC_SP_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-40M_L_VELC_SP_CVC-01.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_501_West_20Elm_Andes_sofa.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_498_West_20Elm_Andes_sofa_db6f519c-7724-4320-b365-525570140b44.jpg?v=1741320196"
+   ],
+   "tags": [
+    "categoryproducts:WE-AS",
+    "categoryproducts:WE-S",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-AS-40M",
+    "FLT___Product_Ref__Old____WE_AS_40R",
+    "FLT___Series_Code___AS",
+    "FLT___Series_Name___Andes",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "series:Andes",
+    "WE-AS-40M"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-AS-40M",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "andes-left-right-arm-2-seater-sofa-slipcover",
+   "title": "Andes Left/Right Arm 2 Seater Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-AS-55M",
+   "price": "349.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-55M_R_LV_STD_VELC_SP_CVC-01.webp?v=1772590851",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-55M_R_LV_STD_VELC_SP_CVC-01.webp?v=1772590851"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-AS",
+    "categoryproducts:WE-S",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Andes",
+    "WE-AS-55M",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-AS-55M",
+     "price": "349.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

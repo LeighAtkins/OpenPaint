@@ -1,0 +1,48 @@
+{
+ "handle": "wtw-style-tismo-slipcovers",
+ "fetchedAt": "2026-09-18T05:40:50.055Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "tismo-2-seater-sofa-slipcover",
+   "title": "Tismo 2 Seater Sofa Slipcover",
+   "vendor": "WTW Style",
+   "sku": "WT-TO-36",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WTW-TO-36_WTW-TO-36_d95cb66f-4173-4685-a44e-ba4bf31e9885.jpg?v=1733363250",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WTW-TO-36_WTW-TO-36_d95cb66f-4173-4685-a44e-ba4bf31e9885.jpg?v=1733363250",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WTW-TO-36_WTW-TO-36_8ac6a489-9500-45d6-8dd7-513b4f408375.jpg?v=1733363296"
+   ],
+   "tags": [
+    "categoryproducts:WT",
+    "categoryproducts:WT-TO",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Tismo",
+    "WT-TO-36"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WT-TO-36",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,119 @@
+{
+ "handle": "bobs-discount-furniture-dream-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:56.584Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "dream-corner-chair-slipcover",
+   "title": "Dream Corner Chair Slipcover",
+   "vendor": "Bobs Discount Furniture",
+   "sku": "BDF-DM-44X",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BDF-DM-44X_VELC_SP_CVC-01.webp?v=1769577386",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BDF-DM-44X_VELC_SP_CVC-01.webp?v=1769577386"
+   ],
+   "tags": [
+    "BDF-DM-44X",
+    "categoryproducts:BDF",
+    "description:",
+    "FLT__MAIN",
+    "series:Dream"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BDF-DM-44X",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "dream-ottoman-slipcover",
+   "title": "Dream Ottoman Slipcover",
+   "vendor": "Bobs Discount Furniture",
+   "sku": "BDF-DM-45F",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BDF-DM-45F_VELC_SP_CVC-01.webp?v=1769578138",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BDF-DM-45F_VELC_SP_CVC-01.webp?v=1769578138"
+   ],
+   "tags": [
+    "BDF-DM-45F",
+    "categoryproducts:BDF",
+    "description:",
+    "FLT__MAIN",
+    "series:Dream"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BDF-DM-45F",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "dream-armless-chair-slipcover",
+   "title": "Dream Armless Chair Slipcover",
+   "vendor": "Bobs Discount Furniture",
+   "sku": "BDF-DM-43X",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BDF-DM-43X_VELC_SP_CVC-01.webp?v=1769570770",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BDF-DM-43X_VELC_SP_CVC-01.webp?v=1769570770"
+   ],
+   "tags": [
+    "BDF-DM-43X",
+    "categoryproducts:BDF",
+    "categoryproducts:BDF-DM",
+    "description:",
+    "FLT__MAIN",
+    "series:Dream"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BDF-DM-43X",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

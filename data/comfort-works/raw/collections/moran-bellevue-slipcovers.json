@@ -1,0 +1,48 @@
+{
+ "handle": "moran-bellevue-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:29.612Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "bellevue-79-sofa-slipcover",
+   "title": "Bellevue 79\" Sofa Slipcover",
+   "vendor": "Moran",
+   "sku": "MN-BE-79",
+   "price": "789.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MN-BE-79_LV_CNRP_PM_CVC-01.jpg?v=1741320171",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MN-BE-79_LV_CNRP_PM_CVC-01.jpg?v=1741320171"
+   ],
+   "tags": [
+    "categoryproducts:MN",
+    "categoryproducts:MN-BE",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "MN-BE-79",
+    "Moran",
+    "series:Bellevue"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MN-BE-79",
+     "price": "789.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,205 @@
+{
+ "handle": "ikea-friheten-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:46.426Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "friheten-3-seater-sofa-bed-cover-loose-fit",
+   "title": "Friheten 3-Seater Sofa-Bed Cover (Loose Fit)",
+   "vendor": "IKEA",
+   "sku": "IK-FN-3B",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FN-3B_SHRT_SP_CVC-01_2X_5833a534-ad06-47d7-97d0-c30017e542d8.jpg?v=1749199078",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FN-3B_SHRT_SP_CVC-01_2X_5833a534-ad06-47d7-97d0-c30017e542d8.jpg?v=1749199078"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:CS",
+    "categoryproducts:FN",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FN-3B",
+    "FLT___Product_Ref__Old____FNX_B",
+    "FLT___Series_Code___FN",
+    "FLT___Series_Name___Friheten",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-FN-3B",
+    "installation:616",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Friheten",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FN-3B",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "friheten-chaise-armrest-protector-covers",
+   "title": "Friheten Chaise Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-FN-APM",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FN-APM_L_SP_CVC-01.jpg?v=1741320134",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FN-APM_L_SP_CVC-01.jpg?v=1741320134"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FN-APM",
+    "FLT___Product_Ref__Old____FNR_AP",
+    "FLT___Series_Code___FN",
+    "FLT___Series_Name___Friheten",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-FN-APM",
+    "series:Friheten"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FN-APM",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "friheten-corner-sofa-bed-cover",
+   "title": "Friheten Corner Sofa-Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FN-25BM",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FN-25BM_R_SV_SHRT_SP_CVC-01_2X_c0dc0e02-5e98-4a7e-bbe6-071c25b8619e.jpg?v=1749199532",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FN-25BM_R_SV_SHRT_SP_CVC-01_2X_c0dc0e02-5e98-4a7e-bbe6-071c25b8619e.jpg?v=1749199532"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:FN",
+    "categoryproducts:IK",
+    "chaise_lounge:Yes",
+    "chaise_lounge_position:Left",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FN-25BM",
+    "FLT___Product_Ref__Old____FN3",
+    "FLT___Series_Code___FN",
+    "FLT___Series_Name___Friheten",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT___Variant_2_Name___The_fabric_version",
+    "FLT___Variant_2_Name___The_leather_version",
+    "FLT___Variant_2_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-FN-25BM",
+    "installation:616",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:One Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Friheten",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FN-25BM",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

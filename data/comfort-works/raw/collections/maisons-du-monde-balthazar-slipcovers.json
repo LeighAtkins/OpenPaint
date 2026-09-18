@@ -1,0 +1,77 @@
+{
+ "handle": "maisons-du-monde-balthazar-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:22.443Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "balthazar-3-seater-sofa-bed-slipcover",
+   "title": "Balthazar 3 Seater Sofa Bed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-BZR-66B",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BZR-66B_SHRT_SP_CVC-01.jpg?v=1741320168",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BZR-66B_SHRT_SP_CVC-01.jpg?v=1741320168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_538_Maison_du_Monde_Balthazar_sofa.jpg?v=1741320168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_537_Maison_du_Monde_Balthazar_sofa.jpg?v=1741320168"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp Straight",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-BZR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-BZR-66B",
+    "FLT___Product_Ref__Old____MDM_BZR_3B",
+    "FLT___Series_Code___BZR",
+    "FLT___Series_Name___Balthazar",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MDM-BZR-66B",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Balthazar",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-BZR-66B",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,570 @@
+{
+ "handle": "slipcover-fabric-by-the-meter-1",
+ "fetchedAt": "2026-09-18T05:38:16.079Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "slipcover-fabric-by-the-meter",
+   "title": "Slipcover Fabric By The Meter",
+   "vendor": "Comfort Works",
+   "sku": "swatch-fabric__BEN-01",
+   "price": "39.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/386-915-category_wide.jpg?v=1740532549",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/386-915-category_wide.jpg?v=1740532549",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/386-915-category_wide_8351539f-ece2-42a3-9cd7-ed1a029295f6.jpg?v=1741050019"
+   ],
+   "tags": [
+    "FLT__MAIN",
+    "swatch-fabric"
+   ],
+   "variants": [
+    {
+     "title": "Crypton® Chenille Snow",
+     "sku": "swatch-fabric__BEN-01",
+     "price": "39.00",
+     "option1": "Crypton® Chenille Snow",
+     "available": true
+    },
+    {
+     "title": "Crypton® Chenille Cream",
+     "sku": "swatch-fabric__BEN-02",
+     "price": "39.00",
+     "option1": "Crypton® Chenille Cream",
+     "available": true
+    },
+    {
+     "title": "Crypton® Chenille Dark Teal",
+     "sku": "swatch-fabric__BEN-03",
+     "price": "39.00",
+     "option1": "Crypton® Chenille Dark Teal",
+     "available": true
+    },
+    {
+     "title": "Crypton® Chenille Burnt Orange",
+     "sku": "swatch-fabric__BEN-04",
+     "price": "39.00",
+     "option1": "Crypton® Chenille Burnt Orange",
+     "available": true
+    },
+    {
+     "title": "Everyday Velvet Sand",
+     "sku": "swatch-fabric__ROYAL-03",
+     "price": "29.00",
+     "option1": "Everyday Velvet Sand",
+     "available": true
+    },
+    {
+     "title": "Everyday Velvet Cacao",
+     "sku": "swatch-fabric__ROYAL-04",
+     "price": "29.00",
+     "option1": "Everyday Velvet Cacao",
+     "available": true
+    },
+    {
+     "title": "Everyday Velvet Storm",
+     "sku": "swatch-fabric__ROYAL-20",
+     "price": "29.00",
+     "option1": "Everyday Velvet Storm",
+     "available": true
+    },
+    {
+     "title": "Everyday Velvet Navy",
+     "sku": "swatch-fabric__ROYAL-14",
+     "price": "29.00",
+     "option1": "Everyday Velvet Navy",
+     "available": true
+    },
+    {
+     "title": "Everyday Velvet Dark Teal",
+     "sku": "swatch-fabric__ROYAL-13",
+     "price": "29.00",
+     "option1": "Everyday Velvet Dark Teal",
+     "available": true
+    },
+    {
+     "title": "Everyday Cotton White",
+     "sku": "swatch-fabric__CVC-01",
+     "price": "29.00",
+     "option1": "Everyday Cotton White",
+     "available": true
+    },
+    {
+     "title": "Everyday Cotton Sand",
+     "sku": "swatch-fabric__CVC-02",
+     "price": "29.00",
+     "option1": "Everyday Cotton Sand",
+     "available": true
+    },
+    {
+     "title": "Everyday Cotton Pebble",
+     "sku": "swatch-fabric__CVC-06",
+     "price": "29.00",
+     "option1": "Everyday Cotton Pebble",
+     "available": true
+    },
+    {
+     "title": "Everyday Cotton Charcoal",
+     "sku": "swatch-fabric__CVC-07",
+     "price": "29.00",
+     "option1": "Everyday Cotton Charcoal",
+     "available": true
+    },
+    {
+     "title": "Everyday Cotton Khaki",
+     "sku": "swatch-fabric__CVC-08",
+     "price": "29.00",
+     "option1": "Everyday Cotton Khaki",
+     "available": true
+    },
+    {
+     "title": "Everyday Cotton Silver Sage",
+     "sku": "swatch-fabric__CVC-03",
+     "price": "29.00",
+     "option1": "Everyday Cotton Silver Sage",
+     "available": true
+    },
+    {
+     "title": "Everyday Cotton Forest Green",
+     "sku": "swatch-fabric__CVC-04",
+     "price": "29.00",
+     "option1": "Everyday Cotton Forest Green",
+     "available": true
+    },
+    {
+     "title": "Everyday Cotton Navy New",
+     "sku": "swatch-fabric__CVC-05",
+     "price": "29.00",
+     "option1": "Everyday Cotton Navy New",
+     "available": true
+    },
+    {
+     "title": "Care+ Canvas Sage",
+     "sku": "swatch-fabric__SUN-C10",
+     "price": "29.00",
+     "option1": "Care+ Canvas Sage",
+     "available": true
+    },
+    {
+     "title": "Care+ Canvas Ash",
+     "sku": "swatch-fabric__SUN-C13",
+     "price": "29.00",
+     "option1": "Care+ Canvas Ash",
+     "available": true
+    },
+    {
+     "title": "Care+ Canvas Beige",
+     "sku": "swatch-fabric__SUN-C38",
+     "price": "29.00",
+     "option1": "Care+ Canvas Beige",
+     "available": true
+    },
+    {
+     "title": "Care+ Canvas Snow",
+     "sku": "swatch-fabric__SUN-C31",
+     "price": "29.00",
+     "option1": "Care+ Canvas Snow",
+     "available": true
+    },
+    {
+     "title": "Care+ Tweed Amber",
+     "sku": "swatch-fabric__SUN-T04",
+     "price": "29.00",
+     "option1": "Care+ Tweed Amber",
+     "available": true
+    },
+    {
+     "title": "Care+ Tweed Sunset",
+     "sku": "swatch-fabric__SUN-T06",
+     "price": "29.00",
+     "option1": "Care+ Tweed Sunset",
+     "available": true
+    },
+    {
+     "title": "Care+ Tweed Mineral Blue",
+     "sku": "swatch-fabric__SUN-T10",
+     "price": "29.00",
+     "option1": "Care+ Tweed Mineral Blue",
+     "available": true
+    },
+    {
+     "title": "Care+ Tweed Teal",
+     "sku": "swatch-fabric__SUN-T12",
+     "price": "29.00",
+     "option1": "Care+ Tweed Teal",
+     "available": true
+    },
+    {
+     "title": "Mod Chenille Beige",
+     "sku": "swatch-fabric__ESTE-52",
+     "price": "29.00",
+     "option1": "Mod Chenille Beige",
+     "available": true
+    },
+    {
+     "title": "Mod Chenille Cream",
+     "sku": "swatch-fabric__ESTE-01",
+     "price": "0.00",
+     "option1": "Mod Chenille Cream",
+     "available": true
+    },
+    {
+     "title": "Mod Chenille Espresso",
+     "sku": "swatch-fabric__ESTE-57",
+     "price": "29.00",
+     "option1": "Mod Chenille Espresso",
+     "available": true
+    },
+    {
+     "title": "Mod Chenille Denim",
+     "sku": "swatch-fabric__ESTE-78",
+     "price": "29.00",
+     "option1": "Mod Chenille Denim",
+     "available": true
+    },
+    {
+     "title": "Mod Chenille Mist",
+     "sku": "swatch-fabric__ESTE-92",
+     "price": "29.00",
+     "option1": "Mod Chenille Mist",
+     "available": true
+    },
+    {
+     "title": "Sunbrella® Fretwork Pewter",
+     "sku": "swatch-fabric__45991-0002",
+     "price": "69.00",
+     "option1": "Sunbrella® Fretwork Pewter",
+     "available": true
+    },
+    {
+     "title": "Sunbrella® Fretwork Flax",
+     "sku": "swatch-fabric__45991-0001",
+     "price": "69.00",
+     "option1": "Sunbrella® Fretwork Flax",
+     "available": true
+    },
+    {
+     "title": "Sunbrella® Canvas Flax",
+     "sku": "swatch-fabric__5492-0000",
+     "price": "49.00",
+     "option1": "Sunbrella® Canvas Flax",
+     "available": true
+    },
+    {
+     "title": "Sunbrella® Canvas Antique Beige",
+     "sku": "swatch-fabric__5422-0000",
+     "price": "49.00",
+     "option1": "Sunbrella® Canvas Antique Beige",
+     "available": true
+    },
+    {
+     "title": "Signature Velvet Cream",
+     "sku": "swatch-fabric__PAL-01",
+     "price": "39.00",
+     "option1": "Signature Velvet Cream",
+     "available": true
+    },
+    {
+     "title": "Signature Velvet Natural",
+     "sku": "swatch-fabric__PAL-02",
+     "price": "39.00",
+     "option1": "Signature Velvet Natural",
+     "available": true
+    },
+    {
+     "title": "Signature Velvet Sand",
+     "sku": "swatch-fabric__PAL-03",
+     "price": "39.00",
+     "option1": "Signature Velvet Sand",
+     "available": true
+    },
+    {
+     "title": "Signature Velvet Hazel",
+     "sku": "swatch-fabric__PAL-04",
+     "price": "39.00",
+     "option1": "Signature Velvet Hazel",
+     "available": true
+    },
+    {
+     "title": "Signature Velvet Sunset",
+     "sku": "swatch-fabric__PAL-07",
+     "price": "39.00",
+     "option1": "Signature Velvet Sunset",
+     "available": true
+    },
+    {
+     "title": "Signature Velvet Caramel",
+     "sku": "swatch-fabric__PAL-09",
+     "price": "39.00",
+     "option1": "Signature Velvet Caramel",
+     "available": true
+    },
+    {
+     "title": "Signature Velvet Bayleaf",
+     "sku": "swatch-fabric__PAL-11",
+     "price": "39.00",
+     "option1": "Signature Velvet Bayleaf",
+     "available": true
+    },
+    {
+     "title": "Signature Velvet Midnight",
+     "sku": "swatch-fabric__PAL-12",
+     "price": "39.00",
+     "option1": "Signature Velvet Midnight",
+     "available": true
+    },
+    {
+     "title": "Signature Velvet Eucalyptus",
+     "sku": "swatch-fabric__PAL-14",
+     "price": "39.00",
+     "option1": "Signature Velvet Eucalyptus",
+     "available": true
+    },
+    {
+     "title": "Everyday Weave Pebble",
+     "sku": "swatch-fabric__EYL-20",
+     "price": "19.00",
+     "option1": "Everyday Weave Pebble",
+     "available": true
+    },
+    {
+     "title": "Everyday Weave Storm",
+     "sku": "swatch-fabric__EYL-24",
+     "price": "19.00",
+     "option1": "Everyday Weave Storm",
+     "available": true
+    },
+    {
+     "title": "Everyday Weave Cream",
+     "sku": "swatch-fabric__EYL-35",
+     "price": "19.00",
+     "option1": "Everyday Weave Cream",
+     "available": true
+    },
+    {
+     "title": "Everyday Weave Teal",
+     "sku": "swatch-fabric__EYL-43",
+     "price": "19.00",
+     "option1": "Everyday Weave Teal",
+     "available": true
+    },
+    {
+     "title": "Everyday Weave Basil Green",
+     "sku": "swatch-fabric__EYL-47",
+     "price": "19.00",
+     "option1": "Everyday Weave Basil Green",
+     "available": true
+    },
+    {
+     "title": "Everyday Weave Maroon",
+     "sku": "swatch-fabric__EYL-38",
+     "price": "19.00",
+     "option1": "Everyday Weave Maroon",
+     "available": true
+    },
+    {
+     "title": "Everyday Weave Rust",
+     "sku": "swatch-fabric__EYL-39",
+     "price": "19.00",
+     "option1": "Everyday Weave Rust",
+     "available": true
+    },
+    {
+     "title": "Everyday Weave Navy",
+     "sku": "swatch-fabric__EYL-44",
+     "price": "19.00",
+     "option1": "Everyday Weave Navy",
+     "available": true
+    },
+    {
+     "title": "Everyday Cotton Navy",
+     "sku": "swatch-fabric__TC-05",
+     "price": "29.00",
+     "option1": "Everyday Cotton Navy",
+     "available": true
+    },
+    {
+     "title": "Signature Microfiber Sand",
+     "sku": "swatch-fabric__FA-45",
+     "price": "39.00",
+     "option1": "Signature Microfiber Sand",
+     "available": true
+    },
+    {
+     "title": "Signature Microfiber Cream",
+     "sku": "swatch-fabric__FA-01",
+     "price": "39.00",
+     "option1": "Signature Microfiber Cream",
+     "available": true
+    },
+    {
+     "title": "Signature Microfiber Caramel",
+     "sku": "swatch-fabric__FA-09",
+     "price": "39.00",
+     "option1": "Signature Microfiber Caramel",
+     "available": true
+    },
+    {
+     "title": "Signature Microfiber Silver Sage",
+     "sku": "swatch-fabric__FA-67",
+     "price": "39.00",
+     "option1": "Signature Microfiber Silver Sage",
+     "available": true
+    },
+    {
+     "title": "Signature Microfiber Forest Green",
+     "sku": "swatch-fabric__FA-63",
+     "price": "39.00",
+     "option1": "Signature Microfiber Forest Green",
+     "available": true
+    },
+    {
+     "title": "Signature Microfiber Coral",
+     "sku": "swatch-fabric__FA-14",
+     "price": "39.00",
+     "option1": "Signature Microfiber Coral",
+     "available": true
+    },
+    {
+     "title": "Signature Microfiber Dark Coral",
+     "sku": "swatch-fabric__FA-54",
+     "price": "39.00",
+     "option1": "Signature Microfiber Dark Coral",
+     "available": true
+    },
+    {
+     "title": "Mod Boucle Cream",
+     "sku": "swatch-fabric__MOSS-01",
+     "price": "29.00",
+     "option1": "Mod Boucle Cream",
+     "available": true
+    },
+    {
+     "title": "Mod Boucle Amber",
+     "sku": "swatch-fabric__MOSS-09",
+     "price": "29.00",
+     "option1": "Mod Boucle Amber",
+     "available": true
+    },
+    {
+     "title": "Mod Boucle Oatmeal",
+     "sku": "swatch-fabric__MOSS-40",
+     "price": "29.00",
+     "option1": "Mod Boucle Oatmeal",
+     "available": true
+    },
+    {
+     "title": "Mod Boucle Charcoal",
+     "sku": "swatch-fabric__MOSS-97",
+     "price": "29.00",
+     "option1": "Mod Boucle Charcoal",
+     "available": true
+    },
+    {
+     "title": "Care+ Linen White",
+     "sku": "swatch-fabric__COS-101",
+     "price": "39.00",
+     "option1": "Care+ Linen White",
+     "available": true
+    },
+    {
+     "title": "Care+ Linen Cream",
+     "sku": "swatch-fabric__COS-103",
+     "price": "39.00",
+     "option1": "Care+ Linen Cream",
+     "available": true
+    },
+    {
+     "title": "Care+ Linen Natural",
+     "sku": "swatch-fabric__COS-105",
+     "price": "39.00",
+     "option1": "Care+ Linen Natural",
+     "available": true
+    },
+    {
+     "title": "Classic Velvet Peach",
+     "sku": "swatch-fabric__FM-02P",
+     "price": "19.00",
+     "option1": "Classic Velvet Peach",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Fabrics",
+     "position": 1,
+     "values": [
+      "Crypton® Chenille Snow",
+      "Crypton® Chenille Cream",
+      "Crypton® Chenille Dark Teal",
+      "Crypton® Chenille Burnt Orange",
+      "Everyday Velvet Sand",
+      "Everyday Velvet Cacao",
+      "Everyday Velvet Storm",
+      "Everyday Velvet Navy",
+      "Everyday Velvet Dark Teal",
+      "Everyday Cotton White",
+      "Everyday Cotton Sand",
+      "Everyday Cotton Pebble",
+      "Everyday Cotton Charcoal",
+      "Everyday Cotton Khaki",
+      "Everyday Cotton Silver Sage",
+      "Everyday Cotton Forest Green",
+      "Everyday Cotton Navy New",
+      "Care+ Canvas Sage",
+      "Care+ Canvas Ash",
+      "Care+ Canvas Beige",
+      "Care+ Canvas Snow",
+      "Care+ Tweed Amber",
+      "Care+ Tweed Sunset",
+      "Care+ Tweed Mineral Blue",
+      "Care+ Tweed Teal",
+      "Mod Chenille Beige",
+      "Mod Chenille Cream",
+      "Mod Chenille Espresso",
+      "Mod Chenille Denim",
+      "Mod Chenille Mist",
+      "Sunbrella® Fretwork Pewter",
+      "Sunbrella® Fretwork Flax",
+      "Sunbrella® Canvas Flax",
+      "Sunbrella® Canvas Antique Beige",
+      "Signature Velvet Cream",
+      "Signature Velvet Natural",
+      "Signature Velvet Sand",
+      "Signature Velvet Hazel",
+      "Signature Velvet Sunset",
+      "Signature Velvet Caramel",
+      "Signature Velvet Bayleaf",
+      "Signature Velvet Midnight",
+      "Signature Velvet Eucalyptus",
+      "Everyday Weave Pebble",
+      "Everyday Weave Storm",
+      "Everyday Weave Cream",
+      "Everyday Weave Teal",
+      "Everyday Weave Basil Green",
+      "Everyday Weave Maroon",
+      "Everyday Weave Rust",
+      "Everyday Weave Navy",
+      "Everyday Cotton Navy",
+      "Signature Microfiber Sand",
+      "Signature Microfiber Cream",
+      "Signature Microfiber Caramel",
+      "Signature Microfiber Silver Sage",
+      "Signature Microfiber Forest Green",
+      "Signature Microfiber Coral",
+      "Signature Microfiber Dark Coral",
+      "Mod Boucle Cream",
+      "Mod Boucle Amber",
+      "Mod Boucle Oatmeal",
+      "Mod Boucle Charcoal",
+      "Care+ Linen White",
+      "Care+ Linen Cream",
+      "Care+ Linen Natural",
+      "Classic Velvet Peach"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,75 @@
+{
+ "handle": "west-elm-auburn-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:36.490Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "auburn-chair-slipcover",
+   "title": "Auburn Chair Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-AN-30",
+   "price": "259.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AN-30_LSKT_SP_CVC-01.jpg?v=1741320194",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AN-30_LSKT_SP_CVC-01.jpg?v=1741320194",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_503_West_Elm_Auburn_sofa.jpg?v=1741320194",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_504_West_Elm_Auburn_sofa.jpg?v=1741320194"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular High",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:WE-AN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-AN-30",
+    "FLT___Product_Ref__Old____WE_AN_59",
+    "FLT___Series_Code___AN",
+    "FLT___Series_Name___Auburn",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Auburn",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "WE-AN-30"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-AN-30",
+     "price": "259.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

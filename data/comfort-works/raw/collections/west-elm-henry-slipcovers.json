@@ -1,0 +1,466 @@
+{
+ "handle": "west-elm-henry-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:40.349Z",
+ "count": 7,
+ "products": [
+  {
+   "handle": "henry-armchair-slipcover",
+   "title": "Henry Armchair Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HE-35",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-35_LSKT_PM_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-35_LSKT_PM_CVC-01.jpg?v=1741320197",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_515_West_Elm_Henry_sofa.jpg?v=1741320197",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_514_West_Elm_Henry_sofa.jpg?v=1741320197"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:WE-chair",
+    "categoryproducts:WE-HE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HE-35",
+    "FLT___Product_Ref__Old____WE_HE_34",
+    "FLT___Series_Code___HE",
+    "FLT___Series_Name___Henry",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Henry",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "WE-HE-35"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HE-35",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "henry-queen-sleeper-sofa-slipcover",
+   "title": "Henry Queen Sleeper Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HE-79B",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-79B_LSKT_PM_CVC-01.jpg?v=1741320195",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-79B_LSKT_PM_CVC-01.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_515_West_Elm_Henry_sofa_f2f12ee8-787a-45e5-bc6d-729ea1e56331.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_653_West_Elm_Henry_sofa.jpg?v=1741320195"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:WE-HE",
+    "categoryproducts:WE-sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HE-79B",
+    "FLT___Series_Code___HE",
+    "FLT___Series_Name___Henry",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Henry",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "WE-HE-79B"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HE-79B",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "henry-86-sofa-slipcover",
+   "title": "Henry 86\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HE-86",
+   "price": "639.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-86_LSKT_PM_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-86_LSKT_PM_CVC-01.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_514_West_Elm_Henry_sofa_cfc0760d-0743-4897-9cf4-8138699e0a8a.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_653_West_Elm_Henry_sofa_9a77dc3f-1140-43de-a066-00560fb9ee69.jpg?v=1741320196"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:WE-HE",
+    "categoryproducts:WE-sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HE-86",
+    "FLT___Series_Code___HE",
+    "FLT___Series_Name___Henry",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Henry",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "WE-HE-86"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HE-86",
+     "price": "639.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "henry-66-sofa-slipcover",
+   "title": "Henry 66\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HE-66",
+   "price": "579.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-66_LSKT_PM_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-66_LSKT_PM_CVC-01.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_516_West_20Elm_Henry_sofa.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_652_West_Elm_Henry_sofa_45cf5ed7-b9be-4df1-a3d7-ca497b185c34.jpg?v=1741320196"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:WE-HE",
+    "categoryproducts:WE-sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HE-66",
+    "FLT___Series_Code___HE",
+    "FLT___Series_Name___Henry",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Henry",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "WE-HE-66"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HE-66",
+     "price": "579.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "henry-76-sofa-slipcover",
+   "title": "Henry 76\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HE-76",
+   "price": "569.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-76_LSKT_PM_CVC-01.jpg?v=1741320195",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-76_LSKT_PM_CVC-01.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_513_West_Elm_Henry_sofa_e802ebb3-7fbe-4a02-8f81-19eff32dea7d.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_652_West_Elm_Henry_sofa.jpg?v=1741320195"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:WE-HE",
+    "categoryproducts:WE-sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HE-76",
+    "FLT___Series_Code___HE",
+    "FLT___Series_Name___Henry",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Henry",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "WE-HE-76"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HE-76",
+     "price": "569.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "henry-ottoman-slipcover",
+   "title": "Henry Ottoman Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HE-30F",
+   "price": "109.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-30F_LSKT_PM_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-30F_LSKT_PM_CVC-01.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_516_West_20Elm_Henry_sofa_ec18a663-6b91-4e57-ad23-01513649ce34.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_513_West_Elm_Henry_sofa.jpg?v=1741320196"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:WE-0",
+    "categoryproducts:WE-HE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HE-30F",
+    "FLT___Product_Ref__Old____WE_HE_23",
+    "FLT___Series_Code___HE",
+    "FLT___Series_Name___Henry",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Henry",
+    "size:1 Seater",
+    "storage:No",
+    "WE-HE-30F"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HE-30F",
+     "price": "109.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "henry-3-piece-l-shaped-sectional-sofa-slipcover",
+   "title": "Henry 3-Piece L-Shaped Sectional Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HE-102-S",
+   "price": "1059.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-HE-102-S_WE-HE-102-S.jpg?v=1733366582",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-HE-102-S_WE-HE-102-S.jpg?v=1733366582",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-HE-102-S_WE-HE-102-S_c77ec090-5fec-4f30-9fa5-374b47f8216b.jpg?v=1733366589"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HE",
+    "categoryproducts:WE-S",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Henry",
+    "WE-HE-102-S",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HE-102-S",
+     "price": "1059.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

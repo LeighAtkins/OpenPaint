@@ -1,0 +1,48 @@
+{
+ "handle": "armonia-k-087-sofas-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:45.208Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "k-087-straight-sofa-slipcover",
+   "title": "K-087 Straight Sofa Slipcover",
+   "vendor": "Armonia",
+   "sku": "AR-K87-79",
+   "price": "439.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AR-K87-79_LV_VELC_SP_CVC-01.jpg?v=1741320087",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AR-K87-79_LV_VELC_SP_CVC-01.jpg?v=1741320087"
+   ],
+   "tags": [
+    "AR-K87-79",
+    "Armonia",
+    "categoryproducts:AR",
+    "categoryproducts:AR-K87",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:K-087"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AR-K87-79",
+     "price": "439.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,195 @@
+{
+ "handle": "custom-dining-chair-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:17.543Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "long-skirt-dining-chair-slipcover",
+   "title": "Long-Skirt Dining Chair Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CSDC-CNRP",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/long-skirt-dining-chair-slipcover.jpg?v=1678617039",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/long-skirt-dining-chair-slipcover.jpg?v=1678617039",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/Front-CSDC-CNRP.png?v=1678617039",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/Back-CSDC-CNRP.png?v=1678617039"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CSDC-CNRP",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CSDC-CNRP",
+    "FLT___Series_Code___CSDC",
+    "FLT___Size___Dining_Chair",
+    "FLT___Styles_Code___PC",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Dining Chair Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CSDC-CNRP",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "mid-skirt-dining-chair-slipcover",
+   "title": "Mid-skirt Dining Chair Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CSDC-MSKT",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/mid-skirt-dining-chair-slipcover.jpg?v=1678617038",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/mid-skirt-dining-chair-slipcover.jpg?v=1678617038",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/Front-CSDC-MSKT.png?v=1678617038",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/Back-CSDC-MSKT.png?v=1678617038"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CSDC-MSKT",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CSDC-MSKT",
+    "FLT___Series_Code___CSDC",
+    "FLT___Size___Dining_Chair",
+    "FLT___Styles_Code___PC",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Dining Chair Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CSDC-MSKT",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "snug-fit-dining-chair-slipcover",
+   "title": "Snug fit Dining Chair Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CSDC-SNUG",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/snug-fit-dining-chair-slipcover.jpg?v=1678617037",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/snug-fit-dining-chair-slipcover.jpg?v=1678617037"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CSDC-SNUG",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CSDC-SNUG",
+    "FLT___Series_Code___CSDC",
+    "FLT___Size___Dining_Chair",
+    "FLT___Styles_Code___PC",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Dining Chair Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CSDC-SNUG",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "dining-chair-with-armrest-slipcover",
+   "title": "Dining chair with armrest slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CSDC-SA-SNUG",
+   "price": "159.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/dining-chair-with-armrest-slipcover-jpg.jpg?v=1678617037",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/dining-chair-with-armrest-slipcover-jpg.jpg?v=1678617037"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CSDC-SA-SNUG",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CSDC-SA-SNUG",
+    "FLT___Series_Code___CSDC",
+    "FLT___Size___Dining_Chair",
+    "FLT___Styles_Code___PC",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Dining Chair Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CSDC-SA-SNUG",
+     "price": "159.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

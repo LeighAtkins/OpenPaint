@@ -1,0 +1,433 @@
+{
+ "handle": "ikea-landskrona-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:56.606Z",
+ "count": 6,
+ "products": [
+  {
+   "handle": "landskrona-3-seat-sofa-cover",
+   "title": "Landskrona 3-seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LSA-3",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-3_SHRT_SP_CVC-01.jpg?v=1741320154",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-3_SHRT_SP_CVC-01.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_067_IKEA_Landskrona_sofa_af9ee12a-07b7-4e05-bd6a-26e41cd92097.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_070_IKEA_Landskrona_sofa.jpg?v=1741320154"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LSA-3",
+    "FLT___Product_Ref__Old____LSA3",
+    "FLT___Series_Code___LSA",
+    "FLT___Series_Name___Landskrona",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LSA-3",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Landskrona",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LSA-3",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "landskrona-footstool-cover",
+   "title": "Landskrona Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LSA-0",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-0_SHRT_SP_CVC-01.jpg?v=1741320155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-0_SHRT_SP_CVC-01.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_071_IKEA_Landskrona_sofa_4d9008b9-a118-4a08-85e0-1c5b9838ab24.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_068_IKEA_Landskrona_sofa.jpg?v=1741320155"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:LSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LSA-0",
+    "FLT___Product_Ref__Old____LSA0",
+    "FLT___Series_Code___LSA",
+    "FLT___Series_Name___Landskrona",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-LSA-0",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Landskrona",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LSA-0",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "landskrona-armchair-cover",
+   "title": "Landskrona Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LSA-1",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-1_SHRT_SP_CVC-01.jpg?v=1741320150",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-1_SHRT_SP_CVC-01.jpg?v=1741320150",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_069_IKEA_Landskrona_sofa_277c28cb-c255-430b-b2ff-de57935a794d.jpg?v=1741320150",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_067_IKEA_Landskrona_sofa.jpg?v=1741320150"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:LSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LSA-1",
+    "FLT___Product_Ref__Old____LSA1",
+    "FLT___Series_Code___LSA",
+    "FLT___Series_Name___Landskrona",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LSA-1",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Landskrona",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LSA-1",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "landskrona-2-seat-sofa-cover",
+   "title": "Landskrona 2-seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LSA-2",
+   "price": "229.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-2_SHRT_SP_CVC-01.jpg?v=1741320154",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-2_SHRT_SP_CVC-01.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_069_IKEA_Landskrona_sofa.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_068_IKEA_Landskrona_sofa_a638b0e7-71bd-4fd5-a6d7-23ca9ceafa71.jpg?v=1741320154"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LSA-2",
+    "FLT___Product_Ref__Old____LSA2",
+    "FLT___Series_Code___LSA",
+    "FLT___Series_Name___Landskrona",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LSA-2",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Landskrona",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LSA-2",
+     "price": "229.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "landskrona-4-seat-with-chaise-sofa-cover",
+   "title": "Landskrona 4-seat (with Chaise) Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LSA-35",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-35_L_SHRT_SP_CVC-01.jpg?v=1741320146",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-35_L_SHRT_SP_CVC-01.jpg?v=1741320146",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_072_IKEA_Landskrona_sofa.jpg?v=1741320146",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_074_IKEA_Landskrona_sofa.jpg?v=1741320146"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LSA-35",
+    "FLT___Product_Ref__Old____LSA_35",
+    "FLT___Series_Code___LSA",
+    "FLT___Series_Name___Landskrona",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Variant_1_Name___Left_Chaise",
+    "FLT___Variant_1_Name___Right_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LSA-35",
+    "installation:579",
+    "l_shaped_seat_cushion:1",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Landskrona",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LSA-35",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "landskrona-3-seat-with-chaise-sofa-cover",
+   "title": "Landskrona 3-seat (with Chaise) Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LSA-25",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-25_L_SHRT_SP_CVC-01.jpg?v=1741320147",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-25_L_SHRT_SP_CVC-01.jpg?v=1741320147",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_071_IKEA_Landskrona_sofa.jpg?v=1741320147",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_073_IKEA_Landskrona_sofa.jpg?v=1741320147"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LSA-25",
+    "FLT___Product_Ref__Old____LSA_25",
+    "FLT___Series_Code___LSA",
+    "FLT___Series_Name___Landskrona",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Variant_1_Name___Left_Chaise",
+    "FLT___Variant_1_Name___Right_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LSA-25",
+    "installation:579",
+    "l_shaped_seat_cushion:1",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Landskrona",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LSA-25",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

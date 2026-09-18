@@ -1,0 +1,147 @@
+{
+ "handle": "ikea-flottebo-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:45.924Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "flottebo-sofa-bed-cover-90cm",
+   "title": "Flottebo Sofa Bed Cover (90cm)",
+   "vendor": "IKEA",
+   "sku": "IK-FLO-3BX-2C",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FLO-3BX-2C_VELC_SP_CVC-01.jpg?v=1741678946",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FLO-3BX-2C_VELC_SP_CVC-01.jpg?v=1741678946",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_106_IKEA_Flottebo_sofa.jpg?v=1741678946",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_195_IKEA_Flottebo_sofa.jpg?v=1741678946"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa bed",
+    "categoryproducts:FLO",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FLO-3BX-2C",
+    "FLT___Product_Ref__Old____FLO2",
+    "FLT___Series_Code___FLO",
+    "FLT___Series_Name___Flottebo",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-FLO-3BX-2C",
+    "important_notes:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Flottebo",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FLO-3BX-2C",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "flottebo-sofa-bed-cover-120cm",
+   "title": "Flottebo Sofa Bed Cover (120cm)",
+   "vendor": "IKEA",
+   "sku": "IK-FLO-3BX-3C",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FLO-3BX-3C_VELC_SP_CVC-01.jpg?v=1741678946",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FLO-3BX-3C_VELC_SP_CVC-01.jpg?v=1741678946",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_193_IKEA_Flottebo_sofa.jpg?v=1741678946",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_106_IKEA_Flottebo_sofa_24d86819-7372-456b-bbef-adb45b803f92.jpg?v=1741678946"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa bed",
+    "categoryproducts:FLO",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FLO-3BX-3C",
+    "FLT___Product_Ref__Old____FLO3",
+    "FLT___Series_Code___FLO",
+    "FLT___Series_Name___Flottebo",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-FLO-3BX-3C",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Flottebo",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FLO-3BX-3C",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

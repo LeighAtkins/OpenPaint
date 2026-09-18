@@ -1,0 +1,256 @@
+{
+ "handle": "ikea-angby-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:30.103Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "angby-2-seater-sofa-cover",
+   "title": "Angby 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-AY-2",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AY-2_SHRT_SP_CVC-01.jpg?v=1741314431",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AY-2_SHRT_SP_CVC-01.jpg?v=1741314431",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_211_IKEA_Angby_sofa_e0c142e4-705d-4a46-b05a-201983acf1e1.jpg?v=1741329019",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_212_IKEA_Angby_sofa.jpg?v=1741329050"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:AY",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-AY-2",
+    "FLT___Product_Ref__Old____AY2",
+    "FLT___Series_Code___AY",
+    "FLT___Series_Name___Angby",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-AY-2",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Angby",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-AY-2",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "angby-3-seater-sofa-cover",
+   "title": "Angby 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-AY-3",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AY-3_SHRT_SP_CVC-01.jpg?v=1741320159",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AY-3_SHRT_SP_CVC-01.jpg?v=1741320159"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:AY",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-AY-3",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Angby",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-AY-3",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "angby-armchair-cover",
+   "title": "Angby Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-AY-1",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AY-1_SHRT_SP_CVC-01.jpg?v=1741320117",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AY-1_SHRT_SP_CVC-01.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_212_IKEA_Angby_sofa_ad5de1ed-0dd5-444e-8588-7290e2a27de6.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_211_IKEA_Angby_sofa.jpg?v=1741320117"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:AY",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-AY-1",
+    "FLT___Product_Ref__Old____AY1",
+    "FLT___Series_Code___AY",
+    "FLT___Series_Name___Angby",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-AY-1",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Angby",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No",
+    "t_shaped_back_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-AY-1",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "angby-armrest-protector-covers",
+   "title": "Angby Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-AY-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AY-AP_SP_CVC-01.jpg?v=1741320126",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AY-AP_SP_CVC-01.jpg?v=1741320126"
+   ],
+   "tags": [
+    "categoryproducts:AY",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-AY-AP",
+    "FLT___Product_Ref__Old____AY_AP",
+    "FLT___Series_Code___AY",
+    "FLT___Series_Name___Angby",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-AY-AP",
+    "series:Angby"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-AY-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

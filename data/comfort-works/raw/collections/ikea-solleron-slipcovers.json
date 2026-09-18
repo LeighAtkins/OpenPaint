@@ -1,0 +1,386 @@
+{
+ "handle": "ikea-solleron-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:08.504Z",
+ "count": 7,
+ "products": [
+  {
+   "handle": "solleron-2-seat-modular-cushion-covers",
+   "title": "Solleron 2-seat Modular Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SLN-2",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-2_DVN_SP_CVC-01.jpg?v=1741320153",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-2_DVN_SP_CVC-01.jpg?v=1741320153",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_358_IKEA_Solleron_sofa_a2d653f5-d9e6-4394-b9d8-ee29240a1193.jpg?v=1741320153",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_360_IKEA_Solleron_sofa.jpg?v=1741320153"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SLN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SLN-2",
+    "FLT___Series_Code___SLN",
+    "FLT___Series_Name___Solleron",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-SLN-2",
+    "series:Solleron"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SLN-2",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "solleron-3-seat-corner-modular-armless-cushion-covers",
+   "title": "Solleron 3-seat Corner Modular Armless Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SLN-261X",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-261X_DVN_SP_CVC-01.jpg?v=1741320152",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-261X_DVN_SP_CVC-01.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_362_IKEA_Solleron_sofa_bf5c389b-837b-4bd9-8979-d239a5e62d03.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_615_IKEA_Solleron_sofa_28c0ac75-091a-4e9d-becf-7873d21991f8.jpg?v=1741320152"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SLN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SLN-261X",
+    "FLT___Series_Code___SLN",
+    "FLT___Series_Name___Solleron",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-SLN-261X",
+    "series:Solleron"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SLN-261X",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "solleron-3-seat-corner-modular-cushion-covers",
+   "title": "Solleron 3-seat Corner Modular Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SLN-261",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-261_DVN_SP_CVC-01.jpg?v=1741320151",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-261_DVN_SP_CVC-01.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_362_IKEA_Solleron_sofa.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_615_IKEA_Solleron_sofa.jpg?v=1741320151"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SLN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SLN-261",
+    "FLT___Series_Code___SLN",
+    "FLT___Series_Name___Solleron",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-SLN-261",
+    "series:Solleron"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SLN-261",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "solleron-3-seat-modular-cushion-covers",
+   "title": "Solleron 3-seat Modular Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SLN-3",
+   "price": "199.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-3_DVN_SP_CVC-01.jpg?v=1741320159",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-3_DVN_SP_CVC-01.jpg?v=1741320159",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_358_IKEA_Solleron_sofa.jpg?v=1741320159",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_359_IKEA_Solleron_sofa.jpg?v=1741320159"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SLN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SLN-3",
+    "FLT___Series_Code___SLN",
+    "FLT___Series_Name___Solleron",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-SLN-3",
+    "series:Solleron"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SLN-3",
+     "price": "199.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "solleron-3-seat-modular-with-ottoman-cushion-covers",
+   "title": "Solleron 3-seat Modular with Ottoman Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SLN-25",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-25_DVN_SP_CVC-01.jpg?v=1741320156",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-25_DVN_SP_CVC-01.jpg?v=1741320156",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_354_IKEA_Solleron_sofa_03c3f8a7-29dc-4be9-aeed-026a770b3fb4.jpg?v=1741320156",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_360_IKEA_Solleron_sofa_9928f525-8ce5-4f5e-9a3d-69f7851a0311.jpg?v=1741320156"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SLN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SLN-25",
+    "FLT___Series_Code___SLN",
+    "FLT___Series_Name___Solleron",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-SLN-25",
+    "series:Solleron"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SLN-25",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "solleron-4-seat-modular-corner-sofa-cushion-covers",
+   "title": "Solleron 4-seat Modular Corner Sofa Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SLN-2615",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-2615_DVN_SP_CVC-01.jpg?v=1741320153",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-2615_DVN_SP_CVC-01.jpg?v=1741320153",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_361_IKEA_Solleron_sofa.jpg?v=1741320153",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_617_IKEA_Solleron_sofa.jpg?v=1741320153"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SLN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SLN-2615",
+    "FLT___Series_Code___SLN",
+    "FLT___Series_Name___Solleron",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-SLN-2615",
+    "series:Solleron"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SLN-2615",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "solleron-armchair-cushion-covers",
+   "title": "Solleron Armchair Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SLN-1",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-1_DVN_SP_CVC-01.jpg?v=1741320155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-1_DVN_SP_CVC-01.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_354_IKEA_Solleron_sofa.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_357_IKEA_Solleron_sofa.jpg?v=1741320155"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SLN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Outdoor",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SLN-1",
+    "FLT___Series_Code___SLN",
+    "FLT___Series_Name___Solleron",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-SLN-1",
+    "series:Solleron"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SLN-1",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,215 @@
+{
+ "handle": "sofa-bed-covers-muji",
+ "fetchedAt": "2026-09-18T05:38:22.829Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "muji-3-seater-sofa-bed-slipcover-eu-version",
+   "title": "Muji 3 Seater Sofa Bed Slipcover [EU version]",
+   "vendor": "MUJI",
+   "sku": "MJ-MJS-3BX",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-MJS-3BX_VELC_PM_CVC-01.jpg?v=1741320180",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-MJS-3BX_VELC_PM_CVC-01.jpg?v=1741320180",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_482_Muji_Bench_sofa_b64cde65-e5f6-4ca8-a5fb-24e5225d673a.jpg?v=1741320180",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_484_Muji_Bed_sofa_a81e1a65-9274-4bb9-8dbc-1754d9cf764c.jpg?v=1741320180"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-MJS",
+    "categoryproducts:MJ-SB",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-MJS-3BX",
+    "FLT___Product_Ref__Old____MJ_SB_3",
+    "FLT___Series_Code___MJS",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-MJS-3BX",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-MJS-3BX",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "t2-sofa-bed-cover",
+   "title": "T2 Sofa Bed Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-T2-3X",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-T2-3X_WR_CVC-01.jpg?v=1741320175",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-T2-3X_WR_CVC-01.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_466_Muji_T2_Sofabed_sofa.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_465_Muji_T2_Sofabed_sofa_0003e730-5220-4771-9f31-35e92a61edbe.jpg?v=1741320175"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-RSB",
+    "categoryproducts:MJ-T2",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-T2-3X",
+    "FLT___Product_Ref__Old____MJ_RSB",
+    "FLT___Series_Code___T2",
+    "FLT___Series_Name___T2_Sofabed",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___WR",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-T2-3X",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:T2",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-T2-3X",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "wooden-sofa-bed-cover",
+   "title": "Wooden Sofa Bed Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-OTH-3BX",
+   "price": "209.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-OTH-3BX_LV_SP_CVC-01.jpg?v=1741320174",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-OTH-3BX_LV_SP_CVC-01.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_470_Muji_Wooden_Bed_sofa.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_637_Muji_Wooden_Bed_sofa.jpg?v=1741320174"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-OTH",
+    "categoryproducts:MJ-SB",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-OTH-3BX",
+    "FLT___Product_Ref__Old____MJ_SB_2B",
+    "FLT___Series_Code___OTH",
+    "FLT___Series_Name___Wooden_Sofa_Bed",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-OTH-3BX",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:Wooden",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-OTH-3BX",
+     "price": "209.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

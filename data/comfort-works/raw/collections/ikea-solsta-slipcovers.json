@@ -1,0 +1,254 @@
+{
+ "handle": "ikea-solsta-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:08.800Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "solsta-sofa-bed-cover",
+   "title": "Solsta Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SA-2B",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-2B_SHRT_SP_CVC-01.jpg?v=1741320113",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-2B_SHRT_SP_CVC-01.jpg?v=1741320113",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_365_IKEA_Solsta_sofa.jpg?v=1741320113",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_364_IKEA_Solsta_sofa_4e24afa7-1083-45f2-8ec9-909c87df5017.jpg?v=1741320113"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SA-2B",
+    "FLT___Product_Ref__Old____SA_B",
+    "FLT___Series_Code___SA",
+    "FLT___Series_Name___Solsta",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SA-2B",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Solsta",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SA-2B",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "solsta-olarp-armchair-cover",
+   "title": "Solsta Olarp Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SA-1",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-1_CNRP_PM_CVC-01.jpg?v=1741320123",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-1_CNRP_PM_CVC-01.jpg?v=1741320123",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_364_IKEA_Solsta_sofa.jpg?v=1741320123",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_363_IKEA_Solsta_sofa.jpg?v=1741320123"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular Straight",
+    "back_type:High Rounded Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:SA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SA-1",
+    "FLT___Product_Ref__Old____SA1",
+    "FLT___Series_Code___SA",
+    "FLT___Series_Name___Solsta",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SA-1",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_seat_cushion:1",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Solsta",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SA-1",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "solsta-pallbo-footstool-cover",
+   "title": "Solsta Pallbo Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SA-0",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-0_LSKT_PM_CVC-01.jpg?v=1741320123",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-0_LSKT_PM_CVC-01.jpg?v=1741320123",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_364_IKEA_Solsta_sofa_9a58e4ad-82e0-4b59-af7a-682693ff4f48.jpg?v=1741320123",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_365_IKEA_Solsta_sofa_3768a53c-e0d1-4d25-b737-f97e116d8aee.jpg?v=1741320123"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:SA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SA-0",
+    "FLT___Product_Ref__Old____SA0",
+    "FLT___Series_Code___SA",
+    "FLT___Series_Name___Solsta",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-SA-0",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Solsta",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SA-0",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "solsta-armrest-protector-covers",
+   "title": "Solsta Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SA-AP",
+   "price": "39.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-AP_SP_CVC-01_2X_ac3f03bd-4ae4-4e66-9a6d-b195bc4c685a.jpg?v=1754285943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-AP_SP_CVC-01_2X_ac3f03bd-4ae4-4e66-9a6d-b195bc4c685a.jpg?v=1754285943"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SA",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SA-AP",
+    "FLT___Product_Ref__Old____SA_AP",
+    "FLT___Series_Code___SA",
+    "FLT___Series_Name___Solsta",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "IK-SA-AP",
+    "series:Solsta"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SA-AP",
+     "price": "39.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

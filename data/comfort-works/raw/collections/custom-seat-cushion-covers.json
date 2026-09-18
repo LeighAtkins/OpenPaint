@@ -1,0 +1,175 @@
+{
+ "handle": "custom-seat-cushion-covers",
+ "fetchedAt": "2026-09-18T05:32:18.630Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "custom-knife-edge-seat-cushion-cover",
+   "title": "Custom Knife Edge Seat Cushion Cover",
+   "vendor": "Made to Measure",
+   "sku": "CC-ST-KE",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-ST-KE_SP_RS-07_5210046b-7e3e-4b96-8aec-2461a8ec13d5.jpg?v=1710299879",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-ST-KE_SP_RS-07_5210046b-7e3e-4b96-8aec-2461a8ec13d5.jpg?v=1710299879",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-ST-K_29c10175-246f-4b63-b24c-7fca33b05a07.jpg?v=1710382437"
+   ],
+   "tags": [
+    "categoryproducts:CC-ST",
+    "CC-ST-KE",
+    "description:",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "series:Custom Seat Cushion Covers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CC-ST-KE",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "custom-box-seat-cushion-cover",
+   "title": "Custom Box Seat Cushion Cover",
+   "vendor": "Made to Measure",
+   "sku": "CC-ST-BE",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-ST-BE_SP_RS-07_f1d42c09-4432-4242-9140-c08750902cd7.jpg?v=1710300071",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-ST-BE_SP_RS-07_f1d42c09-4432-4242-9140-c08750902cd7.jpg?v=1710300071",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-ST-B_c0959c60-b46d-4480-9c7f-3ae30ae5ebe0.jpg?v=1710382375"
+   ],
+   "tags": [
+    "categoryproducts:CC-ST",
+    "CC-ST-BE",
+    "description:",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "series:Custom Seat Cushion Covers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CC-ST-BE",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "custom-t-shape-seat-cushion-cover",
+   "title": "Custom T-Shape Seat Cushion Cover",
+   "vendor": "Made to Measure",
+   "sku": "CC-ST-T",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-ST-T_PM_17027B-14_430x_4676db89-7b0b-49e6-ab58-fd7de8bb17c5.jpg?v=1710290666",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-ST-T_PM_17027B-14_430x_4676db89-7b0b-49e6-ab58-fd7de8bb17c5.jpg?v=1710290666",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/CC-ST-T.jpg?v=1710290666"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CC-ST-T",
+    "discount: -22%",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CC-ST-T",
+    "FLT___Series_Code___ST",
+    "FLT___Size___Cushion_Only",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "series:Custom Seat Cushion Covers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CC-ST-T",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "custom-l-shape-seat-cushion-cover",
+   "title": "Custom L-Shape Seat Cushion Cover",
+   "vendor": "Made to Measure",
+   "sku": "CC-ST-L",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-ST-L_SP_RS-07.jpg?v=1713515362",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-ST-L_SP_RS-07.jpg?v=1713515362",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CC-ST-L.jpg?v=1713515368"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CC-ST-L",
+    "discount: -22%",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CC-ST-L",
+    "FLT___Series_Code___ST",
+    "FLT___Size___Cushion_Only",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "series:Custom Seat Cushion Covers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CC-ST-L",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

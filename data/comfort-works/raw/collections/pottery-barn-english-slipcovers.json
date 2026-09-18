@@ -1,0 +1,50 @@
+{
+ "handle": "pottery-barn-english-slipcovers",
+ "fetchedAt": "2026-09-18T05:37:54.147Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "pb-english-arm-sleeper-sofa-slipcover",
+   "title": "PB English Arm Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-EH-87B",
+   "price": "739.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-EH-87B_KE_SHRT_PM_CVC-01.jpg?v=1741656901",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-EH-87B_KE_SHRT_PM_CVC-01.jpg?v=1741656901"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-EH",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-EH-87B",
+    "Pottery Barn",
+    "series:PB English Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-EH-87B",
+     "price": "739.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

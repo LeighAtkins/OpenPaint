@@ -1,0 +1,198 @@
+{
+ "handle": "crate-and-barrel-bayside-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:07.706Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "bayside-loveseat-slipcover",
+   "title": "Bayside Loveseat Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BE-68",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BE-68_CNRP_PM_CVC-01.jpg?v=1741320093",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BE-68_CNRP_PM_CVC-01.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_439_Crate_and_Barrel_Bayside_sofa.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_440_Crate_and_Barrel_Bayside_sofa.jpg?v=1741320093"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-BE",
+    "CB-BE-68",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-BE-68",
+    "FLT___Series_Code___BE",
+    "FLT___Series_Name___Bayside",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Bayside",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BE-68",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bayside-88-sofa-slipcover",
+   "title": "Bayside 88\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BE-88",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BE-88_LV_MLTP_PM_CVC-01.jpg?v=1741741754",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BE-88_LV_MLTP_PM_CVC-01.jpg?v=1741741754"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-BE",
+    "categoryproducts:CB-Slipcover",
+    "CB-BE-88",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Bayside"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BE-88",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bayside-accent-chair-slipcover",
+   "title": "Bayside Accent Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BE-34",
+   "price": "349.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BE-34_CNRP_PM_CVC-01.webp?v=1787897172",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BE-34_CNRP_PM_CVC-01.webp?v=1787897172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_085_Crate_and_Barrel_Bayside_sofa.jpg?v=1741320096",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_086_Crate_and_Barrel_Bayside_sofa.jpg?v=1741320096"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-BE",
+    "CB-BE-34",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-BE-34",
+    "FLT___Product_Ref__Old____CB_BE_30",
+    "FLT___Series_Code___BE",
+    "FLT___Series_Name___Bayside",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Bayside",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:0",
+    "storage:No",
+    "t_shaped_back_cushion:1",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BE-34",
+     "price": "349.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

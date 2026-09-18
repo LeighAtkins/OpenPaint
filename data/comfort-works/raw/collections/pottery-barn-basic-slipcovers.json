@@ -1,0 +1,1114 @@
+{
+ "handle": "pottery-barn-basic-slipcovers",
+ "fetchedAt": "2026-09-18T05:37:50.412Z",
+ "count": 16,
+ "products": [
+  {
+   "handle": "pb-basic-sofa-slipcover",
+   "title": "PB Basic Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-82",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-82_MG_CNRP_PM_CVC-01.jpg?v=1741320177",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-82_MG_CNRP_PM_CVC-01.jpg?v=1741320177",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_013_IKEA_Ektorp_sofa_e33cbc1e-1eac-4d54-b72c-b30bce19b616.jpg?v=1741320177",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_014_IKEA_Ektorp_sofa.jpg?v=1741320177"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-82",
+    "FLT___Product_Ref__Old____PB_BSC_3",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_1_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-BSC-82",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Basic",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-82",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Manufacturer Version",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-ottoman-slipcover",
+   "title": "PB Basic Ottoman Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-29F",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-29F_MG_CNRP_PM_CVC-01.jpg?v=1741320174",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-29F_MG_CNRP_PM_CVC-01.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_089_Pottery_Barn_PB_Basic_sofa_7d7b0e5a-0c00-4cd2-bee5-565a19475876.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_090_Pottery_Barn_PB_Basic_sofa_7110bfa9-9a8f-4aed-82a4-e52fe2b51a72.jpg?v=1741320174"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-29F",
+    "FLT___Product_Ref__Old____PB_BSC_0",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_1_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:N/A",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "PB-BSC-29F",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:PB Basic",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-29F",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-armchair-slipcover",
+   "title": "PB Basic Armchair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-39",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-39_MG_CNRP_PM_CVC-01.jpg?v=1741320174",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-39_MG_CNRP_PM_CVC-01.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_091_Pottery_20Barn_PB_20Basic_sofa.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_013_IKEA_Ektorp_sofa.jpg?v=1741320174"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-39",
+    "FLT___Product_Ref__Old____PB_BSC_1",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_1_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-BSC-39",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Basic",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No",
+    "t_shaped_back_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-39",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Manufacturer Version",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-loveseat-slipcover",
+   "title": "PB Basic Loveseat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-60",
+   "price": "539.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-60_MG_CNRP_PM_CVC-01.jpg?v=1741320181",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-60_MG_CNRP_PM_CVC-01.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_091_Pottery_20Barn_PB_20Basic_sofa_f387b645-5caf-4462-810e-bb2e138ab78f.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_090_Pottery_Barn_PB_Basic_sofa.jpg?v=1741320181"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-60",
+    "FLT___Product_Ref__Old____PB_BSC_2",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_1_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-BSC-60",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Basic",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-60",
+     "price": "539.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Manufacturer Version",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-sleeper-sofa-slipcover",
+   "title": "PB Basic Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-82B",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-82B_MG_CNRP_PM_CVC-01.jpg?v=1741320178",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-82B_MG_CNRP_PM_CVC-01.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_089_Pottery_Barn_PB_Basic_sofa.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_092_Pottery_Barn_PB_Basic_sofa.jpg?v=1741320178"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-82B",
+    "FLT___Product_Ref__Old____PB_BSC_3B",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_1_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-BSC-82B",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Basic",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-82B",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Manufacturer Version",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-left-right-arm-loveseat-slipcover",
+   "title": "PB Basic Left/Right Arm Loveseat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-69M",
+   "price": "549.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-69M_L_MG_CNRP_PM_CVC-01.jpg?v=1741320177",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-69M_L_MG_CNRP_PM_CVC-01.jpg?v=1741320177",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_094_Pottery_Barn_PB_Basic_sofa.jpg?v=1741320177",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_103_Pottery_Barn_PB_Basic_sofa.jpg?v=1741320177"
+   ],
+   "tags": [
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-69M",
+    "FLT___Product_Ref__Old____PB_BSC_2R",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT___Variant_2_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_2_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_2_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "measurementsrequired",
+    "number_of_arms:One Arm",
+    "PB-BSC-69M",
+    "series:PB Basic",
+    "size:2+ Seater"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-69M",
+     "price": "549.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Manufacturer Version",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-left-right-arm-chaise-slipcover",
+   "title": "PB Basic Left/Right Arm Chaise Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-39M",
+   "price": "429.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-39M_L_MG_CNRP_PM_CVC-01.jpg?v=1741320176",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-39M_L_MG_CNRP_PM_CVC-01.jpg?v=1741320176",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_093_Pottery_Barn_PB_Basic_sofa.jpg?v=1741320176",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_094_Pottery_Barn_PB_Basic_sofa_6286a6b3-6999-449e-8399-20fb0b3acaec.jpg?v=1741320176"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Chaise Lounge",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-39M",
+    "FLT___Product_Ref__Old____PB_BSC_5R",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT___Variant_2_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_2_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_2_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:1",
+    "l_shaped_seat_cushion:1",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:One Arm",
+    "PB-BSC-39M",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Basic",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-39M",
+     "price": "429.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Manufacturer Version",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-armless-chair-slipcover",
+   "title": "PB Basic Armless Chair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-31X",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-31X_MG_CNRP_PM_CVC-01.jpg?v=1741320175",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-31X_MG_CNRP_PM_CVC-01.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_642_Pottery_Barn_PB_Basic_sofa.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_643_Pottery_Barn_PB_Basic_sofa.jpg?v=1741320175"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-31X",
+    "FLT___Product_Ref__Old____PB_BSC_1X",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_1_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:No Arm",
+    "PB-BSC-31X",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Basic",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-31X",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-left-right-armchair-slipcover",
+   "title": "PB Basic Left/Right Armchair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-40M",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-40M_L_MG_CNRP_PM_CVC-01.jpg?v=1741320177",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-40M_L_MG_CNRP_PM_CVC-01.jpg?v=1741320177",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_099_Pottery_20Barn_PB_20Basic_sofa.jpg?v=1741320177",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_095_Pottery_Barn_PB_Basic_sofa.jpg?v=1741320177"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-40M",
+    "FLT___Product_Ref__Old____PB_BSC_1R",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT___Variant_2_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_2_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_2_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "l_shaped_back_cushion:1",
+    "main_arm_shape_categories:Round Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:One Arm",
+    "PB-BSC-40M",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Basic",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-40M",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-corner-seat-slipcover",
+   "title": "PB Basic Corner Seat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-35X",
+   "price": "429.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-35X_MG_CNRP_PM_CVC-01.jpg?v=1741320177",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-35X_MG_CNRP_PM_CVC-01.jpg?v=1741320177",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_096_Pottery_Barn_PB_Basic_sofa_97654186-f61b-4bc1-8acf-1885bf50ef72.jpg?v=1741320177",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_103_Pottery_Barn_PB_Basic_sofa_43bad37f-7046-44f6-99f1-382bd7759ea5.jpg?v=1741320177"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-35X",
+    "FLT___Product_Ref__Old____PB_BSC_6",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_1_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "other_shaped_back_cushion:2",
+    "PB-BSC-35X",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Basic",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-35X",
+     "price": "429.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-armless-loveseat-slipcover",
+   "title": "PB Basic Armless Loveseat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-60X",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-60X_MG_CNRP_PM_CVC-01.jpg?v=1741320177",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-60X_MG_CNRP_PM_CVC-01.jpg?v=1741320177",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_091_Pottery_20Barn_PB_20Basic_sofa_2fa115c1-98bf-4006-9b2e-fa488859cae0.jpg?v=1741320177",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_090_Pottery_Barn_PB_Basic_sofa_23185e63-560b-4f24-8912-c43a8d177e49.jpg?v=1741320177"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-60X",
+    "FLT___Product_Ref__Old____PB_BSC_2X",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_1_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:No Arm",
+    "PB-BSC-60X",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Basic",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-60X",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-armrest-protector-covers",
+   "title": "PB Basic Armrest Protector Covers",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-AP",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-AP_PM_CVC-01.jpg?v=1741320179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-AP_PM_CVC-01.jpg?v=1741320179"
+   ],
+   "tags": [
+    "categoryproducts:PB-BSC",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-AP",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "PB-BSC-AP",
+    "series:PB Basic"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-AP",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-left-right-arm-return-sofa-slipcover",
+   "title": "PB Basic Left/Right Arm Return Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-103",
+   "price": "829.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-103_L_MG_CNRP_PM_CVC-01.jpg?v=1741320179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-103_L_MG_CNRP_PM_CVC-01.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_099_Pottery_20Barn_PB_20Basic_sofa_d9925313-b7cb-4625-bf32-34b72faceff9.jpg?v=1741320179",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_100_Pottery_Barn_PB_Basic_sofa.jpg?v=1741320179"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-103",
+    "FLT___Product_Ref__Old____PB_BSC_RA_L",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT___Variant_2_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_2_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_2_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:2",
+    "PB-BSC-103",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Basic",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-103",
+     "price": "829.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-left-right-sofa-with-chaise-sectional-slipcover",
+   "title": "PB Basic Left/Right Sofa with Chaise Sectional Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-107",
+   "price": "899.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-107_L_MG_CNRP_PM_CVC-01.jpg?v=1741320180",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-107_L_MG_CNRP_PM_CVC-01.jpg?v=1741320180",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_098_Pottery_20Barn_PB_20Basic_sofa.jpg?v=1741320180",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_097_Pottery_Barn_PB_Basic_sofa.jpg?v=1741320180"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "chaise_lounge:Yes",
+    "chaise_lounge_position:Left",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-107",
+    "FLT___Product_Ref__Old____PB_BSC_2L5R",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Left_Chaise",
+    "FLT___Variant_1_Name___Right_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT___Variant_2_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_2_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_2_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:1",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:One Arm",
+    "PB-BSC-107",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:PB Basic",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-107",
+     "price": "899.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-93-grand-sofa-slipcover",
+   "title": "PB Basic 93\" Grand Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-93",
+   "price": "739.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-93_MLTP_PM_CVC-01.jpg?v=1741320191",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-93_MLTP_PM_CVC-01.jpg?v=1741320191"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-BSC-93",
+    "Pottery Barn",
+    "series:PB Basic"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-93",
+     "price": "739.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-corner-wedge-sofa-slipcover",
+   "title": "PB Basic Corner Wedge Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-44X",
+   "price": "509.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-44X_PB_CNRP_PM_CVC-01.webp?v=1770779891",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-44X_PB_CNRP_PM_CVC-01.webp?v=1770779891"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-BSC-44X",
+    "series:PB Basic"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-44X",
+     "price": "509.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

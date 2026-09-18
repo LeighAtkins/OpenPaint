@@ -1,0 +1,56 @@
+{
+ "handle": "ikea-ekenaset-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:36.552Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "ekenaset-armchair-cover",
+   "title": "Ekenaset Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EKS-7",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EKS-7_VELC_WR_CVC-01.jpg?v=1741320138",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EKS-7_VELC_WR_CVC-01.jpg?v=1741320138"
+   ],
+   "tags": [
+    "categoryproducts:EKS",
+    "categoryproducts:IK",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EKS-7",
+    "FLT___Product_Ref__Old____EKS1",
+    "FLT___Series_Code___EKS",
+    "FLT___Series_Name___Ekenaset",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-EKS-7",
+    "installation:579",
+    "series:Ekenaset"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EKS-7",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

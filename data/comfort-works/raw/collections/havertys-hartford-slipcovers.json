@@ -1,0 +1,48 @@
+{
+ "handle": "havertys-hartford-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:27.700Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "hartford-sofa-slipcover",
+   "title": "Hartford Sofa Slipcover",
+   "vendor": "Haverty's",
+   "sku": "HY-HD-89",
+   "price": "669.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_HY_HY-HD_HY-HD-89_HY-HD-89_VELC_PM_CVC-01.jpg?v=1744941340",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_HY_HY-HD_HY-HD-89_HY-HD-89_VELC_PM_CVC-01.jpg?v=1744941340"
+   ],
+   "tags": [
+    "categoryproducts:HY",
+    "categoryproducts:HY-HD",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "Haverty's",
+    "HY-HD-89",
+    "installation:579",
+    "series:Hartford"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "HY-HD-89",
+     "price": "669.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

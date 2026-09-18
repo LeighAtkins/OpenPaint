@@ -1,0 +1,24 @@
+{
+ "handle": "rowe-aberdeen-slipcovers",
+ "representative": "aberdeen-88-bench-cushion-sofa-slipcover",
+ "hubLinks": [
+  "\\/pages\\/fabrics-hypoallergenic-collection-everyday-cotton",
+  "\\/pages\\/fabrics-cozy-collection-everyday-velvet",
+  "\\/pages\\/fabrics-starter-collection-everyday-weave",
+  "\\/pages\\/fabrics-performance-collection-signature-velvet",
+  "\\/pages\\/fabrics-pet-friendly-collection-signature-microfiber",
+  "\\/pages\\/fabrics-performance-collection-sunbrella"
+ ],
+ "fabricCount": 1,
+ "fabrics": [
+  {
+   "fabric": null,
+   "handle": "aberdeen-88-bench-cushion-sofa-slipcover",
+   "url": "https://comfort-works.com/products/aberdeen-88-bench-cushion-sofa-slipcover",
+   "sku": "RE-AN-88-1C",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/RE-AN-88-1C_VELC_SP_CVC-01.jpg?v=1741575837"
+  }
+ ]
+}

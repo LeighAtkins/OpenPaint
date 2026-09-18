@@ -1,0 +1,270 @@
+{
+ "handle": "pottery-barn-big-sur-slipcovers",
+ "fetchedAt": "2026-09-18T05:37:51.026Z",
+ "count": 6,
+ "products": [
+  {
+   "handle": "big-sur-roll-arm-deep-seat-77-loveseat-slipcover",
+   "title": "Big Sur Roll Arm Deep Seat 77\" Loveseat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSRAD-77",
+   "price": "709.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSRAD-77_LV_2S-2B_LSKT_SP_CVC-01.jpg?v=1741575838",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSRAD-77_LV_2S-2B_LSKT_SP_CVC-01.jpg?v=1741575838"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSR",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-BSRAD-77",
+    "series:Big Sur Roll Arm",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSRAD-77",
+     "price": "709.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "big-sur-square-arm-105-grand-sofa-slipcover",
+   "title": "Big Sur Square Arm 105\" Grand Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSSA-105",
+   "price": "739.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSSA-105_LV_1S-3B_LSKT_SP_CVC-01.jpg?v=1741576853",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSSA-105_LV_1S-3B_LSKT_SP_CVC-01.jpg?v=1741576853"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSSA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-BSSA-105",
+    "series:Big Sur Square Arm",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSSA-105",
+     "price": "739.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "big-sur-square-arm-left-right-51-wide-chaise-sectional-slipcover",
+   "title": "Big Sur Square Arm Left/Right 51\" Wide Chaise Sectional Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSSA-51M",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSSA-51M_L_LV_VELC_SP_CVC-01.jpg?v=1741741758",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSSA-51M_L_LV_VELC_SP_CVC-01.jpg?v=1741741758"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSSA",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-BSSA-51M",
+    "series:Big Sur Square Arm",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSSA-51M",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "big-sur-square-arm-left-right-105-grand-sofa-sectional-slipcover",
+   "title": "Big Sur Square Arm Left/Right 105\" Grand Sofa Sectional Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSSA-105M",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSSA-105M_R_LV_3S-3B_VELC_SI_CVC-01.jpg?v=1744678060",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSSA-105M_R_LV_3S-3B_VELC_SI_CVC-01.jpg?v=1744678060"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSSA",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "PB-BSSA-105M",
+    "series:Big Sur Square Arm",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSSA-105M",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "big-sur-square-arm-left-right-arm-loveseat-slipcover",
+   "title": "Big Sur Square Arm Left/Right Arm Loveseat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSSA-73M",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSSA-73M_R_SV_1S-2B_VELC_SP_CVC-01.webp?v=1770175230",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSSA-73M_R_SV_1S-2B_VELC_SP_CVC-01.webp?v=1770175230"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSSA",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "PB-BSSA-73M",
+    "series:Big Sur Square Arm",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSSA-73M",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "big-sur-square-arm-left-right-41-chaise-slipcover",
+   "title": "Big Sur Square Arm Left/Right 41\" Chaise Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSSA-41M",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSSA-41M.jpg?v=1770947626",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSSA-41M.jpg?v=1770947626",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSSA-41M_6614cf9b-be71-4fd9-99d1-16bc112974d7.jpg?v=1770947636"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSSA",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-BSSA-41M",
+    "series:Big Sur Square Arm",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSSA-41M",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

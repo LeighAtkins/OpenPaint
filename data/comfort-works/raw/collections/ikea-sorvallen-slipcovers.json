@@ -1,0 +1,291 @@
+{
+ "handle": "ikea-sorvallen-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:09.184Z",
+ "count": 6,
+ "products": [
+  {
+   "handle": "sorvallen-3-seat-sofa-with-chaise-sofa-cover",
+   "title": "Sorvallen 3-Seat Sofa with Chaise Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SVN-25CH",
+   "price": "429.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-25CH_R_VELC_SP_CVC-01.webp?v=1787998346",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-25CH_R_VELC_SP_CVC-01.webp?v=1787998346"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SVN",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-SVN-25CH",
+    "IKEA",
+    "installation:579",
+    "series:Sorvallen"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SVN-25CH",
+     "price": "429.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sorvallen-3-seat-sofa-cover",
+   "title": "Sorvallen 3 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SVN-3",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_SVN_IK-SVN-92_IK-SVN-92_VELC_SP_CVC-01.jpg?v=1744882905",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_SVN_IK-SVN-92_IK-SVN-92_VELC_SP_CVC-01.jpg?v=1744882905"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SVN",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "IK-SVN-3",
+    "IKEA",
+    "installation:579",
+    "series:Sorvallen"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SVN-3",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sorvallen-3-seat-corner-sofa-cover",
+   "title": "Sorvallen 3-Seat Corner Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SVN-25",
+   "price": "459.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-112_L_VELC_SP_CVC-01.jpg?v=1741679951",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-112_L_VELC_SP_CVC-01.jpg?v=1741679951"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SVN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-SVN-25",
+    "IKEA",
+    "installation:579",
+    "series:Sorvallen"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SVN-25",
+     "price": "459.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sorvallen-footstool-cover",
+   "title": "Sorvallen Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SVN-0",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-0_VELC_SP_CVC-01.jpg?v=1741320161",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-0_VELC_SP_CVC-01.jpg?v=1741320161"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SVN",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-SVN-0",
+    "installation:579",
+    "series:Sorvallen",
+    "vendor:IKEA"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SVN-0",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sorvallen-headrest-cover",
+   "title": "Sorvallen Headrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SVN-HRX",
+   "price": "29.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-HRX_SP_CVC-01.jpg?v=1741679950",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-HRX_SP_CVC-01.jpg?v=1741679950"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SVN",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Headrest",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-SVN-HRX",
+    "installation:579",
+    "series:Sorvallen",
+    "vendor:IKEA"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SVN-HRX",
+     "price": "29.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sorvallen-2-seat-sofa-cover",
+   "title": "Sorvallen 2 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SVN-2",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-3_VELC_SP_CVC-01.jpg?v=1741320147",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-3_VELC_SP_CVC-01.jpg?v=1741320147",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_666_IKEA_Sorvallen_sofa.jpg?v=1741320147",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_665_IKEA_Sorvallen_sofa.jpg?v=1741320147"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SVN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SVN-2",
+    "FLT___Product_Ref__Old____SVN2",
+    "FLT___Series_Code___SVN",
+    "FLT___Series_Name___Sorvallen",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SVN-2",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:Sorvallen",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SVN-2",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

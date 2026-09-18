@@ -1,0 +1,755 @@
+{
+ "handle": "sofa-covers-room-and-board",
+ "fetchedAt": "2026-09-18T05:38:31.554Z",
+ "count": 15,
+ "products": [
+  {
+   "handle": "metro-88-sofa-slipcover",
+   "title": "Metro 88\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MO-88",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-88_SV_STD_2S-2B_SHRT_SP_CVC-01.jpg?v=1744677136",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-88_SV_STD_2S-2B_SHRT_SP_CVC-01.jpg?v=1744677136"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MO",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "RB-MO-88",
+    "Room and Board",
+    "series:Metro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MO-88",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kendall-74-sofa-slipcover",
+   "title": "Kendall 74\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-KL-74",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_RB_RB-KL_RB-KL-74_RB-KL-74_CNRP_SP_CVC-01.jpg?v=1744956145",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_RB_RB-KL_RB-KL-74_RB-KL-74_CNRP_SP_CVC-01.jpg?v=1744956145"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-KL",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-KL-74",
+    "Room and Board",
+    "series:Kendall"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-KL-74",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "easton-91-sofa-slipcover",
+   "title": "Easton 91\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-EN-91",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-EN-91_SHRT_SP_CVC-01.jpg?v=1744679236",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-EN-91_SHRT_SP_CVC-01.jpg?v=1744679236"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-EN",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-EN-91",
+    "Room and Board",
+    "series:Easton"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-EN-91",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "york-87-sofa-slipcover",
+   "title": "York 87\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-YK-87",
+   "price": "709.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-87_LV_SHRT_PM_CVC-01.jpg?v=1741741769",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-87_LV_SHRT_PM_CVC-01.jpg?v=1741741769"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-Sofa",
+    "categoryproducts:RB-YK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-YK-87",
+    "Room and Board",
+    "series:York"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-YK-87",
+     "price": "709.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "york-71-sofa-slipcover",
+   "title": "York 71\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-YK-71",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-71_LV_SHRT_PM_CVC-01.jpg?v=1741741765",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-YK-71_LV_SHRT_PM_CVC-01.jpg?v=1741741765"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-Sofa",
+    "categoryproducts:RB-YK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-YK-71",
+    "Room and Board",
+    "series:York"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-YK-71",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "metro-75-sofa-slipcover",
+   "title": "Metro 75\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MO-75",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-75_LV_SHRT_SP_CVC-01.jpg?v=1741741761",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-75_LV_SHRT_SP_CVC-01.jpg?v=1741741761"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MO",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "RB-MO-75",
+    "Room and Board",
+    "series:Metro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MO-75",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "metro-65-loveseat-slipcover",
+   "title": "Metro 65\" Loveseat Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MO-65",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-65_LV_SHRT_SP_CVC-01.jpg?v=1741741765",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-65_LV_SHRT_SP_CVC-01.jpg?v=1741741765"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MO",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "RB-MO-65",
+    "Room and Board",
+    "series:Metro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MO-65",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morrison-96-sofa-slipcover",
+   "title": "Morrison 96\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MN-96",
+   "price": "799.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MN-96_VELC_PM_CVC-01.jpg?v=1741320194",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MN-96_VELC_PM_CVC-01.jpg?v=1741320194"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MN",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-MN-96",
+    "Room and Board",
+    "series:Morrison"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MN-96",
+     "price": "799.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morrison-86-sofa-slipcover",
+   "title": "Morrison 86\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MN-86",
+   "price": "719.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MN-86_VELC_PM_CVC-01.jpg?v=1741320192",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MN-86_VELC_PM_CVC-01.jpg?v=1741320192"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MN",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-MN-86",
+    "Room and Board",
+    "series:Morrison"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MN-86",
+     "price": "719.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morrison-76-sofa-slipcover",
+   "title": "Morrison 76\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MN-76",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MN-76_VELC_PM_CVC-01.jpg?v=1741320193",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MN-76_VELC_PM_CVC-01.jpg?v=1741320193"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MN",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-MN-76",
+    "Room and Board",
+    "series:Morrison"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MN-76",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jasper-96-sofa-slipcover",
+   "title": "Jasper 96\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-JR-96",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-96_LV_2S-2B_VELC_SP_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-96_LV_2S-2B_VELC_SP_CVC-01.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_577_Room_20and_20Board_Jasper_sofa_ae5c52a6-b301-4b31-8f0a-ee141fbc583e.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_576_Room_and_Board_Jasper_sofa_5a78200f-d34a-4ba7-ba09-27a665d81d94.jpg?v=1741320196"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-JR",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "RB-JR-96",
+    "Room and Board",
+    "series:Jasper"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-JR-96",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hess-89-sofa-slipcover",
+   "title": "Hess 89\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-HS-89",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-HS-89_SV_SHRT_PM_CVC-01.jpg?v=1744679071",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-HS-89_SV_SHRT_PM_CVC-01.jpg?v=1744679071"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-HS",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-HS-89",
+    "Room and Board",
+    "series:Hess"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-HS-89",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jasper-71-loveseat-slipcover",
+   "title": "Jasper 71\" Loveseat Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-JR-71",
+   "price": "549.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-71_VELC_SP_CVC-01.jpg?v=1741320194",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-71_VELC_SP_CVC-01.jpg?v=1741320194",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_575_Room_and_Board_Jasper_sofa_2db7fa7f-6780-446b-a8ee-8115785d60a6.jpg?v=1741320194",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_576_Room_and_Board_Jasper_sofa_ac94e50a-6574-47ac-9612-cf0978bd2d9e.jpg?v=1741320194"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RB-JR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Room_and_Board",
+    "FLT___Product_Ref__New____RB-JR-71",
+    "FLT___Series_Code___JR",
+    "FLT___Series_Name___Jasper",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "RB-JR-71",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Jasper",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-JR-71",
+     "price": "549.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "andre-76-sofa-slipcover",
+   "title": "Andre 76\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-AE-76",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-AE-76_VELC_PM_CVC-01.jpg?v=1741320193",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-AE-76_VELC_PM_CVC-01.jpg?v=1741320193",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_669_Room_and_Board_Andre_sofa.jpg?v=1741320193",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_670_Room_and_Board_Andre_sofa.jpg?v=1741320193"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RB-AE",
+    "categoryproducts:RB-Sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Ref__New____RB-AE-76",
+    "FLT___Series_Code___AE",
+    "FLT___Series_Name___Andre",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "RB-AE-76",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Andre",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-AE-76",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jasper-slipcovered-86-sofa-slipcover",
+   "title": "Jasper Slipcovered 86\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-JR-86",
+   "price": "579.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-86_VELC_SP_CVC-01.jpg?v=1741320193",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-JR-86_VELC_SP_CVC-01.jpg?v=1741320193",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_576_Room_and_Board_Jasper_sofa_576e0a60-7426-49e7-9447-268082ec32ad.jpg?v=1741320193",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_575_Room_and_Board_Jasper_sofa.jpg?v=1741320193"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RB-JR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Room_and_Board",
+    "FLT___Product_Ref__New____RB-JR-86",
+    "FLT___Series_Code___JR",
+    "FLT___Series_Name___Jasper",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "RB-JR-86",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Jasper",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-JR-86",
+     "price": "579.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

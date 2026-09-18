@@ -1,0 +1,4135 @@
+{
+ "handle": "chair-covers-ikea",
+ "fetchedAt": "2026-09-18T05:32:02.853Z",
+ "count": 65,
+ "products": [
+  {
+   "handle": "angby-armchair-cover",
+   "title": "Angby Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-AY-1",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AY-1_SHRT_SP_CVC-01.jpg?v=1741320117",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AY-1_SHRT_SP_CVC-01.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_212_IKEA_Angby_sofa_ad5de1ed-0dd5-444e-8588-7290e2a27de6.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_211_IKEA_Angby_sofa.jpg?v=1741320117"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:AY",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-AY-1",
+    "FLT___Product_Ref__Old____AY1",
+    "FLT___Series_Code___AY",
+    "FLT___Series_Name___Angby",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-AY-1",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Angby",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No",
+    "t_shaped_back_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-AY-1",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "applaro-armchair-cushion-cover",
+   "title": "Applaro Armchair Cushion Cover",
+   "vendor": "IKEA",
+   "sku": "IK-APO-1",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-APO-1_DVN_SP_CVC-01.jpg?v=1741320154",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-APO-1_DVN_SP_CVC-01.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_215_IKEA_Applaro_sofa_55f43e56-850a-4563-94ca-61ecc2829649.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_216_IKEA_Applaro_sofa_90f76c5e-9d0e-4db8-8883-62d59803e2cb.jpg?v=1741320154"
+   ],
+   "tags": [
+    "categoryproducts:APO",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Outdoor",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-APO-1",
+    "FLT___Series_Code___APO",
+    "FLT___Series_Name___Applaro",
+    "FLT___Size___Armchair",
+    "FLT___Size___Cushion_Only",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-APO-1",
+    "series:Applaro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-APO-1",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "applaro-bench-with-backrest-cushion-covers",
+   "title": "Applaro Bench with Backrest Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-APO-9",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-APO-9_DVN_SP_CVC-01.jpg?v=1741320155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-APO-9_DVN_SP_CVC-01.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_214_IKEA_Applaro_sofa.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_216_IKEA_Applaro_sofa.jpg?v=1741320155"
+   ],
+   "tags": [
+    "categoryproducts:APO",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Outdoor",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-APO-9",
+    "FLT___Series_Code___APO",
+    "FLT___Series_Name___Applaro",
+    "FLT___Size___Bench",
+    "FLT___Size___Cushion_Only",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-APO-9",
+    "series:Applaro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-APO-9",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backsalen-1-5-seat-armchair-cover",
+   "title": "Backsalen 1.5 seat Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BSN-1",
+   "price": "239.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BSN-1_LSKT_SI_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BSN-1_LSKT_SI_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_225_IKEA_Backsalen_sofa_ca90606c-eac3-4ad0-89e1-823822ac1678.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_224_IKEA_Backsalen_sofa.jpg?v=1741320129"
+   ],
+   "tags": [
+    "5 seat Armchair",
+    "be:1",
+    "be_-_back:1",
+    "be_-_throw:2",
+    "categories:Armchair",
+    "categoryproducts:BSN",
+    "features:515",
+    "features:539",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BSN-1",
+    "FLT___Product_Ref__Old____BSN15",
+    "FLT___Series_Code___BSN",
+    "FLT___Series_Name___Backsalen",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:YES",
+    "has_back:YES",
+    "IK-BSN-1",
+    "number_of_arms:Two Arms",
+    "original_cover_with_skirt:YES",
+    "product_name:Backsalen 1",
+    "removable_back_cushion:YES",
+    "removable_seat_cushion:YES",
+    "series:Backsalen",
+    "size:1 Seater",
+    "throw_-_total:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BSN-1",
+     "price": "239.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "barkaby-armchair-cover",
+   "title": "Barkaby Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BY-1",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BY-1_CNRP_PM_CVC-01.jpg?v=1741320124",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BY-1_CNRP_PM_CVC-01.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_228_IKEA_Barkaby_sofa.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_227_IKEA_Barkaby_sofa.jpg?v=1741320124"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:BY",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BY-1",
+    "FLT___Product_Ref__Old____BY1",
+    "FLT___Series_Code___BY",
+    "FLT___Series_Name___Barkaby",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-BY-1",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Barkaby",
+    "size:1 Seater",
+    "storage:No",
+    "t_shaped_back_cushion:1",
+    "t_shaped_seat_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BY-1",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bergmund-barstool-cover",
+   "title": "Bergmund Barstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BMD-BS",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BMD-BS_VELC_SP_CVC-01.jpg?v=1741320127",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BMD-BS_VELC_SP_CVC-01.jpg?v=1741320127",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_231_IKEA_Bergmund_sofa.jpg?v=1741320127",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_232_IKEA_Bergmund_sofa.jpg?v=1741320127"
+   ],
+   "tags": [
+    "categoryproducts:BMD",
+    "categoryproducts:IK",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BMD-BS",
+    "FLT___Series_Code___BMD",
+    "FLT___Series_Name___Bergmund",
+    "FLT___Size___Bar_Stool",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-BMD-BS",
+    "series:Bergmund"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BMD-BS",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bondholmen-armchair-cushion-covers",
+   "title": "Bondholmen Armchair Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BHN-1",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-1_DVN_DC_SP_CVC-01.jpg?v=1741320152",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-1_DVN_DC_SP_CVC-01.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_233_IKEA_Bondholmen_sofa.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_235_IKEA_Bondholmen_sofa_47e19802-09d7-4684-b314-af81003481b1.jpg?v=1741320152"
+   ],
+   "tags": [
+    "categoryproducts:BHN",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Outdoor",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BHN-1",
+    "FLT___Series_Code___BHN",
+    "FLT___Series_Name___Bondholmen",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT___Variant_2_Name___55_9W_x_54D_x_83_5H_cm",
+    "FLT___Variant_2_Name___77_2W_x_75_8D_x_78_1H_cm",
+    "FLT___Variant_2_Type___Size",
+    "FLT__MAIN",
+    "IK-BHN-1",
+    "series:Bondholmen"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BHN-1",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bondholmen-bar-stool-cushion-covers",
+   "title": "Bondholmen Bar Stool Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BHN-BS",
+   "price": "29.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-BS_DVN_SP_CVC-01.jpg?v=1741320155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-BS_DVN_SP_CVC-01.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_234_IKEA_Bondholmen_sofa.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_597_IKEA_Bondholmen_sofa.jpg?v=1741320155"
+   ],
+   "tags": [
+    "categoryproducts:BHN",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Outdoor",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BHN-BS",
+    "FLT___Series_Code___BHN",
+    "FLT___Series_Name___Bondholmen",
+    "FLT___Size___Bar_Stool",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-BHN-BS",
+    "series:Bondholmen"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BHN-BS",
+     "price": "29.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bondholmen-reclining-chair-cushion-covers",
+   "title": "Bondholmen Reclining Chair Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BHN-1RC",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-1RC_DVN_SP_CVC-01.jpg?v=1741320152",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BHN-1RC_DVN_SP_CVC-01.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_236_IKEA_Bondholmen_sofa.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_596_IKEA_Bondholmen_sofa.jpg?v=1741320152"
+   ],
+   "tags": [
+    "categoryproducts:BHN",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Outdoor",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BHN-1RC",
+    "FLT___Series_Code___BHN",
+    "FLT___Series_Name___Bondholmen",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-BHN-1RC",
+    "series:Bondholmen"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BHN-1RC",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ekenas-armchair-cover",
+   "title": "Ekenas Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EKN-1",
+   "price": "159.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EKN-1_LSKT_SP_CVC-01.jpg?v=1741320148",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EKN-1_LSKT_SP_CVC-01.jpg?v=1741320148",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_241_IKEA_Ekenas_sofa.jpg?v=1741320148",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_242_IKEA_Ekenas_sofa.jpg?v=1741320148"
+   ],
+   "tags": [
+    "categoryproducts:EKN",
+    "categoryproducts:IK",
+    "features:539",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EKN-1",
+    "FLT___Product_Ref__Old____EKN1",
+    "FLT___Series_Code___EKN",
+    "FLT___Series_Name___Ekenas",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "IK-EKN-1",
+    "installation:579",
+    "series:Ekenas"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EKN-1",
+     "price": "159.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ekenaset-armchair-cover",
+   "title": "Ekenaset Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EKS-7",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EKS-7_VELC_WR_CVC-01.jpg?v=1741320138",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EKS-7_VELC_WR_CVC-01.jpg?v=1741320138"
+   ],
+   "tags": [
+    "categoryproducts:EKS",
+    "categoryproducts:IK",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EKS-7",
+    "FLT___Product_Ref__Old____EKS1",
+    "FLT___Series_Code___EKS",
+    "FLT___Series_Name___Ekenaset",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-EKS-7",
+    "installation:579",
+    "series:Ekenaset"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EKS-7",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ekero-armchair-cover",
+   "title": "Ekero Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EK-1",
+   "price": "139.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EK-1_VELC_SP_CVC-01.jpg?v=1741320151",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EK-1_VELC_SP_CVC-01.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_243_IKEA_Ekero_sofa.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_244_IKEA_Ekero_sofa.jpg?v=1741320151"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:EK",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EK-1",
+    "FLT___Product_Ref__Old____EK1",
+    "FLT___Series_Code___EK",
+    "FLT___Series_Name___Ekero",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EK-1",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:Ekero",
+    "size:1 Seater",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EK-1",
+     "price": "139.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ekeskog-armchair-cover",
+   "title": "Ekeskog Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EG-1",
+   "price": "239.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-1_MLTP_PM_CVC-01.jpg?v=1741678109",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-1_MLTP_PM_CVC-01.jpg?v=1741678109",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_245_IKEA_Ekeskog_sofa.jpg?v=1741678109",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_246_IKEA_Ekeskog_sofa.jpg?v=1741678109"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:EG",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EG-1",
+    "FLT___Product_Ref__Old____EG1",
+    "FLT___Series_Code___EG",
+    "FLT___Series_Name___Ekeskog",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EG-1",
+    "installation:579",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ekeskog",
+    "size:1 Seater",
+    "storage:No",
+    "t_shaped_back_cushion:1",
+    "t_shaped_seat_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EG-1",
+     "price": "239.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ekolsund-recliner-cover",
+   "title": "Ekolsund Recliner Cover",
+   "vendor": "IKEA",
+   "sku": "IK-ED-1",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-ED-1_VELC_SP_CVC-01.jpg?v=1741320140",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-ED-1_VELC_SP_CVC-01.jpg?v=1741320140",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_248_IKEA_Ekolsund_sofa.jpg?v=1741320140",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_247_IKEA_Ekolsund_sofa.jpg?v=1741320140"
+   ],
+   "tags": [
+    "categoryproducts:ED",
+    "categoryproducts:IK",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-ED-1",
+    "FLT___Product_Ref__Old____ED1",
+    "FLT___Series_Code___ED",
+    "FLT___Series_Name___Ekolsund",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-ED-1",
+    "installation:579",
+    "series:Ekolsund"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-ED-1",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ektorp-armchair-cover",
+   "title": "Ektorp Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EP-1",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-1_CNRP_PM_CVC-01.jpg?v=1741320113",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-1_CNRP_PM_CVC-01.jpg?v=1741320113"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:EP",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EP-1",
+    "FLT___Product_Ref__Old____EP1",
+    "FLT___Series_Code___EP",
+    "FLT___Series_Name___Ektorp",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EP-1",
+    "installation:586",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ektorp",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No",
+    "t_shaped_back_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EP-1",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ektorp-armchair-tullsta-cover",
+   "title": "Ektorp Armchair Tullsta Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EP-1TA",
+   "price": "139.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-1TA_CNRP_PM_CVC-01.jpg?v=1741320111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-1TA_CNRP_PM_CVC-01.jpg?v=1741320111"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular Straight",
+    "back_type:High Rounded Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:EP",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EP-1TA",
+    "FLT___Product_Ref__Old____EP_T",
+    "FLT___Series_Code___EP",
+    "FLT___Series_Name___Ektorp",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EP-1TA",
+    "installation:586",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_seat_cushion:1",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ektorp Tullsta",
+    "size:1 Seater",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EP-1TA",
+     "price": "139.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ektorp-jennylund-armchair-cover",
+   "title": "Ektorp Jennylund Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EP-1JD",
+   "price": "139.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-1JD_CNRP_PM_CVC-01.jpg?v=1741320124",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-1JD_CNRP_PM_CVC-01.jpg?v=1741320124"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:EP",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EP-1JD",
+    "FLT___Product_Ref__Old____JD1",
+    "FLT___Series_Code___EP",
+    "FLT___Series_Name___Ektorp",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EP-1JD",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Ektorp Jennylund",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EP-1JD",
+     "price": "139.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "farlov-armchair-cover",
+   "title": "Farlov Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FV-1",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FV-1_CNRP_SP_CVC-01.jpg?v=1741320142",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FV-1_CNRP_SP_CVC-01.jpg?v=1741320142",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_055_IKEA_Farlov_sofa.jpg?v=1741320142",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_054_IKEA_Farlov_sofa.jpg?v=1741320142"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Sloped Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Round Wedge Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:FV",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FV-1",
+    "FLT___Product_Ref__Old____FV1",
+    "FLT___Series_Code___FV",
+    "FLT___Series_Name___Farlov",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-FV-1",
+    "installation:617",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Farlov",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FV-1",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-1-seat-section-cover",
+   "title": "Finnala 1 Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-1X",
+   "price": "139.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-1X_VELC_WR_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-1X_VELC_WR_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_117_IKEA_Finnala_sofa_5278fb67-3a9e-43ec-8b7f-ee6348cd287d.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_120_IKEA_Finnala_sofa.jpg?v=1741320129"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-1X",
+    "FLT___Product_Ref__Old____FNA1_N",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-1X",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-1X",
+     "price": "139.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gronlid-armchair-cover",
+   "title": "Gronlid Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-GRD-1",
+   "price": "139.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-1_SHRT_PM_CVC-01.jpg?v=1741320151",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-1_SHRT_PM_CVC-01.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_253_IKEA_Gronlid_sofa.jpg?v=1741320151",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_255_IKEA_Gronlid_sofa.jpg?v=1741320151"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:GRD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-GRD-1",
+    "FLT___Product_Ref__Old____GRD15",
+    "FLT___Series_Code___GRD",
+    "FLT___Series_Name___Gronlid",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-GRD-1",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Gronlid",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-GRD-1",
+     "price": "139.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gronlid-one-seat-section-cover",
+   "title": "Gronlid One-Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-GRD-1X",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-1X_SHRT_PM_CVC-01.jpg?v=1741320154",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-1X_SHRT_PM_CVC-01.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_255_IKEA_Gronlid_sofa_17350b2f-3f5b-4cf4-8440-1ff1222a4c78.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_256_IKEA_Gronlid_sofa_73f2786d-0a05-456f-9c62-b382efb2486b.jpg?v=1741320154"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Corner Section",
+    "categoryproducts:GRD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-GRD-1X",
+    "FLT___Product_Ref__Old____GRD1_N",
+    "FLT___Series_Code___GRD",
+    "FLT___Series_Name___Gronlid",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_WR",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-GRD-1X",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Gronlid",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-GRD-1X",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-1-seat-section-cover",
+   "title": "Harlanda 1 Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-1X",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-1X_SHRT_PM_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-1X_SHRT_PM_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_264_IKEA_Harlanda_sofa_24a70a91-d2e5-47bd-98a4-16c49a06f8c7.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_263_IKEA_Harlanda_sofa.jpg?v=1741320129"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-1X",
+    "FLT___Product_Ref__Old____HLD1_N",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-1X",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-1X",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harnosand-1-seater-sofa-cover",
+   "title": "Harnosand 1 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HD-1",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HD-1_LSKT_SI_CVC-01.jpg?v=1741320124",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HD-1_LSKT_SI_CVC-01.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_269_IKEA_Harnosand_sofa.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_270_IKEA_Harnosand_sofa_50d8f2a1-a192-40bc-980d-2532891bbb1d.jpg?v=1741320124"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Thin Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:HD",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HD-1",
+    "FLT___Product_Ref__Old____HD1",
+    "FLT___Series_Code___HD",
+    "FLT___Series_Name___Harnosand",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HD-1",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Harnosand",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HD-1",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harry-dining-chair-slipcover",
+   "title": "Harry Dining Chair Slipcover",
+   "vendor": "IKEA",
+   "sku": "IK-HY-DCX",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HY-DCX_34CM_VELC_SP_CVC-01.jpg?v=1741657465",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HY-DCX_34CM_VELC_SP_CVC-01.jpg?v=1741657465"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Dining Chair",
+    "categoryproducts:HY",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HY-DCX",
+    "FLT___Product_Ref__Old____HY1",
+    "FLT___Series_Code___HY",
+    "FLT___Series_Name___Harry",
+    "FLT___Size___Dining_Chair",
+    "FLT___Style_Name___Long_Skirt",
+    "FLT___Style_Name___No_Skirt",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___13_5_inches_or_34_5cm",
+    "FLT___Variant_1_Name___17_inches_or_43cm",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HY-DCX",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Harry",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HY-DCX",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "henriksdal-bar-stool-slipcover",
+   "title": "Henriksdal Bar Stool Slipcover",
+   "vendor": "IKEA",
+   "sku": "IK-HL-BS",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HL-BS_N_VELC_SP_CVC-01.jpg?v=1741320127",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HL-BS_N_VELC_SP_CVC-01.jpg?v=1741320127"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Bar Stool",
+    "categoryproducts:HL",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HL-BS",
+    "FLT___Product_Ref__Old____HL0",
+    "FLT___Series_Code___HL",
+    "FLT___Series_Name___Henriksdal",
+    "FLT___Size___Bar_Stool",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___New___45W_x_44_5D_x_48H_cm",
+    "FLT___Variant_1_Name___Old___38W_x_38D_x_43H_cm",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HL-BS",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Henriksdal",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HL-BS",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "henriksdal-dining-chair-slipcover",
+   "title": "Henriksdal Dining Chair Slipcover",
+   "vendor": "IKEA",
+   "sku": "IK-HL-DCX",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HL-DCX_EXD_VELC_SP_CVC-01.jpg?v=1741655791",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HL-DCX_EXD_VELC_SP_CVC-01.jpg?v=1741655791"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Dining Chair",
+    "categoryproducts:HL",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HL-DCX",
+    "FLT___Product_Ref__Old____HL3",
+    "FLT___Series_Code___HL",
+    "FLT___Series_Name___Henriksdal",
+    "FLT___Size___Dining_Chair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___51W_x_49D_x_95H_cm",
+    "FLT___Variant_1_Name___54W_x_56D_x_97H_cm",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HL-DCX",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Henriksdal",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HL-DCX",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hova-chair-cover",
+   "title": "Hova Chair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HA-1",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HA-1_VELC_SP_CVC-01.webp?v=1767664971",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HA-1_VELC_SP_CVC-01.webp?v=1767664971"
+   ],
+   "tags": [
+    "categoryproducts:HA",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-HA-1",
+    "IKEA",
+    "installation:579",
+    "series:Hova"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HA-1",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hovas-armchair-cover",
+   "title": "Hovas Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HS-1",
+   "price": "229.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HS-1_CNRP_SP_CVC-01.jpg?v=1741320114",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HS-1_CNRP_SP_CVC-01.jpg?v=1741320114",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_280_IKEA_Hovas_sofa.jpg?v=1741320114",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_281_IKEA_Hovas_sofa.jpg?v=1741320114"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:HS",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HS-1",
+    "FLT___Product_Ref__Old____HS1",
+    "FLT___Series_Code___HS",
+    "FLT___Series_Name___Hovas",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HS-1",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Hovas",
+    "size:1 Seater",
+    "storage:No",
+    "t_shaped_back_cushion:1",
+    "t_shaped_seat_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HS-1",
+     "price": "229.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jattebo-1-seat-storage-module-cover",
+   "title": "Jattebo 1-Seat Storage Module Cover",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-1XP",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-1XP_VELC_SP_CVC-01.jpg?v=1741320154",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-1XP_VELC_SP_CVC-01.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_290_IKEA_Jattebo_sofa_cd0624dc-a3f2-482c-86ea-d031c178647a.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_292_IKEA_Jattebo_sofa.jpg?v=1741320154"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-1XP",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-JTO-1XP",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-1XP",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jattebo-1-5-seat-storage-module-cover",
+   "title": "Jattebo 1.5-Seat Storage Module Cover",
+   "vendor": "IKEA",
+   "sku": "IK-JTO-1X",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-1X_VELC_SP_CVC-01.jpg?v=1741320157",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-JTO-1X_VELC_SP_CVC-01.jpg?v=1741320157",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_287_IKEA_Jattebo_sofa.jpg?v=1741320157",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_285_IKEA_Jattebo_sofa.jpg?v=1741320157"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:JTO",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-JTO-1X",
+    "FLT___Series_Code___JTO",
+    "FLT___Series_Name___Jattebo",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-JTO-1X",
+    "series:Jattebo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-JTO-1X",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlanda-armchair-cover",
+   "title": "Karlanda Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KA-1",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-1_LSKT_WR_CVC-01.jpg?v=1741320110",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-1_LSKT_WR_CVC-01.jpg?v=1741320110",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_301_IKEA_Karlanda_sofa_34c0b692-37c7-4556-a360-bea84e713af9.jpg?v=1741320110",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_298_IKEA_Karlanda_sofa.jpg?v=1741320110"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:KA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KA-1",
+    "FLT___Product_Ref__Old____KA1",
+    "FLT___Series_Code___KA",
+    "FLT___Series_Name___Karlanda",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KA-1",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlanda",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KA-1",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlanda-bench-cover",
+   "title": "Karlanda Bench Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KA-9",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-9_VELC_PM_CVC-01.jpg?v=1741320124",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KA-9_VELC_PM_CVC-01.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_606_IKEA_Karlanda_sofa.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_299_IKEA_Karlanda_sofa.jpg?v=1741320124"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:KA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KA-9",
+    "FLT___Product_Ref__Old____KA6",
+    "FLT___Series_Code___KA",
+    "FLT___Series_Name___Karlanda",
+    "FLT___Size___Bench",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-KA-9",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Karlanda",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KA-9",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-armchair-small-cover",
+   "title": "Karlstad Armchair (Small) Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-1-PTD",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-1-PTD_SHRT_SP_CVC-01.jpg?v=1741675373",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-1-PTD_SHRT_SP_CVC-01.jpg?v=1741675373",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_05_1003_c0138c85-546a-446e-a7fe-564cc5adb90b.jpg?v=1741675373",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD1_15_RS_20_1_ba055909-a8a6-4094-adda-f3a91d6d4801.jpg?v=1741675373"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Thin Regular High",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-1-PTD",
+    "FLT___Product_Ref__Old____KD7",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KD-1-PTD",
+    "installation:578",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-1-PTD",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-armchair-cover",
+   "title": "Karlstad Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-1",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-1_VELC_SP_CVC-01.jpg?v=1741678941",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-1_VELC_SP_CVC-01.jpg?v=1741678941",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_05_1003.jpg?v=1741678941",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD1_15_RS_20_1.jpg?v=1741678941"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Rounded Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-1",
+    "FLT___Product_Ref__Old____KD1",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KD-1",
+    "installation:578",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-1",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kivik-1-seater-sofa-cover",
+   "title": "Kivik 1 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KK-1X",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KK-1X_VELC_SI_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KK-1X_VELC_SI_CVC-01.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KK2_03_RY.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KK2_04_RY.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:KK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KK-1X",
+    "FLT___Product_Ref__Old____KK1",
+    "FLT___Series_Code___KK",
+    "FLT___Series_Name___Kivik",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KK-1X",
+    "installation:587",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Kivik",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KK-1X",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "koarp-armchair-cover",
+   "title": "Koarp Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KP-1",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KP-1_VELC_WR_CVC-01.jpg?v=1741678945",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KP-1_VELC_WR_CVC-01.jpg?v=1741678945",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_302_IKEA_Koarp_sofa.jpg?v=1741678945",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_303_IKEA_Koarp_sofa.jpg?v=1741678945"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:KP",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KP-1",
+    "FLT___Product_Ref__Old____KP1",
+    "FLT___Series_Code___KP",
+    "FLT___Series_Name___Koarp",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KP-1",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Koarp",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KP-1",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kungshamn-1-seat-module-slipcover",
+   "title": "Kungshamn 1-seat Module Slipcover",
+   "vendor": "IKEA",
+   "sku": "IK-KUN-1X",
+   "price": "109.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KUN-1X_LSKT_SP_CVC-01.jpg?v=1741320143",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KUN-1X_LSKT_SP_CVC-01.jpg?v=1741320143",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_305_IKEA_Kungshamn_sofa.jpg?v=1741320143",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_306_IKEA_Kungshamn_sofa.jpg?v=1741320143"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:KUN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KUN-1X",
+    "FLT___Product_Ref__Old____KUN1",
+    "FLT___Series_Code___KUN",
+    "FLT___Series_Name___Kungshamn",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KUN-1X",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Kungshamn",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KUN-1X",
+     "price": "109.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "landskrona-armchair-cover",
+   "title": "Landskrona Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LSA-1",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-1_SHRT_SP_CVC-01.jpg?v=1741320150",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-1_SHRT_SP_CVC-01.jpg?v=1741320150",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_069_IKEA_Landskrona_sofa_277c28cb-c255-430b-b2ff-de57935a794d.jpg?v=1741320150",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_067_IKEA_Landskrona_sofa.jpg?v=1741320150"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:LSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LSA-1",
+    "FLT___Product_Ref__Old____LSA1",
+    "FLT___Series_Code___LSA",
+    "FLT___Series_Name___Landskrona",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LSA-1",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Landskrona",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LSA-1",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lidhult-1-seat-section-cover",
+   "title": "Lidhult 1 Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LT-1X",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-1X_VELC_SP_CVC-01.jpg?v=1741320139",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-1X_VELC_SP_CVC-01.jpg?v=1741320139",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_307_IKEA_Lidhult_sofa_73db41be-7d30-4ed3-8984-c9e3261ec375.jpg?v=1741320139",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_424_IKEA_Lidhult_sofa_e7acd9d7-2f97-47e4-bd47-c9b23d5661fb.jpg?v=1741320139"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:LT",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LT-1X",
+    "FLT___Product_Ref__Old____LT1_N",
+    "FLT___Series_Code___LT",
+    "FLT___Series_Name___Lidhult",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-LT-1X",
+    "installation:579",
+    "series:Lidhult"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LT-1X",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lillberg-armchair-cover",
+   "title": "Lillberg Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LG-1",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-1_PM_CVC-01.jpg?v=1741660252",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-1_PM_CVC-01.jpg?v=1741660252",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_313_IKEA_Lillberg_sofa.jpg?v=1741320112",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_315_IKEA_Lillberg_sofa_b452942f-a6f9-47a4-be75-b960c1f18567.jpg?v=1741320112"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin Frame",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Frame High",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:LG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LG-1",
+    "FLT___Product_Ref__Old____LG1",
+    "FLT___Series_Code___LG",
+    "FLT___Series_Name___Lillberg",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LG-1",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lillberg",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LG-1",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lycksele-chair-bed-cover",
+   "title": "Lycksele Chair Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LE-1BX",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LE-1BX_LSKT_SP_CVC-01.jpg?v=1741678944",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LE-1BX_LSKT_SP_CVC-01.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_423_IKEA_Lycksele_sofa.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_319_IKEA_Lycksele_sofa.jpg?v=1741678944"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:LE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LE-1BX",
+    "FLT___Product_Ref__Old____LE1",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lycksele",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LE-1BX",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Lycksele",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LE-1BX",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "mellby-armchair-cover",
+   "title": "Mellby Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-MY-1",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MY-1_VELC_SI_CVC-01.jpg?v=1741320108",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MY-1_VELC_SI_CVC-01.jpg?v=1741320108",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_320_IKEA_Mellby_sofa.jpg?v=1741320108",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_321_IKEA_Mellby_sofa.jpg?v=1741320108"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:MY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MY-1",
+    "FLT___Product_Ref__Old____MY1",
+    "FLT___Series_Code___MY",
+    "FLT___Series_Name___Mellby",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-MY-1",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Mellby",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MY-1",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morabo-armchair-cover",
+   "title": "Morabo Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-MRO-1",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-1_SHRT_SP_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-1_SHRT_SP_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_145_IKEA_Morabo_sofa_3c727fe5-a53b-4072-9ea1-6fc7441455f9.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_148_IKEA_Morabo_sofa.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:MRO",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MRO-1",
+    "FLT___Product_Ref__Old____MRO1",
+    "FLT___Series_Code___MRO",
+    "FLT___Series_Name___Morabo",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-MRO-1",
+    "series:Morabo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MRO-1",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nils-armchair-slipcover",
+   "title": "Nils Armchair Slipcover",
+   "vendor": "IKEA",
+   "sku": "IK-NS-1",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NS-1_VELC_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NS-1_VELC_SP_CVC-01.jpg?v=1741678943"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular High",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:NS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NS-1",
+    "FLT___Product_Ref__Old____NS1",
+    "FLT___Series_Code___NS",
+    "FLT___Series_Name___Nils",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___BKPT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-NS-1",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Nils",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NS-1",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nils-bar-stool-slipcover",
+   "title": "Nils Bar Stool Slipcover",
+   "vendor": "IKEA",
+   "sku": "IK-NS-BS",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NS-BS_VELC_SP_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NS-BS_VELC_SP_CVC-01.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_334_IKEA_Nils_sofa.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_481_IKEA_Nils_sofa.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Stool",
+    "categoryproducts:IK",
+    "categoryproducts:NS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NS-BS",
+    "FLT___Product_Ref__Old____NS0",
+    "FLT___Series_Code___NS",
+    "FLT___Series_Name___Nils",
+    "FLT___Size___Bar_Stool",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-NS-BS",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Nils",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NS-BS",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sakarias-chair-cover",
+   "title": "Sakarias Chair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SAK-1",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SAK-1_VELC_SP_CVC-01.jpg?v=1741320132",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SAK-1_VELC_SP_CVC-01.jpg?v=1741320132",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_344_IKEA_Sakarias_sofa.jpg?v=1741320132",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_493_IKEA_Sakarias_sofa.jpg?v=1741320132"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Slope Square Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Square Sloping Back",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:SAK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SAK-1",
+    "FLT___Product_Ref__Old____SAK1",
+    "FLT___Series_Code___SAK",
+    "FLT___Series_Name___Sakarias",
+    "FLT___Size___Dining_Chair",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SAK-1",
+    "installation:579",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Sakarias",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SAK-1",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sakarias-stool-cover",
+   "title": "Sakarias Stool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SAK-BS",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SAK-BS_VELC_SP_CVC-01.jpg?v=1741320144",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SAK-BS_VELC_SP_CVC-01.jpg?v=1741320144",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_345_IKEA_Sakarias_sofa.jpg?v=1741320144",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_494_IKEA_Sakarias_sofa.jpg?v=1741320144"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:SAK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SAK-BS",
+    "FLT___Product_Ref__Old____SAK0",
+    "FLT___Series_Code___SAK",
+    "FLT___Series_Name___Sakarias",
+    "FLT___Size___Bar_Stool",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-SAK-BS",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Sakarias",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SAK-BS",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "saltsjobaden-armchair-cover",
+   "title": "Saltsjobaden Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SJN-1",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-1.jpg?v=1787302883",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-1.jpg?v=1787302883",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SJN-1_087901d3-dc05-41e4-bf74-c069b9768f5d.jpg?v=1787302891"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SJN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-SJN-1",
+    "installation:579",
+    "series:Saltsjobaden"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SJN-1",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sandby-armchair-cover",
+   "title": "Sandby Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SY-1X",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-1X_CNRP_PM_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-1X_CNRP_PM_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_349_IKEA_Sandby_sofa_b995e9fb-4202-4164-a637-dcb9536497d6.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_350_IKEA_Sandby_sofa_91e8e09f-5a2a-4c43-8182-790a039b3146.jpg?v=1741320129"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:SY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SY-1X",
+    "FLT___Product_Ref__Old____SY1",
+    "FLT___Series_Code___SY",
+    "FLT___Series_Name___Sandby",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SY-1X",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Sandby",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SY-1X",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "segeron-armchair-cushion-covers",
+   "title": "Segeron Armchair Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SGN-1",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SGN-1_DVN_PTD_SP_CVC-01.jpg?v=1741320153",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SGN-1_DVN_PTD_SP_CVC-01.jpg?v=1741320153",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_352_IKEA_Segeron_sofa.jpg?v=1741320153",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_355_IKEA_Segeron_sofa_b68b2b2e-9a41-4fef-94b5-478f038bac46.jpg?v=1741320153"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SGN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Outdoor",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SGN-1",
+    "FLT___Series_Code___SGN",
+    "FLT___Series_Name___Segeron",
+    "FLT___Size___Armchair",
+    "FLT___Size___Cushion_Only",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT___Variant_2_Name___44_x_44_cm",
+    "FLT___Variant_2_Name___50_x_50_cm",
+    "FLT___Variant_2_Type___Size",
+    "FLT__MAIN",
+    "IK-SGN-1",
+    "series:Segeron"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SGN-1",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "segeron-modular-seat-section-cushion-covers",
+   "title": "Segeron Modular Seat Section Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SGN-1X",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SGN-1X_DVN_SP_CVC-01.jpg?v=1741320150",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SGN-1X_DVN_SP_CVC-01.jpg?v=1741320150",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_352_IKEA_Segeron_sofa_b0741e14-efbc-4778-9dc6-98f39d5f05ed.jpg?v=1741320150",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_355_IKEA_Segeron_sofa_e6a0b3de-5c2a-454e-b3ce-a65e12fe73bd.jpg?v=1741320150"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SGN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SGN-1X",
+    "FLT___Series_Code___SGN",
+    "FLT___Series_Name___Segeron",
+    "FLT___Size___Armchair",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-SGN-1X",
+    "series:Segeron"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SGN-1X",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "soderhamn-one-seat-section-cover",
+   "title": "Soderhamn One Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SN-1X",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-1X_VELC_SP_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-1X_VELC_SP_CVC-01.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Corner Section",
+    "categoryproducts:IK",
+    "categoryproducts:SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SN-1X",
+    "FLT___Product_Ref__Old____SN1_N",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Soderhamn",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SN-1X",
+    "installation:585",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Soderhamn",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SN-1X",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "solleron-armchair-cushion-covers",
+   "title": "Solleron Armchair Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-SLN-1",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-1_DVN_SP_CVC-01.jpg?v=1741320155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SLN-1_DVN_SP_CVC-01.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_354_IKEA_Solleron_sofa.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_357_IKEA_Solleron_sofa.jpg?v=1741320155"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SLN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Outdoor",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SLN-1",
+    "FLT___Series_Code___SLN",
+    "FLT___Series_Name___Solleron",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-SLN-1",
+    "series:Solleron"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SLN-1",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "solsta-olarp-armchair-cover",
+   "title": "Solsta Olarp Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SA-1",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-1_CNRP_PM_CVC-01.jpg?v=1741320123",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-1_CNRP_PM_CVC-01.jpg?v=1741320123",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_364_IKEA_Solsta_sofa.jpg?v=1741320123",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_363_IKEA_Solsta_sofa.jpg?v=1741320123"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular Straight",
+    "back_type:High Rounded Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:SA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SA-1",
+    "FLT___Product_Ref__Old____SA1",
+    "FLT___Series_Code___SA",
+    "FLT___Series_Name___Solsta",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SA-1",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_seat_cushion:1",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Solsta",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SA-1",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stockholm-1-5-seater-sofa-cover",
+   "title": "Stockholm 1.5 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SM-1",
+   "price": "229.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-1_VELC_SP_CVC-01.jpg?v=1741678944",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-1_VELC_SP_CVC-01.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_136_IKEA_Stockholm_sofa_f41294bb-c56c-43b5-aae1-badb2887f269.jpg?v=1741678944",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_140_IKEA_Stockholm_sofa_f8837544-4add-4058-94f8-8929d87ead32.jpg?v=1741678944"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:SM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SM-1",
+    "FLT___Product_Ref__Old____SM15",
+    "FLT___Series_Code___SM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SM-1",
+    "installation:580",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Stockholm",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SM-1",
+     "price": "229.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stockholm-easy-chair-sofa-cover",
+   "title": "Stockholm Easy Chair Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SM-1X",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-1X_VELC_SP_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-1X_VELC_SP_CVC-01.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_136_IKEA_Stockholm_sofa_3d99f8d6-bcf7-4315-8add-cf11791cbe5a.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_140_IKEA_Stockholm_sofa.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:SM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SM-1X",
+    "FLT___Product_Ref__Old____SM1",
+    "FLT___Series_Code___SM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SM-1X",
+    "installation:580",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Stockholm",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SM-1X",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stocksund-armchair-cover",
+   "title": "Stocksund Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SU-1",
+   "price": "209.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-1_VELC_SP_CVC-01.jpg?v=1741675998",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-1_VELC_SP_CVC-01.jpg?v=1741675998",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_060_IKEA_Stocksund_sofa_78594751-856d-4958-91e1-08aeb29494c8.jpg?v=1741675998",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_062_IKEA_Stocksund_sofa_165f185a-c15b-45db-a898-dee6170dfbcc.jpg?v=1741675998"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Roll arm (English roll arm)",
+    "arm_shape_categories:Round",
+    "arm_type:Round English Roll",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:SU",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SU-1",
+    "FLT___Product_Ref__Old____SU1",
+    "FLT___Series_Code___SU",
+    "FLT___Series_Name___Stocksund",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SU-1",
+    "installation:579",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Stocksund",
+    "size:1 Seater",
+    "storage:No",
+    "t_shaped_back_cushion:1",
+    "t_shaped_seat_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SU-1",
+     "price": "209.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stocksund-bench-sofa-cover",
+   "title": "Stocksund Bench Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SU-9",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-9_VELC_SP_CVC-01.jpg?v=1741676124",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-9_VELC_SP_CVC-01.jpg?v=1741676124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_062_IKEA_Stocksund_sofa.jpg?v=1741676124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_065_IKEA_Stocksund_sofa.jpg?v=1741676124"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:SU",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SU-9",
+    "FLT___Product_Ref__Old____SU5",
+    "FLT___Series_Code___SU",
+    "FLT___Series_Name___Stocksund",
+    "FLT___Size___Bench",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-SU-9",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Stocksund",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:Yes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SU-9",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "strandmon-armchair-cover-loose-fit",
+   "title": "Strandmon Armchair Cover (Loose Fit)",
+   "vendor": "IKEA",
+   "sku": "IK-SR-1",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SR-1_SHRT_PM_CVC-01.jpg?v=1741320149",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SR-1_SHRT_PM_CVC-01.jpg?v=1741320149",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_367_IKEA_Strandmon_sofa.jpg?v=1741320149",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_366_IKEA_Strandmon_sofa_a3452631-6562-4b95-aa73-10374d3dcd94.jpg?v=1741320149"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round English Roll",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:SR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SR-1",
+    "FLT___Product_Ref__Old____SR1",
+    "FLT___Series_Code___SR",
+    "FLT___Series_Name___Strandmon",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SR-1",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Strandmon",
+    "size:1 Seater",
+    "storage:No",
+    "t_shaped_seat_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SR-1",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tomelilla-armchair-cover",
+   "title": "Tomelilla Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TA-1",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-1_PTD_LSKT_SP_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-1_PTD_LSKT_SP_CVC-01.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_371_IKEA_Tomelilla_sofa.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_373_IKEA_Tomelilla_sofa_75efb553-918c-4a95-8a56-791c2dda6413.jpg?v=1741575836"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Pointed High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:TA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TA-1",
+    "FLT___Product_Ref__Old____TA1",
+    "FLT___Series_Code___TA",
+    "FLT___Series_Name___Tomelilla",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Small",
+    "FLT___Variant_1_Name___Standard",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-TA-1",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Tomelilla",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TA-1",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tylosand-1-seat-section-sofa-cover",
+   "title": "Tylosand 1 Seat Section Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TD-1X",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-1X_VELC_SP_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-1X_VELC_SP_CVC-01.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_180_IKEA_Tylosand_sofa.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_178_IKEA_Tylosand_sofa.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Thin arm",
+    "arm_type:Thin Regular Straight",
+    "back_type:Metal Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:TD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TD-1X",
+    "FLT___Product_Ref__Old____TD1",
+    "FLT___Series_Code___TD",
+    "FLT___Series_Name___Tylosand",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-TD-1X",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Tylosand",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TD-1X",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "uppland-armchair-cover",
+   "title": "Uppland Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-UD-1",
+   "price": "229.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UD-1_CNRP_PM_CVC-01.jpg?v=1741320141",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UD-1_CNRP_PM_CVC-01.jpg?v=1741320141",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_014_IKEA_Ektorp_sofa_72af7f0e-bb66-4736-b260-83ee0acced8d.jpg?v=1741320141",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_013_IKEA_Ektorp_sofa_737a8da8-a551-4028-9231-e9b2043f95c0.jpg?v=1741320141"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:UD",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-UD-1",
+    "FLT___Product_Ref__Old____UD1",
+    "FLT___Series_Code___UD",
+    "FLT___Series_Name___Uppland",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "IK-UD-1",
+    "installation:579",
+    "series:Uppland"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-UD-1",
+     "price": "229.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vallentuna-seat-module-cover",
+   "title": "Vallentuna Seat Module Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VA-1X",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-1X_STD_VELC_SI_CVC-01.jpg?v=1741741765",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VA-1X_STD_VELC_SI_CVC-01.jpg?v=1741741765"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:VA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VA-1X",
+    "FLT___Product_Ref__New____IK-VAX",
+    "FLT___Product_Ref__Old____VA1_S",
+    "FLT___Series_Code___VA",
+    "FLT___Series_Name___Vallentuna",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT___Variant_1_Name___With_Storage",
+    "FLT___Variant_1_Name___Without_Storage",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-VA-1X",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Vallentuna",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:Yes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VA-1X",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vaxholm-one-seat-section-cover",
+   "title": "Vaxholm One-Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VXM-1X",
+   "price": "159.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-1X_VELC_SP_CVC-01.jpg?v=1741320144",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-1X_VELC_SP_CVC-01.jpg?v=1741320144",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_378_IKEA_Vaxholm_sofa_723d6d01-f422-4ed3-9c71-2bb165738de8.jpg?v=1741320144",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_380_IKEA_Vaxholm_sofa_28d5a4df-c832-4ee8-a15a-999c2e5ee677.jpg?v=1741320144"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:VXM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VXM-1X",
+    "FLT___Product_Ref__Old____VXM1_N",
+    "FLT___Series_Code___VXM",
+    "FLT___Series_Name___Vaxholm",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VXM-1X",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vaxholm",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VXM-1X",
+     "price": "159.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-one-seat-section-cover",
+   "title": "Vimle One Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-1X",
+   "price": "139.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-1X_IK-VE-1X_VELC_SP_CVC-01_2X_0f89e91c-928a-4c49-9fc1-8c367c344c4b.webp?v=1771904398",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-1X_IK-VE-1X_VELC_SP_CVC-01_2X_0f89e91c-928a-4c49-9fc1-8c367c344c4b.webp?v=1771904398",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_117_IKEA_Finnala_sofa_44ed8633-178c-402c-b54d-b1732251edbb.jpg?v=1771904398",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_118_IKEA_Finnala_sofa_ef55800c-f19c-4d6e-9220-771f96bdd3da.jpg?v=1771904398"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-1X",
+    "FLT___Product_Ref__Old____VE1_N",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-1X",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-1X",
+     "price": "139.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

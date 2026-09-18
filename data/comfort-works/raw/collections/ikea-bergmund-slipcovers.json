@@ -1,0 +1,56 @@
+{
+ "handle": "ikea-bergmund-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:34.162Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "bergmund-barstool-cover",
+   "title": "Bergmund Barstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BMD-BS",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BMD-BS_VELC_SP_CVC-01.jpg?v=1741320127",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BMD-BS_VELC_SP_CVC-01.jpg?v=1741320127",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_231_IKEA_Bergmund_sofa.jpg?v=1741320127",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_232_IKEA_Bergmund_sofa.jpg?v=1741320127"
+   ],
+   "tags": [
+    "categoryproducts:BMD",
+    "categoryproducts:IK",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BMD-BS",
+    "FLT___Series_Code___BMD",
+    "FLT___Series_Name___Bergmund",
+    "FLT___Size___Bar_Stool",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-BMD-BS",
+    "series:Bergmund"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BMD-BS",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

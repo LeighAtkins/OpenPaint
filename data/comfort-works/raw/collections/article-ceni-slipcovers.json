@@ -1,0 +1,233 @@
+{
+ "handle": "article-ceni-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:48.742Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "ceni-39-armchair-cover",
+   "title": "Ceni 39\" Armchair Cover",
+   "vendor": "Article",
+   "sku": "AE-CE-39",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-CE-39_SHRT_SP_CVC-01.jpg?v=1741320088",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-CE-39_SHRT_SP_CVC-01.jpg?v=1741320088",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_036_Article_Ceni_sofa.jpg?v=1741320088",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_037_Article_Ceni_sofa_ba356bae-97db-477c-86f8-e83f319c8e22.jpg?v=1741320088"
+   ],
+   "tags": [
+    "AE-CE-39",
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:AE-CE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Article",
+    "FLT___Product_Ref__New____AE-CE-39",
+    "FLT___Series_Code___CE",
+    "FLT___Series_Name___Ceni",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ceni",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AE-CE-39",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ceni-61-loveseat-slipcover",
+   "title": "Ceni 61\" Loveseat Slipcover",
+   "vendor": "Article",
+   "sku": "AE-CE-61",
+   "price": "419.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-CE-61_SHRT_SP_CVC-01.jpg?v=1741320087",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-CE-61_SHRT_SP_CVC-01.jpg?v=1741320087"
+   ],
+   "tags": [
+    "AE-CE-61",
+    "Article",
+    "categoryproducts:AE-CE",
+    "categoryproducts:AE-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Ceni"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AE-CE-61",
+     "price": "419.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ceni-83-sofa-cover",
+   "title": "Ceni 83\" Sofa Cover",
+   "vendor": "Article",
+   "sku": "AE-CE-83",
+   "price": "549.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-CE-83_SHRT_SP_CVC-01.jpg?v=1741320090",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-CE-83_SHRT_SP_CVC-01.jpg?v=1741320090",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_037_Article_Ceni_sofa.jpg?v=1741320090",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_036_Article_Ceni_sofa_09fdd8af-5c0d-4ad2-87b9-e1270271370b.jpg?v=1741320090"
+   ],
+   "tags": [
+    "AE-CE-83",
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:AE-CE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Article",
+    "FLT___Product_Ref__New____AE-CE-83",
+    "FLT___Series_Code___CE",
+    "FLT___Series_Name___Ceni",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ceni",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AE-CE-83",
+     "price": "549.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ceni-ottoman-slipcover",
+   "title": "Ceni Ottoman Slipcover",
+   "vendor": "Article",
+   "sku": "AE-CE-35F",
+   "price": "109.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-CE-35F_SHRT_PM_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-CE-35F_SHRT_PM_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "AE-CE-35F",
+    "Article",
+    "categoryproducts:AE-CE",
+    "categoryproducts:AE-Sofa",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Ceni"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AE-CE-35F",
+     "price": "109.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

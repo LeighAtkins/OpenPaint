@@ -1,0 +1,56 @@
+{
+ "handle": "chair-covers-elbgestoeber",
+ "fetchedAt": "2026-09-18T05:32:01.768Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "elbdock-one-seater-chair-cover",
+   "title": "Elbdock One Seater / Chair Cover",
+   "vendor": "Elbgestoeber",
+   "sku": "EGS-EK-32X",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EGS-EK-32X_LSKT_SP_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EGS-EK-32X_LSKT_SP_CVC-01.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_587_Elbgestoeber_Elbdock_sofa_12a48113-cc4c-481c-a5c7-b696e8757926.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_589_Elbgestoeber_Elbdock_sofa_98e40d77-ea93-4a7c-9d12-9a1b124b2e55.jpg?v=1741575836"
+   ],
+   "tags": [
+    "categoryproducts:EGS",
+    "EGS-EK-32X",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Elbgestoeber",
+    "FLT___Product_Ref__New____EGS-EK-32X",
+    "FLT___Product_Ref__Old____EGS_EK_1",
+    "FLT___Series_Code___EK",
+    "FLT___Series_Name___Elbdock",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "series:Elbdock"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EGS-EK-32X",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

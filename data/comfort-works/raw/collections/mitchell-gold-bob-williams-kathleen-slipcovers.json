@@ -1,0 +1,49 @@
+{
+ "handle": "mitchell-gold-bob-williams-kathleen-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:28.019Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "kathleen-85-sleeper-sofa-slipcover",
+   "title": "Kathleen 85\" Sleeper Sofa Slipcover",
+   "vendor": "Mitchell Gold + Bob Williams",
+   "sku": "MG-KN-85B",
+   "price": "959.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-KN-85B.jpg?v=1788238932",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-KN-85B.jpg?v=1788238932",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-KN-85B_73ddec6b-c8f8-4d89-a9d6-af31f294cda4.jpg?v=1788238941"
+   ],
+   "tags": [
+    "categoryproducts:MG-KN",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "MG-KN-85B",
+    "series:Kathleen"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MG-KN-85B",
+     "price": "959.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

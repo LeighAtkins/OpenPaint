@@ -1,0 +1,48 @@
+{
+ "handle": "arhaus-pavo-sofas",
+ "fetchedAt": "2026-09-18T05:31:44.534Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "pavo-left-right-arm-sofa-slipcover",
+   "title": "Pavo Left/Right Arm Sofa Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-PO-87M",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-PO-87M_R_EXD_VELC_SP_CVC-01.webp?v=1778557688",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-PO-87M_R_EXD_VELC_SP_CVC-01.webp?v=1778557688"
+   ],
+   "tags": [
+    "AS-PO-87M",
+    "categoryproducts:AS",
+    "categoryproducts:AS-PO",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Pavo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-PO-87M",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

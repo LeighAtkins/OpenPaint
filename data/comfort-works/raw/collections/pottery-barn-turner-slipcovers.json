@@ -1,0 +1,480 @@
+{
+ "handle": "pottery-barn-turner-slipcovers",
+ "fetchedAt": "2026-09-18T05:37:57.258Z",
+ "count": 8,
+ "products": [
+  {
+   "handle": "turner-roll-arm-grand-sofa-107-three-seat-slipcover",
+   "title": "Turner Roll Arm Grand Sofa 107\" Three Seat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TRA-108-3C",
+   "price": "799.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TRA-108-3C_LV_CNRP_PM_CVC-01.jpg?v=1741320182",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TRA-108-3C_LV_CNRP_PM_CVC-01.jpg?v=1741320182",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_411_Pottery_Barn_Turner_Roll_Arm_sofa.jpg?v=1741320182",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_649_Pottery_Barn_Turner_Roll_Arm_sofa.jpg?v=1741320182"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB-TRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-TRA-108-3C",
+    "FLT___Product_Ref__Old____PB_TRA_35_3C",
+    "FLT___Series_Code___TRA",
+    "FLT___Series_Name___Turner_Roll_Arm",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "PB-TRA-108-3C",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Turner Roll Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TRA-108-3C",
+     "price": "799.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "turner-square-arm-84-sofa-slipcover",
+   "title": "Turner Square Arm 84\" Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TSA-84",
+   "price": "709.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TSA-84_SV_EXD_3S-3B_LSKT_SP_CVC-01.webp?v=1779156894",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TSA-84_SV_EXD_3S-3B_LSKT_SP_CVC-01.webp?v=1779156894",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_409_Pottery_Barn_Turner_Square_Arm_sofa.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_650_Pottery_Barn_Turner_Square_Arm_sofa_d7c214c3-db6c-4ad4-8193-5ec645ccdde7.jpg?v=1741320178"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB-TSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-TSA-84",
+    "FLT___Product_Ref__Old____PB_TSA_3_3C",
+    "FLT___Series_Code___TSA",
+    "FLT___Series_Name___Turner_Square_Arm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "PB-TSA-84",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Turner Square Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TSA-84",
+     "price": "709.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "turner-square-arm-grand-sofa-slipcover",
+   "title": "Turner Square Arm Grand Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TSA-103",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TSA-103_LV_LSKT_SP_CVC-01.jpg?v=1741320178",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TSA-103_LV_LSKT_SP_CVC-01.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_408_Pottery_20Barn_Turner_20Square_20Arm_sofa.jpg?v=1741320178",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_650_Pottery_Barn_Turner_Square_Arm_sofa.jpg?v=1741320178"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-TSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-TSA-103",
+    "FLT___Product_Ref__Old____PB_TSA_35",
+    "FLT___Series_Code___TSA",
+    "FLT___Series_Name___Turner_Square_Arm",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___The_fabric_version",
+    "FLT___Variant_1_Name___The_leather_version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "PB-TSA-103",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Turner Square Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TSA-103",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "turner-square-arm-43-grand-armchair-slipcover",
+   "title": "Turner Square Arm 43\" Grand Armchair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TSA-43",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TSA-43_SV_LSKT_SP_CVC-01.webp?v=1780463919",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TSA-43_SV_LSKT_SP_CVC-01.webp?v=1780463919"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TSA",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-TSA-43",
+    "series:Turner Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TSA-43",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "turner-roll-arm-87-5-sofa-slipcover",
+   "title": "Turner Roll Arm 87.5\" Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TRA-88",
+   "price": "799.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TRA-88_SV_3S-3B_SHRT_SP_CVC-01.jpg?v=1741656727",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TRA-88_SV_3S-3B_SHRT_SP_CVC-01.jpg?v=1741656727"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TRA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-TRA-88",
+    "series:Turner Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TRA-88",
+     "price": "799.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "turner-roll-arm-77-loveseat-slipcover",
+   "title": "Turner Roll Arm 77\" Loveseat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TRA-77",
+   "price": "669.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TRA-77_LV_SHRT_SP_CVC-01.jpg?v=1741741763",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TRA-77_LV_SHRT_SP_CVC-01.jpg?v=1741741763"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TRA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-TRA-77",
+    "series:Turner Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TRA-77",
+     "price": "669.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "turner-square-arm-leather-standard-chaise-section-slipcover",
+   "title": "Turner Square Arm Leather Standard Chaise Section Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TSA-38M",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TSA-38M_L_LSKT_SP_CVC-01.jpg?v=1741320179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TSA-38M_L_LSKT_SP_CVC-01.jpg?v=1741320179"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Chaise Lounge",
+    "categoryproducts:PB",
+    "categoryproducts:PB-TSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:1",
+    "l_shaped_seat_cushion:1",
+    "main_arm_shape_categories:Squared Arm",
+    "next_steps:648",
+    "number_of_arms:One Arm",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "PB-TSA-38M",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Turner Square Arm",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:0",
+    "square_rectangle_back_cushion:0",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TSA-38M",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "turner-square-arm-left-right-loveseat-slipcover",
+   "title": "Turner Square Arm Left/Right Loveseat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-TSA-67M",
+   "price": "479.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TSA-67M_L_LSKT_SP_CVC-01.jpg?v=1741320181",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-TSA-67M_L_LSKT_SP_CVC-01.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_408_Pottery_20Barn_Turner_20Square_20Arm_sofa_b2455861-4a43-453d-b637-3ffdc468fefb.jpg?v=1741320181",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_409_Pottery_Barn_Turner_Square_Arm_sofa_2a506303-d7f1-4fd1-8678-2014083a9f07.jpg?v=1741320181"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TSA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-TSA-67M",
+    "FLT___Product_Ref__Old____PB_TSA_2S",
+    "FLT___Series_Code___TSA",
+    "FLT___Series_Name___Turner_Square_Arm",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "PB-TSA-67M",
+    "series:Turner Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-TSA-67M",
+     "price": "479.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

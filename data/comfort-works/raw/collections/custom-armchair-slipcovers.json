@@ -1,0 +1,470 @@
+{
+ "handle": "custom-armchair-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:16.395Z",
+ "count": 9,
+ "products": [
+  {
+   "handle": "boxed-seat-snug-fit-wedge-armchair-slipcover",
+   "title": "Boxed Seat Snug Fit Wedge Armchair Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS1B-WA-SNUG",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-1_VELC_SP_RS-07.jpg?v=1741660508",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SM-1_VELC_SP_RS-07.jpg?v=1741660508"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS1B-WA-SNUG",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS1B-WA-SNUG",
+    "FLT___Series_Code___CS1B",
+    "FLT___Size___Armchair",
+    "FLT___Styles_Code___SHRT_PC",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___SNUG_PC",
+    "FLT___Styles_Code___SNUG_PM",
+    "FLT___Styles_Code___SNUG_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Armchair Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS1B-WA-SNUG",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-cushion-covers-only-for-armchair",
+   "title": "Boxed Cushion Covers ONLY for Armchair",
+   "vendor": "Made to Measure",
+   "sku": "CS1X-CC-SNUG",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-1_9cd04da0-72eb-44b7-a4aa-fb0bf42a3b10.jpg?v=1741660252",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-1_9cd04da0-72eb-44b7-a4aa-fb0bf42a3b10.jpg?v=1741660252"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS1X-CC-SNUG",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS1X-CC-SNUG",
+    "FLT___Series_Code___CS1X",
+    "FLT___Size___Armchair",
+    "FLT___Styles_Code___PC",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Armchair Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS1X-CC-SNUG",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-loose-fit-round-armchair-slipcover",
+   "title": "Boxed Seat Loose Fit Round Armchair Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS1B-RA-CNRP",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CS1B-RA-CNRP_CNRP_PM_RS-07.jpg?v=1741660684",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CS1B-RA-CNRP_CNRP_PM_RS-07.jpg?v=1741660684",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/boxed-seat-loose-fit-round-armchair-slipcover.jpg?v=1741660684"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS1B-RA-CNRP",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS1B-RA-CNRP",
+    "FLT___Series_Code___CS1B",
+    "FLT___Size___Armchair",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Armchair Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS1B-RA-CNRP",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-snug-fit-round-armchair-slipcover",
+   "title": "Boxed Seat Snug Fit Round Armchair Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS1B-RA-SNUG",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CS1B-RA-SNUG_SHRT_PM_RS-07.jpg?v=1741660753",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CS1B-RA-SNUG_SHRT_PM_RS-07.jpg?v=1741660753"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS1B-RA-SNUG",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS1B-RA-SNUG",
+    "FLT___Series_Code___CS1B",
+    "FLT___Size___Armchair",
+    "FLT___Styles_Code___SHRT_PC",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___SNUG_PC",
+    "FLT___Styles_Code___SNUG_PM",
+    "FLT___Styles_Code___SNUG_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Armchair Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS1B-RA-SNUG",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-loose-fit-square-armchair-slipcover",
+   "title": "Boxed Seat Loose Fit Square Armchair Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS1B-SA-CNRP",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/boxed-seat-loose-fit-square-armchair-slipcover.jpg?v=1741660997",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/boxed-seat-loose-fit-square-armchair-slipcover.jpg?v=1741660997"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS1B-SA-CNRP",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS1B-SA-CNRP",
+    "FLT___Series_Code___CS1B",
+    "FLT___Size___Armchair",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Armchair Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS1B-SA-CNRP",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-loose-fit-armless-chair-slipcover",
+   "title": "Boxed Seat Loose Fit Armless Chair Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS1B-NA-CNRP",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CS1B-NA-CNRP_CNRP_PM_RS-07.jpg?v=1741661082",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CS1B-NA-CNRP_CNRP_PM_RS-07.jpg?v=1741661082"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS1B-NA-CNRP",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS1B-NA-CNRP",
+    "FLT___Series_Code___CS1B",
+    "FLT___Size___Armchair",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Armchair Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS1B-NA-CNRP",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-snug-fit-square-armchair-slipcover",
+   "title": "Boxed Seat Snug Fit Square Armchair Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS1B-SA-SNUG",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/boxed-seat-snug-fit-square-armchair-slipcover.jpg?v=1741661166",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/boxed-seat-snug-fit-square-armchair-slipcover.jpg?v=1741661166"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS1B-SA-SNUG",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS1B-SA-SNUG",
+    "FLT___Series_Code___CS1B",
+    "FLT___Size___Armchair",
+    "FLT___Styles_Code___SHRT_PC",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___SNUG_PC",
+    "FLT___Styles_Code___SNUG_PM",
+    "FLT___Styles_Code___SNUG_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Armchair Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS1B-SA-SNUG",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-snug-fit-armless-chair-slipcover",
+   "title": "Boxed Seat Snug Fit Armless Chair Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS1B-NA-SNUG",
+   "price": "469.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CS1B-NA-SNUG_SHRT_PM_RS-07.jpg?v=1741661396",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CS1B-NA-SNUG_SHRT_PM_RS-07.jpg?v=1741661396"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS1B-NA-SNUG",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS1B-NA-SNUG",
+    "FLT___Series_Code___CS1B",
+    "FLT___Size___Armchair",
+    "FLT___Styles_Code___SHRT_PC",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___SNUG_PC",
+    "FLT___Styles_Code___SNUG_PM",
+    "FLT___Styles_Code___SNUG_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Armchair Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS1B-NA-SNUG",
+     "price": "469.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "t-seat-loose-fit-round-armchair-slipcover",
+   "title": "T-seat Loose Fit Round Armchair Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS1L-RA-CNRP",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CS1L-RA-CNRP_CNRP_PM_RS-07.jpg?v=1741661465",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CS1L-RA-CNRP_CNRP_PM_RS-07.jpg?v=1741661465",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/34e0ab080e7a4554911c37bd3cacf274-2_2x_e53c82fd-e14a-4ca4-99ed-cd9c10b89381.png?v=1741661465",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/34e0ab080e7a4554911c37bd3cacf274-3_2x_90422f5d-3555-4a63-ad3a-bebb090b10d5.png?v=1741661465"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "Covers for",
+    "CS1L-RA-CNRP",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS1L-RA-CNRP",
+    "FLT___Series_Code___CS1L",
+    "FLT___Size___Armchair",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Armchair Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS1L-RA-CNRP",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,149 @@
+{
+ "handle": "custom-armrest-protector-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:16.878Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "square-armrest-protector-covers",
+   "title": "Square Armrest Protector Covers",
+   "vendor": "Made to Measure",
+   "sku": "CSAP-SA",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/889-1189-category_wide.jpg?v=1678676526",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/889-1189-category_wide.jpg?v=1678676526",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/460_Custom-Armrest-Protectors-Liege-Eggshell-Linen-Blends-Couch-Slipcover.jpg?v=1678676526"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CSAP-SA",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CSAP-SA",
+    "FLT___Series_Code___CSAP",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Styles_Code___PC",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Armrest Protectors"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CSAP-SA",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "round-armrest-protector-covers",
+   "title": "Round Armrest Protector Covers",
+   "vendor": "Made to Measure",
+   "sku": "CSAP-RA",
+   "price": "109.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/887-1187-category_wide.jpg?v=1678676525",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/887-1187-category_wide.jpg?v=1678676525"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CSAP-RA",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CSAP-RA",
+    "FLT___Series_Code___CSAP",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Styles_Code___PC",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Armrest Protectors"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CSAP-RA",
+     "price": "109.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "wedge-armrest-protector-covers",
+   "title": "Wedge Armrest Protector Covers",
+   "vendor": "Made to Measure",
+   "sku": "CSAP-WA",
+   "price": "109.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/888-1188-category_wide.jpg?v=1678676525",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/888-1188-category_wide.jpg?v=1678676525"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CSAP-WA",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CSAP-WA",
+    "FLT___Series_Code___CSAP",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Styles_Code___PC",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Armrest Protectors"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CSAP-WA",
+     "price": "109.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

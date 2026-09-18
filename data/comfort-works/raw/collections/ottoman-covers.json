@@ -1,0 +1,4244 @@
+{
+ "handle": "ottoman-covers",
+ "fetchedAt": "2026-09-18T05:37:45.625Z",
+ "count": 71,
+ "products": [
+  {
+   "handle": "2019-wide-arm-urethane-pocket-coil-ottoman-slipcover",
+   "title": "2019 Wide Arm Urethane Pocket Coil Ottoman Slipcover",
+   "vendor": "MUJI",
+   "sku": "MJ-UPC-0-2019",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-0-2019_VELC_PM_CVC-01.jpg?v=1741320173",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-0-2019_VELC_PM_CVC-01.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_152_Muji_Wide_Arm_sofa.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_156_Muji_Wide_Arm_sofa_374e3c13-84a2-4586-840f-bb26b12e8233.jpg?v=1741320173"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-UPC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-UPC-0-2019",
+    "FLT___Product_Ref__Old____MJ_WDE_0_PU19",
+    "FLT___Series_Code___UPC",
+    "FLT___Series_Name___Wide_arm_sofa",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-UPC-0-2019",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-UPC-0-2019",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2019-2020-feather-pocket-coil-ottoman-cover",
+   "title": "2019/2020 Feather Pocket Coil Ottoman Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-FPC-0-2019",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-0-2019_VELC_SP_CVC-01.jpg?v=1741320174",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-0-2019_VELC_SP_CVC-01.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_491_Muji_Wide_Arm_sofa_88db0f43-25de-4e78-91b8-949b4c4ccab0.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_480_Muji_Wide_Arm_sofa_24aff8ef-1f88-401d-b054-843a89b11b9c.jpg?v=1741320174"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-UPC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FPC-0-2019",
+    "FLT___Product_Ref__Old____MJ_PU19_0",
+    "FLT___Series_Code___FPC",
+    "FLT___Series_Name___Wide_arm_sofa",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-FPC-0-2019",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FPC-0-2019",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "andes-ottoman-slipcover",
+   "title": "Andes Ottoman Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-AS-39F",
+   "price": "109.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-76F_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AS-76F_VELC_SP_CVC-01.jpg?v=1741320197",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_501_West_20Elm_Andes_sofa_dd08c585-ee84-457f-a0ba-72c045158309.jpg?v=1741320197",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_497_West_Elm_Andes_sofa.jpg?v=1741320197"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:WE-0",
+    "categoryproducts:WE-AS",
+    "categoryproducts:WE-S",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-AS-39F",
+    "FLT___Product_Ref__Old____WE_AS_0",
+    "FLT___Series_Code___AS",
+    "FLT___Series_Name___Andes",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Andes",
+    "size:1 Seater",
+    "storage:No",
+    "WE-AS-39F"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-AS-39F",
+     "price": "109.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "axis-ii-ottoman-slipcover",
+   "title": "Axis II Ottoman Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-AS-32F",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-32F_VELC_PM_CVC-01.jpg?v=1741674054",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-32F_VELC_PM_CVC-01.jpg?v=1741674054",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_084_Crate_and_Barrel_Axis_II_sofa.jpg?v=1741674054",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_083_Crate_and_Barrel_Axis_II_sofa.jpg?v=1741674054"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:CB-AS",
+    "CB-AS-32F",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-AS-32F",
+    "FLT___Product_Ref__Old____CB_AS_0",
+    "FLT___Series_Code___AS",
+    "FLT___Series_Name___Axis",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:N/A",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Axis II",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-AS-32F",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "buchanan-ottoman-slipcover",
+   "title": "Buchanan Ottoman Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BN-27F",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BN-27F_CNRP_PM_CVC-01.jpg?v=1741320180",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BN-27F_CNRP_PM_CVC-01.jpg?v=1741320180",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_330_Pottery_Barn_Buchanan_sofa.jpg?v=1741320180",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_447_Pottery_Barn_Buchanan_sofa.jpg?v=1741320180"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BN",
+    "categoryproducts:PB-BRA",
+    "categoryproducts:PB-BSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BN-27F",
+    "FLT___Product_Ref__Old____PB_BN_0",
+    "FLT___Series_Code___BN",
+    "FLT___Series_Name___Buchanan",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "PB-BN-27F",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Buchanan",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:0",
+    "square_rectangle_back_cushion:0",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BN-27F",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cameron-roll-arm-ottoman-slipcover",
+   "title": "Cameron Roll Arm Ottoman Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CR-31F",
+   "price": "139.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CR-31F_LV_LSKT_PM_CVC-01.jpg?v=1741320186",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CR-31F_LV_LSKT_PM_CVC-01.jpg?v=1741320186"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CR",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-CR-31F",
+    "series:Cameron Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CR-31F",
+     "price": "139.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cooper-ottoman-slipcover",
+   "title": "Cooper Ottoman Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-CR-40F",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-CR-40F_VELC_SP_CVC-01.jpg?v=1741320091",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-CR-40F_VELC_SP_CVC-01.jpg?v=1741320091"
+   ],
+   "tags": [
+    "Arhaus",
+    "AS-CR-40F",
+    "categoryproducts:AS",
+    "categoryproducts:AS-Chair",
+    "categoryproducts:AS-CR",
+    "categoryproducts:AS-Sofa",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Cooper"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-CR-40F",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "drake-76-sofa-slipcover",
+   "title": "Drake 76\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-DE-76",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-DE-76_LV_VELC_PM_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-DE-76_LV_VELC_PM_CVC-01.jpg?v=1741320196"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-DE",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Drake",
+    "WE-DE-76",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-DE-76",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "dune-32-ottoman-slipcover",
+   "title": "Dune 32\" Ottoman Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-DNE-32F",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-DNE-32F_VELC_PM_CVC-01.jpg?v=1741320085",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-DNE-32F_VELC_PM_CVC-01.jpg?v=1741320085"
+   ],
+   "tags": [
+    "Arhaus",
+    "AS-DNE-32F",
+    "categoryproducts:AS",
+    "categoryproducts:AS-0",
+    "categoryproducts:AS-DNE",
+    "categoryproducts:AS-Sofa",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Dune"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-DNE-32F",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ekenas-footstool-cover",
+   "title": "Ekenas Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EKN-0",
+   "price": "69.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EKN-0_SHRT_SP_CVC-01.jpg?v=1741320145",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EKN-0_SHRT_SP_CVC-01.jpg?v=1741320145"
+   ],
+   "tags": [
+    "categoryproducts:EKN",
+    "categoryproducts:IK",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EKN-0",
+    "FLT___Product_Ref__Old____EKN0",
+    "FLT___Series_Code___EKN",
+    "FLT___Series_Name___Ekenas",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "IK-EKN-0",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Ekenas"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EKN-0",
+     "price": "69.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ektorp-footstool-cover",
+   "title": "Ektorp Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EP-0",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-0_CNRP_PM_CVC-01.jpg?v=1741320115",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EP-0_CNRP_PM_CVC-01.jpg?v=1741320115"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:EP",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EP-0",
+    "FLT___Product_Ref__Old____EP0",
+    "FLT___Series_Code___EP",
+    "FLT___Series_Name___Ektorp",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-EP-0",
+    "installation:586",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Ektorp",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:Yes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EP-0",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "elbdock-ottoman-cover",
+   "title": "Elbdock Ottoman Cover",
+   "vendor": "Elbgestoeber",
+   "sku": "EGS-EK-31F",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EGS-EK-31F_LSKT_SP_CVC-01.jpg?v=1741320103",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EGS-EK-31F_LSKT_SP_CVC-01.jpg?v=1741320103",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_586_Elbgestoeber_Elbdock_sofa.jpg?v=1741320103",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_135_Elbgestoeber_Elbdock_sofa.jpg?v=1741320103"
+   ],
+   "tags": [
+    "categoryproducts:EGS",
+    "EGS-EK-31F",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Elbgestoeber",
+    "FLT___Product_Ref__New____EGS-EK-31F",
+    "FLT___Product_Ref__Old____EGS_EK_0",
+    "FLT___Series_Code___EK",
+    "FLT___Series_Name___Elbdock",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "series:Elbdock"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EGS-EK-31F",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "emory-ottoman-slipcover",
+   "title": "Emory Ottoman Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-EMY-45F",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-EMY-45F_SHRT_SP_CVC-01.jpg?v=1741741757",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-EMY-45F_SHRT_SP_CVC-01.jpg?v=1741741757"
+   ],
+   "tags": [
+    "Arhaus",
+    "AS-EMY-45F",
+    "categoryproducts:AS",
+    "categoryproducts:AS-0",
+    "categoryproducts:AS-EMY",
+    "categoryproducts:AS-Sofa",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Emory"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-EMY-45F",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "farlov-footstool-with-storage-cover",
+   "title": "Farlov Footstool (with Storage) Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FV-0",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FV-0_CNRP_SP_CVC-01.webp?v=1785736388",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FV-0_CNRP_SP_CVC-01.webp?v=1785736388",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_054_IKEA_Farlov_sofa_2306c101-358b-4589-83ca-d6aef55862b8.jpg?v=1741320142",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_056_IKEA_Farlov_sofa_27b0a07c-a4d1-4c5d-b3e5-7210ee7e48d6.jpg?v=1741320142"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:FV",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FV-0",
+    "FLT___Product_Ref__Old____FV0",
+    "FLT___Series_Code___FV",
+    "FLT___Series_Name___Farlov",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-FV-0",
+    "installation:617",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Farlov",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:Yes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FV-0",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-footstool-cover",
+   "title": "Finnala Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-0",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-0_VELC_WR_CVC-01.jpg?v=1741320134",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-0_VELC_WR_CVC-01.jpg?v=1741320134",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_120_IKEA_Finnala_sofa_72333879-4785-4ab4-92f8-66f56b239af9.jpg?v=1741320134",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_121_IKEA_Finnala_sofa_d80d5904-5be7-473f-a988-f45756098c7a.jpg?v=1741320134"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-0",
+    "FLT___Product_Ref__Old____FNA0",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-0",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-0",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gronlid-footstool-cover",
+   "title": "Gronlid Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-GRD-0",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-0_SHRT_PM_CVC-01.jpg?v=1741320149",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-0_SHRT_PM_CVC-01.jpg?v=1741320149",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_257_IKEA_Gronlid_sofa_77a0af43-549f-4d38-a146-77d800bf9736.jpg?v=1741320149",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_601_IKEA_Gronlid_sofa_e3776fc5-093e-46d6-9a42-26ad63726c37.jpg?v=1741320149"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:GRD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-GRD-0",
+    "FLT___Product_Ref__Old____GRD0",
+    "FLT___Series_Code___GRD",
+    "FLT___Series_Name___Gronlid",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_WR",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-GRD-0",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Gronlid",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-GRD-0",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gronlid-footstool-with-storage-cover",
+   "title": "Gronlid Footstool with Storage Cover",
+   "vendor": "IKEA",
+   "sku": "IK-GRD-0S",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-0S_SHRT_PM_CVC-01.jpg?v=1741320147",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GRD-0S_SHRT_PM_CVC-01.jpg?v=1741320147",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_257_IKEA_Gronlid_sofa_b08c13e0-23a7-4707-bff4-386628b6d5a8.jpg?v=1741320147",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_601_IKEA_Gronlid_sofa_9b9a5f24-257f-4dac-b50a-8cc742e5d168.jpg?v=1741320147"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:GRD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-GRD-0S",
+    "FLT___Product_Ref__Old____GRD0_N",
+    "FLT___Series_Code___GRD",
+    "FLT___Series_Name___Gronlid",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_WR",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-GRD-0S",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Gronlid",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:Yes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-GRD-0S",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harlanda-footstool-cover",
+   "title": "Harlanda Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HLD-0",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-0_SHRT_PM_CVC-01.jpg?v=1741320131",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HLD-0_SHRT_PM_CVC-01.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_268_IKEA_Harlanda_sofa.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_263_IKEA_Harlanda_sofa_33876367-6590-4086-bb8e-11df9b3feabe.jpg?v=1741320131"
+   ],
+   "tags": [
+    "categoryproducts:HLD",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HLD-0",
+    "FLT___Product_Ref__Old____HLD0",
+    "FLT___Series_Code___HLD",
+    "FLT___Series_Name___Harlanda",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-HLD-0",
+    "series:Harlanda"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HLD-0",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-modular-43-5-ottoman-slipcover",
+   "title": "Harmony Modular 43.5\" Ottoman Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HY-44FM",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-44FM_LV_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-44FM_LV_VELC_SP_CVC-01.jpg?v=1741320197"
+   ],
+   "tags": [
+    "categoryproducts:WE-0",
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HY",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Harmony Modular",
+    "WE-HY-44FM",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HY-44FM",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harris-66-sofa-slipcover",
+   "title": "Harris 66\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HS-66",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HS-66_LV_2S-2B_VELC_SP_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HS-66_LV_2S-2B_VELC_SP_CVC-01.jpg?v=1741575837"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HS",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Harris",
+    "WE-HS-66",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HS-66",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harris-96-sofa-slipcover",
+   "title": "Harris 96\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HS-96",
+   "price": "549.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HS-96_SV_STD_2S-2B_VELC_SP_CVC-01.jpg?v=1744678563",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HS-96_SV_STD_2S-2B_VELC_SP_CVC-01.jpg?v=1744678563"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HS",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Harris",
+    "WE-HS-96",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HS-96",
+     "price": "549.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harris-loft-86-sofa-slipcover",
+   "title": "Harris Loft 86\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HSL-86",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HSL-86_LV_VELC_SP_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HSL-86_LV_VELC_SP_CVC-01.jpg?v=1741320197"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HS",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Harris",
+    "WE-HSL-86",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HSL-86",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "haven-loft-86-sofa-slipcover",
+   "title": "Haven Loft 86\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HL-86",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HL-86_LV_3S-3B_SHRT_SP_CVC-01.jpg?v=1741741771",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HL-86_LV_3S-3B_SHRT_SP_CVC-01.jpg?v=1741741771"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HN",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Haven",
+    "WE-HL-86",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HL-86",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "haven-ottoman-slipcover",
+   "title": "Haven Ottoman Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HN-39F",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HN-39F_LV_SHRT_SP_CVC-01.jpg?v=1741741770",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HN-39F_LV_SHRT_SP_CVC-01.jpg?v=1741741770"
+   ],
+   "tags": [
+    "categoryproducts:WE-0",
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HN",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Haven",
+    "WE-HN-39F",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HN-39F",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "henry-ottoman-slipcover",
+   "title": "Henry Ottoman Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HE-30F",
+   "price": "109.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-30F_LSKT_PM_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-30F_LSKT_PM_CVC-01.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_516_West_20Elm_Henry_sofa_ec18a663-6b91-4e57-ad23-01513649ce34.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_513_West_Elm_Henry_sofa.jpg?v=1741320196"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:WE-0",
+    "categoryproducts:WE-HE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HE-30F",
+    "FLT___Product_Ref__Old____WE_HE_23",
+    "FLT___Series_Code___HE",
+    "FLT___Series_Name___Henry",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Henry",
+    "size:1 Seater",
+    "storage:No",
+    "WE-HE-30F"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HE-30F",
+     "price": "109.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hovas-footstool-cover",
+   "title": "Hovas Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HS-0",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HS-0_CNRP_SP_CVC-01.jpg?v=1741320115",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HS-0_CNRP_SP_CVC-01.jpg?v=1741320115",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_282_IKEA_Hovas_sofa.jpg?v=1741320115",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_281_IKEA_Hovas_sofa_a2d3727a-1df9-4893-91b2-2984bf9c5e22.jpg?v=1741320115"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:HS",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HS-0",
+    "FLT___Product_Ref__Old____HS0",
+    "FLT___Series_Code___HS",
+    "FLT___Series_Name___Hovas",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-HS-0",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Hovas",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HS-0",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "karlstad-footstool-cover",
+   "title": "Karlstad Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KD-0",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-0_VELC_SP_CVC-01.jpg?v=1741678941",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KD-0_VELC_SP_CVC-01.jpg?v=1741678941",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KD3_13_L132_4d5b0c8e-24ab-4e27-8b17-8c1c3ef77cf7.jpg?v=1741678941"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:KD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KD-0",
+    "FLT___Product_Ref__Old____KD0",
+    "FLT___Series_Code___KD",
+    "FLT___Series_Name___Karlstad",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-KD-0",
+    "installation:578",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Karlstad",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KD-0",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kivik-footstool-cover",
+   "title": "Kivik Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KK-0",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KK-0_VELC_SI_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KK-0_VELC_SI_CVC-01.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:KK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KK-0",
+    "FLT___Product_Ref__Old____KK0",
+    "FLT___Series_Code___KK",
+    "FLT___Series_Name___Kivik",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-KK-0",
+    "installation:587",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Kivik",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:Yes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KK-0",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "klippan-footstool-cover",
+   "title": "Klippan Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KN-0",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-0_LV_VELC_SP_CVC-01.jpg?v=1741741764",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-0_LV_VELC_SP_CVC-01.jpg?v=1741741764",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_183_IKEA_Klippan_sofa_d72ade93-be28-4d2f-80db-b043dbcd3e5f.jpg?v=1741741764",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_184_IKEA_Klippan_sofa_61d04180-e704-4d60-b791-1998b666235f.jpg?v=1741741764"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:KN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KN-0",
+    "FLT___Product_Ref__Old____KN0",
+    "FLT___Series_Code___KN",
+    "FLT___Series_Name___Klippan",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_fabric_version",
+    "FLT___Variant_1_Name___The_leather_version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-KN-0",
+    "important_notes:643",
+    "installation:618",
+    "main_arm_shape_categories:N/A",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Klippan",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KN-0",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kramfors-footstool-cover",
+   "title": "Kramfors Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KS-0",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-0_LV_SHRT_SP_CVC-01.jpg?v=1741675493",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-0_LV_SHRT_SP_CVC-01.jpg?v=1741675493",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_039_IKEA_Kramfors_sofa.jpg?v=1741675493"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:KS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KS-0",
+    "FLT___Product_Ref__Old____KS0",
+    "FLT___Series_Code___KS",
+    "FLT___Series_Name___Kramfors",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Variant_1_Name___The_leather_version",
+    "FLT___Variant_1_Name___The_standard_version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-KS-0",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Kramfors",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KS-0",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kramfors-footstool-cushion-cover-only",
+   "title": "Kramfors Footstool Cushion Cover Only",
+   "vendor": "IKEA",
+   "sku": "IK-KS-CC-0",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-CC-0_LV_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KS-CC-0_LV_SP_CVC-01.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_044_IKEA_Kramfors_sofa_3914d09b-9b18-4a37-94a1-e1774bcf06fa.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_040_IKEA_Kramfors_sofa.jpg?v=1741678943"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:KS",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KS-CC-0",
+    "FLT___Product_Ref__Old____KS0_CC",
+    "FLT___Series_Code___KS",
+    "FLT___Series_Name___Kramfors",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___The_leather_version",
+    "FLT___Variant_1_Name___The_standard_version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-KS-CC-0",
+    "installation:579",
+    "series:Kramfors"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KS-CC-0",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "landskrona-footstool-cover",
+   "title": "Landskrona Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LSA-0",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-0_SHRT_SP_CVC-01.jpg?v=1741320155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LSA-0_SHRT_SP_CVC-01.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_071_IKEA_Landskrona_sofa_4d9008b9-a118-4a08-85e0-1c5b9838ab24.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_068_IKEA_Landskrona_sofa.jpg?v=1741320155"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:LSA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LSA-0",
+    "FLT___Product_Ref__Old____LSA0",
+    "FLT___Series_Code___LSA",
+    "FLT___Series_Name___Landskrona",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-LSA-0",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Landskrona",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LSA-0",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lidhult-open-end-section-with-storage-cover",
+   "title": "Lidhult Open End Section With Storage Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LT-0",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-0_VELC_SP_CVC-01.jpg?v=1741320145",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-0_VELC_SP_CVC-01.jpg?v=1741320145",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_307_IKEA_Lidhult_sofa_63e40e52-6ee0-40b3-8321-c2b78cc669d0.jpg?v=1741320145",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_312_IKEA_Lidhult_sofa_2210efb0-931f-4f76-b559-38d22958715c.jpg?v=1741320145"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:LT",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LT-0",
+    "FLT___Product_Ref__Old____LT0",
+    "FLT___Series_Code___LT",
+    "FLT___Series_Name___Lidhult",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-LT-0",
+    "installation:579",
+    "series:Lidhult"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LT-0",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-ii-37-ottoman-slipcover",
+   "title": "Lounge II 37\" Ottoman Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-37F",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-37F_LSKT_SP_CVC-01.jpg?v=1741320090",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-37F_LSKT_SP_CVC-01.jpg?v=1741320090",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_075_Crate_and_Barrel_Lounge_II_sofa.jpg?v=1741320090",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_080_Crate_and_Barrel_Lounge_II_sofa.jpg?v=1741320090"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-37F",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-LE-37F",
+    "FLT___Product_Ref__Old____CB_LE_0",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lounge_II",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Lounge II",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-37F",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morabo-footstool-cover",
+   "title": "Morabo Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-MRO-0",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-0_SHRT_SP_CVC-01.jpg?v=1741320128",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-0_SHRT_SP_CVC-01.jpg?v=1741320128",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_145_IKEA_Morabo_sofa_b2d86134-716a-4bcf-8a74-c994a7d2f802.jpg?v=1741320128",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_149_IKEA_Morabo_sofa_250b0f9d-da34-41f1-b291-9bab3ca1bb85.jpg?v=1756454675"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:MRO",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MRO-0",
+    "FLT___Product_Ref__Old____MRO0",
+    "FLT___Series_Code___MRO",
+    "FLT___Series_Name___Morabo",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-MRO-0",
+    "series:Morabo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MRO-0",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "muji-high-back-reclining-sofa-ottoman-cover",
+   "title": "Muji High Back Reclining Sofa Ottoman Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-HBR-0",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-HBR-0_VELC_SI_CVC-01.jpg?v=1741320171",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-HBR-0_VELC_SI_CVC-01.jpg?v=1741320171",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_629_Muji_High_Back_Reclining_sofa.jpg?v=1741320171"
+   ],
+   "tags": [
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-HBR",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-HBR-0",
+    "FLT___Product_Ref__Old____MJ_HBR_0",
+    "FLT___Series_Code___HBR",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "MJ-HBR-0",
+    "series:High Back Reclining"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-HBR-0",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nantucket-ottoman-slipcover",
+   "title": "Nantucket Ottoman Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-NT-32F",
+   "price": "139.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-32F_CNRP_PM_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-32F_CNRP_PM_CVC-01.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_125_Rowe_Nantucket_sofa_c3174055-0e2a-4906-acfb-4546d7a6a27a.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_185_Rowe_Nantucket_sofa_c1d86b13-ca74-437b-954f-0172e361efa4.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:RE-NT",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Rowe",
+    "FLT___Product_Ref__New____RE-NT-32F",
+    "FLT___Product_Ref__Old____RE_NT_0",
+    "FLT___Series_Code___NT",
+    "FLT___Series_Name___Nantucket",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "RE-NT-32F",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Nantucket",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-NT-32F",
+     "price": "139.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nockeby-footstool-cover",
+   "title": "Nockeby Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-NY-0",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NY-0_VELC_WR_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NY-0_VELC_WR_CVC-01.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_111_IKEA_Nockeby_sofa.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_112_IKEA_Nockeby_sofa_f7665e67-e6db-4ed9-9bff-ab23de687311.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:NY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NY-0",
+    "FLT___Product_Ref__Old____NY0",
+    "FLT___Series_Code___NY",
+    "FLT___Series_Name___Nockeby",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-NY-0",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Nockeby",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NY-0",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "old-compact-sofa-ottoman-cover",
+   "title": "Old Compact Sofa Ottoman Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-COM-0",
+   "price": "69.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-COM-0_SHRT_SP_CVC-01.jpg?v=1741320175",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-COM-0_SHRT_SP_CVC-01.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_485_Muji_Old_Compact_Sofa.jpg?v=1741320175",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_488_Muji_Old_Compact_Sofa.jpg?v=1741320175"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-COM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-COM-0",
+    "FLT___Product_Ref__Old____MJ_COM_0",
+    "FLT___Series_Code___COM",
+    "FLT___Series_Name___Old_Compact_Sofa",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-COM-0",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Old Compact Sofa",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-COM-0",
+     "price": "69.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ottoman-large-feather-pocketed-coil-cushion-cover",
+   "title": "Ottoman (Large Feather Pocketed Coil) Cushion Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-FPC-0",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-0_VELC_SP_CVC-01.jpg?v=1741320173",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FPC-0_VELC_SP_CVC-01.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_490_Muji_Feather_Pocket_Coil_Ottoman.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_491_Muji_Wide_Arm_sofa_79a23a9b-9d1f-4cff-8596-13cd9596da29.jpg?v=1741320173"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-SLM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FPC-0",
+    "FLT___Product_Ref__Old____MJ_FTR_0",
+    "FLT___Series_Code___FPC",
+    "FLT___Series_Name___Feather_Pocket_Coil_Ottoman",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-FPC-0",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Wide Arm",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FPC-0",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ottoman-cover-large-2005",
+   "title": "Ottoman Cover Large 2005",
+   "vendor": "MUJI",
+   "sku": "MJ-OWA-0-2005-EXD",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-OWA-0-2005-EXD_LV_VELC_SP_CVC-01.jpg?v=1741320170",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-OWA-0-2005-EXD_LV_VELC_SP_CVC-01.jpg?v=1741320170",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_453_Muji_2005_sofa_f7f635a2-3e0a-4654-9a5a-f5c14288821d.jpg?v=1741320170",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_464_Muji_2005_sofa_f0c6011a-db56-4e16-8eeb-30175549c370.jpg?v=1741320170"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-OWA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-OWA-0-2005-EXD",
+    "FLT___Product_Ref__Old____MJ_2005_0L",
+    "FLT___Series_Code___OWA",
+    "FLT___Series_Name___Sofa_2005",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-OWA-0-2005-EXD",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Sofa 2005",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-OWA-0-2005-EXD",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ottoman-cover-medium-2005",
+   "title": "Ottoman Cover Medium 2005",
+   "vendor": "MUJI",
+   "sku": "MJ-OWA-0-2005-STD",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-OWA-0-2005-STD_LV_VELC_SP_CVC-01.jpg?v=1741320176",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-OWA-0-2005-STD_LV_VELC_SP_CVC-01.jpg?v=1741320176",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_454_Muji_2005_sofa.jpg?v=1741320176",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_459_Muji_2002_sofa_6cb5c538-79a0-4261-9b53-b032d29728a2.jpg?v=1741320176"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-OWA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-OWA-0-2005-STD",
+    "FLT___Product_Ref__Old____MJ_2005_0M",
+    "FLT___Series_Code___OWA",
+    "FLT___Series_Name___Sofa_2005",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-OWA-0-2005-STD",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Sofa 2005",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-OWA-0-2005-STD",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ottoman-cover-small-2005",
+   "title": "Ottoman Cover Small 2005",
+   "vendor": "MUJI",
+   "sku": "MJ-OWA-0-2005-PTD",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-OWA-0-2005-PTD_LV_VELC_SP_CVC-01.jpg?v=1741320172",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-OWA-0-2005-PTD_LV_VELC_SP_CVC-01.jpg?v=1741320172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_455_Muji_2005_sofa.jpg?v=1741320172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_453_Muji_2005_sofa.jpg?v=1741320172"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-OWA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-OWA-0-2005-PTD",
+    "FLT___Product_Ref__Old____MJ_2005_0S",
+    "FLT___Series_Code___OWA",
+    "FLT___Series_Name___Sofa_2005",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-OWA-0-2005-PTD",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Sofa 2005",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-OWA-0-2005-PTD",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ottoman-polyurethane-cushion-cover",
+   "title": "Ottoman Polyurethane Cushion Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-UPC-0B",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-0B_LV_VELC_SP_CVC-01.jpg?v=1741320170",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-UPC-0B_LV_VELC_SP_CVC-01.jpg?v=1741320170",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_640_Muji_Polyurethane_Ottoman_sofa.jpg?v=1741320170",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_446_Muji_Polyurethane_Ottoman_sofa.jpg?v=1741320170"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FPC",
+    "categoryproducts:MJ-SLM",
+    "categoryproducts:MJ-UPC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-UPC-0B",
+    "FLT___Product_Ref__Old____MJ_URT_0",
+    "FLT___Series_Code___UPC",
+    "FLT___Series_Name___Polyurethane_Ottoman",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-UPC-0B",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Polyurethane",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-UPC-0B",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-basic-ottoman-slipcover",
+   "title": "PB Basic Ottoman Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-BSC-29F",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-29F_MG_CNRP_PM_CVC-01.jpg?v=1741320174",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-BSC-29F_MG_CNRP_PM_CVC-01.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_089_Pottery_Barn_PB_Basic_sofa_7d7b0e5a-0c00-4cd2-bee5-565a19475876.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_090_Pottery_Barn_PB_Basic_sofa_7110bfa9-9a8f-4aed-82a4-e52fe2b51a72.jpg?v=1741320174"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:PB",
+    "categoryproducts:PB-BSC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-BSC-29F",
+    "FLT___Product_Ref__Old____PB_BSC_0",
+    "FLT___Series_Code___BSC",
+    "FLT___Series_Name___PB_Basic",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Made_by_Mitchell_Gold",
+    "FLT___Variant_1_Name___Made_by_Pottery_Barn",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:N/A",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "PB-BSC-29F",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:PB Basic",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-BSC-29F",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-comfort-ottoman-slipcover",
+   "title": "PB Comfort Ottoman Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CT-30F",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CT-30F_CNRP_PM_CVC-01.jpg?v=1741320176",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CT-30F_CNRP_PM_CVC-01.jpg?v=1741320176",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_403_Pottery_Barn_Comfort_sofa.jpg?v=1741320176"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:PB",
+    "categoryproducts:PB-CT",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-CT-30F",
+    "FLT___Product_Ref__Old____PB_CT0",
+    "FLT___Series_Code___CT",
+    "FLT___Series_Name___PB_Comfort",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "PB-CT-30F",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:PB Comfort",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CT-30F",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pb-square-arm-ottoman-slipcover",
+   "title": "PB Square Arm Ottoman Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-SQ-31F",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-SQ-31F_LSKT_PM_CVC-01.jpg?v=1741320181",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-SQ-31F_LSKT_PM_CVC-01.jpg?v=1741320181"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-SQ",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-SQ-31F",
+    "series:PB Square"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-SQ-31F",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "petrie-midcentury-ottoman-slipcover",
+   "title": "Petrie Midcentury Ottoman Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PE-34F",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PE-34F_VELC_PM_CVC-01_5a293b73-7f8a-4162-8b2f-282a05b75037.jpg?v=1742951011",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PE-34F_VELC_PM_CVC-01_5a293b73-7f8a-4162-8b2f-282a05b75037.jpg?v=1742951011",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_425_Crate_and_Barrel_Petrie_Midcentury_sofa.jpg?v=1742951011",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_130_Crate_and_Barrel_Petrie_Midcentury_sofa.jpg?v=1742951011"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:CB-PE",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:PB-Ottoman",
+    "CB-PE-34F",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-PE-34F",
+    "FLT___Product_Ref__Old____CB_PE_0",
+    "FLT___Series_Code___PE",
+    "FLT___Series_Name___Petrie_Midcentury",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Petrie Midcentury",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PE-34F",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "poang-footstool-cover",
+   "title": "Poang Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-PG-0",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-PG-0_VELC_SI_CVC-01.jpg?v=1741320127",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-PG-0_VELC_SI_CVC-01.jpg?v=1741320127"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:PG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-PG-0",
+    "FLT___Product_Ref__Old____PG0",
+    "FLT___Series_Code___PG",
+    "FLT___Series_Name___Poang",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-PG-0",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Poang",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-PG-0",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "potomac-ottoman-slipcover",
+   "title": "Potomac Ottoman Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PC-32F",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-32F_CNRP_SP_CVC-01.jpg?v=1741320104",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-32F_CNRP_SP_CVC-01.jpg?v=1741320104"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-PC",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:PB-Ottoman",
+    "CB-PC-32F",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Potomac",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PC-32F",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "reiko-footstool",
+   "title": "Reiko Footstool",
+   "vendor": "Habitat",
+   "sku": "HT-RO-37F",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-RO-37F_SHRT_SP_CVC-01.jpg?v=1741319716",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-RO-37F_SHRT_SP_CVC-01.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_594_Habitat_Reiko_sofa.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_569_Habitat_Reiko_sofa_9e18bfa4-e0e6-486c-b5fc-9476ced4e6af.jpg?v=1741319716"
+   ],
+   "tags": [
+    "categoryproducts:HT",
+    "categoryproducts:HT-RO",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Habitat_",
+    "FLT___Product_Ref__New____HT-RO-37F",
+    "FLT___Product_Ref__Old____HT_RO_0",
+    "FLT___Series_Code___RO",
+    "FLT___Series_Name___Reiko",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "HT-RO-37F",
+    "series:Reiko"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "HT-RO-37F",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sandby-footstool-cover",
+   "title": "Sandby Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SY-0",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-0_CNRP_PM_CVC-01.jpg?v=1741320124",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SY-0_CNRP_PM_CVC-01.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_351_IKEA_Sandby_sofa.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_348_IKEA_Sandby_sofa.jpg?v=1741320124"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:SY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SY-0",
+    "FLT___Product_Ref__Old____SY0",
+    "FLT___Series_Code___SY",
+    "FLT___Series_Name___Sandby",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-SY-0",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Sandby",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SY-0",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "shelter-72-sofa-slipcover",
+   "title": "Shelter 72\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-SHR-72",
+   "price": "459.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-SHR-72_SHRT_SP_CVC-01.jpg?v=1741741769",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-SHR-72_SHRT_SP_CVC-01.jpg?v=1741741769"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-SHR",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Shelter",
+    "WE-SHR-72"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-SHR-72",
+     "price": "459.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "soderhamn-footstool-cover",
+   "title": "Soderhamn Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SN-0",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-0_VELC_SP_CVC-01.jpg?v=1741678945",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SN-0_VELC_SP_CVC-01.jpg?v=1741678945"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:SN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SN-0",
+    "FLT___Product_Ref__Old____SN0",
+    "FLT___Series_Code___SN",
+    "FLT___Series_Name___Soderhamn",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-SN-0",
+    "installation:585",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Soderhamn",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SN-0",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sofa-bench-ottoman-cover",
+   "title": "Sofa Bench Ottoman Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-MJS-0B",
+   "price": "69.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-MJS-0B_LV_VELC_SP_CVC-01.jpg?v=1741320172",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-MJS-0B_LV_VELC_SP_CVC-01.jpg?v=1741320172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_482_Muji_Bench_sofa.jpg?v=1741320172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_484_Muji_Bed_sofa.jpg?v=1741320172"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-MJS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-MJS-0B",
+    "FLT___Product_Ref__Old____MJ_SBC_0",
+    "FLT___Series_Code___MJS",
+    "FLT___Series_Name___Sofa_Bench",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-MJS-0B",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Sofa Bench",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-MJS-0B",
+     "price": "69.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "solano-ottoman-slipcover",
+   "title": "Solano Ottoman Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-SO-35F",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-SO-35F_LSKT_PM_CVC-01.jpg?v=1741320183",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-SO-35F_LSKT_PM_CVC-01.jpg?v=1741320183"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-SO",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-SO-35F",
+    "series:Solano",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-SO-35F",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "solsta-pallbo-footstool-cover",
+   "title": "Solsta Pallbo Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SA-0",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-0_LSKT_PM_CVC-01.jpg?v=1741320123",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SA-0_LSKT_PM_CVC-01.jpg?v=1741320123",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_364_IKEA_Solsta_sofa_9a58e4ad-82e0-4b59-af7a-682693ff4f48.jpg?v=1741320123",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_365_IKEA_Solsta_sofa_3768a53c-e0d1-4d25-b737-f97e116d8aee.jpg?v=1741320123"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:SA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SA-0",
+    "FLT___Product_Ref__Old____SA0",
+    "FLT___Series_Code___SA",
+    "FLT___Series_Name___Solsta",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-SA-0",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Solsta",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SA-0",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sorvallen-footstool-cover",
+   "title": "Sorvallen Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SVN-0",
+   "price": "99.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-0_VELC_SP_CVC-01.jpg?v=1741320161",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-0_VELC_SP_CVC-01.jpg?v=1741320161"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SVN",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-SVN-0",
+    "installation:579",
+    "series:Sorvallen",
+    "vendor:IKEA"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SVN-0",
+     "price": "99.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stockholm-2017-pouffe",
+   "title": "Stockholm 2017 Pouffe",
+   "vendor": "IKEA",
+   "sku": "IK-STM-0",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-STM-0_ELAS_SP_CVC-01.jpg?v=1741679952",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-STM-0_ELAS_SP_CVC-01.jpg?v=1741679952",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_144_IKEA_Stockholm_sofa.jpg?v=1741679952"
+   ],
+   "tags": [
+    "categoryproducts:SM",
+    "categoryproducts:STM",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-STM-0",
+    "FLT___Product_Ref__Old____STM0_P",
+    "FLT___Series_Code___STM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___ELAS_SP",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "IK-STM-0",
+    "series:Stockholm 2017"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-STM-0",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stocksund-footstool-cover",
+   "title": "Stocksund Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SU-0",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-0_VELC_SP_CVC-01.jpg?v=1741675958",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SU-0_VELC_SP_CVC-01.jpg?v=1741675958",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_066_IKEA_Stocksund_sofa.jpg?v=1741675958",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_060_IKEA_Stocksund_sofa.jpg?v=1741675958"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:SU",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SU-0",
+    "FLT___Product_Ref__Old____SU0",
+    "FLT___Series_Code___SU",
+    "FLT___Series_Name___Stocksund",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-SU-0",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Stocksund",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SU-0",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "strandmon-footstool-loose-fit-cover",
+   "title": "Strandmon Footstool Loose Fit Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SR-0",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SR-0_SHRT_PM_CVC-01.jpg?v=1741320152",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SR-0_SHRT_PM_CVC-01.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_367_IKEA_Strandmon_sofa_f709418b-94fc-43c9-a2ec-068d15b50e44.jpg?v=1741320152",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_366_IKEA_Strandmon_sofa.jpg?v=1741320152"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:SR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SR-0",
+    "FLT___Product_Ref__Old____SR0",
+    "FLT___Series_Code___SR",
+    "FLT___Series_Name___Strandmon",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-SR-0",
+    "important_notes:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Strandmon",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SR-0",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "t2-footstool-cover",
+   "title": "T2 Footstool Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-T2-0",
+   "price": "69.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-T2-0_LV_ELAS_SP_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-T2-0_LV_ELAS_SP_CVC-01.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_465_Muji_T2_Sofabed_sofa.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-RSB",
+    "categoryproducts:MJ-T2",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-T2-0",
+    "FLT___Product_Ref__Old____MJ_RSB_0",
+    "FLT___Series_Code___T2",
+    "FLT___Series_Name___T2_Sofabed",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___ELAS_SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-T2-0",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:T2",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-T2-0",
+     "price": "69.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tomelilla-footstool-cover",
+   "title": "Tomelilla Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TA-0",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-0_N_LSKT_SP_CVC-01.jpg?v=1741320112",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-0_N_LSKT_SP_CVC-01.jpg?v=1741320112",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_370_IKEA_Tomelilla_sofa.jpg?v=1741320112",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_372_IKEA_Tomelilla_sofa_190a1401-1480-4002-8d70-8efa700fb2fc.jpg?v=1741320112"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:TA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TA-0",
+    "FLT___Product_Ref__Old____TA0",
+    "FLT___Series_Code___TA",
+    "FLT___Series_Name___Tomelilla",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___The_Single_piece_Version",
+    "FLT___Variant_1_Name___The_Two_piece_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-TA-0",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Tomelilla",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:Yes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TA-0",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tylosand-footstool-cover",
+   "title": "Tylosand Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TD-0",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-0_VELC_SP_CVC-01.jpg?v=1741678943",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TD-0_VELC_SP_CVC-01.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_181_IKEA_Tylosand_sofa.jpg?v=1741678943",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_178_IKEA_Tylosand_sofa_26861704-8310-4f20-9ba7-28cf75a51181.jpg?v=1741678943"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:TD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TD-0",
+    "FLT___Product_Ref__Old____TD0",
+    "FLT___Series_Code___TD",
+    "FLT___Series_Name___Tylosand",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_WR",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-TD-0",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Tylosand",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TD-0",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "unit-sofa-ottoman-cover-large",
+   "title": "Unit Sofa Ottoman Cover Large",
+   "vendor": "MUJI",
+   "sku": "MJ-USL-0",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-USL-0_EXD_VELC_SP_CVC-01.jpg?v=1741320172",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-USL-0_EXD_VELC_SP_CVC-01.jpg?v=1741320172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_476_Muji_Unit_20Sofa_sofa_5c3cfb74-d82a-4115-9132-43c16769c1dc.jpg?v=1741320172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_475_Muji_Unit_Sofa_c54a0239-753e-415a-bb5e-594522274e7a.jpg?v=1741320172"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-USL",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-USL-0",
+    "FLT___Product_Ref__Old____MJ_USL_0",
+    "FLT___Series_Code___USL",
+    "FLT___Series_Name___Unit_Sofa",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Width__72cm__Depth__58cm__Heights__27cm",
+    "FLT___Variant_1_Name___Width__77cm__Depth__77cm__Heights__37cm",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-USL-0",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Unit Sofa",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-USL-0",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "unit-sofa-ottoman-cover-small",
+   "title": "Unit Sofa Ottoman Cover Small",
+   "vendor": "MUJI",
+   "sku": "MJ-USS-0",
+   "price": "69.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-USS-0_EXD_VELC_SP_CVC-01.jpg?v=1741320171",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-USS-0_EXD_VELC_SP_CVC-01.jpg?v=1741320171",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_450_Muji_Unit_Sofa_a21e211c-50d0-4563-87b8-f60d374aa5ab.jpg?v=1741320171",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_641_Muji_Unit_Sofa.jpg?v=1741320171"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-USL",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-USS-0",
+    "FLT___Product_Ref__Old____MJ_USS_0",
+    "FLT___Series_Code___USS",
+    "FLT___Series_Name___Unit_Sofa",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Width__57cm__Depth__52cm__Heights__27cm",
+    "FLT___Variant_1_Name___Width__61cm__Depth__61cm__Heights__37cm",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-USS-0",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Unit Sofa",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-USS-0",
+     "price": "69.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "uppland-ottoman-cover",
+   "title": "Uppland Ottoman Cover",
+   "vendor": "IKEA",
+   "sku": "IK-UD-0",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UD-0_CNRP_PM_CVC-01.jpg?v=1741320145",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-UD-0_CNRP_PM_CVC-01.jpg?v=1741320145",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_015_IKEA_Ektorp_sofa_d945eaed-fb2f-4c71-b4e0-db2d422ee23c.jpg?v=1747730124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_013_IKEA_Ektorp_sofa_f2b54b59-9bce-48d6-9e92-83bbc6b1aaaa.jpg?v=1747730124"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:UD",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-UD-0",
+    "FLT___Product_Ref__Old____UD0",
+    "FLT___Series_Code___UD",
+    "FLT___Series_Name___Uppland",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "IK-UD-0",
+    "installation:579",
+    "series:Uppland"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-UD-0",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "urban-ottoman-slipcover",
+   "title": "Urban Ottoman Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-UN-39F",
+   "price": "109.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-UN-39F_LV_VELC_SP_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-UN-39F_LV_VELC_SP_CVC-01.jpg?v=1741320196"
+   ],
+   "tags": [
+    "categoryproducts:WE-0",
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-UN",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Urban",
+    "WE-UN-39F",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-UN-39F",
+     "price": "109.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vaxholm-footstool-cover",
+   "title": "Vaxholm Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VXM-0",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-0_VELC_SP_CVC-01.jpg?v=1741320148",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VXM-0_VELC_SP_CVC-01.jpg?v=1741320148",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_378_IKEA_Vaxholm_sofa_ae9ebc61-4d3b-443f-8e20-b18441902358.jpg?v=1741320148",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_376_IKEA_Vaxholm_sofa.jpg?v=1741320148"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:VXM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VXM-0",
+    "FLT___Product_Ref__Old____VXM0",
+    "FLT___Series_Code___VXM",
+    "FLT___Series_Name___Vaxholm",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-VXM-0",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Vaxholm",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VXM-0",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-footstool-with-storage-cover",
+   "title": "Vimle Footstool with Storage Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-0",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-0_IK-VE-0_VELC_SP_CVC-01_2X_2267c469-ce25-40c4-ac93-ce7450fd9522.webp?v=1771904434",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-0_IK-VE-0_VELC_SP_CVC-01_2X_2267c469-ce25-40c4-ac93-ce7450fd9522.webp?v=1771904434",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_197_IKEA_Vimle_sofa_f34c6730-6414-4ed1-b260-bac9c5a608f1.jpg?v=1771904434",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_196_IKEA_Vimle_sofa.jpg?v=1771904434"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-0",
+    "FLT___Product_Ref__Old____VE0",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-VE-0",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:Yes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-0",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "willow-modern-ottoman-and-a-half-slipcover",
+   "title": "Willow Modern Ottoman and a Half Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-WW-45F",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-45F_CNRP_PM_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-45F_CNRP_PM_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:CB-WW",
+    "categoryproducts:PB-Ottoman",
+    "CB-WW-45F",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "series:Willow"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-WW-45F",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

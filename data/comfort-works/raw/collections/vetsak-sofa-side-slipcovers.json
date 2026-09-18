@@ -1,0 +1,49 @@
+{
+ "handle": "vetsak-sofa-side-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:35.190Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "sofa-side-12-slipcover",
+   "title": "Sofa Side 12\" Slipcover",
+   "vendor": "Vetsak",
+   "sku": "VK-SE-12",
+   "price": "239.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/VK-SE-12.png?v=1786324591",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/VK-SE-12.png?v=1786324591",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/VK-SE-12_2307ac37-d027-48c3-a176-18faf28709da.png?v=1786324601"
+   ],
+   "tags": [
+    "categoryproducts:VK",
+    "categoryproducts:VK-SE",
+    "description:",
+    "features:575",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Sofa Side",
+    "VK-SE-12"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "VK-SE-12",
+     "price": "239.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

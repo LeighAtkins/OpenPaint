@@ -1,0 +1,1046 @@
+{
+ "handle": "ikea-vimle-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:15.174Z",
+ "count": 15,
+ "products": [
+  {
+   "handle": "vimle-4-seat-corner-sofa-cover",
+   "title": "Vimle 4-seat Corner Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-262",
+   "price": "549.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-262_REG_VELC_SP_CVC-01.webp?v=1771901746",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-262_REG_VELC_SP_CVC-01.webp?v=1771901746",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_202_IKEA_Vimle_sofa.jpg?v=1771901746",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_203_IKEA_Vimle_sofa.jpg?v=1771901746"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-262",
+    "FLT___Product_Ref__Old____VE_224",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-262",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:2",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:5",
+    "square_rectangle_back_cushion:4",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-262",
+     "price": "549.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-headrest-cover",
+   "title": "Vimle Headrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-HRX",
+   "price": "39.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-HRX_IK-VE-HRX_SP_CVC-01_2X_ebdd0f67-6815-446d-93a1-dfe204578ed0.webp?v=1771902220",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-HRX_IK-VE-HRX_SP_CVC-01_2X_ebdd0f67-6815-446d-93a1-dfe204578ed0.webp?v=1771902220"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "features:575",
+    "FLT___Category_Size___Headrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-HRX",
+    "FLT___Product_Ref__Old____VE_HR",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Headrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-VE-HRX",
+    "important_notes:579",
+    "installation:630",
+    "series:Vimle"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-HRX",
+     "price": "39.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-sofa-bed-cover-section",
+   "title": "Vimle Sofa Bed Cover Section",
+   "vendor": "IKEA",
+   "sku": "IK-VE-2BX",
+   "price": "259.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-2BX_IK-VE-2BX_PTD_VELC_SP_CVC-01_2X_47ceffea-52d0-43b8-86a9-72628a8718d6.webp?v=1771902371",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-2BX_IK-VE-2BX_PTD_VELC_SP_CVC-01_2X_47ceffea-52d0-43b8-86a9-72628a8718d6.webp?v=1771902371",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_121_IKEA_Finnala_sofa_5d8d4fb4-6dc6-45fa-abf1-ceb61019ec8f.jpg?v=1771902371",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_118_IKEA_Finnala_sofa_04d6cba2-e48a-4eae-aed1-68a95d61be2c.jpg?v=1771902371"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-2BX",
+    "FLT___Product_Ref__Old____VE2_BN",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___140cm_mattress_size",
+    "FLT___Variant_1_Name___153cm_or_60in_mattress_size",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-2BX",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-2BX",
+     "price": "259.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-sofa-bed-cover",
+   "title": "Vimle Sofa-Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-2B",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-2B_PTD_REG_VELC_SP_CVC-01.webp?v=1771900566",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-2B_PTD_REG_VELC_SP_CVC-01.webp?v=1771900566",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_118_IKEA_Finnala_sofa_63ad23fb-f27c-4845-90b7-70296b113106.jpg?v=1771900566",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_121_IKEA_Finnala_sofa_56a4104b-152e-4e3d-a2b8-ed78b485a7bf.jpg?v=1771900566"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-2B",
+    "FLT___Product_Ref__Old____VE2_B",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___140cm_mattress_size",
+    "FLT___Variant_1_Name___153cm_or_60in_mattress_size",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-2B",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-2B",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-2-seater-with-chaise-cover",
+   "title": "Vimle 2 Seater with Chaise Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-25",
+   "price": "409.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-25_R_REG_VELC_SP_CVC-01.webp?v=1771903138",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-25_R_REG_VELC_SP_CVC-01.webp?v=1771903138",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_119_IKEA_Finnala_sofa_95c9fd0e-2434-4d8c-91d8-e5a58f9c33cc.jpg?v=1771903138",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_197_IKEA_Vimle_sofa.jpg?v=1771903138"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:Yes",
+    "chaise_lounge_position:Right",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-25",
+    "FLT___Product_Ref__Old____VE7",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Chaise",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Chaise",
+    "FLT___Variant_1_Name___Right_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-25",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-25",
+     "price": "409.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-corner-sofa-cover-2-3",
+   "title": "Vimle Corner Sofa Cover (2+3)",
+   "vendor": "IKEA",
+   "sku": "IK-VE-362",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-362_R_REG_VELC_SP_CVC-01.webp?v=1771903930",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-362_R_REG_VELC_SP_CVC-01.webp?v=1771903930",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_198_IKEA_Vimle_sofa.jpg?v=1771903930",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_200_IKEA_Vimle_sofa_91afe892-9a22-4554-9574-fd35da4b6ae2.jpg?v=1771903930"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-362",
+    "FLT___Product_Ref__Old____VE4_0",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___3_Seater_Left_Side__319cm_",
+    "FLT___Variant_1_Name___3_Seater_Right_Side__319cm_",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-362",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:2",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:6",
+    "square_rectangle_back_cushion:5",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-362",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-sofa-cover",
+   "title": "Vimle Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-3",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-3_REG_VELC_SP_CVC-01.webp?v=1771899781",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-3_REG_VELC_SP_CVC-01.webp?v=1771899781",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_117_IKEA_Finnala_sofa_a878337e-570b-492a-aa86-61f8f592d831.jpg?v=1771899781",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_120_IKEA_Finnala_sofa_491615e6-f04c-4980-9489-39da7510d52f.jpg?v=1771899781"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-3",
+    "FLT___Product_Ref__Old____VE3",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-3",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-3",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-loveseat-cover",
+   "title": "Vimle Loveseat Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-2",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-2_REG_VELC_SP_CVC-01.webp?v=1771899743",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-2_REG_VELC_SP_CVC-01.webp?v=1771899743",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_121_IKEA_Finnala_sofa_78ee53ec-28ac-481a-90fd-3b161fcab2fe.jpg?v=1771899743",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_118_IKEA_Finnala_sofa_8298718a-d133-4c8d-aa8d-de812fddebb2.jpg?v=1771899743"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-2",
+    "FLT___Product_Ref__Old____VE2",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-2",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-2",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-corner-section-cover",
+   "title": "Vimle Corner Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-6",
+   "price": "199.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-6_IK-VE-6_VELC_SP_CVC-01_2X_cda3c1ca-c3dd-45c4-bcb5-9f3889ad1e64.webp?v=1771904086",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-6_IK-VE-6_VELC_SP_CVC-01_2X_cda3c1ca-c3dd-45c4-bcb5-9f3889ad1e64.webp?v=1771904086",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_123_IKEA_Finnala_sofa_c2b4b89b-bb76-4242-b35e-961b52989688.jpg?v=1771904086",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_124_IKEA_Finnala_sofa_65c75a9f-0fc5-451e-9a7f-26bcaa699dd6.jpg?v=1771904086"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Corner Section",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-6",
+    "FLT___Product_Ref__Old____VE4_N",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-6",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "other_shaped_back_cushion:2",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-6",
+     "price": "199.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-armrest-covers-one-pair",
+   "title": "Vimle Armrest Covers (One Pair)",
+   "vendor": "IKEA",
+   "sku": "IK-VE-8",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-8_IK-VE-8_EXD_VELC_SP_CVC-01_2X_3af2f685-c976-48a1-8f24-99e8112c5548.webp?v=1771904148",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-8_IK-VE-8_EXD_VELC_SP_CVC-01_2X_3af2f685-c976-48a1-8f24-99e8112c5548.webp?v=1771904148",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_200_IKEA_Vimle_sofa.jpg?v=1771904148"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "features:575",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-8",
+    "FLT___Product_Ref__Old____VE8",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Regular__15cm",
+    "FLT___Variant_1_Name___Wide__22cm",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "IK-VE-8",
+    "important_notes:579",
+    "installation:630",
+    "series:Vimle"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-8",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-loveseat-section-cover",
+   "title": "Vimle Loveseat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-2X",
+   "price": "239.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-2X_IK-VE-2X_VELC_SP_CVC-01_2X_c4f2c754-7b1c-4f6d-b230-91ea0b08eb84.webp?v=1771904324",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-2X_IK-VE-2X_VELC_SP_CVC-01_2X_c4f2c754-7b1c-4f6d-b230-91ea0b08eb84.webp?v=1771904324",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_121_IKEA_Finnala_sofa_3f566501-0961-4144-b5d2-08f38d977f5c.jpg?v=1771904324",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_118_IKEA_Finnala_sofa_2303e6d4-cb14-4cc9-97d8-9351da2fae3e.jpg?v=1771904324"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-2X",
+    "FLT___Product_Ref__Old____VE2_N",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-2X",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-2X",
+     "price": "239.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-sofa-section-cover",
+   "title": "Vimle Sofa Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-3X",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-3X_IK-VE-3X_VELC_SP_CVC-01_2X_d1cffff0-1866-42cc-8740-6c2d896b0335.webp?v=1771904357",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-3X_IK-VE-3X_VELC_SP_CVC-01_2X_d1cffff0-1866-42cc-8740-6c2d896b0335.webp?v=1771904357",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_117_IKEA_Finnala_sofa_8d451183-b003-42c0-8b16-562f51e2b748.jpg?v=1771904357",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_120_IKEA_Finnala_sofa_1deb11e1-4251-4363-acc5-048787871cc5.jpg?v=1771904357"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-3X",
+    "FLT___Product_Ref__Old____VE3_N",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-3X",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-3X",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-one-seat-section-cover",
+   "title": "Vimle One Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-1X",
+   "price": "139.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-1X_IK-VE-1X_VELC_SP_CVC-01_2X_0f89e91c-928a-4c49-9fc1-8c367c344c4b.webp?v=1771904398",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-1X_IK-VE-1X_VELC_SP_CVC-01_2X_0f89e91c-928a-4c49-9fc1-8c367c344c4b.webp?v=1771904398",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_117_IKEA_Finnala_sofa_44ed8633-178c-402c-b54d-b1732251edbb.jpg?v=1771904398",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_118_IKEA_Finnala_sofa_ef55800c-f19c-4d6e-9220-771f96bdd3da.jpg?v=1771904398"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-1X",
+    "FLT___Product_Ref__Old____VE1_N",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-1X",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-1X",
+     "price": "139.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-footstool-with-storage-cover",
+   "title": "Vimle Footstool with Storage Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-0",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-0_IK-VE-0_VELC_SP_CVC-01_2X_2267c469-ce25-40c4-ac93-ce7450fd9522.webp?v=1771904434",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-0_IK-VE-0_VELC_SP_CVC-01_2X_2267c469-ce25-40c4-ac93-ce7450fd9522.webp?v=1771904434",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_197_IKEA_Vimle_sofa_f34c6730-6414-4ed1-b260-bac9c5a608f1.jpg?v=1771904434",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_196_IKEA_Vimle_sofa.jpg?v=1771904434"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-0",
+    "FLT___Product_Ref__Old____VE0",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-VE-0",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:Yes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-0",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-chaise-section-cover",
+   "title": "Vimle Chaise Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-5X",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-5X_IK-VE-5X_VELC_SP_CVC-01_2X_c9f6c490-e710-4698-9573-222823568928.webp?v=1771904469",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_ikea_VE_IK-VE-5X_IK-VE-5X_VELC_SP_CVC-01_2X_c9f6c490-e710-4698-9573-222823568928.webp?v=1771904469",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_119_IKEA_Finnala_sofa_ac9f29bc-5cee-4f5d-9a74-48b33240479b.jpg?v=1771904469",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_122_IKEA_Finnala_sofa_b2390636-bb41-4dae-82f7-b6f2cd861b70.jpg?v=1771904469"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Chaise",
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-5X",
+    "FLT___Product_Ref__Old____VE5_N",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-VE-5X",
+    "important_notes:579",
+    "installation:630",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Vimle",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-5X",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

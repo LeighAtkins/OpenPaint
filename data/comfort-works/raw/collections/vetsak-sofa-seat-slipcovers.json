@@ -1,0 +1,89 @@
+{
+ "handle": "vetsak-sofa-seat-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:34.743Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "sofa-seat-41-slipcover",
+   "title": "Sofa Seat 41\" Slipcover",
+   "vendor": "Vetsak",
+   "sku": "VK-ST-41",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/VK-ST-41.png?v=1786345378",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/VK-ST-41.png?v=1786345378",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/VK-ST-41_d47cdb5a-a48d-4f32-bf31-f21322d63714.png?v=1786345387"
+   ],
+   "tags": [
+    "categoryproducts:VK",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Sofa Seat",
+    "VK-ST-41"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "VK-ST-41",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sofa-seat-33-slipcover",
+   "title": "Sofa Seat 33\" Slipcover",
+   "vendor": "Vetsak",
+   "sku": "VK-ST-33",
+   "price": "239.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/VK-ST-33.png?v=1786341165",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/VK-ST-33.png?v=1786341165",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/VK-ST-33_c1f1384a-f8fa-4027-ab4d-65ef01d58a02.png?v=1786341176"
+   ],
+   "tags": [
+    "categoryproducts:VK",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Sofa Seat",
+    "VK-ST-33"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "VK-ST-33",
+     "price": "239.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

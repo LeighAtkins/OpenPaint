@@ -1,0 +1,50 @@
+{
+ "handle": "west-elm-antwerp-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:36.145Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "antwerp-89-sofa-slipcover",
+   "title": "Antwerp 89\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-AP-89",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AP-89_VELC_SP_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AP-89_VELC_SP_CVC-01.jpg?v=1741320196"
+   ],
+   "tags": [
+    "categoryproducts:WE-AP",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Antwerp",
+    "WE-AP-89",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-AP-89",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

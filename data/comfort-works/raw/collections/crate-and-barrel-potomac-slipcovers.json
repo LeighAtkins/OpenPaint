@@ -1,0 +1,278 @@
+{
+ "handle": "crate-and-barrel-potomac-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:14.303Z",
+ "count": 5,
+ "products": [
+  {
+   "handle": "potomac-sofa-slipcover",
+   "title": "Potomac Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PC-90",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-90_CNRP_SP_CVC-01.jpg?v=1741320104",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-90_CNRP_SP_CVC-01.jpg?v=1741320104",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_432_Crate_and_Barrel_Potomac_sofa.jpg?v=1741320104",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_433_Crate_and_Barrel_Potomac_sofa.jpg?v=1741320104"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB-PC",
+    "CB-PC-90",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-PC-90",
+    "FLT___Series_Code___PC",
+    "FLT___Series_Name___Potomac",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Potomac",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PC-90",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "potomac-apartment-sofa-slipcover",
+   "title": "Potomac Apartment Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PC-75",
+   "price": "529.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-75_CNRP_SP_CVC-01.jpg?v=1741320095",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-75_CNRP_SP_CVC-01.jpg?v=1741320095",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_113_Crate_and_Barrel_Potomac_sofa.jpg?v=1741320095",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_129_Crate_and_Barrel_Potomac_sofa.jpg?v=1741320095"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB-PC",
+    "CB-PC-75",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-PC-75",
+    "FLT___Series_Code___PC",
+    "FLT___Series_Name___Potomac",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Potomac",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PC-75",
+     "price": "529.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "potomac-chair-slipcover",
+   "title": "Potomac Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PC-39",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-39_CNRP_PM_CVC-01.jpg?v=1741320098",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-39_CNRP_PM_CVC-01.jpg?v=1741320098"
+   ],
+   "tags": [
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-PC",
+    "categoryproducts:CB-Slipcover",
+    "CB-PC-39",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Potomac"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PC-39",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "potomac-ottoman-slipcover",
+   "title": "Potomac Ottoman Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PC-32F",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-32F_CNRP_SP_CVC-01.jpg?v=1741320104",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-32F_CNRP_SP_CVC-01.jpg?v=1741320104"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-PC",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:PB-Ottoman",
+    "CB-PC-32F",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Potomac",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PC-32F",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "potomac-90-queen-sleeper-sofa-slipcover",
+   "title": "Potomac 90\" Queen Sleeper Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PC-90B",
+   "price": "679.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-90B_MLTP_PM_CVC-01.jpg?v=1741741766",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-90B_MLTP_PM_CVC-01.jpg?v=1741741766"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-PC",
+    "categoryproducts:CB-Slipcover",
+    "CB-PC-90B",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Potomac",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PC-90B",
+     "price": "679.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

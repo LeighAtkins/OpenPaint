@@ -1,0 +1,969 @@
+{
+ "handle": "ikea-klobo-slipcovers",
+ "representative": "klobo-2-seater-sofa-cover",
+ "hubLinks": [
+  "\\/pages\\/fabrics-hypoallergenic-collection-everyday-cotton",
+  "\\/pages\\/fabrics-cozy-collection-everyday-velvet",
+  "\\/pages\\/fabrics-starter-collection-everyday-weave",
+  "\\/pages\\/fabrics-performance-collection-signature-velvet",
+  "\\/pages\\/fabrics-pet-friendly-collection-signature-microfiber",
+  "\\/pages\\/fabrics-performance-collection-sunbrella"
+ ],
+ "fabricCount": 106,
+ "fabrics": [
+  {
+   "fabric": null,
+   "handle": "klobo-2-seater-sofa-cover",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover",
+   "sku": "IK-KO-2",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_CVC-01.jpg?v=1741320117"
+  },
+  {
+   "fabric": "Care+ Canvas Ash",
+   "handle": "klobo-2-seater-sofa-cover-care-canvas-ash",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-care-canvas-ash",
+   "sku": "IK-KO-2__LSKT_SP__SUN-C13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_SUN-C13_9153f6ee-f38e-4977-9557-e4481f24c804.jpg?v=1727235016"
+  },
+  {
+   "fabric": "Care+ Canvas Beige",
+   "handle": "klobo-2-seater-sofa-cover-care-canvas-beige",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-care-canvas-beige",
+   "sku": "IK-KO-2__LSKT_SP__SUN-C38",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Canvas Sage",
+   "handle": "klobo-2-seater-sofa-cover-care-canvas-sage",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-care-canvas-sage",
+   "sku": "IK-KO-2__LSKT_SP__SUN-C10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_5c4342c7-bbb8-4cea-8fe7-d6cbd0be9bf6.jpg?v=1727235562"
+  },
+  {
+   "fabric": "Care+ Canvas Snow",
+   "handle": "klobo-2-seater-sofa-cover-care-canvas-snow",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-care-canvas-snow",
+   "sku": "IK-KO-2__LSKT_SP__SUN-C31",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen Cream",
+   "handle": "klobo-2-seater-sofa-cover-care-linen-cream",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-care-linen-cream",
+   "sku": "IK-KO-2__LSKT_SP__COS-103",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen Natural",
+   "handle": "klobo-2-seater-sofa-cover-care-linen-natural",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-care-linen-natural",
+   "sku": "IK-KO-2__LSKT_SP__COS-105",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen White",
+   "handle": "klobo-2-seater-sofa-cover-care-linen-white",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-care-linen-white",
+   "sku": "IK-KO-2__LSKT_SP__COS-101",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Tweed Amber",
+   "handle": "klobo-2-seater-sofa-cover-care-tweed-amber",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-care-tweed-amber",
+   "sku": "IK-KO-2__LSKT_SP__SUN-T04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_SUN-T04_39dbe965-1a41-451b-8928-3dfa5d04fd9e.jpg?v=1727235016"
+  },
+  {
+   "fabric": "Care+ Tweed Mineral Blue",
+   "handle": "klobo-2-seater-sofa-cover-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-care-tweed-mineral-blue",
+   "sku": "IK-KO-2__LSKT_SP__SUN-T10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_SUN-T10_bc8633cf-2b5c-467e-a5bc-7014ad4e65c7.jpg?v=1727235011"
+  },
+  {
+   "fabric": "Care+ Tweed Sunset",
+   "handle": "klobo-2-seater-sofa-cover-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-care-tweed-sunset",
+   "sku": "IK-KO-2__LSKT_SP__SUN-T06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_SUN-T06_6b3de6b5-cc71-4696-98db-d7aca6ae598c.jpg?v=1727235017"
+  },
+  {
+   "fabric": "Care+ Tweed Teal",
+   "handle": "klobo-2-seater-sofa-cover-care-tweed-teal",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-care-tweed-teal",
+   "sku": "IK-KO-2__LSKT_SP__SUN-T12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_SUN-T12_dd7181af-38e9-4e35-a75b-ac245a0de822.jpg?v=1727235016"
+  },
+  {
+   "fabric": "Classic Velvet Peach",
+   "handle": "klobo-2-seater-sofa-cover-classic-velvet-peach",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-classic-velvet-peach",
+   "sku": "IK-KO-2__LSKT_SP__FM-02P",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_FM-02P.jpg?v=1725359907"
+  },
+  {
+   "fabric": "Crypton® Chenille Burnt Orange",
+   "handle": "klobo-2-seater-sofa-cover-crypton®-chenille-burnt-orange",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-crypton®-chenille-burnt-orange",
+   "sku": "IK-KO-2__LSKT_SP__BEN-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Cream",
+   "handle": "klobo-2-seater-sofa-cover-crypton®-chenille-cream",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-crypton®-chenille-cream",
+   "sku": "IK-KO-2__LSKT_SP__BEN-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Dark Teal",
+   "handle": "klobo-2-seater-sofa-cover-crypton®-chenille-dark-teal",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-crypton®-chenille-dark-teal",
+   "sku": "IK-KO-2__LSKT_SP__BEN-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Snow",
+   "handle": "klobo-2-seater-sofa-cover-crypton®-chenille-snow",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-crypton®-chenille-snow",
+   "sku": "IK-KO-2__LSKT_SP__BEN-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Charcoal",
+   "handle": "klobo-2-seater-sofa-cover-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-cotton-charcoal",
+   "sku": "IK-KO-2__LSKT_SP__CVC-07",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Forest Green",
+   "handle": "klobo-2-seater-sofa-cover-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-cotton-forest-green",
+   "sku": "IK-KO-2__LSKT_SP__CVC-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Khaki",
+   "handle": "klobo-2-seater-sofa-cover-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-cotton-khaki",
+   "sku": "IK-KO-2__LSKT_SP__CVC-08",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Navy",
+   "handle": "klobo-2-seater-sofa-cover-everyday-cotton-navy",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-cotton-navy",
+   "sku": "IK-KO-2__LSKT_SP__CVC-05",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Pebble",
+   "handle": "klobo-2-seater-sofa-cover-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-cotton-pebble",
+   "sku": "IK-KO-2__LSKT_SP__CVC-06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_CVC-06_f0a524fd-5b02-4a94-b0d1-10ab3cd51d64.jpg?v=1743088494"
+  },
+  {
+   "fabric": "Everyday Cotton Sand",
+   "handle": "klobo-2-seater-sofa-cover-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-cotton-sand",
+   "sku": "IK-KO-2__LSKT_SP__CVC-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Silver Sage",
+   "handle": "klobo-2-seater-sofa-cover-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-cotton-silver-sage",
+   "sku": "IK-KO-2__LSKT_SP__CVC-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton White",
+   "handle": "klobo-2-seater-sofa-cover-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-cotton-white",
+   "sku": "IK-KO-2__LSKT_SP__CVC-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Cacao",
+   "handle": "klobo-2-seater-sofa-cover-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-velvet-cacao",
+   "sku": "IK-KO-2__LSKT_SP__ROYAL-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Dark Teal",
+   "handle": "klobo-2-seater-sofa-cover-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-velvet-dark-teal",
+   "sku": "IK-KO-2__LSKT_SP__ROYAL-13",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Navy",
+   "handle": "klobo-2-seater-sofa-cover-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-velvet-navy",
+   "sku": "IK-KO-2__LSKT_SP__ROYAL-14",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Sand",
+   "handle": "klobo-2-seater-sofa-cover-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-velvet-sand",
+   "sku": "IK-KO-2__LSKT_SP__ROYAL-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Storm",
+   "handle": "klobo-2-seater-sofa-cover-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-velvet-storm",
+   "sku": "IK-KO-2__LSKT_SP__ROYAL-20",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Weave Basil Green",
+   "handle": "klobo-2-seater-sofa-cover-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-weave-basil-green",
+   "sku": "IK-KO-2__LSKT_SP__EYL-47",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_EYL-47.jpg?v=1725359877"
+  },
+  {
+   "fabric": "Everyday Weave Cream",
+   "handle": "klobo-2-seater-sofa-cover-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-weave-cream",
+   "sku": "IK-KO-2__LSKT_SP__EYL-35",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_EYL-35.jpg?v=1725359872"
+  },
+  {
+   "fabric": "Everyday Weave Maroon",
+   "handle": "klobo-2-seater-sofa-cover-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-weave-maroon",
+   "sku": "IK-KO-2__LSKT_SP__EYL-38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_EYL-38.jpg?v=1725359880"
+  },
+  {
+   "fabric": "Everyday Weave Navy",
+   "handle": "klobo-2-seater-sofa-cover-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-weave-navy",
+   "sku": "IK-KO-2__LSKT_SP__EYL-44",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_EYL-44.jpg?v=1725359885"
+  },
+  {
+   "fabric": "Everyday Weave Pebble",
+   "handle": "klobo-2-seater-sofa-cover-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-weave-pebble",
+   "sku": "IK-KO-2__LSKT_SP__EYL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_EYL-20.jpg?v=1725359867"
+  },
+  {
+   "fabric": "Everyday Weave Rust",
+   "handle": "klobo-2-seater-sofa-cover-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-weave-rust",
+   "sku": "IK-KO-2__LSKT_SP__EYL-39",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_EYL-39.jpg?v=1725359882"
+  },
+  {
+   "fabric": "Everyday Weave Storm",
+   "handle": "klobo-2-seater-sofa-cover-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-weave-storm",
+   "sku": "IK-KO-2__LSKT_SP__EYL-24",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_EYL-24.jpg?v=1725359869"
+  },
+  {
+   "fabric": "Everyday Weave Teal",
+   "handle": "klobo-2-seater-sofa-cover-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-everyday-weave-teal",
+   "sku": "IK-KO-2__LSKT_SP__EYL-43",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_EYL-43.jpg?v=1725359875"
+  },
+  {
+   "fabric": "Mod Boucle Amber",
+   "handle": "klobo-2-seater-sofa-cover-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-mod-boucle-amber",
+   "sku": "IK-KO-2__LSKT_SP__MOSS-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_MOSS-09_e15e7e4f-a2be-42bb-9679-a34b68f9d7ed.jpg?v=1725359731"
+  },
+  {
+   "fabric": "Mod Boucle Charcoal",
+   "handle": "klobo-2-seater-sofa-cover-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-mod-boucle-charcoal",
+   "sku": "IK-KO-2__LSKT_SP__MOSS-97",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_MOSS-97_32143dd8-0a9a-435f-adff-a0509a8aecb0.jpg?v=1725359736"
+  },
+  {
+   "fabric": "Mod Boucle Cream",
+   "handle": "klobo-2-seater-sofa-cover-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-mod-boucle-cream",
+   "sku": "IK-KO-2__LSKT_SP__MOSS-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_MOSS-01_755fbeac-0032-4073-b454-96933d5fc0ad.jpg?v=1725359728"
+  },
+  {
+   "fabric": "Mod Boucle Oatmeal",
+   "handle": "klobo-2-seater-sofa-cover-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-mod-boucle-oatmeal",
+   "sku": "IK-KO-2__LSKT_SP__MOSS-40",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_MOSS-40_c042ac6b-1d25-44e8-8c40-8ee08a08bf1a.jpg?v=1725359734"
+  },
+  {
+   "fabric": "Mod Chenille Beige",
+   "handle": "klobo-2-seater-sofa-cover-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-mod-chenille-beige",
+   "sku": "IK-KO-2__LSKT_SP__ESTE-52",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_ESTE-52_a5e296c4-a2ab-4f8e-b7a9-b21291e8f3db.jpg?v=1725359704"
+  },
+  {
+   "fabric": "Mod Chenille Denim",
+   "handle": "klobo-2-seater-sofa-cover-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-mod-chenille-denim",
+   "sku": "IK-KO-2__LSKT_SP__ESTE-78",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_ESTE-78_51190f0a-adcc-4b67-9e1c-879794567a93.jpg?v=1725359713"
+  },
+  {
+   "fabric": "Mod Chenille Espresso",
+   "handle": "klobo-2-seater-sofa-cover-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-mod-chenille-espresso",
+   "sku": "IK-KO-2__LSKT_SP__ESTE-57",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_ESTE-57_98f5ba35-23d5-4f03-ab42-6788e3c0f729.jpg?v=1725359710"
+  },
+  {
+   "fabric": "Mod Chenille Mist",
+   "handle": "klobo-2-seater-sofa-cover-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-mod-chenille-mist",
+   "sku": "IK-KO-2__LSKT_SP__ESTE-92",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_ESTE-92_e0092808-68ad-4556-a13b-0ec76392ca53.jpg?v=1725359716"
+  },
+  {
+   "fabric": "Signature Microfiber Caramel",
+   "handle": "klobo-2-seater-sofa-cover-signature-microfiber-caramel",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-microfiber-caramel",
+   "sku": "IK-KO-2__LSKT_SP__FA-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_FA-09_2ac8e379-38be-44c9-8ef6-c668b06f7402.jpg?v=1725359745"
+  },
+  {
+   "fabric": "Signature Microfiber Coral",
+   "handle": "klobo-2-seater-sofa-cover-signature-microfiber-coral",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-microfiber-coral",
+   "sku": "IK-KO-2__LSKT_SP__FA-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_FA-14_b412ef63-84f3-422f-99a7-889f7de7940f.jpg?v=1725359753"
+  },
+  {
+   "fabric": "Signature Microfiber Cream",
+   "handle": "klobo-2-seater-sofa-cover-signature-microfiber-cream",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-microfiber-cream",
+   "sku": "IK-KO-2__LSKT_SP__FA-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_FA-01_abcd3dd8-c895-4001-8e09-6b4e9f5ba614.jpg?v=1725359742"
+  },
+  {
+   "fabric": "Signature Microfiber Dark Coral",
+   "handle": "klobo-2-seater-sofa-cover-signature-microfiber-dark-coral",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-microfiber-dark-coral",
+   "sku": "IK-KO-2__LSKT_SP__FA-54",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_FA-54_24548392-a156-416a-8987-716d21ec01ad.jpg?v=1725359756"
+  },
+  {
+   "fabric": "Signature Microfiber Forest Green",
+   "handle": "klobo-2-seater-sofa-cover-signature-microfiber-forest-green",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-microfiber-forest-green",
+   "sku": "IK-KO-2__LSKT_SP__FA-63",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_FA-63_8c9bd5a3-cb06-40c4-8552-7579635d4ad1.jpg?v=1725359750"
+  },
+  {
+   "fabric": "Signature Microfiber Sand",
+   "handle": "klobo-2-seater-sofa-cover-signature-microfiber-sand",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-microfiber-sand",
+   "sku": "IK-KO-2__LSKT_SP__FA-45",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_FA-45_77fcd6cf-6a09-410b-8e3b-89c68cd6ae99.jpg?v=1725359739"
+  },
+  {
+   "fabric": "Signature Microfiber Silver Sage",
+   "handle": "klobo-2-seater-sofa-cover-signature-microfiber-silver-sage",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-microfiber-silver-sage",
+   "sku": "IK-KO-2__LSKT_SP__FA-67",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_FA-67_3afc3635-ff30-4f22-9813-9c8883655497.jpg?v=1725359747"
+  },
+  {
+   "fabric": "Signature Velvet Bayleaf",
+   "handle": "klobo-2-seater-sofa-cover-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-velvet-bayleaf",
+   "sku": "IK-KO-2__LSKT_SP__PAL-11",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Caramel",
+   "handle": "klobo-2-seater-sofa-cover-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-velvet-caramel",
+   "sku": "IK-KO-2__LSKT_SP__PAL-09",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Cream",
+   "handle": "klobo-2-seater-sofa-cover-signature-velvet-cream",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-velvet-cream",
+   "sku": "IK-KO-2__LSKT_SP__PAL-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Eucalyptus",
+   "handle": "klobo-2-seater-sofa-cover-signature-velvet-eucalyptus",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-velvet-eucalyptus",
+   "sku": "IK-KO-2__LSKT_SP__PAL-14",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Hazel",
+   "handle": "klobo-2-seater-sofa-cover-signature-velvet-hazel",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-velvet-hazel",
+   "sku": "IK-KO-2__LSKT_SP__PAL-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Midnight",
+   "handle": "klobo-2-seater-sofa-cover-signature-velvet-midnight",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-velvet-midnight",
+   "sku": "IK-KO-2__LSKT_SP__PAL-12",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Natural",
+   "handle": "klobo-2-seater-sofa-cover-signature-velvet-natural",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-velvet-natural",
+   "sku": "IK-KO-2__LSKT_SP__PAL-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Sand",
+   "handle": "klobo-2-seater-sofa-cover-signature-velvet-sand",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-velvet-sand",
+   "sku": "IK-KO-2__LSKT_SP__PAL-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Sunset",
+   "handle": "klobo-2-seater-sofa-cover-signature-velvet-sunset",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-signature-velvet-sunset",
+   "sku": "IK-KO-2__LSKT_SP__PAL-07",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Sunbrella® Canvas Flax",
+   "handle": "klobo-2-seater-sofa-cover-sunbrella®-canvas-flax",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-sunbrella®-canvas-flax",
+   "sku": "IK-KO-2__LSKT_SP__5492-0000",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_5492-0000.jpg?v=1725359836"
+  },
+  {
+   "fabric": "Sunbrella® Fretwork Flax",
+   "handle": "klobo-2-seater-sofa-cover-sunbrella®-fretwork-flax",
+   "url": "https://comfort-works.com/products/klobo-2-seater-sofa-cover-sunbrella®-fretwork-flax",
+   "sku": "IK-KO-2__LSKT_SP__45991-0001",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-KO-2_LSKT_SP_45991-0001.jpg?v=1725359825"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-teal",
+   "sku": "swatch__EYL-43",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-43_Everyday_Weave_Teal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-storm",
+   "sku": "swatch__EYL-24",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-24_Everyday_Weave_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-rust",
+   "sku": "swatch__EYL-39",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-39_Everyday_Weave_Rust.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-pebble",
+   "sku": "swatch__EYL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-20_Everyday_Weave_Pebble.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-navy",
+   "sku": "swatch__EYL-44",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-44_Everyday_Weave_Navy.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-maroon",
+   "sku": "swatch__EYL-38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-38_Everyday_Weave_Maroon.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-cream",
+   "sku": "swatch__EYL-35",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-35_Everyday_Weave_Cream.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-basil-green",
+   "sku": "swatch__EYL-47",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-47_Everyday_Weave_Basil_Green.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-white",
+   "sku": "swatch__CVC-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/TC-01_Everyday_Cotton_White_1X_1.jpg?v=1718092472"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-sand",
+   "sku": "swatch__CVC-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-02_Everyday_Cotton_Sand.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-silver-sage",
+   "sku": "swatch__CVC-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-03_Everyday_Cotton_Silver_Sage.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-forest-green",
+   "sku": "swatch__CVC-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-04_Everyday_Cotton_Forest_Green.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-navy",
+   "sku": "swatch__CVC-05",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-05.jpg?v=1785723660"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-pebble",
+   "sku": "swatch__CVC-06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-06_Everyday_Cotton_Pebble.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-charcoal",
+   "sku": "swatch__CVC-07",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-07_Everyday_Cotton_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-khaki",
+   "sku": "swatch__CVC-08",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-08_Everyday_Cotton_Khaki.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-cacao",
+   "sku": "swatch__ROYAL-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-04_Everyday_Velvet_Cacao.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-dark-teal",
+   "sku": "swatch__ROYAL-13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-13_Everyday_Velvet_Dark_Teal.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-navy",
+   "sku": "swatch__ROYAL-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-14_Everyday_Velvet_Navy.avif?v=1777425396"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-sand",
+   "sku": "swatch__ROYAL-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-03_Everyday_Velvet_Sand.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-storm",
+   "sku": "swatch__ROYAL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-20_Everyday_Velvet_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-sage",
+   "sku": "swatch__SUN-C10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/SUN-C10_Performance-Canvas-Sage_1080x1080_22f090cb-fce4-4f4f-bc62-d6af2bb93957.png?v=1702022331"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-ash",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-ash",
+   "sku": "swatch__SUN-C13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C13_Care_Canvas_Ash.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-beige",
+   "sku": "swatch__SUN-C38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C38_Care_Canvas_Beige.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-snow",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-snow",
+   "sku": "swatch__SUN-C31",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C31_Care_Canvas_Snow.avif?v=1777425376"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-teal",
+   "sku": "swatch__SUN-T12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T12_Care_Tweed_Teal.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-sunset",
+   "sku": "swatch__SUN-T06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T06_Care_Tweed_Sunset.avif?v=1777425402"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-mineral-blue",
+   "sku": "swatch__SUN-T10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T10_Care_Tweed_Mineral_Blue.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-amber",
+   "sku": "swatch__SUN-T04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T04_Care_Tweed_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-mist",
+   "sku": "swatch__ESTE-92",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-92_Mod_Chenille_Mist.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-espresso",
+   "sku": "swatch__ESTE-57",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-57ModChenilleCacao_1X_dac9a2ae-b3ad-4656-a8be-dd44b643f5d5.jpg?v=1723009282"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-denim",
+   "sku": "swatch__ESTE-78",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-78_Mod_Chenille_Denim.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-beige",
+   "sku": "swatch__ESTE-52",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-52_Mod_Chenille_Beige.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-amber",
+   "sku": "swatch__MOSS-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-09_Mod_Boucle_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-charcoal",
+   "sku": "swatch__MOSS-97",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-97_Mod_Boucle_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-cream",
+   "sku": "swatch__MOSS-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-01_Mod_Boucle_Cream.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-oatmeal",
+   "sku": "swatch__MOSS-40",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-40_Mod_Boucle_Oatmeal.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-white",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-white",
+   "sku": "swatch__COS-101",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-101_Care_Linen_White.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-cream",
+   "sku": "swatch__COS-103",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-103_Care_Linen_Cream.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-natural",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-natural",
+   "sku": "swatch__COS-105",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-105_Care_Linen_Natural.avif?v=1777425397"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-bayleaf",
+   "sku": "swatch__PAL-11",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-11_Signature_Velvet_Bayleaf.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-caramel",
+   "sku": "swatch__PAL-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-09_Signature_Velvet_Caramel.avif?v=1777425383"
+  }
+ ]
+}

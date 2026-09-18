@@ -1,0 +1,254 @@
+{
+ "handle": "maisons-du-monde-louvre-louvain-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:23.875Z",
+ "count": 5,
+ "products": [
+  {
+   "handle": "louvain-3-4-seater-sofa-slipcover",
+   "title": "Louvain 3/4 seater sofa slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-LV-80",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-80_LSKT_SI_CVC-01.jpg?v=1741320165",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-80_LSKT_SI_CVC-01.jpg?v=1741320165",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_623_Maison_du_Monde_Louvain_sofa_ad9dd575-e4ef-4ed4-afcc-ee330e0fb25e.jpg?v=1741320165",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_554_Maison_du_Monde_Louvain_sofa.jpg?v=1741320165"
+   ],
+   "tags": [
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-LV",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-LV-80",
+    "FLT___Product_Ref__Old____MDM_LV_3",
+    "FLT___Series_Code___LV",
+    "FLT___Series_Name___Louvain",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "MDM-LV-80",
+    "series:Louvre (Louvain)"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-LV-80",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "louvain-2-seater-sofa-bed-slipcover",
+   "title": "Louvain 2 seater sofa bed slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-LV-64B",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-64B_LSKT_SI_CVC-01.jpg?v=1741320167",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-64B_LSKT_SI_CVC-01.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_623_Maison_du_Monde_Louvain_sofa_20a8d6d9-3ddd-4724-8a71-0fa00bc49cd8.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_553_Maison_du_Monde_Louvain_sofa_c08a348b-c066-40ad-b287-0ff0e853c1c8.jpg?v=1741320167"
+   ],
+   "tags": [
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-LV",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-LV-64B",
+    "FLT___Product_Ref__Old____MDM_LV_2B",
+    "FLT___Series_Code___LV",
+    "FLT___Series_Name___Louvain",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "MDM-LV-64B",
+    "series:Louvre (Louvain)"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-LV-64B",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "louvain-armchair-slipcover",
+   "title": "Louvain Armchair Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-LV-29",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-29_LSKT_SI_CVC-01.jpg?v=1741320167",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-29_LSKT_SI_CVC-01.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_554_Maison_du_Monde_Louvain_sofa_5e06806b-c818-4886-a43e-352e8b844d43.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_552_Maison_du_Monde_Louvain_sofa.jpg?v=1741320167"
+   ],
+   "tags": [
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-LV",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-LV-29",
+    "FLT___Product_Ref__Old____MDM_LV_1",
+    "FLT___Series_Code___LV",
+    "FLT___Series_Name___Louvain",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "MDM-LV-29",
+    "series:Louvre (Louvain)"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-LV-29",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "louvain-3-4-seater-sofa-bed-slipcover",
+   "title": "Louvain 3/4 seater sofa bed slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-LV-80B",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-80B_LSKT_SI_CVC-01.jpg?v=1741320167",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-80B_LSKT_SI_CVC-01.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_623_Maison_du_Monde_Louvain_sofa.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_554_Maison_du_Monde_Louvain_sofa_03547888-0eca-4872-9076-3ba0c876efbb.jpg?v=1741320167"
+   ],
+   "tags": [
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-LV",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-LV-80B",
+    "FLT___Product_Ref__Old____MDM_LV_3B",
+    "FLT___Series_Code___LV",
+    "FLT___Series_Name___Louvain",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "MDM-LV-80B",
+    "series:Louvre (Louvain)"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-LV-80B",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "louvain-2-seater-sofa-slipcover",
+   "title": "Louvain 2 seater sofa slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-LV-64",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-64_LSKT_SI_CVC-01.jpg?v=1741320168",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-64_LSKT_SI_CVC-01.jpg?v=1741320168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_623_Maison_du_Monde_Louvain_sofa_276adbe6-1267-4f2f-8826-7318c1b471ee.jpg?v=1741320168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_553_Maison_du_Monde_Louvain_sofa.jpg?v=1741320168"
+   ],
+   "tags": [
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-LV",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-LV-64",
+    "FLT___Product_Ref__Old____MDM_LV_2",
+    "FLT___Series_Code___LV",
+    "FLT___Series_Name___Louvain",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "MDM-LV-64",
+    "series:Louvre (Louvain)"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-LV-64",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

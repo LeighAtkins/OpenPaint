@@ -1,0 +1,50 @@
+{
+ "handle": "article-oneira-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:48.777Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "oneira-77-sofa-bed-slipcover",
+   "title": "Oneira 77\" Sofa Bed Slipcover",
+   "vendor": "Article",
+   "sku": "AE-OA-77B",
+   "price": "569.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-OA-77B_VELC_PM_CVC-01.jpg?v=1741320086",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-OA-77B_VELC_PM_CVC-01.jpg?v=1741320086"
+   ],
+   "tags": [
+    "AE-OA-77B",
+    "Article",
+    "categoryproducts:AE-OA",
+    "categoryproducts:AE-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Oneira"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AE-OA-77B",
+     "price": "569.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

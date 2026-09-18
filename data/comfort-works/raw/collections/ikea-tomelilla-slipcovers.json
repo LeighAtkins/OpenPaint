@@ -1,0 +1,400 @@
+{
+ "handle": "ikea-tomelilla-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:11.587Z",
+ "count": 6,
+ "products": [
+  {
+   "handle": "tomelilla-sofa-bed-cover",
+   "title": "Tomelilla Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TA-2B",
+   "price": "349.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-2B_PTD_LSKT_SP_CVC-01.jpg?v=1741320137",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-2B_PTD_LSKT_SP_CVC-01.jpg?v=1741320137",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_372_IKEA_Tomelilla_sofa.jpg?v=1741320137",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_373_IKEA_Tomelilla_sofa_ea88ae8c-5e74-4ff9-8db9-1f35182beead.jpg?v=1741320137"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Pointed High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:TA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TA-2B",
+    "FLT___Product_Ref__Old____TA3_BN",
+    "FLT___Series_Code___TA",
+    "FLT___Series_Name___Tomelilla",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Tomelilla_Sofa_Bed__Regular_",
+    "FLT___Variant_1_Name___Tomelilla_Sofa_Bed__Slim_",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-TA-2B",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Tomelilla",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:5",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TA-2B",
+     "price": "349.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tomelilla-armrest-protector-covers",
+   "title": "Tomelilla Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-TA-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-AP_1_SP_CVC-01_2X_f3f907f4-a7eb-402f-a125-f1bbbe962289.jpg?v=1748918453",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-AP_1_SP_CVC-01_2X_f3f907f4-a7eb-402f-a125-f1bbbe962289.jpg?v=1748918453"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TA-AP",
+    "FLT___Product_Ref__Old____TA_AP",
+    "FLT___Series_Code___TA",
+    "FLT___Series_Name___Tomelilla",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-TA-AP",
+    "series:Tomelilla"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TA-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tomelilla-3-seater-sofa-cover",
+   "title": "Tomelilla 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TA-3",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-3_LSKT_SP_CVC-01.jpg?v=1741320115",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-3_LSKT_SP_CVC-01.jpg?v=1741320115",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_373_IKEA_Tomelilla_sofa.jpg?v=1741320115",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_370_IKEA_Tomelilla_sofa_2262f2a7-4439-43a9-ab17-584885d4be0c.jpg?v=1741320115"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Pointed High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:TA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TA-3",
+    "FLT___Product_Ref__Old____TA3",
+    "FLT___Series_Code___TA",
+    "FLT___Series_Name___Tomelilla",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-TA-3",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Tomelilla",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:5",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TA-3",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tomelilla-2-seater-sofa-cover",
+   "title": "Tomelilla 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TA-2",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-2_LSKT_SP_CVC-01.jpg?v=1741320116",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-2_LSKT_SP_CVC-01.jpg?v=1741320116",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_372_IKEA_Tomelilla_sofa_77fc5a4a-603c-4e34-b50a-04aaf0a9d0f1.jpg?v=1741320116",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_373_IKEA_Tomelilla_sofa_8b18dfce-3f28-42b8-acfa-bd561a5f106b.jpg?v=1741320116"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Pointed High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:TA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TA-2",
+    "FLT___Product_Ref__Old____TA2",
+    "FLT___Series_Code___TA",
+    "FLT___Series_Name___Tomelilla",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-TA-2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Tomelilla",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TA-2",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tomelilla-armchair-cover",
+   "title": "Tomelilla Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TA-1",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-1_PTD_LSKT_SP_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-1_PTD_LSKT_SP_CVC-01.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_371_IKEA_Tomelilla_sofa.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_373_IKEA_Tomelilla_sofa_75efb553-918c-4a95-8a56-791c2dda6413.jpg?v=1741575836"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Pointed High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:TA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TA-1",
+    "FLT___Product_Ref__Old____TA1",
+    "FLT___Series_Code___TA",
+    "FLT___Series_Name___Tomelilla",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Small",
+    "FLT___Variant_1_Name___Standard",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-TA-1",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Tomelilla",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TA-1",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tomelilla-footstool-cover",
+   "title": "Tomelilla Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-TA-0",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-0_N_LSKT_SP_CVC-01.jpg?v=1741320112",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-TA-0_N_LSKT_SP_CVC-01.jpg?v=1741320112",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_370_IKEA_Tomelilla_sofa.jpg?v=1741320112",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_372_IKEA_Tomelilla_sofa_190a1401-1480-4002-8d70-8efa700fb2fc.jpg?v=1741320112"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:TA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-TA-0",
+    "FLT___Product_Ref__Old____TA0",
+    "FLT___Series_Code___TA",
+    "FLT___Series_Name___Tomelilla",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___The_Single_piece_Version",
+    "FLT___Variant_1_Name___The_Two_piece_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-TA-0",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Multiple Pieces",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Tomelilla",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:Yes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-TA-0",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

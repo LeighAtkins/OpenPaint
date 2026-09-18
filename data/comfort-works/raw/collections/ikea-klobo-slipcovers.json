@@ -1,0 +1,119 @@
+{
+ "handle": "ikea-klobo-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:55.263Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "klobo-2-seater-sofa-cover",
+   "title": "Klobo 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KO-2",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KO-2_LSKT_SP_CVC-01.jpg?v=1741320117",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KO-2_LSKT_SP_CVC-01.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_591_IKEA_Klobo_sofa.jpg?v=1741320117",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_590_IKEA_Klobo_sofa.jpg?v=1741320117"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:KO",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KO-2",
+    "FLT___Product_Ref__Old____KO",
+    "FLT___Series_Code___KO",
+    "FLT___Series_Name___Klobo",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KO-2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Klobo",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KO-2",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "klobo-armrest-protector-covers",
+   "title": "Klobo Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-KO-AP",
+   "price": "39.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KO-AP_SP_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KO-AP_SP_CVC-01.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:KO",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KO-AP",
+    "FLT___Product_Ref__Old____KO_AP",
+    "FLT___Series_Code___KO",
+    "FLT___Series_Name___Klobo",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-KO-AP",
+    "series:Klobo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KO-AP",
+     "price": "39.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

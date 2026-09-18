@@ -1,0 +1,213 @@
+{
+ "handle": "sofa-covers-rowe",
+ "fetchedAt": "2026-09-18T05:38:32.203Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "darby-sofa-slipcover",
+   "title": "Darby Sofa Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-DY-86",
+   "price": "859.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-DY-86_MLTP_PM_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-DY-86_MLTP_PM_CVC-01.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_521_Rowe_Darby_sofa.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_522_Rowe_Darby_sofa.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RE",
+    "categoryproducts:RE-DY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Rowe",
+    "FLT___Product_Ref__New____RE-DY-86",
+    "FLT___Series_Code___DY",
+    "FLT___Series_Name___Darby",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "RE-DY-86",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Darby",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-DY-86",
+     "price": "859.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nantucket-loveseat-slipcover",
+   "title": "Nantucket Loveseat Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-NT-63",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-63_MLTP_PM_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-63_MLTP_PM_CVC-01.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_186_Rowe_Nantucket_sofa_6287ef0c-ce8e-422e-a3ad-ab9c8ced45f8.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_185_Rowe_Nantucket_sofa.jpg?v=1741575836"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RE-NT",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Rowe",
+    "FLT___Product_Ref__New____RE-NT-63",
+    "FLT___Product_Ref__Old____RE_NT_2",
+    "FLT___Series_Code___NT",
+    "FLT___Series_Name___Nantucket",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "RE-NT-63",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Nantucket",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-NT-63",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nantucket-sofa-slipcover",
+   "title": "Nantucket Sofa Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-NT-84",
+   "price": "869.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-84_MLTP_PM_CVC-01.webp?v=1779153291",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-84_MLTP_PM_CVC-01.webp?v=1779153291",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_186_Rowe_Nantucket_sofa.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_125_Rowe_Nantucket_sofa.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RE-NT",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Rowe",
+    "FLT___Product_Ref__New____RE-NT-84",
+    "FLT___Product_Ref__Old____RE_NT_3",
+    "FLT___Series_Code___NT",
+    "FLT___Series_Name___Nantucket",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "RE-NT-84",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Nantucket",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-NT-84",
+     "price": "869.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

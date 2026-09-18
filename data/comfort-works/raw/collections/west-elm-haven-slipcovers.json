@@ -1,0 +1,393 @@
+{
+ "handle": "west-elm-haven-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:40.288Z",
+ "count": 8,
+ "products": [
+  {
+   "handle": "haven-84-sofa-slipcover",
+   "title": "Haven 84\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HN-84",
+   "price": "579.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HN-84_EXD_SHRT_SP_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HN-84_EXD_SHRT_SP_CVC-01.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_512_West_20Elm_Haven_sofa.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_511_West_Elm_Haven_sofa.jpg?v=1741320196"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:WE-HN",
+    "categoryproducts:WE-sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HN-84",
+    "FLT___Series_Code___HN",
+    "FLT___Series_Name___Haven",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Variant_1_Name___Extra_Deep",
+    "FLT___Variant_1_Name___Standard_Depth",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Haven",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "WE-HN-84"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HN-84",
+     "price": "579.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "haven-106-2-piece-bumper-chaise-sectional-slipcover",
+   "title": "Haven 106\" 2-Piece Bumper Chaise Sectional Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HN-106",
+   "price": "749.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-HN-106_WE-HN-106.jpg?v=1734924487",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-HN-106_WE-HN-106.jpg?v=1734924487",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-HN-106_WE-HN-106_8ee4985d-e6b1-4ed6-9737-926d73b5f3cf.jpg?v=1734924506"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HN",
+    "categoryproducts:WE-S",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Haven",
+    "WE-HN-106",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HN-106",
+     "price": "749.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "haven-left-right-arm-2-5-seater-sofa-slipcover",
+   "title": "Haven Left/Right Arm 2.5 Seater Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HN-78M",
+   "price": "479.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-HN-78M_WE-HN-78M.jpg?v=1733365580",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-HN-78M_WE-HN-78M.jpg?v=1733365580",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-HN-78M_WE-HN-78M_6d7f3efc-b681-415a-b2a6-9b0909fdd52d.jpg?v=1733365591"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HN",
+    "categoryproducts:WE-S",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Haven",
+    "WE-HN-78M",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HN-78M",
+     "price": "479.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "haven-left-right-arm-chaise-slipcover",
+   "title": "Haven Left/Right Arm Chaise Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HN-37M",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-HN-37M_WE-HN-37M.jpg?v=1733365668",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-HN-37M_WE-HN-37M.jpg?v=1733365668",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-HN-37M_WE-HN-37M_5969966c-00dd-472e-a737-4527ba2e9f95.jpg?v=1733365674"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HN",
+    "categoryproducts:WE-S",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Haven",
+    "WE-HN-37M",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HN-37M",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "haven-loft-86-sofa-slipcover",
+   "title": "Haven Loft 86\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HL-86",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HL-86_LV_3S-3B_SHRT_SP_CVC-01.jpg?v=1741741771",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HL-86_LV_3S-3B_SHRT_SP_CVC-01.jpg?v=1741741771"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HN",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Haven",
+    "WE-HL-86",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HL-86",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "haven-ottoman-slipcover",
+   "title": "Haven Ottoman Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HN-39F",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HN-39F_LV_SHRT_SP_CVC-01.jpg?v=1741741770",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HN-39F_LV_SHRT_SP_CVC-01.jpg?v=1741741770"
+   ],
+   "tags": [
+    "categoryproducts:WE-0",
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HN",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Haven",
+    "WE-HN-39F",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HN-39F",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "haven-chair-and-a-half-slipcover",
+   "title": "Haven Chair and a Half Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HN-40",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HN-40_LV_SHRT_SP_CVC-01.jpg?v=1741741767",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HN-40_LV_SHRT_SP_CVC-01.jpg?v=1741741767"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-chair",
+    "categoryproducts:WE-HN",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Haven",
+    "WE-HN-40",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HN-40",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "haven-106-3-piece-l-shaped-multi-seat-sectional-slipcover",
+   "title": "Haven 106\" 3-Piece L-Shaped Multi Seat Sectional Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HN-106-5C",
+   "price": "959.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HN-106-5C_LSKT_SP_CVC-01.jpg?v=1741320198",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HN-106-5C_LSKT_SP_CVC-01.jpg?v=1741320198"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-HN",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "series:Haven",
+    "WE-HN-106-5C"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HN-106-5C",
+     "price": "959.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

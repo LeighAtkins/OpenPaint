@@ -1,0 +1,273 @@
+{
+ "handle": "chair-covers-restoration-hardware",
+ "fetchedAt": "2026-09-18T05:32:04.012Z",
+ "count": 5,
+ "products": [
+  {
+   "handle": "covers-for-rh-maxwell-chair",
+   "title": "Covers for RH Maxwell Chair",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-ML-42",
+   "price": "409.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-ML-42_LV_EXD_VELC_SP_CVC-01.jpg?v=1741741761",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-ML-42_LV_EXD_VELC_SP_CVC-01.jpg?v=1741741761"
+   ],
+   "tags": [
+    "categoryproducts:RH-ML",
+    "categoryproducts:RH-Sofa",
+    "Covers for Restoration Hardware",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RH-ML-42",
+    "series:Maxwell"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-ML-42",
+     "price": "409.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "covers-for-rh-cloud-classic-chair-and-a-half",
+   "title": "Covers for RH Cloud Classic Chair-and-a-Half",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-CD-60",
+   "price": "639.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CD-60_LV_VELC_SP_CVC-01.jpg?v=1741320191",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CD-60_LV_VELC_SP_CVC-01.jpg?v=1741320191"
+   ],
+   "tags": [
+    "categoryproducts:RH-CD",
+    "categoryproducts:RH-Sofa",
+    "Covers for Restoration Hardware",
+    "description:",
+    "discount: -10%",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RH-CD-60",
+    "series:Cloud"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-CD-60",
+     "price": "639.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "covers-for-rh-belgian-track-arm-petite-chair",
+   "title": "Covers for RH Belgian Track Arm Petite Chair",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-BT-31",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-BT-31_LV_CNRP_SP_CVC-01.jpg?v=1741320192",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-BT-31_LV_CNRP_SP_CVC-01.jpg?v=1741320192"
+   ],
+   "tags": [
+    "categoryproducts:RH-BT",
+    "categoryproducts:RH-Sofa",
+    "Covers for Restoration Hardware",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RH-BT-31",
+    "series:Belgian Track Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-BT-31",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "covers-for-rh-cloud-modular-armless-chair",
+   "title": "Covers for RH Cloud Modular Armless Chair",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-CM-39X",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CM-39X_EXD_VELC_SP_CVC-01.jpg?v=1741320097",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CM-39X_EXD_VELC_SP_CVC-01.jpg?v=1741320097"
+   ],
+   "tags": [
+    "categoryproducts:RH-CM",
+    "categoryproducts:RH-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Restoration_Hardware",
+    "FLT___Product_Ref__New____RH-CM-39X",
+    "FLT___Product_Ref__Old____RH_CM_1X",
+    "FLT___Series_Code___CM",
+    "FLT___Series_Name___Cloud_Modular",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Classic__40in",
+    "FLT___Variant_1_Name___Luxe__45in",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "RH-CM-39X",
+    "series:Cloud"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-CM-39X",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "covers-for-rh-grand-scale-roll-arm-chair",
+   "title": "Covers for RH Grand-Scale Roll Arm Chair",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-GRA-43",
+   "price": "579.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-GRA-43_EXD_CNRP_PM_CVC-01.jpg?v=1741320088",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-GRA-43_EXD_CNRP_PM_CVC-01.jpg?v=1741320088",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_662_Restoration_Hardware_Grand-Scale_Roll_Arm_sofa.jpg?v=1741320088",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_661_Restoration_Hardware_Grand-Scale_Roll_Arm_sofa.jpg?v=1741320088"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:RH-",
+    "categoryproducts:RH-GRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Restoration_Hardware",
+    "FLT___Product_Ref__New____RH-GRA-43",
+    "FLT___Series_Code___GRA",
+    "FLT___Series_Name___Grand_Scale_Roll_Arm",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Variant_1_Name___Classic__38in",
+    "FLT___Variant_1_Name___Luxe__43in",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "RH-GRA-43",
+    "series:Grand-Scale",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:0",
+    "storage:No",
+    "t_shaped_back_cushion:1",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-GRA-43",
+     "price": "579.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,121 @@
+{
+ "handle": "crate-and-barrel-verano-ii-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:15.500Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "verano-ii-slope-arm-sofa-slipcover",
+   "title": "Verano II Slope Arm Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-VO-90",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-VO-90_CNRP_SP_CVC-01.jpg?v=1741320100",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-VO-90_CNRP_SP_CVC-01.jpg?v=1741320100",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_418_Crate_and_Barrel_Verrano_II_Slope_Arm_sofa.jpg?v=1741320100",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_419_Crate_and_Barrel_Verrano_II_Slope_Arm_sofa.jpg?v=1741320100"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Slope Square Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Sloping Back",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-VO",
+    "CB-VO-90",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-VO-90",
+    "FLT___Series_Code___VO",
+    "FLT___Series_Name___Verrano_II_Slope_Arm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Verano",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-VO-90",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "verano-ii-slope-arm-chair-slipcover",
+   "title": "Verano II Slope Arm Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-VO-32",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-VO-32_SHRT_SP_CVC-01.jpg?v=1741741758",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-VO-32_SHRT_SP_CVC-01.jpg?v=1741741758"
+   ],
+   "tags": [
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:CB-VO",
+    "CB-VO-32",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Verano",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-VO-32",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

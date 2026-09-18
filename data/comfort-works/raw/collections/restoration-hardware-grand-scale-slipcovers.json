@@ -1,0 +1,157 @@
+{
+ "handle": "restoration-hardware-grand-scale-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:01.209Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "covers-for-rh-grand-scale-roll-arm-96-sofa",
+   "title": "Covers for RH Grand-Scale Roll Arm 96\" Sofa",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-GRA-96",
+   "price": "1019.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-GRA-96_EXD_MLTP_PM_CVC-01.jpg?v=1741320093",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-GRA-96_EXD_MLTP_PM_CVC-01.jpg?v=1741320093"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RH-GRA",
+    "categoryproducts:RH-Sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Round Arm",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "RH-GRA-96",
+    "series:Grand-Scale",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:0",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-GRA-96",
+     "price": "1019.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "covers-for-rh-grand-scale-roll-arm-chair",
+   "title": "Covers for RH Grand-Scale Roll Arm Chair",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-GRA-43",
+   "price": "579.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-GRA-43_EXD_CNRP_PM_CVC-01.jpg?v=1741320088",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-GRA-43_EXD_CNRP_PM_CVC-01.jpg?v=1741320088",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_662_Restoration_Hardware_Grand-Scale_Roll_Arm_sofa.jpg?v=1741320088",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_661_Restoration_Hardware_Grand-Scale_Roll_Arm_sofa.jpg?v=1741320088"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:RH-",
+    "categoryproducts:RH-GRA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Restoration_Hardware",
+    "FLT___Product_Ref__New____RH-GRA-43",
+    "FLT___Series_Code___GRA",
+    "FLT___Series_Name___Grand_Scale_Roll_Arm",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Variant_1_Name___Classic__38in",
+    "FLT___Variant_1_Name___Luxe__43in",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "RH-GRA-43",
+    "series:Grand-Scale",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:0",
+    "storage:No",
+    "t_shaped_back_cushion:1",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-GRA-43",
+     "price": "579.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

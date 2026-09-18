@@ -1,0 +1,1257 @@
+{
+ "handle": "muji-beads-slipcovers",
+ "representative": "beads-sofa-cover-mini",
+ "hubLinks": [
+  "\\/pages\\/fabrics-hypoallergenic-collection-everyday-cotton",
+  "\\/pages\\/fabrics-cozy-collection-everyday-velvet",
+  "\\/pages\\/fabrics-starter-collection-everyday-weave",
+  "\\/pages\\/fabrics-performance-collection-signature-velvet",
+  "\\/pages\\/fabrics-pet-friendly-collection-signature-microfiber",
+  "\\/pages\\/fabrics-performance-collection-sunbrella"
+ ],
+ "fabricCount": 138,
+ "fabrics": [
+  {
+   "fabric": null,
+   "handle": "beads-sofa-cover-mini",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini",
+   "sku": "MJ-BDS-7-M",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/803-1208-category_wide.jpg?v=1704778416"
+  },
+  {
+   "fabric": "Care+ Canvas Ash",
+   "handle": "beads-sofa-cover-mini-care-canvas-ash",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-care-canvas-ash",
+   "sku": "MJ-BDS-7-M__STD__SP__SUN-C13__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_SUN-C13_gumi-130_d2b53832-db3f-4c1a-82ea-35e7150a80ee.jpg?v=1753757872"
+  },
+  {
+   "fabric": "Care+ Canvas Beige",
+   "handle": "beads-sofa-cover-mini-care-canvas-beige",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-care-canvas-beige",
+   "sku": "MJ-BDS-7-M__STD__SP__SUN-C38__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_SUN-C38_gumi-130.jpg?v=1755155508"
+  },
+  {
+   "fabric": "Care+ Canvas Sage",
+   "handle": "beads-sofa-cover-mini-care-canvas-sage",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-care-canvas-sage",
+   "sku": "MJ-BDS-7-M__STD__SP__SUN-C10__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_SUN-C10_gumi-130_bfc93e25-5c13-4f28-823a-48b76ffd257f.jpg?v=1753757867"
+  },
+  {
+   "fabric": "Care+ Canvas Snow",
+   "handle": "beads-sofa-cover-mini-care-canvas-snow",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-care-canvas-snow",
+   "sku": "MJ-BDS-7-M__STD__SP__SUN-C31__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_SUN-C31_gumi-130.jpg?v=1755155504"
+  },
+  {
+   "fabric": "Care+ Linen Cream",
+   "handle": "beads-sofa-cover-mini-care-linen-cream",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-care-linen-cream",
+   "sku": "MJ-BDS-7-M__STD__SP__COS-103__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_COS-103_gumi-11.jpg?v=1755189749"
+  },
+  {
+   "fabric": "Care+ Linen Natural",
+   "handle": "beads-sofa-cover-mini-care-linen-natural",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-care-linen-natural",
+   "sku": "MJ-BDS-7-M__STD__SP__COS-105__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_COS-105_gumi-11.jpg?v=1755189754"
+  },
+  {
+   "fabric": "Care+ Linen White",
+   "handle": "beads-sofa-cover-mini-care-linen-white",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-care-linen-white",
+   "sku": "MJ-BDS-7-M__STD__SP__COS-101__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_COS-101_gumi-11.jpg?v=1755189745"
+  },
+  {
+   "fabric": "Care+ Tweed Amber",
+   "handle": "beads-sofa-cover-mini-care-tweed-amber",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-care-tweed-amber",
+   "sku": "MJ-BDS-7-M__STD__SP__SUN-T04__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_SUN-T04_gumi-130_2X_dfc76eaf-ffda-4c0d-8736-a0c7066d504c.jpg?v=1727235529"
+  },
+  {
+   "fabric": "Care+ Tweed Mineral Blue",
+   "handle": "beads-sofa-cover-mini-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-care-tweed-mineral-blue",
+   "sku": "MJ-BDS-7-M__STD__SP__SUN-T10__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_SUN-T10_gumi-130_e1592531-4f8b-4cc6-befb-54f17af3fc32.jpg?v=1753757870"
+  },
+  {
+   "fabric": "Care+ Tweed Sunset",
+   "handle": "beads-sofa-cover-mini-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-care-tweed-sunset",
+   "sku": "MJ-BDS-7-M__STD__SP__SUN-T06__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_SUN-T06_gumi-130_2X_33cbf91d-8cd1-4168-aabb-799322c02933.jpg?v=1727235495"
+  },
+  {
+   "fabric": "Care+ Tweed Teal",
+   "handle": "beads-sofa-cover-mini-care-tweed-teal",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-care-tweed-teal",
+   "sku": "MJ-BDS-7-M__STD__SP__SUN-T12__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_SUN-T12_gumi-130_2X_aec67efc-189e-42f9-9916-2594d9335a31.jpg?v=1727235494"
+  },
+  {
+   "fabric": "Classic Velvet Peach",
+   "handle": "beads-sofa-cover-mini-classic-velvet-peach",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-classic-velvet-peach",
+   "sku": "MJ-BDS-7-M__STD__SP__FM-02P__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_FM-02P_gumi-130_2X_8c923a17-bb95-40ff-8702-32018721a568.jpg?v=1723799814"
+  },
+  {
+   "fabric": "Crypton® Chenille Burnt Orange",
+   "handle": "beads-sofa-cover-mini-crypton®-chenille-burnt-orange",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-crypton®-chenille-burnt-orange",
+   "sku": "MJ-BDS-7-M__SP__BEN-04__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-04_Crypton_Chenille_Burnt_Orange_1X_15c50c19-3cca-4e37-a9c8-59a614cd5a91.jpg?v=1779173753"
+  },
+  {
+   "fabric": "Crypton® Chenille Cream",
+   "handle": "beads-sofa-cover-mini-crypton®-chenille-cream",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-crypton®-chenille-cream",
+   "sku": "MJ-BDS-7-M__SP__BEN-02__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-02_Crypton_Chenille_Cream_1X_119fb8b6-e388-4bd6-877a-e1a432592cf3.jpg?v=1779173754"
+  },
+  {
+   "fabric": "Crypton® Chenille Dark Teal",
+   "handle": "beads-sofa-cover-mini-crypton®-chenille-dark-teal",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-crypton®-chenille-dark-teal",
+   "sku": "MJ-BDS-7-M__SP__BEN-03__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-03_Crypton_Chenille_Dark_Teal_1X_10f5c679-d25e-41d7-b714-f9ed0358b2e6.jpg?v=1779173754"
+  },
+  {
+   "fabric": "Crypton® Chenille Snow",
+   "handle": "beads-sofa-cover-mini-crypton®-chenille-snow",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-crypton®-chenille-snow",
+   "sku": "MJ-BDS-7-M__SP__BEN-01__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-01_Crypton_Chenille_Snow_1X_6f1bfb5a-6159-40ff-a4c8-486bc50c6cfb.jpg?v=1779173753"
+  },
+  {
+   "fabric": "Everyday Cotton Charcoal",
+   "handle": "beads-sofa-cover-mini-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-cotton-charcoal",
+   "sku": "MJ-BDS-7-M__STD__SP__CVC-07__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_CVC-07_gumi-11.jpg?v=1755189706"
+  },
+  {
+   "fabric": "Everyday Cotton Forest Green",
+   "handle": "beads-sofa-cover-mini-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-cotton-forest-green",
+   "sku": "MJ-BDS-7-M__STD__SP__CVC-04__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/TC-04_Everyday_Cotton_Forest_Green_1X_1_930558dc-0457-43a1-8772-4261fff7dab2.jpg?v=1773384157"
+  },
+  {
+   "fabric": "Everyday Cotton Khaki",
+   "handle": "beads-sofa-cover-mini-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-cotton-khaki",
+   "sku": "MJ-BDS-7-M__STD__SP__CVC-08__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_CVC-08_gumi-11.jpg?v=1755189711"
+  },
+  {
+   "fabric": "Everyday Cotton Navy",
+   "handle": "beads-sofa-cover-mini-everyday-cotton-navy",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-cotton-navy",
+   "sku": "MJ-BDS-7-M__STD__SP__CVC-05__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-05.jpg?v=1785723660"
+  },
+  {
+   "fabric": "Everyday Cotton Pebble",
+   "handle": "beads-sofa-cover-mini-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-cotton-pebble",
+   "sku": "MJ-BDS-7-M__STD__SP__CVC-06__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_CVC-06_gumi-11.jpg?v=1755189702"
+  },
+  {
+   "fabric": "Everyday Cotton Sand",
+   "handle": "beads-sofa-cover-mini-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-cotton-sand",
+   "sku": "MJ-BDS-7-M__STD__SP__CVC-02__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_CVC-02_gumi-130.jpg?v=1753754554"
+  },
+  {
+   "fabric": "Everyday Cotton Silver Sage",
+   "handle": "beads-sofa-cover-mini-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-cotton-silver-sage",
+   "sku": "MJ-BDS-7-M__STD__SP__CVC-03__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/TC-03_Everyday_Cotton_Silver_Sage_1X_1_8d2f8609-9bc7-4cf4-bee7-42fcf9b0b28d.jpg?v=1769588706"
+  },
+  {
+   "fabric": "Everyday Cotton White",
+   "handle": "beads-sofa-cover-mini-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-cotton-white",
+   "sku": "MJ-BDS-7-M__STD__SP__CVC-01__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_CVC-01_gumi-130.jpg?v=1755189697"
+  },
+  {
+   "fabric": "Everyday Velvet Cacao",
+   "handle": "beads-sofa-cover-mini-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-velvet-cacao",
+   "sku": "MJ-BDS-7-M__STD__SP__ROYAL-04__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_ROYAL-04_gumi-11.jpg?v=1755189716"
+  },
+  {
+   "fabric": "Everyday Velvet Dark Teal",
+   "handle": "beads-sofa-cover-mini-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-velvet-dark-teal",
+   "sku": "MJ-BDS-7-M__STD__SP__ROYAL-13__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_ROYAL-13_gumi-11.jpg?v=1755189720"
+  },
+  {
+   "fabric": "Everyday Velvet Navy",
+   "handle": "beads-sofa-cover-mini-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-velvet-navy",
+   "sku": "MJ-BDS-7-M__STD__SP__ROYAL-14__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_ROYAL-14_gumi-11.jpg?v=1755189725"
+  },
+  {
+   "fabric": "Everyday Velvet Sand",
+   "handle": "beads-sofa-cover-mini-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-velvet-sand",
+   "sku": "MJ-BDS-7-M__STD__SP__ROYAL-03__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_ROYAL-03_gumi-11.jpg?v=1755189732"
+  },
+  {
+   "fabric": "Everyday Velvet Storm",
+   "handle": "beads-sofa-cover-mini-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-velvet-storm",
+   "sku": "MJ-BDS-7-M__STD__SP__ROYAL-20__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_ROYAL-20_gumi-11.jpg?v=1755189740"
+  },
+  {
+   "fabric": "Everyday Weave Basil Green",
+   "handle": "beads-sofa-cover-mini-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-weave-basil-green",
+   "sku": "MJ-BDS-7-M__STD__SP__EYL-47__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_EYL-47_gumi-130_2X_4a0f964a-b73d-429b-8704-b2c301aaaff2.jpg?v=1723799760"
+  },
+  {
+   "fabric": "Everyday Weave Cream",
+   "handle": "beads-sofa-cover-mini-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-weave-cream",
+   "sku": "MJ-BDS-7-M__STD__SP__EYL-35__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_EYL-35_gumi-130_2X_e3173126-d854-4aa2-953e-a71d67a5f0f4.jpg?v=1723799759"
+  },
+  {
+   "fabric": "Everyday Weave Maroon",
+   "handle": "beads-sofa-cover-mini-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-weave-maroon",
+   "sku": "MJ-BDS-7-M__STD__SP__EYL-38__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_EYL-38_gumi-130_2X_f20a3bee-908e-43fe-8766-28e4c9c089b0.jpg?v=1723799819"
+  },
+  {
+   "fabric": "Everyday Weave Navy",
+   "handle": "beads-sofa-cover-mini-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-weave-navy",
+   "sku": "MJ-BDS-7-M__STD__SP__EYL-44__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_EYL-44_gumi-130_2X_b2eeb3c3-81d8-4d83-b874-bcb97cf5d1df.jpg?v=1723799822"
+  },
+  {
+   "fabric": "Everyday Weave Pebble",
+   "handle": "beads-sofa-cover-mini-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-weave-pebble",
+   "sku": "MJ-BDS-7-M__STD__SP__EYL-20__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_EYL-20_gumi-130_2X_887c8036-0614-413f-bc6d-734b0dad8532.jpg?v=1723799760"
+  },
+  {
+   "fabric": "Everyday Weave Rust",
+   "handle": "beads-sofa-cover-mini-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-weave-rust",
+   "sku": "MJ-BDS-7-M__STD__SP__EYL-39__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_EYL-39_gumi-130_2X_ebf60736-cb98-44ee-8280-8a60109fc80a.jpg?v=1723799819"
+  },
+  {
+   "fabric": "Everyday Weave Storm",
+   "handle": "beads-sofa-cover-mini-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-weave-storm",
+   "sku": "MJ-BDS-7-M__STD__SP__EYL-24__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_EYL-24_gumi-130_2X_e6546168-f31b-458d-9d2e-81b9fc219ea5.jpg?v=1723799760"
+  },
+  {
+   "fabric": "Everyday Weave Teal",
+   "handle": "beads-sofa-cover-mini-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-everyday-weave-teal",
+   "sku": "MJ-BDS-7-M__STD__SP__EYL-43__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_EYL-43_gumi-130_2X_90fe19fb-5cb0-4541-b106-3ca1d96ab198.jpg?v=1723799761"
+  },
+  {
+   "fabric": "Mod Boucle Amber",
+   "handle": "beads-sofa-cover-mini-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-mod-boucle-amber",
+   "sku": "MJ-BDS-7-M__STD__SP__MOSS-09__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_MOSS-09_gumi-130_2X_9fb84271-547f-4dbd-8abf-c910e459d3d5.jpg?v=1723799833"
+  },
+  {
+   "fabric": "Mod Boucle Charcoal",
+   "handle": "beads-sofa-cover-mini-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-mod-boucle-charcoal",
+   "sku": "MJ-BDS-7-M__STD__SP__MOSS-97__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_MOSS-97_gumi-130_2X_13062d96-3f56-4796-acae-4de21b440b03.jpg?v=1723799829"
+  },
+  {
+   "fabric": "Mod Boucle Cream",
+   "handle": "beads-sofa-cover-mini-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-mod-boucle-cream",
+   "sku": "MJ-BDS-7-M__STD__SP__MOSS-01__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_MOSS-01_gumi-130_2X_97f4c219-b43a-4feb-9b31-ad42518e48a7.jpg?v=1723799836"
+  },
+  {
+   "fabric": "Mod Boucle Oatmeal",
+   "handle": "beads-sofa-cover-mini-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-mod-boucle-oatmeal",
+   "sku": "MJ-BDS-7-M__STD__SP__MOSS-40__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_MOSS-40_gumi-130_2X_5a25961a-61f1-4894-8c5b-cb9c57f083e0.jpg?v=1723799828"
+  },
+  {
+   "fabric": "Mod Chenille Beige",
+   "handle": "beads-sofa-cover-mini-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-mod-chenille-beige",
+   "sku": "MJ-BDS-7-M__STD__SP__ESTE-52__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_ESTE-52_gumi-130_2X_b8b6f68d-3c84-45cd-89af-ec4ad5014d8a.jpg?v=1723799837"
+  },
+  {
+   "fabric": "Mod Chenille Denim",
+   "handle": "beads-sofa-cover-mini-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-mod-chenille-denim",
+   "sku": "MJ-BDS-7-M__STD__SP__ESTE-78__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_ESTE-78_gumi-130_2X_65e30ac8-8158-48e2-9ce0-523aae232268.jpg?v=1723799835"
+  },
+  {
+   "fabric": "Mod Chenille Espresso",
+   "handle": "beads-sofa-cover-mini-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-mod-chenille-espresso",
+   "sku": "MJ-BDS-7-M__STD__SP__ESTE-57__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_ESTE-57_gumi-130_2X_86757772-1549-4b5c-a9e8-48dbf15c586a.jpg?v=1723799834"
+  },
+  {
+   "fabric": "Mod Chenille Mist",
+   "handle": "beads-sofa-cover-mini-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-mod-chenille-mist",
+   "sku": "MJ-BDS-7-M__STD__SP__ESTE-92__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_ESTE-92_gumi-130_2X_faafee7b-a4f8-4778-beba-13aed1c284d1.jpg?v=1723799837"
+  },
+  {
+   "fabric": "Performance Canvas Ash",
+   "handle": "beads-sofa-cover-mini-performance-canvas-ash",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-performance-canvas-ash",
+   "sku": "MJ-BDS-7-M__STD__SP__SUN-C13__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_SUN-C13_gumi-130_2X_138450c3-d912-4245-b2c5-c2e11510746a.jpg?v=1723799759"
+  },
+  {
+   "fabric": "Performance Canvas Sage",
+   "handle": "beads-sofa-cover-mini-performance-canvas-sage",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-performance-canvas-sage",
+   "sku": "MJ-BDS-7-M__STD__SP__SUN-C10__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_SUN-C10_gumi-130_2X_530785a0-8cfd-47fc-8ca7-85c0a6a2709d.jpg?v=1723799757"
+  },
+  {
+   "fabric": "Performance Tweed Amber",
+   "handle": "beads-sofa-cover-mini-performance-tweed-amber",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-performance-tweed-amber",
+   "sku": "MJ-BDS-7-M__STD__SP__SUN-T04__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_SUN-T04_gumi-130_2X_26a3a311-58c5-4c28-a7a5-d214c5d939cf.jpg?v=1723799761"
+  },
+  {
+   "fabric": "Performance Tweed Mineral Blue",
+   "handle": "beads-sofa-cover-mini-performance-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-performance-tweed-mineral-blue",
+   "sku": "MJ-BDS-7-M__STD__SP__SUN-T10__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_SUN-T10_gumi-130_2X_9392fcb8-a41f-49db-8b39-1badd4d77177.jpg?v=1723799816"
+  },
+  {
+   "fabric": "Performance Tweed Sunset",
+   "handle": "beads-sofa-cover-mini-performance-tweed-sunset",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-performance-tweed-sunset",
+   "sku": "MJ-BDS-7-M__STD__SP__SUN-T06__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_SUN-T06_gumi-130_2X_2daa92f7-18fe-4d95-aa3e-55119478dd0b.jpg?v=1723799762"
+  },
+  {
+   "fabric": "Performance Tweed Teal",
+   "handle": "beads-sofa-cover-mini-performance-tweed-teal",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-performance-tweed-teal",
+   "sku": "MJ-BDS-7-M__STD__SP__SUN-T12__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_SUN-T12_gumi-130_2X_976eb1be-b726-401e-86fa-7698e28ca0c6.jpg?v=1723799818"
+  },
+  {
+   "fabric": "Signature Microfiber Caramel",
+   "handle": "beads-sofa-cover-mini-signature-microfiber-caramel",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-microfiber-caramel",
+   "sku": "MJ-BDS-7-M__STD__SP__FA-09__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_FA-09_gumi-130_2X_a9df21c1-e11b-4971-9e83-80a908474d20.jpg?v=1723799828"
+  },
+  {
+   "fabric": "Signature Microfiber Coral",
+   "handle": "beads-sofa-cover-mini-signature-microfiber-coral",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-microfiber-coral",
+   "sku": "MJ-BDS-7-M__STD__SP__FA-14__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_FA-14_gumi-130_2X_6be75641-31fe-4b9d-a928-013c928f1fc6.jpg?v=1723799825"
+  },
+  {
+   "fabric": "Signature Microfiber Cream",
+   "handle": "beads-sofa-cover-mini-signature-microfiber-cream",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-microfiber-cream",
+   "sku": "MJ-BDS-7-M__STD__SP__FA-01__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_FA-01_gumi-130_2X_a0803c19-a7a1-45d6-9a8c-574cb06c3fc5.jpg?v=1723799830"
+  },
+  {
+   "fabric": "Signature Microfiber Dark Coral",
+   "handle": "beads-sofa-cover-mini-signature-microfiber-dark-coral",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-microfiber-dark-coral",
+   "sku": "MJ-BDS-7-M__STD__SP__FA-54__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_FA-54_gumi-130_2X_e16be552-934d-4a04-9c59-8d5e200e786e.jpg?v=1723799825"
+  },
+  {
+   "fabric": "Signature Microfiber Forest Green",
+   "handle": "beads-sofa-cover-mini-signature-microfiber-forest-green",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-microfiber-forest-green",
+   "sku": "MJ-BDS-7-M__STD__SP__FA-63__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_FA-63_gumi-130_2X_ad1f59f6-43ac-4c5d-b701-78a6fac46692.jpg?v=1723799830"
+  },
+  {
+   "fabric": "Signature Microfiber Sand",
+   "handle": "beads-sofa-cover-mini-signature-microfiber-sand",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-microfiber-sand",
+   "sku": "MJ-BDS-7-M__STD__SP__FA-45__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_FA-45_gumi-130_2X_9e570895-fc63-49a7-ba29-8583b83070f0.jpg?v=1723799826"
+  },
+  {
+   "fabric": "Signature Microfiber Silver Sage",
+   "handle": "beads-sofa-cover-mini-signature-microfiber-silver-sage",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-microfiber-silver-sage",
+   "sku": "MJ-BDS-7-M__STD__SP__FA-67__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_FA-67_gumi-130_2X_a27ea8a2-8ab3-4225-973b-21a95cf32ebe.jpg?v=1723799823"
+  },
+  {
+   "fabric": "Signature Velvet Bayleaf",
+   "handle": "beads-sofa-cover-mini-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-velvet-bayleaf",
+   "sku": "MJ-BDS-7-M__STD__SP__PAL-11__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_PAL-11_gumi-130.jpg?v=1753757857"
+  },
+  {
+   "fabric": "Signature Velvet Caramel",
+   "handle": "beads-sofa-cover-mini-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-velvet-caramel",
+   "sku": "MJ-BDS-7-M__STD__SP__PAL-09__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_PAL-09_gumi-130.jpg?v=1753757857"
+  },
+  {
+   "fabric": "Signature Velvet Cream",
+   "handle": "beads-sofa-cover-mini-signature-velvet-cream",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-velvet-cream",
+   "sku": "MJ-BDS-7-M__STD__SP__PAL-01__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_PAL-01_gumi-130.jpg?v=1753757859"
+  },
+  {
+   "fabric": "Signature Velvet Eucalyptus",
+   "handle": "beads-sofa-cover-mini-signature-velvet-eucalyptus",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-velvet-eucalyptus",
+   "sku": "MJ-BDS-7-M__STD__SP__PAL-14__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_PAL-14_gumi-130.jpg?v=1753757862"
+  },
+  {
+   "fabric": "Signature Velvet Hazel",
+   "handle": "beads-sofa-cover-mini-signature-velvet-hazel",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-velvet-hazel",
+   "sku": "MJ-BDS-7-M__STD__SP__PAL-04__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_PAL-04_gumi-130.jpg?v=1753757863"
+  },
+  {
+   "fabric": "Signature Velvet Midnight",
+   "handle": "beads-sofa-cover-mini-signature-velvet-midnight",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-velvet-midnight",
+   "sku": "MJ-BDS-7-M__STD__SP__PAL-12__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_PAL-12_gumi-130.jpg?v=1753757858"
+  },
+  {
+   "fabric": "Signature Velvet Natural",
+   "handle": "beads-sofa-cover-mini-signature-velvet-natural",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-velvet-natural",
+   "sku": "MJ-BDS-7-M__STD__SP__PAL-02__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_PAL-02_gumi-130.jpg?v=1753757852"
+  },
+  {
+   "fabric": "Signature Velvet Sand",
+   "handle": "beads-sofa-cover-mini-signature-velvet-sand",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-velvet-sand",
+   "sku": "MJ-BDS-7-M__STD__SP__PAL-03__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_PAL-03_gumi-130.jpg?v=1753757864"
+  },
+  {
+   "fabric": "Signature Velvet Sunset",
+   "handle": "beads-sofa-cover-mini-signature-velvet-sunset",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-signature-velvet-sunset",
+   "sku": "MJ-BDS-7-M__STD__SP__PAL-07__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_PAL-07_gumi-130.jpg?v=1753757858"
+  },
+  {
+   "fabric": "Sunbrella® Canvas Flax",
+   "handle": "beads-sofa-cover-mini-sunbrella®-canvas-flax",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-sunbrella®-canvas-flax",
+   "sku": "MJ-BDS-7-M__STD__SP__5492-0000__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_5492-0000_gumi-130_2X_c8542bd2-27fe-410a-8776-2331e8bae99c.jpg?v=1723799819"
+  },
+  {
+   "fabric": "Sunbrella® Fretwork Flax",
+   "handle": "beads-sofa-cover-mini-sunbrella®-fretwork-flax",
+   "url": "https://comfort-works.com/products/beads-sofa-cover-mini-sunbrella®-fretwork-flax",
+   "sku": "MJ-BDS-7-M__STD__SP__45991-0001__gumi-130",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MJ-BDS-7-M_PTD_SP_45991-0001_gumi-130_2X_737bfde8-639c-45af-88a8-3e5fd3035a34.jpg?v=1723799816"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-teal",
+   "sku": "swatch__EYL-43",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-43_Everyday_Weave_Teal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-storm",
+   "sku": "swatch__EYL-24",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-24_Everyday_Weave_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-rust",
+   "sku": "swatch__EYL-39",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-39_Everyday_Weave_Rust.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-pebble",
+   "sku": "swatch__EYL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-20_Everyday_Weave_Pebble.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-navy",
+   "sku": "swatch__EYL-44",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-44_Everyday_Weave_Navy.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-maroon",
+   "sku": "swatch__EYL-38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-38_Everyday_Weave_Maroon.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-cream",
+   "sku": "swatch__EYL-35",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-35_Everyday_Weave_Cream.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-basil-green",
+   "sku": "swatch__EYL-47",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-47_Everyday_Weave_Basil_Green.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-white",
+   "sku": "swatch__CVC-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/TC-01_Everyday_Cotton_White_1X_1.jpg?v=1718092472"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-sand",
+   "sku": "swatch__CVC-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-02_Everyday_Cotton_Sand.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-silver-sage",
+   "sku": "swatch__CVC-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-03_Everyday_Cotton_Silver_Sage.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-forest-green",
+   "sku": "swatch__CVC-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-04_Everyday_Cotton_Forest_Green.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-navy",
+   "sku": "swatch__CVC-05",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-05.jpg?v=1785723660"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-pebble",
+   "sku": "swatch__CVC-06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-06_Everyday_Cotton_Pebble.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-charcoal",
+   "sku": "swatch__CVC-07",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-07_Everyday_Cotton_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-khaki",
+   "sku": "swatch__CVC-08",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-08_Everyday_Cotton_Khaki.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-cacao",
+   "sku": "swatch__ROYAL-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-04_Everyday_Velvet_Cacao.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-dark-teal",
+   "sku": "swatch__ROYAL-13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-13_Everyday_Velvet_Dark_Teal.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-navy",
+   "sku": "swatch__ROYAL-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-14_Everyday_Velvet_Navy.avif?v=1777425396"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-sand",
+   "sku": "swatch__ROYAL-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-03_Everyday_Velvet_Sand.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-storm",
+   "sku": "swatch__ROYAL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-20_Everyday_Velvet_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-sage",
+   "sku": "swatch__SUN-C10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/SUN-C10_Performance-Canvas-Sage_1080x1080_22f090cb-fce4-4f4f-bc62-d6af2bb93957.png?v=1702022331"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-ash",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-ash",
+   "sku": "swatch__SUN-C13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C13_Care_Canvas_Ash.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-beige",
+   "sku": "swatch__SUN-C38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C38_Care_Canvas_Beige.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-snow",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-snow",
+   "sku": "swatch__SUN-C31",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C31_Care_Canvas_Snow.avif?v=1777425376"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-teal",
+   "sku": "swatch__SUN-T12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T12_Care_Tweed_Teal.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-sunset",
+   "sku": "swatch__SUN-T06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T06_Care_Tweed_Sunset.avif?v=1777425402"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-mineral-blue",
+   "sku": "swatch__SUN-T10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T10_Care_Tweed_Mineral_Blue.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-amber",
+   "sku": "swatch__SUN-T04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T04_Care_Tweed_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-mist",
+   "sku": "swatch__ESTE-92",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-92_Mod_Chenille_Mist.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-espresso",
+   "sku": "swatch__ESTE-57",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-57ModChenilleCacao_1X_dac9a2ae-b3ad-4656-a8be-dd44b643f5d5.jpg?v=1723009282"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-denim",
+   "sku": "swatch__ESTE-78",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-78_Mod_Chenille_Denim.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-beige",
+   "sku": "swatch__ESTE-52",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-52_Mod_Chenille_Beige.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-amber",
+   "sku": "swatch__MOSS-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-09_Mod_Boucle_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-charcoal",
+   "sku": "swatch__MOSS-97",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-97_Mod_Boucle_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-cream",
+   "sku": "swatch__MOSS-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-01_Mod_Boucle_Cream.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-oatmeal",
+   "sku": "swatch__MOSS-40",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-40_Mod_Boucle_Oatmeal.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-white",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-white",
+   "sku": "swatch__COS-101",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-101_Care_Linen_White.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-cream",
+   "sku": "swatch__COS-103",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-103_Care_Linen_Cream.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-natural",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-natural",
+   "sku": "swatch__COS-105",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-105_Care_Linen_Natural.avif?v=1777425397"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-bayleaf",
+   "sku": "swatch__PAL-11",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-11_Signature_Velvet_Bayleaf.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-caramel",
+   "sku": "swatch__PAL-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-09_Signature_Velvet_Caramel.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-cream",
+   "sku": "swatch__PAL-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-01_Signature_Velvet_Cream.avif?v=1777425379"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-eucalyptus",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-eucalyptus",
+   "sku": "swatch__PAL-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-14_Signature_Velvet_Eucalyptus.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-hazel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-hazel",
+   "sku": "swatch__PAL-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-04_Signature_Velvet_Hazel.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-natural",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-natural",
+   "sku": "swatch__PAL-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-02_Signature_Velvet_Natural.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-sand",
+   "sku": "swatch__PAL-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-03_Signature_Velvet_Sand.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-sunset",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-sunset",
+   "sku": "swatch__PAL-07",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-07_Signature_Velvet_Sunset.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-midnight",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-midnight",
+   "sku": "swatch__PAL-12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-12_Signature_Velvet_Midnight.avif?v=1777425381"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-caramel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-caramel",
+   "sku": "swatch__FA-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-09_Signature_Microfibre_Caramel.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-coral",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-coral",
+   "sku": "swatch__FA-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-14_Signature_Microfibre_Coral.avif?v=1777425387"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-cream",
+   "sku": "swatch__FA-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-01_Signature_Microfibre_Cream.avif?v=1777425377"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-dark-coral",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-dark-coral",
+   "sku": "swatch__FA-54",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-54_Signature_Microfibre_Dark_Coral.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-forest-green",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-forest-green",
+   "sku": "swatch__FA-63",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-63_Signature_Microfibre_Forest_Green.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-sand",
+   "sku": "swatch__FA-45",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-45_Signature_Microfibre_Sand.avif?v=1777425392"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-silver-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-silver-sage",
+   "sku": "swatch__FA-67",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-67_Signature_Microfibre_Silver_Sage.avif?v=1777425397"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-snow",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-snow",
+   "sku": "swatch__BEN-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-01_Crypton_Chenille_Snow_1X_93dcac9d-c70d-4433-ab9b-d2c9e77c41d9.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-cream",
+   "sku": "swatch__BEN-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-02_Crypton_Chenille_Cream_1X_64152f0a-1efa-4d2c-8d3a-82b8ac99dcba.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-dark-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-dark-teal",
+   "sku": "swatch__BEN-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-03_Crypton_Chenille_Dark_Teal_1X_297f2e4e-538a-4a15-9984-6f1db09d32a0.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-burnt-orange",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-burnt-orange",
+   "sku": "swatch__BEN-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-04_Crypton_Chenille_Burnt_Orange_1X_5022eba9-da20-4396-ac22-c4bd47bdb6f0.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-sunbrella®-canvas-flax",
+   "url": "https://comfort-works.com/products/fabric-samples-sunbrella®-canvas-flax",
+   "sku": "swatch__5492-0000",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/5492-0000_Sunbrella_Canvas_Flax.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-sunbrella®-fretwork-flax",
+   "url": "https://comfort-works.com/products/fabric-samples-sunbrella®-fretwork-flax",
+   "sku": "swatch__45991-0001",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/45991-0001_Sunbrella_Fretwork_Flax.avif?v=1777425394"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-classic-velvet-peach",
+   "url": "https://comfort-works.com/products/fabric-samples-classic-velvet-peach",
+   "sku": "swatch__FM-02P",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FM-02P_20Classic_20Velvet_20Peach_1X_1371728e-ddee-4af9-9e08-9e7b95f0d79b.jpg?v=1710488070"
+  },
+  {
+   "fabric": null,
+   "handle": "cooper-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/cooper-wooden-sofa-leg",
+   "sku": "LEG-CR__BK",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-CR__BK.jpg?v=1683617841"
+  },
+  {
+   "fabric": null,
+   "handle": "bailey-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/bailey-wooden-sofa-leg",
+   "sku": "BY__ch",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/bailey_wooden_sofa_leg_cherry_BY__ch.jpg?v=1718327199"
+  },
+  {
+   "fabric": null,
+   "handle": "stella-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/stella-wooden-sofa-leg",
+   "sku": "LEG-SA__WH",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-SA__WH.webp?v=1689910066"
+  },
+  {
+   "fabric": null,
+   "handle": "peroni-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/peroni-wooden-sofa-leg",
+   "sku": "LEG-PN__WH",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-PN__WH.webp?v=1689910053"
+  },
+  {
+   "fabric": null,
+   "handle": "flexifit-universal-couch-cushion-covers",
+   "url": "https://comfort-works.com/products/flexifit-universal-couch-cushion-covers",
+   "sku": "CW-FF-CC",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CW-FF-CC_SQ_8396_SP_EYL-35.webp?v=1755762125"
+  }
+ ]
+}

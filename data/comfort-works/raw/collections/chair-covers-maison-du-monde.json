@@ -1,0 +1,195 @@
+{
+ "handle": "chair-covers-maison-du-monde",
+ "fetchedAt": "2026-09-18T05:32:02.722Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "butterfly-armchair-slipcover",
+   "title": "Butterfly Armchair Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-BY-35",
+   "price": "279.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BY-35_CNRP_PM_CVC-01.jpg?v=1741320173",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-BY-35_CNRP_PM_CVC-01.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_541_Maison_du_Monde_Butterfly_sofa_823b35c7-49b3-43a0-be30-42b72597e5f5.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_542_Maison_du_Monde_Butterfly_sofa_56a39390-b0dd-4573-b222-d14203cf8d12.jpg?v=1741320173"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-BY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-BY-35",
+    "FLT___Product_Ref__Old____MDM_BY_1",
+    "FLT___Series_Code___BY",
+    "FLT___Series_Name___Butterfly",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "MDM-BY-35",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Butterfly",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No",
+    "t_shaped_back_cushion:1",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-BY-35",
+     "price": "279.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "louvain-armchair-slipcover",
+   "title": "Louvain Armchair Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-LV-29",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-29_LSKT_SI_CVC-01.jpg?v=1741320167",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-LV-29_LSKT_SI_CVC-01.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_554_Maison_du_Monde_Louvain_sofa_5e06806b-c818-4886-a43e-352e8b844d43.jpg?v=1741320167",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_552_Maison_du_Monde_Louvain_sofa.jpg?v=1741320167"
+   ],
+   "tags": [
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-LV",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-LV-29",
+    "FLT___Product_Ref__Old____MDM_LV_1",
+    "FLT___Series_Code___LV",
+    "FLT___Series_Name___Louvain",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "MDM-LV-29",
+    "series:Louvre (Louvain)"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-LV-29",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "milano-armchair-slipcover",
+   "title": "Milano Armchair Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-MO-40",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-MO-40_VELC_SP_CVC-01.jpg?v=1741320163",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-MO-40_VELC_SP_CVC-01.jpg?v=1741320163",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_547_Maison_du_Monde_Milano_sofa.jpg?v=1741320163",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_624_Maison_du_Monde_Milano_sofa.jpg?v=1741320163"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-MO",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-MO-40",
+    "FLT___Product_Ref__Old____MDM_MO_1",
+    "FLT___Series_Code___MO",
+    "FLT___Series_Name___Milano",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MDM-MO-40",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Milano",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-MO-40",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

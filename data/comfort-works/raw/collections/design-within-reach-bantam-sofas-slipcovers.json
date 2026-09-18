@@ -1,0 +1,89 @@
+{
+ "handle": "design-within-reach-bantam-sofas-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:19.799Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "bantam-armchair-slipcover",
+   "title": "Bantam Armchair Slipcover",
+   "vendor": "Design Within Reach",
+   "sku": "DW-BM-35",
+   "price": "349.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/DW-BM-35_LV_SHRT_PM_CVC-01.jpg?v=1741320103",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/DW-BM-35_LV_SHRT_PM_CVC-01.jpg?v=1741320103"
+   ],
+   "tags": [
+    "categoryproducts:DW",
+    "categoryproducts:DW-BM",
+    "description:",
+    "Design Within Reach",
+    "DW-BM-35",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Bantam"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "DW-BM-35",
+     "price": "349.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bantam-studio-sofa-slipcover",
+   "title": "Bantam Studio Sofa Slipcover",
+   "vendor": "Design Within Reach",
+   "sku": "DW-BM-87M",
+   "price": "629.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/DW-BM-87M_L_LV_SHRT_PM_CVC-01.jpg?v=1741320096",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/DW-BM-87M_L_LV_SHRT_PM_CVC-01.jpg?v=1741320096"
+   ],
+   "tags": [
+    "categoryproducts:DW",
+    "categoryproducts:DW-BM",
+    "description:",
+    "Design Within Reach",
+    "DW-BM-87M",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Bantam"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "DW-BM-87M",
+     "price": "629.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

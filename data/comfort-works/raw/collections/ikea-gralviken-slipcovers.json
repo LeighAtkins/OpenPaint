@@ -1,0 +1,79 @@
+{
+ "handle": "ikea-gralviken-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:47.427Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "gralviken-3-seat-sofa-bed-cover",
+   "title": "Gralviken 3 Seat Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-GVK-3B",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GVK-3B_SHRT_SP_CVC-01.webp?v=1758095645",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GVK-3B_SHRT_SP_CVC-01.webp?v=1758095645",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_604_IKEA_Gralviken_sofa.jpg?v=1758095645"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:GVK",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-GVK-3B",
+    "FLT___Product_Ref__Old____GVK_B",
+    "FLT___Series_Code___GVK",
+    "FLT___Series_Name___Gralviken",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-GVK-3B",
+    "important_notes:643",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:Gralviken",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-GVK-3B",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

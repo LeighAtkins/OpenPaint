@@ -1,0 +1,293 @@
+{
+ "handle": "sofa-covers-mitchell-gold-bob-williams",
+ "fetchedAt": "2026-09-18T05:38:29.530Z",
+ "count": 6,
+ "products": [
+  {
+   "handle": "kathleen-85-sleeper-sofa-slipcover",
+   "title": "Kathleen 85\" Sleeper Sofa Slipcover",
+   "vendor": "Mitchell Gold + Bob Williams",
+   "sku": "MG-KN-85B",
+   "price": "959.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-KN-85B.jpg?v=1788238932",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-KN-85B.jpg?v=1788238932",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-KN-85B_73ddec6b-c8f8-4d89-a9d6-af31f294cda4.jpg?v=1788238941"
+   ],
+   "tags": [
+    "categoryproducts:MG-KN",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "MG-KN-85B",
+    "series:Kathleen"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MG-KN-85B",
+     "price": "959.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "dominique-89-sofa-slipcover",
+   "title": "Dominique 89\" Sofa Slipcover",
+   "vendor": "Mitchell Gold + Bob Williams",
+   "sku": "MG-DE-89",
+   "price": "699.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-DE-89_CNRP_SP_CVC-01.jpg?v=1741320169",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-DE-89_CNRP_SP_CVC-01.jpg?v=1741320169"
+   ],
+   "tags": [
+    "categoryproducts:MG",
+    "categoryproducts:MG-DE",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "MG-DE-89",
+    "Mitchel Gold + Bob Williams",
+    "Mitchell Gold + Bob Williams",
+    "series:Dominique"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MG-DE-89",
+     "price": "699.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "alexa-ii-61-loveseat-slipcover",
+   "title": "Alexa II 61\" Loveseat Slipcover",
+   "vendor": "Mitchell Gold + Bob Williams",
+   "sku": "MG-AA-61",
+   "price": "699.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-AA-61_MLTP_PM_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-AA-61_MLTP_PM_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:MG",
+    "categoryproducts:MG-AA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "MG-AA-61",
+    "Mitchell Gold + Bob Williams",
+    "series:Alexa II",
+    "vendor:Mitchell Gold + Bob Williams"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MG-AA-61",
+     "price": "699.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "alex-ii-89-sofa-slipcover",
+   "title": "Alex II 89\" Sofa Slipcover",
+   "vendor": "Mitchell Gold + Bob Williams",
+   "sku": "MG-AX-89",
+   "price": "899.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-AX-89_MLTP_PM_CVC-01.jpg?v=1741320169",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-AX-89_MLTP_PM_CVC-01.jpg?v=1741320169"
+   ],
+   "tags": [
+    "categoryproducts:MG",
+    "categoryproducts:MG-AX",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "MG-AX-89",
+    "Mitchell Gold + Bob Williams",
+    "series:Alex II",
+    "vendor:Mitchell Gold + Bob Williams"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MG-AX-89",
+     "price": "899.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nicki-88-sofa-slipcover",
+   "title": "Nicki 88\" Sofa Slipcover",
+   "vendor": "Mitchell Gold + Bob Williams",
+   "sku": "MG-NK-88",
+   "price": "959.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-NK-88_MLTP_PM_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-NK-88_MLTP_PM_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:MG",
+    "categoryproducts:MG-NK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "MG-NK-88",
+    "Mitchell Gold + Bob Williams",
+    "series:Nicki",
+    "vendor:Mitchell Gold + Bob Williams"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MG-NK-88",
+     "price": "959.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "alex-ii-79-sofa-slipcover",
+   "title": "Alex II 79\" Sofa Slipcover",
+   "vendor": "Mitchell Gold + Bob Williams",
+   "sku": "MG-AX-79",
+   "price": "829.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-AX-79_MLTP_PM_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-AX-79_MLTP_PM_CVC-01.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_578_Mitchell_Gold___Bob_Williams_Alex_II_sofa.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_579_Mitchell_Gold___Bob_Williams_Alex_II_sofa.jpg?v=1741575836"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Mitchell_Gold___Bob_Williams",
+    "FLT___Product_Ref__New____MG-AX-79",
+    "FLT___Series_Code___AX",
+    "FLT___Series_Name___Alex_II",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "MG-AX-79",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Alex II",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MG-AX-79",
+     "price": "829.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

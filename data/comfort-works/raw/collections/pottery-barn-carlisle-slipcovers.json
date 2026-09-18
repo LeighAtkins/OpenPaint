@@ -1,0 +1,87 @@
+{
+ "handle": "pottery-barn-carlisle-slipcovers",
+ "fetchedAt": "2026-09-18T05:37:51.917Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "carlisle-100-chaise-sectional-slipcover",
+   "title": "Carlisle 100\" Chaise Sectional Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CE-100",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_PB_PB-CE_PB-CE-100_PB-CE-100_R_SHRT_SP_CVC-01.jpg?v=1744884171",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_PB_PB-CE_PB-CE-100_PB-CE-100_R_SHRT_SP_CVC-01.jpg?v=1744884171"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CE",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-CE-100",
+    "series:Carlisle"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CE-100",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "carlisle-chair-slipcover",
+   "title": "Carlisle Chair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CE-35",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_PB_PB-CE_PB-CE-35_PB-CE-35_SHRT_SP_CVC-01.jpg?v=1744884303",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_PB_PB-CE_PB-CE-35_PB-CE-35_SHRT_SP_CVC-01.jpg?v=1744884303"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CE",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-CE-35",
+    "series:Carlisle"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CE-35",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

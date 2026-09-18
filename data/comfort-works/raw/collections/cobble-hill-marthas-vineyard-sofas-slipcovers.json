@@ -1,0 +1,91 @@
+{
+ "handle": "cobble-hill-marthas-vineyard-sofas-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:06.445Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "martha-rsquo-s-vineyard-slipped-chair-1-2-slipcover",
+   "title": "Martha's Vineyard Slipped Chair & 1/2 Slipcover",
+   "vendor": "Cobble Hill",
+   "sku": "CH-MA-53",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_CH-MA-53_CH-MA-53.jpg?v=1733290494",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_CH-MA-53_CH-MA-53.jpg?v=1733290494",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_CH-MA-53_CH-MA-53_2b40e729-6bda-49fa-8b71-3450b48116ba.jpg?v=1733290509"
+   ],
+   "tags": [
+    "categoryproducts:CH",
+    "categoryproducts:CH-MA",
+    "CH-MA-53",
+    "Cobble Hill",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Martha's Vineyard"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CH-MA-53",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "martha-rsquo-s-vineyard-slipped-two-seat-sofa-slipcover",
+   "title": "Martha's Vineyard Slipped Two Seat Sofa Slipcover",
+   "vendor": "Cobble Hill",
+   "sku": "CH-MA-94",
+   "price": "969.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_CH-MA-94_CH-MA-94_6555455c-2642-42cc-9c2f-3c54d0f94b59.jpg?v=1733370323",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_CH-MA-94_CH-MA-94_6555455c-2642-42cc-9c2f-3c54d0f94b59.jpg?v=1733370323",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_CH-MA-94_CH-MA-94_8167f0bb-ac76-4e39-bcb4-d23a59d13134.jpg?v=1733370336"
+   ],
+   "tags": [
+    "categoryproducts:CH",
+    "categoryproducts:CH-MA",
+    "CH-MA-94",
+    "Cobble Hill",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Martha's Vineyard"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CH-MA-94",
+     "price": "969.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

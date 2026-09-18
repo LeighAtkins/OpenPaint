@@ -1,0 +1,1212 @@
+{
+ "handle": "mitchell-gold-bob-williams-hunter-slipcovers",
+ "representative": "hunter-100-sofa-slipcover",
+ "hubLinks": [
+  "\\/pages\\/fabrics-hypoallergenic-collection-everyday-cotton",
+  "\\/pages\\/fabrics-cozy-collection-everyday-velvet",
+  "\\/pages\\/fabrics-starter-collection-everyday-weave",
+  "\\/pages\\/fabrics-performance-collection-signature-velvet",
+  "\\/pages\\/fabrics-pet-friendly-collection-signature-microfiber",
+  "\\/pages\\/fabrics-performance-collection-sunbrella"
+ ],
+ "fabricCount": 133,
+ "fabrics": [
+  {
+   "fabric": null,
+   "handle": "hunter-100-sofa-slipcover",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover",
+   "sku": "MG-HR-100",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MG-HR-100_LV_2S-2B_SHRT_PM_CVC-01.webp?v=1788248954"
+  },
+  {
+   "fabric": "Care+ Canvas Ash",
+   "handle": "hunter-100-sofa-slipcover-care-canvas-ash",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-care-canvas-ash",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__SUN-C13",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Canvas Beige",
+   "handle": "hunter-100-sofa-slipcover-care-canvas-beige",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-care-canvas-beige",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__SUN-C38",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Canvas Sage",
+   "handle": "hunter-100-sofa-slipcover-care-canvas-sage",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-care-canvas-sage",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__SUN-C10",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Canvas Snow",
+   "handle": "hunter-100-sofa-slipcover-care-canvas-snow",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-care-canvas-snow",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__SUN-C31",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen Cream",
+   "handle": "hunter-100-sofa-slipcover-care-linen-cream",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-care-linen-cream",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__COS-103",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen Natural",
+   "handle": "hunter-100-sofa-slipcover-care-linen-natural",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-care-linen-natural",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__COS-105",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen White",
+   "handle": "hunter-100-sofa-slipcover-care-linen-white",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-care-linen-white",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__COS-101",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Tweed Amber",
+   "handle": "hunter-100-sofa-slipcover-care-tweed-amber",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-care-tweed-amber",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__SUN-T04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Tweed Mineral Blue",
+   "handle": "hunter-100-sofa-slipcover-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-care-tweed-mineral-blue",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__SUN-T10",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Tweed Sunset",
+   "handle": "hunter-100-sofa-slipcover-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-care-tweed-sunset",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__SUN-T06",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Tweed Teal",
+   "handle": "hunter-100-sofa-slipcover-care-tweed-teal",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-care-tweed-teal",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__SUN-T12",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Classic Velvet Peach",
+   "handle": "hunter-100-sofa-slipcover-classic-velvet-peach",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-classic-velvet-peach",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__FM-02P",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Burnt Orange",
+   "handle": "hunter-100-sofa-slipcover-crypton®-chenille-burnt-orange",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-crypton®-chenille-burnt-orange",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__BEN-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Cream",
+   "handle": "hunter-100-sofa-slipcover-crypton®-chenille-cream",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-crypton®-chenille-cream",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__BEN-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Dark Teal",
+   "handle": "hunter-100-sofa-slipcover-crypton®-chenille-dark-teal",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-crypton®-chenille-dark-teal",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__BEN-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Snow",
+   "handle": "hunter-100-sofa-slipcover-crypton®-chenille-snow",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-crypton®-chenille-snow",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__BEN-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Charcoal",
+   "handle": "hunter-100-sofa-slipcover-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-cotton-charcoal",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__CVC-07",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Forest Green",
+   "handle": "hunter-100-sofa-slipcover-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-cotton-forest-green",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__CVC-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Khaki",
+   "handle": "hunter-100-sofa-slipcover-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-cotton-khaki",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__CVC-08",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Navy New",
+   "handle": "hunter-100-sofa-slipcover-everyday-cotton-navy",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-cotton-navy",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__CVC-05",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Pebble",
+   "handle": "hunter-100-sofa-slipcover-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-cotton-pebble",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__CVC-06",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Sand",
+   "handle": "hunter-100-sofa-slipcover-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-cotton-sand",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__CVC-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Silver Sage",
+   "handle": "hunter-100-sofa-slipcover-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-cotton-silver-sage",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__CVC-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton White",
+   "handle": "hunter-100-sofa-slipcover-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-cotton-white",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__CVC-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Cacao",
+   "handle": "hunter-100-sofa-slipcover-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-velvet-cacao",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__ROYAL-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Dark Teal",
+   "handle": "hunter-100-sofa-slipcover-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-velvet-dark-teal",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__ROYAL-13",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Navy",
+   "handle": "hunter-100-sofa-slipcover-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-velvet-navy",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__ROYAL-14",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Sand",
+   "handle": "hunter-100-sofa-slipcover-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-velvet-sand",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__ROYAL-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Storm",
+   "handle": "hunter-100-sofa-slipcover-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-velvet-storm",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__ROYAL-20",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Weave Basil Green",
+   "handle": "hunter-100-sofa-slipcover-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-weave-basil-green",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__EYL-47",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Weave Cream",
+   "handle": "hunter-100-sofa-slipcover-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-weave-cream",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__EYL-35",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Weave Maroon",
+   "handle": "hunter-100-sofa-slipcover-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-weave-maroon",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__EYL-38",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Weave Navy",
+   "handle": "hunter-100-sofa-slipcover-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-weave-navy",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__EYL-44",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Weave Pebble",
+   "handle": "hunter-100-sofa-slipcover-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-weave-pebble",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__EYL-20",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Weave Rust",
+   "handle": "hunter-100-sofa-slipcover-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-weave-rust",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__EYL-39",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Weave Storm",
+   "handle": "hunter-100-sofa-slipcover-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-weave-storm",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__EYL-24",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Weave Teal",
+   "handle": "hunter-100-sofa-slipcover-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-everyday-weave-teal",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__EYL-43",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Mod Boucle Amber",
+   "handle": "hunter-100-sofa-slipcover-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-mod-boucle-amber",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__MOSS-09",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Mod Boucle Charcoal",
+   "handle": "hunter-100-sofa-slipcover-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-mod-boucle-charcoal",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__MOSS-97",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Mod Boucle Cream",
+   "handle": "hunter-100-sofa-slipcover-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-mod-boucle-cream",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__MOSS-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Mod Boucle Oatmeal",
+   "handle": "hunter-100-sofa-slipcover-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-mod-boucle-oatmeal",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__MOSS-40",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Mod Chenille Beige",
+   "handle": "hunter-100-sofa-slipcover-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-mod-chenille-beige",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__ESTE-52",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Mod Chenille Denim",
+   "handle": "hunter-100-sofa-slipcover-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-mod-chenille-denim",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__ESTE-78",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Mod Chenille Espresso",
+   "handle": "hunter-100-sofa-slipcover-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-mod-chenille-espresso",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__ESTE-57",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Mod Chenille Mist",
+   "handle": "hunter-100-sofa-slipcover-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-mod-chenille-mist",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__ESTE-92",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Microfiber Caramel",
+   "handle": "hunter-100-sofa-slipcover-signature-microfiber-caramel",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-microfiber-caramel",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__FA-09",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Microfiber Coral",
+   "handle": "hunter-100-sofa-slipcover-signature-microfiber-coral",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-microfiber-coral",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__FA-14",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Microfiber Cream",
+   "handle": "hunter-100-sofa-slipcover-signature-microfiber-cream",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-microfiber-cream",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__FA-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Microfiber Dark Coral",
+   "handle": "hunter-100-sofa-slipcover-signature-microfiber-dark-coral",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-microfiber-dark-coral",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__FA-54",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Microfiber Forest Green",
+   "handle": "hunter-100-sofa-slipcover-signature-microfiber-forest-green",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-microfiber-forest-green",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__FA-63",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Microfiber Sand",
+   "handle": "hunter-100-sofa-slipcover-signature-microfiber-sand",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-microfiber-sand",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__FA-45",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Microfiber Silver Sage",
+   "handle": "hunter-100-sofa-slipcover-signature-microfiber-silver-sage",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-microfiber-silver-sage",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__FA-67",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Bayleaf",
+   "handle": "hunter-100-sofa-slipcover-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-velvet-bayleaf",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__PAL-11",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Caramel",
+   "handle": "hunter-100-sofa-slipcover-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-velvet-caramel",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__PAL-09",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Cream",
+   "handle": "hunter-100-sofa-slipcover-signature-velvet-cream",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-velvet-cream",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__PAL-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Eucalyptus",
+   "handle": "hunter-100-sofa-slipcover-signature-velvet-eucalyptus",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-velvet-eucalyptus",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__PAL-14",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Hazel",
+   "handle": "hunter-100-sofa-slipcover-signature-velvet-hazel",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-velvet-hazel",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__PAL-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Midnight",
+   "handle": "hunter-100-sofa-slipcover-signature-velvet-midnight",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-velvet-midnight",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__PAL-12",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Natural",
+   "handle": "hunter-100-sofa-slipcover-signature-velvet-natural",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-velvet-natural",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__PAL-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Sand",
+   "handle": "hunter-100-sofa-slipcover-signature-velvet-sand",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-velvet-sand",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__PAL-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Sunset",
+   "handle": "hunter-100-sofa-slipcover-signature-velvet-sunset",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-signature-velvet-sunset",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__PAL-07",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Sunbrella® Canvas Flax",
+   "handle": "hunter-100-sofa-slipcover-sunbrella®-canvas-flax",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-sunbrella®-canvas-flax",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__5492-0000",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Sunbrella® Fretwork Flax",
+   "handle": "hunter-100-sofa-slipcover-sunbrella®-fretwork-flax",
+   "url": "https://comfort-works.com/products/hunter-100-sofa-slipcover-sunbrella®-fretwork-flax",
+   "sku": "MG-HR-100__SV__1S-2B__SHRT_SP__45991-0001",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-teal",
+   "sku": "swatch__EYL-43",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-43_Everyday_Weave_Teal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-storm",
+   "sku": "swatch__EYL-24",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-24_Everyday_Weave_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-rust",
+   "sku": "swatch__EYL-39",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-39_Everyday_Weave_Rust.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-pebble",
+   "sku": "swatch__EYL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-20_Everyday_Weave_Pebble.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-navy",
+   "sku": "swatch__EYL-44",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-44_Everyday_Weave_Navy.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-maroon",
+   "sku": "swatch__EYL-38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-38_Everyday_Weave_Maroon.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-cream",
+   "sku": "swatch__EYL-35",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-35_Everyday_Weave_Cream.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-basil-green",
+   "sku": "swatch__EYL-47",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-47_Everyday_Weave_Basil_Green.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-white",
+   "sku": "swatch__CVC-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/TC-01_Everyday_Cotton_White_1X_1.jpg?v=1718092472"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-sand",
+   "sku": "swatch__CVC-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-02_Everyday_Cotton_Sand.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-silver-sage",
+   "sku": "swatch__CVC-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-03_Everyday_Cotton_Silver_Sage.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-forest-green",
+   "sku": "swatch__CVC-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-04_Everyday_Cotton_Forest_Green.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-navy",
+   "sku": "swatch__CVC-05",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-05.jpg?v=1785723660"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-pebble",
+   "sku": "swatch__CVC-06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-06_Everyday_Cotton_Pebble.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-charcoal",
+   "sku": "swatch__CVC-07",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-07_Everyday_Cotton_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-khaki",
+   "sku": "swatch__CVC-08",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-08_Everyday_Cotton_Khaki.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-cacao",
+   "sku": "swatch__ROYAL-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-04_Everyday_Velvet_Cacao.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-dark-teal",
+   "sku": "swatch__ROYAL-13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-13_Everyday_Velvet_Dark_Teal.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-navy",
+   "sku": "swatch__ROYAL-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-14_Everyday_Velvet_Navy.avif?v=1777425396"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-sand",
+   "sku": "swatch__ROYAL-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-03_Everyday_Velvet_Sand.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-storm",
+   "sku": "swatch__ROYAL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-20_Everyday_Velvet_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-sage",
+   "sku": "swatch__SUN-C10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/SUN-C10_Performance-Canvas-Sage_1080x1080_22f090cb-fce4-4f4f-bc62-d6af2bb93957.png?v=1702022331"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-ash",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-ash",
+   "sku": "swatch__SUN-C13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C13_Care_Canvas_Ash.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-beige",
+   "sku": "swatch__SUN-C38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C38_Care_Canvas_Beige.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-snow",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-snow",
+   "sku": "swatch__SUN-C31",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C31_Care_Canvas_Snow.avif?v=1777425376"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-teal",
+   "sku": "swatch__SUN-T12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T12_Care_Tweed_Teal.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-sunset",
+   "sku": "swatch__SUN-T06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T06_Care_Tweed_Sunset.avif?v=1777425402"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-mineral-blue",
+   "sku": "swatch__SUN-T10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T10_Care_Tweed_Mineral_Blue.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-amber",
+   "sku": "swatch__SUN-T04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T04_Care_Tweed_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-mist",
+   "sku": "swatch__ESTE-92",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-92_Mod_Chenille_Mist.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-espresso",
+   "sku": "swatch__ESTE-57",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-57ModChenilleCacao_1X_dac9a2ae-b3ad-4656-a8be-dd44b643f5d5.jpg?v=1723009282"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-denim",
+   "sku": "swatch__ESTE-78",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-78_Mod_Chenille_Denim.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-beige",
+   "sku": "swatch__ESTE-52",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-52_Mod_Chenille_Beige.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-amber",
+   "sku": "swatch__MOSS-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-09_Mod_Boucle_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-charcoal",
+   "sku": "swatch__MOSS-97",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-97_Mod_Boucle_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-cream",
+   "sku": "swatch__MOSS-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-01_Mod_Boucle_Cream.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-oatmeal",
+   "sku": "swatch__MOSS-40",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-40_Mod_Boucle_Oatmeal.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-white",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-white",
+   "sku": "swatch__COS-101",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-101_Care_Linen_White.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-cream",
+   "sku": "swatch__COS-103",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-103_Care_Linen_Cream.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-natural",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-natural",
+   "sku": "swatch__COS-105",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-105_Care_Linen_Natural.avif?v=1777425397"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-bayleaf",
+   "sku": "swatch__PAL-11",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-11_Signature_Velvet_Bayleaf.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-caramel",
+   "sku": "swatch__PAL-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-09_Signature_Velvet_Caramel.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-cream",
+   "sku": "swatch__PAL-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-01_Signature_Velvet_Cream.avif?v=1777425379"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-eucalyptus",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-eucalyptus",
+   "sku": "swatch__PAL-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-14_Signature_Velvet_Eucalyptus.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-hazel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-hazel",
+   "sku": "swatch__PAL-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-04_Signature_Velvet_Hazel.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-natural",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-natural",
+   "sku": "swatch__PAL-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-02_Signature_Velvet_Natural.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-sand",
+   "sku": "swatch__PAL-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-03_Signature_Velvet_Sand.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-sunset",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-sunset",
+   "sku": "swatch__PAL-07",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-07_Signature_Velvet_Sunset.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-midnight",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-midnight",
+   "sku": "swatch__PAL-12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-12_Signature_Velvet_Midnight.avif?v=1777425381"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-caramel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-caramel",
+   "sku": "swatch__FA-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-09_Signature_Microfibre_Caramel.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-coral",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-coral",
+   "sku": "swatch__FA-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-14_Signature_Microfibre_Coral.avif?v=1777425387"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-cream",
+   "sku": "swatch__FA-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-01_Signature_Microfibre_Cream.avif?v=1777425377"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-dark-coral",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-dark-coral",
+   "sku": "swatch__FA-54",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-54_Signature_Microfibre_Dark_Coral.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-forest-green",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-forest-green",
+   "sku": "swatch__FA-63",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-63_Signature_Microfibre_Forest_Green.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-sand",
+   "sku": "swatch__FA-45",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-45_Signature_Microfibre_Sand.avif?v=1777425392"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-silver-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-silver-sage",
+   "sku": "swatch__FA-67",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-67_Signature_Microfibre_Silver_Sage.avif?v=1777425397"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-snow",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-snow",
+   "sku": "swatch__BEN-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-01_Crypton_Chenille_Snow_1X_93dcac9d-c70d-4433-ab9b-d2c9e77c41d9.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-cream",
+   "sku": "swatch__BEN-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-02_Crypton_Chenille_Cream_1X_64152f0a-1efa-4d2c-8d3a-82b8ac99dcba.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-dark-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-dark-teal",
+   "sku": "swatch__BEN-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-03_Crypton_Chenille_Dark_Teal_1X_297f2e4e-538a-4a15-9984-6f1db09d32a0.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-burnt-orange",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-burnt-orange",
+   "sku": "swatch__BEN-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-04_Crypton_Chenille_Burnt_Orange_1X_5022eba9-da20-4396-ac22-c4bd47bdb6f0.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-sunbrella®-canvas-flax",
+   "url": "https://comfort-works.com/products/fabric-samples-sunbrella®-canvas-flax",
+   "sku": "swatch__5492-0000",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/5492-0000_Sunbrella_Canvas_Flax.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-sunbrella®-fretwork-flax",
+   "url": "https://comfort-works.com/products/fabric-samples-sunbrella®-fretwork-flax",
+   "sku": "swatch__45991-0001",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/45991-0001_Sunbrella_Fretwork_Flax.avif?v=1777425394"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-classic-velvet-peach",
+   "url": "https://comfort-works.com/products/fabric-samples-classic-velvet-peach",
+   "sku": "swatch__FM-02P",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FM-02P_20Classic_20Velvet_20Peach_1X_1371728e-ddee-4af9-9e08-9e7b95f0d79b.jpg?v=1710488070"
+  },
+  {
+   "fabric": "USB2-CBL",
+   "handle": "smart-sofa-accessories-usb2-cbl",
+   "url": "https://comfort-works.com/products/smart-sofa-accessories-usb2-cbl",
+   "sku": "NOUSB",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/1_default_attaching-USB-port_e641b4e0-014a-4685-9135-c52f619c48b1.jpg?v=1689153245"
+  },
+  {
+   "fabric": null,
+   "handle": "cooper-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/cooper-wooden-sofa-leg",
+   "sku": "LEG-CR__BK",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-CR__BK.jpg?v=1683617841"
+  },
+  {
+   "fabric": null,
+   "handle": "bailey-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/bailey-wooden-sofa-leg",
+   "sku": "BY__ch",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/bailey_wooden_sofa_leg_cherry_BY__ch.jpg?v=1718327199"
+  },
+  {
+   "fabric": null,
+   "handle": "stella-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/stella-wooden-sofa-leg",
+   "sku": "LEG-SA__WH",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-SA__WH.webp?v=1689910066"
+  },
+  {
+   "fabric": null,
+   "handle": "peroni-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/peroni-wooden-sofa-leg",
+   "sku": "LEG-PN__WH",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-PN__WH.webp?v=1689910053"
+  },
+  {
+   "fabric": null,
+   "handle": "flexifit-universal-couch-cushion-covers",
+   "url": "https://comfort-works.com/products/flexifit-universal-couch-cushion-covers",
+   "sku": "CW-FF-CC",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CW-FF-CC_SQ_8396_SP_EYL-35.webp?v=1755762125"
+  }
+ ]
+}

@@ -1,0 +1,47 @@
+{
+ "handle": "birch-lane-lucia-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:56.363Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "lucia-93-sofa-slipcover",
+   "title": "Lucia 93\" Sofa Slipcover",
+   "vendor": "Birch Lane",
+   "sku": "BL-LA-93",
+   "price": "529.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BL-LA-93_CNRP_SP_CVC-01.jpg?v=1741320091",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BL-LA-93_CNRP_SP_CVC-01.jpg?v=1741320091"
+   ],
+   "tags": [
+    "BL-LA-93",
+    "categoryproducts:BL",
+    "categoryproducts:BL-LA",
+    "description:",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "series:Lucia"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BL-LA-93",
+     "price": "529.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1013 @@
+{
+ "handle": "custom-sectional-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:19.163Z",
+ "count": 19,
+ "products": [
+  {
+   "handle": "armless-sofa-section-slipcover",
+   "title": "Armless Sofa Section Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS3X-NA",
+   "price": "859.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1109-1913-category_wide.jpg?v=1678803112",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1109-1913-category_wide.jpg?v=1678803112"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS3X-NA",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS3X-NA",
+    "FLT___Series_Code___CS3X",
+    "FLT___Size___Sofa",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS3X-NA",
+     "price": "859.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-armless-chair-slipcover",
+   "title": "Boxed Seat Armless Chair Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS1X-NA",
+   "price": "469.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1108-1911-category_wide.jpg?v=1678803112",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1108-1911-category_wide.jpg?v=1678803112"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS1X-NA",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS1X-NA",
+    "FLT___Series_Code___CS1X",
+    "FLT___Size___Armchair",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS1X-NA",
+     "price": "469.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-left-round-arm-chair-section-cover",
+   "title": "Boxed Seat Left Round Arm Chair Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS1B-SRA-L",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1091-1884-category_wide.jpg?v=1678803111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1091-1884-category_wide.jpg?v=1678803111"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS1B-SRA-L",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS1B-SRA-L",
+    "FLT___Series_Code___CS1B",
+    "FLT___Size___Armchair",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS1B-SRA-L",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-left-round-arm-chaise-section-cover",
+   "title": "Boxed Seat Left Round Arm Chaise Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS5B-SRA-L",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1095-1887-category_wide.jpg?v=1678803111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1095-1887-category_wide.jpg?v=1678803111"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS5B-SRA-L",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS5B-SRA-L",
+    "FLT___Series_Code___CS5B",
+    "FLT___Size___Chaise",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS5B-SRA-L",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-left-round-arm-loveseat-section-cover",
+   "title": "Boxed Seat Left Round Arm Loveseat Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS2B-SRA-L",
+   "price": "709.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1083-1879-category_wide.jpg?v=1678795589",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1083-1879-category_wide.jpg?v=1678795589"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS2B-SRA-L",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS2B-SRA-L",
+    "FLT___Series_Code___CS2B",
+    "FLT___Size___Loveseat",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS2B-SRA-L",
+     "price": "709.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-left-round-arm-sofa-section-cover",
+   "title": "Boxed Seat Left Round Arm Sofa Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS3B-SRA-L",
+   "price": "859.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1078-1942-category_wide.jpg?v=1678795589",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1078-1942-category_wide.jpg?v=1678795589"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS3B-SRA-L",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS3B-SRA-L",
+    "FLT___Series_Code___CS3B",
+    "FLT___Size___Sofa",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS3B-SRA-L",
+     "price": "859.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-left-square-arm-chair-section-cover",
+   "title": "Boxed Seat Left Square Arm Chair Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS1B-SSA-L",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1102-1898-category_wide.jpg?v=1678803111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1102-1898-category_wide.jpg?v=1678803111"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS1B-SSA-L",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS1B-SSA-L",
+    "FLT___Series_Code___CS1B",
+    "FLT___Size___Armchair",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS1B-SSA-L",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-left-square-arm-loveseat-section-cover",
+   "title": "Boxed Seat Left Square Arm Loveseat Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS2B-SSA-L",
+   "price": "709.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1100-1894-category_wide.jpg?v=1678803111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1100-1894-category_wide.jpg?v=1678803111"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS2B-SSA-L",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS2B-SSA-L",
+    "FLT___Series_Code___CS2B",
+    "FLT___Size___Loveseat",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS2B-SSA-L",
+     "price": "709.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-left-square-arm-sofa-section-cover",
+   "title": "Boxed Seat Left Square Arm Sofa Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS3B-SSA-L",
+   "price": "859.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1098-1941-category_wide.jpg?v=1678803111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1098-1941-category_wide.jpg?v=1678803111"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS3B-SSA-L",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS3B-SSA-L",
+    "FLT___Series_Code___CS3B",
+    "FLT___Size___Sofa",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS3B-SSA-L",
+     "price": "859.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-right-round-arm-chair-section-cover",
+   "title": "Boxed Seat Right Round Arm Chair Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS1B-SRA-R",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1092-1885-category_wide.jpg?v=1678803111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1092-1885-category_wide.jpg?v=1678803111"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS1B-SRA-R",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS1B-SRA-R",
+    "FLT___Series_Code___CS1B",
+    "FLT___Size___Armchair",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS1B-SRA-R",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-right-round-arm-chaise-section-cover",
+   "title": "Boxed Seat Right Round Arm Chaise Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS5B-SRA-R",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1096-1889-category_wide.jpg?v=1678803111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1096-1889-category_wide.jpg?v=1678803111"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS5B-SRA-R",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS5B-SRA-R",
+    "FLT___Series_Code___CS5B",
+    "FLT___Size___Chaise",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS5B-SRA-R",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-right-round-arm-loveseat-section-cover",
+   "title": "Boxed Seat Right Round Arm Loveseat Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS2B-SRA-R",
+   "price": "709.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1088-1876-category_wide.jpg?v=1678803111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1088-1876-category_wide.jpg?v=1678803111"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS2B-SRA-R",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS2B-SRA-R",
+    "FLT___Series_Code___CS2B",
+    "FLT___Size___Loveseat",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS2B-SRA-R",
+     "price": "709.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-right-round-arm-sofa-section-cover",
+   "title": "Boxed Seat Right Round Arm Sofa Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS3B-SRA-R",
+   "price": "859.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1082-1943-category_wide.jpg?v=1678795588",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1082-1943-category_wide.jpg?v=1678795588"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS3B-SRA-R",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS3B-SRA-R",
+    "FLT___Series_Code___CS3B",
+    "FLT___Size___Sofa",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS3B-SRA-R",
+     "price": "859.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-right-square-arm-chair-section-cover",
+   "title": "Boxed Seat Right Square Arm Chair Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS1B-SSA-R",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1103-1900-category_wide.jpg?v=1678803111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1103-1900-category_wide.jpg?v=1678803111"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS1B-SSA-R",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS1B-SSA-R",
+    "FLT___Series_Code___CS1B",
+    "FLT___Size___Armchair",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS1B-SSA-R",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-right-square-arm-loveseat-section-cover",
+   "title": "Boxed Seat Right Square Arm Loveseat Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS2B-SSA-R",
+   "price": "709.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1101-1896-category_wide.jpg?v=1678803112",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1101-1896-category_wide.jpg?v=1678803112"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS2B-SSA-R",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS2B-SSA-R",
+    "FLT___Series_Code___CS2B",
+    "FLT___Size___Loveseat",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS2B-SSA-R",
+     "price": "709.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-seat-right-square-arm-sofa-section-cover",
+   "title": "Boxed Seat Right Square Arm Sofa Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS3B-SSA-R",
+   "price": "859.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1099-1940-category_wide.jpg?v=1678803111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1099-1940-category_wide.jpg?v=1678803111"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS3B-SSA-R",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS3B-SSA-R",
+    "FLT___Series_Code___CS3B",
+    "FLT___Size___Sofa",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS3B-SSA-R",
+     "price": "859.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "corner-square-seat-section-slipcover",
+   "title": "Corner Square Seat Section Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS1-CNR",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1106-1907-category_wide.jpg?v=1678803112",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1106-1907-category_wide.jpg?v=1678803112"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS1-CNR",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS1-CNR",
+    "FLT___Series_Code___CS1",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS1-CNR",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "l-seat-left-square-arm-chaise-section-cover",
+   "title": "L-seat Left Square Arm Chaise Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS5L-SSA-L",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1104-1903-category_wide.jpg?v=1678803111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1104-1903-category_wide.jpg?v=1678803111"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS5L-SSA-L",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS5L-SSA-L",
+    "FLT___Series_Code___CS5L",
+    "FLT___Size___Chaise",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS5L-SSA-L",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "l-seat-right-square-arm-chaise-section-cover",
+   "title": "L-Seat Right Square Arm Chaise Section Cover",
+   "vendor": "Made to Measure",
+   "sku": "CS5L-SSA-R",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1105-1905-category_wide.jpg?v=1678803111",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/1105-1905-category_wide.jpg?v=1678803111"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS5L-SSA-R",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS5L-SSA-R",
+    "FLT___Series_Code___CS5L",
+    "FLT___Size___Chaise",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Sectional Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS5L-SSA-R",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

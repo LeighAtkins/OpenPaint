@@ -1,0 +1,220 @@
+{
+ "handle": "muji-slim-arm-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:35.716Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "2-seater-slim-arm-sofa-cover",
+   "title": "2 Seater Slim Arm Sofa Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-SLM-2",
+   "price": "279.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-SLM-2_CW-CC_VELC_SP_CVC-01.jpg?v=1741320174",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-SLM-2_CW-CC_VELC_SP_CVC-01.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_444_Muji_Slim_Arm_Sofa.jpg?v=1741320174",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_329_Muji_Slim_Arm_Sofa_b6f38ed5-d5cd-4f44-8e8e-e97c1983d4be.jpg?v=1741320174"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-SLM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-SLM-2",
+    "FLT___Product_Ref__Old____MJ_SLM_2",
+    "FLT___Series_Code___SLM",
+    "FLT___Series_Name___Slim_Arm_Sofa",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Comfort_Works_original_seams",
+    "FLT___Variant_1_Name___Muji_original_seams",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-SLM-2",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Slim Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-SLM-2",
+     "price": "279.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "2-5-seater-slim-arm-sofa-cover",
+   "title": "2.5 Seater Slim Arm Sofa Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-SLM-3P",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-SLM-3P_CW-CC_VELC_SP_CVC-01.jpg?v=1741320171",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-SLM-3P_CW-CC_VELC_SP_CVC-01.jpg?v=1741320171",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_443_Muji_Slim_Arm_Sofa.jpg?v=1741320171",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_329_Muji_Slim_Arm_Sofa_c99f130d-d747-4203-8449-95be8ce2518e.jpg?v=1741320171"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-SLM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-SLM-3P",
+    "FLT___Product_Ref__Old____MJ_SLM_25",
+    "FLT___Series_Code___SLM",
+    "FLT___Series_Name___Slim_Arm_Sofa",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Comfort_Works_original_seams",
+    "FLT___Variant_1_Name___Muji_original_seams",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-SLM-3P",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Slim Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-SLM-3P",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "1-seater-slim-arm-sofa-cover",
+   "title": "1 Seater Slim Arm Sofa Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-SLM-1",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-SLM-1_CW-CC_VELC_SP_CVC-01.jpg?v=1741320171",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-SLM-1_CW-CC_VELC_SP_CVC-01.jpg?v=1741320171",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_445_Muji_Slim_Arm_Sofa.jpg?v=1741320171",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_329_Muji_Slim_Arm_Sofa.jpg?v=1741320171"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-SLM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-SLM-1",
+    "FLT___Product_Ref__Old____MJ_SLM_1",
+    "FLT___Series_Code___SLM",
+    "FLT___Series_Name___Slim_Arm_Sofa",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Comfort_Works_original_seams",
+    "FLT___Variant_1_Name___Muji_original_seams",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "MJ-SLM-1",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Slim Arm",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-SLM-1",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

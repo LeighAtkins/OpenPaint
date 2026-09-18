@@ -1,0 +1,93 @@
+{
+ "handle": "pottery-barn-teen-jamie-slipcovers",
+ "fetchedAt": "2026-09-18T05:37:56.358Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "jamie-daybed-twin-slipcover",
+   "title": "Jamie Daybed Twin Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-JE-44B",
+   "price": "559.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-JE-44B_CNRP_SP_CVC-01.jpg?v=1741320186",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-JE-44B_CNRP_SP_CVC-01.jpg?v=1741320186"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TJE",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-JE-44B",
+    "series:Jamie",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-JE-44B",
+     "price": "559.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "jamie-daybed-queen-slipcover",
+   "title": "Jamie Daybed Queen Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-JE-67B",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-JE-67B_CNRP_SP_CVC-01.jpg?v=1741320190",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-JE-67B_CNRP_SP_CVC-01.jpg?v=1741320190"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-TJE",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-JE-67B",
+    "series:Jamie",
+    "vendor:Pottery Barn"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-JE-67B",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

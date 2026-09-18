@@ -1,0 +1,87 @@
+{
+ "handle": "slipcovers-for-lexington-bristol-sofas",
+ "fetchedAt": "2026-09-18T05:38:16.898Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "bristol-pds-i-78-sofa-slipcover",
+   "title": "Bristol PDS I 78\" Sofa Slipcover",
+   "vendor": "Lexington",
+   "sku": "LN-BL-78",
+   "price": "599.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/LN-BL-78_VELC_SP_CVC-01.webp?v=1787902088",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/LN-BL-78_VELC_SP_CVC-01.webp?v=1787902088"
+   ],
+   "tags": [
+    "categoryproducts:LN",
+    "categoryproducts:LN-BL",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "LN-BL-78",
+    "series:Bristol"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "LN-BL-78",
+     "price": "599.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bristol-pds-i-32-chair-slipcover",
+   "title": "Bristol PDS I 32\" Chair Slipcover",
+   "vendor": "Lexington",
+   "sku": "LN-BL-32",
+   "price": "349.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/LN-BL-32_VELC_SP_CVC-01.webp?v=1788332623",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/LN-BL-32_VELC_SP_CVC-01.webp?v=1788332623"
+   ],
+   "tags": [
+    "categoryproducts:LN",
+    "categoryproducts:LN-BL",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "LN-BL-32",
+    "series:Bristol"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "LN-BL-32",
+     "price": "349.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

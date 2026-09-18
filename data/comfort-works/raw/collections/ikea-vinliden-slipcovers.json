@@ -1,0 +1,109 @@
+{
+ "handle": "ikea-vinliden-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:15.544Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "vinliden-3-seat-sofa-cover",
+   "title": "Vinliden 3 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VN-3",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VN-3_VELC_WR_CVC-01.jpg?v=1741320140",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VN-3_VELC_WR_CVC-01.jpg?v=1741320140",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_383_IKEA_Vinliden_sofa.jpg?v=1741320140",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_384_IKEA_Vinliden_sofa.jpg?v=1741320140"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:VN",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VN-3",
+    "FLT___Product_Ref__Old____VN3",
+    "FLT___Series_Code___VN",
+    "FLT___Series_Name___Vinliden",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-VN-3",
+    "installation:579",
+    "series:Vinliden"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VN-3",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vinliden-2-seat-sofa-cover",
+   "title": "Vinliden 2 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VN-2",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VN-2_VELC_WR_CVC-01.jpg?v=1741320137",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VN-2_VELC_WR_CVC-01.jpg?v=1741320137",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_383_IKEA_Vinliden_sofa_637a74d7-f94b-4bb5-aa0f-46dd2c278084.jpg?v=1741320137",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_384_IKEA_Vinliden_sofa_497a052e-ae68-410c-a284-4e5cb73f9a29.jpg?v=1741320137"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:VN",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VN-2",
+    "FLT___Product_Ref__Old____VN2",
+    "FLT___Series_Code___VN",
+    "FLT___Series_Name___Vinliden",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-VN-2",
+    "installation:579",
+    "series:Vinliden"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VN-2",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

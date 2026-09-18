@@ -1,0 +1,70 @@
+{
+ "handle": "ikea-allerum-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:29.406Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "allerum-sofa-bed-cover",
+   "title": "Allerum Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-AM-3BX",
+   "price": "239.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AM-3BX_PTD_VELC_SP_CVC-01.webp?v=1759826913",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AM-3BX_PTD_VELC_SP_CVC-01.webp?v=1759826913"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:Rounded Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:AM",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-AM-3BX",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Allerum",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:0",
+    "square_rectangle_back_cushion:0",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-AM-3BX",
+     "price": "239.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

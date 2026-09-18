@@ -1,0 +1,589 @@
+{
+ "handle": "sectional-covers-crate-and-barrel",
+ "fetchedAt": "2026-09-18T05:38:11.950Z",
+ "count": 11,
+ "products": [
+  {
+   "handle": "axis-ii-1-arm-chaise-slipcover",
+   "title": "Axis II 1-Arm Chaise Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-AS-35M",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-35M_L_VELC_PM_CVC-01.jpg?v=1741674337",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-35M_L_VELC_PM_CVC-01.jpg?v=1741674337",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_434_Crate_and_Barrel_Axis_II_sofa.jpg?v=1741674337",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_435_Crate_and_Barrel_Axis_II_sofa_8f30dd42-19ea-409a-ad7a-57bab44a17c5.jpg?v=1741674337"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Chaise Lounge",
+    "categoryproducts:CB",
+    "categoryproducts:CB-AS",
+    "CB-AS-35M",
+    "chaise_lounge:Yes",
+    "chaise_lounge_position:Left",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-AS-35M",
+    "FLT___Product_Ref__Old____CB_AS_35L",
+    "FLT___Series_Code___AS",
+    "FLT___Series_Name___Axis_II",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "l_shaped_back_cushion:1",
+    "l_shaped_seat_cushion:1",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:One Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Axis II",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-AS-35M",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "axis-ii-corner-seat-slipcover",
+   "title": "Axis II Corner Seat Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-AS-43X",
+   "price": "409.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-43X_VELC_PM_CVC-01.jpg?v=1741674109",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-43X_VELC_PM_CVC-01.jpg?v=1741674109",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_420_Crate_and_Barrel_Axis_II_sofa.jpg?v=1741674109",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_083_Crate_and_Barrel_Axis_II_sofa_5148723d-be97-48ef-bf41-20c1032deb66.jpg?v=1741674109"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Corner Section",
+    "categoryproducts:CB-AS",
+    "categoryproducts:CB-Sectional",
+    "CB-AS-43X",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-AS-43X",
+    "FLT___Product_Ref__Old____CB_AS_6",
+    "FLT___Series_Code___AS",
+    "FLT___Series_Name___Axis_II",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "other_shaped_back_cushion:2",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Axis II",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-AS-43X",
+     "price": "409.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "barrett-reversible-sectional-sofa-slipcover",
+   "title": "Barrett Reversible Sectional Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BT-90",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-90_VELC_SP_CVC-01.jpg?v=1741320093",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-90_VELC_SP_CVC-01.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_101_Crate_and_Barrel_Barrett_sofa.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_102_Crate_and_Barrel_Barrett_sofa.jpg?v=1741320093"
+   ],
+   "tags": [
+    "categoryproducts:CB-BT",
+    "categoryproducts:CB-Sectional",
+    "CB-BT-90",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-BT-90",
+    "FLT___Series_Code___BT",
+    "FLT___Series_Name___Barrett_Track",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "series:Barrett"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BT-90",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gather-left-right-arm-apartment-sofa-slipcover",
+   "title": "Gather Left/Right-Arm Apartment Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-GR-73M",
+   "price": "529.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-73M_28ae8990-7cb6-4f5f-8b20-d7c25c5e5fd7.jpg?v=1761211184",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-73M_28ae8990-7cb6-4f5f-8b20-d7c25c5e5fd7.jpg?v=1761211184",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-73M.jpg?v=1761211176"
+   ],
+   "tags": [
+    "categoryproducts:CB-GR",
+    "categoryproducts:CB-Sectional",
+    "categoryproducts:CB-Slipcover",
+    "CB-GR-73M",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Gather Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-GR-73M",
+     "price": "529.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gather-left-right-arm-chaise-slipcover",
+   "title": "Gather Left/Right-Arm Chaise Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-GR-35M",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-35M_5631a896-b951-4b5e-9535-43f477df0fb8.jpg?v=1761101610",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-35M_5631a896-b951-4b5e-9535-43f477df0fb8.jpg?v=1761101610",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-35M_9b2582d7-793f-457a-a3ab-94a8eaeb477c.jpg?v=1761116730"
+   ],
+   "tags": [
+    "categoryproducts:CB-GR",
+    "categoryproducts:CB-Sectional",
+    "categoryproducts:CB-Slipcover",
+    "CB-GR-35M",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Gather Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-GR-35M",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gather-wood-base-corner-chair-slipcover",
+   "title": "Gather Wood Base Corner Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-GR-38X",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-38X_SHRT_SP_CVC-01.jpg?v=1741674454",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-38X_SHRT_SP_CVC-01.jpg?v=1741674454"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-GR",
+    "categoryproducts:CB-Slipcover",
+    "CB-GR-38X",
+    "Crate and Barrel",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Gather Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-GR-38X",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gather-wood-base-left-right-arm-sofa-slipcover",
+   "title": "Gather Wood Base Left/Right-Arm Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-GR-74M",
+   "price": "529.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-74M_L_SHRT_SP_CVC-01.jpg?v=1741674484",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-74M_L_SHRT_SP_CVC-01.jpg?v=1741674484"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-GR",
+    "categoryproducts:CB-Slipcover",
+    "CB-GR-74M",
+    "Crate and Barrel",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Gather Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-GR-74M",
+     "price": "529.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-deep-corner-chair-slipcover",
+   "title": "Lounge Deep Corner Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-46X",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-46X.jpg?v=1751339542",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-46X.jpg?v=1751339542",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-46X_d56d1bf8-0e81-4492-bac7-1fdbd2fe4057.jpg?v=1751339542"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-46X",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Lounge",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-46X",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pacific-wood-left-right-arm-chaise-slipcover",
+   "title": "Pacific Wood Left/Right-Arm Chaise Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PA-41M",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PA-41M_L_LV_SHRT_SP_CVC-01.jpg?v=1741320105",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PA-41M_L_LV_SHRT_SP_CVC-01.jpg?v=1741320105"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-PA",
+    "categoryproducts:CB-Slipcover",
+    "CB-PA-41M",
+    "Crate and Barrel",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Pacific Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PA-41M",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pacific-wood-left-right-arm-sofa-slipcover",
+   "title": "Pacific Wood Left/Right-Arm Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PA-76M",
+   "price": "439.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PA-76M_R_SV_1S-2B_SHRT_SP_CVC-01.jpg?v=1744677958",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PA-76M_R_SV_1S-2B_SHRT_SP_CVC-01.jpg?v=1744677958"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-PA",
+    "categoryproducts:CB-Slipcover",
+    "CB-PA-76M",
+    "Crate and Barrel",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Pacific Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PA-76M",
+     "price": "439.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "petrie-midcentury-2-piece-corner-sectional-slipcover",
+   "title": "Petrie Midcentury 2-Piece Corner Sectional Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PE-95",
+   "price": "839.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PE-95_VELC_SP_CVC-01.jpg?v=1741320091",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PE-95_VELC_SP_CVC-01.jpg?v=1741320091",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_425_Crate_and_Barrel_Petrie_Midcentury_sofa_fee0fa04-bdb7-40b1-8e57-2c48bd6eed2e.jpg?v=1741320091",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_429_Crate_and_Barrel_Petrie_Midcentury_sofa.jpg?v=1741320091"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Corner Section",
+    "categoryproducts:CB-PE",
+    "CB-PE-95",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-PE-95",
+    "FLT___Product_Ref__Old____CB_PE_95C",
+    "FLT___Series_Code___PE",
+    "FLT___Series_Name___Petrie_Midcentury",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:2",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Petrie Midcentury",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:5",
+    "square_rectangle_back_cushion:4",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PE-95",
+     "price": "839.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

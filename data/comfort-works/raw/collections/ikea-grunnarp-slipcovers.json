@@ -1,0 +1,49 @@
+{
+ "handle": "ikea-grunnarp-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:48.051Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "grunnarp-3-seater-sofa-bed-cover",
+   "title": "Grunnarp 3-Seater Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-GP-3B",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GP-91B_VELC_SP_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GP-91B_VELC_SP_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:IK-GP",
+    "description:",
+    "features:515",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Size___Sofa_Bed",
+    "FLT__MAIN",
+    "IK-GP-3B",
+    "installation:579",
+    "series:Grunnarp"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-GP-3B",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,141 @@
+{
+ "handle": "crate-and-barrel-pacific-wood-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:13.512Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "pacific-wood-80-sofa-slipcover",
+   "title": "Pacific Wood 80\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PA-80",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PA-80_LV_1S-2B_SHRT_SP_CVC-01.jpg?v=1741320103",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PA-80_LV_1S-2B_SHRT_SP_CVC-01.jpg?v=1741320103"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-PA",
+    "categoryproducts:CB-Slipcover",
+    "CB-PA-80",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Pacific Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PA-80",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pacific-wood-left-right-arm-chaise-slipcover",
+   "title": "Pacific Wood Left/Right-Arm Chaise Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PA-41M",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PA-41M_L_LV_SHRT_SP_CVC-01.jpg?v=1741320105",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PA-41M_L_LV_SHRT_SP_CVC-01.jpg?v=1741320105"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-PA",
+    "categoryproducts:CB-Slipcover",
+    "CB-PA-41M",
+    "Crate and Barrel",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Pacific Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PA-41M",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pacific-wood-left-right-arm-sofa-slipcover",
+   "title": "Pacific Wood Left/Right-Arm Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PA-76M",
+   "price": "439.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PA-76M_R_SV_1S-2B_SHRT_SP_CVC-01.jpg?v=1744677958",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PA-76M_R_SV_1S-2B_SHRT_SP_CVC-01.jpg?v=1744677958"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-PA",
+    "categoryproducts:CB-Slipcover",
+    "CB-PA-76M",
+    "Crate and Barrel",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Pacific Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PA-76M",
+     "price": "439.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

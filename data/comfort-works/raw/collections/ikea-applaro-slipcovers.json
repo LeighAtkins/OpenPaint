@@ -1,0 +1,169 @@
+{
+ "handle": "ikea-applaro-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:30.511Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "applaro-2-seat-modular-sofa-cushion-covers",
+   "title": "Applaro 2-seat Modular Sofa Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-APO-2M",
+   "price": "199.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-APO-2M_DVN_SP_CVC-01.jpg?v=1741320153",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-APO-2M_DVN_SP_CVC-01.jpg?v=1741320153",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_214_IKEA_Applaro_sofa_e23e706a-b430-4c6b-80ba-52d46c1d0af2.jpg?v=1741320153",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_215_IKEA_Applaro_sofa.jpg?v=1741320153"
+   ],
+   "tags": [
+    "categoryproducts:APO",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-APO-2M",
+    "FLT___Series_Code___APO",
+    "FLT___Series_Name___Applaro",
+    "FLT___Size___Cushion_Only",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-APO-2M",
+    "series:Applaro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-APO-2M",
+     "price": "199.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "applaro-bench-with-backrest-cushion-covers",
+   "title": "Applaro Bench with Backrest Cushion Covers",
+   "vendor": "IKEA",
+   "sku": "IK-APO-9",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-APO-9_DVN_SP_CVC-01.jpg?v=1741320155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-APO-9_DVN_SP_CVC-01.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_214_IKEA_Applaro_sofa.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_216_IKEA_Applaro_sofa.jpg?v=1741320155"
+   ],
+   "tags": [
+    "categoryproducts:APO",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Outdoor",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-APO-9",
+    "FLT___Series_Code___APO",
+    "FLT___Series_Name___Applaro",
+    "FLT___Size___Bench",
+    "FLT___Size___Cushion_Only",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-APO-9",
+    "series:Applaro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-APO-9",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "applaro-armchair-cushion-cover",
+   "title": "Applaro Armchair Cushion Cover",
+   "vendor": "IKEA",
+   "sku": "IK-APO-1",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-APO-1_DVN_SP_CVC-01.jpg?v=1741320154",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-APO-1_DVN_SP_CVC-01.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_215_IKEA_Applaro_sofa_55f43e56-850a-4563-94ca-61ecc2829649.jpg?v=1741320154",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_216_IKEA_Applaro_sofa_90f76c5e-9d0e-4db8-8883-62d59803e2cb.jpg?v=1741320154"
+   ],
+   "tags": [
+    "categoryproducts:APO",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Outdoor",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-APO-1",
+    "FLT___Series_Code___APO",
+    "FLT___Series_Name___Applaro",
+    "FLT___Size___Armchair",
+    "FLT___Size___Cushion_Only",
+    "FLT___Style_Name___With_Plain_Seams",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Duvholmen",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "IK-APO-1",
+    "series:Applaro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-APO-1",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

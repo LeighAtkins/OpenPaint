@@ -1,0 +1,275 @@
+{
+ "handle": "crate-and-barrel-gather-wood-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:10.644Z",
+ "count": 6,
+ "products": [
+  {
+   "handle": "gather-49-chair-and-a-half-slipcover",
+   "title": "Gather 49\" Chair and a Half Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-GR-49",
+   "price": "409.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-49.jpg?v=1764036149",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-49.jpg?v=1764036149",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-49_80be7eb2-b154-4a43-b3e2-bb4f7975d600.jpg?v=1764036160"
+   ],
+   "tags": [
+    "categoryproducts:CB-Armchair",
+    "CB-GR-49",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Gather Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-GR-49",
+     "price": "409.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gather-left-right-arm-apartment-sofa-slipcover",
+   "title": "Gather Left/Right-Arm Apartment Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-GR-73M",
+   "price": "529.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-73M_28ae8990-7cb6-4f5f-8b20-d7c25c5e5fd7.jpg?v=1761211184",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-73M_28ae8990-7cb6-4f5f-8b20-d7c25c5e5fd7.jpg?v=1761211184",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-73M.jpg?v=1761211176"
+   ],
+   "tags": [
+    "categoryproducts:CB-GR",
+    "categoryproducts:CB-Sectional",
+    "categoryproducts:CB-Slipcover",
+    "CB-GR-73M",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Gather Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-GR-73M",
+     "price": "529.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gather-left-right-arm-chaise-slipcover",
+   "title": "Gather Left/Right-Arm Chaise Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-GR-35M",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-35M_5631a896-b951-4b5e-9535-43f477df0fb8.jpg?v=1761101610",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-35M_5631a896-b951-4b5e-9535-43f477df0fb8.jpg?v=1761101610",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-35M_9b2582d7-793f-457a-a3ab-94a8eaeb477c.jpg?v=1761116730"
+   ],
+   "tags": [
+    "categoryproducts:CB-GR",
+    "categoryproducts:CB-Sectional",
+    "categoryproducts:CB-Slipcover",
+    "CB-GR-35M",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Gather Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-GR-35M",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gather-wood-base-89-sofa-slipcover",
+   "title": "Gather Wood Base 89\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-GR-89",
+   "price": "719.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_CB_CB-GR_CB-GR-89_CB-GR-89_LV_EXD_2S-2B_SHRT_SP_CVC-01.jpg?v=1744941200",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_CB_CB-GR_CB-GR-89_CB-GR-89_LV_EXD_2S-2B_SHRT_SP_CVC-01.jpg?v=1744941200"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-GR",
+    "categoryproducts:CB-Slipcover",
+    "CB-GR-89",
+    "Crate and Barrel",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Gather Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-GR-89",
+     "price": "719.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gather-wood-base-corner-chair-slipcover",
+   "title": "Gather Wood Base Corner Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-GR-38X",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-38X_SHRT_SP_CVC-01.jpg?v=1741674454",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-38X_SHRT_SP_CVC-01.jpg?v=1741674454"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-GR",
+    "categoryproducts:CB-Slipcover",
+    "CB-GR-38X",
+    "Crate and Barrel",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Gather Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-GR-38X",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "gather-wood-base-left-right-arm-sofa-slipcover",
+   "title": "Gather Wood Base Left/Right-Arm Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-GR-74M",
+   "price": "529.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-74M_L_SHRT_SP_CVC-01.jpg?v=1741674484",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-GR-74M_L_SHRT_SP_CVC-01.jpg?v=1741674484"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-GR",
+    "categoryproducts:CB-Slipcover",
+    "CB-GR-74M",
+    "Crate and Barrel",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Gather Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-GR-74M",
+     "price": "529.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

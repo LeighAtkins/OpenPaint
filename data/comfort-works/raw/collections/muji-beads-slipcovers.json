@@ -1,0 +1,200 @@
+{
+ "handle": "muji-beads-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:30.717Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "beads-cushion-cover",
+   "title": "Beads Cushion Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-BDS-7-C",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/beads-cushion-cover.jpg?v=1704778418",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/beads-cushion-cover.jpg?v=1704778418",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_204_Muji_Beads_Sofa_5a3249e7-20de-4c00-b78a-364da3661213.jpg?v=1704778418",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_206_Muji_Beads_Sofa_0af557d0-079c-4fa5-a0c1-4d033549cc7c.jpg?v=1704778418"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Beanbag",
+    "categoryproducts:MJ-BDS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-BDS-7-C",
+    "FLT___Product_Ref__Old____MJ_BDS_C",
+    "FLT___Series_Code___BDS",
+    "FLT___Series_Name___Beads_sofa",
+    "FLT___Size___Beads",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-BDS-7-C",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Muji Beads",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-BDS-7-C",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "beads-sofa-cover-mini",
+   "title": "Beads Sofa Cover, Mini",
+   "vendor": "MUJI",
+   "sku": "MJ-BDS-7-M",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/803-1208-category_wide.jpg?v=1704778416",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/803-1208-category_wide.jpg?v=1704778416",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_205_Muji_Beads_Sofa_674e5bc3-269b-4748-83d0-c2dc5b6a039f.jpg?v=1704778416",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_206_Muji_Beads_Sofa.jpg?v=1704778416"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Beanbag",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-BDS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-BDS-7-M",
+    "FLT___Product_Ref__Old____MJ_BDS_M",
+    "FLT___Series_Code___BDS",
+    "FLT___Series_Name___Beads_Sofa",
+    "FLT___Size___Beads",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT___Variant_1_Name___Width__45cm__Depth__45cm__Heights__33cm",
+    "FLT___Variant_1_Name___Width__55cm__Depth__55cm__Heights__38cm",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-BDS-7-M",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Muji Beads",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-BDS-7-M",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "beads-sofa-cover",
+   "title": "Beads Sofa Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-BDS-7",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/802-1207-category_wide.jpg?v=1673965622",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/802-1207-category_wide.jpg?v=1673965622",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_204_Muji_Beads_Sofa.jpg?v=1704778405",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_205_Muji_Beads_Sofa.jpg?v=1704778404"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Beanbag",
+    "categoryproducts:MJ-BDS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-BDS-7",
+    "FLT___Product_Ref__Old____MJ_BDS_0",
+    "FLT___Series_Code___BDS",
+    "FLT___Series_Name___Beads_Sofa",
+    "FLT___Size___Beads",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MJ-BDS-7",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Muji Beads",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-BDS-7",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

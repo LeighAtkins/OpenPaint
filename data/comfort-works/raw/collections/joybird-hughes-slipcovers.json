@@ -1,0 +1,89 @@
+{
+ "handle": "joybird-hughes-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:18.172Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "hughes-grand-sofa-slipcover",
+   "title": "Hughes Grand Sofa Slipcover",
+   "vendor": "Joybird",
+   "sku": "JB-HS-95",
+   "price": "419.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/JB-HS-95_VELC_SP_CVC-01.jpg?v=1741320156",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/JB-HS-95_VELC_SP_CVC-01.jpg?v=1741320156"
+   ],
+   "tags": [
+    "categoryproducts:JB",
+    "categoryproducts:JB-HS",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "JB-HS-95",
+    "Joybird",
+    "series:Hughes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "JB-HS-95",
+     "price": "419.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hughes-reversible-sectional-slipcover",
+   "title": "Hughes Reversible Sectional Slipcover",
+   "vendor": "Joybird",
+   "sku": "JB-HS-95-S",
+   "price": "469.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/JB-HS-95-S_VELC_SP_CVC-01.jpg?v=1741320161",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/JB-HS-95-S_VELC_SP_CVC-01.jpg?v=1741320161"
+   ],
+   "tags": [
+    "categoryproducts:JB",
+    "categoryproducts:JB-HS",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "JB-HS-95-S",
+    "Joybird",
+    "series:Hughes"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "JB-HS-95-S",
+     "price": "469.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

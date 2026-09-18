@@ -1,0 +1,141 @@
+{
+ "handle": "ikea-sakarias-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:05.388Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "sakarias-stool-cover",
+   "title": "Sakarias Stool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SAK-BS",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SAK-BS_VELC_SP_CVC-01.jpg?v=1741320144",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SAK-BS_VELC_SP_CVC-01.jpg?v=1741320144",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_345_IKEA_Sakarias_sofa.jpg?v=1741320144",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_494_IKEA_Sakarias_sofa.jpg?v=1741320144"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:SAK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SAK-BS",
+    "FLT___Product_Ref__Old____SAK0",
+    "FLT___Series_Code___SAK",
+    "FLT___Series_Name___Sakarias",
+    "FLT___Size___Bar_Stool",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-SAK-BS",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Sakarias",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SAK-BS",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sakarias-chair-cover",
+   "title": "Sakarias Chair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SAK-1",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SAK-1_VELC_SP_CVC-01.jpg?v=1741320132",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SAK-1_VELC_SP_CVC-01.jpg?v=1741320132",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_344_IKEA_Sakarias_sofa.jpg?v=1741320132",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_493_IKEA_Sakarias_sofa.jpg?v=1741320132"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Slope Square Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Square Sloping Back",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:SAK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-SAK-1",
+    "FLT___Product_Ref__Old____SAK1",
+    "FLT___Series_Code___SAK",
+    "FLT___Series_Name___Sakarias",
+    "FLT___Size___Dining_Chair",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-SAK-1",
+    "installation:579",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Sakarias",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SAK-1",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

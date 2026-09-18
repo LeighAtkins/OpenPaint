@@ -1,0 +1,121 @@
+{
+ "handle": "ikea-backa-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:31.311Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "backa-2-5-seater-sofa-cover",
+   "title": "Backa 2.5 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-BA-3",
+   "price": "389.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BA-3_VELC_PM_CVC-01.jpg?v=1741320123",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BA-3_VELC_PM_CVC-01.jpg?v=1741320123",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_217_IKEA_Backa_sofa.jpg?v=1741320123",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_218_IKEA_Backa_sofa.jpg?v=1741320123"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:BA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BA-3",
+    "FLT___Product_Ref__Old____BA25",
+    "FLT___Series_Code___BA",
+    "FLT___Series_Name___Backa",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-BA-3",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Backa",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No",
+    "throw_pillows:4"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BA-3",
+     "price": "389.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "backa-armrest-protector-covers",
+   "title": "Backa Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-BA-AP",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BA-AP_PM_CVC-01.jpg?v=1741320127",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-BA-AP_PM_CVC-01.jpg?v=1741320127"
+   ],
+   "tags": [
+    "categoryproducts:BA",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-BA-AP",
+    "FLT___Product_Ref__Old____BA_AP",
+    "FLT___Series_Code___BA",
+    "FLT___Series_Name___Backa",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___PM",
+    "FLT__MAIN",
+    "IK-BA-AP",
+    "series:Backa"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-BA-AP",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

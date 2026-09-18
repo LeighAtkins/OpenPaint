@@ -1,0 +1,48 @@
+{
+ "handle": "article-sitka-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:49.449Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "sitka-99-sofa-slipcover",
+   "title": "Sitka 99\" Sofa Slipcover",
+   "vendor": "Article",
+   "sku": "AE-SA-99",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-SA-99_VELC_PM_CVC-01.jpg?v=1741741757",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AE-SA-99_VELC_PM_CVC-01.jpg?v=1741741757"
+   ],
+   "tags": [
+    "AE-SA-99",
+    "Article",
+    "categoryproducts:AE-SA",
+    "categoryproducts:AE-Sofa",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Sitka"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AE-SA-99",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

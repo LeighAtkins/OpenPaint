@@ -1,0 +1,49 @@
+{
+ "handle": "crate-and-barrel-manor-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:12.583Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "manor-rolled-arm-89-sofa-slipcover",
+   "title": "Manor Rolled Arm 89\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-MR-89",
+   "price": "769.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-MR-89_MLTP_PM_CVC-01.webp?v=1776396497",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-MR-89_MLTP_PM_CVC-01.webp?v=1776396497"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-MR",
+    "CB-MR-89",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Manor"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-MR-89",
+     "price": "769.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

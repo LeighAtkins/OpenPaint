@@ -1,0 +1,1221 @@
+{
+ "handle": "crate-and-barrel-unwind-slipcovers",
+ "representative": "unwind-corner-chair-slipcover",
+ "hubLinks": [
+  "\\/pages\\/fabrics-hypoallergenic-collection-everyday-cotton",
+  "\\/pages\\/fabrics-cozy-collection-everyday-velvet",
+  "\\/pages\\/fabrics-starter-collection-everyday-weave",
+  "\\/pages\\/fabrics-performance-collection-signature-velvet",
+  "\\/pages\\/fabrics-pet-friendly-collection-signature-microfiber",
+  "\\/pages\\/fabrics-performance-collection-sunbrella"
+ ],
+ "fabricCount": 134,
+ "fabrics": [
+  {
+   "fabric": null,
+   "handle": "unwind-corner-chair-slipcover",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover",
+   "sku": "CB-UD-45CR",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_CVC-01.jpg?v=1741320104"
+  },
+  {
+   "fabric": "Care+ Canvas Ash",
+   "handle": "unwind-corner-chair-slipcover-care-canvas-ash",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-care-canvas-ash",
+   "sku": "CB-UD-45CR__CNRP_SP__SUN-C13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_SUN-C13.jpg?v=1727235503"
+  },
+  {
+   "fabric": "Care+ Canvas Beige",
+   "handle": "unwind-corner-chair-slipcover-care-canvas-beige",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-care-canvas-beige",
+   "sku": "CB-UD-45CR__CNRP_SP__SUN-C38",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Canvas Sage",
+   "handle": "unwind-corner-chair-slipcover-care-canvas-sage",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-care-canvas-sage",
+   "sku": "CB-UD-45CR__CNRP_SP__SUN-C10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_SUN-C10.jpg?v=1727235507"
+  },
+  {
+   "fabric": "Care+ Canvas Snow",
+   "handle": "unwind-corner-chair-slipcover-care-canvas-snow",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-care-canvas-snow",
+   "sku": "CB-UD-45CR__CNRP_SP__SUN-C31",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen Cream",
+   "handle": "unwind-corner-chair-slipcover-care-linen-cream",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-care-linen-cream",
+   "sku": "CB-UD-45CR__CNRP_SP__COS-103",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen Natural",
+   "handle": "unwind-corner-chair-slipcover-care-linen-natural",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-care-linen-natural",
+   "sku": "CB-UD-45CR__CNRP_SP__COS-105",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen White",
+   "handle": "unwind-corner-chair-slipcover-care-linen-white",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-care-linen-white",
+   "sku": "CB-UD-45CR__CNRP_SP__COS-101",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Tweed Amber",
+   "handle": "unwind-corner-chair-slipcover-care-tweed-amber",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-care-tweed-amber",
+   "sku": "CB-UD-45CR__CNRP_SP__SUN-T04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_SUN-T04.jpg?v=1727235505"
+  },
+  {
+   "fabric": "Care+ Tweed Mineral Blue",
+   "handle": "unwind-corner-chair-slipcover-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-care-tweed-mineral-blue",
+   "sku": "CB-UD-45CR__CNRP_SP__SUN-T10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_SUN-T10.jpg?v=1727235503"
+  },
+  {
+   "fabric": "Care+ Tweed Sunset",
+   "handle": "unwind-corner-chair-slipcover-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-care-tweed-sunset",
+   "sku": "CB-UD-45CR__CNRP_SP__SUN-T06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_SUN-T06.jpg?v=1727235503"
+  },
+  {
+   "fabric": "Care+ Tweed Teal",
+   "handle": "unwind-corner-chair-slipcover-care-tweed-teal",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-care-tweed-teal",
+   "sku": "CB-UD-45CR__CNRP_SP__SUN-T12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_SUN-T12.jpg?v=1727235508"
+  },
+  {
+   "fabric": "Classic Velvet Peach",
+   "handle": "unwind-corner-chair-slipcover-classic-velvet-peach",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-classic-velvet-peach",
+   "sku": "CB-UD-45CR__CNRP_SP__FM-02P",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/CB-UD-45CR_CNRP_SP_FM-02P.jpg?v=1710917883"
+  },
+  {
+   "fabric": "Crypton® Chenille Burnt Orange",
+   "handle": "unwind-corner-chair-slipcover-crypton®-chenille-burnt-orange",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-crypton®-chenille-burnt-orange",
+   "sku": "CB-UD-45CR__CNRP_SP__BEN-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Cream",
+   "handle": "unwind-corner-chair-slipcover-crypton®-chenille-cream",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-crypton®-chenille-cream",
+   "sku": "CB-UD-45CR__CNRP_SP__BEN-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Dark Teal",
+   "handle": "unwind-corner-chair-slipcover-crypton®-chenille-dark-teal",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-crypton®-chenille-dark-teal",
+   "sku": "CB-UD-45CR__CNRP_SP__BEN-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Snow",
+   "handle": "unwind-corner-chair-slipcover-crypton®-chenille-snow",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-crypton®-chenille-snow",
+   "sku": "CB-UD-45CR__CNRP_SP__BEN-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Charcoal",
+   "handle": "unwind-corner-chair-slipcover-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-cotton-charcoal",
+   "sku": "CB-UD-45CR__CNRP_SP__CVC-07",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Forest Green",
+   "handle": "unwind-corner-chair-slipcover-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-cotton-forest-green",
+   "sku": "CB-UD-45CR__CNRP_SP__CVC-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Khaki",
+   "handle": "unwind-corner-chair-slipcover-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-cotton-khaki",
+   "sku": "CB-UD-45CR__CNRP_SP__CVC-08",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_CVC-08_db130f88-c092-4a1e-83e7-6d4061167796.jpg?v=1743058357"
+  },
+  {
+   "fabric": "Everyday Cotton Navy",
+   "handle": "unwind-corner-chair-slipcover-everyday-cotton-navy",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-cotton-navy",
+   "sku": "CB-UD-45CR__CNRP_SP__CVC-05",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Pebble",
+   "handle": "unwind-corner-chair-slipcover-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-cotton-pebble",
+   "sku": "CB-UD-45CR__CNRP_SP__CVC-06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_CVC-06_4b614889-40f9-443b-a846-2681ee00094f.jpg?v=1743058306"
+  },
+  {
+   "fabric": "Everyday Cotton Sand",
+   "handle": "unwind-corner-chair-slipcover-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-cotton-sand",
+   "sku": "CB-UD-45CR__CNRP_SP__CVC-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Silver Sage",
+   "handle": "unwind-corner-chair-slipcover-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-cotton-silver-sage",
+   "sku": "CB-UD-45CR__CNRP_SP__CVC-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton White",
+   "handle": "unwind-corner-chair-slipcover-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-cotton-white",
+   "sku": "CB-UD-45CR__CNRP_SP__CVC-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Cacao",
+   "handle": "unwind-corner-chair-slipcover-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-velvet-cacao",
+   "sku": "CB-UD-45CR__CNRP_SP__ROYAL-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Dark Teal",
+   "handle": "unwind-corner-chair-slipcover-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-velvet-dark-teal",
+   "sku": "CB-UD-45CR__CNRP_SP__ROYAL-13",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Navy",
+   "handle": "unwind-corner-chair-slipcover-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-velvet-navy",
+   "sku": "CB-UD-45CR__CNRP_SP__ROYAL-14",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Sand",
+   "handle": "unwind-corner-chair-slipcover-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-velvet-sand",
+   "sku": "CB-UD-45CR__CNRP_SP__ROYAL-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Storm",
+   "handle": "unwind-corner-chair-slipcover-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-velvet-storm",
+   "sku": "CB-UD-45CR__CNRP_SP__ROYAL-20",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Weave Basil Green",
+   "handle": "unwind-corner-chair-slipcover-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-weave-basil-green",
+   "sku": "CB-UD-45CR__CNRP_SP__EYL-47",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/CB-UD-45CR_CNRP_SP_EYL-47.jpg?v=1701274391"
+  },
+  {
+   "fabric": "Everyday Weave Cream",
+   "handle": "unwind-corner-chair-slipcover-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-weave-cream",
+   "sku": "CB-UD-45CR__CNRP_SP__EYL-35",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/CB-UD-45CR_CNRP_SP_EYL-35.jpg?v=1701274383"
+  },
+  {
+   "fabric": "Everyday Weave Maroon",
+   "handle": "unwind-corner-chair-slipcover-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-weave-maroon",
+   "sku": "CB-UD-45CR__CNRP_SP__EYL-38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/CB-UD-45CR_CNRP_SP_EYL-38.jpg?v=1701274397"
+  },
+  {
+   "fabric": "Everyday Weave Navy",
+   "handle": "unwind-corner-chair-slipcover-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-weave-navy",
+   "sku": "CB-UD-45CR__CNRP_SP__EYL-44",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/CB-UD-45CR_CNRP_SP_EYL-44.jpg?v=1710917878"
+  },
+  {
+   "fabric": "Everyday Weave Pebble",
+   "handle": "unwind-corner-chair-slipcover-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-weave-pebble",
+   "sku": "CB-UD-45CR__CNRP_SP__EYL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/CB-UD-45CR_CNRP_SP_EYL-20.jpg?v=1701274374"
+  },
+  {
+   "fabric": "Everyday Weave Rust",
+   "handle": "unwind-corner-chair-slipcover-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-weave-rust",
+   "sku": "CB-UD-45CR__CNRP_SP__EYL-39",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/CB-UD-45CR_CNRP_SP_EYL-39.jpg?v=1710917876"
+  },
+  {
+   "fabric": "Everyday Weave Storm",
+   "handle": "unwind-corner-chair-slipcover-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-weave-storm",
+   "sku": "CB-UD-45CR__CNRP_SP__EYL-24",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/CB-UD-45CR_CNRP_SP_EYL-24.jpg?v=1701274378"
+  },
+  {
+   "fabric": "Everyday Weave Teal",
+   "handle": "unwind-corner-chair-slipcover-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-everyday-weave-teal",
+   "sku": "CB-UD-45CR__CNRP_SP__EYL-43",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/CB-UD-45CR_CNRP_SP_EYL-43.jpg?v=1701274387"
+  },
+  {
+   "fabric": "Mod Boucle Amber",
+   "handle": "unwind-corner-chair-slipcover-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-mod-boucle-amber",
+   "sku": "CB-UD-45CR__CNRP_SP__MOSS-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_MOSS-09.jpg?v=1719987771"
+  },
+  {
+   "fabric": "Mod Boucle Charcoal",
+   "handle": "unwind-corner-chair-slipcover-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-mod-boucle-charcoal",
+   "sku": "CB-UD-45CR__CNRP_SP__MOSS-97",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_MOSS-97.jpg?v=1719987776"
+  },
+  {
+   "fabric": "Mod Boucle Cream",
+   "handle": "unwind-corner-chair-slipcover-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-mod-boucle-cream",
+   "sku": "CB-UD-45CR__CNRP_SP__MOSS-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_MOSS-01.jpg?v=1719987769"
+  },
+  {
+   "fabric": "Mod Boucle Oatmeal",
+   "handle": "unwind-corner-chair-slipcover-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-mod-boucle-oatmeal",
+   "sku": "CB-UD-45CR__CNRP_SP__MOSS-40",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_MOSS-40.jpg?v=1719987774"
+  },
+  {
+   "fabric": "Mod Chenille Beige",
+   "handle": "unwind-corner-chair-slipcover-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-mod-chenille-beige",
+   "sku": "CB-UD-45CR__CNRP_SP__ESTE-52",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_ESTE-52.jpg?v=1722226647"
+  },
+  {
+   "fabric": "Mod Chenille Denim",
+   "handle": "unwind-corner-chair-slipcover-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-mod-chenille-denim",
+   "sku": "CB-UD-45CR__CNRP_SP__ESTE-78",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_ESTE-78.jpg?v=1722226654"
+  },
+  {
+   "fabric": "Mod Chenille Espresso",
+   "handle": "unwind-corner-chair-slipcover-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-mod-chenille-espresso",
+   "sku": "CB-UD-45CR__CNRP_SP__ESTE-57",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_ESTE-57.jpg?v=1722226652"
+  },
+  {
+   "fabric": "Mod Chenille Mist",
+   "handle": "unwind-corner-chair-slipcover-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-mod-chenille-mist",
+   "sku": "CB-UD-45CR__CNRP_SP__ESTE-92",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_ESTE-92.jpg?v=1722226657"
+  },
+  {
+   "fabric": "Signature Microfiber Caramel",
+   "handle": "unwind-corner-chair-slipcover-signature-microfiber-caramel",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-microfiber-caramel",
+   "sku": "CB-UD-45CR__CNRP_SP__FA-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_FA-09.jpg?v=1718040435"
+  },
+  {
+   "fabric": "Signature Microfiber Coral",
+   "handle": "unwind-corner-chair-slipcover-signature-microfiber-coral",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-microfiber-coral",
+   "sku": "CB-UD-45CR__CNRP_SP__FA-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_FA-14.jpg?v=1718040443"
+  },
+  {
+   "fabric": "Signature Microfiber Cream",
+   "handle": "unwind-corner-chair-slipcover-signature-microfiber-cream",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-microfiber-cream",
+   "sku": "CB-UD-45CR__CNRP_SP__FA-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_FA-01.jpg?v=1718040432"
+  },
+  {
+   "fabric": "Signature Microfiber Dark Coral",
+   "handle": "unwind-corner-chair-slipcover-signature-microfiber-dark-coral",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-microfiber-dark-coral",
+   "sku": "CB-UD-45CR__CNRP_SP__FA-54",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_FA-54.jpg?v=1718040445"
+  },
+  {
+   "fabric": "Signature Microfiber Forest Green",
+   "handle": "unwind-corner-chair-slipcover-signature-microfiber-forest-green",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-microfiber-forest-green",
+   "sku": "CB-UD-45CR__CNRP_SP__FA-63",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_FA-63.jpg?v=1718040440"
+  },
+  {
+   "fabric": "Signature Microfiber Sand",
+   "handle": "unwind-corner-chair-slipcover-signature-microfiber-sand",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-microfiber-sand",
+   "sku": "CB-UD-45CR__CNRP_SP__FA-45",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_FA-45.jpg?v=1718040429"
+  },
+  {
+   "fabric": "Signature Microfiber Silver Sage",
+   "handle": "unwind-corner-chair-slipcover-signature-microfiber-silver-sage",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-microfiber-silver-sage",
+   "sku": "CB-UD-45CR__CNRP_SP__FA-67",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-45CR_CNRP_SP_FA-67.jpg?v=1718040437"
+  },
+  {
+   "fabric": "Signature Velvet Bayleaf",
+   "handle": "unwind-corner-chair-slipcover-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-velvet-bayleaf",
+   "sku": "CB-UD-45CR__CNRP_SP__PAL-11",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Caramel",
+   "handle": "unwind-corner-chair-slipcover-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-velvet-caramel",
+   "sku": "CB-UD-45CR__CNRP_SP__PAL-09",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Cream",
+   "handle": "unwind-corner-chair-slipcover-signature-velvet-cream",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-velvet-cream",
+   "sku": "CB-UD-45CR__CNRP_SP__PAL-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Eucalyptus",
+   "handle": "unwind-corner-chair-slipcover-signature-velvet-eucalyptus",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-velvet-eucalyptus",
+   "sku": "CB-UD-45CR__CNRP_SP__PAL-14",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Hazel",
+   "handle": "unwind-corner-chair-slipcover-signature-velvet-hazel",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-velvet-hazel",
+   "sku": "CB-UD-45CR__CNRP_SP__PAL-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Midnight",
+   "handle": "unwind-corner-chair-slipcover-signature-velvet-midnight",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-velvet-midnight",
+   "sku": "CB-UD-45CR__CNRP_SP__PAL-12",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Natural",
+   "handle": "unwind-corner-chair-slipcover-signature-velvet-natural",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-velvet-natural",
+   "sku": "CB-UD-45CR__CNRP_SP__PAL-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Sand",
+   "handle": "unwind-corner-chair-slipcover-signature-velvet-sand",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-velvet-sand",
+   "sku": "CB-UD-45CR__CNRP_SP__PAL-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Sunset",
+   "handle": "unwind-corner-chair-slipcover-signature-velvet-sunset",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-signature-velvet-sunset",
+   "sku": "CB-UD-45CR__CNRP_SP__PAL-07",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Sunbrella® Canvas Flax",
+   "handle": "unwind-corner-chair-slipcover-sunbrella®-canvas-flax",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-sunbrella®-canvas-flax",
+   "sku": "CB-UD-45CR__CNRP_SP__5492-0000",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/CB-UD-45CR_CNRP_SP_5492-0000.jpg?v=1701274293"
+  },
+  {
+   "fabric": "Sunbrella® Fretwork Flax",
+   "handle": "unwind-corner-chair-slipcover-sunbrella®-fretwork-flax",
+   "url": "https://comfort-works.com/products/unwind-corner-chair-slipcover-sunbrella®-fretwork-flax",
+   "sku": "CB-UD-45CR__CNRP_SP__45991-0001",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/CB-UD-45CR_CNRP_SP_45991-0001.jpg?v=1701274274"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-teal",
+   "sku": "swatch__EYL-43",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-43_Everyday_Weave_Teal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-storm",
+   "sku": "swatch__EYL-24",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-24_Everyday_Weave_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-rust",
+   "sku": "swatch__EYL-39",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-39_Everyday_Weave_Rust.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-pebble",
+   "sku": "swatch__EYL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-20_Everyday_Weave_Pebble.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-navy",
+   "sku": "swatch__EYL-44",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-44_Everyday_Weave_Navy.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-maroon",
+   "sku": "swatch__EYL-38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-38_Everyday_Weave_Maroon.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-cream",
+   "sku": "swatch__EYL-35",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-35_Everyday_Weave_Cream.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-basil-green",
+   "sku": "swatch__EYL-47",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-47_Everyday_Weave_Basil_Green.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-white",
+   "sku": "swatch__CVC-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/TC-01_Everyday_Cotton_White_1X_1.jpg?v=1718092472"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-sand",
+   "sku": "swatch__CVC-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-02_Everyday_Cotton_Sand.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-silver-sage",
+   "sku": "swatch__CVC-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-03_Everyday_Cotton_Silver_Sage.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-forest-green",
+   "sku": "swatch__CVC-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-04_Everyday_Cotton_Forest_Green.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-navy",
+   "sku": "swatch__CVC-05",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-05.jpg?v=1785723660"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-pebble",
+   "sku": "swatch__CVC-06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-06_Everyday_Cotton_Pebble.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-charcoal",
+   "sku": "swatch__CVC-07",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-07_Everyday_Cotton_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-khaki",
+   "sku": "swatch__CVC-08",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-08_Everyday_Cotton_Khaki.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-cacao",
+   "sku": "swatch__ROYAL-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-04_Everyday_Velvet_Cacao.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-dark-teal",
+   "sku": "swatch__ROYAL-13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-13_Everyday_Velvet_Dark_Teal.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-navy",
+   "sku": "swatch__ROYAL-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-14_Everyday_Velvet_Navy.avif?v=1777425396"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-sand",
+   "sku": "swatch__ROYAL-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-03_Everyday_Velvet_Sand.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-storm",
+   "sku": "swatch__ROYAL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-20_Everyday_Velvet_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-sage",
+   "sku": "swatch__SUN-C10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/SUN-C10_Performance-Canvas-Sage_1080x1080_22f090cb-fce4-4f4f-bc62-d6af2bb93957.png?v=1702022331"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-ash",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-ash",
+   "sku": "swatch__SUN-C13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C13_Care_Canvas_Ash.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-beige",
+   "sku": "swatch__SUN-C38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C38_Care_Canvas_Beige.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-snow",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-snow",
+   "sku": "swatch__SUN-C31",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C31_Care_Canvas_Snow.avif?v=1777425376"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-teal",
+   "sku": "swatch__SUN-T12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T12_Care_Tweed_Teal.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-sunset",
+   "sku": "swatch__SUN-T06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T06_Care_Tweed_Sunset.avif?v=1777425402"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-mineral-blue",
+   "sku": "swatch__SUN-T10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T10_Care_Tweed_Mineral_Blue.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-amber",
+   "sku": "swatch__SUN-T04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T04_Care_Tweed_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-mist",
+   "sku": "swatch__ESTE-92",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-92_Mod_Chenille_Mist.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-espresso",
+   "sku": "swatch__ESTE-57",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-57ModChenilleCacao_1X_dac9a2ae-b3ad-4656-a8be-dd44b643f5d5.jpg?v=1723009282"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-denim",
+   "sku": "swatch__ESTE-78",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-78_Mod_Chenille_Denim.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-beige",
+   "sku": "swatch__ESTE-52",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-52_Mod_Chenille_Beige.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-amber",
+   "sku": "swatch__MOSS-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-09_Mod_Boucle_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-charcoal",
+   "sku": "swatch__MOSS-97",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-97_Mod_Boucle_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-cream",
+   "sku": "swatch__MOSS-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-01_Mod_Boucle_Cream.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-oatmeal",
+   "sku": "swatch__MOSS-40",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-40_Mod_Boucle_Oatmeal.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-white",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-white",
+   "sku": "swatch__COS-101",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-101_Care_Linen_White.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-cream",
+   "sku": "swatch__COS-103",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-103_Care_Linen_Cream.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-natural",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-natural",
+   "sku": "swatch__COS-105",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-105_Care_Linen_Natural.avif?v=1777425397"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-bayleaf",
+   "sku": "swatch__PAL-11",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-11_Signature_Velvet_Bayleaf.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-caramel",
+   "sku": "swatch__PAL-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-09_Signature_Velvet_Caramel.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-cream",
+   "sku": "swatch__PAL-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-01_Signature_Velvet_Cream.avif?v=1777425379"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-eucalyptus",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-eucalyptus",
+   "sku": "swatch__PAL-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-14_Signature_Velvet_Eucalyptus.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-hazel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-hazel",
+   "sku": "swatch__PAL-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-04_Signature_Velvet_Hazel.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-natural",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-natural",
+   "sku": "swatch__PAL-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-02_Signature_Velvet_Natural.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-sand",
+   "sku": "swatch__PAL-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-03_Signature_Velvet_Sand.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-sunset",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-sunset",
+   "sku": "swatch__PAL-07",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-07_Signature_Velvet_Sunset.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-midnight",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-midnight",
+   "sku": "swatch__PAL-12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-12_Signature_Velvet_Midnight.avif?v=1777425381"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-caramel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-caramel",
+   "sku": "swatch__FA-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-09_Signature_Microfibre_Caramel.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-coral",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-coral",
+   "sku": "swatch__FA-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-14_Signature_Microfibre_Coral.avif?v=1777425387"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-cream",
+   "sku": "swatch__FA-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-01_Signature_Microfibre_Cream.avif?v=1777425377"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-dark-coral",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-dark-coral",
+   "sku": "swatch__FA-54",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-54_Signature_Microfibre_Dark_Coral.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-forest-green",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-forest-green",
+   "sku": "swatch__FA-63",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-63_Signature_Microfibre_Forest_Green.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-sand",
+   "sku": "swatch__FA-45",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-45_Signature_Microfibre_Sand.avif?v=1777425392"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-silver-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-silver-sage",
+   "sku": "swatch__FA-67",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-67_Signature_Microfibre_Silver_Sage.avif?v=1777425397"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-snow",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-snow",
+   "sku": "swatch__BEN-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-01_Crypton_Chenille_Snow_1X_93dcac9d-c70d-4433-ab9b-d2c9e77c41d9.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-cream",
+   "sku": "swatch__BEN-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-02_Crypton_Chenille_Cream_1X_64152f0a-1efa-4d2c-8d3a-82b8ac99dcba.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-dark-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-dark-teal",
+   "sku": "swatch__BEN-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-03_Crypton_Chenille_Dark_Teal_1X_297f2e4e-538a-4a15-9984-6f1db09d32a0.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-burnt-orange",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-burnt-orange",
+   "sku": "swatch__BEN-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-04_Crypton_Chenille_Burnt_Orange_1X_5022eba9-da20-4396-ac22-c4bd47bdb6f0.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-sunbrella®-canvas-flax",
+   "url": "https://comfort-works.com/products/fabric-samples-sunbrella®-canvas-flax",
+   "sku": "swatch__5492-0000",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/5492-0000_Sunbrella_Canvas_Flax.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-sunbrella®-fretwork-flax",
+   "url": "https://comfort-works.com/products/fabric-samples-sunbrella®-fretwork-flax",
+   "sku": "swatch__45991-0001",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/45991-0001_Sunbrella_Fretwork_Flax.avif?v=1777425394"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-classic-velvet-peach",
+   "url": "https://comfort-works.com/products/fabric-samples-classic-velvet-peach",
+   "sku": "swatch__FM-02P",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FM-02P_20Classic_20Velvet_20Peach_1X_1371728e-ddee-4af9-9e08-9e7b95f0d79b.jpg?v=1710488070"
+  },
+  {
+   "fabric": "USB1-CBL",
+   "handle": "smart-sofa-accessories-usb1-cbl",
+   "url": "https://comfort-works.com/products/smart-sofa-accessories-usb1-cbl",
+   "sku": "NOUSB",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/1_default_attaching-USB-port_f6887085-cc2d-42c5-bc84-b06604a01715.jpg?v=1689216295"
+  },
+  {
+   "fabric": null,
+   "handle": "unwind-left-right-arm-chair-slipcover",
+   "url": "https://comfort-works.com/products/unwind-left-right-arm-chair-slipcover",
+   "sku": "CB-UD-50M",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CB-UD-50M_L_CNRP_SP_CVC-01.jpg?v=1741320092"
+  },
+  {
+   "fabric": null,
+   "handle": "cooper-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/cooper-wooden-sofa-leg",
+   "sku": "LEG-CR__BK",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-CR__BK.jpg?v=1683617841"
+  },
+  {
+   "fabric": null,
+   "handle": "bailey-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/bailey-wooden-sofa-leg",
+   "sku": "BY__ch",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/bailey_wooden_sofa_leg_cherry_BY__ch.jpg?v=1718327199"
+  },
+  {
+   "fabric": null,
+   "handle": "stella-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/stella-wooden-sofa-leg",
+   "sku": "LEG-SA__WH",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-SA__WH.webp?v=1689910066"
+  },
+  {
+   "fabric": null,
+   "handle": "peroni-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/peroni-wooden-sofa-leg",
+   "sku": "LEG-PN__WH",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-PN__WH.webp?v=1689910053"
+  },
+  {
+   "fabric": null,
+   "handle": "flexifit-universal-couch-cushion-covers",
+   "url": "https://comfort-works.com/products/flexifit-universal-couch-cushion-covers",
+   "sku": "CW-FF-CC",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CW-FF-CC_SQ_8396_SP_EYL-35.webp?v=1755762125"
+  }
+ ]
+}

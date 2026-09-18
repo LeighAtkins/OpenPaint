@@ -1,0 +1,302 @@
+{
+ "handle": "ottoman-covers-crate-and-barrel",
+ "fetchedAt": "2026-09-18T05:37:46.114Z",
+ "count": 5,
+ "products": [
+  {
+   "handle": "axis-ii-ottoman-slipcover",
+   "title": "Axis II Ottoman Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-AS-32F",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-32F_VELC_PM_CVC-01.jpg?v=1741674054",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-32F_VELC_PM_CVC-01.jpg?v=1741674054",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_084_Crate_and_Barrel_Axis_II_sofa.jpg?v=1741674054",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_083_Crate_and_Barrel_Axis_II_sofa.jpg?v=1741674054"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:CB-AS",
+    "CB-AS-32F",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-AS-32F",
+    "FLT___Product_Ref__Old____CB_AS_0",
+    "FLT___Series_Code___AS",
+    "FLT___Series_Name___Axis",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:N/A",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Axis II",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-AS-32F",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-ii-37-ottoman-slipcover",
+   "title": "Lounge II 37\" Ottoman Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-37F",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-37F_LSKT_SP_CVC-01.jpg?v=1741320090",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-37F_LSKT_SP_CVC-01.jpg?v=1741320090",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_075_Crate_and_Barrel_Lounge_II_sofa.jpg?v=1741320090",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_080_Crate_and_Barrel_Lounge_II_sofa.jpg?v=1741320090"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-37F",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-LE-37F",
+    "FLT___Product_Ref__Old____CB_LE_0",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lounge_II",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Lounge II",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-37F",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "petrie-midcentury-ottoman-slipcover",
+   "title": "Petrie Midcentury Ottoman Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PE-34F",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PE-34F_VELC_PM_CVC-01_5a293b73-7f8a-4162-8b2f-282a05b75037.jpg?v=1742951011",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PE-34F_VELC_PM_CVC-01_5a293b73-7f8a-4162-8b2f-282a05b75037.jpg?v=1742951011",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_425_Crate_and_Barrel_Petrie_Midcentury_sofa.jpg?v=1742951011",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_130_Crate_and_Barrel_Petrie_Midcentury_sofa.jpg?v=1742951011"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:CB-PE",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:PB-Ottoman",
+    "CB-PE-34F",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-PE-34F",
+    "FLT___Product_Ref__Old____CB_PE_0",
+    "FLT___Series_Code___PE",
+    "FLT___Series_Name___Petrie_Midcentury",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Petrie Midcentury",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PE-34F",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "potomac-ottoman-slipcover",
+   "title": "Potomac Ottoman Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PC-32F",
+   "price": "119.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-32F_CNRP_SP_CVC-01.jpg?v=1741320104",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-32F_CNRP_SP_CVC-01.jpg?v=1741320104"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-PC",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:PB-Ottoman",
+    "CB-PC-32F",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Potomac",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PC-32F",
+     "price": "119.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "willow-modern-ottoman-and-a-half-slipcover",
+   "title": "Willow Modern Ottoman and a Half Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-WW-45F",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-45F_CNRP_PM_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-45F_CNRP_PM_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:CB-WW",
+    "categoryproducts:PB-Ottoman",
+    "CB-WW-45F",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "series:Willow"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-WW-45F",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

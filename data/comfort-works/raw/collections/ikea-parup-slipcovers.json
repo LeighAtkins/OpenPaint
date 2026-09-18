@@ -1,0 +1,160 @@
+{
+ "handle": "ikea-parup-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:03.541Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "parup-loveseat-cover",
+   "title": "Parup Loveseat Cover",
+   "vendor": "IKEA",
+   "sku": "IK-PRP-2",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-PRP-2_VELC_PM_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-PRP-2_VELC_PM_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_337_IKEA_Parup_sofa_e8ebd3a9-09ac-48ba-b254-97a2be4dea9b.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_338_IKEA_Parup_sofa_0f57caf9-918f-4358-86a9-e54ed9659d81.jpg?v=1741320129"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:PRP",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-PRP-2",
+    "FLT___Product_Ref__Old____PRP2",
+    "FLT___Series_Code___PRP",
+    "FLT___Series_Name___Parup",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-PRP-2",
+    "series:Parup"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-PRP-2",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "parup-sofa-cover",
+   "title": "Parup Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-PRP-3",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-PRP-3_VELC_PM_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-PRP-3_VELC_PM_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_338_IKEA_Parup_sofa.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_492_IKEA_Parup_sofa.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:PRP",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-PRP-3",
+    "FLT___Product_Ref__Old____PRP3",
+    "FLT___Series_Code___PRP",
+    "FLT___Series_Name___Parup",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "IK-PRP-3",
+    "series:Parup"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-PRP-3",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "parup-sofa-with-chaise-cover",
+   "title": "Parup Sofa with Chaise Cover",
+   "vendor": "IKEA",
+   "sku": "IK-PRP-25",
+   "price": "409.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-PRP-25_L_VELC_PM_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-PRP-25_L_VELC_PM_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_339_IKEA_Parup_sofa.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_337_IKEA_Parup_sofa.jpg?v=1741320129"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:PRP",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-PRP-25",
+    "FLT___Product_Ref__Old____PRP35",
+    "FLT___Series_Code___PRP",
+    "FLT___Series_Name___Parup",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-PRP-25",
+    "series:Parup"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-PRP-25",
+     "price": "409.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

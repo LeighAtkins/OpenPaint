@@ -1,0 +1,92 @@
+{
+ "handle": "mitchell-gold-bob-williams-nicki-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:28.698Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "nicki-chair-slipcover",
+   "title": "Nicki Chair Slipcover",
+   "vendor": "Mitchell Gold + Bob Williams",
+   "sku": "MG-NK-43",
+   "price": "549.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-NK-43_CNRP_PM_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-NK-43_CNRP_PM_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:MG",
+    "categoryproducts:MG-NK",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "MG-NK-43",
+    "series:Nicki",
+    "vendor:Mitchell Gold + Bob Williams"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MG-NK-43",
+     "price": "549.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nicki-88-sofa-slipcover",
+   "title": "Nicki 88\" Sofa Slipcover",
+   "vendor": "Mitchell Gold + Bob Williams",
+   "sku": "MG-NK-88",
+   "price": "959.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-NK-88_MLTP_PM_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MG-NK-88_MLTP_PM_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:MG",
+    "categoryproducts:MG-NK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "MG-NK-88",
+    "Mitchell Gold + Bob Williams",
+    "series:Nicki",
+    "vendor:Mitchell Gold + Bob Williams"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MG-NK-88",
+     "price": "959.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

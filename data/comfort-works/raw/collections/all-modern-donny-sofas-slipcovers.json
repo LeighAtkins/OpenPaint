@@ -1,0 +1,48 @@
+{
+ "handle": "all-modern-donny-sofas-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:39.959Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "donny-89-sofa-slipcover",
+   "title": "Donny 89\" Sofa Slipcover",
+   "vendor": "All Modern",
+   "sku": "AM-DY-89",
+   "price": "459.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AM-DY-89_VELC_SI_CVC-01.jpg?v=1741741760",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AM-DY-89_VELC_SI_CVC-01.jpg?v=1741741760"
+   ],
+   "tags": [
+    "All Modern",
+    "AM-DY-89",
+    "categoryproducts:AM",
+    "categoryproducts:AM-DY",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Donny"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AM-DY-89",
+     "price": "459.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

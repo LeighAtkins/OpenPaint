@@ -1,0 +1,281 @@
+{
+ "handle": "ikea-klippan-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:54.733Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "klippan-2-seater-sofa-cover",
+   "title": "Klippan 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KN-2",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-2_STD_SV_VELC_SP_CVC-01.jpg?v=1741741755",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-2_STD_SV_VELC_SP_CVC-01.jpg?v=1741741755"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KN-2",
+    "FLT___Product_Ref__Old____KN2",
+    "FLT___Series_Code___KN",
+    "FLT___Series_Name___Klippan",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___SDPT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Klippan_2_Seater_Version",
+    "FLT___Variant_1_Name___Klippan_Compact_2_Seater_Version",
+    "FLT___Variant_1_Type___Size",
+    "FLT___Variant_2_Name___The_fabric_version",
+    "FLT___Variant_2_Name___The_leather_version",
+    "FLT___Variant_2_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KN-2",
+    "important_notes:643",
+    "installation:618",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Klippan",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KN-2",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "klippan-armrest-protector-covers",
+   "title": "Klippan Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-KN-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-AP_SP_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-AP_SP_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KN-IKEA-Sofa-Cover-Klippan-Rouge-Emerald-Velvet-Blends-Couch-Slipcovers-2_d5ecc0be-5d9f-40b5-a334-4fea7402f5b7.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KN-IKEA-Sofa-Cover-Klippan-Shire-Mustard-Wool-Blends-Couch-Slipcovers-3_744ba130-de3e-4152-aca3-f594911e6e64.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:KN",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KN-AP",
+    "FLT___Product_Ref__Old____KN_AP",
+    "FLT___Series_Code___KN",
+    "FLT___Series_Name___Klippan",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-KN-AP",
+    "series:Klippan"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KN-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "klippan-4-seater-sofa-cover",
+   "title": "Klippan 4 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KN-4",
+   "price": "209.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-4_SV_VELC_SP_CVC-01.jpg?v=1741741756",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-4_SV_VELC_SP_CVC-01.jpg?v=1741741756",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KN2_02_E204.jpg?v=1741741756",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/KN2_01_E204.jpg?v=1741741756"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:KN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KN-4",
+    "FLT___Product_Ref__Old____KN4",
+    "FLT___Series_Code___KN",
+    "FLT___Series_Name___Klippan",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___SDPT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_fabric_version",
+    "FLT___Variant_1_Name___The_leather_version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KN-4",
+    "important_notes:643",
+    "installation:618",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Klippan",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KN-4",
+     "price": "209.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "klippan-footstool-cover",
+   "title": "Klippan Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KN-0",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-0_LV_VELC_SP_CVC-01.jpg?v=1741741764",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-0_LV_VELC_SP_CVC-01.jpg?v=1741741764",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_183_IKEA_Klippan_sofa_d72ade93-be28-4d2f-80db-b043dbcd3e5f.jpg?v=1741741764",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_184_IKEA_Klippan_sofa_61d04180-e704-4d60-b791-1998b666235f.jpg?v=1741741764"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:IK",
+    "categoryproducts:KN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KN-0",
+    "FLT___Product_Ref__Old____KN0",
+    "FLT___Series_Code___KN",
+    "FLT___Series_Name___Klippan",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_fabric_version",
+    "FLT___Variant_1_Name___The_leather_version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "IK-KN-0",
+    "important_notes:643",
+    "installation:618",
+    "main_arm_shape_categories:N/A",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Klippan",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KN-0",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

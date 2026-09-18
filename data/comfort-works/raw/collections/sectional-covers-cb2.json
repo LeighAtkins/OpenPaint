@@ -1,0 +1,180 @@
+{
+ "handle": "sectional-covers-cb2",
+ "fetchedAt": "2026-09-18T05:38:11.779Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "piazza-sofa-slipcover",
+   "title": "Piazza Sofa Slipcover",
+   "vendor": "CB2",
+   "sku": "CB2-PA-81X",
+   "price": "459.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB2-PA-81X_VELC_SP_CVC-01.jpg?v=1741320088",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB2-PA-81X_VELC_SP_CVC-01.jpg?v=1741320088",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_580_CB2_Piazza_sofa.jpg?v=1741320088",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_581_CB2_Piazza_sofa.jpg?v=1741320088"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:CB2-PA",
+    "CB2-PA-81X",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___CB2",
+    "FLT___Product_Ref__New____CB2-PA-81X",
+    "FLT___Product_Ref__Old____CB2_PA_81",
+    "FLT___Series_Code___PA",
+    "FLT___Series_Name___Piazza",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Piazza",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB2-PA-81X",
+     "price": "459.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "uno-sofa-cover",
+   "title": "Uno Sofa Cover",
+   "vendor": "CB2",
+   "sku": "CB2-UNO-65M",
+   "price": "369.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB2-UNO-65M_CB2-UNO-65M_L_VELC_SP_CVC-01.jpg?v=1744771731",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB2-UNO-65M_CB2-UNO-65M_L_VELC_SP_CVC-01.jpg?v=1744771731"
+   ],
+   "tags": [
+    "categoryproducts:CB2",
+    "categoryproducts:CB2-UNO",
+    "CB2-UNO-65M",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___CB2",
+    "FLT___Product_Ref__New____CB2-UNO-65M",
+    "FLT___Product_Ref__Old____CB2_UNO_65",
+    "FLT___Series_Code___UNO",
+    "FLT___Series_Name___Uno",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "series:Uno"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB2-UNO-65M",
+     "price": "369.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "uno-chaise-cover",
+   "title": "Uno Chaise Cover",
+   "vendor": "CB2",
+   "sku": "CB2-UNO-48M",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB2-UNO-48M_CB2-UNO-48M_R_VELC_SP_CVC-01.jpg?v=1744771661",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB2-UNO-48M_CB2-UNO-48M_R_VELC_SP_CVC-01.jpg?v=1744771661"
+   ],
+   "tags": [
+    "categoryproducts:CB2",
+    "categoryproducts:CB2-UNO",
+    "CB2-UNO-48M",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___CB2",
+    "FLT___Product_Ref__New____CB2-UNO-48M",
+    "FLT___Product_Ref__Old____CB2_UNO_48",
+    "FLT___Series_Code___UNO",
+    "FLT___Series_Name___Uno",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Uno"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB2-UNO-48M",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

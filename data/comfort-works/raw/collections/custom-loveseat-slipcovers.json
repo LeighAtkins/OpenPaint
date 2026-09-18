@@ -1,0 +1,427 @@
+{
+ "handle": "custom-loveseat-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:17.949Z",
+ "count": 8,
+ "products": [
+  {
+   "handle": "pre-order-only-boxed-seats-snug-fit-wedge-arm-loveseat-slipcover",
+   "title": "[PRE-ORDER ONLY] Boxed Seats Snug Fit Wedge Arm Loveseat Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS2B-WA-SHORT",
+   "price": "699.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-GH-3_SHRT_PM_YH1918-2.jpg?v=1678678252",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-GH-3_SHRT_PM_YH1918-2.jpg?v=1678678252",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365832178_3b139cda67_k_2cd11148-1cfb-4d9e-b39e-538f1f3bb033.jpg?v=1678678252",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365831678_07f89f6996_o_9f225234-5f85-44ff-9d28-0b446ca983ed.jpg?v=1678678252"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS2B-WA-SHORT",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS2B-WA-SHORT",
+    "FLT___Series_Code___CS2B",
+    "FLT___Size___Loveseat",
+    "FLT___Styles_Code___SHRT_PC",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___SNUG_PC",
+    "FLT___Styles_Code___SNUG_PM",
+    "FLT___Styles_Code___SNUG_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Loveseat Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS2B-WA-SHORT",
+     "price": "699.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pre-order-only-l-seats-long-skirt-round-arm-loveseat-slipcover",
+   "title": "[PRE-ORDER ONLY] L-seats Long Skirt Round Arm Loveseat Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS2L-RA-SKIRT",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-3_MLTP_PM_YH1918-2.jpg?v=1741660006",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-3_MLTP_PM_YH1918-2.jpg?v=1741660006",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50366526581_b59d4654ab_o_dc5b160f-60e8-415c-a6ef-a1274afb011d.jpg?v=1741660006",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/49959351507_3cd225ca3a_k_918c3110-bffc-4498-82b5-4af67328e6ab.jpg?v=1741660006"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS2L-RA-SKIRT",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS2L-RA-SKIRT",
+    "FLT___Series_Code___CS2L",
+    "FLT___Size___Loveseat",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Loveseat Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS2L-RA-SKIRT",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pre-order-only-boxed-seats-long-skirt-square-arm-loveseat-slipcover",
+   "title": "[PRE-ORDER ONLY] Boxed Seats Long Skirt Square Arm Loveseat Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS2B-SA-SKIRT",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-BSA-2_CNRP_PM_YH1918-2.jpg?v=1678678251",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-BSA-2_CNRP_PM_YH1918-2.jpg?v=1678678251",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/49959351507_3cd225ca3a_k.jpg?v=1678678251",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50366526581_b59d4654ab_o_12dc8865-9a33-416e-83c8-52ebfcc1663b.jpg?v=1678678251"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS2B-SA-SKIRT",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS2B-SA-SKIRT",
+    "FLT___Series_Code___CS2B",
+    "FLT___Size___Loveseat",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Loveseat Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS2B-SA-SKIRT",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pre-order-only-boxed-seats-long-skirt-round-arm-loveseat-slipcover",
+   "title": "[PRE-ORDER ONLY] Boxed Seats Long Skirt Round Arm Loveseat Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS2B-RA-SKIRT",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-BSC-2_CNRP_PM_YH1918-2.jpg?v=1678678251",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-BSC-2_CNRP_PM_YH1918-2.jpg?v=1678678251",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50366526581_b59d4654ab_o.jpg?v=1678678251",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/49959351507_3cd225ca3a_k_3e61b2ae-f745-4744-ad55-308ae3630a1b.jpg?v=1678678251"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS2B-RA-SKIRT",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS2B-RA-SKIRT",
+    "FLT___Series_Code___CS2B",
+    "FLT___Size___Loveseat",
+    "FLT___Styles_Code___CNRP_PC",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___LSKT_PC",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___MLTP_PC",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT___Styles_Code___MLTP_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Loveseat Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS2B-RA-SKIRT",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pre-order-only-boxed-seats-snug-fit-round-arm-loveseat-slipcover",
+   "title": "[PRE-ORDER ONLY] Boxed Seats Snug Fit Round Arm Loveseat Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS2B-RA-SHORT",
+   "price": "699.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-CR-3_SHRT_PM_YH1918-2_67e8a389-363c-4cfa-b01c-56f701a31dd0.jpg?v=1678678251",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/PB-CR-3_SHRT_PM_YH1918-2_67e8a389-363c-4cfa-b01c-56f701a31dd0.jpg?v=1678678251",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365832178_3b139cda67_k_621adf35-0d74-40c6-ac20-e7eab568daae.jpg?v=1678678251",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365831678_07f89f6996_o_16911987-91c4-4b39-aa08-1b3864176855.jpg?v=1678678251"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS2B-RA-SHORT",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS2B-RA-SHORT",
+    "FLT___Series_Code___CS2B",
+    "FLT___Size___Loveseat",
+    "FLT___Styles_Code___SHRT_PC",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___SNUG_PC",
+    "FLT___Styles_Code___SNUG_PM",
+    "FLT___Styles_Code___SNUG_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Loveseat Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS2B-RA-SHORT",
+     "price": "699.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pre-order-only-boxed-seats-snug-fit-square-arm-loveseat-slipcover",
+   "title": "[PRE-ORDER ONLY] Boxed Seats Snug Fit Square Arm Loveseat Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS2B-SA-SHORT",
+   "price": "699.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/CB-BT-78B_VELC_SP_YH1918-2.jpg?v=1678678251",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/CB-BT-78B_VELC_SP_YH1918-2.jpg?v=1678678251",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365832178_3b139cda67_k_f3c35fed-89f0-466f-a68e-d74db7f1cd7b.jpg?v=1678678251",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365831678_07f89f6996_o_bb915097-ad1c-481b-b7ca-70806ca9ac8a.jpg?v=1678678251"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS2B-SA-SHORT",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS2B-SA-SHORT",
+    "FLT___Series_Code___CS2B",
+    "FLT___Size___Loveseat",
+    "FLT___Styles_Code___SHRT_PC",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___SNUG_PC",
+    "FLT___Styles_Code___SNUG_PM",
+    "FLT___Styles_Code___SNUG_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Loveseat Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS2B-SA-SHORT",
+     "price": "699.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pre-order-only-l-seats-snug-fit-square-arm-loveseat-slipcover",
+   "title": "[PRE-ORDER ONLY] L-seats Snug Fit Square Arm Loveseat Slipcover",
+   "vendor": "Made to Measure",
+   "sku": "CS2L-SA-SHORT",
+   "price": "699.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GG-3_YH1918-2.jpg?v=1741659782",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-GG-3_YH1918-2.jpg?v=1741659782",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365832178_3b139cda67_k_81b73c86-06d4-4076-bfe4-a7c91f38d4e2.jpg?v=1741659782",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/products/50365831678_07f89f6996_o_0db1f77a-08f5-498a-832c-e9328de2ba08.jpg?v=1741659782"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS2L-SA-SHORT",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS2L-SA-SHORT",
+    "FLT___Series_Code___CS2L",
+    "FLT___Size___Loveseat",
+    "FLT___Styles_Code___SHRT_PC",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___SNUG_PC",
+    "FLT___Styles_Code___SNUG_PM",
+    "FLT___Styles_Code___SNUG_SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Loveseat Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS2L-SA-SHORT",
+     "price": "699.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "boxed-cushion-covers-only-for-loveseat",
+   "title": "Boxed Cushion Covers ONLY for Loveseat",
+   "vendor": "Made to Measure",
+   "sku": "CS2X-CC-SNUG",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-2_PM_YH1918-2.jpg?v=1725342499",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LG-2_PM_YH1918-2.jpg?v=1725342499"
+   ],
+   "tags": [
+    "categoryproducts:CS",
+    "CS2X-CC-SNUG",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___M2M",
+    "FLT___Product_Ref__New____CS2X-CC-SNUG",
+    "FLT___Series_Code___CS2X",
+    "FLT___Size___Loveseat",
+    "FLT___Styles_Code___PC",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "measurementsrequired",
+    "next_steps_m2m:662",
+    "series:Custom Loveseat Slipcovers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CS2X-CC-SNUG",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

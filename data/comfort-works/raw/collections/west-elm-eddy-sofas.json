@@ -1,0 +1,89 @@
+{
+ "handle": "west-elm-eddy-sofas",
+ "fetchedAt": "2026-09-18T05:38:38.343Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "eddy-82-sofa-slipcover",
+   "title": "Eddy 82\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-EY-82",
+   "price": "419.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_WE_WE-EY_WE-EY-82_WE-EY-82_LV_VELC_SP_CVC-01.jpg?v=1744956868",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_WE_WE-EY_WE-EY-82_WE-EY-82_LV_VELC_SP_CVC-01.jpg?v=1744956868"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-EY",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Eddy",
+    "WE-EY-82",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-EY-82",
+     "price": "419.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "eddy-90-2-piece-reversible-sectional-slipcover",
+   "title": "Eddy 90\" 2-Piece Reversible Sectional Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-EY-90-S",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-EY-90-S_VELC_SP_CVC-01.webp?v=1787902599",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-EY-90-S_VELC_SP_CVC-01.webp?v=1787902599"
+   ],
+   "tags": [
+    "categoryproducts:WE-EY",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Eddy",
+    "WE-EY-90-S"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-EY-90-S",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,89 @@
+{
+ "handle": "eilersen-rig-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:20.387Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "rig-centre-with-short-back-200-x-100-cm-slipcover",
+   "title": "Rig Centre With Short Back 200 X 100 CM Slipcover",
+   "vendor": "Eilersen",
+   "sku": "EN-RG-79M",
+   "price": "539.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EN-RG-79M_L_VELC_SP_CVC-01.jpg?v=1741320095",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EN-RG-79M_L_VELC_SP_CVC-01.jpg?v=1741320095"
+   ],
+   "tags": [
+    "categoryproducts:EN",
+    "categoryproducts:EN-RG",
+    "description:",
+    "Eilersen",
+    "EN-RG-79M",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Rig"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EN-RG-79M",
+     "price": "539.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "rig-chaiselong-with-arm-110-x-170-cm-slipcover",
+   "title": "Rig Chaiselong With Arm 110 X 170 CM Slipcover",
+   "vendor": "Eilersen",
+   "sku": "EN-RG-43M",
+   "price": "639.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EN-RG-43M_L_VELC_SP_CVC-01.jpg?v=1741320102",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EN-RG-43M_L_VELC_SP_CVC-01.jpg?v=1741320102"
+   ],
+   "tags": [
+    "categoryproducts:EN",
+    "categoryproducts:EN-RG",
+    "description:",
+    "Eilersen",
+    "EN-RG-43M",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Rig"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EN-RG-43M",
+     "price": "639.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

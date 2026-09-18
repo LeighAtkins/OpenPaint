@@ -1,0 +1,578 @@
+{
+ "handle": "sofa-covers-restoration-hardware",
+ "fetchedAt": "2026-09-18T05:38:31.231Z",
+ "count": 9,
+ "products": [
+  {
+   "handle": "covers-for-rh-collins-8ft-sofa",
+   "title": "Covers for RH Collins 8ft Sofa",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-CN-96",
+   "price": "1069.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CN-96_EXD_VELC_PM_CVC-01.jpg?v=1744676698",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CN-96_EXD_VELC_PM_CVC-01.jpg?v=1744676698"
+   ],
+   "tags": [
+    "categoryproducts:RH-Sofa",
+    "Covers for Restoration Hardware",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "RH-CN-96",
+    "series:Collins"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-CN-96",
+     "price": "1069.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "covers-for-rh-original-lancaster-7ft-sofa",
+   "title": "Covers for RH Original Lancaster 7ft Sofa",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-LCR-84",
+   "price": "989.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-LCR-84_LV_EXD_VELC_PM_CVC-01.jpg?v=1758608665",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-LCR-84_LV_EXD_VELC_PM_CVC-01.jpg?v=1758608665"
+   ],
+   "tags": [
+    "categoryproducts:RH-LCR",
+    "categoryproducts:RH-Sofa",
+    "Covers for Restoration Hardware",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "Restoration Hardware",
+    "RH-LCR-84",
+    "series:Lancaster"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-LCR-84",
+     "price": "989.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "covers-for-rh-maddox-8ft-sofa",
+   "title": "Covers for RH Maddox 8ft Sofa",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-MDX-96",
+   "price": "969.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-MDX-96_LV_EXD_VELC_PM_CVC-01.jpg?v=1744676699",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-MDX-96_LV_EXD_VELC_PM_CVC-01.jpg?v=1744676699"
+   ],
+   "tags": [
+    "categoryproducts:RH-MDX",
+    "categoryproducts:RH-Sofa",
+    "Covers for Restoration Hardware",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "Restoration Hardware",
+    "RH-MDX-96",
+    "series:Maddox"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-MDX-96",
+     "price": "969.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "covers-for-rh-belgian-slope-arm-8ft-sofa",
+   "title": "Covers for RH Belgian Slope Arm 8ft Sofa",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-BS-96",
+   "price": "969.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-BS-96-1C_EXD_CNRP_SP_CVC-01.jpg?v=1741320090",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-BS-96-1C_EXD_CNRP_SP_CVC-01.jpg?v=1741320090"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Slope Square Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Rounded Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RH-BS",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Restoration_Hardware",
+    "FLT___Product_Ref__New____RH-BS-96",
+    "FLT___Series_Code___BS",
+    "FLT___Series_Name___Belgian_Slope",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Variant_1_Name___Classic__37in",
+    "FLT___Variant_1_Name___Luxe__42in",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "RH-BS-96",
+    "series:Belgian Slope Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-BS-96",
+     "price": "969.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Title",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "covers-for-rh-maxwell-8ft-sofa",
+   "title": "Covers for RH Maxwell 8ft Sofa",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-ML-96",
+   "price": "819.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-ML-96-2C_EXD_VELC_SP_CVC-01.jpg?v=1741320091",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-ML-96-2C_EXD_VELC_SP_CVC-01.jpg?v=1741320091",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_664_Restoration_Hardware_Maxwell_sofa.jpg?v=1741320091",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_663_Restoration_Hardware_Maxwell_sofa.jpg?v=1741320091"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RH-ML",
+    "categoryproducts:RH-Sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Restoration_Hardware",
+    "FLT___Product_Ref__New____RH-ML-96",
+    "FLT___Product_Ref__Old____RH_ML_8_2C",
+    "FLT___Series_Code___ML",
+    "FLT___Series_Name___Maxwell",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Classic__40in",
+    "FLT___Variant_1_Name___Luxe__46in",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "RH-ML-96",
+    "series:Maxwell",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-ML-96",
+     "price": "819.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Title",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "covers-for-rh-belgian-track-arm-9ft-sofa",
+   "title": "Covers for RH Belgian Track Arm 9ft Sofa",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-BT-108",
+   "price": "1069.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-BT-108_EXD_CNRP_SP_CVC-01.jpg?v=1741320092",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-BT-108_EXD_CNRP_SP_CVC-01.jpg?v=1741320092",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_532_Restoration_Hardware_Belgian_Track_Arm_sofa_0494b13f-60ce-4e6b-8f1b-4e81a42a640f.jpg?v=1741320092",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_531_Restoration_Hardware_Belgian_Track_Arm_sofa_e5208bb9-5646-4c94-9a6d-2ede20aece86.jpg?v=1741320092"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RH-BT",
+    "categoryproducts:RH-Sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Outdoor",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Restoration_Hardware",
+    "FLT___Product_Ref__New____RH-BT-108",
+    "FLT___Product_Ref__Old____RH_BT_9",
+    "FLT___Series_Code___BT",
+    "FLT___Series_Name___Belgian_Track",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Variant_1_Name___Classic__37_?in",
+    "FLT___Variant_1_Name___Luxe__43_?in",
+    "FLT___Variant_1_Name___Petite__34in",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "RH-BT-108",
+    "series:Belgian Track Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-BT-108",
+     "price": "1069.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "covers-for-rh-belgian-slope-arm-9ft-sofa",
+   "title": "Covers for RH Belgian Slope Arm 9ft Sofa",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-BS-108",
+   "price": "969.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-BS-108_EXD_CNRP_SP_CVC-01.jpg?v=1741320089",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-BS-108_EXD_CNRP_SP_CVC-01.jpg?v=1741320089",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_530_Restoration_Hardware_Belgian_Slope_sofa.jpg?v=1741320089",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_651_Restoration_Hardware_Belgian_Slope_sofa.jpg?v=1741320089"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Slope Square Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Rounded Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RH-BS",
+    "categoryproducts:RH-Sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Restoration_Hardware",
+    "FLT___Product_Ref__New____RH-BS-108",
+    "FLT___Product_Ref__Old____RH_BS_9",
+    "FLT___Series_Code___BS",
+    "FLT___Series_Name___Belgian_Slope",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Variant_1_Name___Classic__37in",
+    "FLT___Variant_1_Name___Luxe__42in",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "RH-BS-108",
+    "series:Belgian Slope Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-BS-108",
+     "price": "969.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Title",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "belgian-classic-roll-arm-6ft-sofa-slipcover",
+   "title": "Belgian Classic Roll Arm 6ft Sofa Slipcover",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-BCRA-72",
+   "price": "849.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-BCRA-72-1C_EXD_CNRP_SP_CVC-01.jpg?v=1741320094",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-BCRA-72-1C_EXD_CNRP_SP_CVC-01.jpg?v=1741320094",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_527_Restoration_Hardware_Belgian_Classic_Roll_Arm_sofa.jpg?v=1741320094",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_528_Restoration_Hardware_Belgian_Classic_Roll_Arm_sofa.jpg?v=1741320094"
+   ],
+   "tags": [
+    "categoryproducts:RH-BCRA",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Restoration_Hardware",
+    "FLT___Product_Ref__New____RH-BCRA-72",
+    "FLT___Series_Code___BCRA",
+    "FLT___Series_Name___Belgian_Classic_Roll_Arm",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Variant_1_Name___Classic__41in",
+    "FLT___Variant_1_Name___Luxe__46in",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "RH-BCRA-72",
+    "series:Belgian Classic Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-BCRA-72",
+     "price": "849.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "belgian-track-arm-bench-seat-7ft-sofa-slipcover",
+   "title": "Belgian Track Arm Bench Seat 7ft Sofa",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-BT-84",
+   "price": "849.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-BT-84_EXD_CNRP_SP_CVC-01.jpg?v=1741320090",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-BT-84_EXD_CNRP_SP_CVC-01.jpg?v=1741320090",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_531_Restoration_Hardware_Belgian_Track_Arm_sofa.jpg?v=1741320090",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_532_Restoration_Hardware_Belgian_Track_Arm_sofa.jpg?v=1741320090"
+   ],
+   "tags": [
+    "categoryproducts:RH-BT",
+    "categoryproducts:RH-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Restoration_Hardware",
+    "FLT___Product_Ref__New____RH-BT-84",
+    "FLT___Product_Ref__Old____RH_BT_7",
+    "FLT___Series_Code___BT",
+    "FLT___Series_Name___Belgian_Track_Arm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Variant_1_Name___Classic__37_?in",
+    "FLT___Variant_1_Name___Luxe__43_?in",
+    "FLT___Variant_1_Name___Petite__34in",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "measurementsrequired",
+    "next_steps:648",
+    "RH-BT-84",
+    "series:Belgian Track Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-BT-84",
+     "price": "849.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

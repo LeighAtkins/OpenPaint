@@ -1,0 +1,244 @@
+{
+ "handle": "habitat-chester-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:25.357Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "chester-armchair-slipcover",
+   "title": "Chester Armchair slipcover",
+   "vendor": "Habitat",
+   "sku": "HT-CR-29",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-CR-29_VELC_SP_CVC-01.jpg?v=1741319716",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-CR-29_VELC_SP_CVC-01.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_564_Habitat_Chester_sofa.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_565_Habitat_Chester_sofa.jpg?v=1741319716"
+   ],
+   "tags": [
+    "categoryproducts:HT",
+    "categoryproducts:HT-CR",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Habitat_",
+    "FLT___Product_Ref__New____HT-CR-29",
+    "FLT___Product_Ref__Old____HT_CR_1",
+    "FLT___Series_Code___CR",
+    "FLT___Series_Name___Chester",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "HT-CR-29",
+    "series:Chester"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "HT-CR-29",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "chester-2-seater-sofa-slipcover",
+   "title": "Chester 2 seater sofa slipcover",
+   "vendor": "Habitat",
+   "sku": "HT-CR-67",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-CR-67_VELC_SP_CVC-01.jpg?v=1741319716",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-CR-67_VELC_SP_CVC-01.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_593_Habitat_Chester_sofa.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_567_Habitat_Chester_sofa.jpg?v=1741319716"
+   ],
+   "tags": [
+    "categoryproducts:HT",
+    "categoryproducts:HT-CR",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Habitat_",
+    "FLT___Product_Ref__New____HT-CR-67",
+    "FLT___Product_Ref__Old____HT_CR_2",
+    "FLT___Series_Code___CR",
+    "FLT___Series_Name___Chester",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "HT-CR-67",
+    "series:Chester"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "HT-CR-67",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "chester-3-seater-sofa-slipcover",
+   "title": "Chester 3 seater sofa slipcover",
+   "vendor": "Habitat",
+   "sku": "HT-CR-79",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-CR-79_VELC_SP_CVC-01.jpg?v=1741319716",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-CR-79_VELC_SP_CVC-01.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_565_Habitat_Chester_sofa_1c85fe6d-3d3f-438d-bb87-55b884b210c9.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_566_Habitat_Chester_sofa_135edb03-7baa-497d-85ac-80b1082543bc.jpg?v=1741319716"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:HT",
+    "categoryproducts:HT-CR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Habitat_",
+    "FLT___Product_Ref__New____HT-CR-79",
+    "FLT___Product_Ref__Old____HT_CR_3",
+    "FLT___Series_Code___CR",
+    "FLT___Series_Name___Chester",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "HT-CR-79",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Chester",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "HT-CR-79",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "chester-compact-sofa-slipcover",
+   "title": "Chester Compact sofa slipcover",
+   "vendor": "Habitat",
+   "sku": "HT-CR-47",
+   "price": "239.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-CR-47_VELC_SP_CVC-01.jpg?v=1741319716",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-CR-47_VELC_SP_CVC-01.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_564_Habitat_Chester_sofa_8a97a1be-f62c-4195-899c-444abf71b9d5.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_566_Habitat_Chester_sofa.jpg?v=1741319716"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:HT",
+    "categoryproducts:HT-CR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Habitat_",
+    "FLT___Product_Ref__New____HT-CR-47",
+    "FLT___Product_Ref__Old____HT_CR_15",
+    "FLT___Series_Code___CR",
+    "FLT___Series_Name___Chester",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "HT-CR-47",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Chester",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "HT-CR-47",
+     "price": "239.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

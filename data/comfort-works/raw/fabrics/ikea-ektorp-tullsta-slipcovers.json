@@ -1,0 +1,1212 @@
+{
+ "handle": "ikea-ektorp-tullsta-slipcovers",
+ "representative": "ektorp-armchair-tullsta-cover",
+ "hubLinks": [
+  "\\/pages\\/fabrics-hypoallergenic-collection-everyday-cotton",
+  "\\/pages\\/fabrics-cozy-collection-everyday-velvet",
+  "\\/pages\\/fabrics-starter-collection-everyday-weave",
+  "\\/pages\\/fabrics-performance-collection-signature-velvet",
+  "\\/pages\\/fabrics-pet-friendly-collection-signature-microfiber",
+  "\\/pages\\/fabrics-performance-collection-sunbrella"
+ ],
+ "fabricCount": 133,
+ "fabrics": [
+  {
+   "fabric": null,
+   "handle": "ektorp-armchair-tullsta-cover",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover",
+   "sku": "IK-EP-1TA",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_CVC-01.jpg?v=1741320111"
+  },
+  {
+   "fabric": "Care+ Canvas Ash",
+   "handle": "ektorp-armchair-tullsta-cover-care-canvas-ash",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-care-canvas-ash",
+   "sku": "IK-EP-1TA__CNRP_PM__SUN-C13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_e51f313f-417a-4b4e-b36b-33a95d546332.jpg?v=1727235558"
+  },
+  {
+   "fabric": "Care+ Canvas Beige",
+   "handle": "ektorp-armchair-tullsta-cover-care-canvas-beige",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-care-canvas-beige",
+   "sku": "IK-EP-1TA__CNRP_PM__SUN-C38",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Canvas Sage",
+   "handle": "ektorp-armchair-tullsta-cover-care-canvas-sage",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-care-canvas-sage",
+   "sku": "IK-EP-1TA__CNRP_PM__SUN-C10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_5b417acc-33b9-4b22-b442-925766dddfba.jpg?v=1727235555"
+  },
+  {
+   "fabric": "Care+ Canvas Snow",
+   "handle": "ektorp-armchair-tullsta-cover-care-canvas-snow",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-care-canvas-snow",
+   "sku": "IK-EP-1TA__CNRP_PM__SUN-C31",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen Cream",
+   "handle": "ektorp-armchair-tullsta-cover-care-linen-cream",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-care-linen-cream",
+   "sku": "IK-EP-1TA__CNRP_PM__COS-103",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen Natural",
+   "handle": "ektorp-armchair-tullsta-cover-care-linen-natural",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-care-linen-natural",
+   "sku": "IK-EP-1TA__CNRP_PM__COS-105",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen White",
+   "handle": "ektorp-armchair-tullsta-cover-care-linen-white",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-care-linen-white",
+   "sku": "IK-EP-1TA__CNRP_PM__COS-101",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Tweed Amber",
+   "handle": "ektorp-armchair-tullsta-cover-care-tweed-amber",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-care-tweed-amber",
+   "sku": "IK-EP-1TA__CNRP_PM__SUN-T04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_SUN-T04_fcfa3f6d-5736-4741-aeb5-db035a69e05a.jpg?v=1727235284"
+  },
+  {
+   "fabric": "Care+ Tweed Mineral Blue",
+   "handle": "ektorp-armchair-tullsta-cover-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-care-tweed-mineral-blue",
+   "sku": "IK-EP-1TA__CNRP_PM__SUN-T10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_SUN-T10_ada73eae-534a-4b94-8691-0a2188a0458b.jpg?v=1727235291"
+  },
+  {
+   "fabric": "Care+ Tweed Sunset",
+   "handle": "ektorp-armchair-tullsta-cover-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-care-tweed-sunset",
+   "sku": "IK-EP-1TA__CNRP_PM__SUN-T06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_SUN-T06_60ce0468-6da2-4e29-9796-cc5d13901052.jpg?v=1727235269"
+  },
+  {
+   "fabric": "Care+ Tweed Teal",
+   "handle": "ektorp-armchair-tullsta-cover-care-tweed-teal",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-care-tweed-teal",
+   "sku": "IK-EP-1TA__CNRP_PM__SUN-T12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_SUN-T12_4d12abf9-02c0-4a63-9826-1bab66618e56.jpg?v=1727235285"
+  },
+  {
+   "fabric": "Classic Velvet Peach",
+   "handle": "ektorp-armchair-tullsta-cover-classic-velvet-peach",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-classic-velvet-peach",
+   "sku": "IK-EP-1TA__CNRP_PM__FM-02P",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_FM-02P_21dd93e4-9838-4eda-a719-05d2235851c8.jpg?v=1725302097"
+  },
+  {
+   "fabric": "Crypton® Chenille Burnt Orange",
+   "handle": "ektorp-armchair-tullsta-cover-crypton®-chenille-burnt-orange",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-crypton®-chenille-burnt-orange",
+   "sku": "IK-EP-1TA__CNRP_PM__BEN-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Cream",
+   "handle": "ektorp-armchair-tullsta-cover-crypton®-chenille-cream",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-crypton®-chenille-cream",
+   "sku": "IK-EP-1TA__CNRP_PM__BEN-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Dark Teal",
+   "handle": "ektorp-armchair-tullsta-cover-crypton®-chenille-dark-teal",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-crypton®-chenille-dark-teal",
+   "sku": "IK-EP-1TA__CNRP_PM__BEN-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Snow",
+   "handle": "ektorp-armchair-tullsta-cover-crypton®-chenille-snow",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-crypton®-chenille-snow",
+   "sku": "IK-EP-1TA__CNRP_PM__BEN-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Charcoal",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-cotton-charcoal",
+   "sku": "IK-EP-1TA__CNRP_PM__CVC-07",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Forest Green",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-cotton-forest-green",
+   "sku": "IK-EP-1TA__CNRP_PM__CVC-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Khaki",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-cotton-khaki",
+   "sku": "IK-EP-1TA__CNRP_PM__CVC-08",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Pebble",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-cotton-pebble",
+   "sku": "IK-EP-1TA__CNRP_PM__CVC-06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_CVC-06.jpg?v=1743060220"
+  },
+  {
+   "fabric": "Everyday Cotton Sand",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-cotton-sand",
+   "sku": "IK-EP-1TA__CNRP_PM__CVC-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Silver Sage",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-cotton-silver-sage",
+   "sku": "IK-EP-1TA__CNRP_PM__CVC-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton White",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-cotton-white",
+   "sku": "IK-EP-1TA__CNRP_PM__CVC-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Cacao",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-velvet-cacao",
+   "sku": "IK-EP-1TA__CNRP_PM__ROYAL-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Dark Teal",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-velvet-dark-teal",
+   "sku": "IK-EP-1TA__CNRP_PM__ROYAL-13",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Navy",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-velvet-navy",
+   "sku": "IK-EP-1TA__CNRP_PM__ROYAL-14",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Sand",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-velvet-sand",
+   "sku": "IK-EP-1TA__CNRP_PM__ROYAL-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Storm",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-velvet-storm",
+   "sku": "IK-EP-1TA__CNRP_PM__ROYAL-20",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Weave Basil Green",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-weave-basil-green",
+   "sku": "IK-EP-1TA__CNRP_PM__EYL-47",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_EYL-47_d6c5ff33-37c7-4476-8645-60ad2d519a51.jpg?v=1725302068"
+  },
+  {
+   "fabric": "Everyday Weave Cream",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-weave-cream",
+   "sku": "IK-EP-1TA__CNRP_PM__EYL-35",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_EYL-35_cf89367a-5ce0-4207-8eda-2edecd9cef24.jpg?v=1725302062"
+  },
+  {
+   "fabric": "Everyday Weave Maroon",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-weave-maroon",
+   "sku": "IK-EP-1TA__CNRP_PM__EYL-38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_EYL-38_fde5dd73-db95-45e3-bb92-f05921b2631e.jpg?v=1725302071"
+  },
+  {
+   "fabric": "Everyday Weave Navy",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-weave-navy",
+   "sku": "IK-EP-1TA__CNRP_PM__EYL-44",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_EYL-44_ff1d913a-7084-408f-9f4b-dec0f7cfb53d.jpg?v=1725302077"
+  },
+  {
+   "fabric": "Everyday Weave Pebble",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-weave-pebble",
+   "sku": "IK-EP-1TA__CNRP_PM__EYL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_EYL-20_dbbf8e56-7ff9-484d-b07a-e03aa4a96b07.jpg?v=1725302055"
+  },
+  {
+   "fabric": "Everyday Weave Rust",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-weave-rust",
+   "sku": "IK-EP-1TA__CNRP_PM__EYL-39",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_EYL-39_8fe83696-4c10-4d9f-9b13-26874fec35e3.jpg?v=1725302074"
+  },
+  {
+   "fabric": "Everyday Weave Storm",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-weave-storm",
+   "sku": "IK-EP-1TA__CNRP_PM__EYL-24",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_EYL-24_d00333df-d290-4c4d-80f4-cd039a90eb90.jpg?v=1725302059"
+  },
+  {
+   "fabric": "Everyday Weave Teal",
+   "handle": "ektorp-armchair-tullsta-cover-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-everyday-weave-teal",
+   "sku": "IK-EP-1TA__CNRP_PM__EYL-43",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_EYL-43_0ff0ef96-7894-4bd5-b2cf-c469e45468d9.jpg?v=1725302065"
+  },
+  {
+   "fabric": "Mod Boucle Amber",
+   "handle": "ektorp-armchair-tullsta-cover-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-mod-boucle-amber",
+   "sku": "IK-EP-1TA__CNRP_PM__MOSS-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_MOSS-09_72556127-b54d-443f-a806-810970d1e26d.jpg?v=1725301902"
+  },
+  {
+   "fabric": "Mod Boucle Charcoal",
+   "handle": "ektorp-armchair-tullsta-cover-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-mod-boucle-charcoal",
+   "sku": "IK-EP-1TA__CNRP_PM__MOSS-97",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_MOSS-97_9a5f3fb4-8172-448c-9820-9f560dc44b5a.jpg?v=1725301908"
+  },
+  {
+   "fabric": "Mod Boucle Cream",
+   "handle": "ektorp-armchair-tullsta-cover-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-mod-boucle-cream",
+   "sku": "IK-EP-1TA__CNRP_PM__MOSS-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_MOSS-01_cf5cad29-d1a8-4d0f-86d6-cc9399548d77.jpg?v=1725301899"
+  },
+  {
+   "fabric": "Mod Boucle Oatmeal",
+   "handle": "ektorp-armchair-tullsta-cover-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-mod-boucle-oatmeal",
+   "sku": "IK-EP-1TA__CNRP_PM__MOSS-40",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_MOSS-40_e84fe34b-69f6-4fbe-80ab-c7ba2775966c.jpg?v=1725301905"
+  },
+  {
+   "fabric": "Mod Chenille Beige",
+   "handle": "ektorp-armchair-tullsta-cover-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-mod-chenille-beige",
+   "sku": "IK-EP-1TA__CNRP_PM__ESTE-52",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_ESTE-52_bdc985fe-870d-4860-bba7-82c8e6870878.jpg?v=1725301875"
+  },
+  {
+   "fabric": "Mod Chenille Denim",
+   "handle": "ektorp-armchair-tullsta-cover-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-mod-chenille-denim",
+   "sku": "IK-EP-1TA__CNRP_PM__ESTE-78",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_ESTE-78_7a2e969e-6d18-4c17-bd88-a7580225faf5.jpg?v=1725301884"
+  },
+  {
+   "fabric": "Mod Chenille Espresso",
+   "handle": "ektorp-armchair-tullsta-cover-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-mod-chenille-espresso",
+   "sku": "IK-EP-1TA__CNRP_PM__ESTE-57",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_ESTE-57_9d0d24bf-c60d-4e44-9095-77dc60db487d.jpg?v=1725301881"
+  },
+  {
+   "fabric": "Mod Chenille Mist",
+   "handle": "ektorp-armchair-tullsta-cover-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-mod-chenille-mist",
+   "sku": "IK-EP-1TA__CNRP_PM__ESTE-92",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_ESTE-92_da93e26c-310c-4333-8abb-2e53f50be916.jpg?v=1725301887"
+  },
+  {
+   "fabric": "Signature Microfiber Caramel",
+   "handle": "ektorp-armchair-tullsta-cover-signature-microfiber-caramel",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-microfiber-caramel",
+   "sku": "IK-EP-1TA__CNRP_PM__FA-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_FA-09_324e1547-59c8-44df-9932-f15e9dcfde70.jpg?v=1725301919"
+  },
+  {
+   "fabric": "Signature Microfiber Coral",
+   "handle": "ektorp-armchair-tullsta-cover-signature-microfiber-coral",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-microfiber-coral",
+   "sku": "IK-EP-1TA__CNRP_PM__FA-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_FA-14_f51fbfd0-f148-450d-9796-34a11db910a3.jpg?v=1725301929"
+  },
+  {
+   "fabric": "Signature Microfiber Cream",
+   "handle": "ektorp-armchair-tullsta-cover-signature-microfiber-cream",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-microfiber-cream",
+   "sku": "IK-EP-1TA__CNRP_PM__FA-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_FA-01_d9456d9a-2488-4fce-aeb7-96bb390b162e.jpg?v=1725301915"
+  },
+  {
+   "fabric": "Signature Microfiber Dark Coral",
+   "handle": "ektorp-armchair-tullsta-cover-signature-microfiber-dark-coral",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-microfiber-dark-coral",
+   "sku": "IK-EP-1TA__CNRP_PM__FA-54",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_FA-54_c310ea67-cef0-4d89-a9ed-7558e193486d.jpg?v=1725301932"
+  },
+  {
+   "fabric": "Signature Microfiber Forest Green",
+   "handle": "ektorp-armchair-tullsta-cover-signature-microfiber-forest-green",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-microfiber-forest-green",
+   "sku": "IK-EP-1TA__CNRP_PM__FA-63",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_FA-63_270c7757-9a1c-45a7-aeac-573005757b72.jpg?v=1725301926"
+  },
+  {
+   "fabric": "Signature Microfiber Sand",
+   "handle": "ektorp-armchair-tullsta-cover-signature-microfiber-sand",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-microfiber-sand",
+   "sku": "IK-EP-1TA__CNRP_PM__FA-45",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_FA-45_260ff78a-e6c2-4b22-890d-b4a0af733363.jpg?v=1725301911"
+  },
+  {
+   "fabric": "Signature Microfiber Silver Sage",
+   "handle": "ektorp-armchair-tullsta-cover-signature-microfiber-silver-sage",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-microfiber-silver-sage",
+   "sku": "IK-EP-1TA__CNRP_PM__FA-67",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_FA-67_9f02c219-f8c9-419d-93de-04ef4bba3eea.jpg?v=1725301922"
+  },
+  {
+   "fabric": "Signature Velvet Bayleaf",
+   "handle": "ektorp-armchair-tullsta-cover-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-velvet-bayleaf",
+   "sku": "IK-EP-1TA__CNRP_PM__PAL-11",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Caramel",
+   "handle": "ektorp-armchair-tullsta-cover-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-velvet-caramel",
+   "sku": "IK-EP-1TA__CNRP_PM__PAL-09",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Cream",
+   "handle": "ektorp-armchair-tullsta-cover-signature-velvet-cream",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-velvet-cream",
+   "sku": "IK-EP-1TA__CNRP_PM__PAL-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Eucalyptus",
+   "handle": "ektorp-armchair-tullsta-cover-signature-velvet-eucalyptus",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-velvet-eucalyptus",
+   "sku": "IK-EP-1TA__CNRP_PM__PAL-14",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Hazel",
+   "handle": "ektorp-armchair-tullsta-cover-signature-velvet-hazel",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-velvet-hazel",
+   "sku": "IK-EP-1TA__CNRP_PM__PAL-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Midnight",
+   "handle": "ektorp-armchair-tullsta-cover-signature-velvet-midnight",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-velvet-midnight",
+   "sku": "IK-EP-1TA__CNRP_PM__PAL-12",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Natural",
+   "handle": "ektorp-armchair-tullsta-cover-signature-velvet-natural",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-velvet-natural",
+   "sku": "IK-EP-1TA__CNRP_PM__PAL-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Sand",
+   "handle": "ektorp-armchair-tullsta-cover-signature-velvet-sand",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-velvet-sand",
+   "sku": "IK-EP-1TA__CNRP_PM__PAL-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Sunset",
+   "handle": "ektorp-armchair-tullsta-cover-signature-velvet-sunset",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-signature-velvet-sunset",
+   "sku": "IK-EP-1TA__CNRP_PM__PAL-07",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Sunbrella® Canvas Flax",
+   "handle": "ektorp-armchair-tullsta-cover-sunbrella®-canvas-flax",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-sunbrella®-canvas-flax",
+   "sku": "IK-EP-1TA__CNRP_PM__5492-0000",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_5492-0000_5aacf893-813b-46d4-adf6-4f941b8a7cfe.jpg?v=1725302020"
+  },
+  {
+   "fabric": "Sunbrella® Fretwork Flax",
+   "handle": "ektorp-armchair-tullsta-cover-sunbrella®-fretwork-flax",
+   "url": "https://comfort-works.com/products/ektorp-armchair-tullsta-cover-sunbrella®-fretwork-flax",
+   "sku": "IK-EP-1TA__CNRP_PM__45991-0001",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-EP-1TA_CNRP_PM_45991-0001_10fd60f3-1850-4924-9280-b87ae15a593a.jpg?v=1725302005"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-teal",
+   "sku": "swatch__EYL-43",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-43_Everyday_Weave_Teal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-storm",
+   "sku": "swatch__EYL-24",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-24_Everyday_Weave_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-rust",
+   "sku": "swatch__EYL-39",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-39_Everyday_Weave_Rust.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-pebble",
+   "sku": "swatch__EYL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-20_Everyday_Weave_Pebble.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-navy",
+   "sku": "swatch__EYL-44",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-44_Everyday_Weave_Navy.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-maroon",
+   "sku": "swatch__EYL-38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-38_Everyday_Weave_Maroon.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-cream",
+   "sku": "swatch__EYL-35",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-35_Everyday_Weave_Cream.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-basil-green",
+   "sku": "swatch__EYL-47",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-47_Everyday_Weave_Basil_Green.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-white",
+   "sku": "swatch__CVC-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/TC-01_Everyday_Cotton_White_1X_1.jpg?v=1718092472"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-sand",
+   "sku": "swatch__CVC-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-02_Everyday_Cotton_Sand.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-silver-sage",
+   "sku": "swatch__CVC-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-03_Everyday_Cotton_Silver_Sage.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-forest-green",
+   "sku": "swatch__CVC-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-04_Everyday_Cotton_Forest_Green.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-navy",
+   "sku": "swatch__CVC-05",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-05.jpg?v=1785723660"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-pebble",
+   "sku": "swatch__CVC-06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-06_Everyday_Cotton_Pebble.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-charcoal",
+   "sku": "swatch__CVC-07",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-07_Everyday_Cotton_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-khaki",
+   "sku": "swatch__CVC-08",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-08_Everyday_Cotton_Khaki.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-cacao",
+   "sku": "swatch__ROYAL-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-04_Everyday_Velvet_Cacao.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-dark-teal",
+   "sku": "swatch__ROYAL-13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-13_Everyday_Velvet_Dark_Teal.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-navy",
+   "sku": "swatch__ROYAL-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-14_Everyday_Velvet_Navy.avif?v=1777425396"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-sand",
+   "sku": "swatch__ROYAL-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-03_Everyday_Velvet_Sand.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-storm",
+   "sku": "swatch__ROYAL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-20_Everyday_Velvet_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-sage",
+   "sku": "swatch__SUN-C10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/SUN-C10_Performance-Canvas-Sage_1080x1080_22f090cb-fce4-4f4f-bc62-d6af2bb93957.png?v=1702022331"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-ash",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-ash",
+   "sku": "swatch__SUN-C13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C13_Care_Canvas_Ash.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-beige",
+   "sku": "swatch__SUN-C38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C38_Care_Canvas_Beige.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-snow",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-snow",
+   "sku": "swatch__SUN-C31",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C31_Care_Canvas_Snow.avif?v=1777425376"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-teal",
+   "sku": "swatch__SUN-T12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T12_Care_Tweed_Teal.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-sunset",
+   "sku": "swatch__SUN-T06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T06_Care_Tweed_Sunset.avif?v=1777425402"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-mineral-blue",
+   "sku": "swatch__SUN-T10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T10_Care_Tweed_Mineral_Blue.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-amber",
+   "sku": "swatch__SUN-T04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T04_Care_Tweed_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-mist",
+   "sku": "swatch__ESTE-92",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-92_Mod_Chenille_Mist.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-espresso",
+   "sku": "swatch__ESTE-57",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-57ModChenilleCacao_1X_dac9a2ae-b3ad-4656-a8be-dd44b643f5d5.jpg?v=1723009282"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-denim",
+   "sku": "swatch__ESTE-78",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-78_Mod_Chenille_Denim.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-beige",
+   "sku": "swatch__ESTE-52",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-52_Mod_Chenille_Beige.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-amber",
+   "sku": "swatch__MOSS-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-09_Mod_Boucle_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-charcoal",
+   "sku": "swatch__MOSS-97",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-97_Mod_Boucle_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-cream",
+   "sku": "swatch__MOSS-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-01_Mod_Boucle_Cream.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-oatmeal",
+   "sku": "swatch__MOSS-40",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-40_Mod_Boucle_Oatmeal.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-white",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-white",
+   "sku": "swatch__COS-101",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-101_Care_Linen_White.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-cream",
+   "sku": "swatch__COS-103",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-103_Care_Linen_Cream.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-natural",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-natural",
+   "sku": "swatch__COS-105",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-105_Care_Linen_Natural.avif?v=1777425397"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-bayleaf",
+   "sku": "swatch__PAL-11",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-11_Signature_Velvet_Bayleaf.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-caramel",
+   "sku": "swatch__PAL-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-09_Signature_Velvet_Caramel.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-cream",
+   "sku": "swatch__PAL-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-01_Signature_Velvet_Cream.avif?v=1777425379"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-eucalyptus",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-eucalyptus",
+   "sku": "swatch__PAL-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-14_Signature_Velvet_Eucalyptus.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-hazel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-hazel",
+   "sku": "swatch__PAL-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-04_Signature_Velvet_Hazel.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-natural",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-natural",
+   "sku": "swatch__PAL-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-02_Signature_Velvet_Natural.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-sand",
+   "sku": "swatch__PAL-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-03_Signature_Velvet_Sand.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-sunset",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-sunset",
+   "sku": "swatch__PAL-07",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-07_Signature_Velvet_Sunset.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-midnight",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-midnight",
+   "sku": "swatch__PAL-12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-12_Signature_Velvet_Midnight.avif?v=1777425381"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-caramel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-caramel",
+   "sku": "swatch__FA-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-09_Signature_Microfibre_Caramel.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-coral",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-coral",
+   "sku": "swatch__FA-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-14_Signature_Microfibre_Coral.avif?v=1777425387"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-cream",
+   "sku": "swatch__FA-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-01_Signature_Microfibre_Cream.avif?v=1777425377"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-dark-coral",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-dark-coral",
+   "sku": "swatch__FA-54",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-54_Signature_Microfibre_Dark_Coral.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-forest-green",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-forest-green",
+   "sku": "swatch__FA-63",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-63_Signature_Microfibre_Forest_Green.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-sand",
+   "sku": "swatch__FA-45",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-45_Signature_Microfibre_Sand.avif?v=1777425392"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-silver-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-silver-sage",
+   "sku": "swatch__FA-67",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-67_Signature_Microfibre_Silver_Sage.avif?v=1777425397"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-snow",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-snow",
+   "sku": "swatch__BEN-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-01_Crypton_Chenille_Snow_1X_93dcac9d-c70d-4433-ab9b-d2c9e77c41d9.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-cream",
+   "sku": "swatch__BEN-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-02_Crypton_Chenille_Cream_1X_64152f0a-1efa-4d2c-8d3a-82b8ac99dcba.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-dark-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-dark-teal",
+   "sku": "swatch__BEN-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-03_Crypton_Chenille_Dark_Teal_1X_297f2e4e-538a-4a15-9984-6f1db09d32a0.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-burnt-orange",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-burnt-orange",
+   "sku": "swatch__BEN-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-04_Crypton_Chenille_Burnt_Orange_1X_5022eba9-da20-4396-ac22-c4bd47bdb6f0.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-sunbrella®-canvas-flax",
+   "url": "https://comfort-works.com/products/fabric-samples-sunbrella®-canvas-flax",
+   "sku": "swatch__5492-0000",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/5492-0000_Sunbrella_Canvas_Flax.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-sunbrella®-fretwork-flax",
+   "url": "https://comfort-works.com/products/fabric-samples-sunbrella®-fretwork-flax",
+   "sku": "swatch__45991-0001",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/45991-0001_Sunbrella_Fretwork_Flax.avif?v=1777425394"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-classic-velvet-peach",
+   "url": "https://comfort-works.com/products/fabric-samples-classic-velvet-peach",
+   "sku": "swatch__FM-02P",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FM-02P_20Classic_20Velvet_20Peach_1X_1371728e-ddee-4af9-9e08-9e7b95f0d79b.jpg?v=1710488070"
+  },
+  {
+   "fabric": "USB1-CBL",
+   "handle": "smart-sofa-accessories-usb1-cbl",
+   "url": "https://comfort-works.com/products/smart-sofa-accessories-usb1-cbl",
+   "sku": "NOUSB",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/1_default_attaching-USB-port_f6887085-cc2d-42c5-bc84-b06604a01715.jpg?v=1689216295"
+  },
+  {
+   "fabric": null,
+   "handle": "solsta-olarp-armchair-cover",
+   "url": "https://comfort-works.com/products/solsta-olarp-armchair-cover",
+   "sku": "IK-SA-1",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-SA-1_CNRP_PM_CVC-01.jpg?v=1741320123"
+  },
+  {
+   "fabric": null,
+   "handle": "cooper-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/cooper-wooden-sofa-leg",
+   "sku": "LEG-CR__BK",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-CR__BK.jpg?v=1683617841"
+  },
+  {
+   "fabric": null,
+   "handle": "bailey-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/bailey-wooden-sofa-leg",
+   "sku": "BY__ch",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/bailey_wooden_sofa_leg_cherry_BY__ch.jpg?v=1718327199"
+  },
+  {
+   "fabric": null,
+   "handle": "stella-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/stella-wooden-sofa-leg",
+   "sku": "LEG-SA__WH",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-SA__WH.webp?v=1689910066"
+  },
+  {
+   "fabric": null,
+   "handle": "peroni-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/peroni-wooden-sofa-leg",
+   "sku": "LEG-PN__WH",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-PN__WH.webp?v=1689910053"
+  },
+  {
+   "fabric": null,
+   "handle": "flexifit-universal-couch-cushion-covers",
+   "url": "https://comfort-works.com/products/flexifit-universal-couch-cushion-covers",
+   "sku": "CW-FF-CC",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CW-FF-CC_SQ_8396_SP_EYL-35.webp?v=1755762125"
+  }
+ ]
+}

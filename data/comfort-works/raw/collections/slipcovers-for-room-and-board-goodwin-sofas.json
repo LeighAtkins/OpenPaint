@@ -1,0 +1,49 @@
+{
+ "handle": "slipcovers-for-room-and-board-goodwin-sofas",
+ "fetchedAt": "2026-09-18T05:38:18.563Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "goodwin-70-sofa-slipcover",
+   "title": "Goodwin 70\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-GN-70",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-GN-70_LV_VELC_PM_CVC-01.webp?v=1784191856",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-GN-70_LV_VELC_PM_CVC-01.webp?v=1784191856"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-GN",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-GN-70",
+    "Room and Board",
+    "series:Goodwin"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-GN-70",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

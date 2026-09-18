@@ -1,0 +1,50 @@
+{
+ "handle": "west-elm-mae-slipcovers",
+ "fetchedAt": "2026-09-18T05:43:01.458Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "mae-ottoman-slipcover",
+   "title": "Mae Ottoman Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-MAE-37F",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-MAE-37F_SHRT_SP_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-MAE-37F_SHRT_SP_CVC-01.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-MAE-37F_WE-MAE-37F_4619d073-9a69-4434-87be-3858fd305424.jpg?v=1741575836"
+   ],
+   "tags": [
+    "categoryproducts:WE-0",
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-MAE",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Mae",
+    "WE-MAE-37F",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-MAE-37F",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

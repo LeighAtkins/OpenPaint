@@ -1,0 +1,49 @@
+{
+ "handle": "room-and-board-berin-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:03.614Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "berin-queen-sleeper-76-sofa-slipcover",
+   "title": "Berin Queen Sleeper 76\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-BN-76B",
+   "price": "549.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-BN-76B_SV_VELC_SP_CVC-01.webp?v=1784174666",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-BN-76B_SV_VELC_SP_CVC-01.webp?v=1784174666"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-Slipcover",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:575",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-BN-76B",
+    "Room and Board",
+    "series:Berin"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-BN-76B",
+     "price": "549.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

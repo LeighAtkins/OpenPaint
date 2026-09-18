@@ -1,0 +1,136 @@
+{
+ "handle": "ikea-hyltarp-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:52.644Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "hyltarp-3-seater-sofa-cover",
+   "title": "Hyltarp 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HP-3",
+   "price": "349.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HP-3.jpg?v=1787300800",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HP-3.jpg?v=1787300800",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HP-3_8cfb239b-a613-4253-9ae4-0455b6ef7bef.jpg?v=1787300809"
+   ],
+   "tags": [
+    "categoryproducts:HP",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-HP-3",
+    "installation:579",
+    "series:Hyltarp"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HP-3",
+     "price": "349.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hyltarp-2-seater-sofa-cover",
+   "title": "Hyltarp 2 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HP-2",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HP-2_f14120e8-0097-43af-abef-3ae3fed22d3f.jpg?v=1787297200",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HP-2_f14120e8-0097-43af-abef-3ae3fed22d3f.jpg?v=1787297200",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HP-2_575dab1c-63e2-41b8-baf0-14fd2ea01c3d.jpg?v=1787297266"
+   ],
+   "tags": [
+    "categoryproducts:HP",
+    "categoryproducts:IK",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-HP-2",
+    "installation:579",
+    "series:Hyltarp"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HP-2",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hyltarp-3-seater-sofa-with-chaise-cover",
+   "title": "Hyltarp 3 Seater Sofa with Chaise Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HP-25",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HP-25.jpg?v=1787295803",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HP-25.jpg?v=1787295803",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HP-25_0d090528-4e8b-4c8e-ae84-4b0b81f82c91.jpg?v=1787297250"
+   ],
+   "tags": [
+    "categoryproducts:HP",
+    "categoryproducts:IK",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-HP-25",
+    "installation:579",
+    "series:Hyltarp"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HP-25",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

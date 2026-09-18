@@ -1,0 +1,81 @@
+{
+ "handle": "muji-floor-chair-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:32.384Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "floor-chair-cover",
+   "title": "Floor Chair Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-FC-7",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FC-7_EXD_VELC_PM_CVC-01.jpg?v=1741320173",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-FC-7_EXD_VELC_PM_CVC-01.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_472_Muji_Floor_Chair.jpg?v=1741320173",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_627_Muji_Floor_Chair.jpg?v=1741320173"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Floor Chair",
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-FC",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-FC-7",
+    "FLT___Product_Ref__Old____MJ_FRL",
+    "FLT___Series_Code___FC",
+    "FLT___Series_Name___Floor_Chair",
+    "FLT___Size___Floor_Chair",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Large",
+    "FLT___Variant_1_Name___Small",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:N/A",
+    "measurementsrequired",
+    "MJ-FC-7",
+    "next_steps:648",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Floor Chair",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-FC-7",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

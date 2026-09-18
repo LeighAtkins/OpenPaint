@@ -1,0 +1,186 @@
+{
+ "handle": "crate-and-barrel-rochelle-midcentury-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:14.417Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "rochelle-midcentury-modern-chair-slipcover",
+   "title": "Rochelle Midcentury Modern Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-RMM-34",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-RMM-34_SHRT_PM_CVC-01.webp?v=1770778885",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-RMM-34_SHRT_PM_CVC-01.webp?v=1770778885"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-RMM",
+    "CB-RMM-34",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Series_Name___Rochelle_Midcentury",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Rochelle Midcentury"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-RMM-34",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "rochelle-midcentury-sofa-slipcover",
+   "title": "Rochelle Midcentury Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-RMM-86",
+   "price": "599.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-RMM-86_SHRT_PM_CVC-01.jpg?v=1741575834",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-RMM-86_SHRT_PM_CVC-01.jpg?v=1741575834",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_415_Crate_and_Barrel_Rochelle_Midcentury_sofa.jpg?v=1741575834",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_131_Crate_and_Barrel_Rochelle_Midcentury_sofa.jpg?v=1741575834"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-RMM",
+    "CB-RMM-86",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-RMM-86",
+    "FLT___Series_Code___RMM",
+    "FLT___Series_Name___Rochelle_Midcentury",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Rochelle Midcentury",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-RMM-86",
+     "price": "599.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "rochelle-midcentury-apartment-sofa-slipcover",
+   "title": "Rochelle Midcentury Apartment Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-RMM-76",
+   "price": "529.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-RMM-76_SHRT_PM_CVC-01.jpg?v=1741320092",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-RMM-76_SHRT_PM_CVC-01.jpg?v=1741320092",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_414_Crate_and_Barrel_Rochelle_Midcentury_sofa.jpg?v=1741320092",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_131_Crate_and_Barrel_Rochelle_Midcentury_sofa_c0284596-fc67-4726-bb98-2d5d1ce9a1f2.jpg?v=1741320092"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-RMM",
+    "CB-RMM-76",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-RMM-76",
+    "FLT___Series_Code___RMM",
+    "FLT___Series_Name___Rochelle_Midcentury",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Rochelle Midcentury",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-RMM-76",
+     "price": "529.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

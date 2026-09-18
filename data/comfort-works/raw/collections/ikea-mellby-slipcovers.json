@@ -1,0 +1,122 @@
+{
+ "handle": "ikea-mellby-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:59.606Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "mellby-armchair-cover",
+   "title": "Mellby Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-MY-1",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MY-1_VELC_SI_CVC-01.jpg?v=1741320108",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MY-1_VELC_SI_CVC-01.jpg?v=1741320108",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_320_IKEA_Mellby_sofa.jpg?v=1741320108",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_321_IKEA_Mellby_sofa.jpg?v=1741320108"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:MY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MY-1",
+    "FLT___Product_Ref__Old____MY1",
+    "FLT___Series_Code___MY",
+    "FLT___Series_Name___Mellby",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-MY-1",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Mellby",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MY-1",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "mellby-armrest-protector-covers",
+   "title": "Mellby Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-MY-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MY-AP_SI_CVC-01.jpg?v=1741320128",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MY-AP_SI_CVC-01.jpg?v=1741320128"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:MY",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MY-AP",
+    "FLT___Product_Ref__Old____MY1_AP",
+    "FLT___Series_Code___MY",
+    "FLT___Series_Name___Mellby",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___SI",
+    "FLT__MAIN",
+    "IK-MY-AP",
+    "series:Mellby"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MY-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

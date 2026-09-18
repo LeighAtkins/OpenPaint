@@ -1,0 +1,119 @@
+{
+ "handle": "chair-covers-rowe",
+ "fetchedAt": "2026-09-18T05:32:04.918Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "nantucket-armchair-slipcover",
+   "title": "Nantucket Armchair Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-NT-39",
+   "price": "429.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-39_CNRP_PM_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-39_CNRP_PM_CVC-01.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_125_Rowe_Nantucket_sofa_adbc8937-69c0-4b4e-9b29-69601836970b.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_185_Rowe_Nantucket_sofa_50e8445a-9459-4599-a1b6-4382506eb77c.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:RE-NT",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Rowe",
+    "FLT___Product_Ref__New____RE-NT-39",
+    "FLT___Product_Ref__Old____RE_NT_1",
+    "FLT___Series_Code___NT",
+    "FLT___Series_Name___Nantucket",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "RE-NT-39",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Nantucket",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No",
+    "t_shaped_back_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-NT-39",
+     "price": "429.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sylvie-chair-slipcover",
+   "title": "Sylvie Chair Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-SE-39",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-SE-39_LV_LSKT_SP_CVC-01.jpg?v=1741575834",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-SE-39_LV_LSKT_SP_CVC-01.jpg?v=1741575834"
+   ],
+   "tags": [
+    "categoryproducts:RE",
+    "categoryproducts:RE-SE",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___Rowe",
+    "FLT__MAIN",
+    "installation:579",
+    "RE-SE-39",
+    "Rowe",
+    "series:Sylvie"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-SE-39",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

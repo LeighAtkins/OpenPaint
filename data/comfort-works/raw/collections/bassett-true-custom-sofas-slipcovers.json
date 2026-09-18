@@ -1,0 +1,50 @@
+{
+ "handle": "bassett-true-custom-sofas-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:53.704Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "true-custom-2-piece-large-track-arm-l-shaped-sectional-slipcover",
+   "title": "True Custom 2 Piece Large Track Arm L-Shaped Sectional Slipcover",
+   "vendor": "Bassett",
+   "sku": "BA-TC-92",
+   "price": "1099.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_BT-TC-92_BT-TC-92_d5e07190-166a-4add-9993-be29da387eba.jpg?v=1733294671",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_BT-TC-92_BT-TC-92_d5e07190-166a-4add-9993-be29da387eba.jpg?v=1733294671",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_BT-TC-92_BT-TC-92_2afd6569-e310-4810-be8e-bbc546d11b93.jpg?v=1733294686"
+   ],
+   "tags": [
+    "BA-TC-92",
+    "Bassett",
+    "categoryproducts:BA",
+    "categoryproducts:BA-TC",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:True Custom"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BA-TC-92",
+     "price": "1099.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

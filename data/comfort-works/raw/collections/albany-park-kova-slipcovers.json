@@ -1,0 +1,88 @@
+{
+ "handle": "albany-park-kova-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:39.049Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "kova-ottoman-slipcover",
+   "title": "Kova Ottoman Slipcover",
+   "vendor": "Albany Park",
+   "sku": "AK-KA-37F",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AK-KA-37F_NSE_KE_SHRT_SP_CVC-01.webp?v=1769499145",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AK-KA-37F_NSE_KE_SHRT_SP_CVC-01.webp?v=1769499145"
+   ],
+   "tags": [
+    "AK-KA-37F",
+    "categoryproducts:AK",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Kova"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AK-KA-37F",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "kova-corner-slipcover",
+   "title": "Kova Corner Slipcover",
+   "vendor": "Albany Park",
+   "sku": "AK-KA-43X",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AK-KA-43X_KE_SHRT_SP_CVC-01.webp?v=1778653492",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AK-KA-43X_KE_SHRT_SP_CVC-01.webp?v=1778653492"
+   ],
+   "tags": [
+    "AK-KA-43X",
+    "categoryproducts:AK",
+    "categoryproducts:AK-KA",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Kova"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AK-KA-43X",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

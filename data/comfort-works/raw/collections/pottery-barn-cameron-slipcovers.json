@@ -1,0 +1,499 @@
+{
+ "handle": "pottery-barn-cameron-slipcovers",
+ "fetchedAt": "2026-09-18T05:37:51.899Z",
+ "count": 10,
+ "products": [
+  {
+   "handle": "cameron-roll-arm-63-loveseat-slipcover",
+   "title": "Cameron Roll Arm 63\" Loveseat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CR-63",
+   "price": "539.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CR-63_SV_SHRT_PM_CVC-01.webp?v=1776915244",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CR-63_SV_SHRT_PM_CVC-01.webp?v=1776915244"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-CR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "installation:579",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Round Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "PB-CR-63",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Cameron",
+    "series:Cameron Roll Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "t_shaped_back_cushion:0",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CR-63",
+     "price": "539.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cameron-roll-arm-88-reversible-chaise-sectional-slipcover",
+   "title": "Cameron Roll Arm 88\" Reversible Chaise Sectional Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CR-88-S",
+   "price": "829.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CR-88-S_SHRT_PM_CVC-01.webp?v=1775446146",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CR-88-S_SHRT_PM_CVC-01.webp?v=1775446146"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CR",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-CR-88-S",
+    "series:Cameron Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CR-88-S",
+     "price": "829.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cameron-roll-arm-98-grand-sofa-slipcover",
+   "title": "Cameron Roll Arm 98\" Grand Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CR-98",
+   "price": "799.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CR-98_SV_STD_3S-3B_LSKT_PM_CVC-01.jpg?v=1744678137",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CR-98_SV_STD_3S-3B_LSKT_PM_CVC-01.jpg?v=1744678137"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CR",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-CR-98",
+    "series:Cameron Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CR-98",
+     "price": "799.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cameron-roll-arm-ottoman-slipcover",
+   "title": "Cameron Roll Arm Ottoman Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CR-31F",
+   "price": "139.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CR-31F_LV_LSKT_PM_CVC-01.jpg?v=1741320186",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CR-31F_LV_LSKT_PM_CVC-01.jpg?v=1741320186"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CR",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "installation:579",
+    "PB-CR-31F",
+    "series:Cameron Roll Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CR-31F",
+     "price": "139.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cameron-roll-arm-sofa-slipcover",
+   "title": "Cameron Roll Arm Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CR-88",
+   "price": "729.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CR-88_LSKT_PM_CVC-01.jpg?v=1741320182",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CR-88_LSKT_PM_CVC-01.jpg?v=1741320182",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_410_Pottery_Barn_Cameron_Roll_Arm_sofa.jpg?v=1741320182",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_644_Pottery_Barn_Cameron_Roll_Arm_sofa.jpg?v=1741320182"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:PB",
+    "categoryproducts:PB-CR",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT___Product_Ref__New____PB-CR-88",
+    "FLT___Product_Ref__Old____PB_CR_3",
+    "FLT___Series_Code___CR",
+    "FLT___Series_Name___Cameron_Roll_Arm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "PB-CR-88",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Cameron Roll Arm",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CR-88",
+     "price": "729.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cameron-square-arm-61-loveseat-slipcover",
+   "title": "Cameron Square Arm 61\" Loveseat Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CSA-60",
+   "price": "579.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CSA-60_SV_STD_LSKT_PM_CVC-01.jpg?v=1744676698",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CSA-60_SV_STD_LSKT_PM_CVC-01.jpg?v=1744676698"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CSA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-CSA-60",
+    "series:Cameron Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CSA-60",
+     "price": "579.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cameron-square-arm-86-sleeper-sofa-slipcover",
+   "title": "Cameron Square Arm 86\" Sleeper Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CSA-86B",
+   "price": "699.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CSA-86B_3S-3B_LSKT_PM_CVC-01.jpg?v=1744678213",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CSA-86B_3S-3B_LSKT_PM_CVC-01.jpg?v=1744678213"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CSA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-CSA-86B",
+    "series:Cameron Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CSA-86B",
+     "price": "699.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cameron-square-arm-86-sofa-slipcover",
+   "title": "Cameron Square Arm 86\" Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CSA-86",
+   "price": "669.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CSA-86_SV_STD_3S-3B_LSKT_PM_CVC-01.jpg?v=1744678179",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CSA-86_SV_STD_3S-3B_LSKT_PM_CVC-01.jpg?v=1744678179"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CSA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-CSA-86",
+    "series:Cameron Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CSA-86",
+     "price": "669.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cameron-square-arm-96-grand-sofa-slipcover",
+   "title": "Cameron Square Arm 96\" Grand Sofa Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CSA-96",
+   "price": "829.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CSA-96_SV_STD_3S-3B_LSKT_PM_CVC-01.jpg?v=1744678262",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CSA-96_SV_STD_3S-3B_LSKT_PM_CVC-01.jpg?v=1744678262"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CSA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-CSA-96",
+    "series:Cameron Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CSA-96",
+     "price": "829.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cameron-square-arm-chair-slipcover",
+   "title": "Cameron Square Arm Chair Slipcover",
+   "vendor": "Pottery Barn",
+   "sku": "PB-CSA-36",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CSA-36_SV_STD_LSKT_PM_CVC-01.jpg?v=1744676698",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-CSA-36_SV_STD_LSKT_PM_CVC-01.jpg?v=1744676698"
+   ],
+   "tags": [
+    "categoryproducts:PB",
+    "categoryproducts:PB-CSA",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___Pottery_Barn",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "PB-CSA-36",
+    "series:Cameron Square Arm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PB-CSA-36",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

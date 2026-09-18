@@ -1,0 +1,48 @@
+{
+ "handle": "rowe-addison-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:08.904Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "addison-7860-sofa-slipcover",
+   "title": "Addison 7860 Sofa Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-AD-95",
+   "price": "809.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-AD-95_CNRP_PM_CVC-01.webp?v=1789526547",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-AD-95_CNRP_PM_CVC-01.webp?v=1789526547"
+   ],
+   "tags": [
+    "categoryproducts:RE",
+    "categoryproducts:RE-Sofa",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "RE-AD-95",
+    "Rowe",
+    "series:Addison"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-AD-95",
+     "price": "809.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,705 @@
+{
+ "handle": "chair-covers-crate-and-barrel",
+ "fetchedAt": "2026-09-18T05:32:01.021Z",
+ "count": 12,
+ "products": [
+  {
+   "handle": "axis-ii-chair-slipcover",
+   "title": "Axis II Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-AS-48",
+   "price": "429.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-48_VELC_PM_CVC-01.jpg?v=1741674146",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-48_VELC_PM_CVC-01.jpg?v=1741674146",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_435_Crate_and_Barrel_Axis_II_sofa.jpg?v=1741674146",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_436_Crate_and_Barrel_Axis_II_sofa.jpg?v=1741674146"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:CB",
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-AS",
+    "categoryproducts:CB-Slipcover",
+    "CB-AS-48",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-AS-48",
+    "FLT___Series_Code___AS",
+    "FLT___Series_Name___Axis_II",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Axis II",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No",
+    "t_shaped_back_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-AS-48",
+     "price": "429.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "barrett-track-arm-chair-slipcover",
+   "title": "Barrett Track Arm Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BT-35",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-35_VELC_SP_CVC-01.jpg?v=1741320091",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-35_VELC_SP_CVC-01.jpg?v=1741320091",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_088_Crate_and_Barrel_Barrett_sofa_33373525-a49b-4d7c-a9ad-9ffcc801cbce.jpg?v=1741320091",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_441_Crate_and_Barrel_Barrett_sofa.jpg?v=1741320091"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:CB-BT",
+    "CB-BT-35",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-BT-35",
+    "FLT___Series_Code___BT",
+    "FLT___Series_Name___Barrett_Track_Arm",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Barrett",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BT-35",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bayside-accent-chair-slipcover",
+   "title": "Bayside Accent Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BE-34",
+   "price": "349.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BE-34_CNRP_PM_CVC-01.webp?v=1787897172",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BE-34_CNRP_PM_CVC-01.webp?v=1787897172",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_085_Crate_and_Barrel_Bayside_sofa.jpg?v=1741320096",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_086_Crate_and_Barrel_Bayside_sofa.jpg?v=1741320096"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-BE",
+    "CB-BE-34",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-BE-34",
+    "FLT___Product_Ref__Old____CB_BE_30",
+    "FLT___Series_Code___BE",
+    "FLT___Series_Name___Bayside",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "Important_Notes:643",
+    "is_filter_widget_product:",
+    "l_shaped_back_cushion:0",
+    "l_shaped_seat_cushion:0",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "other_shaped_back_cushion:0",
+    "other_shaped_seat_cushion:0",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Bayside",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:0",
+    "storage:No",
+    "t_shaped_back_cushion:1",
+    "t_shaped_seat_cushion:0",
+    "throw_pillows:0"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BE-34",
+     "price": "349.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ever-44-chair-by-leanne-ford-slipcover",
+   "title": "Ever 44\" Chair by Leanne Ford Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-ER-44",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-ER-44_LSKT_SP_CVC-01.jpg?v=1741320104",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-ER-44_LSKT_SP_CVC-01.jpg?v=1741320104"
+   ],
+   "tags": [
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-ER",
+    "categoryproducts:CB-Slipcover",
+    "CB-ER-44",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Ever"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-ER-44",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hathaway-armrest-protector-covers",
+   "title": "Hathaway Armrest Protector Covers",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-HY-AP",
+   "price": "69.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-HY-AP_SP_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-HY-AP_SP_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-HY",
+    "categoryproducts:CB-Slipcover",
+    "CB-HY-AP",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Hathaway"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-HY-AP",
+     "price": "69.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hathaway-swivel-glider-slipcover",
+   "title": "Hathaway Swivel Glider Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-HY-29SC",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-HY-29SC_CNRP_SP_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-HY-29SC_CNRP_SP_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-HY",
+    "categoryproducts:CB-Slipcover",
+    "CB-HY-29SC",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Hathaway"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-HY-29SC",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-ii-chair-and-a-half-slipcover",
+   "title": "Lounge II Chair and a Half Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-49",
+   "price": "369.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-49.jpg?v=1751336212",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-49.jpg?v=1751336212",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-49_5c770f03-e59f-4ed5-8b7f-b634634cef7e.jpg?v=1751336212",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_087_Crate_and_Barrel_Lounge_II_sofa.jpg?v=1751336212"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-49",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-LE-49",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lounge_II",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lounge II",
+    "size:1 Seater",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "t_shaped_seat_cushion:1",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-49",
+     "price": "369.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-ii-left-right-arm-chaise-slipcover",
+   "title": "Lounge II Left/Right Arm Chaise Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-46M",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-46M_L_LSKT_SP_CVC-01.jpg?v=1741320093",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-46M_L_LSKT_SP_CVC-01.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_087_Crate_and_Barrel_Lounge_II_sofa_2a95de98-426f-4ccd-a88e-f45f1c83758b.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_080_Crate_and_Barrel_Lounge_II_sofa_465295ae-4875-4b5b-9c89-1df259222d3f.jpg?v=1741320093"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Chaise Lounge",
+    "categoryproducts:CB-LE",
+    "CB-LE-46M",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-LE-46M",
+    "FLT___Product_Ref__Old____CB_LE_46R",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lounge_II",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_seat_cushion:1",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:One Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lounge II",
+    "size:1 Seater",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-46M",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "petrie-midcentury-armchair-slipcover",
+   "title": "Petrie Midcentury Armchair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PE-35",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PE-35_VELC_PM_CVC-01.jpg?v=1741320092",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PE-35_VELC_PM_CVC-01.jpg?v=1741320092",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_426_Crate_and_Barrel_Petrie_Midcentury_sofa.jpg?v=1741320092",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_428_Crate_and_Barrel_Petrie_Midcentury_sofa.jpg?v=1741320092"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-PE",
+    "categoryproducts:CB-Slipcover",
+    "CB-PE-35",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-PE-35",
+    "FLT___Series_Code___PE",
+    "FLT___Series_Name___Petrie_Midcentury",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Petrie Midcentury",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PE-35",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "potomac-chair-slipcover",
+   "title": "Potomac Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PC-39",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-39_CNRP_PM_CVC-01.jpg?v=1741320098",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-39_CNRP_PM_CVC-01.jpg?v=1741320098"
+   ],
+   "tags": [
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-PC",
+    "categoryproducts:CB-Slipcover",
+    "CB-PC-39",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Potomac"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PC-39",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "willow-arm-chair-slipcover",
+   "title": "Willow Arm Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-WW-36",
+   "price": "399.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-36_CNRP_PM_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-36_CNRP_PM_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:CB-WW",
+    "CB-WW-36",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Willow",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-WW-36",
+     "price": "399.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "willow-modern-chair-and-a-half-slipcover",
+   "title": "Willow Modern Chair and a Half Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-WW-53",
+   "price": "529.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-53_CNRP_PM_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-53_CNRP_PM_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:CB-WW",
+    "CB-WW-53",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "series:Willow",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-WW-53",
+     "price": "529.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

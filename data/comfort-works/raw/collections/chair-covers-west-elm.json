@@ -1,0 +1,439 @@
+{
+ "handle": "chair-covers-west-elm",
+ "fetchedAt": "2026-09-18T05:32:05.209Z",
+ "count": 8,
+ "products": [
+  {
+   "handle": "auburn-chair-slipcover",
+   "title": "Auburn Chair Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-AN-30",
+   "price": "259.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AN-30_LSKT_SP_CVC-01.jpg?v=1741320194",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-AN-30_LSKT_SP_CVC-01.jpg?v=1741320194",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_503_West_Elm_Auburn_sofa.jpg?v=1741320194",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_504_West_Elm_Auburn_sofa.jpg?v=1741320194"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular High",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:WE-AN",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-AN-30",
+    "FLT___Product_Ref__Old____WE_AN_59",
+    "FLT___Series_Code___AN",
+    "FLT___Series_Name___Auburn",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Auburn",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "WE-AN-30"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-AN-30",
+     "price": "259.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "crosby-mid-century-armchair-slipcover",
+   "title": "Crosby Mid-Century Armchair Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-CY-34",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-CY-34_LV_VELC_PM_CVC-01.jpg?v=1744676699",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-CY-34_LV_VELC_PM_CVC-01.jpg?v=1744676699"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-chair",
+    "categoryproducts:WE-CY",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Crosby Mid-Century",
+    "WE-CY-34",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-CY-34",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "hamilton-chair-slipcover",
+   "title": "Hamilton Chair Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HMN-30",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HMN-30_LV_VELC_PM_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HMN-30_LV_VELC_PM_CVC-01.jpg?v=1741320196"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-chair",
+    "categoryproducts:WE-HMN",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Hamilton",
+    "WE-HMN-30",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HMN-30",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-chair-slipcover",
+   "title": "Harmony Chair Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HY-45",
+   "price": "419.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-45_VELC_SP_CVC-01.jpg?v=1741320195",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HY-45_VELC_SP_CVC-01.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_509_West_20Elm_Harmony_sofa.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_654_West_Elm_Harmony_sofa_29318599-7e67-4d78-b50b-9f1cf3f543b4.jpg?v=1741320195"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:WE-chair",
+    "categoryproducts:WE-HY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HY-45",
+    "FLT___Product_Ref__Old____WE_HY_1",
+    "FLT___Series_Code___HY",
+    "FLT___Series_Name___Harmony",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Harmony",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "throw_pillows:2",
+    "WE-HY-45"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HY-45",
+     "price": "419.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harmony-modular-armless-single-sofa-slipcover",
+   "title": "Harmony Modular Armless Single Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HM-34X",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HM-34X_SV_STD_VELC_SP_CVC-01.webp?v=1787902011",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HM-34X_SV_STD_VELC_SP_CVC-01.webp?v=1787902011"
+   ],
+   "tags": [
+    "categoryproducts:WE-HY",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Harmony Modular",
+    "WE-HM-34X"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HM-34X",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "haven-chair-and-a-half-slipcover",
+   "title": "Haven Chair and a Half Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HN-40",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HN-40_LV_SHRT_SP_CVC-01.jpg?v=1741741767",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HN-40_LV_SHRT_SP_CVC-01.jpg?v=1741741767"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-chair",
+    "categoryproducts:WE-HN",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Haven",
+    "WE-HN-40",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HN-40",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "henry-armchair-slipcover",
+   "title": "Henry Armchair Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-HE-35",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-35_LSKT_PM_CVC-01.jpg?v=1741320197",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-HE-35_LSKT_PM_CVC-01.jpg?v=1741320197",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_515_West_Elm_Henry_sofa.jpg?v=1741320197",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_514_West_Elm_Henry_sofa.jpg?v=1741320197"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:WE-chair",
+    "categoryproducts:WE-HE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-HE-35",
+    "FLT___Product_Ref__Old____WE_HE_34",
+    "FLT___Series_Code___HE",
+    "FLT___Series_Name___Henry",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Henry",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No",
+    "WE-HE-35"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-HE-35",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "urban-swivel-chair-slipcover",
+   "title": "Urban Swivel Chair Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-UN-41SC",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-UN-41SC_VELC_SP_CVC-01.jpg?v=1741320198",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-UN-41SC_VELC_SP_CVC-01.jpg?v=1741320198"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-chair",
+    "categoryproducts:WE-UN",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Urban",
+    "WE-UN-41SC",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-UN-41SC",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

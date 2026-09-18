@@ -1,0 +1,48 @@
+{
+ "handle": "maiden-home-the-sullivan-sofa-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:21.626Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "the-sullivan-80-sofa-slipcover",
+   "title": "The Sullivan 80\" Sofa Slipcover",
+   "vendor": "Maiden Home",
+   "sku": "MH-TS-80",
+   "price": "679.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MH-TS-80_LV_SHRT_SP_CVC-01.jpg?v=1741741761",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MH-TS-80_LV_SHRT_SP_CVC-01.jpg?v=1741741761"
+   ],
+   "tags": [
+    "categoryproducts:MH",
+    "categoryproducts:MH-TS",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "Maiden Home",
+    "MH-TS-80",
+    "series:The Sullivan Sofa"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MH-TS-80",
+     "price": "679.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

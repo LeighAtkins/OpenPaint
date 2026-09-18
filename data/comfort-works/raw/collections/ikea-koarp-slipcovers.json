@@ -1,0 +1,76 @@
+{
+ "handle": "ikea-koarp-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:55.626Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "koarp-armchair-cover",
+   "title": "Koarp Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KP-1",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KP-1_VELC_WR_CVC-01.jpg?v=1741678945",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KP-1_VELC_WR_CVC-01.jpg?v=1741678945",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_302_IKEA_Koarp_sofa.jpg?v=1741678945",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_303_IKEA_Koarp_sofa.jpg?v=1741678945"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:KP",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KP-1",
+    "FLT___Product_Ref__Old____KP1",
+    "FLT___Series_Code___KP",
+    "FLT___Series_Name___Koarp",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-KP-1",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Koarp",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KP-1",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

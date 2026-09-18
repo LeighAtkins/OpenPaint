@@ -1,0 +1,2011 @@
+{
+ "handle": "sofa-covers-crate-and-barrel",
+ "fetchedAt": "2026-09-18T05:38:26.311Z",
+ "count": 36,
+ "products": [
+  {
+   "handle": "axis-105-grande-sofa-slipcover",
+   "title": "Axis 105\" Grande Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-AS-105",
+   "price": "819.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-105_SV_STD_3S-3B_VELC_PM_CVC-01.jpg?v=1744677334",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-105_SV_STD_3S-3B_VELC_PM_CVC-01.jpg?v=1744677334"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-AS",
+    "categoryproducts:CB-Slipcover",
+    "CB-AS-105",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Axis"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-AS-105",
+     "price": "819.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "axis-66-loveseat-slipcover",
+   "title": "Axis 66\" Loveseat Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-AS-66",
+   "price": "569.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-66_LV_STD_VELC_SP_CVC-01.jpg?v=1741742405",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-66_LV_STD_VELC_SP_CVC-01.jpg?v=1741742405"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-AS",
+    "categoryproducts:CB-Slipcover",
+    "CB-AS-66",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Axis"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-AS-66",
+     "price": "569.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "axis-76-apartment-sofa-slipcover",
+   "title": "Axis 76\" Apartment Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-AS-76",
+   "price": "569.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-76_SV_STD_2S-2B_VELC_PM_CVC-01.jpg?v=1744677413",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-76_SV_STD_2S-2B_VELC_PM_CVC-01.jpg?v=1744677413"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-AS",
+    "categoryproducts:CB-Slipcover",
+    "CB-AS-76",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Axis"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-AS-76",
+     "price": "569.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "axis-88-sofa-slipcover",
+   "title": "Axis 88\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-AS-88",
+   "price": "719.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-88_SV_STD_3S-3B_VELC_PM_CVC-01.jpg?v=1744677551",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-88_SV_STD_3S-3B_VELC_PM_CVC-01.jpg?v=1744677551",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_421_Crate_and_Barrel_Axis_II_sofa_cebb0f4f-37a1-4500-bf5c-4081f8443599.jpg?v=1744677551",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_422_Crate_and_Barrel_Axis_II_sofa_6159d6eb-22ce-4151-9d76-018e50c4ed7e.jpg?v=1744677551"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-AS",
+    "categoryproducts:CB-Slipcover",
+    "CB-AS-88",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Axis"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-AS-88",
+     "price": "719.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "axis-ii-left-right-arm-loveseat-slipcover",
+   "title": "Axis II Left/Right-Arm Loveseat Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-AS-68M",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-68M_L_VELC_PM_CVC-01.jpg?v=1741674369",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-AS-68M_L_VELC_PM_CVC-01.jpg?v=1741674369",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_420_Crate_and_Barrel_Axis_II_sofa_e616a7f4-d287-4da0-9ab9-808fd3712b61.jpg?v=1741674369",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_435_Crate_and_Barrel_Axis_II_sofa_147ce709-ac3b-4f4b-a9a1-37a43a56f4a1.jpg?v=1741674369"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB-AS",
+    "categoryproducts:CB-Slipcover",
+    "CB-AS-68M",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-AS-68M",
+    "FLT___Product_Ref__Old____CB_AS_68L",
+    "FLT___Series_Code___AS",
+    "FLT___Series_Name___Axis_II",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Classic",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:1",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:One Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Axis II",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-AS-68M",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "barrett-ii-track-arm-91-sofa-slipcover",
+   "title": "Barrett II Track Arm 91\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BT-91",
+   "price": "569.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-91_LV_VELC_SP_CVC-01.jpg?v=1741320096",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-91_LV_VELC_SP_CVC-01.jpg?v=1741320096"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-BT",
+    "categoryproducts:CB-Slipcover",
+    "CB-BT-91",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Barrett"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BT-91",
+     "price": "569.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "barrett-track-arm-chair-and-a-half-slipcover",
+   "title": "Barrett Track Arm Chair and a Half Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BT-53",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-53_VELC_SP_CVC-01.jpg?v=1741320093",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BT-53_VELC_SP_CVC-01.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_088_Crate_and_Barrel_Barrett_sofa.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_442_Crate_and_Barrel_Barrett_sofa.jpg?v=1741320093"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:CB-BT",
+    "CB-BT-53",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-BT-53",
+    "FLT___Series_Code___BT",
+    "FLT___Series_Name___Barrett_Track_Arm",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Barrett",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BT-53",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bayside-88-sofa-slipcover",
+   "title": "Bayside 88\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BE-88",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BE-88_LV_MLTP_PM_CVC-01.jpg?v=1741741754",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BE-88_LV_MLTP_PM_CVC-01.jpg?v=1741741754"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-BE",
+    "categoryproducts:CB-Slipcover",
+    "CB-BE-88",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Bayside"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BE-88",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "bayside-loveseat-slipcover",
+   "title": "Bayside Loveseat Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-BE-68",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BE-68_CNRP_PM_CVC-01.jpg?v=1741320093",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-BE-68_CNRP_PM_CVC-01.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_439_Crate_and_Barrel_Bayside_sofa.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_440_Crate_and_Barrel_Bayside_sofa.jpg?v=1741320093"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-BE",
+    "CB-BE-68",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-BE-68",
+    "FLT___Series_Code___BE",
+    "FLT___Series_Name___Bayside",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Bayside",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-BE-68",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "catalina-93-sofa-slipcover",
+   "title": "Catalina 93\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-CAT-93",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-CAT-93_SHRT_SP_CVC-01.jpg?v=1741674256",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-CAT-93_SHRT_SP_CVC-01.jpg?v=1741674256"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-CAT",
+    "categoryproducts:CB-Slipcover",
+    "CB-CAT-93",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Catalina"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-CAT-93",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "davis-2-seat-sofa-slipcover",
+   "title": "Davis 2 Seat Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-DS-77",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-DS-77_VELC_PM_CVC-01.jpg?v=1741320089",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-DS-77_VELC_PM_CVC-01.jpg?v=1741320089",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_104_Crate_and_Barrel_Davis_sofa.jpg?v=1741320089",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_105_Crate_and_Barrel_Davis_sofa.jpg?v=1741320089"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-DS",
+    "CB-DS-77",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-DS-77",
+    "FLT___Series_Code___DS",
+    "FLT___Series_Name___Davis",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Squared Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Davis",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-DS-77",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "essex-sofa-slipcover",
+   "title": "Essex Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-EX-89",
+   "price": "569.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-EX-89_SHRT_SP_CVC-01.jpg?v=1741320101",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-EX-89_SHRT_SP_CVC-01.jpg?v=1741320101"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-EX",
+    "categoryproducts:CB-Slipcover",
+    "CB-EX-89",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Essex"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-EX-89",
+     "price": "569.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harborside-84-sofa-slipcover",
+   "title": "Harborside 84\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-HE-84",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-HE-84_MLTP_PM_CVC-01.jpg?v=1741741765",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-HE-84_MLTP_PM_CVC-01.jpg?v=1741741765"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-HE",
+    "categoryproducts:CB-Sectional",
+    "categoryproducts:CB-Slipcover",
+    "CB-HE-84",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Harborside"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-HE-84",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "keely-92-sofa-slipcover",
+   "title": "Keely 92\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-KY-92",
+   "price": "569.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-KY-92_LSKT_SP_CVC-01.jpg?v=1741320103",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-KY-92_LSKT_SP_CVC-01.jpg?v=1741320103"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-KY",
+    "categoryproducts:CB-Slipcover",
+    "CB-KY-92",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Keely"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-KY-92",
+     "price": "569.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-105-grande-sofa-slipcover",
+   "title": "Lounge 105\" Grande Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-105",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-105_SV_STD_3S-3B_VELC_SP_CVC-01.webp?v=1763084830",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-105_SV_STD_3S-3B_VELC_SP_CVC-01.webp?v=1763084830"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-105",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Lounge",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-105",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-73-apartment-sofa-slipcover",
+   "title": "Lounge 73\" Apartment Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-73",
+   "price": "529.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-73_SV_PTD_2S-2B_VELC_SP_CVC-01.webp?v=1762310561",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-73_SV_PTD_2S-2B_VELC_SP_CVC-01.webp?v=1762310561",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-73_SV_PTD_2S-2B_VELC_SP_CVC-01_ec9154a8-3bfa-47e1-96f8-6421429af310.webp?v=1762310622"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-73",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Lounge",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-73",
+     "price": "529.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-83-sofa-slipcover",
+   "title": "Lounge 83\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-83",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-83.jpg?v=1751338574",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-83.jpg?v=1751338574",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-83_68202f9b-63fc-49e3-9cbc-d6ddf5d71561.jpg?v=1751338574",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_078_Crate_and_Barrel_Lounge_II_sofa_93c6ba0a-066b-4c25-839f-1aaf95d3760b.jpg?v=1751338574"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-83",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Lounge",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-83",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-ii-93-sofa-slipcover",
+   "title": "Lounge II 93\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-93-STD",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-93-STD_d03b0086-5246-4b02-a20d-2a7e20e03979.jpg?v=1750673601",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-93-STD_d03b0086-5246-4b02-a20d-2a7e20e03979.jpg?v=1750673601",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-93-STD.jpg?v=1750673601",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_075_Crate_and_Barrel_Lounge_II_sofa_f3f233b5-28ed-4d13-91a2-deab321b9e4e.jpg?v=1750673601"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-93-STD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-LE-93-STD",
+    "FLT___Product_Ref__Old____CB_LE_93",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lounge_II",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lounge II",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:4"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-93-STD",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-ii-left-right-arm-loveseat-slipcover",
+   "title": "Lounge II Left/Right Arm Loveseat Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-79M",
+   "price": "479.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-79M_L_LSKT_SP_CVC-01.jpg?v=1741320091",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-79M_L_LSKT_SP_CVC-01.jpg?v=1741320091",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_087_Crate_and_Barrel_Lounge_II_sofa_0ba92311-1265-4083-97d2-0004f4f7c70d.jpg?v=1741320091",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_080_Crate_and_Barrel_Lounge_II_sofa_df4e14a3-408b-4487-b344-02f90683b11c.jpg?v=1741320091"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB-LE",
+    "CB-LE-79M",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-LE-79M",
+    "FLT___Product_Ref__Old____CB_LE_79L",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lounge_II",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_seat_cushion:1",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:One Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lounge II",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-79M",
+     "price": "479.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lounge-ii-petite-93-sofa-slipcover",
+   "title": "Lounge II Petite 93\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-LE-93-PTD",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-93-PTD_9157503b-7d56-4a7a-97ed-ce36e8e1510f.jpg?v=1750674059",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-93-PTD_9157503b-7d56-4a7a-97ed-ce36e8e1510f.jpg?v=1750674059",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-LE-93-PTD_d7500e84-f486-401a-8582-2e302dcef750.jpg?v=1750674059",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_075_Crate_and_Barrel_Lounge_II_sofa_dd4ee972-9f06-464c-b1dd-5ae487b3ac1e.jpg?v=1750674059"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-LE",
+    "categoryproducts:CB-Slipcover",
+    "CB-LE-93-PTD",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-LE-93-PTD",
+    "FLT___Product_Ref__Old____CB_LE_93P",
+    "FLT___Series_Code___LE",
+    "FLT___Series_Name___Lounge_II",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Lounge II",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-LE-93-PTD",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "manor-rolled-arm-89-sofa-slipcover",
+   "title": "Manor Rolled Arm 89\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-MR-89",
+   "price": "769.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-MR-89_MLTP_PM_CVC-01.webp?v=1776396497",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-MR-89_MLTP_PM_CVC-01.webp?v=1776396497"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-MR",
+    "CB-MR-89",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Manor"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-MR-89",
+     "price": "769.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "pacific-wood-80-sofa-slipcover",
+   "title": "Pacific Wood 80\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PA-80",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PA-80_LV_1S-2B_SHRT_SP_CVC-01.jpg?v=1741320103",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PA-80_LV_1S-2B_SHRT_SP_CVC-01.jpg?v=1741320103"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-PA",
+    "categoryproducts:CB-Slipcover",
+    "CB-PA-80",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Pacific Wood"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PA-80",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "petrie-midcentury-apartment-sofa-slipcover",
+   "title": "Petrie Midcentury Apartment Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PE-76",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PE-76_VELC_PM_CVC-01.webp?v=1782437481",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PE-76_VELC_PM_CVC-01.webp?v=1782437481",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_427_Crate_and_Barrel_Petrie_Midcentury_sofa.jpg?v=1741320094",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_130_Crate_and_Barrel_Petrie_Midcentury_sofa_0bdfdf44-b21e-4e33-a828-33910dbe46e0.jpg?v=1741320094"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-PE",
+    "categoryproducts:CB-Slipcover",
+    "CB-PE-76",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-PE-76",
+    "FLT___Series_Code___PE",
+    "FLT___Series_Name___Petrie_Midcentury",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Petrie Midcentury",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PE-76",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "petrie-midcentury-sofa-slipcover",
+   "title": "Petrie Midcentury Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PE-86",
+   "price": "559.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PE-86_VELC_PM_CVC-01.jpg?v=1741320092",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PE-86_VELC_PM_CVC-01.jpg?v=1741320092",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_426_Crate_and_Barrel_Petrie_Midcentury_sofa_2bea47fa-4eab-429e-9978-feda89260cba.jpg?v=1741320092",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_428_Crate_and_Barrel_Petrie_Midcentury_sofa_be287f88-942b-4214-b346-f2f68173f1ea.jpg?v=1741320092"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB-PE",
+    "CB-PE-86",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-PE-86",
+    "FLT___Series_Code___PE",
+    "FLT___Series_Name___Petrie_Midcentury",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Petrie Midcentury",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PE-86",
+     "price": "559.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "potomac-apartment-sofa-slipcover",
+   "title": "Potomac Apartment Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PC-75",
+   "price": "529.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-75_CNRP_SP_CVC-01.jpg?v=1741320095",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-75_CNRP_SP_CVC-01.jpg?v=1741320095",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_113_Crate_and_Barrel_Potomac_sofa.jpg?v=1741320095",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_129_Crate_and_Barrel_Potomac_sofa.jpg?v=1741320095"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB-PC",
+    "CB-PC-75",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-PC-75",
+    "FLT___Series_Code___PC",
+    "FLT___Series_Name___Potomac",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "measurementsrequired",
+    "next_steps:648",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Potomac",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PC-75",
+     "price": "529.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "potomac-sofa-slipcover",
+   "title": "Potomac Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-PC-90",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-90_CNRP_SP_CVC-01.jpg?v=1741320104",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-PC-90_CNRP_SP_CVC-01.jpg?v=1741320104",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_432_Crate_and_Barrel_Potomac_sofa.jpg?v=1741320104",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_433_Crate_and_Barrel_Potomac_sofa.jpg?v=1741320104"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB-PC",
+    "CB-PC-90",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-PC-90",
+    "FLT___Series_Code___PC",
+    "FLT___Series_Name___Potomac",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Potomac",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-PC-90",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "rochelle-midcentury-apartment-sofa-slipcover",
+   "title": "Rochelle Midcentury Apartment Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-RMM-76",
+   "price": "529.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-RMM-76_SHRT_PM_CVC-01.jpg?v=1741320092",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-RMM-76_SHRT_PM_CVC-01.jpg?v=1741320092",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_414_Crate_and_Barrel_Rochelle_Midcentury_sofa.jpg?v=1741320092",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_131_Crate_and_Barrel_Rochelle_Midcentury_sofa_c0284596-fc67-4726-bb98-2d5d1ce9a1f2.jpg?v=1741320092"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-RMM",
+    "CB-RMM-76",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-RMM-76",
+    "FLT___Series_Code___RMM",
+    "FLT___Series_Name___Rochelle_Midcentury",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Rochelle Midcentury",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-RMM-76",
+     "price": "529.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "rochelle-midcentury-modern-chair-slipcover",
+   "title": "Rochelle Midcentury Modern Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-RMM-34",
+   "price": "309.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-RMM-34_SHRT_PM_CVC-01.webp?v=1770778885",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-RMM-34_SHRT_PM_CVC-01.webp?v=1770778885"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-RMM",
+    "CB-RMM-34",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Series_Name___Rochelle_Midcentury",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Rochelle Midcentury"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-RMM-34",
+     "price": "309.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "rochelle-midcentury-sofa-slipcover",
+   "title": "Rochelle Midcentury Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-RMM-86",
+   "price": "599.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-RMM-86_SHRT_PM_CVC-01.jpg?v=1741575834",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-RMM-86_SHRT_PM_CVC-01.jpg?v=1741575834",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_415_Crate_and_Barrel_Rochelle_Midcentury_sofa.jpg?v=1741575834",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_131_Crate_and_Barrel_Rochelle_Midcentury_sofa.jpg?v=1741575834"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-RMM",
+    "CB-RMM-86",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-RMM-86",
+    "FLT___Series_Code___RMM",
+    "FLT___Series_Name___Rochelle_Midcentury",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___SHRT_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Rochelle Midcentury",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-RMM-86",
+     "price": "599.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "the-oasis-85-sofa-slipcover",
+   "title": "The Oasis 85\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-OS-85",
+   "price": "889.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-OS-85_LSKT_SI_CVC-01.jpg?v=1741741757",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-OS-85_LSKT_SI_CVC-01.jpg?v=1741741757"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-OS",
+    "categoryproducts:CB-Slipcover",
+    "CB-OS-85",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Oasis",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-OS-85",
+     "price": "889.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "tribeca-grande-sofa-slipcover",
+   "title": "Tribeca Grande Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-TA-101",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-TA-101_VELC_PM_CVC-01.jpg?v=1741320100",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-TA-101_VELC_PM_CVC-01.jpg?v=1741320100"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:CB-TA",
+    "CB-TA-101",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Tribeca"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-TA-101",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "verano-ii-slope-arm-chair-slipcover",
+   "title": "Verano II Slope Arm Chair Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-VO-32",
+   "price": "319.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-VO-32_SHRT_SP_CVC-01.jpg?v=1741741758",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-VO-32_SHRT_SP_CVC-01.jpg?v=1741741758"
+   ],
+   "tags": [
+    "categoryproducts:CB-Armchair",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:CB-VO",
+    "CB-VO-32",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Verano",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-VO-32",
+     "price": "319.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "verano-ii-slope-arm-sofa-slipcover",
+   "title": "Verano II Slope Arm Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-VO-90",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-VO-90_CNRP_SP_CVC-01.jpg?v=1741320100",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-VO-90_CNRP_SP_CVC-01.jpg?v=1741320100",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_418_Crate_and_Barrel_Verrano_II_Slope_Arm_sofa.jpg?v=1741320100",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_419_Crate_and_Barrel_Verrano_II_Slope_Arm_sofa.jpg?v=1741320100"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Slope Square Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Sloping Back",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-VO",
+    "CB-VO-90",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-VO-90",
+    "FLT___Series_Code___VO",
+    "FLT___Series_Name___Verrano_II_Slope_Arm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Scandi",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Verano",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-VO-90",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "willow-59-loveseat-slipcover",
+   "title": "Willow 59\" Loveseat Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-WW-59",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-59_MLTP_PM_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-59_MLTP_PM_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:CB-WW",
+    "CB-WW-59",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Willow",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-WW-59",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "willow-70-apartment-sofa-slipcover",
+   "title": "Willow 70\" Apartment Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-WW-70",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-70_CNRP_PM_CVC-01.jpg?v=1744676698",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-70_CNRP_PM_CVC-01.jpg?v=1744676698"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-Slipcover",
+    "categoryproducts:CB-WW",
+    "CB-WW-70",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Willow",
+    "vendor:Crate and Barrel"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-WW-70",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "willow-84-sofa-slipcover",
+   "title": "Willow 84\" Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-WW-84",
+   "price": "629.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-84_MLTP_PM_CVC-01.jpg?v=1741320093",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-WW-84_MLTP_PM_CVC-01.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_430_Crate_and_Barrel_Willow_sofa.jpg?v=1741320093",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_431_Crate_and_Barrel_Willow_sofa.jpg?v=1741320093"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:CB",
+    "categoryproducts:CB-WW",
+    "CB-WW-84",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT___Product_Ref__New____CB-WW-84",
+    "FLT___Series_Code___WW",
+    "FLT___Series_Name___Willow",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Willow",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-WW-84",
+     "price": "629.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

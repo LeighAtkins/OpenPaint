@@ -1,0 +1,142 @@
+{
+ "handle": "arhaus-cooper-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:42.337Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "cooper-armless-chair-slipcover",
+   "title": "Cooper Armless Chair Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-CR-36X",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-CR-36X_VELC_SP_CVC-01.jpg?v=1741320090",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-CR-36X_VELC_SP_CVC-01.jpg?v=1741320090"
+   ],
+   "tags": [
+    "Arhaus",
+    "AS-CR-36X",
+    "categoryproducts:AS",
+    "categoryproducts:AS-Chair",
+    "categoryproducts:AS-CR",
+    "categoryproducts:AS-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Cooper"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-CR-36X",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cooper-left-right-arm-chair-slipcover",
+   "title": "Cooper Left/Right-Arm Chair Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-CR-44M",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-CR-44M_L_VELC_SP_CVC-01.jpg?v=1741320091",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-CR-44M_L_VELC_SP_CVC-01.jpg?v=1741320091"
+   ],
+   "tags": [
+    "Arhaus",
+    "AS-CR-44M",
+    "categoryproducts:AS",
+    "categoryproducts:AS-Chair",
+    "categoryproducts:AS-CR",
+    "categoryproducts:AS-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Cooper"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-CR-44M",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cooper-ottoman-slipcover",
+   "title": "Cooper Ottoman Slipcover",
+   "vendor": "Arhaus",
+   "sku": "AS-CR-40F",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-CR-40F_VELC_SP_CVC-01.jpg?v=1741320091",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AS-CR-40F_VELC_SP_CVC-01.jpg?v=1741320091"
+   ],
+   "tags": [
+    "Arhaus",
+    "AS-CR-40F",
+    "categoryproducts:AS",
+    "categoryproducts:AS-Chair",
+    "categoryproducts:AS-CR",
+    "categoryproducts:AS-Sofa",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Cooper"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AS-CR-40F",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

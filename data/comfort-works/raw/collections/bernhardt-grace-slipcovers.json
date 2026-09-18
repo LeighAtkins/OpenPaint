@@ -1,0 +1,44 @@
+{
+ "handle": "bernhardt-grace-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:54.672Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "grace-sofa-slipcover",
+   "title": "Grace Sofa Slipcover",
+   "vendor": "Bernhardt",
+   "sku": "BE-GE-89",
+   "price": "829.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BE-GE-89_CNRP_SP_CVC-01.webp?v=1769579436",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BE-GE-89_CNRP_SP_CVC-01.webp?v=1769579436"
+   ],
+   "tags": [
+    "BE-GE-89",
+    "categoryproducts:BE",
+    "description:",
+    "FLT__MAIN",
+    "series:Grace"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BE-GE-89",
+     "price": "829.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

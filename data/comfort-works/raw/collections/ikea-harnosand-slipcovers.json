@@ -1,0 +1,266 @@
+{
+ "handle": "ikea-harnosand-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:49.779Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "harnosand-3-seater-sofa-cover",
+   "title": "Harnosand 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HD-2",
+   "price": "279.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HD-2_LSKT_SI_CVC-01.jpg?v=1741320116",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HD-2_LSKT_SI_CVC-01.jpg?v=1741320116",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_271_IKEA_Harnosand_sofa.jpg?v=1741320116",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_264_IKEA_Harlanda_sofa_7ce0a84c-142d-437e-b7c7-42f1fd81a81b.jpg?v=1741320116"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Thin Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:HD",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HD-2",
+    "FLT___Product_Ref__Old____HD3",
+    "FLT___Series_Code___HD",
+    "FLT___Series_Name___Harnosand",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HD-2",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Harnosand",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HD-2",
+     "price": "279.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harnosand-1-seater-sofa-cover",
+   "title": "Harnosand 1 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HD-1",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HD-1_LSKT_SI_CVC-01.jpg?v=1741320124",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HD-1_LSKT_SI_CVC-01.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_269_IKEA_Harnosand_sofa.jpg?v=1741320124",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_270_IKEA_Harnosand_sofa_50d8f2a1-a192-40bc-980d-2532891bbb1d.jpg?v=1741320124"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Thin Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:HD",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HD-1",
+    "FLT___Product_Ref__Old____HD1",
+    "FLT___Series_Code___HD",
+    "FLT___Series_Name___Harnosand",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HD-1",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Harnosand",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HD-1",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harnosand-2-seater-chaise-lounge-sofa-cover",
+   "title": "Harnosand 2 Seater & Chaise Lounge Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-HD-25",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HD-25_L_LSKT_SI_CVC-01.jpg?v=1741320123",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HD-25_L_LSKT_SI_CVC-01.jpg?v=1741320123",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_269_IKEA_Harnosand_sofa_1589650e-7422-4f11-8f2c-a002e22337be.jpg?v=1741320123",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_270_IKEA_Harnosand_sofa.jpg?v=1741320123"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Thin Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:HD",
+    "categoryproducts:IK",
+    "chaise_lounge:Yes",
+    "chaise_lounge_position:Left",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HD-25",
+    "FLT___Product_Ref__Old____HD2C",
+    "FLT___Series_Code___HD",
+    "FLT___Series_Name___Harnosand",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HD-25",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Harnosand",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:4",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HD-25",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "harnosand-armrest-protector-covers",
+   "title": "Harnosand Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-HD-AP",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HD-AP_SI_CVC-01.jpg?v=1741320137",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HD-AP_SI_CVC-01.jpg?v=1741320137"
+   ],
+   "tags": [
+    "categoryproducts:HD",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HD-AP",
+    "FLT___Product_Ref__Old____HD1_AP",
+    "FLT___Series_Code___HD",
+    "FLT___Series_Name___Harnosand",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___IK_HD_AP",
+    "FLT___Styles_Code___SI",
+    "FLT__MAIN",
+    "IK-HD-AP",
+    "series:Harnosand"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HD-AP",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

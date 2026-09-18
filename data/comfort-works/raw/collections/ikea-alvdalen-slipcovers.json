@@ -1,0 +1,49 @@
+{
+ "handle": "ikea-alvdalen-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:29.786Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "alvdalen-3-seat-sofa-bed-cover",
+   "title": "Alvdalen 3-Seat Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-AN-3BX",
+   "price": "199.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AN-3BX_SHRT_SP_CVC-01_52795a11-386a-406d-b441-e512e0082596.webp?v=1787997105",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AN-3BX_SHRT_SP_CVC-01_52795a11-386a-406d-b441-e512e0082596.webp?v=1787997105"
+   ],
+   "tags": [
+    "categoryproducts:AN",
+    "categoryproducts:IK",
+    "description:",
+    "features:575",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Size___Sofa_Bed",
+    "FLT__MAIN",
+    "IK-AN-3BX",
+    "installation:579",
+    "series:Alvdalen"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-AN-3BX",
+     "price": "199.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

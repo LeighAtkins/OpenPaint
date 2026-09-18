@@ -1,0 +1,63 @@
+{
+ "handle": "ikea-karlaby-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:53.251Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "karlaby-sofa-bed-cover",
+   "title": "Karlaby Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-KY-3BX",
+   "price": "229.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KY-3BX_120CM_SHRT_SP_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KY-3BX_120CM_SHRT_SP_CVC-01.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_295_IKEA_Karlaby_sofa.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_294_IKEA_Karlaby_sofa.jpg?v=1741575836"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:KY",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-KY-3BX",
+    "FLT___Product_Ref__Old____KY2B",
+    "FLT___Series_Code___KY",
+    "FLT___Series_Name___Karlaby",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Variant_1_Name___120_cm_or_47in_mattress_size",
+    "FLT___Variant_1_Name___140_cm_or_55in_mattress_size",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "IK-KY-3BX",
+    "important_notes:643",
+    "measurementsrequired",
+    "next_steps:648",
+    "series:Karlaby"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-KY-3BX",
+     "price": "229.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

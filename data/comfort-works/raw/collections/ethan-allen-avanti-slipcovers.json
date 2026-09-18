@@ -1,0 +1,48 @@
+{
+ "handle": "ethan-allen-avanti-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:20.987Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "avanti-87-sofa-slipcover",
+   "title": "Avanti 87\" Sofa Slipcover",
+   "vendor": "Ethan Allen",
+   "sku": "EA-AI-87",
+   "price": "689.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-AI-87_SV_VELC_PM_CVC-01.webp?v=1770708203",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-AI-87_SV_VELC_PM_CVC-01.webp?v=1770708203"
+   ],
+   "tags": [
+    "categoryproducts:EA",
+    "categoryproducts:EA-AI",
+    "categoryproducts:EA-Sofa",
+    "description:",
+    "EA-AI-87",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Avanti"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EA-AI-87",
+     "price": "689.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

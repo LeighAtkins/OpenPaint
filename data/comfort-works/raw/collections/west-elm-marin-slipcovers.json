@@ -1,0 +1,47 @@
+{
+ "handle": "west-elm-marin-slipcovers",
+ "fetchedAt": "2026-09-18T05:40:47.003Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "marin-94-sofa-slipcover",
+   "title": "Marin 94\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-MN-94",
+   "price": "579.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-MN-94_SV_VELC_SP_CVC-01.webp?v=1778654500",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-MN-94_SV_VELC_SP_CVC-01.webp?v=1778654500"
+   ],
+   "tags": [
+    "categoryproducts:WE-MN",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Marin",
+    "WE-MN-94"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-MN-94",
+     "price": "579.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

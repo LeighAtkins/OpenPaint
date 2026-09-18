@@ -1,0 +1,171 @@
+{
+ "handle": "bernhardt-foster-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:54.673Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "foster-98-sofa-slipcover",
+   "title": "Foster 98\" Sofa Slipcover",
+   "vendor": "Bernhardt",
+   "sku": "BE-FR-98",
+   "price": "889.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_BE_BE-FR_BE-FR-98_BE-FR-98_LV_VELC_PM_CVC-01.jpg?v=1744940420",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_BE_BE-FR_BE-FR-98_BE-FR-98_LV_VELC_PM_CVC-01.jpg?v=1744940420"
+   ],
+   "tags": [
+    "BE-FR-98",
+    "Bernhardt",
+    "categoryproducts:BE",
+    "categoryproducts:BE-FR",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Foster"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BE-FR-98",
+     "price": "889.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "foster-chair-slipcover",
+   "title": "Foster Chair Slipcover",
+   "vendor": "Bernhardt",
+   "sku": "BE-FR-46",
+   "price": "549.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_BE_BE-FR_BE-FR-46_BE-FR-46_LV_VELC_PM_CVC-01.jpg?v=1744940519",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_BE_BE-FR_BE-FR-46_BE-FR-46_LV_VELC_PM_CVC-01.jpg?v=1744940519"
+   ],
+   "tags": [
+    "BE-FR-46",
+    "Bernhardt",
+    "categoryproducts:BE",
+    "categoryproducts:BE-FR",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Foster"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BE-FR-46",
+     "price": "549.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "foster-loveseat-slipcover",
+   "title": "Foster Loveseat Slipcover",
+   "vendor": "Bernhardt",
+   "sku": "BE-FR-71",
+   "price": "789.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BE-FR-71_SV_SHRT_PM_CVC-01.jpg?v=1741741766",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BE-FR-71_SV_SHRT_PM_CVC-01.jpg?v=1741741766"
+   ],
+   "tags": [
+    "BE-FR-71",
+    "Bernhardt",
+    "categoryproducts:BE",
+    "categoryproducts:BE-FR",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Foster"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BE-FR-71",
+     "price": "789.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "foster-ottoman-slipcover",
+   "title": "Foster Ottoman Slipcover",
+   "vendor": "Bernhardt",
+   "sku": "BE-FR-29F",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BE-FR-29F_LV_VELC_PM_CVC-01.jpg?v=1744676697",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/BE-FR-29F_LV_VELC_PM_CVC-01.jpg?v=1744676697"
+   ],
+   "tags": [
+    "BE-FR-29F",
+    "Bernhardt",
+    "categoryproducts:BE",
+    "categoryproducts:BE-FR",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Foster"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "BE-FR-29F",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

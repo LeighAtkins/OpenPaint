@@ -1,0 +1,127 @@
+{
+ "handle": "mcm-house-johnson-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:26.231Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "johnson-modular-82-sofa-slipcover",
+   "title": "Johnson Modular 82\" Sofa Slipcover",
+   "vendor": "MCM House",
+   "sku": "ME-JN-82",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/ME-JN-82_SHRT_SP_CVC-01.webp?v=1788916529",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/ME-JN-82_SHRT_SP_CVC-01.webp?v=1788916529"
+   ],
+   "tags": [
+    "categoryproducts:ME",
+    "categoryproducts:ME-JN",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "ME-JN-82",
+    "series:Johnson"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "ME-JN-82",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "johnson-36-ottoman-slipcover",
+   "title": "Johnson 36\" Ottoman Slipcover",
+   "vendor": "MCM House",
+   "sku": "ME-JN-36F",
+   "price": "199.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/ME-JN-36F_SHRT_SP_CVC-01.webp?v=1788831521",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/ME-JN-36F_SHRT_SP_CVC-01.webp?v=1788831521"
+   ],
+   "tags": [
+    "categoryproducts:ME",
+    "categoryproducts:ME-JN",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "ME-JN-36F",
+    "series:Johnson"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "ME-JN-36F",
+     "price": "199.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "johnson-modular-118-sofa-slipcover",
+   "title": "Johnson Modular 118\" Sofa Slipcover",
+   "vendor": "MCM House",
+   "sku": "ME-JN-118",
+   "price": "859.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/ME-JN-118_SHRT_SP_CVC-01.webp?v=1788917180",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/ME-JN-118_SHRT_SP_CVC-01.webp?v=1788917180"
+   ],
+   "tags": [
+    "categoryproducts:ME",
+    "categoryproducts:ME-JN",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "ME-JN-118",
+    "series:Johnson"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "ME-JN-118",
+     "price": "859.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

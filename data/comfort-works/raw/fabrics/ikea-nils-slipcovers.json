@@ -1,0 +1,1203 @@
+{
+ "handle": "ikea-nils-slipcovers",
+ "representative": "nils-bar-stool-slipcover",
+ "hubLinks": [
+  "\\/pages\\/fabrics-hypoallergenic-collection-everyday-cotton",
+  "\\/pages\\/fabrics-cozy-collection-everyday-velvet",
+  "\\/pages\\/fabrics-starter-collection-everyday-weave",
+  "\\/pages\\/fabrics-performance-collection-signature-velvet",
+  "\\/pages\\/fabrics-pet-friendly-collection-signature-microfiber",
+  "\\/pages\\/fabrics-performance-collection-sunbrella"
+ ],
+ "fabricCount": 132,
+ "fabrics": [
+  {
+   "fabric": null,
+   "handle": "nils-bar-stool-slipcover",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover",
+   "sku": "IK-NS-BS",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_VELC_SP_CVC-01.jpg?v=1741678942"
+  },
+  {
+   "fabric": "Care+ Canvas Ash",
+   "handle": "nils-bar-stool-slipcover-care-canvas-ash",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-care-canvas-ash",
+   "sku": "IK-NS-BS__CNRP_SP__SUN-C13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_SUN-C13_f15e9915-8d7e-4c1d-84cd-a1ef57c146e4.jpg?v=1727235016"
+  },
+  {
+   "fabric": "Care+ Canvas Beige",
+   "handle": "nils-bar-stool-slipcover-care-canvas-beige",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-care-canvas-beige",
+   "sku": "IK-NS-BS__CNRP_SP__SUN-C38",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Canvas Sage",
+   "handle": "nils-bar-stool-slipcover-care-canvas-sage",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-care-canvas-sage",
+   "sku": "IK-NS-BS__CNRP_SP__SUN-C10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_dc356a60-697c-478c-bf2d-c1b57bef5497.jpg?v=1727235568"
+  },
+  {
+   "fabric": "Care+ Canvas Snow",
+   "handle": "nils-bar-stool-slipcover-care-canvas-snow",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-care-canvas-snow",
+   "sku": "IK-NS-BS__CNRP_SP__SUN-C31",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen Cream",
+   "handle": "nils-bar-stool-slipcover-care-linen-cream",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-care-linen-cream",
+   "sku": "IK-NS-BS__CNRP_SP__COS-103",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen Natural",
+   "handle": "nils-bar-stool-slipcover-care-linen-natural",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-care-linen-natural",
+   "sku": "IK-NS-BS__CNRP_SP__COS-105",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen White",
+   "handle": "nils-bar-stool-slipcover-care-linen-white",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-care-linen-white",
+   "sku": "IK-NS-BS__CNRP_SP__COS-101",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Tweed Amber",
+   "handle": "nils-bar-stool-slipcover-care-tweed-amber",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-care-tweed-amber",
+   "sku": "IK-NS-BS__CNRP_SP__SUN-T04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_SUN-T04_7610cefd-ef3e-4129-b54d-4b6c1f21da49.jpg?v=1727235024"
+  },
+  {
+   "fabric": "Care+ Tweed Mineral Blue",
+   "handle": "nils-bar-stool-slipcover-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-care-tweed-mineral-blue",
+   "sku": "IK-NS-BS__CNRP_SP__SUN-T10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_SUN-T10_451b8f8b-918e-439e-9897-1903f9dfb56e.jpg?v=1727235022"
+  },
+  {
+   "fabric": "Care+ Tweed Sunset",
+   "handle": "nils-bar-stool-slipcover-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-care-tweed-sunset",
+   "sku": "IK-NS-BS__CNRP_SP__SUN-T06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_SUN-T06_3b4a5340-f1f9-46ac-be18-4695d4bfbcaa.jpg?v=1727235012"
+  },
+  {
+   "fabric": "Care+ Tweed Teal",
+   "handle": "nils-bar-stool-slipcover-care-tweed-teal",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-care-tweed-teal",
+   "sku": "IK-NS-BS__CNRP_SP__SUN-T12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_SUN-T12_267c17fc-8e44-4952-96c3-46f419f8d62f.jpg?v=1727235016"
+  },
+  {
+   "fabric": "Classic Velvet Peach",
+   "handle": "nils-bar-stool-slipcover-classic-velvet-peach",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-classic-velvet-peach",
+   "sku": "IK-NS-BS__CNRP_SP__FM-02P",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_FM-02P.jpg?v=1725358022"
+  },
+  {
+   "fabric": "Crypton® Chenille Burnt Orange",
+   "handle": "nils-bar-stool-slipcover-crypton®-chenille-burnt-orange",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-crypton®-chenille-burnt-orange",
+   "sku": "IK-NS-BS__CNRP_SP__BEN-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Cream",
+   "handle": "nils-bar-stool-slipcover-crypton®-chenille-cream",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-crypton®-chenille-cream",
+   "sku": "IK-NS-BS__CNRP_SP__BEN-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Dark Teal",
+   "handle": "nils-bar-stool-slipcover-crypton®-chenille-dark-teal",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-crypton®-chenille-dark-teal",
+   "sku": "IK-NS-BS__CNRP_SP__BEN-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Snow",
+   "handle": "nils-bar-stool-slipcover-crypton®-chenille-snow",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-crypton®-chenille-snow",
+   "sku": "IK-NS-BS__CNRP_SP__BEN-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Charcoal",
+   "handle": "nils-bar-stool-slipcover-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-cotton-charcoal",
+   "sku": "IK-NS-BS__CNRP_SP__CVC-07",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Forest Green",
+   "handle": "nils-bar-stool-slipcover-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-cotton-forest-green",
+   "sku": "IK-NS-BS__CNRP_SP__CVC-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Khaki",
+   "handle": "nils-bar-stool-slipcover-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-cotton-khaki",
+   "sku": "IK-NS-BS__CNRP_SP__CVC-08",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Navy",
+   "handle": "nils-bar-stool-slipcover-everyday-cotton-navy",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-cotton-navy",
+   "sku": "IK-NS-BS__CNRP_SP__CVC-05",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Pebble",
+   "handle": "nils-bar-stool-slipcover-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-cotton-pebble",
+   "sku": "IK-NS-BS__CNRP_SP__CVC-06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_CVC-06_83e71d37-9e41-4290-ae7a-ccef13867d09.jpg?v=1743087431"
+  },
+  {
+   "fabric": "Everyday Cotton Sand",
+   "handle": "nils-bar-stool-slipcover-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-cotton-sand",
+   "sku": "IK-NS-BS__CNRP_SP__CVC-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Silver Sage",
+   "handle": "nils-bar-stool-slipcover-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-cotton-silver-sage",
+   "sku": "IK-NS-BS__CNRP_SP__CVC-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton White",
+   "handle": "nils-bar-stool-slipcover-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-cotton-white",
+   "sku": "IK-NS-BS__CNRP_SP__CVC-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Cacao",
+   "handle": "nils-bar-stool-slipcover-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-velvet-cacao",
+   "sku": "IK-NS-BS__CNRP_SP__ROYAL-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Dark Teal",
+   "handle": "nils-bar-stool-slipcover-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-velvet-dark-teal",
+   "sku": "IK-NS-BS__CNRP_SP__ROYAL-13",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Navy",
+   "handle": "nils-bar-stool-slipcover-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-velvet-navy",
+   "sku": "IK-NS-BS__CNRP_SP__ROYAL-14",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Sand",
+   "handle": "nils-bar-stool-slipcover-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-velvet-sand",
+   "sku": "IK-NS-BS__CNRP_SP__ROYAL-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Storm",
+   "handle": "nils-bar-stool-slipcover-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-velvet-storm",
+   "sku": "IK-NS-BS__CNRP_SP__ROYAL-20",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Weave Basil Green",
+   "handle": "nils-bar-stool-slipcover-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-weave-basil-green",
+   "sku": "IK-NS-BS__CNRP_SP__EYL-47",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_EYL-47.jpg?v=1725357983"
+  },
+  {
+   "fabric": "Everyday Weave Cream",
+   "handle": "nils-bar-stool-slipcover-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-weave-cream",
+   "sku": "IK-NS-BS__CNRP_SP__EYL-35",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_EYL-35.jpg?v=1725357976"
+  },
+  {
+   "fabric": "Everyday Weave Maroon",
+   "handle": "nils-bar-stool-slipcover-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-weave-maroon",
+   "sku": "IK-NS-BS__CNRP_SP__EYL-38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_EYL-38.jpg?v=1725357987"
+  },
+  {
+   "fabric": "Everyday Weave Navy",
+   "handle": "nils-bar-stool-slipcover-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-weave-navy",
+   "sku": "IK-NS-BS__CNRP_SP__EYL-44",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_EYL-44.jpg?v=1725357994"
+  },
+  {
+   "fabric": "Everyday Weave Pebble",
+   "handle": "nils-bar-stool-slipcover-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-weave-pebble",
+   "sku": "IK-NS-BS__CNRP_SP__EYL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_EYL-20.jpg?v=1725357968"
+  },
+  {
+   "fabric": "Everyday Weave Rust",
+   "handle": "nils-bar-stool-slipcover-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-weave-rust",
+   "sku": "IK-NS-BS__CNRP_SP__EYL-39",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_EYL-39.jpg?v=1725357991"
+  },
+  {
+   "fabric": "Everyday Weave Storm",
+   "handle": "nils-bar-stool-slipcover-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-weave-storm",
+   "sku": "IK-NS-BS__CNRP_SP__EYL-24",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_EYL-24.jpg?v=1725357972"
+  },
+  {
+   "fabric": "Everyday Weave Teal",
+   "handle": "nils-bar-stool-slipcover-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-everyday-weave-teal",
+   "sku": "IK-NS-BS__CNRP_SP__EYL-43",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_EYL-43.jpg?v=1725357979"
+  },
+  {
+   "fabric": "Mod Boucle Amber",
+   "handle": "nils-bar-stool-slipcover-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-mod-boucle-amber",
+   "sku": "IK-NS-BS__CNRP_SP__MOSS-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_MOSS-09_6c7bee98-f03e-44e8-b741-23d4a17c65f7.jpg?v=1725357781"
+  },
+  {
+   "fabric": "Mod Boucle Charcoal",
+   "handle": "nils-bar-stool-slipcover-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-mod-boucle-charcoal",
+   "sku": "IK-NS-BS__CNRP_SP__MOSS-97",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_MOSS-97_d9580f25-7fab-4fc4-b2d9-d1e47da80b97.jpg?v=1725357789"
+  },
+  {
+   "fabric": "Mod Boucle Cream",
+   "handle": "nils-bar-stool-slipcover-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-mod-boucle-cream",
+   "sku": "IK-NS-BS__CNRP_SP__MOSS-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_MOSS-01_8a9dcf3d-b8c8-486e-b731-a4327d7b39ca.jpg?v=1725357777"
+  },
+  {
+   "fabric": "Mod Boucle Oatmeal",
+   "handle": "nils-bar-stool-slipcover-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-mod-boucle-oatmeal",
+   "sku": "IK-NS-BS__CNRP_SP__MOSS-40",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_MOSS-40_a6accc37-eceb-4b4d-8dd5-6328941bf86e.jpg?v=1725357785"
+  },
+  {
+   "fabric": "Mod Chenille Beige",
+   "handle": "nils-bar-stool-slipcover-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-mod-chenille-beige",
+   "sku": "IK-NS-BS__CNRP_SP__ESTE-52",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_ESTE-52_588dbada-bada-4865-ad0d-4004deebff54.jpg?v=1725357746"
+  },
+  {
+   "fabric": "Mod Chenille Denim",
+   "handle": "nils-bar-stool-slipcover-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-mod-chenille-denim",
+   "sku": "IK-NS-BS__CNRP_SP__ESTE-78",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_ESTE-78_10d9b24a-59cd-4fc6-8f7d-41396fa9c4d0.jpg?v=1725357758"
+  },
+  {
+   "fabric": "Mod Chenille Espresso",
+   "handle": "nils-bar-stool-slipcover-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-mod-chenille-espresso",
+   "sku": "IK-NS-BS__CNRP_SP__ESTE-57",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_ESTE-57_fb80af7f-20c4-4004-bd29-9bb19db05095.jpg?v=1725357754"
+  },
+  {
+   "fabric": "Mod Chenille Mist",
+   "handle": "nils-bar-stool-slipcover-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-mod-chenille-mist",
+   "sku": "IK-NS-BS__CNRP_SP__ESTE-92",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_ESTE-92_bd8e85e2-6df1-43ea-8825-feb0b44ecab2.jpg?v=1725357762"
+  },
+  {
+   "fabric": "Signature Microfiber Caramel",
+   "handle": "nils-bar-stool-slipcover-signature-microfiber-caramel",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-microfiber-caramel",
+   "sku": "IK-NS-BS__CNRP_SP__FA-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_FA-09_a8552888-cee8-4eb6-9764-1efb8464392f.jpg?v=1725357800"
+  },
+  {
+   "fabric": "Signature Microfiber Coral",
+   "handle": "nils-bar-stool-slipcover-signature-microfiber-coral",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-microfiber-coral",
+   "sku": "IK-NS-BS__CNRP_SP__FA-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_FA-14_62ac9b88-3dc6-468c-8377-8aef9d10544e.jpg?v=1725357812"
+  },
+  {
+   "fabric": "Signature Microfiber Cream",
+   "handle": "nils-bar-stool-slipcover-signature-microfiber-cream",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-microfiber-cream",
+   "sku": "IK-NS-BS__CNRP_SP__FA-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_FA-01_872bc7c0-8622-4515-98e8-659794b9943a.jpg?v=1725357796"
+  },
+  {
+   "fabric": "Signature Microfiber Dark Coral",
+   "handle": "nils-bar-stool-slipcover-signature-microfiber-dark-coral",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-microfiber-dark-coral",
+   "sku": "IK-NS-BS__CNRP_SP__FA-54",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_FA-54_79991271-ef1b-45e8-aaaf-d570ed596ccd.jpg?v=1725357815"
+  },
+  {
+   "fabric": "Signature Microfiber Forest Green",
+   "handle": "nils-bar-stool-slipcover-signature-microfiber-forest-green",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-microfiber-forest-green",
+   "sku": "IK-NS-BS__CNRP_SP__FA-63",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_FA-63_d776edec-bc1b-416b-9810-26c67645e862.jpg?v=1725357808"
+  },
+  {
+   "fabric": "Signature Microfiber Sand",
+   "handle": "nils-bar-stool-slipcover-signature-microfiber-sand",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-microfiber-sand",
+   "sku": "IK-NS-BS__CNRP_SP__FA-45",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_FA-45_15b9a827-47d4-4d0d-befc-763f3b039a00.jpg?v=1725357793"
+  },
+  {
+   "fabric": "Signature Microfiber Silver Sage",
+   "handle": "nils-bar-stool-slipcover-signature-microfiber-silver-sage",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-microfiber-silver-sage",
+   "sku": "IK-NS-BS__CNRP_SP__FA-67",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_FA-67_a6e719fd-5f25-45d5-ad1d-471b3d29fe95.jpg?v=1725357804"
+  },
+  {
+   "fabric": "Signature Velvet Bayleaf",
+   "handle": "nils-bar-stool-slipcover-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-velvet-bayleaf",
+   "sku": "IK-NS-BS__CNRP_SP__PAL-11",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Caramel",
+   "handle": "nils-bar-stool-slipcover-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-velvet-caramel",
+   "sku": "IK-NS-BS__CNRP_SP__PAL-09",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Cream",
+   "handle": "nils-bar-stool-slipcover-signature-velvet-cream",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-velvet-cream",
+   "sku": "IK-NS-BS__CNRP_SP__PAL-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Eucalyptus",
+   "handle": "nils-bar-stool-slipcover-signature-velvet-eucalyptus",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-velvet-eucalyptus",
+   "sku": "IK-NS-BS__CNRP_SP__PAL-14",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Hazel",
+   "handle": "nils-bar-stool-slipcover-signature-velvet-hazel",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-velvet-hazel",
+   "sku": "IK-NS-BS__CNRP_SP__PAL-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Midnight",
+   "handle": "nils-bar-stool-slipcover-signature-velvet-midnight",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-velvet-midnight",
+   "sku": "IK-NS-BS__CNRP_SP__PAL-12",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Natural",
+   "handle": "nils-bar-stool-slipcover-signature-velvet-natural",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-velvet-natural",
+   "sku": "IK-NS-BS__CNRP_SP__PAL-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Sand",
+   "handle": "nils-bar-stool-slipcover-signature-velvet-sand",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-velvet-sand",
+   "sku": "IK-NS-BS__CNRP_SP__PAL-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Sunset",
+   "handle": "nils-bar-stool-slipcover-signature-velvet-sunset",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-signature-velvet-sunset",
+   "sku": "IK-NS-BS__CNRP_SP__PAL-07",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Sunbrella® Canvas Flax",
+   "handle": "nils-bar-stool-slipcover-sunbrella®-canvas-flax",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-sunbrella®-canvas-flax",
+   "sku": "IK-NS-BS__CNRP_SP__5492-0000",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_5492-0000.jpg?v=1725357925"
+  },
+  {
+   "fabric": "Sunbrella® Fretwork Flax",
+   "handle": "nils-bar-stool-slipcover-sunbrella®-fretwork-flax",
+   "url": "https://comfort-works.com/products/nils-bar-stool-slipcover-sunbrella®-fretwork-flax",
+   "sku": "IK-NS-BS__CNRP_SP__45991-0001",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/IK-NS-BS_CNRP_SP_45991-0001.jpg?v=1725357907"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-teal",
+   "sku": "swatch__EYL-43",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-43_Everyday_Weave_Teal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-storm",
+   "sku": "swatch__EYL-24",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-24_Everyday_Weave_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-rust",
+   "sku": "swatch__EYL-39",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-39_Everyday_Weave_Rust.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-pebble",
+   "sku": "swatch__EYL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-20_Everyday_Weave_Pebble.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-navy",
+   "sku": "swatch__EYL-44",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-44_Everyday_Weave_Navy.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-maroon",
+   "sku": "swatch__EYL-38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-38_Everyday_Weave_Maroon.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-cream",
+   "sku": "swatch__EYL-35",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-35_Everyday_Weave_Cream.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-basil-green",
+   "sku": "swatch__EYL-47",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-47_Everyday_Weave_Basil_Green.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-white",
+   "sku": "swatch__CVC-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/TC-01_Everyday_Cotton_White_1X_1.jpg?v=1718092472"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-sand",
+   "sku": "swatch__CVC-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-02_Everyday_Cotton_Sand.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-silver-sage",
+   "sku": "swatch__CVC-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-03_Everyday_Cotton_Silver_Sage.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-forest-green",
+   "sku": "swatch__CVC-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-04_Everyday_Cotton_Forest_Green.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-navy",
+   "sku": "swatch__CVC-05",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-05.jpg?v=1785723660"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-pebble",
+   "sku": "swatch__CVC-06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-06_Everyday_Cotton_Pebble.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-charcoal",
+   "sku": "swatch__CVC-07",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-07_Everyday_Cotton_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-khaki",
+   "sku": "swatch__CVC-08",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-08_Everyday_Cotton_Khaki.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-cacao",
+   "sku": "swatch__ROYAL-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-04_Everyday_Velvet_Cacao.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-dark-teal",
+   "sku": "swatch__ROYAL-13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-13_Everyday_Velvet_Dark_Teal.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-navy",
+   "sku": "swatch__ROYAL-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-14_Everyday_Velvet_Navy.avif?v=1777425396"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-sand",
+   "sku": "swatch__ROYAL-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-03_Everyday_Velvet_Sand.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-storm",
+   "sku": "swatch__ROYAL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-20_Everyday_Velvet_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-sage",
+   "sku": "swatch__SUN-C10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/SUN-C10_Performance-Canvas-Sage_1080x1080_22f090cb-fce4-4f4f-bc62-d6af2bb93957.png?v=1702022331"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-ash",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-ash",
+   "sku": "swatch__SUN-C13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C13_Care_Canvas_Ash.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-beige",
+   "sku": "swatch__SUN-C38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C38_Care_Canvas_Beige.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-snow",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-snow",
+   "sku": "swatch__SUN-C31",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C31_Care_Canvas_Snow.avif?v=1777425376"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-teal",
+   "sku": "swatch__SUN-T12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T12_Care_Tweed_Teal.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-sunset",
+   "sku": "swatch__SUN-T06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T06_Care_Tweed_Sunset.avif?v=1777425402"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-mineral-blue",
+   "sku": "swatch__SUN-T10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T10_Care_Tweed_Mineral_Blue.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-amber",
+   "sku": "swatch__SUN-T04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T04_Care_Tweed_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-mist",
+   "sku": "swatch__ESTE-92",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-92_Mod_Chenille_Mist.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-espresso",
+   "sku": "swatch__ESTE-57",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-57ModChenilleCacao_1X_dac9a2ae-b3ad-4656-a8be-dd44b643f5d5.jpg?v=1723009282"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-denim",
+   "sku": "swatch__ESTE-78",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-78_Mod_Chenille_Denim.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-beige",
+   "sku": "swatch__ESTE-52",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-52_Mod_Chenille_Beige.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-amber",
+   "sku": "swatch__MOSS-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-09_Mod_Boucle_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-charcoal",
+   "sku": "swatch__MOSS-97",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-97_Mod_Boucle_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-cream",
+   "sku": "swatch__MOSS-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-01_Mod_Boucle_Cream.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-oatmeal",
+   "sku": "swatch__MOSS-40",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-40_Mod_Boucle_Oatmeal.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-white",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-white",
+   "sku": "swatch__COS-101",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-101_Care_Linen_White.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-cream",
+   "sku": "swatch__COS-103",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-103_Care_Linen_Cream.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-natural",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-natural",
+   "sku": "swatch__COS-105",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-105_Care_Linen_Natural.avif?v=1777425397"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-bayleaf",
+   "sku": "swatch__PAL-11",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-11_Signature_Velvet_Bayleaf.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-caramel",
+   "sku": "swatch__PAL-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-09_Signature_Velvet_Caramel.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-cream",
+   "sku": "swatch__PAL-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-01_Signature_Velvet_Cream.avif?v=1777425379"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-eucalyptus",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-eucalyptus",
+   "sku": "swatch__PAL-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-14_Signature_Velvet_Eucalyptus.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-hazel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-hazel",
+   "sku": "swatch__PAL-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-04_Signature_Velvet_Hazel.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-natural",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-natural",
+   "sku": "swatch__PAL-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-02_Signature_Velvet_Natural.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-sand",
+   "sku": "swatch__PAL-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-03_Signature_Velvet_Sand.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-sunset",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-sunset",
+   "sku": "swatch__PAL-07",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-07_Signature_Velvet_Sunset.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-midnight",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-midnight",
+   "sku": "swatch__PAL-12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-12_Signature_Velvet_Midnight.avif?v=1777425381"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-caramel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-caramel",
+   "sku": "swatch__FA-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-09_Signature_Microfibre_Caramel.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-coral",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-coral",
+   "sku": "swatch__FA-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-14_Signature_Microfibre_Coral.avif?v=1777425387"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-cream",
+   "sku": "swatch__FA-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-01_Signature_Microfibre_Cream.avif?v=1777425377"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-dark-coral",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-dark-coral",
+   "sku": "swatch__FA-54",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-54_Signature_Microfibre_Dark_Coral.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-forest-green",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-forest-green",
+   "sku": "swatch__FA-63",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-63_Signature_Microfibre_Forest_Green.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-sand",
+   "sku": "swatch__FA-45",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-45_Signature_Microfibre_Sand.avif?v=1777425392"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-silver-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-silver-sage",
+   "sku": "swatch__FA-67",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-67_Signature_Microfibre_Silver_Sage.avif?v=1777425397"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-snow",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-snow",
+   "sku": "swatch__BEN-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-01_Crypton_Chenille_Snow_1X_93dcac9d-c70d-4433-ab9b-d2c9e77c41d9.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-cream",
+   "sku": "swatch__BEN-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-02_Crypton_Chenille_Cream_1X_64152f0a-1efa-4d2c-8d3a-82b8ac99dcba.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-dark-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-dark-teal",
+   "sku": "swatch__BEN-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-03_Crypton_Chenille_Dark_Teal_1X_297f2e4e-538a-4a15-9984-6f1db09d32a0.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-burnt-orange",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-burnt-orange",
+   "sku": "swatch__BEN-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-04_Crypton_Chenille_Burnt_Orange_1X_5022eba9-da20-4396-ac22-c4bd47bdb6f0.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-sunbrella®-canvas-flax",
+   "url": "https://comfort-works.com/products/fabric-samples-sunbrella®-canvas-flax",
+   "sku": "swatch__5492-0000",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/5492-0000_Sunbrella_Canvas_Flax.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-sunbrella®-fretwork-flax",
+   "url": "https://comfort-works.com/products/fabric-samples-sunbrella®-fretwork-flax",
+   "sku": "swatch__45991-0001",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/45991-0001_Sunbrella_Fretwork_Flax.avif?v=1777425394"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-classic-velvet-peach",
+   "url": "https://comfort-works.com/products/fabric-samples-classic-velvet-peach",
+   "sku": "swatch__FM-02P",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FM-02P_20Classic_20Velvet_20Peach_1X_1371728e-ddee-4af9-9e08-9e7b95f0d79b.jpg?v=1710488070"
+  },
+  {
+   "fabric": null,
+   "handle": "cooper-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/cooper-wooden-sofa-leg",
+   "sku": "LEG-CR__BK",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-CR__BK.jpg?v=1683617841"
+  },
+  {
+   "fabric": null,
+   "handle": "bailey-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/bailey-wooden-sofa-leg",
+   "sku": "BY__ch",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/bailey_wooden_sofa_leg_cherry_BY__ch.jpg?v=1718327199"
+  },
+  {
+   "fabric": null,
+   "handle": "stella-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/stella-wooden-sofa-leg",
+   "sku": "LEG-SA__WH",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-SA__WH.webp?v=1689910066"
+  },
+  {
+   "fabric": null,
+   "handle": "peroni-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/peroni-wooden-sofa-leg",
+   "sku": "LEG-PN__WH",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-PN__WH.webp?v=1689910053"
+  },
+  {
+   "fabric": null,
+   "handle": "flexifit-universal-couch-cushion-covers",
+   "url": "https://comfort-works.com/products/flexifit-universal-couch-cushion-covers",
+   "sku": "CW-FF-CC",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CW-FF-CC_SQ_8396_SP_EYL-35.webp?v=1755762125"
+  }
+ ]
+}

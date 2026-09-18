@@ -1,0 +1,89 @@
+{
+ "handle": "slipcovers-for-west-elm-york-sofas",
+ "fetchedAt": "2026-09-18T05:38:20.048Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "york-35-left-right-arm-chaise-slipcover",
+   "title": "York 35\" Left/Right Arm Chaise Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-YK-35M",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-YK-35M_L_LV_LSKT_SP_CVC-01.webp?v=1783392914",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-YK-35M_L_LV_LSKT_SP_CVC-01.webp?v=1783392914"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-sofa",
+    "categoryproducts:WE-YK",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:York",
+    "WE-YK-35M"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-YK-35M",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "york-60-left-right-arm-loveseat-slipcover",
+   "title": "York 60” Left/Right Arm Loveseat Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-YK-60M",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-YK-60M_L_SV_SHRT_SP_CVC-01.webp?v=1783393219",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-YK-60M_L_SV_SHRT_SP_CVC-01.webp?v=1783393219"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-sofa",
+    "categoryproducts:WE-YK",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:York",
+    "WE-YK-60M"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-YK-60M",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

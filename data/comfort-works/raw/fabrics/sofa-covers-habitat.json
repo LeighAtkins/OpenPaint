@@ -1,0 +1,1221 @@
+{
+ "handle": "sofa-covers-habitat",
+ "representative": "chester-3-seater-sofa-slipcover",
+ "hubLinks": [
+  "\\/pages\\/fabrics-hypoallergenic-collection-everyday-cotton",
+  "\\/pages\\/fabrics-cozy-collection-everyday-velvet",
+  "\\/pages\\/fabrics-starter-collection-everyday-weave",
+  "\\/pages\\/fabrics-performance-collection-signature-velvet",
+  "\\/pages\\/fabrics-pet-friendly-collection-signature-microfiber",
+  "\\/pages\\/fabrics-performance-collection-sunbrella"
+ ],
+ "fabricCount": 134,
+ "fabrics": [
+  {
+   "fabric": null,
+   "handle": "chester-3-seater-sofa-slipcover",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover",
+   "sku": "HT-CR-79",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_CVC-01.jpg?v=1741319716"
+  },
+  {
+   "fabric": "Care+ Canvas Ash",
+   "handle": "chester-3-seater-sofa-slipcover-care-canvas-ash",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-care-canvas-ash",
+   "sku": "HT-CR-79__VELC_SP__SUN-C13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_SUN-C13.jpg?v=1727235057"
+  },
+  {
+   "fabric": "Care+ Canvas Beige",
+   "handle": "chester-3-seater-sofa-slipcover-care-canvas-beige",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-care-canvas-beige",
+   "sku": "HT-CR-79__VELC_SP__SUN-C38",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Canvas Sage",
+   "handle": "chester-3-seater-sofa-slipcover-care-canvas-sage",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-care-canvas-sage",
+   "sku": "HT-CR-79__VELC_SP__SUN-C10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_SUN-C10.jpg?v=1727235054"
+  },
+  {
+   "fabric": "Care+ Canvas Snow",
+   "handle": "chester-3-seater-sofa-slipcover-care-canvas-snow",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-care-canvas-snow",
+   "sku": "HT-CR-79__VELC_SP__SUN-C31",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen Cream",
+   "handle": "chester-3-seater-sofa-slipcover-care-linen-cream",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-care-linen-cream",
+   "sku": "HT-CR-79__VELC_SP__COS-103",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen Natural",
+   "handle": "chester-3-seater-sofa-slipcover-care-linen-natural",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-care-linen-natural",
+   "sku": "HT-CR-79__VELC_SP__COS-105",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Linen White",
+   "handle": "chester-3-seater-sofa-slipcover-care-linen-white",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-care-linen-white",
+   "sku": "HT-CR-79__VELC_SP__COS-101",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Care+ Tweed Amber",
+   "handle": "chester-3-seater-sofa-slipcover-care-tweed-amber",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-care-tweed-amber",
+   "sku": "HT-CR-79__VELC_SP__SUN-T04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_SUN-T04.jpg?v=1727235053"
+  },
+  {
+   "fabric": "Care+ Tweed Mineral Blue",
+   "handle": "chester-3-seater-sofa-slipcover-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-care-tweed-mineral-blue",
+   "sku": "HT-CR-79__VELC_SP__SUN-T10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_SUN-T10.jpg?v=1727235060"
+  },
+  {
+   "fabric": "Care+ Tweed Sunset",
+   "handle": "chester-3-seater-sofa-slipcover-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-care-tweed-sunset",
+   "sku": "HT-CR-79__VELC_SP__SUN-T06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_SUN-T06.jpg?v=1727235057"
+  },
+  {
+   "fabric": "Care+ Tweed Teal",
+   "handle": "chester-3-seater-sofa-slipcover-care-tweed-teal",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-care-tweed-teal",
+   "sku": "HT-CR-79__VELC_SP__SUN-T12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_SUN-T12.jpg?v=1727235055"
+  },
+  {
+   "fabric": "Classic Velvet Peach",
+   "handle": "chester-3-seater-sofa-slipcover-classic-velvet-peach",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-classic-velvet-peach",
+   "sku": "HT-CR-79__VELC_SP__FM-02P",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/HT-CR-79_VELC_SP_FM-02P.jpg?v=1710919085"
+  },
+  {
+   "fabric": "Crypton® Chenille Burnt Orange",
+   "handle": "chester-3-seater-sofa-slipcover-crypton®-chenille-burnt-orange",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-crypton®-chenille-burnt-orange",
+   "sku": "HT-CR-79__VELC_SP__BEN-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Cream",
+   "handle": "chester-3-seater-sofa-slipcover-crypton®-chenille-cream",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-crypton®-chenille-cream",
+   "sku": "HT-CR-79__VELC_SP__BEN-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Dark Teal",
+   "handle": "chester-3-seater-sofa-slipcover-crypton®-chenille-dark-teal",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-crypton®-chenille-dark-teal",
+   "sku": "HT-CR-79__VELC_SP__BEN-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Crypton® Chenille Snow",
+   "handle": "chester-3-seater-sofa-slipcover-crypton®-chenille-snow",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-crypton®-chenille-snow",
+   "sku": "HT-CR-79__VELC_SP__BEN-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Charcoal",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-cotton-charcoal",
+   "sku": "HT-CR-79__VELC_SP__CVC-07",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Forest Green",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-cotton-forest-green",
+   "sku": "HT-CR-79__VELC_SP__CVC-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Khaki",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-cotton-khaki",
+   "sku": "HT-CR-79__VELC_SP__CVC-08",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_CVC-08.jpg?v=1743054058"
+  },
+  {
+   "fabric": "Everyday Cotton Navy",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-cotton-navy",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-cotton-navy",
+   "sku": "HT-CR-79__VELC_SP__CVC-05",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Pebble",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-cotton-pebble",
+   "sku": "HT-CR-79__VELC_SP__CVC-06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_CVC-06_2e13f661-f578-44b9-8755-77476aa5f223.jpg?v=1743054005"
+  },
+  {
+   "fabric": "Everyday Cotton Sand",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-cotton-sand",
+   "sku": "HT-CR-79__VELC_SP__CVC-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton Silver Sage",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-cotton-silver-sage",
+   "sku": "HT-CR-79__VELC_SP__CVC-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Cotton White",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-cotton-white",
+   "sku": "HT-CR-79__VELC_SP__CVC-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Cacao",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-velvet-cacao",
+   "sku": "HT-CR-79__VELC_SP__ROYAL-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Dark Teal",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-velvet-dark-teal",
+   "sku": "HT-CR-79__VELC_SP__ROYAL-13",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Navy",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-velvet-navy",
+   "sku": "HT-CR-79__VELC_SP__ROYAL-14",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Sand",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-velvet-sand",
+   "sku": "HT-CR-79__VELC_SP__ROYAL-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Velvet Storm",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-velvet-storm",
+   "sku": "HT-CR-79__VELC_SP__ROYAL-20",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Everyday Weave Basil Green",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-weave-basil-green",
+   "sku": "HT-CR-79__VELC_SP__EYL-47",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/HT-CR-79_VELC_SP_EYL-47_4da51a5f-8c2e-4713-953b-4fb544aed94d.jpg?v=1696572863"
+  },
+  {
+   "fabric": "Everyday Weave Cream",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-weave-cream",
+   "sku": "HT-CR-79__VELC_SP__EYL-35",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/HT-CR-79_VELC_SP_EYL-35_853ad51b-b3f3-44b5-85f8-933462ef2493.jpg?v=1696572857"
+  },
+  {
+   "fabric": "Everyday Weave Maroon",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-weave-maroon",
+   "sku": "HT-CR-79__VELC_SP__EYL-38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/HT-CR-79_VELC_SP_EYL-38_3d6fb5f2-d20c-4760-a6ec-3adac49c1d76.jpg?v=1696572867"
+  },
+  {
+   "fabric": "Everyday Weave Navy",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-weave-navy",
+   "sku": "HT-CR-79__VELC_SP__EYL-44",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/HT-CR-79_VELC_SP_EYL-44.jpg?v=1710919079"
+  },
+  {
+   "fabric": "Everyday Weave Pebble",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-weave-pebble",
+   "sku": "HT-CR-79__VELC_SP__EYL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/HT-CR-79_VELC_SP_EYL-20_8a5d71b3-00ff-41ae-ad79-d51484bbc2cb.jpg?v=1696572851"
+  },
+  {
+   "fabric": "Everyday Weave Rust",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-weave-rust",
+   "sku": "HT-CR-79__VELC_SP__EYL-39",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/HT-CR-79_VELC_SP_EYL-39.jpg?v=1710919077"
+  },
+  {
+   "fabric": "Everyday Weave Storm",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-weave-storm",
+   "sku": "HT-CR-79__VELC_SP__EYL-24",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/HT-CR-79_VELC_SP_EYL-24_48edecf9-e770-4a02-a2c1-cf845c6ab416.jpg?v=1696572854"
+  },
+  {
+   "fabric": "Everyday Weave Teal",
+   "handle": "chester-3-seater-sofa-slipcover-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-everyday-weave-teal",
+   "sku": "HT-CR-79__VELC_SP__EYL-43",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/HT-CR-79_VELC_SP_EYL-43_41dfef49-0519-44bd-a0dc-010b9f37877a.jpg?v=1696572860"
+  },
+  {
+   "fabric": "Mod Boucle Amber",
+   "handle": "chester-3-seater-sofa-slipcover-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-mod-boucle-amber",
+   "sku": "HT-CR-79__VELC_SP__MOSS-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_MOSS-09.jpg?v=1719988221"
+  },
+  {
+   "fabric": "Mod Boucle Charcoal",
+   "handle": "chester-3-seater-sofa-slipcover-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-mod-boucle-charcoal",
+   "sku": "HT-CR-79__VELC_SP__MOSS-97",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_MOSS-97.jpg?v=1719988226"
+  },
+  {
+   "fabric": "Mod Boucle Cream",
+   "handle": "chester-3-seater-sofa-slipcover-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-mod-boucle-cream",
+   "sku": "HT-CR-79__VELC_SP__MOSS-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_MOSS-01.jpg?v=1719988218"
+  },
+  {
+   "fabric": "Mod Boucle Oatmeal",
+   "handle": "chester-3-seater-sofa-slipcover-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-mod-boucle-oatmeal",
+   "sku": "HT-CR-79__VELC_SP__MOSS-40",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_MOSS-40.jpg?v=1719988223"
+  },
+  {
+   "fabric": "Mod Chenille Beige",
+   "handle": "chester-3-seater-sofa-slipcover-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-mod-chenille-beige",
+   "sku": "HT-CR-79__VELC_SP__ESTE-52",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_ESTE-52.jpg?v=1722252921"
+  },
+  {
+   "fabric": "Mod Chenille Denim",
+   "handle": "chester-3-seater-sofa-slipcover-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-mod-chenille-denim",
+   "sku": "HT-CR-79__VELC_SP__ESTE-78",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_ESTE-78.jpg?v=1722252928"
+  },
+  {
+   "fabric": "Mod Chenille Espresso",
+   "handle": "chester-3-seater-sofa-slipcover-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-mod-chenille-espresso",
+   "sku": "HT-CR-79__VELC_SP__ESTE-57",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_ESTE-57.jpg?v=1722252926"
+  },
+  {
+   "fabric": "Mod Chenille Mist",
+   "handle": "chester-3-seater-sofa-slipcover-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-mod-chenille-mist",
+   "sku": "HT-CR-79__VELC_SP__ESTE-92",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_ESTE-92.jpg?v=1722252931"
+  },
+  {
+   "fabric": "Signature Microfiber Caramel",
+   "handle": "chester-3-seater-sofa-slipcover-signature-microfiber-caramel",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-microfiber-caramel",
+   "sku": "HT-CR-79__VELC_SP__FA-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_FA-09.jpg?v=1718160259"
+  },
+  {
+   "fabric": "Signature Microfiber Coral",
+   "handle": "chester-3-seater-sofa-slipcover-signature-microfiber-coral",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-microfiber-coral",
+   "sku": "HT-CR-79__VELC_SP__FA-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_FA-14.jpg?v=1718160267"
+  },
+  {
+   "fabric": "Signature Microfiber Cream",
+   "handle": "chester-3-seater-sofa-slipcover-signature-microfiber-cream",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-microfiber-cream",
+   "sku": "HT-CR-79__VELC_SP__FA-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_FA-01.jpg?v=1718160256"
+  },
+  {
+   "fabric": "Signature Microfiber Dark Coral",
+   "handle": "chester-3-seater-sofa-slipcover-signature-microfiber-dark-coral",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-microfiber-dark-coral",
+   "sku": "HT-CR-79__VELC_SP__FA-54",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_FA-54.jpg?v=1718160270"
+  },
+  {
+   "fabric": "Signature Microfiber Forest Green",
+   "handle": "chester-3-seater-sofa-slipcover-signature-microfiber-forest-green",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-microfiber-forest-green",
+   "sku": "HT-CR-79__VELC_SP__FA-63",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_FA-63.jpg?v=1718160264"
+  },
+  {
+   "fabric": "Signature Microfiber Sand",
+   "handle": "chester-3-seater-sofa-slipcover-signature-microfiber-sand",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-microfiber-sand",
+   "sku": "HT-CR-79__VELC_SP__FA-45",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_FA-45_6e8887b9-2be3-48d8-a043-cc1bb8b32417.jpg?v=1718160253"
+  },
+  {
+   "fabric": "Signature Microfiber Silver Sage",
+   "handle": "chester-3-seater-sofa-slipcover-signature-microfiber-silver-sage",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-microfiber-silver-sage",
+   "sku": "HT-CR-79__VELC_SP__FA-67",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-79_VELC_SP_FA-67.jpg?v=1718160261"
+  },
+  {
+   "fabric": "Signature Velvet Bayleaf",
+   "handle": "chester-3-seater-sofa-slipcover-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-velvet-bayleaf",
+   "sku": "HT-CR-79__VELC_SP__PAL-11",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Caramel",
+   "handle": "chester-3-seater-sofa-slipcover-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-velvet-caramel",
+   "sku": "HT-CR-79__VELC_SP__PAL-09",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Cream",
+   "handle": "chester-3-seater-sofa-slipcover-signature-velvet-cream",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-velvet-cream",
+   "sku": "HT-CR-79__VELC_SP__PAL-01",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Eucalyptus",
+   "handle": "chester-3-seater-sofa-slipcover-signature-velvet-eucalyptus",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-velvet-eucalyptus",
+   "sku": "HT-CR-79__VELC_SP__PAL-14",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Hazel",
+   "handle": "chester-3-seater-sofa-slipcover-signature-velvet-hazel",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-velvet-hazel",
+   "sku": "HT-CR-79__VELC_SP__PAL-04",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Midnight",
+   "handle": "chester-3-seater-sofa-slipcover-signature-velvet-midnight",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-velvet-midnight",
+   "sku": "HT-CR-79__VELC_SP__PAL-12",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Natural",
+   "handle": "chester-3-seater-sofa-slipcover-signature-velvet-natural",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-velvet-natural",
+   "sku": "HT-CR-79__VELC_SP__PAL-02",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Sand",
+   "handle": "chester-3-seater-sofa-slipcover-signature-velvet-sand",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-velvet-sand",
+   "sku": "HT-CR-79__VELC_SP__PAL-03",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Signature Velvet Sunset",
+   "handle": "chester-3-seater-sofa-slipcover-signature-velvet-sunset",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-signature-velvet-sunset",
+   "sku": "HT-CR-79__VELC_SP__PAL-07",
+   "price": null,
+   "currency": null,
+   "image": null
+  },
+  {
+   "fabric": "Sunbrella® Canvas Flax",
+   "handle": "chester-3-seater-sofa-slipcover-sunbrella®-canvas-flax",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-sunbrella®-canvas-flax",
+   "sku": "HT-CR-79__VELC_SP__5492-0000",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/HT-CR-79_VELC_SP_5492-0000.jpg?v=1693130143"
+  },
+  {
+   "fabric": "Sunbrella® Fretwork Flax",
+   "handle": "chester-3-seater-sofa-slipcover-sunbrella®-fretwork-flax",
+   "url": "https://comfort-works.com/products/chester-3-seater-sofa-slipcover-sunbrella®-fretwork-flax",
+   "sku": "HT-CR-79__VELC_SP__45991-0001",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/HT-CR-79_VELC_SP_45991-0001.jpg?v=1693130132"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-teal",
+   "sku": "swatch__EYL-43",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-43_Everyday_Weave_Teal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-storm",
+   "sku": "swatch__EYL-24",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-24_Everyday_Weave_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-rust",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-rust",
+   "sku": "swatch__EYL-39",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-39_Everyday_Weave_Rust.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-pebble",
+   "sku": "swatch__EYL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-20_Everyday_Weave_Pebble.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-navy",
+   "sku": "swatch__EYL-44",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-44_Everyday_Weave_Navy.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-maroon",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-maroon",
+   "sku": "swatch__EYL-38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-38_Everyday_Weave_Maroon.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-cream",
+   "sku": "swatch__EYL-35",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-35_Everyday_Weave_Cream.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-weave-basil-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-weave-basil-green",
+   "sku": "swatch__EYL-47",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/EYL-47_Everyday_Weave_Basil_Green.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-white",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-white",
+   "sku": "swatch__CVC-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/TC-01_Everyday_Cotton_White_1X_1.jpg?v=1718092472"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-sand",
+   "sku": "swatch__CVC-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-02_Everyday_Cotton_Sand.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-silver-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-silver-sage",
+   "sku": "swatch__CVC-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-03_Everyday_Cotton_Silver_Sage.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-forest-green",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-forest-green",
+   "sku": "swatch__CVC-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-04_Everyday_Cotton_Forest_Green.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-navy",
+   "sku": "swatch__CVC-05",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-05.jpg?v=1785723660"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-pebble",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-pebble",
+   "sku": "swatch__CVC-06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-06_Everyday_Cotton_Pebble.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-charcoal",
+   "sku": "swatch__CVC-07",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-07_Everyday_Cotton_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-cotton-khaki",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-cotton-khaki",
+   "sku": "swatch__CVC-08",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CVC-08_Everyday_Cotton_Khaki.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-cacao",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-cacao",
+   "sku": "swatch__ROYAL-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-04_Everyday_Velvet_Cacao.avif?v=1777425393"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-dark-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-dark-teal",
+   "sku": "swatch__ROYAL-13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-13_Everyday_Velvet_Dark_Teal.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-navy",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-navy",
+   "sku": "swatch__ROYAL-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-14_Everyday_Velvet_Navy.avif?v=1777425396"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-sand",
+   "sku": "swatch__ROYAL-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-03_Everyday_Velvet_Sand.avif?v=1777425390"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-everyday-velvet-storm",
+   "url": "https://comfort-works.com/products/fabric-samples-everyday-velvet-storm",
+   "sku": "swatch__ROYAL-20",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ROYAL-20_Everyday_Velvet_Storm.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-sage",
+   "sku": "swatch__SUN-C10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/SUN-C10_Performance-Canvas-Sage_1080x1080_22f090cb-fce4-4f4f-bc62-d6af2bb93957.png?v=1702022331"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-ash",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-ash",
+   "sku": "swatch__SUN-C13",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C13_Care_Canvas_Ash.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-beige",
+   "sku": "swatch__SUN-C38",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C38_Care_Canvas_Beige.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-canvas-snow",
+   "url": "https://comfort-works.com/products/fabric-samples-care-canvas-snow",
+   "sku": "swatch__SUN-C31",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-C31_Care_Canvas_Snow.avif?v=1777425376"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-teal",
+   "sku": "swatch__SUN-T12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T12_Care_Tweed_Teal.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-sunset",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-sunset",
+   "sku": "swatch__SUN-T06",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T06_Care_Tweed_Sunset.avif?v=1777425402"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-mineral-blue",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-mineral-blue",
+   "sku": "swatch__SUN-T10",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T10_Care_Tweed_Mineral_Blue.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-tweed-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-care-tweed-amber",
+   "sku": "swatch__SUN-T04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/SUN-T04_Care_Tweed_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-mist",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-mist",
+   "sku": "swatch__ESTE-92",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-92_Mod_Chenille_Mist.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-espresso",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-espresso",
+   "sku": "swatch__ESTE-57",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-57ModChenilleCacao_1X_dac9a2ae-b3ad-4656-a8be-dd44b643f5d5.jpg?v=1723009282"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-denim",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-denim",
+   "sku": "swatch__ESTE-78",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-78_Mod_Chenille_Denim.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-chenille-beige",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-chenille-beige",
+   "sku": "swatch__ESTE-52",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/ESTE-52_Mod_Chenille_Beige.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-amber",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-amber",
+   "sku": "swatch__MOSS-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-09_Mod_Boucle_Amber.avif?v=1777425401"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-charcoal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-charcoal",
+   "sku": "swatch__MOSS-97",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-97_Mod_Boucle_Charcoal.avif?v=1777425400"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-cream",
+   "sku": "swatch__MOSS-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-01_Mod_Boucle_Cream.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-mod-boucle-oatmeal",
+   "url": "https://comfort-works.com/products/fabric-samples-mod-boucle-oatmeal",
+   "sku": "swatch__MOSS-40",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MOSS-40_Mod_Boucle_Oatmeal.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-white",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-white",
+   "sku": "swatch__COS-101",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-101_Care_Linen_White.avif?v=1777425382"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-cream",
+   "sku": "swatch__COS-103",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-103_Care_Linen_Cream.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-care-linen-natural",
+   "url": "https://comfort-works.com/products/fabric-samples-care-linen-natural",
+   "sku": "swatch__COS-105",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/COS-105_Care_Linen_Natural.avif?v=1777425397"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-bayleaf",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-bayleaf",
+   "sku": "swatch__PAL-11",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-11_Signature_Velvet_Bayleaf.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-caramel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-caramel",
+   "sku": "swatch__PAL-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-09_Signature_Velvet_Caramel.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-cream",
+   "sku": "swatch__PAL-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-01_Signature_Velvet_Cream.avif?v=1777425379"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-eucalyptus",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-eucalyptus",
+   "sku": "swatch__PAL-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-14_Signature_Velvet_Eucalyptus.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-hazel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-hazel",
+   "sku": "swatch__PAL-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-04_Signature_Velvet_Hazel.avif?v=1777425385"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-natural",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-natural",
+   "sku": "swatch__PAL-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-02_Signature_Velvet_Natural.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-sand",
+   "sku": "swatch__PAL-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-03_Signature_Velvet_Sand.avif?v=1777425384"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-sunset",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-sunset",
+   "sku": "swatch__PAL-07",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-07_Signature_Velvet_Sunset.avif?v=1777425383"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-velvet-midnight",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-velvet-midnight",
+   "sku": "swatch__PAL-12",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/PAL-12_Signature_Velvet_Midnight.avif?v=1777425381"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-caramel",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-caramel",
+   "sku": "swatch__FA-09",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-09_Signature_Microfibre_Caramel.avif?v=1777425399"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-coral",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-coral",
+   "sku": "swatch__FA-14",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-14_Signature_Microfibre_Coral.avif?v=1777425387"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-cream",
+   "sku": "swatch__FA-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-01_Signature_Microfibre_Cream.avif?v=1777425377"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-dark-coral",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-dark-coral",
+   "sku": "swatch__FA-54",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-54_Signature_Microfibre_Dark_Coral.avif?v=1777425395"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-forest-green",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-forest-green",
+   "sku": "swatch__FA-63",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-63_Signature_Microfibre_Forest_Green.avif?v=1777425391"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-sand",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-sand",
+   "sku": "swatch__FA-45",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-45_Signature_Microfibre_Sand.avif?v=1777425392"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-signature-microfiber-silver-sage",
+   "url": "https://comfort-works.com/products/fabric-samples-signature-microfiber-silver-sage",
+   "sku": "swatch__FA-67",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FA-67_Signature_Microfibre_Silver_Sage.avif?v=1777425397"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-snow",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-snow",
+   "sku": "swatch__BEN-01",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-01_Crypton_Chenille_Snow_1X_93dcac9d-c70d-4433-ab9b-d2c9e77c41d9.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-cream",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-cream",
+   "sku": "swatch__BEN-02",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-02_Crypton_Chenille_Cream_1X_64152f0a-1efa-4d2c-8d3a-82b8ac99dcba.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-dark-teal",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-dark-teal",
+   "sku": "swatch__BEN-03",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-03_Crypton_Chenille_Dark_Teal_1X_297f2e4e-538a-4a15-9984-6f1db09d32a0.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-crypton®-chenille-burnt-orange",
+   "url": "https://comfort-works.com/products/fabric-samples-crypton®-chenille-burnt-orange",
+   "sku": "swatch__BEN-04",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/BEN-04_Crypton_Chenille_Burnt_Orange_1X_5022eba9-da20-4396-ac22-c4bd47bdb6f0.jpg?v=1777020064"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-sunbrella®-canvas-flax",
+   "url": "https://comfort-works.com/products/fabric-samples-sunbrella®-canvas-flax",
+   "sku": "swatch__5492-0000",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/5492-0000_Sunbrella_Canvas_Flax.avif?v=1777425398"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-sunbrella®-fretwork-flax",
+   "url": "https://comfort-works.com/products/fabric-samples-sunbrella®-fretwork-flax",
+   "sku": "swatch__45991-0001",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/45991-0001_Sunbrella_Fretwork_Flax.avif?v=1777425394"
+  },
+  {
+   "fabric": null,
+   "handle": "fabric-samples-classic-velvet-peach",
+   "url": "https://comfort-works.com/products/fabric-samples-classic-velvet-peach",
+   "sku": "swatch__FM-02P",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/FM-02P_20Classic_20Velvet_20Peach_1X_1371728e-ddee-4af9-9e08-9e7b95f0d79b.jpg?v=1710488070"
+  },
+  {
+   "fabric": "USB2-CBL",
+   "handle": "smart-sofa-accessories-usb2-cbl",
+   "url": "https://comfort-works.com/products/smart-sofa-accessories-usb2-cbl",
+   "sku": "NOUSB",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/1_default_attaching-USB-port_e641b4e0-014a-4685-9135-c52f619c48b1.jpg?v=1689153245"
+  },
+  {
+   "fabric": null,
+   "handle": "chester-2-seater-sofa-slipcover",
+   "url": "https://comfort-works.com/products/chester-2-seater-sofa-slipcover",
+   "sku": "HT-CR-67",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/HT-CR-67_VELC_SP_CVC-01.jpg?v=1741319716"
+  },
+  {
+   "fabric": null,
+   "handle": "cooper-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/cooper-wooden-sofa-leg",
+   "sku": "LEG-CR__BK",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-CR__BK.jpg?v=1683617841"
+  },
+  {
+   "fabric": null,
+   "handle": "bailey-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/bailey-wooden-sofa-leg",
+   "sku": "BY__ch",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/bailey_wooden_sofa_leg_cherry_BY__ch.jpg?v=1718327199"
+  },
+  {
+   "fabric": null,
+   "handle": "stella-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/stella-wooden-sofa-leg",
+   "sku": "LEG-SA__WH",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-SA__WH.webp?v=1689910066"
+  },
+  {
+   "fabric": null,
+   "handle": "peroni-wooden-sofa-leg",
+   "url": "https://comfort-works.com/products/peroni-wooden-sofa-leg",
+   "sku": "LEG-PN__WH",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/products/LEG-PN__WH.webp?v=1689910053"
+  },
+  {
+   "fabric": null,
+   "handle": "flexifit-universal-couch-cushion-covers",
+   "url": "https://comfort-works.com/products/flexifit-universal-couch-cushion-covers",
+   "sku": "CW-FF-CC",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/CW-FF-CC_SQ_8396_SP_EYL-35.webp?v=1755762125"
+  }
+ ]
+}

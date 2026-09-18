@@ -1,0 +1,79 @@
+{
+ "handle": "ikea-lugnvik-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:58.160Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "lugnvik-sofa-bed-cover-with-chaise",
+   "title": "Lugnvik Sofa Bed Cover with Chaise",
+   "vendor": "IKEA",
+   "sku": "IK-LK-25B",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LK-25B_L_LSKT_PM_CVC-01.jpg?v=1741320145",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LK-25B_L_LSKT_PM_CVC-01.jpg?v=1741320145",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_317_IKEA_Lugnvik_sofa.jpg?v=1741320145",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_316_IKEA_Lugnvik_sofa_91d8d242-1768-4b6f-a13b-fed2411cee35.jpg?v=1741320145"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:LK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LK-25B",
+    "FLT___Product_Ref__Old____LK2_R",
+    "FLT___Series_Code___LK",
+    "FLT___Series_Name___Lugnvik",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___LSKT_PM",
+    "FLT___Variant_1_Name___Left_Chaise",
+    "FLT___Variant_1_Name___Right_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-LK-25B",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:No",
+    "series:Lugnvik",
+    "size:2+ Seater",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LK-25B",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,354 @@
+{
+ "handle": "ikea-morabo-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:00.623Z",
+ "count": 7,
+ "products": [
+  {
+   "handle": "morabo-sofa-cover",
+   "title": "Morabo Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-MRO-3",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-3_SHRT_SP_CVC-01.jpg?v=1741320126",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-3_SHRT_SP_CVC-01.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_149_IKEA_Morabo_sofa.jpg?v=1741320126",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_145_IKEA_Morabo_sofa.jpg?v=1741320126"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:MRO",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MRO-3",
+    "FLT___Product_Ref__Old____MRO3",
+    "FLT___Series_Code___MRO",
+    "FLT___Series_Name___Morabo",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-MRO-3",
+    "series:Morabo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MRO-3",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morabo-5-seat-sectional-cover",
+   "title": "Morabo 5-Seat Sectional Cover",
+   "vendor": "IKEA",
+   "sku": "IK-MRO-263",
+   "price": "479.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-263_L_SHRT_SP_CVC-01.jpg?v=1741320131",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-263_L_SHRT_SP_CVC-01.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_147_IKEA_Morabo_sofa.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_150_IKEA_Morabo_sofa.jpg?v=1741320131"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:MRO",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MRO-263",
+    "FLT___Product_Ref__Old____MRO7",
+    "FLT___Series_Code___MRO",
+    "FLT___Series_Name___Morabo",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Sofa_on_Left_side",
+    "FLT___Variant_1_Name___Sofa_on_Right_side",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-MRO-263",
+    "series:Morabo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MRO-263",
+     "price": "479.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morabo-sofa-with-chaise-cover",
+   "title": "Morabo Sofa with Chaise Cover",
+   "vendor": "IKEA",
+   "sku": "IK-MRO-25",
+   "price": "379.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-96_L_SV_VELC_SP_CVC-01.jpg?v=1741741758",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-96_L_SV_VELC_SP_CVC-01.jpg?v=1741741758"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:MRO",
+    "description:",
+    "features:539",
+    "FLT___Category_Size___Sectional",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-MRO-25",
+    "IKEA",
+    "installation:579",
+    "series:Morabo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MRO-25",
+     "price": "379.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morabo-loveseat-cover",
+   "title": "Morabo Loveseat Cover",
+   "vendor": "IKEA",
+   "sku": "IK-MRO-2",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-2_SHRT_SP_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-2_SHRT_SP_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_148_IKEA_Morabo_sofa_e3d22430-f40d-40c8-bf9b-b0d2923c8f14.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_146_IKEA_Morabo_sofa.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:MRO",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MRO-2",
+    "FLT___Product_Ref__Old____MRO2",
+    "FLT___Series_Code___MRO",
+    "FLT___Series_Name___Morabo",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-MRO-2",
+    "series:Morabo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MRO-2",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morabo-armchair-cover",
+   "title": "Morabo Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-MRO-1",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-1_SHRT_SP_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-1_SHRT_SP_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_145_IKEA_Morabo_sofa_3c727fe5-a53b-4072-9ea1-6fc7441455f9.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_148_IKEA_Morabo_sofa.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:MRO",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MRO-1",
+    "FLT___Product_Ref__Old____MRO1",
+    "FLT___Series_Code___MRO",
+    "FLT___Series_Name___Morabo",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-MRO-1",
+    "series:Morabo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MRO-1",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morabo-footstool-cover",
+   "title": "Morabo Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-MRO-0",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-0_SHRT_SP_CVC-01.jpg?v=1741320128",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-0_SHRT_SP_CVC-01.jpg?v=1741320128",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_145_IKEA_Morabo_sofa_b2d86134-716a-4bcf-8a74-c994a7d2f802.jpg?v=1741320128",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_149_IKEA_Morabo_sofa_250b0f9d-da34-41f1-b291-9bab3ca1bb85.jpg?v=1756454675"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:MRO",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-MRO-0",
+    "FLT___Product_Ref__Old____MRO0",
+    "FLT___Series_Code___MRO",
+    "FLT___Series_Name___Morabo",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Modern",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-MRO-0",
+    "series:Morabo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MRO-0",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morabo-4-seat-sofa-with-chaise-sofa-cover",
+   "title": "Morabo 4-seat Sofa with Chaise Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-MRO-35",
+   "price": "409.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-35_R_SV_SHRT_SP_CVC-01.webp?v=1780993765",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-MRO-35_R_SV_SHRT_SP_CVC-01.webp?v=1780993765"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:MRO",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "IK-MRO-35",
+    "IKEA",
+    "installation:579",
+    "series:Morabo"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-MRO-35",
+     "price": "409.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,202 @@
+{
+ "handle": "west-elm-drake-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:38.337Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "drake-86-sofa-slipcover",
+   "title": "Drake 86\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-DE-86",
+   "price": "639.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-DE-86_VELC_PM_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-DE-86_VELC_PM_CVC-01.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_505_West_20Elm_Drake_sofa.jpg?v=1741320196",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_506_West_Elm_Drake_sofa.jpg?v=1741320196"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:WE-DE",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___West_Elm",
+    "FLT___Product_Ref__New____WE-DE-86",
+    "FLT___Series_Code___DE",
+    "FLT___Series_Name___Drake",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Drake",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No",
+    "WE-DE-86"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-DE-86",
+     "price": "639.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "drake-2-piece-86-reversible-sectional-slipcover",
+   "title": "Drake 2-Piece 86\" Reversible Sectional Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-DE-86-S",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-DE-86-S_WE-DE-86-S.jpg?v=1733380373",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-DE-86-S_WE-DE-86-S.jpg?v=1733380373",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_WE-DE-86-S_WE-DE-86-S_5f490a4e-013c-443d-abbd-2e216843cf0d.jpg?v=1733380381"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-S",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Drake",
+    "WE-DE-86-S",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-DE-86-S",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "drake-76-sofa-slipcover",
+   "title": "Drake 76\" Sofa Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-DE-76",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-DE-76_LV_VELC_PM_CVC-01.jpg?v=1741320196",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-DE-76_LV_VELC_PM_CVC-01.jpg?v=1741320196"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-DE",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___Product_Brand___West_Elm",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Drake",
+    "WE-DE-76",
+    "West Elm"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-DE-76",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "drake-100-2-piece-bumper-chaise-sectional-slipcover",
+   "title": "Drake 100\" 2-Piece Bumper Chaise Sectional Slipcover",
+   "vendor": "West Elm",
+   "sku": "WE-DE-100",
+   "price": "959.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-DE-100_L_VELC_PM_CVC-01.jpg?v=1741320198",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/WE-DE-100_L_VELC_PM_CVC-01.jpg?v=1741320198"
+   ],
+   "tags": [
+    "categoryproducts:WE-1",
+    "categoryproducts:WE-DE",
+    "categoryproducts:WE-S",
+    "categoryproducts:WE-sofa",
+    "description:",
+    "features:515",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "series:Drake",
+    "WE-DE-100"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "WE-DE-100",
+     "price": "959.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

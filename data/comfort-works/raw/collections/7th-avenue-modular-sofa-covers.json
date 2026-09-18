@@ -1,0 +1,88 @@
+{
+ "handle": "7th-avenue-modular-sofa-covers",
+ "fetchedAt": "2026-09-18T05:31:39.046Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "modular-ottoman-slipcover",
+   "title": "Modular Ottoman Slipcover",
+   "vendor": "7th Avenue",
+   "sku": "AV-MR-38F",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AV-MR-38F_EXD_VELC_SP_CVC-01.webp?v=1778649044",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AV-MR-38F_EXD_VELC_SP_CVC-01.webp?v=1778649044"
+   ],
+   "tags": [
+    "AV-MR-38F",
+    "categoryproducts:AV",
+    "categoryproducts:AV-MR",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "series:Modular"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AV-MR-38F",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "modular-left-right-corner-seat-slipcover",
+   "title": "Modular Left/Right Corner Seat Slipcover",
+   "vendor": "7th Avenue",
+   "sku": "AV-MR-47M",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AV-MR-47M_R_EXD_VELC_SP_CVC-01.webp?v=1778649395",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AV-MR-47M_R_EXD_VELC_SP_CVC-01.webp?v=1778649395"
+   ],
+   "tags": [
+    "AV-MR-47M",
+    "categoryproducts:AV",
+    "categoryproducts:AV-MR",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Modular"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AV-MR-47M",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

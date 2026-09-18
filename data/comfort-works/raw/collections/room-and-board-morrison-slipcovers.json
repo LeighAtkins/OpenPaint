@@ -1,0 +1,182 @@
+{
+ "handle": "room-and-board-morrison-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:06.954Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "morrison-96-sofa-slipcover",
+   "title": "Morrison 96\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MN-96",
+   "price": "799.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MN-96_VELC_PM_CVC-01.jpg?v=1741320194",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MN-96_VELC_PM_CVC-01.jpg?v=1741320194"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MN",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-MN-96",
+    "Room and Board",
+    "series:Morrison"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MN-96",
+     "price": "799.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morrison-86-sofa-slipcover",
+   "title": "Morrison 86\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MN-86",
+   "price": "719.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MN-86_VELC_PM_CVC-01.jpg?v=1741320192",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MN-86_VELC_PM_CVC-01.jpg?v=1741320192"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MN",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-MN-86",
+    "Room and Board",
+    "series:Morrison"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MN-86",
+     "price": "719.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morrison-76-sofa-slipcover",
+   "title": "Morrison 76\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MN-76",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MN-76_VELC_PM_CVC-01.jpg?v=1741320193",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MN-76_VELC_PM_CVC-01.jpg?v=1741320193"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MN",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-MN-76",
+    "Room and Board",
+    "series:Morrison"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MN-76",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "morrison-square-ottoman-slipcover",
+   "title": "Morrison Square Ottoman Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MN-42F",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MN-42F_9a410e47-45f2-4bf5-9e9c-4e85404ca56e.jpg?v=1724368501",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MN-42F_9a410e47-45f2-4bf5-9e9c-4e85404ca56e.jpg?v=1724368501",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/placeholder_RB-MN-42F_RB-MN-42F.jpg?v=1730083894"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MN",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-MN-42F",
+    "Room and Board",
+    "series:Morrison"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MN-42F",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

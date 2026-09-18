@@ -1,0 +1,564 @@
+{
+ "handle": "ikea-norsborg-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:02.731Z",
+ "count": 8,
+ "products": [
+  {
+   "handle": "norsborg-two-seat-sofa-cover",
+   "title": "Norsborg Two-seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-NG-2",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-2_LSKT_SI_CVC-01.jpg?v=1741320137",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-2_LSKT_SI_CVC-01.jpg?v=1741320137",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_108_IKEA_Norsborg_sofa_d8af59b7-d20d-435b-b2c8-b7713ac0eeba.jpg?v=1741320137",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_110_IKEA_Norsborg_sofa_35741092-bfa8-44ba-b0cf-54e01ae974f3.jpg?v=1741320137"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:NG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NG-2",
+    "FLT___Product_Ref__Old____NG2",
+    "FLT___Series_Code___NG",
+    "FLT___Series_Name___Norsborg",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original__With_Arm_Pockets_",
+    "FLT___Style_Name___Original__Without_Arm_Pockets_",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR_NARM",
+    "FLT___Styles_Code___VELC_WR_YARM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-NG-2",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Norsborg",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NG-2",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "norsborg-two-seat-section-cover-only",
+   "title": "Norsborg Two-seat Section Cover Only",
+   "vendor": "IKEA",
+   "sku": "IK-NG-2X",
+   "price": "189.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-2X_VELC_WR_CVC-01.jpg?v=1741678945",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-2X_VELC_WR_CVC-01.jpg?v=1741678945",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_108_IKEA_Norsborg_sofa_abccd4ce-68c7-4b34-ba74-31b2f5038aea.jpg?v=1741678945",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_110_IKEA_Norsborg_sofa_8cb9e3f4-3cff-418a-9018-43cdd14368e2.jpg?v=1741678945"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:NG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NG-2X",
+    "FLT___Product_Ref__Old____NG2_N",
+    "FLT___Series_Code___NG",
+    "FLT___Series_Name___Norsborg",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-NG-2X",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Norsborg",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NG-2X",
+     "price": "189.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "norsborg-three-seat-section-cover-only",
+   "title": "Norsborg Three-seat Section Cover Only",
+   "vendor": "IKEA",
+   "sku": "IK-NG-3X",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-3X_VELC_WR_CVC-01.jpg?v=1741678945",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-3X_VELC_WR_CVC-01.jpg?v=1741678945",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_109_IKEA_Norsborg_sofa_4011ac6a-76a9-4454-b5de-9d89f91282d9.jpg?v=1741678945"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:NG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NG-3X",
+    "FLT___Product_Ref__Old____NG3_N",
+    "FLT___Series_Code___NG",
+    "FLT___Series_Name___Norsborg",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-NG-3X",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Norsborg",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NG-3X",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "norsborg-chaise-section-cover-only",
+   "title": "Norsborg Chaise Section Cover Only",
+   "vendor": "IKEA",
+   "sku": "IK-NG-5X",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-5X_VELC_WR_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-5X_VELC_WR_CVC-01.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_109_IKEA_Norsborg_sofa_36d3c42d-ad08-4d97-abc6-eb3c7c42dac6.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Chaise Lounge",
+    "categoryproducts:IK",
+    "categoryproducts:NG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NG-5X",
+    "FLT___Product_Ref__Old____NG5_N",
+    "FLT___Series_Code___NG",
+    "FLT___Series_Name___Norsborg",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-NG-5X",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Norsborg",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NG-5X",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "norsborg-armrest-covers-pair",
+   "title": "Norsborg Armrest Covers (Pair)",
+   "vendor": "IKEA",
+   "sku": "IK-NG-8",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-8_LSKT_SI_CVC-01.jpg?v=1741320135",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-8_LSKT_SI_CVC-01.jpg?v=1741320135",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_109_IKEA_Norsborg_sofa.jpg?v=1741320135"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:NG",
+    "features:575",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NG-8",
+    "FLT___Product_Ref__Old____NG8",
+    "FLT___Series_Code___NG",
+    "FLT___Series_Name___Norsborg",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Original__With_Arm_Pockets_",
+    "FLT___Style_Name___Original__Without_Arm_Pockets_",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR_NARM",
+    "FLT___Styles_Code___VELC_WR_YARM",
+    "FLT__MAIN",
+    "IK-NG-8",
+    "installation:579",
+    "series:Norsborg"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NG-8",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "norsborg-corner-section-cover-only",
+   "title": "Norsborg Corner Section Cover Only",
+   "vendor": "IKEA",
+   "sku": "IK-NG-6",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-6_VELC_WR_CVC-01.jpg?v=1741678946",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-6_VELC_WR_CVC-01.jpg?v=1741678946",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_108_IKEA_Norsborg_sofa_6c403fa9-58f4-4fd2-8319-ffbe9aaa9842.jpg?v=1741678946",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_061_IKEA_Norsborg_sofa.jpg?v=1741678946"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:IK",
+    "categoryproducts:NG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NG-6",
+    "FLT___Product_Ref__Old____NG4",
+    "FLT___Series_Code___NG",
+    "FLT___Series_Name___Norsborg",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-NG-6",
+    "installation:579",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Norsborg",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NG-6",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "norsborg-chaise-cover",
+   "title": "Norsborg Chaise Cover",
+   "vendor": "IKEA",
+   "sku": "IK-NG-5",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-5_LSKT_SI_CVC-01.jpg?v=1741320139",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-5_LSKT_SI_CVC-01.jpg?v=1741320139",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_110_IKEA_Norsborg_sofa.jpg?v=1741320139"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Chaise Lounge",
+    "categoryproducts:IK",
+    "categoryproducts:NG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NG-5",
+    "FLT___Product_Ref__Old____NG5",
+    "FLT___Series_Code___NG",
+    "FLT___Series_Name___Norsborg",
+    "FLT___Size___Chaise",
+    "FLT___Style_Name___Original__With_Arm_Pockets_",
+    "FLT___Style_Name___Original__Without_Arm_Pockets_",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR_NARM",
+    "FLT___Styles_Code___VELC_WR_YARM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-NG-5",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Norsborg",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NG-5",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "norsborg-three-seat-sofa-cover",
+   "title": "Norsborg Three-seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-NG-3",
+   "price": "329.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-3_LSKT_SI_CVC-01.jpg?v=1741320138",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-NG-3_LSKT_SI_CVC-01.jpg?v=1741320138",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_108_IKEA_Norsborg_sofa.jpg?v=1741320138",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_107_IKEA_Norsborg_sofa.jpg?v=1741320138"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:NG",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-NG-3",
+    "FLT___Product_Ref__Old____NG3",
+    "FLT___Series_Code___NG",
+    "FLT___Series_Name___Norsborg",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original__With_Arm_Pockets_",
+    "FLT___Style_Name___Original__Without_Arm_Pockets_",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR_NARM",
+    "FLT___Styles_Code___VELC_WR_YARM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-NG-3",
+    "installation:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Norsborg",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:3",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-NG-3",
+     "price": "329.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

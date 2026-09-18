@@ -1,0 +1,338 @@
+{
+ "handle": "headrest-covers",
+ "fetchedAt": "2026-09-18T05:32:28.401Z",
+ "count": 7,
+ "products": [
+  {
+   "handle": "finnala-headrest-cover",
+   "title": "Finnala Headrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-HRX",
+   "price": "39.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-HRX_SP_CVC-01_2X_b6299e30-9b7d-4157-804d-2c9f3ed1be59.jpg?v=1754285816",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-HRX_SP_CVC-01_2X_b6299e30-9b7d-4157-804d-2c9f3ed1be59.jpg?v=1754285816"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Headrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-HRX",
+    "FLT___Product_Ref__Old____FNA_HR",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Headrest_Cover",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-HRX",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-HRX",
+     "price": "39.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "vimle-headrest-cover",
+   "title": "Vimle Headrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-VE-HRX",
+   "price": "39.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-HRX_IK-VE-HRX_SP_CVC-01_2X_ebdd0f67-6815-446d-93a1-dfe204578ed0.webp?v=1771902220",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-VE-HRX_IK-VE-HRX_SP_CVC-01_2X_ebdd0f67-6815-446d-93a1-dfe204578ed0.webp?v=1771902220"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:VE",
+    "features:575",
+    "FLT___Category_Size___Headrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-VE-HRX",
+    "FLT___Product_Ref__Old____VE_HR",
+    "FLT___Series_Code___VE",
+    "FLT___Series_Name___Vimle",
+    "FLT___Size___Headrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-VE-HRX",
+    "important_notes:579",
+    "installation:630",
+    "series:Vimle"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-VE-HRX",
+     "price": "39.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "headrest-2-seater-cover",
+   "title": "Headrest 2 Seater Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-HR-2",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-HR-2_LV_VELC_SP_CVC-01.jpg?v=1741320172",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-HR-2_LV_VELC_SP_CVC-01.jpg?v=1741320172"
+   ],
+   "tags": [
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-HR",
+    "FLT___Category_Size___Headrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-HR-2",
+    "FLT___Product_Ref__Old____MJ_HR_2",
+    "FLT___Series_Code___HR",
+    "FLT___Series_Name___Headrest",
+    "FLT___Size___Headrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "MJ-HR-2",
+    "series:Headrest Covers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-HR-2",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "headrest-2-5-seater-cover",
+   "title": "Headrest 2.5 Seater Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-HR-3P",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-HR-3P_LV_VELC_SP_CVC-01.jpg?v=1741320173",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-HR-3P_LV_VELC_SP_CVC-01.jpg?v=1741320173"
+   ],
+   "tags": [
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-HR",
+    "FLT___Category_Size___Headrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-HR-3P",
+    "FLT___Product_Ref__Old____MJ_HR_25",
+    "FLT___Series_Code___HR",
+    "FLT___Series_Name___Headrest",
+    "FLT___Size___Headrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "MJ-HR-3P",
+    "series:Headrest Covers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-HR-3P",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "headrest-3-seater-cover",
+   "title": "Headrest 3 Seater Cover",
+   "vendor": "MUJI",
+   "sku": "MJ-HR-3",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-HR-3_LV_VELC_SP_CVC-01.jpg?v=1741320171",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MJ-HR-3_LV_VELC_SP_CVC-01.jpg?v=1741320171"
+   ],
+   "tags": [
+    "categoryproducts:MJ",
+    "categoryproducts:MJ-HR",
+    "FLT___Category_Size___Headrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Muji",
+    "FLT___Product_Ref__New____MJ-HR-3",
+    "FLT___Product_Ref__Old____MJ_HR_3",
+    "FLT___Series_Code___HR",
+    "FLT___Series_Name___Headrest",
+    "FLT___Size___Headrest_Cover",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___The_Fabric_Version",
+    "FLT___Variant_1_Name___The_Leather_Version",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "MJ-HR-3",
+    "series:Headrest Covers"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MJ-HR-3",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "sorvallen-headrest-cover",
+   "title": "Sorvallen Headrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-SVN-HRX",
+   "price": "29.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-HRX_SP_CVC-01.jpg?v=1741679950",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-SVN-HRX_SP_CVC-01.jpg?v=1741679950"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:SVN",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Headrest",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-SVN-HRX",
+    "installation:579",
+    "series:Sorvallen",
+    "vendor:IKEA"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-SVN-HRX",
+     "price": "29.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "aspered-headrest-cover",
+   "title": "Aspered Headrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-AD-HRX",
+   "price": "199.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AD-HRX_SI_CVC-01.webp?v=1783394198",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-AD-HRX_SI_CVC-01.webp?v=1783394198"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "description:",
+    "features:575",
+    "FLT___Category_Size___Headrest",
+    "FLT___Product_Brand___IKEA",
+    "FLT__MAIN",
+    "IK-AD-HRX",
+    "installation:579",
+    "series:Aspered"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-AD-HRX",
+     "price": "199.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

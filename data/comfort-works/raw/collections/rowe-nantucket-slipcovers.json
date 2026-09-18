@@ -1,0 +1,278 @@
+{
+ "handle": "rowe-nantucket-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:09.649Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "nantucket-armchair-slipcover",
+   "title": "Nantucket Armchair Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-NT-39",
+   "price": "429.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-39_CNRP_PM_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-39_CNRP_PM_CVC-01.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_125_Rowe_Nantucket_sofa_adbc8937-69c0-4b4e-9b29-69601836970b.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_185_Rowe_Nantucket_sofa_50e8445a-9459-4599-a1b6-4382506eb77c.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:RE-NT",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Rowe",
+    "FLT___Product_Ref__New____RE-NT-39",
+    "FLT___Product_Ref__Old____RE_NT_1",
+    "FLT___Series_Code___NT",
+    "FLT___Series_Name___Nantucket",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "important_notes:643",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "RE-NT-39",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Nantucket",
+    "size:1 Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No",
+    "t_shaped_back_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-NT-39",
+     "price": "429.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nantucket-ottoman-slipcover",
+   "title": "Nantucket Ottoman Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-NT-32F",
+   "price": "139.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-32F_CNRP_PM_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-32F_CNRP_PM_CVC-01.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_125_Rowe_Nantucket_sofa_c3174055-0e2a-4906-acfb-4546d7a6a27a.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_185_Rowe_Nantucket_sofa_c1d86b13-ca74-437b-954f-0172e361efa4.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Footstool",
+    "categoryproducts:RE-NT",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:539",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Rowe",
+    "FLT___Product_Ref__New____RE-NT-32F",
+    "FLT___Product_Ref__Old____RE_NT_0",
+    "FLT___Series_Code___NT",
+    "FLT___Series_Name___Nantucket",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:No",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "number_of_pieces_only_footstool:Single Piece",
+    "RE-NT-32F",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Nantucket",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-NT-32F",
+     "price": "139.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nantucket-sofa-slipcover",
+   "title": "Nantucket Sofa Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-NT-84",
+   "price": "869.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-84_MLTP_PM_CVC-01.webp?v=1779153291",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-84_MLTP_PM_CVC-01.webp?v=1779153291",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_186_Rowe_Nantucket_sofa.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_125_Rowe_Nantucket_sofa.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RE-NT",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Rowe",
+    "FLT___Product_Ref__New____RE-NT-84",
+    "FLT___Product_Ref__Old____RE_NT_3",
+    "FLT___Series_Code___NT",
+    "FLT___Series_Name___Nantucket",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "RE-NT-84",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Nantucket",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:3",
+    "square_rectangle_back_cushion:1",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-NT-84",
+     "price": "869.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "nantucket-loveseat-slipcover",
+   "title": "Nantucket Loveseat Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-NT-63",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-63_MLTP_PM_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-NT-63_MLTP_PM_CVC-01.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_186_Rowe_Nantucket_sofa_6287ef0c-ce8e-422e-a3ad-ab9c8ced45f8.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_185_Rowe_Nantucket_sofa.jpg?v=1741575836"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RE-NT",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Rowe",
+    "FLT___Product_Ref__New____RE-NT-63",
+    "FLT___Product_Ref__Old____RE_NT_2",
+    "FLT___Series_Code___NT",
+    "FLT___Series_Name___Nantucket",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "l_shaped_back_cushion:2",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "RE-NT-63",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Nantucket",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-NT-63",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

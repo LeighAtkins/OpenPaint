@@ -1,0 +1,48 @@
+{
+ "handle": "ashley-coulee-point-slipcovers",
+ "fetchedAt": "2026-09-18T05:31:51.083Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "coulee-point-2-piece-sectional-with-chaise-slipcover",
+   "title": "Coulee Point 2-Piece Sectional with Chaise Slipcover",
+   "vendor": "Ashley Furniture Homestore",
+   "sku": "AY-CE-132",
+   "price": "729.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AY-CE-132_R_VELC_SI_CVC-01.jpg?v=1744679968",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/AY-CE-132_R_VELC_SI_CVC-01.jpg?v=1744679968"
+   ],
+   "tags": [
+    "Ashley Home Furniture",
+    "AY-CE-132",
+    "categoryproducts:AY",
+    "categoryproducts:AY-CE",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Coulee Point"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "AY-CE-132",
+     "price": "729.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

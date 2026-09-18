@@ -1,0 +1,77 @@
+{
+ "handle": "habitat-newman-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:25.643Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "newman-3-seater-sofa-slipcover",
+   "title": "Newman 3 seater sofa slipcover",
+   "vendor": "Habitat",
+   "sku": "HT-NM-93",
+   "price": "519.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-NM-93_VELC_SP_CVC-01.jpg?v=1741319716",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-NM-93_VELC_SP_CVC-01.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_574_Habitat_Newman_sofa.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_573_Habitat_Newman_sofa.jpg?v=1741319716"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Thin",
+    "arm_type:Thin Regular Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:HT",
+    "categoryproducts:HT-NM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Habitat_",
+    "FLT___Product_Ref__New____HT-NM-93",
+    "FLT___Product_Ref__Old____HT_NM_3",
+    "FLT___Series_Code___NM",
+    "FLT___Series_Name___Newman",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "HT-NM-93",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Newman",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:4"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "HT-NM-93",
+     "price": "519.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

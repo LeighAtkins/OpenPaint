@@ -1,0 +1,258 @@
+{
+ "handle": "maisons-du-monde-roma-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:24.699Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "roma-100-sofa-bed-slipcover",
+   "title": "Roma 100\" Sofa Bed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-RA-100B",
+   "price": "709.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_MDM_MDM-RA_MDM-RA-100B_MDM-RA-100B_CNRP_PM_CVC-01.jpg?v=1744955842",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/default_img_products_MDM_MDM-RA_MDM-RA-100B_MDM-RA-100B_CNRP_PM_CVC-01.jpg?v=1744955842"
+   ],
+   "tags": [
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-RA",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "Maisons Du Monde",
+    "MDM-RA-100B",
+    "series:Roma"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-RA-100B",
+     "price": "709.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "roma-2-seater-sofa-slipcover",
+   "title": "Roma 2 Seater Sofa Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-RA-71",
+   "price": "429.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RA-71_CNRP_PM_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RA-71_CNRP_PM_CVC-01.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_543_Maison_du_Monde_Roma_sofa.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_551_Maison_du_Monde_Roma_sofa.jpg?v=1741575836"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Wedge Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-RA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-RA-71",
+    "FLT___Product_Ref__Old____MDM_RA_2",
+    "FLT___Series_Code___RA",
+    "FLT___Series_Name___Roma",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Round Arm",
+    "MDM-RA-71",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Roma",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "square_rectangle_back_cushion:3",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-RA-71",
+     "price": "429.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "roma-3-4-seater-sofa-slipcover",
+   "title": "Roma 3/4 Seater Sofa Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-RA-89",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RA-89_CNRP_PM_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RA-89_CNRP_PM_CVC-01.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_543_Maison_du_Monde_Roma_sofa_a2299707-e3eb-4007-97fc-ae712f032e5f.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_544_Maison_du_Monde_Roma_sofa_e46b3969-9463-4aec-a0be-ab6a337436cc.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular Straight",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-RA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-RA-89",
+    "FLT___Product_Ref__Old____MDM_RA_3",
+    "FLT___Series_Code___RA",
+    "FLT___Series_Name___Roma",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MDM-RA-89",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Roma",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-RA-89",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "roma-3-seater-sofa-bed-slipcover",
+   "title": "Roma 3 Seater Sofa Bed Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-RA-89B",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RA-89B_CNRP_PM_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-RA-89B_CNRP_PM_CVC-01.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_543_Maison_du_Monde_Roma_sofa_b330af2a-e227-4967-b284-1936609dd95c.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_544_Maison_du_Monde_Roma_sofa.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular Straight",
+    "back_type:N/A",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:CS",
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-RA",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-RA-89B",
+    "FLT___Product_Ref__Old____MDM_RA_3B",
+    "FLT___Series_Code___RA",
+    "FLT___Series_Name___Roma",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___CNRP_PM",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:N/A",
+    "MDM-RA-89B",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Roma",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:4",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-RA-89B",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

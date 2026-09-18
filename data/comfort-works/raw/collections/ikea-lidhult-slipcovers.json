@@ -1,0 +1,423 @@
+{
+ "handle": "ikea-lidhult-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:57.429Z",
+ "count": 8,
+ "products": [
+  {
+   "handle": "lidhult-corner-section-cover",
+   "title": "Lidhult Corner Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LT-6",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-6_VELC_SP_CVC-01.jpg?v=1741320142",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-6_VELC_SP_CVC-01.jpg?v=1741320142",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_312_IKEA_Lidhult_sofa.jpg?v=1741320142",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_311_IKEA_Lidhult_sofa.jpg?v=1741320142"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:LT",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LT-6",
+    "FLT___Product_Ref__Old____LT4_N",
+    "FLT___Series_Code___LT",
+    "FLT___Series_Name___Lidhult",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-LT-6",
+    "installation:579",
+    "series:Lidhult"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LT-6",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lidhult-2-seat-section-cover",
+   "title": "Lidhult 2 Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LT-2X",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-2X_VELC_SP_CVC-01.jpg?v=1741320139",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-2X_VELC_SP_CVC-01.jpg?v=1741320139",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_307_IKEA_Lidhult_sofa.jpg?v=1741320139",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_308_IKEA_Lidhult_sofa.jpg?v=1741320139"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:LT",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LT-2X",
+    "FLT___Product_Ref__Old____LT2_N",
+    "FLT___Series_Code___LT",
+    "FLT___Series_Name___Lidhult",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-LT-2X",
+    "installation:579",
+    "series:Lidhult"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LT-2X",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lidhult-3-seat-section-cover",
+   "title": "Lidhult 3 Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LT-3X",
+   "price": "299.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-3X_VELC_SP_CVC-01.jpg?v=1741320138",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-3X_VELC_SP_CVC-01.jpg?v=1741320138",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_312_IKEA_Lidhult_sofa_80444441-174d-4b6d-8f5a-505f57e44aa7.jpg?v=1741320138",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_309_IKEA_Lidhult_sofa.jpg?v=1741320138"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:LT",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LT-3X",
+    "FLT___Product_Ref__Old____LT3_N",
+    "FLT___Series_Code___LT",
+    "FLT___Series_Name___Lidhult",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-LT-3X",
+    "installation:579",
+    "series:Lidhult"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LT-3X",
+     "price": "299.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lidhult-chaise-lounge-section-cover",
+   "title": "Lidhult Chaise Lounge Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LT-5X",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-5X_VELC_SP_CVC-01.jpg?v=1741320142",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-5X_VELC_SP_CVC-01.jpg?v=1741320142",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_310_IKEA_Lidhult_sofa.jpg?v=1741320142",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_316_IKEA_Lugnvik_sofa.jpg?v=1741320142"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:LT",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LT-5X",
+    "FLT___Product_Ref__Old____LT5_N",
+    "FLT___Series_Code___LT",
+    "FLT___Series_Name___Lidhult",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-LT-5X",
+    "installation:579",
+    "series:Lidhult"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LT-5X",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lidhult-armrest-cover",
+   "title": "Lidhult Armrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LT-8",
+   "price": "109.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-8_VELC_SP_CVC-01.jpg?v=1741320141",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-8_VELC_SP_CVC-01.jpg?v=1741320141",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_312_IKEA_Lidhult_sofa_93b42241-e592-4a84-a44d-83dd4d696360.jpg?v=1741320141",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_424_IKEA_Lidhult_sofa.jpg?v=1741320141"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:LT",
+    "features:575",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LT-8",
+    "FLT___Product_Ref__Old____LT8_AP",
+    "FLT___Series_Code___LT",
+    "FLT___Series_Name___Lidhult",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-LT-8",
+    "installation:579",
+    "series:Lidhult"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LT-8",
+     "price": "109.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lidhult-open-end-section-with-storage-cover",
+   "title": "Lidhult Open End Section With Storage Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LT-0",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-0_VELC_SP_CVC-01.jpg?v=1741320145",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-0_VELC_SP_CVC-01.jpg?v=1741320145",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_307_IKEA_Lidhult_sofa_63e40e52-6ee0-40b3-8321-c2b78cc669d0.jpg?v=1741320145",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_312_IKEA_Lidhult_sofa_2210efb0-931f-4f76-b559-38d22958715c.jpg?v=1741320145"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:LT",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LT-0",
+    "FLT___Product_Ref__Old____LT0",
+    "FLT___Series_Code___LT",
+    "FLT___Series_Name___Lidhult",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-LT-0",
+    "installation:579",
+    "series:Lidhult"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LT-0",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lidhult-1-seat-section-cover",
+   "title": "Lidhult 1 Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LT-1X",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-1X_VELC_SP_CVC-01.jpg?v=1741320139",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-1X_VELC_SP_CVC-01.jpg?v=1741320139",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_307_IKEA_Lidhult_sofa_73db41be-7d30-4ed3-8984-c9e3261ec375.jpg?v=1741320139",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_424_IKEA_Lidhult_sofa_e7acd9d7-2f97-47e4-bd47-c9b23d5661fb.jpg?v=1741320139"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:LT",
+    "features:575",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LT-1X",
+    "FLT___Product_Ref__Old____LT1_N",
+    "FLT___Series_Code___LT",
+    "FLT___Series_Name___Lidhult",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-LT-1X",
+    "installation:579",
+    "series:Lidhult"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LT-1X",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "lidhult-2-seat-sofa-bed-section-cover",
+   "title": "Lidhult 2 Seat Sofa Bed Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-LT-2BX",
+   "price": "249.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-2BX_VELC_SP_CVC-01.jpg?v=1741320139",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-LT-2BX_VELC_SP_CVC-01.jpg?v=1741320139",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_307_IKEA_Lidhult_sofa_7913e281-22ed-4ddc-ac9c-2ac8deb6a162.jpg?v=1741320139",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_308_IKEA_Lidhult_sofa_b4aeb881-bdab-42ae-a3c2-6103d53ca856.jpg?v=1741320139"
+   ],
+   "tags": [
+    "categoryproducts:IK",
+    "categoryproducts:LT",
+    "features:575",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-LT-2BX",
+    "FLT___Product_Ref__Old____LT2_BN",
+    "FLT___Series_Code___LT",
+    "FLT___Series_Name___Lidhult",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "IK-LT-2BX",
+    "installation:579",
+    "series:Lidhult"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-LT-2BX",
+     "price": "249.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

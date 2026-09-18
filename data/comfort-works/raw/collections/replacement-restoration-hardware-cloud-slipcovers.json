@@ -1,0 +1,338 @@
+{
+ "handle": "replacement-restoration-hardware-cloud-slipcovers",
+ "fetchedAt": "2026-09-18T05:37:59.001Z",
+ "count": 7,
+ "products": [
+  {
+   "handle": "covers-for-rh-cloud-9ft-sofa",
+   "title": "Covers for RH Cloud 9ft Sofa",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-CD-108",
+   "price": "269.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CD-108_SV_EXD_2S-2B_VELC_SP_CVC-01.webp?v=1786429670",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CD-108_SV_EXD_2S-2B_VELC_SP_CVC-01.webp?v=1786429670"
+   ],
+   "tags": [
+    "categoryproducts:RH-CD",
+    "categoryproducts:RH-Sofa",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "RH-CD-108",
+    "series:Cloud"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-CD-108",
+     "price": "269.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "covers-for-rh-cloud-coffee-classic-ottoman",
+   "title": "Covers for RH Cloud Coffee Classic Ottoman",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-CD-56F",
+   "price": "259.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CD-56F_LV_VELC_SP_CVC-01.jpg?v=1741320191",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CD-56F_LV_VELC_SP_CVC-01.jpg?v=1741320191"
+   ],
+   "tags": [
+    "categoryproducts:RH-CD",
+    "categoryproducts:RH-Sofa",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "RH-CD-56F",
+    "series:Cloud"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-CD-56F",
+     "price": "259.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "covers-for-rh-cloud-classic-ottoman",
+   "title": "Covers for RH Cloud Classic Ottoman",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-CD-32F",
+   "price": "209.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CD-32F_LV_VELC_SP_CVC-01.jpg?v=1741320194",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CD-32F_LV_VELC_SP_CVC-01.jpg?v=1741320194"
+   ],
+   "tags": [
+    "categoryproducts:RH-CD",
+    "categoryproducts:RH-Sofa",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "RH-CD-32F",
+    "series:Cloud"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-CD-32F",
+     "price": "209.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "covers-for-rh-cloud-classic-chair-and-a-half",
+   "title": "Covers for RH Cloud Classic Chair-and-a-Half",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-CD-60",
+   "price": "639.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CD-60_LV_VELC_SP_CVC-01.jpg?v=1741320191",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CD-60_LV_VELC_SP_CVC-01.jpg?v=1741320191"
+   ],
+   "tags": [
+    "categoryproducts:RH-CD",
+    "categoryproducts:RH-Sofa",
+    "Covers for Restoration Hardware",
+    "description:",
+    "discount: -10%",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "RH-CD-60",
+    "series:Cloud"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-CD-60",
+     "price": "639.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "covers-for-rh-cloud-modular-armless-chair",
+   "title": "Covers for RH Cloud Modular Armless Chair",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-CM-39X",
+   "price": "449.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CM-39X_EXD_VELC_SP_CVC-01.jpg?v=1741320097",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CM-39X_EXD_VELC_SP_CVC-01.jpg?v=1741320097"
+   ],
+   "tags": [
+    "categoryproducts:RH-CM",
+    "categoryproducts:RH-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Restoration_Hardware",
+    "FLT___Product_Ref__New____RH-CM-39X",
+    "FLT___Product_Ref__Old____RH_CM_1X",
+    "FLT___Series_Code___CM",
+    "FLT___Series_Name___Cloud_Modular",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Classic__40in",
+    "FLT___Variant_1_Name___Luxe__45in",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "RH-CM-39X",
+    "series:Cloud"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-CM-39X",
+     "price": "449.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cloud-modular-sectional-ottoman-slipcover",
+   "title": "Cloud Modular Sectional Ottoman Slipcover",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-CM-39F",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CM-39F_EXD_VELC_SP_CVC-01.jpg?v=1741320090",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CM-39F_EXD_VELC_SP_CVC-01.jpg?v=1741320090",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_533_Restoration_Hardware_Cloud_Modular_sofa.jpg?v=1741320090",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_534_Restoration_Hardware_Cloud_Modular_sofa_bb7a6c2a-4f0b-4864-9f57-87e1e42cd105.jpg?v=1741320090"
+   ],
+   "tags": [
+    "categoryproducts:RH-CM",
+    "categoryproducts:RH-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Restoration_Hardware",
+    "FLT___Product_Ref__New____RH-CM-39F",
+    "FLT___Product_Ref__Old____RH_CM_0",
+    "FLT___Series_Code___CM",
+    "FLT___Series_Name___Cloud_Modular",
+    "FLT___Size___Ottoman",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Classic__40in",
+    "FLT___Variant_1_Name___Luxe__45in",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "RH-CM-39F",
+    "series:Cloud"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-CM-39F",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "cloud-modular-corner-chair-slipcover",
+   "title": "Cloud Modular Corner Chair Slipcover",
+   "vendor": "Covers for Restoration Hardware",
+   "sku": "RH-CM-40CR",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CM-40CR_EXD_VELC_SP_CVC-01.jpg?v=1741320095",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RH-CM-40CR_EXD_VELC_SP_CVC-01.jpg?v=1741320095",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_533_Restoration_Hardware_Cloud_Modular_sofa_d8959207-eebf-4d3f-a00d-c17b27520a54.jpg?v=1741320095",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_534_Restoration_Hardware_Cloud_Modular_sofa.jpg?v=1741320095"
+   ],
+   "tags": [
+    "categoryproducts:RH-CM",
+    "categoryproducts:RH-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Restoration_Hardware",
+    "FLT___Product_Ref__New____RH-CM-40CR",
+    "FLT___Product_Ref__Old____RH_CM_6",
+    "FLT___Series_Code___CM",
+    "FLT___Series_Name___Cloud_Modular",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Classic__40in",
+    "FLT___Variant_1_Name___Luxe__45in",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "RH-CM-40CR",
+    "series:Cloud"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RH-CM-40CR",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

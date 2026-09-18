@@ -1,0 +1,51 @@
+{
+ "handle": "crate-and-barrel-essex-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:09.777Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "essex-sofa-slipcover",
+   "title": "Essex Sofa Slipcover",
+   "vendor": "Crate and Barrel",
+   "sku": "CB-EX-89",
+   "price": "569.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-EX-89_SHRT_SP_CVC-01.jpg?v=1741320101",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/CB-EX-89_SHRT_SP_CVC-01.jpg?v=1741320101"
+   ],
+   "tags": [
+    "categoryproducts:CB",
+    "categoryproducts:CB-EX",
+    "categoryproducts:CB-Slipcover",
+    "CB-EX-89",
+    "Crate and Barrel",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Crate_and_Barrel",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Essex"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "CB-EX-89",
+     "price": "569.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

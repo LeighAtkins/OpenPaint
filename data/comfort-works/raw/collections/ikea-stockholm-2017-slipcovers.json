@@ -1,0 +1,203 @@
+{
+ "handle": "ikea-stockholm-2017-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:09.457Z",
+ "count": 3,
+ "products": [
+  {
+   "handle": "stockholm-2017-2-seater-sofa-cover",
+   "title": "Stockholm 2017 2-Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-STM-2",
+   "price": "339.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-STM-2_VELC_WR_CVC-01.jpg?v=1741742125",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-STM-2_VELC_WR_CVC-01.jpg?v=1741742125",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_143_IKEA_Stockholm_sofa.jpg?v=1741742125",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_141_IKEA_Stockholm_sofa_559d3ca7-7d53-416d-94e5-c941d3dd887b.jpg?v=1741742125"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:SM",
+    "categoryproducts:STM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:575",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-STM-2",
+    "FLT___Product_Ref__Old____STM2",
+    "FLT___Series_Code___STM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-STM-2",
+    "important_notes:579",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Stockholm 2017",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:1",
+    "storage:No",
+    "throw_pillows:7"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-STM-2",
+     "price": "339.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stockholm-2017-3-seater-sofa-cover",
+   "title": "Stockholm 2017 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-STM-3",
+   "price": "489.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-STM-3_VELC_WR_CVC-01.jpg?v=1741742168",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-STM-3_VELC_WR_CVC-01.jpg?v=1741742168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_144_IKEA_Stockholm_sofa_4b4fb459-a5fe-4f29-8523-e75babf81255.jpg?v=1741742168",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_141_IKEA_Stockholm_sofa.jpg?v=1741742168"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square Straight Square",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:IK",
+    "categoryproducts:SM",
+    "categoryproducts:STM",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-STM-3",
+    "FLT___Product_Ref__Old____STM3",
+    "FLT___Series_Code___STM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-STM-3",
+    "installation:580",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:Yes",
+    "series:Stockholm 2017",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "storage:No",
+    "throw_pillows:10"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-STM-3",
+     "price": "489.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "stockholm-2017-pouffe",
+   "title": "Stockholm 2017 Pouffe",
+   "vendor": "IKEA",
+   "sku": "IK-STM-0",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-STM-0_ELAS_SP_CVC-01.jpg?v=1741679952",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-STM-0_ELAS_SP_CVC-01.jpg?v=1741679952",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_144_IKEA_Stockholm_sofa.jpg?v=1741679952"
+   ],
+   "tags": [
+    "categoryproducts:SM",
+    "categoryproducts:STM",
+    "features:575",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-STM-0",
+    "FLT___Product_Ref__Old____STM0_P",
+    "FLT___Series_Code___STM",
+    "FLT___Series_Name___Stockholm",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___ELAS_SP",
+    "FLT___Styles_Code___LSKT_SI",
+    "FLT__MAIN",
+    "IK-STM-0",
+    "series:Stockholm 2017"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-STM-0",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

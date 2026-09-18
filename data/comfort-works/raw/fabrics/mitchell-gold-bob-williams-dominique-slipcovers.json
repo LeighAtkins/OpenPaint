@@ -1,0 +1,24 @@
+{
+ "handle": "mitchell-gold-bob-williams-dominique-slipcovers",
+ "representative": "dominique-89-sofa-slipcover",
+ "hubLinks": [
+  "\\/pages\\/fabrics-hypoallergenic-collection-everyday-cotton",
+  "\\/pages\\/fabrics-cozy-collection-everyday-velvet",
+  "\\/pages\\/fabrics-starter-collection-everyday-weave",
+  "\\/pages\\/fabrics-performance-collection-signature-velvet",
+  "\\/pages\\/fabrics-pet-friendly-collection-signature-microfiber",
+  "\\/pages\\/fabrics-performance-collection-sunbrella"
+ ],
+ "fabricCount": 1,
+ "fabrics": [
+  {
+   "fabric": null,
+   "handle": "dominique-89-sofa-slipcover",
+   "url": "https://comfort-works.com/products/dominique-89-sofa-slipcover",
+   "sku": "MG-DE-89",
+   "price": null,
+   "currency": null,
+   "image": "https://comfort-works.com/cdn/shop/files/MG-DE-89_CNRP_SP_CVC-01.jpg?v=1741320169"
+  }
+ ]
+}

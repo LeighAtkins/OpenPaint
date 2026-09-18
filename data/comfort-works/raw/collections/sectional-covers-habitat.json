@@ -1,0 +1,113 @@
+{
+ "handle": "sectional-covers-habitat",
+ "fetchedAt": "2026-09-18T05:38:12.545Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "reiko-chair-unit",
+   "title": "Reiko Chair Unit",
+   "vendor": "Habitat",
+   "sku": "HT-RO-37X",
+   "price": "199.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-RO-37X_SHRT_SP_CVC-01.jpg?v=1741319716",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-RO-37X_SHRT_SP_CVC-01.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_568_Habitat_Reiko_sofa.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_569_Habitat_Reiko_sofa.jpg?v=1741319716"
+   ],
+   "tags": [
+    "categoryproducts:HT",
+    "categoryproducts:HT-RO",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Habitat_",
+    "FLT___Product_Ref__New____HT-RO-37X",
+    "FLT___Product_Ref__Old____HT_RO_1",
+    "FLT___Series_Code___RO",
+    "FLT___Series_Name___Reiko",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT__MAIN",
+    "HT-RO-37X",
+    "series:Reiko"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "HT-RO-37X",
+     "price": "199.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "reiko-left-right-corner-chair-unit-slipcover",
+   "title": "Reiko Left/Right Corner Chair Unit Slipcover",
+   "vendor": "Habitat",
+   "sku": "HT-RO-37",
+   "price": "209.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-RO-37_L_SHRT_SP_CVC-01.jpg?v=1741319716",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/HT-RO-37_L_SHRT_SP_CVC-01.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_569_Habitat_Reiko_sofa_156c0f74-97b1-46d5-9c2b-fdcb06dd7e61.jpg?v=1741319716",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_594_Habitat_Reiko_sofa_9e65a163-04a8-421f-a380-7b03b98f80d7.jpg?v=1741319716"
+   ],
+   "tags": [
+    "categoryproducts:HT",
+    "categoryproducts:HT-RO",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Habitat_",
+    "FLT___Product_Ref__New____HT-RO-37",
+    "FLT___Product_Ref__Old____HT_RO_1R",
+    "FLT___Series_Code___RO",
+    "FLT___Series_Name___Reiko",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___SHRT_SP",
+    "FLT___Variant_1_Name___Left_Arm",
+    "FLT___Variant_1_Name___Right_Arm",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "HT-RO-37",
+    "series:Reiko"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "HT-RO-37",
+     "price": "209.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

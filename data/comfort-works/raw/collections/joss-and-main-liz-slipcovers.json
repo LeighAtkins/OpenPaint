@@ -1,0 +1,48 @@
+{
+ "handle": "joss-and-main-liz-slipcovers",
+ "fetchedAt": "2026-09-18T05:35:16.722Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "liz-102-sofa-slipcover",
+   "title": "Liz 102\" Sofa Slipcover",
+   "vendor": "Joss and Main",
+   "sku": "JM-LZ-102",
+   "price": "569.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/JM-LZ-102.png?v=1788745516",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/JM-LZ-102.png?v=1788745516",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/JM-LZ-102_a4cf8383-b8e7-40ac-a205-5c5d7d09d56e.png?v=1788745526"
+   ],
+   "tags": [
+    "categoryproducts:JM",
+    "categoryproducts:JM-LZ",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "JM-LZ-102",
+    "series:Liz"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "JM-LZ-102",
+     "price": "569.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

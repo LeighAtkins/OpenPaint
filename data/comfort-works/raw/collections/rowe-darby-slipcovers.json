@@ -1,0 +1,119 @@
+{
+ "handle": "rowe-darby-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:08.993Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "darby-sofa-slipcover",
+   "title": "Darby Sofa Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-DY-86",
+   "price": "859.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-DY-86_MLTP_PM_CVC-01.jpg?v=1741575837",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-DY-86_MLTP_PM_CVC-01.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_521_Rowe_Darby_sofa.jpg?v=1741575837",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_522_Rowe_Darby_sofa.jpg?v=1741575837"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Wedge Arm",
+    "arm_shape_categories:Wedge",
+    "arm_type:Wedge Sharp Straight",
+    "back_type:Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:RE",
+    "categoryproducts:RE-DY",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Rowe",
+    "FLT___Product_Ref__New____RE-DY-86",
+    "FLT___Series_Code___DY",
+    "FLT___Series_Name___Darby",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Classic",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "main_arm_shape_categories:Other Shaped Arm",
+    "number_of_arms:Two Arms",
+    "RE-DY-86",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Darby",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No",
+    "throw_pillows:2"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-DY-86",
+     "price": "859.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "darby-62-loveseat-slipcover",
+   "title": "Darby 62\" Loveseat Slipcover",
+   "vendor": "Rowe",
+   "sku": "RE-DY-62",
+   "price": "729.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-DY-62_LV_SHRT_SP_CVC-01.jpg?v=1741741766",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RE-DY-62_LV_SHRT_SP_CVC-01.jpg?v=1741741766"
+   ],
+   "tags": [
+    "categoryproducts:RE",
+    "categoryproducts:RE-DY",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___Product_Brand___Room_and_Board",
+    "FLT__MAIN",
+    "installation:579",
+    "RE-DY-62",
+    "Rowe",
+    "series:Darby"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RE-DY-62",
+     "price": "729.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

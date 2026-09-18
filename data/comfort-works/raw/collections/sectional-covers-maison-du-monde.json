@@ -1,0 +1,57 @@
+{
+ "handle": "sectional-covers-maison-du-monde",
+ "fetchedAt": "2026-09-18T05:38:13.248Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "milano-5-seater-sectional-sofa-slipcover",
+   "title": "Milano 5 Seater Sectional Sofa Slipcover",
+   "vendor": "Maisons Du Monde",
+   "sku": "MDM-MO-103",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-MO-103_VELC_SP_CVC-01.jpg?v=1741320170",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/MDM-MO-103_VELC_SP_CVC-01.jpg?v=1741320170",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_545_Maison_du_Monde_Milano_sofa.jpg?v=1741320170",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_624_Maison_du_Monde_Milano_sofa_5287967a-b917-45a4-9fe7-0f50b58276be.jpg?v=1741320170"
+   ],
+   "tags": [
+    "categoryproducts:MDM",
+    "categoryproducts:MDM-MO",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Maison_du_Monde",
+    "FLT___Product_Ref__New____MDM-MO-103",
+    "FLT___Product_Ref__Old____MDM_MO_5",
+    "FLT___Series_Code___MO",
+    "FLT___Series_Name___Milano",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT__MAIN",
+    "MDM-MO-103",
+    "series:Milano"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "MDM-MO-103",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,273 @@
+{
+ "handle": "ikea-ekeskog-slipcovers",
+ "fetchedAt": "2026-09-18T05:41:55.241Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "ekeskog-3-seater-sofa-cover",
+   "title": "Ekeskog 3 Seater Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EG-3",
+   "price": "439.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-3_MLTP_PM_CVC-01.jpg?v=1741658498",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-3_MLTP_PM_CVC-01.jpg?v=1741658498",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_245_IKEA_Ekeskog_sofa_a87b8123-b382-466d-a407-d53d7f70ebb2.jpg?v=1741658498",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_246_IKEA_Ekeskog_sofa_9e0df392-173d-4e24-b6b3-5a231d293cb7.jpg?v=1741658498"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:EG",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EG-3",
+    "FLT___Product_Ref__Old____EG3",
+    "FLT___Series_Code___EG",
+    "FLT___Series_Name___Ekeskog",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EG-3",
+    "installation:579",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ekeskog",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EG-3",
+     "price": "439.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ekeskog-armchair-cover",
+   "title": "Ekeskog Armchair Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EG-1",
+   "price": "239.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-1_MLTP_PM_CVC-01.jpg?v=1741678109",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-1_MLTP_PM_CVC-01.jpg?v=1741678109",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_245_IKEA_Ekeskog_sofa.jpg?v=1741678109",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_246_IKEA_Ekeskog_sofa.jpg?v=1741678109"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Armchair",
+    "categoryproducts:EG",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EG-1",
+    "FLT___Product_Ref__Old____EG1",
+    "FLT___Series_Code___EG",
+    "FLT___Series_Name___Ekeskog",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EG-1",
+    "installation:579",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ekeskog",
+    "size:1 Seater",
+    "storage:No",
+    "t_shaped_back_cushion:1",
+    "t_shaped_seat_cushion:1"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EG-1",
+     "price": "239.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ekeskog-armrest-protector-covers",
+   "title": "Ekeskog Armrest Protector Covers",
+   "vendor": "IKEA",
+   "sku": "IK-EG-AP",
+   "price": "59.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-AP_PM_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-AP_PM_CVC-01.jpg?v=1741320129"
+   ],
+   "tags": [
+    "categoryproducts:EG",
+    "categoryproducts:IK",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EG-AP",
+    "FLT___Product_Ref__Old____EG_AP",
+    "FLT___Series_Code___EG",
+    "FLT___Series_Name___Ekeskog",
+    "FLT___Size___Armrest_Protector",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___PM",
+    "FLT___Styles_Code___SP",
+    "FLT__MAIN",
+    "IK-EG-AP",
+    "series:Ekeskog"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EG-AP",
+     "price": "59.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "ekeskog-sofa-bed-cover",
+   "title": "Ekeskog Sofa Bed Cover",
+   "vendor": "IKEA",
+   "sku": "IK-EG-3B",
+   "price": "419.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-3B_MLTP_PM_CVC-01.jpg?v=1741678942",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-EG-3B_MLTP_PM_CVC-01.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_245_IKEA_Ekeskog_sofa_8d80201d-b611-41c3-971c-4e4bf2cd3229.jpg?v=1741678942",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_246_IKEA_Ekeskog_sofa_07da8d35-cee7-49f2-a408-ce48e5c0be1c.jpg?v=1741678942"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Round Arm",
+    "arm_shape_categories:Round",
+    "arm_type:Round Regular High",
+    "back_type:High Straight Back",
+    "bed:Yes",
+    "categories:Sofa",
+    "categoryproducts:EG",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-EG-3B",
+    "FLT___Product_Ref__Old____EG3_B",
+    "FLT___Series_Code___EG",
+    "FLT___Series_Name___Ekeskog",
+    "FLT___Size___Sofa",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___MLTP_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-EG-3B",
+    "installation:579",
+    "l_shaped_back_cushion:2",
+    "l_shaped_seat_cushion:2",
+    "main_arm_shape_categories:Round Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Ekeskog",
+    "size:2+ Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-EG-3B",
+     "price": "419.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

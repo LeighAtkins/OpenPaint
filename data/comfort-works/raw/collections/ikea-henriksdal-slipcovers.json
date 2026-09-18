@@ -1,0 +1,139 @@
+{
+ "handle": "ikea-henriksdal-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:50.820Z",
+ "count": 2,
+ "products": [
+  {
+   "handle": "henriksdal-bar-stool-slipcover",
+   "title": "Henriksdal Bar Stool Slipcover",
+   "vendor": "IKEA",
+   "sku": "IK-HL-BS",
+   "price": "49.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HL-BS_N_VELC_SP_CVC-01.jpg?v=1741320127",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HL-BS_N_VELC_SP_CVC-01.jpg?v=1741320127"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Bar Stool",
+    "categoryproducts:HL",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HL-BS",
+    "FLT___Product_Ref__Old____HL0",
+    "FLT___Series_Code___HL",
+    "FLT___Series_Name___Henriksdal",
+    "FLT___Size___Bar_Stool",
+    "FLT___Style_Name___Original",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___New___45W_x_44_5D_x_48H_cm",
+    "FLT___Variant_1_Name___Old___38W_x_38D_x_43H_cm",
+    "FLT___Variant_1_Type___Version",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HL-BS",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Henriksdal",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HL-BS",
+     "price": "49.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "henriksdal-dining-chair-slipcover",
+   "title": "Henriksdal Dining Chair Slipcover",
+   "vendor": "IKEA",
+   "sku": "IK-HL-DCX",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HL-DCX_EXD_VELC_SP_CVC-01.jpg?v=1741655791",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-HL-DCX_EXD_VELC_SP_CVC-01.jpg?v=1741655791"
+   ],
+   "tags": [
+    "all_arm_shape_categories:N/A",
+    "back_type:N/A",
+    "bed:No",
+    "categories:Dining Chair",
+    "categoryproducts:HL",
+    "categoryproducts:IK",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-HL-DCX",
+    "FLT___Product_Ref__Old____HL3",
+    "FLT___Series_Code___HL",
+    "FLT___Series_Name___Henriksdal",
+    "FLT___Size___Dining_Chair",
+    "FLT___Style_Name___Original",
+    "FLT___Style_Name___Signature",
+    "FLT___Styles_Code___CNRP_SP",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___51W_x_49D_x_95H_cm",
+    "FLT___Variant_1_Name___54W_x_56D_x_97H_cm",
+    "FLT___Variant_1_Type___Size",
+    "FLT__MAIN",
+    "has_arm:No",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "IK-HL-DCX",
+    "main_arm_shape_categories:N/A",
+    "number_of_arms:No Arm",
+    "removable_back_cushion:No",
+    "removable_seat_cushion:No",
+    "series:Henriksdal",
+    "size:1 Seater",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-HL-DCX",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

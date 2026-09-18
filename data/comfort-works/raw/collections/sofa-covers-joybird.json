@@ -1,0 +1,210 @@
+{
+ "handle": "sofa-covers-joybird",
+ "fetchedAt": "2026-09-18T05:38:28.344Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "preston-95-grand-sofa-slipcover",
+   "title": "Preston 95\" Grand Sofa Slipcover",
+   "vendor": "Joybird",
+   "sku": "JB-PN-95",
+   "price": "659.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/JB-PN-95_VELC_PM_CVC-01.jpg?v=1741320158",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/JB-PN-95_VELC_PM_CVC-01.jpg?v=1741320158"
+   ],
+   "tags": [
+    "categoryproducts:JB",
+    "categoryproducts:JB-PN",
+    "categoryproducts:JB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "JB-PN-95",
+    "Joybird",
+    "series:Preston"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "JB-PN-95",
+     "price": "659.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "briar-90-sofa-slipcover",
+   "title": "Briar 90\" Sofa Slipcover",
+   "vendor": "Joybird",
+   "sku": "JB-BR-90",
+   "price": "639.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/JB-BR-90_LV_VELC_PM_CVC-01.jpg?v=1741320157",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/JB-BR-90_LV_VELC_PM_CVC-01.jpg?v=1741320157"
+   ],
+   "tags": [
+    "categoryproducts:JB",
+    "categoryproducts:JB-BR",
+    "categoryproducts:JB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "JB-BR-90",
+    "Joybird",
+    "series:Briar",
+    "vendor:Joybird"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "JB-BR-90",
+     "price": "639.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "eliot-104-grand-sofa-slipcover",
+   "title": "Eliot 104\" Grand Sofa Slipcover",
+   "vendor": "Joybird",
+   "sku": "JB-ET-104",
+   "price": "719.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/JB-ET-104_VELC_PM_CVC-01.jpg?v=1741320155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/JB-ET-104_VELC_PM_CVC-01.jpg?v=1741320155"
+   ],
+   "tags": [
+    "categoryproducts:JB",
+    "categoryproducts:JB-ET",
+    "categoryproducts:JB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "JB-ET-104",
+    "Joybird",
+    "series:Eliot",
+    "vendor:Joybird"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "JB-ET-104",
+     "price": "719.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "eliot-84-sofa-slipcover",
+   "title": "Eliot 84\" Sofa Slipcover",
+   "vendor": "Joybird",
+   "sku": "JB-ET-84",
+   "price": "579.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/JB-ET-84_VELC_PM_CVC-01.jpg?v=1741320155",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/JB-ET-84_VELC_PM_CVC-01.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_584_Laura_Ashley_Padstow_sofa.jpg?v=1741320155",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_585_Joybird_Eliot_sofa.jpg?v=1741320155"
+   ],
+   "tags": [
+    "all_arm_shape_categories:Straight Squared Arm",
+    "arm_shape_categories:Square",
+    "arm_type:Square High Square",
+    "back_type:High Straight Back",
+    "bed:No",
+    "categories:Sofa",
+    "categoryproducts:JB-ET",
+    "categoryproducts:JB-Sofa",
+    "chaise_lounge:N/A",
+    "chaise_lounge_position:N/A",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Joybird",
+    "FLT___Product_Ref__New____JB-ET-84",
+    "FLT___Series_Code___ET",
+    "FLT___Series_Name___Eliot",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Modern",
+    "FLT___Styles_Code___VELC_PM",
+    "FLT__MAIN",
+    "has_arm:Yes",
+    "has_back:Yes",
+    "has_skirt_the_original:No",
+    "JB-ET-84",
+    "main_arm_shape_categories:Squared Arm",
+    "number_of_arms:Two Arms",
+    "removable_back_cushion:Yes",
+    "removable_seat_cushion:Yes",
+    "series:Eliot",
+    "size:2+ Seater",
+    "square_or_rectangle_seat_cushion:2",
+    "square_rectangle_back_cushion:2",
+    "storage:No"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "JB-ET-84",
+     "price": "579.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

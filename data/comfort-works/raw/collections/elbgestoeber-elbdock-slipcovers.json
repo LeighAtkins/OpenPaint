@@ -1,0 +1,208 @@
+{
+ "handle": "elbgestoeber-elbdock-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:20.796Z",
+ "count": 4,
+ "products": [
+  {
+   "handle": "elbdock-corner-piece-cover",
+   "title": "Elbdock Corner Piece Cover",
+   "vendor": "Elbgestoeber",
+   "sku": "EGS-EK-35CR",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EGS-EK-35CR_L_LSKT_SP_CVC-01.jpg?v=1741575835",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EGS-EK-35CR_L_LSKT_SP_CVC-01.jpg?v=1741575835",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_588_Elbgestoeber_Elbdock_sofa.jpg?v=1741575835",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_586_Elbgestoeber_Elbdock_sofa_59726540-9c54-4e8e-ae84-65b5bad123fa.jpg?v=1741575835"
+   ],
+   "tags": [
+    "categoryproducts:EGS",
+    "chaise_lounge:Yes",
+    "chaise_lounge_position:Both",
+    "EGS-EK-35CR",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Elbgestoeber",
+    "FLT___Product_Ref__New____EGS-EK-35CR",
+    "FLT___Product_Ref__Old____EGS_EK_4",
+    "FLT___Series_Code___EK",
+    "FLT___Series_Name___Elbdock",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT___Variant_1_Name___Left_end_Corner",
+    "FLT___Variant_1_Name___Right_end_Corner",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "series:Elbdock"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EGS-EK-35CR",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "elbdock-one-seater-chair-cover",
+   "title": "Elbdock One Seater / Chair Cover",
+   "vendor": "Elbgestoeber",
+   "sku": "EGS-EK-32X",
+   "price": "129.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EGS-EK-32X_LSKT_SP_CVC-01.jpg?v=1741575836",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EGS-EK-32X_LSKT_SP_CVC-01.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_587_Elbgestoeber_Elbdock_sofa_12a48113-cc4c-481c-a5c7-b696e8757926.jpg?v=1741575836",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_589_Elbgestoeber_Elbdock_sofa_98e40d77-ea93-4a7c-9d12-9a1b124b2e55.jpg?v=1741575836"
+   ],
+   "tags": [
+    "categoryproducts:EGS",
+    "EGS-EK-32X",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Elbgestoeber",
+    "FLT___Product_Ref__New____EGS-EK-32X",
+    "FLT___Product_Ref__Old____EGS_EK_1",
+    "FLT___Series_Code___EK",
+    "FLT___Series_Name___Elbdock",
+    "FLT___Size___Armchair",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "series:Elbdock"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EGS-EK-32X",
+     "price": "129.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "elbdock-3-seater-combo-cover",
+   "title": "Elbdock 3 Seater Combo Cover",
+   "vendor": "Elbgestoeber",
+   "sku": "EGS-EK-103",
+   "price": "409.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EGS-EK-103_LSKT_SP_CVC-01.jpg?v=1741575835",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EGS-EK-103_LSKT_SP_CVC-01.jpg?v=1741575835"
+   ],
+   "tags": [
+    "categoryproducts:EGS",
+    "EGS-EK-103",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Elbgestoeber",
+    "FLT___Product_Ref__New____EGS-EK-103",
+    "FLT___Product_Ref__Old____EGS_EK_3",
+    "FLT___Series_Code___EK",
+    "FLT___Series_Name___Elbdock",
+    "FLT___Size___Grand_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "series:Elbdock"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EGS-EK-103",
+     "price": "409.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "elbdock-ottoman-cover",
+   "title": "Elbdock Ottoman Cover",
+   "vendor": "Elbgestoeber",
+   "sku": "EGS-EK-31F",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EGS-EK-31F_LSKT_SP_CVC-01.jpg?v=1741320103",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EGS-EK-31F_LSKT_SP_CVC-01.jpg?v=1741320103",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_586_Elbgestoeber_Elbdock_sofa.jpg?v=1741320103",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_135_Elbgestoeber_Elbdock_sofa.jpg?v=1741320103"
+   ],
+   "tags": [
+    "categoryproducts:EGS",
+    "EGS-EK-31F",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Elbgestoeber",
+    "FLT___Product_Ref__New____EGS-EK-31F",
+    "FLT___Product_Ref__Old____EGS_EK_0",
+    "FLT___Series_Code___EK",
+    "FLT___Series_Name___Elbdock",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Minimalist",
+    "FLT___Styles_Code___LSKT_SP",
+    "FLT__MAIN",
+    "series:Elbdock"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EGS-EK-31F",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

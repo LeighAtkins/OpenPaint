@@ -1,0 +1,50 @@
+{
+ "handle": "ethan-allen-wyndam-slipcovers",
+ "fetchedAt": "2026-09-18T05:32:22.661Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "wyndam-tall-sofa-slipcover",
+   "title": "Wyndam Tall Sofa Slipcover",
+   "vendor": "Ethan Allen",
+   "sku": "EA-WM-85",
+   "price": "629.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-WM-85_SHRT_PM_CVC-01.jpg?v=1741675118",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/EA-WM-85_SHRT_PM_CVC-01.jpg?v=1741675118"
+   ],
+   "tags": [
+    "categoryproducts:EA",
+    "categoryproducts:EA-WM",
+    "description:",
+    "EA-WM-85",
+    "Ethan Allen",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "installation:579",
+    "series:Wyndam"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "EA-WM-85",
+     "price": "629.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

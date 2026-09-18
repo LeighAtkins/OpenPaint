@@ -1,0 +1,324 @@
+{
+ "handle": "room-and-board-metro-slipcovers",
+ "fetchedAt": "2026-09-18T05:38:06.901Z",
+ "count": 7,
+ "products": [
+  {
+   "handle": "metro-104-chaise-sectional-slipcover",
+   "title": "Metro 104\" Chaise Sectional Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MO-104",
+   "price": "849.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-104_L_VELC_SP_CVC-01.jpg?v=1741320195",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-104_L_VELC_SP_CVC-01.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_452_Room_20and_20Board_Metro_sofa.jpg?v=1741320195",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_413_Room_and_Board_Metro_sofa.jpg?v=1741320195"
+   ],
+   "tags": [
+    "categoryproducts:RB-MO",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___Room_and_Board",
+    "FLT___Product_Ref__New____RB-MO-104",
+    "FLT___Series_Code___MO",
+    "FLT___Series_Name___Metro",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_SP",
+    "FLT___Variant_1_Name___Left_Chaise",
+    "FLT___Variant_1_Name___Right_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "important_notes:643",
+    "measurementsrequired",
+    "next_steps:648",
+    "RB-MO-104",
+    "series:Metro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MO-104",
+     "price": "849.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "metro-88-sofa-slipcover",
+   "title": "Metro 88\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MO-88",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-88_SV_STD_2S-2B_SHRT_SP_CVC-01.jpg?v=1744677136",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-88_SV_STD_2S-2B_SHRT_SP_CVC-01.jpg?v=1744677136"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MO",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "Important_Notes:643",
+    "installation:579",
+    "measurementsrequired",
+    "next_steps:648",
+    "RB-MO-88",
+    "Room and Board",
+    "series:Metro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MO-88",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "metro-88-guest-select-queen-sleeper-sofa-slipcover",
+   "title": "Metro 88\" Guest Select Queen Sleeper Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MO-88B",
+   "price": "589.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-88B_SHRT_SP_CVC-01.jpg?v=1741741763",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-88B_SHRT_SP_CVC-01.jpg?v=1741741763"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MO",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-MO-88B",
+    "Room and Board",
+    "series:Metro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MO-88B",
+     "price": "589.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "metro-75-sofa-slipcover",
+   "title": "Metro 75\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MO-75",
+   "price": "609.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-75_LV_SHRT_SP_CVC-01.jpg?v=1741741761",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-75_LV_SHRT_SP_CVC-01.jpg?v=1741741761"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MO",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "RB-MO-75",
+    "Room and Board",
+    "series:Metro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MO-75",
+     "price": "609.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "metro-65-loveseat-slipcover",
+   "title": "Metro 65\" Loveseat Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MO-65",
+   "price": "499.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-65_LV_SHRT_SP_CVC-01.jpg?v=1741741765",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-65_LV_SHRT_SP_CVC-01.jpg?v=1741741765"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MO",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT__MAIN",
+    "important_notes:643",
+    "installation:579",
+    "RB-MO-65",
+    "Room and Board",
+    "series:Metro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MO-65",
+     "price": "499.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "metro-ottoman-slipcover",
+   "title": "Metro Ottoman Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MO-30F",
+   "price": "149.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-30F_LV_SHRT_SP_CVC-01.jpg?v=1741741762",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-30F_LV_SHRT_SP_CVC-01.jpg?v=1741741762"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MO",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-MO-30F",
+    "Room and Board",
+    "series:Metro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MO-30F",
+     "price": "149.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "metro-98-sofa-slipcover",
+   "title": "Metro 98\" Sofa Slipcover",
+   "vendor": "Room and Board",
+   "sku": "RB-MO-98",
+   "price": "649.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-98_SV_EXD_2S-2B_SHRT_SP_CVC-01.webp?v=1785313793",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/RB-MO-98_SV_EXD_2S-2B_SHRT_SP_CVC-01.webp?v=1785313793"
+   ],
+   "tags": [
+    "categoryproducts:RB",
+    "categoryproducts:RB-MO",
+    "categoryproducts:RB-Sofa",
+    "description:",
+    "features:515",
+    "FLT__MAIN",
+    "installation:579",
+    "RB-MO-98",
+    "Room and Board",
+    "series:Metro"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "RB-MO-98",
+     "price": "649.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,604 @@
+{
+ "handle": "ikea-finnala-slipcovers",
+ "fetchedAt": "2026-09-18T05:34:45.514Z",
+ "count": 12,
+ "products": [
+  {
+   "handle": "finnala-3-seat-sofa-cover",
+   "title": "Finnala 3 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-3",
+   "price": "359.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-3_VELC_WR_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-3_VELC_WR_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_117_IKEA_Finnala_sofa_0e78f4f4-c362-420b-ae4a-9b87487d864e.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_120_IKEA_Finnala_sofa_895ccf1f-8f1a-43c7-aa9f-1270769968e6.jpg?v=1741320129"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-3",
+    "FLT___Product_Ref__Old____FNA3",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-3",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-3",
+     "price": "359.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-1-seat-section-cover",
+   "title": "Finnala 1 Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-1X",
+   "price": "139.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-1X_VELC_WR_CVC-01.jpg?v=1741320129",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-1X_VELC_WR_CVC-01.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_117_IKEA_Finnala_sofa_5278fb67-3a9e-43ec-8b7f-ee6348cd287d.jpg?v=1741320129",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_120_IKEA_Finnala_sofa.jpg?v=1741320129"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Chair",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-1X",
+    "FLT___Product_Ref__Old____FNA1_N",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Armchair",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-1X",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-1X",
+     "price": "139.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-2-seat-section-cover",
+   "title": "Finnala 2 Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-2X",
+   "price": "209.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-2X_VELC_WR_CVC-01.jpg?v=1741320132",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-2X_VELC_WR_CVC-01.jpg?v=1741320132",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_121_IKEA_Finnala_sofa_81f68f86-6975-40f5-85f1-1db7d472a41c.jpg?v=1741320132",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_123_IKEA_Finnala_sofa_905b8eec-0c7d-46d2-868c-9ffa1cd81928.jpg?v=1741320132"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-2X",
+    "FLT___Product_Ref__Old____FNA2_N",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Loveseat",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-2X",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-2X",
+     "price": "209.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-2-seat-sofa-cover",
+   "title": "Finnala 2 Seat Sofa Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-2",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-2_VELC_WR_CVC-01.jpg?v=1741320134",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-2_VELC_WR_CVC-01.jpg?v=1741320134",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_121_IKEA_Finnala_sofa.jpg?v=1741320134",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_118_IKEA_Finnala_sofa_2f8cd0a5-00ab-4967-980e-314cd51336a6.jpg?v=1741320134"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Sofa",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-2",
+    "FLT___Product_Ref__Old____FNA2",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Loveseat",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-2",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-2",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-3-seat-section-cover",
+   "title": "Finnala 3 Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-3X",
+   "price": "289.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-3X_VELC_WR_CVC-01.jpg?v=1741320128",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-3X_VELC_WR_CVC-01.jpg?v=1741320128",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_117_IKEA_Finnala_sofa_56cd65f4-2a92-40dc-be3f-91c36c104abb.jpg?v=1741320128",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_120_IKEA_Finnala_sofa_7ae2778e-c359-4197-93b3-71812ea8a497.jpg?v=1741320128"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-3X",
+    "FLT___Product_Ref__Old____FNA3_N",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-3X",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-3X",
+     "price": "289.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-armrest-cover",
+   "title": "Finnala Armrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-8",
+   "price": "79.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-8_VELC_WR_CVC-01.jpg?v=1741320136",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-8_VELC_WR_CVC-01.jpg?v=1741320136",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_123_IKEA_Finnala_sofa_716caaae-f1fc-438b-a71e-0d0b76525713.jpg?v=1741320136",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_117_IKEA_Finnala_sofa.jpg?v=1741320136"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Armrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-8",
+    "FLT___Product_Ref__Old____FNA8",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Armrest_Cover",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-8",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-8",
+     "price": "79.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-chaise-section-cover",
+   "title": "Finnala Chaise Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-5X",
+   "price": "169.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-5X_VELC_WR_CVC-01.jpg?v=1741320134",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-5X_VELC_WR_CVC-01.jpg?v=1741320134",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_119_IKEA_Finnala_sofa_a377f944-821f-47e6-a0d1-e6e43a972f63.jpg?v=1741320134",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_122_IKEA_Finnala_sofa_8cbc54ca-a540-4d32-9918-d5098ec94624.jpg?v=1741320134"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-5X",
+    "FLT___Product_Ref__Old____FNA5_N",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Chaise",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-5X",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-5X",
+     "price": "169.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-corner-seat-section-cover",
+   "title": "Finnala Corner Seat Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-6",
+   "price": "179.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-6_VELC_WR_CVC-01.jpg?v=1741320128",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-6_VELC_WR_CVC-01.jpg?v=1741320128",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_123_IKEA_Finnala_sofa.jpg?v=1741320128",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_124_IKEA_Finnala_sofa.jpg?v=1741320128"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-6",
+    "FLT___Product_Ref__Old____FNA4_N",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Corner_Sofa",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-6",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-6",
+     "price": "179.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-footstool-cover",
+   "title": "Finnala Footstool Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-0",
+   "price": "89.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-0_VELC_WR_CVC-01.jpg?v=1741320134",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-0_VELC_WR_CVC-01.jpg?v=1741320134",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_120_IKEA_Finnala_sofa_72333879-4785-4ab4-92f8-66f56b239af9.jpg?v=1741320134",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_121_IKEA_Finnala_sofa_d80d5904-5be7-473f-a988-f45756098c7a.jpg?v=1741320134"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Footstool",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-0",
+    "FLT___Product_Ref__Old____FNA0",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Ottoman",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-0",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-0",
+     "price": "89.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-headrest-cover",
+   "title": "Finnala Headrest Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-HRX",
+   "price": "39.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-HRX_SP_CVC-01_2X_b6299e30-9b7d-4157-804d-2c9f3ed1be59.jpg?v=1754285816",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-HRX_SP_CVC-01_2X_b6299e30-9b7d-4157-804d-2c9f3ed1be59.jpg?v=1754285816"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Headrest",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-HRX",
+    "FLT___Product_Ref__Old____FNA_HR",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Headrest_Cover",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-HRX",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-HRX",
+     "price": "39.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-loveseat-sleeper-section-cover",
+   "title": "Finnala Loveseat Sleeper Section Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-2BX",
+   "price": "219.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-2BX_VELC_WR_CVC-01.jpg?v=1741320131",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-2BX_VELC_WR_CVC-01.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_121_IKEA_Finnala_sofa_3cd213ec-677f-4b97-afcf-450d7f74037f.jpg?v=1741320131",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_118_IKEA_Finnala_sofa.jpg?v=1741320131"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___Category_Size___Sofa_Bed",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-2BX",
+    "FLT___Product_Ref__Old____FNA2B_N",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Sectional",
+    "FLT___Size___Sofa_Bed",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT__MAIN",
+    "IK-FNA-2BX",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-2BX",
+     "price": "219.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  },
+  {
+   "handle": "finnala-sofa-with-chaise-cover",
+   "title": "Finnala Sofa with Chaise Cover",
+   "vendor": "IKEA",
+   "sku": "IK-FNA-25",
+   "price": "369.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-25_L_VELC_WR_CVC-01.jpg?v=1741320130",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-FNA-25_L_VELC_WR_CVC-01.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_119_IKEA_Finnala_sofa.jpg?v=1741320130",
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/Lifestyle_122_IKEA_Finnala_sofa.jpg?v=1741320130"
+   ],
+   "tags": [
+    "categoryproducts:FNA",
+    "features:515",
+    "FLT___Category_Size___Sectional",
+    "FLT___MAIN",
+    "FLT___Product_Brand___IKEA",
+    "FLT___Product_Ref__New____IK-FNA-25",
+    "FLT___Product_Ref__Old____FNA7",
+    "FLT___Series_Code___FNA",
+    "FLT___Series_Name___Finnala",
+    "FLT___Size___Sectional",
+    "FLT___Style_Name___Urban",
+    "FLT___Styles_Code___VELC_WR",
+    "FLT___Variant_1_Name___Left_side_Chaise",
+    "FLT___Variant_1_Name___Right_side_Chaise",
+    "FLT___Variant_1_Type___Orientation",
+    "FLT__MAIN",
+    "IK-FNA-25",
+    "series:Finnala"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "IK-FNA-25",
+     "price": "369.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}

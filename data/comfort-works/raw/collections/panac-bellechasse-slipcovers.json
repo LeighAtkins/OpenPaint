@@ -1,0 +1,48 @@
+{
+ "handle": "panac-bellechasse-slipcovers",
+ "fetchedAt": "2026-09-18T05:37:50.105Z",
+ "count": 1,
+ "products": [
+  {
+   "handle": "bellechasse-70-left-right-arm-module-sofa-slipcover",
+   "title": "Bellechasse 70\" Left/Right Arm Module Sofa Slipcover",
+   "vendor": "Panac",
+   "sku": "PC-BE-70M",
+   "price": "559.00",
+   "available": false,
+   "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PC-BE-70M_L_STD_VELC_SP_CVC-01.webp?v=1784105681",
+   "images": [
+    "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PC-BE-70M_L_STD_VELC_SP_CVC-01.webp?v=1784105681"
+   ],
+   "tags": [
+    "categoryproducts:PC",
+    "categoryproducts:PC-BE",
+    "description:",
+    "features:539",
+    "FLT__MAIN",
+    "installation:579",
+    "measurementsrequired",
+    "PC-BE-70M",
+    "series:Bellechasse"
+   ],
+   "variants": [
+    {
+     "title": "Default Title",
+     "sku": "PC-BE-70M",
+     "price": "559.00",
+     "option1": "Default Title",
+     "available": true
+    }
+   ],
+   "options": [
+    {
+     "name": "Style",
+     "position": 1,
+     "values": [
+      "Default Title"
+     ]
+    }
+   ]
+  }
+ ]
+}
