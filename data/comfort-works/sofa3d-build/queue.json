@@ -658,22 +658,29 @@
    "dependencyIds": [],
    "sourceInputHash": "ed40fd279421ce80",
    "specPath": "specs/ref-IK-KN-0.json",
-   "evidencePaths": [],
-   "implementationFiles": [],
-   "attemptCount": 0,
+   "evidencePaths": [
+    "evidence/structural/",
+    "evidence/renders/klippan-footstool/"
+   ],
+   "implementationFiles": [
+    "src/modules/sofa3d/extended-products.json",
+    "src/modules/sofa3d/extended-models.ts"
+   ],
+   "attemptCount": 1,
    "lastError": null,
-   "nextAction": "source-dimensions",
-   "buildStatus": "queued",
-   "dimensionStatus": "missing",
-   "structureStatus": "not_run",
-   "renderStatus": "not_run",
-   "visualStatus": "unavailable",
+   "nextAction": "await independent visual review",
+   "buildStatus": "implemented",
+   "dimensionStatus": "verified",
+   "structureStatus": "pass",
+   "renderStatus": "pass",
+   "visualStatus": "needs_review",
    "priority": 1,
    "title": "Klippan Footstool Cover",
    "url": "https://comfort-works.com/products/klippan-footstool-cover",
    "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-0_LV_VELC_SP_CVC-01.jpg?v=1741741764",
    "existingPresets": [],
-   "jobClass": "partial-repair"
+   "jobClass": "partial-repair",
+   "sofa3dModelId": "klippan-footstool"
   },
   {
    "configurationId": "ref-IK-KN-2",
@@ -690,22 +697,29 @@
    "dependencyIds": [],
    "sourceInputHash": "ed40fd279421ce80",
    "specPath": "specs/ref-IK-KN-2.json",
-   "evidencePaths": [],
-   "implementationFiles": [],
-   "attemptCount": 0,
+   "evidencePaths": [
+    "evidence/structural/",
+    "evidence/renders/klippan-2-seat/"
+   ],
+   "implementationFiles": [
+    "src/modules/sofa3d/extended-products.json",
+    "src/modules/sofa3d/extended-models.ts"
+   ],
+   "attemptCount": 1,
    "lastError": null,
-   "nextAction": "source-dimensions",
-   "buildStatus": "queued",
-   "dimensionStatus": "missing",
-   "structureStatus": "not_run",
-   "renderStatus": "not_run",
-   "visualStatus": "unavailable",
+   "nextAction": "await independent visual review",
+   "buildStatus": "implemented",
+   "dimensionStatus": "verified",
+   "structureStatus": "pass",
+   "renderStatus": "pass",
+   "visualStatus": "needs_review",
    "priority": 1,
    "title": "Klippan 2 Seater Sofa Cover",
    "url": "https://comfort-works.com/products/klippan-2-seater-sofa-cover",
    "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-2_STD_SV_VELC_SP_CVC-01.jpg?v=1741741755",
    "existingPresets": [],
-   "jobClass": "partial-repair"
+   "jobClass": "partial-repair",
+   "sofa3dModelId": "klippan-2-seat"
   },
   {
    "configurationId": "ref-IK-KN-4",
@@ -722,22 +736,29 @@
    "dependencyIds": [],
    "sourceInputHash": "ed40fd279421ce80",
    "specPath": "specs/ref-IK-KN-4.json",
-   "evidencePaths": [],
-   "implementationFiles": [],
-   "attemptCount": 0,
+   "evidencePaths": [
+    "evidence/structural/",
+    "evidence/renders/klippan-4-seat/"
+   ],
+   "implementationFiles": [
+    "src/modules/sofa3d/extended-products.json",
+    "src/modules/sofa3d/extended-models.ts"
+   ],
+   "attemptCount": 1,
    "lastError": null,
-   "nextAction": "source-dimensions",
-   "buildStatus": "queued",
-   "dimensionStatus": "missing",
-   "structureStatus": "not_run",
-   "renderStatus": "not_run",
-   "visualStatus": "unavailable",
+   "nextAction": "confirm width via CW Import pattern data on next run",
+   "buildStatus": "implemented",
+   "dimensionStatus": "estimated",
+   "structureStatus": "pass",
+   "renderStatus": "pass",
+   "visualStatus": "needs_review",
    "priority": 1,
    "title": "Klippan 4 Seater Sofa Cover",
    "url": "https://comfort-works.com/products/klippan-4-seater-sofa-cover",
    "image": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-4_SV_VELC_SP_CVC-01.jpg?v=1741741756",
    "existingPresets": [],
-   "jobClass": "partial-repair"
+   "jobClass": "partial-repair",
+   "sofa3dModelId": "klippan-4-seat"
   },
   {
    "configurationId": "ref-PB-BSC-103",

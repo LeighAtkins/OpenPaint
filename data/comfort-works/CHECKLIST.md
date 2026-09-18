@@ -3,7 +3,7 @@
 Pulled 2026-09-18 · 371 model families · 1198 base products (configurations) · 17 fabric types / 81 colourways.
 Regenerate with `node tools/cw-catalog/pull-catalog.cjs all` (raw cache in `data/comfort-works/raw/`).
 
-## Coverage: 12/371 model families built (14 touched)
+## Coverage: 13/371 model families built (14 touched)
 
 Legend: ✅ dedicated model built · 🟨 partial · ⬜ not built
 
@@ -59,7 +59,7 @@ Legend: ✅ dedicated model built · 🟨 partial · ⬜ not built
 | [Karlanda](https://comfort-works.com/collections/ikea-karlanda-slipcovers) | Karlanda | 8 | ⬜ not built |
 | [Karlstad](https://comfort-works.com/collections/ikea-karlstad-slipcovers) | Karlstad | 12 | ✅ built — benchmarks (karlstad) |
 | [Kivik](https://comfort-works.com/collections/ikea-kivik-slipcovers) | Kivik | 12 | ⬜ not built |
-| [Klippan](https://comfort-works.com/collections/ikea-klippan-slipcovers) | Klippan | 4 | 🟨 partial — generic profile only, no dedicated preset |
+| [Klippan](https://comfort-works.com/collections/ikea-klippan-slipcovers) | Klippan | 4 | ✅ built — extended (klippan-2-seat verified, klippan-4-seat provisional width, footstool; armrest protector queued as accessory) |
 | [Klobo](https://comfort-works.com/collections/ikea-klobo-slipcovers) | Klobo | 2 | ⬜ not built |
 | [Koarp](https://comfort-works.com/collections/ikea-koarp-slipcovers) | Koarp | 1 | ⬜ not built |
 | [Kramfors](https://comfort-works.com/collections/ikea-kramfors-slipcovers) | Kramfors | 14 | ⬜ not built |

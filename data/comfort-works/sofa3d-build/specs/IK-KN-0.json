@@ -1,0 +1,14 @@
+{
+  "configurationId": "IK-KN-0",
+  "familyIds": ["ikea-klippan-slipcovers"],
+  "title": "Klippan Footstool",
+  "objectType": "ottoman",
+  "dimensionStatus": "verified-tier3",
+  "sources": [
+    { "tier": 3, "url": "https://mammamiacovers.com (Klippan footstool cover fit guide)", "excerpt": "W 53 × D 53 × H 32 cm", "confidence": "medium-high (two independent cover makers agree)" },
+    { "tier": 3, "url": "https://comfort-works.com klippan footstool cover fit data", "excerpt": "W 53 × D 53 × H 32 cm", "confidence": "medium-high" }
+  ],
+  "envelope": { "width": 53, "depth": 53, "height": 32 },
+  "construction": { "armless": true, "backless": true, "legHeight": 11, "seatThickness": 13 },
+  "colourwayDefault": { "name": "provisional warm grey (sampled later)", "hex": "#c9c4b8" }
+}

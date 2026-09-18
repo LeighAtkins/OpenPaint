@@ -1,7 +1,7 @@
 {
  "_meta": {
   "source": "comfort-works.com (Shopify)",
-  "pulledAt": "2026-09-18T05:43:04.221Z",
+  "pulledAt": "2026-09-18T15:56:25.845Z",
   "generator": "tools/cw-catalog/pull-catalog.cjs",
   "counts": {
    "modelFamilies": 371,
@@ -9004,7 +9004,7 @@
    ],
    "cover": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-2_STD_SV_VELC_SP_CVC-01.jpg?v=1741741755",
    "kind": "model-family",
-   "sofa3d": "partial — generic profile only, no dedicated preset"
+   "sofa3d": "built — extended (klippan-2-seat verified, klippan-4-seat provisional width, footstool; armrest protector queued as accessory)"
   },
   {
    "id": "ikea-klobo-slipcovers",

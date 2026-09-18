@@ -298,7 +298,7 @@ const BUILT_3D = {
   'ikea-friheten': 'built — extended (friheten, incl. bed)',
   'ikea-jattebo': 'built — extended (jattebo)',
   'ikea-nammaro': 'built — extended (nammaro, armless outdoor)',
-  'ikea-klippan': 'partial — generic profile only, no dedicated preset',
+  'ikea-klippan': 'built — extended (klippan-2-seat verified, klippan-4-seat provisional width, footstool; armrest protector queued as accessory)',
   'pottery-barn-basic': 'built — benchmarks (pb-basic)',
   'pottery-barn-charleston': 'built — extended (pb-charleston)',
   'pottery-barn-english': 'built — extended (pb-english-sleeper, scanned frame)',

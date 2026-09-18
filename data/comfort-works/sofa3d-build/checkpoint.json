@@ -1,10 +1,11 @@
 {
   "run": 1,
-  "startedAt": "2026-09-18",
-  "phase": "preflight-complete",
-  "activeItem": null,
-  "nextItem": "geometry-harness",
-  "completed": ["preflight", "reconcile", "queue"],
-  "deadlinePolicy": "8h per run; reserve final 45min",
-  "notes": "Baseline validate fails on 180 legacy lint errors (pre-existing, logged). Gate for executor changes: type-check + vitest + no NEW eslint errors in touched files."
+  "status": "finalised-clean",
+  "branch": "sofa3d/overnight-1",
+  "completed": ["preflight", "reconcile", "queue", "harness+calibration", "built-family-audit", "klippan-partial-repair"],
+  "acceptedThisRun": ["IK-KN-2 (verified dims)", "IK-KN-0 (tier-3 dims)", "IK-KN-4 (provisional, estimated width)"],
+  "nextItem": "pb-york-batch: source 16 missing York configs via CW Import OMS session (PIDs PB-YRA-62/83, PB-YDRA-62/97, PB-YSLA-60, PB-YDSA-60/81, + remaining), fallback tier-3 PB factory pages; extend width map in extended-models.ts",
+  "then": "ikea-backlog by config count desc",
+  "inputHash": "sofas.json:ed40fd279421ce80",
+  "validation": "type-check pass; 46/46 sofa3d tests; touched-file eslint clean; full validate red on 180 pre-existing legacy lint (see evidence/baseline-validate.log)"
 }

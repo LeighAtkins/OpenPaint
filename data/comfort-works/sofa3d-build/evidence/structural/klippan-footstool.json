@@ -1,0 +1,185 @@
+{
+ "id": "klippan-footstool",
+ "declared": {
+  "width": 53,
+  "depth": 53,
+  "height": 32,
+  "armWidth": 0,
+  "armHeight": 66,
+  "seatHeight": 32,
+  "seatThickness": 13,
+  "backThickness": 14,
+  "legHeight": 11,
+  "seatCount": 1
+ },
+ "ok": true,
+ "results": [
+  {
+   "name": "finite-transforms",
+   "pass": true,
+   "detail": "0 parts with non-finite transforms"
+  },
+  {
+   "name": "positive-sizes",
+   "pass": true,
+   "detail": "0 parts with non-positive sizes"
+  },
+  {
+   "name": "unique-part-ids",
+   "pass": true,
+   "detail": "6 parts, 6 unique ids"
+  },
+  {
+   "name": "non-empty-geometry",
+   "pass": true,
+   "detail": "6 meshes, 0 empty"
+  },
+  {
+   "name": "overall-width",
+   "pass": true,
+   "detail": "target 53.0 cm, rendered 53.0 cm, tolerance ±1.0 cm"
+  },
+  {
+   "name": "overall-depth",
+   "pass": true,
+   "detail": "target 53.0 cm, rendered 53.0 cm, tolerance ±1.0 cm"
+  },
+  {
+   "name": "overall-height",
+   "pass": true,
+   "detail": "target 32.0 cm, rendered 32.0 cm, tolerance ±1.0 cm"
+  },
+  {
+   "name": "no-below-floor",
+   "pass": true,
+   "detail": "min y 0.00 cm"
+  },
+  {
+   "name": "floor-contact",
+   "pass": true,
+   "detail": "model rests at y=0.00 cm (0 = floor)"
+  },
+  {
+   "name": "seat-count",
+   "pass": true,
+   "detail": "1 seat cushions, spec 1"
+  },
+  {
+   "name": "arm-count",
+   "pass": true,
+   "detail": "0 arms (L 0 / R 0) on implicit main module"
+  }
+ ],
+ "bounds": {
+  "min": [
+   -26.5,
+   0,
+   -26.5
+  ],
+  "max": [
+   26.5,
+   32,
+   26.5
+  ],
+  "size": [
+   53,
+   32,
+   53
+  ]
+ },
+ "counts": {
+  "seats": 1,
+  "backs": 0,
+  "arms": 0,
+  "pillows": 0,
+  "legs": 4,
+  "skirts": 0,
+  "frames": 1
+ },
+ "partBounds": [
+  {
+   "id": "main:frame",
+   "role": "frame",
+   "center": [
+    0,
+    15,
+    0
+   ],
+   "size": [
+    53,
+    8,
+    53
+   ]
+  },
+  {
+   "id": "main:seat-0",
+   "role": "seat",
+   "center": [
+    0,
+    25.5,
+    0
+   ],
+   "size": [
+    51,
+    13,
+    46
+   ]
+  },
+  {
+   "id": "main:leg--1--1",
+   "role": "leg",
+   "center": [
+    -17.5,
+    5.5,
+    -17.5
+   ],
+   "size": [
+    6,
+    11,
+    6
+   ]
+  },
+  {
+   "id": "main:leg--1-1",
+   "role": "leg",
+   "center": [
+    -17.5,
+    5.5,
+    17.5
+   ],
+   "size": [
+    6,
+    11,
+    6
+   ]
+  },
+  {
+   "id": "main:leg-1--1",
+   "role": "leg",
+   "center": [
+    17.5,
+    5.5,
+    -17.5
+   ],
+   "size": [
+    6,
+    11,
+    6
+   ]
+  },
+  {
+   "id": "main:leg-1-1",
+   "role": "leg",
+   "center": [
+    17.5,
+    5.5,
+    17.5
+   ],
+   "size": [
+    6,
+    11,
+    6
+   ]
+  }
+ ]
+}

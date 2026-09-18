@@ -183,6 +183,55 @@ export function createExtendedModel(id: string): SofaDocument {
         offset: { x: 0, y: 0, z: 2 },
       };
   }
+  // Klippan: boxy low-back sofa on exposed square legs. Arms are slim square
+  // posts at full back height; loose baggy cushions form the back's crown.
+  // Dimensions: IKEA PDP for the 2-seat (180/88/66, seat 43, legs 11), same
+  // platform carried to the 4-seat (width tier-3 estimated, provisional) and
+  // the footstool (53/53/32, tier-3, two cover makers concur).
+  if (id === 'klippan-2-seat' || id === 'klippan-4-seat' || id === 'klippan-footstool') {
+    const footstool = id === 'klippan-footstool';
+    const seats = footstool ? 1 : id === 'klippan-4-seat' ? 4 : 2;
+    if (footstool) doc.preset = 'ottoman';
+    Object.assign(doc.dimensions, {
+      armWidth: footstool ? 0 : 11,
+      armHeight: 66,
+      seatHeight: footstool ? 32 : 43,
+      seatThickness: footstool ? 13 : 14,
+      backThickness: 14,
+      legHeight: 11,
+      seatCount: seats,
+    });
+    Object.assign(doc.construction, {
+      backCushions: !footstool,
+      backCushionHeight: footstool ? 0 : 24,
+      frameHeight: footstool ? 19 : 62,
+      legStyle: 'square',
+      legWidth: 6,
+      skirtPleatDepth: 0,
+      skirtFlare: 0,
+    });
+    doc.style = { arm: 'square', back: 'short', cushion: 'rounded', base: 'snug' };
+    doc.pillows = 0;
+    doc.fabric.colour = '#c9c4b8';
+    for (let i = 0; i < seats; i++) {
+      doc.overrides[`main:seat-${i}`] = {
+        depth: footstool ? 46 : 71,
+        loft: 0.55,
+        softness: 0.5,
+        piping: false,
+      };
+      if (!footstool)
+        doc.overrides[`main:back-${i}`] = {
+          height: 26,
+          depth: 15,
+          softness: 0.75,
+          loft: 0.7,
+          shape: 'rounded',
+          rotation: { x: -8, y: 0, z: 0 },
+          offset: { x: 0, y: -1, z: 3 },
+        };
+    }
+  }
   if (id === 'nammaro') {
     Object.assign(doc.dimensions, {
       armWidth: 4,

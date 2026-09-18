@@ -1,0 +1,40 @@
+{
+ "id": "klippan-2-seat:IK-KN-2",
+ "title": "Klippan 2 Seat Sofa",
+ "declared": {
+  "width": 180,
+  "depth": 88,
+  "height": 66
+ },
+ "pixelChecks": {
+  "perspective": {
+   "occupancy": 0.124,
+   "nonEmpty": true
+  },
+  "front": {
+   "occupancy": 0.126,
+   "nonEmpty": true
+  },
+  "side": {
+   "occupancy": 0.616,
+   "nonEmpty": true
+  },
+  "back": {
+   "occupancy": 0.152,
+   "nonEmpty": true
+  },
+  "top": {
+   "occupancy": 0.07,
+   "nonEmpty": true
+  }
+ },
+ "views": [
+  "perspective",
+  "front",
+  "side",
+  "back",
+  "top"
+ ],
+ "renderedAt": "2026-09-18T15:53:40.094Z",
+ "renderer": "SofaRenderer (real) via system Chrome"
+}

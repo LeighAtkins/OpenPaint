@@ -1,0 +1,40 @@
+{
+ "id": "klippan-footstool:IK-KN-0",
+ "title": "Klippan Footstool",
+ "declared": {
+  "width": 53,
+  "depth": 53,
+  "height": 32
+ },
+ "pixelChecks": {
+  "perspective": {
+   "occupancy": 0.019,
+   "nonEmpty": true
+  },
+  "front": {
+   "occupancy": 0.016,
+   "nonEmpty": true
+  },
+  "side": {
+   "occupancy": 0.053,
+   "nonEmpty": true
+  },
+  "back": {
+   "occupancy": 0.019,
+   "nonEmpty": true
+  },
+  "top": {
+   "occupancy": 0.014,
+   "nonEmpty": true
+  }
+ },
+ "views": [
+  "perspective",
+  "front",
+  "side",
+  "back",
+  "top"
+ ],
+ "renderedAt": "2026-09-18T15:54:58.185Z",
+ "renderer": "SofaRenderer (real) via system Chrome"
+}
