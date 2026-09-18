@@ -1,0 +1,137 @@
+{
+  "id": "cloud-corner",
+  "declared": {
+    "width": 114.3,
+    "depth": 114.3,
+    "height": 80,
+    "armWidth": 15,
+    "armHeight": 46.99,
+    "seatHeight": 43,
+    "seatThickness": 14,
+    "backThickness": 15,
+    "legHeight": 1,
+    "seatCount": 1
+  },
+  "ok": false,
+  "results": [
+    {
+      "name": "finite-transforms",
+      "pass": true,
+      "detail": "0 parts with non-finite transforms"
+    },
+    {
+      "name": "positive-sizes",
+      "pass": true,
+      "detail": "0 parts with non-positive sizes"
+    },
+    {
+      "name": "unique-part-ids",
+      "pass": true,
+      "detail": "8 parts, 8 unique ids"
+    },
+    {
+      "name": "non-empty-geometry",
+      "pass": true,
+      "detail": "8 meshes, 0 empty"
+    },
+    {
+      "name": "overall-width",
+      "pass": true,
+      "detail": "target 114.3 cm, rendered 114.3 cm, tolerance ±1.1 cm"
+    },
+    {
+      "name": "overall-depth",
+      "pass": false,
+      "detail": "target 114.3 cm, rendered 122.7 cm, tolerance ±1.1 cm"
+    },
+    {
+      "name": "overall-height",
+      "pass": false,
+      "detail": "target 80.0 cm, rendered 83.3 cm, tolerance ±1.0 cm"
+    },
+    {
+      "name": "no-below-floor",
+      "pass": true,
+      "detail": "min y 0.00 cm"
+    },
+    {
+      "name": "floor-contact",
+      "pass": true,
+      "detail": "model rests at y=0.00 cm (0 = floor)"
+    },
+    {
+      "name": "seat-count",
+      "pass": true,
+      "detail": "1 seat cushions, spec 1"
+    },
+    {
+      "name": "arm-count",
+      "pass": true,
+      "detail": "0 arms for 0 armed modules"
+    }
+  ],
+  "bounds": {
+    "min": [-57.150001525878906, 0, -57.150001525878906],
+    "max": [57.150001525878906, 83.31372926949709, 65.5],
+    "size": [114.30000305175781, 83.31372926949709, 122.6500015258789]
+  },
+  "counts": {
+    "seats": 1,
+    "backs": 2,
+    "arms": 0,
+    "pillows": 1,
+    "legs": 1,
+    "skirts": 0,
+    "frames": 3
+  },
+  "partBounds": [
+    {
+      "id": "main:frame",
+      "role": "frame",
+      "center": [0, 15, 0],
+      "size": [114.30000305175781, 28, 114.30000305175781]
+    },
+    {
+      "id": "main:back-frame",
+      "role": "frame",
+      "center": [0, 23.995000000000005, -49.65],
+      "size": [114.30000305175781, 45.9900016784668, 15]
+    },
+    {
+      "id": "main:corner-back-frame",
+      "role": "frame",
+      "center": [49.65, 23.995000000000005, 7.5],
+      "size": [15.000000000000014, 45.9900016784668, 99.30000305175781]
+    },
+    {
+      "id": "main:seat-0",
+      "role": "seat",
+      "center": [-7.5, 36, 7.5],
+      "size": [97.30000305175781, 14, 96.30000305175781]
+    },
+    {
+      "id": "main:back-0",
+      "role": "back",
+      "center": [-14.495813826253883, 58.076782655738036, -29.672017072239186],
+      "size": [84.0773598642323, 49.52651066366444, 30.96375356982585]
+    },
+    {
+      "id": "main:corner-back-cushion",
+      "role": "back",
+      "center": [29.67204728728016, 58.07688802810834, 26.499999999999996],
+      "size": [29.79664764405478, 45.456328600638045, 78]
+    },
+    {
+      "id": "main:support-0",
+      "role": "leg",
+      "center": [0, 0.5, 0],
+      "size": [100.30000305175781, 1, 96.30000305175781]
+    },
+    {
+      "id": "main:pillow-0",
+      "role": "pillow",
+      "center": [-16.83954320640413, 60.911158567103676, -5.83954320640413],
+      "size": [55.60744254639708, 44.80514140478682, 55.60744254639707]
+    }
+  ]
+}

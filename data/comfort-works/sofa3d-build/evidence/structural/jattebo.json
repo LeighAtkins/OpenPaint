@@ -1,0 +1,188 @@
+{
+  "id": "jattebo",
+  "declared": {
+    "width": 285,
+    "depth": 160,
+    "height": 71,
+    "armWidth": 25,
+    "armHeight": 71,
+    "seatHeight": 46,
+    "seatThickness": 18,
+    "backThickness": 25,
+    "legHeight": 2,
+    "seatCount": 3
+  },
+  "ok": true,
+  "results": [
+    {
+      "name": "finite-transforms",
+      "pass": true,
+      "detail": "0 parts with non-finite transforms"
+    },
+    {
+      "name": "positive-sizes",
+      "pass": true,
+      "detail": "0 parts with non-positive sizes"
+    },
+    {
+      "name": "unique-part-ids",
+      "pass": true,
+      "detail": "14 parts, 14 unique ids"
+    },
+    {
+      "name": "non-empty-geometry",
+      "pass": true,
+      "detail": "14 meshes, 0 empty"
+    },
+    {
+      "name": "overall-width",
+      "pass": true,
+      "detail": "target 285.0 cm, rendered 285.0 cm, tolerance ±2.9 cm"
+    },
+    {
+      "name": "overall-depth",
+      "pass": true,
+      "detail": "target 160.0 cm, rendered 160.0 cm, tolerance ±1.6 cm"
+    },
+    {
+      "name": "overall-height",
+      "pass": true,
+      "detail": "target 71.0 cm, rendered 71.0 cm, tolerance ±1.0 cm"
+    },
+    {
+      "name": "no-below-floor",
+      "pass": true,
+      "detail": "min y 0.00 cm"
+    },
+    {
+      "name": "floor-contact",
+      "pass": true,
+      "detail": "model rests at y=0.00 cm (0 = floor)"
+    },
+    {
+      "name": "seat-count",
+      "pass": true,
+      "detail": "3 seat cushions, spec 3"
+    },
+    {
+      "name": "arm-count",
+      "pass": true,
+      "detail": "2 arms for 2 armed modules"
+    },
+    {
+      "name": "module-overlap",
+      "pass": true,
+      "detail": "main vs middle: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+    },
+    {
+      "name": "module-overlap",
+      "pass": true,
+      "detail": "main vs chaise: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+    },
+    {
+      "name": "module-overlap",
+      "pass": true,
+      "detail": "middle vs chaise: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+    }
+  ],
+  "bounds": {
+    "min": [-142.5, 0, -80],
+    "max": [142.5, 71, 80],
+    "size": [285, 71, 160]
+  },
+  "counts": {
+    "seats": 3,
+    "backs": 0,
+    "arms": 2,
+    "pillows": 0,
+    "legs": 3,
+    "skirts": 0,
+    "frames": 6
+  },
+  "partBounds": [
+    {
+      "id": "main:frame",
+      "role": "frame",
+      "center": [-95, 15, 0],
+      "size": [95, 26, 160]
+    },
+    {
+      "id": "main:back-frame",
+      "role": "frame",
+      "center": [-95, 36.5, -67.5],
+      "size": [95, 69, 25]
+    },
+    {
+      "id": "main:arm-left",
+      "role": "arm",
+      "center": [-130, 36.5, 0],
+      "size": [25, 69, 160]
+    },
+    {
+      "id": "main:seat-0",
+      "role": "seat",
+      "center": [-82.5, 37, 12.5],
+      "size": [68, 18, 132]
+    },
+    {
+      "id": "main:support-0",
+      "role": "leg",
+      "center": [-95, 1, 0],
+      "size": [81, 2, 142]
+    },
+    {
+      "id": "middle:frame",
+      "role": "frame",
+      "center": [0, 15, -32.5],
+      "size": [95, 26, 95]
+    },
+    {
+      "id": "middle:back-frame",
+      "role": "frame",
+      "center": [0, 36.5, -67.5],
+      "size": [95, 69, 25]
+    },
+    {
+      "id": "middle:seat-0",
+      "role": "seat",
+      "center": [0, 37, -20],
+      "size": [93, 18, 67]
+    },
+    {
+      "id": "middle:support-0",
+      "role": "leg",
+      "center": [0, 1, -32.5],
+      "size": [81, 2, 77]
+    },
+    {
+      "id": "chaise:frame",
+      "role": "frame",
+      "center": [95, 15, 0],
+      "size": [95, 26, 160]
+    },
+    {
+      "id": "chaise:back-frame",
+      "role": "frame",
+      "center": [95, 36.5, -67.5],
+      "size": [95, 69, 25]
+    },
+    {
+      "id": "chaise:arm-right",
+      "role": "arm",
+      "center": [130, 36.5, 0],
+      "size": [25, 69, 160]
+    },
+    {
+      "id": "chaise:seat-0",
+      "role": "seat",
+      "center": [82.5, 37, 12.5],
+      "size": [68, 18, 132]
+    },
+    {
+      "id": "chaise:support-0",
+      "role": "leg",
+      "center": [95, 1, 0],
+      "size": [81, 2, 142]
+    }
+  ]
+}

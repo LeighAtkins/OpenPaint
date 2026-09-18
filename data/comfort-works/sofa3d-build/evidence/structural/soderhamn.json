@@ -1,0 +1,173 @@
+{
+  "id": "soderhamn",
+  "declared": {
+    "width": 198,
+    "depth": 99,
+    "height": 83,
+    "armWidth": 6,
+    "armHeight": 69,
+    "seatHeight": 40,
+    "seatThickness": 9,
+    "backThickness": 8,
+    "legHeight": 14,
+    "seatCount": 2
+  },
+  "ok": true,
+  "results": [
+    {
+      "name": "finite-transforms",
+      "pass": true,
+      "detail": "0 parts with non-finite transforms"
+    },
+    {
+      "name": "positive-sizes",
+      "pass": true,
+      "detail": "0 parts with non-positive sizes"
+    },
+    {
+      "name": "unique-part-ids",
+      "pass": true,
+      "detail": "14 parts, 14 unique ids"
+    },
+    {
+      "name": "non-empty-geometry",
+      "pass": true,
+      "detail": "14 meshes, 0 empty"
+    },
+    {
+      "name": "overall-width",
+      "pass": true,
+      "detail": "target 198.0 cm, rendered 198.0 cm, tolerance ±2.0 cm"
+    },
+    {
+      "name": "overall-depth",
+      "pass": true,
+      "detail": "target 99.0 cm, rendered 99.0 cm, tolerance ±1.0 cm"
+    },
+    {
+      "name": "overall-height",
+      "pass": true,
+      "detail": "target 83.0 cm, rendered 82.1 cm, tolerance ±1.0 cm"
+    },
+    {
+      "name": "no-below-floor",
+      "pass": true,
+      "detail": "min y 0.00 cm"
+    },
+    {
+      "name": "floor-contact",
+      "pass": true,
+      "detail": "model rests at y=0.00 cm (0 = floor)"
+    },
+    {
+      "name": "seat-count",
+      "pass": true,
+      "detail": "2 seat cushions, spec 2"
+    },
+    {
+      "name": "arm-count",
+      "pass": true,
+      "detail": "2 arms (L 1 / R 1) on implicit main module"
+    }
+  ],
+  "bounds": {
+    "min": [-99, 0, -49.5],
+    "max": [99, 82.07858489727693, 49.5],
+    "size": [198, 82.07858489727693, 99]
+  },
+  "counts": {
+    "seats": 2,
+    "backs": 2,
+    "arms": 2,
+    "pillows": 2,
+    "legs": 4,
+    "skirts": 0,
+    "frames": 2
+  },
+  "partBounds": [
+    {
+      "id": "main:frame",
+      "role": "frame",
+      "center": [0, 22.5, 0],
+      "size": [198, 17, 99]
+    },
+    {
+      "id": "main:back-frame",
+      "role": "frame",
+      "center": [0, 41.5, -45.5],
+      "size": [198, 55, 8]
+    },
+    {
+      "id": "main:arm-left",
+      "role": "arm",
+      "center": [-96, 41.5, 0],
+      "size": [6, 55, 99]
+    },
+    {
+      "id": "main:arm-right",
+      "role": "arm",
+      "center": [96, 41.5, 0],
+      "size": [6, 55, 99]
+    },
+    {
+      "id": "main:seat-0",
+      "role": "seat",
+      "center": [-46.349999999999994, 35.5, 4],
+      "size": [91.30000305175781, 9, 88]
+    },
+    {
+      "id": "main:back-0",
+      "role": "back",
+      "center": [-46.349999999999994, 59.123022180161264, -34.12614917162423],
+      "size": [91.30000305175781, 45.91112543423132, 23.76803006374004]
+    },
+    {
+      "id": "main:seat-1",
+      "role": "seat",
+      "center": [46.349999999999994, 35.5, 4],
+      "size": [91.30000305175781, 9, 88]
+    },
+    {
+      "id": "main:back-1",
+      "role": "back",
+      "center": [46.349999999999994, 59.122250726241084, -34.12598519403147],
+      "size": [91.30000305175781, 45.91266834207168, 23.76835801892556]
+    },
+    {
+      "id": "main:leg--1--1",
+      "role": "leg",
+      "center": [-90, 7, -40.5],
+      "size": [2.1500000953674316, 14, 2.1500000953674316]
+    },
+    {
+      "id": "main:leg--1-1",
+      "role": "leg",
+      "center": [-90, 7, 40.5],
+      "size": [2.1500000953674316, 14, 2.1500000953674316]
+    },
+    {
+      "id": "main:leg-1--1",
+      "role": "leg",
+      "center": [90, 7, -40.5],
+      "size": [2.1500000953674316, 14, 2.1500000953674316]
+    },
+    {
+      "id": "main:leg-1-1",
+      "role": "leg",
+      "center": [90, 7, 40.5],
+      "size": [2.1500000953674316, 14, 2.1500000953674316]
+    },
+    {
+      "id": "main:pillow-0",
+      "role": "pillow",
+      "center": [-58.99816820474207, 55.03992953891123, -10.51335883756904],
+      "size": [49.00899029327587, 43.11450292198113, 30.037324690259346]
+    },
+    {
+      "id": "main:pillow-1",
+      "role": "pillow",
+      "center": [58.99816820474207, 55.03992953891123, -10.51335883756904],
+      "size": [49.00899029327587, 43.11450292198113, 30.037324690259346]
+    }
+  ]
+}
