@@ -70,6 +70,8 @@ export interface SofaModule {
   rightArm: boolean;
   back: boolean;
   seats: number;
+  /** Back cushions on this module when they differ from `seats`. */
+  backs?: number;
 }
 export type NorsborgSectionKind = 'armrest' | 'two-seat' | 'three-seat' | 'corner' | 'chaise';
 export const NORSBORG_SECTION_KINDS: readonly NorsborgSectionKind[] = [
@@ -137,6 +139,11 @@ export interface SofaDocument {
   modules?: SofaModule[];
   /** Norsborg section chain driving `modules`; kept so the studio can reconfigure it. */
   norsborg?: { sections: NorsborgSection[] };
+  /**
+   * Bench-style layouts where back cushions outnumber the seats (single-module
+   * models only). Left undefined for the default one-back-cushion-per-seat row.
+   */
+  cushionLayout?: { backs: number };
   pillows: number;
   labelOffsets: Record<string, { x: number; y: number }>;
   customDimensions: CustomDimension[];
@@ -350,6 +357,8 @@ export function parseSofaDocument(raw: unknown): SofaDocument {
       m.z = validateDimension(m.z, -1500, 1500);
       m.rotation = validateDimension(m.rotation, -360, 360);
       m.seats = Math.round(validateDimension(m.seats, 1, 8));
+      if (m.backs !== undefined)
+        m.backs = Math.round(validateDimension(m.backs, 1, 8));
     }
   }
   if (doc.norsborg) {
@@ -359,6 +368,11 @@ export function parseSofaDocument(raw: unknown): SofaDocument {
     for (const s of sections)
       if (typeof s?.id !== 'string' || !NORSBORG_SECTION_KINDS.includes(s?.kind))
         throw new Error('Invalid Norsborg section.');
+  }
+  if (doc.cushionLayout) {
+    if (typeof doc.cushionLayout !== 'object' || doc.cushionLayout === null)
+      throw new Error('Invalid cushion layout.');
+    doc.cushionLayout.backs = Math.round(validateDimension(doc.cushionLayout.backs, 1, 8));
   }
   for (const dimension of doc.customDimensions)
     for (const anchor of [dimension.a, dimension.b]) {
@@ -450,7 +464,7 @@ function modulesFor(doc: SofaDocument): SofaModule[] {
       },
     ];
   }
-  return [base];
+  return [{ ...base, backs: doc.cushionLayout?.backs }];
 }
 /** Outer upright is inset beneath the rolled overhang; skirt hangs from that upright. */
 export function armSkirtInset(width: number, construction: SofaConstruction): number {
@@ -633,6 +647,7 @@ export function buildSofaParts(doc: SofaDocument): SofaPart[] {
     const seatWidth = Math.max(10, (inner - (m.seats - 1) * gap - 2) / m.seats);
     const rowStart = -m.width / 2 + left + 1;
     let cursor = rowStart;
+    let backCursor = rowStart;
     for (let i = 0; i < (m.armOnly ? 0 : m.seats); i++) {
       const actualWidth = doc.overrides[`${m.id}:seat-${i}`]?.width ?? seatWidth;
       const seatDepth =
@@ -658,21 +673,67 @@ export function buildSofaParts(doc: SofaDocument): SofaPart[] {
           doc.style.cushion,
           'CC-BE'
         );
-      if (m.back && construction.looseCushions && construction.backCushions && !doc.sleeper?.open) {
+      // One back cushion per seat, unless the module overrides the back count
+      // (bench-cushion models) and gets its own row below.
+      if (
+        m.back &&
+        construction.looseCushions &&
+        construction.backCushions &&
+        !doc.sleeper?.open &&
+        (m.backs ?? m.seats) === m.seats
+      ) {
         const bh = construction.backCushionHeight || Math.max(15, d.height - d.seatHeight + 3);
+        // Norsborg back cushions butt against each other and the section ends
+        // (armrests / corner walls) at their PID widths, instead of floating in
+        // centred slots.
+        const backWidth =
+          doc.norsborg && doc.overrides[`${m.id}:back-${i}`]?.width
+            ? doc.overrides[`${m.id}:back-${i}`]!.width!
+            : seatWidth;
+        if (doc.norsborg && i === 0) backCursor = -m.width / 2 + left;
+        const backCx = doc.norsborg ? backCursor + backWidth / 2 : cx;
+        backCursor += backWidth;
         add(
           m,
           `back-${i}`,
           `Back cushion ${i + 1}`,
           'back',
-          { x: seatWidth, y: bh, z: Math.max(10, d.backThickness * 0.8) },
-          { x: cx, y: d.seatHeight + bh / 2 - 3, z: -m.depth / 2 + d.backThickness * 1.3 + 5 },
+          { x: backWidth, y: bh, z: Math.max(10, d.backThickness * 0.8) },
+          { x: backCx, y: d.seatHeight + bh / 2 - 3, z: -m.depth / 2 + d.backThickness * 1.3 + 5 },
           doc.style.cushion,
           'CC-BE',
           -0.1
         );
       }
       cursor += occupiedWidth + gap;
+    }
+    // Bench-style back row: back cushions spread across the seating width
+    // independently of the seat cushions beneath them.
+    if (
+      m.back &&
+      !m.armOnly &&
+      (m.backs ?? m.seats) !== m.seats &&
+      construction.looseCushions &&
+      construction.backCushions &&
+      !doc.sleeper?.open
+    ) {
+      const bh = construction.backCushionHeight || Math.max(15, d.height - d.seatHeight + 3);
+      const backCount = m.backs!;
+      const backWidth = Math.max(10, (inner - (backCount - 1) * gap - 2) / backCount);
+      for (let i = 0; i < backCount; i++) {
+        const backCx = -m.width / 2 + left + 1 + gap * i + backWidth * (i + 0.5);
+        add(
+          m,
+          `back-${i}`,
+          `Back cushion ${i + 1}`,
+          'back',
+          { x: backWidth, y: bh, z: Math.max(10, d.backThickness * 0.8) },
+          { x: backCx, y: d.seatHeight + bh / 2 - 3, z: -m.depth / 2 + d.backThickness * 1.3 + 5 },
+          doc.style.cushion,
+          'CC-BE',
+          -0.1
+        );
+      }
     }
     if (m.corner && construction.looseCushions && construction.backCushions && !doc.sleeper?.open) {
       const bh = construction.backCushionHeight || Math.max(15, d.height - d.seatHeight + 3);

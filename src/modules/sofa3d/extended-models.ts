@@ -2,6 +2,14 @@ import products from './extended-products.json';
 import { createSofaDocument, type SofaDocument, type SofaModule } from './model';
 export const EXTENDED_MODELS = products;
 
+/** CW cushion variants for the PB York Slope Arm 95" cover (SKU codes 1S-2B … 3S-3B). */
+const YORK_CONFIGS: Record<string, { seats: number; backs: number }> = {
+  'pb-york-slope-95-1s2b': { seats: 1, backs: 2 },
+  'pb-york-slope-95-1s3b': { seats: 1, backs: 3 },
+  'pb-york-slope-95-2s2b': { seats: 2, backs: 2 },
+  'pb-york-slope-95-3s3b': { seats: 3, backs: 3 },
+};
+
 export function createExtendedModel(id: string): SofaDocument {
   const product = products.find(p => p.id === id);
   if (!product) throw new Error('Unknown sofa model.');
@@ -47,10 +55,10 @@ export function createExtendedModel(id: string): SofaDocument {
       armStemWidth: 15,
       armFlare: 1,
       armSetback: 7,
-      backCushionHeight: 44,
+      backCushionHeight: 48,
       skirtPleatDepth: 2,
       skirtFlare: 0.5,
-      frameHeight: 81.8,
+      frameHeight: 91,
     });
     doc.style.arm = 'square';
     doc.style.base = 'long-skirt';
@@ -130,6 +138,51 @@ export function createExtendedModel(id: string): SofaDocument {
       };
     }
   }
+  if (YORK_CONFIGS[id]) {
+    const { seats, backs } = YORK_CONFIGS[id];
+    // Pottery Barn York Slope Arm Grand Sofa (94.5"/240 cm, slipcovered):
+    // overall 240.1 × 96.5 × 91.4, inside seating 209.5 wide, arms 15.2 × 62.2,
+    // seat height 45.7, back frame 84, turned 2.5" legs under a pleated skirt.
+    Object.assign(doc.dimensions, {
+      armWidth: 15.2,
+      armHeight: 62.2,
+      seatHeight: 45.7,
+      seatThickness: 14.5,
+      backThickness: 18,
+      legHeight: 6.4,
+      seatCount: seats,
+      height: 91.4,
+    });
+    // Only the bench variants decouple the back row; equal-count configs stay
+    // on the default one-back-per-seat layout.
+    if (backs !== seats) doc.cushionLayout = { backs };
+    Object.assign(doc.construction, {
+      legStyle: 'round',
+      legWidth: 5.7,
+      backCushionHeight: 51,
+      frameHeight: 84,
+      skirtPleatDepth: 3.5,
+      skirtFlare: 1.2,
+    });
+    doc.style = { arm: 'square', back: 'short', cushion: 'rounded', base: 'long-skirt' };
+    doc.fabric.colour = '#d8d1c2';
+    // Down-blend-wrapped reversible covers: seats keep a low gusset with a
+    // broad crowned panel; backs are plump pillow-top lenses — rounded corners
+    // and a welt ringing the face, thickness kept shallow so the side profile
+    // reads as the reversible-cover lens (zipper gusset on the bottom edge).
+    for (let i = 0; i < seats; i++)
+      doc.overrides[`main:seat-${i}`] = { depth: 67, loft: 0.5, softness: 0.4, piping: true };
+    for (let i = 0; i < backs; i++)
+      doc.overrides[`main:back-${i}`] = {
+        height: 51,
+        depth: 19,
+        softness: 0.6,
+        loft: 0.6,
+        piping: true,
+        rotation: { x: -8, y: 0, z: 0 },
+        offset: { x: 0, y: 0, z: 2 },
+      };
+  }
   if (id === 'nammaro') {
     Object.assign(doc.dimensions, {
       armWidth: 4,
@@ -144,17 +197,21 @@ export function createExtendedModel(id: string): SofaDocument {
       frameStyle: 'slatted',
       legStyle: 'square',
       legWidth: 4,
-      backCushionHeight: 48,
+      backCushionHeight: 51,
     });
     doc.modules = [-81, 0, 81].map((x, i) =>
       module(i === 0 ? 'main' : `module-${i}`, 81, 92, x, 0)
     );
     for (const m of doc.modules) {
       doc.overrides[`${m.id}:seat-0`] = { width: 80, depth: 80, loft: 0.1, piping: true };
+      // Back cushions span the full 81 cm module so neighbouring sections'
+      // cushions connect, and rest against the slatted backrest.
       doc.overrides[`${m.id}:back-0`] = {
-        height: 48,
+        width: 81,
+        height: 51,
         depth: 8,
         rotation: { x: -12, y: 0, z: 0 },
+        offset: { x: 0, y: 2.4, z: -13.1 },
         loft: 0.35,
       };
     }
@@ -224,7 +281,7 @@ export function createExtendedModel(id: string): SofaDocument {
       seatCount: 3,
     });
     Object.assign(doc.construction, {
-      backCushionHeight: 43,
+      backCushionHeight: 45,
       frameHeight: 66,
       legStyle: 'square',
       legWidth: 5,
@@ -280,6 +337,17 @@ export function createExtendedModel(id: string): SofaDocument {
         'Actual photogrammetry frame mesh, aligned to the front; loose cushions remain separately editable.',
         'Scan proportions preserved at an estimated 221 cm width. Absolute scale is not verified.',
         'Open bed is a simplified extended surface; the folding mechanism is not reconstructed.',
+      ],
+    };
+  if (YORK_CONFIGS[id])
+    doc.source = {
+      kind: 'cw',
+      reference: product.reference,
+      notes: [
+        'Pottery Barn factory dimensions for the York Slope Arm Grand Sofa: 240.1 × 96.5 × 91.4 cm overall, inside seating 209.5 wide on a 45.7 cm seat, arms 15.2 × 62.2, 84 cm back frame on 2.5" turned legs.',
+        'Down-blend-wrapped reversible cushion covers: plump pillow-top backs with a welt ringing the face (CNRP corner piping) and a shallow lens side profile; low-gusset seats. Original style: plain seams, pleated skirt.',
+        'Slope arms: the cap runs from a full-height crest at the back down a long diagonal to a rounded front nose, with the welt seam inset along the outer face.',
+        'One of the four CW cushion variants (1S-2B, 1S-3B, 2S-2B, 3S-3B) — pick another York entry to switch the configuration.',
       ],
     };
   return doc;

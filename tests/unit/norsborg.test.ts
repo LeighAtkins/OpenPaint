@@ -92,7 +92,7 @@ describe('Norsborg configurator', () => {
     // Back cushions on the turned leg keep the leg's yaw and lean out locally.
     const legBack = buildSofaParts(doc).find(p => p.id === `${leg[0].id}:back-0`)!;
     expect(legBack.rotation.y).toBeCloseTo((-90 * Math.PI) / 180, 4);
-    expect((legBack.rotation.x * 180) / Math.PI).toBeCloseTo(20, 3);
+    expect((legBack.rotation.x * 180) / Math.PI).toBeCloseTo(-20, 3);
     // Armrest sections carry no cushions, so the fit check must stay quiet.
     expect(sofaFitNotes(doc)).toEqual([]);
   });
@@ -160,11 +160,12 @@ describe('Norsborg configurator', () => {
     expect(size(three, 'seat-1').taper).toBeCloseTo(66 / 61 - 1, 3);
     expect(size(three, 'back-2').size).toMatchObject({ x: 62, y: 44, z: 12 });
     // Back cushions lean out towards the seat on every section.
-    expect((size(three, 'back-2').rotation.x * 180) / Math.PI).toBeCloseTo(20, 3);
+    expect((size(three, 'back-2').rotation.x * 180) / Math.PI).toBeCloseTo(-20, 3);
+    // Every section shares the same 52 cm back frame, corner and three-seat alike.
     const threeBack = size(three, 'back-frame');
-    expect(threeBack.size.y).toBe(42); // 60 cm frame on 18 cm legs
+    expect(threeBack.size.y).toBe(34); // 52 cm frame on 18 cm legs
     expect(threeBack.position.y - threeBack.size.y / 2).toBe(18);
-    expect(threeBack.position.y + threeBack.size.y / 2).toBe(60);
+    expect(threeBack.position.y + threeBack.size.y / 2).toBe(52);
 
     // IK-NG-6 · corner: 72.5 × 72.5 seat, 74/63 and 87/76 tapered back cushions
     // whose sloped edges face the corner and which lean out towards the seat.
@@ -174,24 +175,24 @@ describe('Norsborg configurator', () => {
     expect(cornerBack.size).toMatchObject({ x: 74, y: 45, z: 12 });
     expect(cornerBack.taper).toBeCloseTo(74 / 63 - 1, 3);
     expect(cornerBack.outline).toBe('wedge-right');
-    expect((cornerBack.rotation.x * 180) / Math.PI).toBeCloseTo(20, 3);
+    expect((cornerBack.rotation.x * 180) / Math.PI).toBeCloseTo(-20, 3);
     const sideBack = size(corner, 'corner-back-cushion');
     expect(sideBack.size).toMatchObject({ x: 87, y: 45, z: 12 });
     expect(sideBack.taper).toBeCloseTo(87 / 76 - 1, 3);
     expect(sideBack.outline).toBe('wedge-left');
     expect(sideBack.rotation.y).toBeCloseTo(-Math.PI / 2, 4);
-    expect((sideBack.rotation.x * 180) / Math.PI).toBeCloseTo(20, 3);
+    expect((sideBack.rotation.x * 180) / Math.PI).toBeCloseTo(-20, 3);
     // The side cushion rests on the return-leg back wall's edge, centred on the
     // 88 cm side, leaning out of the wall instead of intersecting it.
     const cornerModule = corner.modules![0];
-    expect(sideBack.position.x - cornerModule.x).toBeCloseTo(17.5, 1);
+    expect(sideBack.position.x - cornerModule.x).toBeCloseTo(30.8, 1);
     expect(sideBack.position.z - cornerModule.z).toBeCloseTo(0, 1);
 
     // Back cushions sit in front of the 15 cm back frame, resting on its top
     // edge — not buried inside it.
     const twoBackCushion = size(two, 'back-0');
     const twoModule = two.modules![0];
-    expect(twoBackCushion.position.z - twoModule.z).toBeCloseTo(-17.5, 1);
+    expect(twoBackCushion.position.z - twoModule.z).toBeCloseTo(-30.8, 1);
     expect(twoBackCushion.position.z - twoModule.z + twoBackCushion.size.z / 2).toBeGreaterThan(
       -29
     );

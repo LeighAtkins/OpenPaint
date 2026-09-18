@@ -12,7 +12,7 @@ import {
  * IKEA NORSBORG sections matched to the Comfort Works PID measurements
  * (Original VELC_WR; the armrest PID exists only in Signature LSKT_SI):
  * sections are 88 cm deep on an 18 cm-leg frame, seat height 43 cm; the
- * three-seat section's back frame stands 60 cm tall, every other section 52 cm.
+ * every section sharing the same 52 cm back frame (CW PID heights).
  * Cushion sizes below are the PID cover measurements, to the centimetre.
  */
 interface NorsborgSectionSpec {
@@ -64,7 +64,7 @@ export const NORSBORG_SECTIONS: Record<NorsborgSectionKind, NorsborgSectionSpec>
     width: 181,
     depth: 88,
     seats: 3,
-    frameHeight: 60,
+    frameHeight: 52,
     seat: { width: 66, baseWidth: 61, depth: 73, thickness: 11.5 },
     back: { width: 62, height: 44, thickness: 12 },
     cover: {
@@ -268,15 +268,22 @@ function styleNorsborgSection(doc: SofaDocument, module: SofaModule, kind: Norsb
       ...values,
     };
   };
-  // Back cushions: bottom on the 43 cm seat, leaning out 20° like the product
-  // renders — the back face rests on the back frame's top edge, so the centre
-  // sits just in front of the frame (20° swings the base 13.2 cm back from the
-  // centre; the 60 cm three-seat frame's contact point sits slightly further
-  // back). The rotation override replaces the default orientation, so it must
-  // carry the module's own yaw — otherwise cushions on turned legs face the
-  // wrong way.
-  const backDrop = { x: 0, y: 3, z: spec.frameHeight >= 60 ? -1 : 2 };
-  const backLean = { x: 20, y: module.rotation, z: 0 };
+  // Back cushions: bottom on the 43 cm seat, reclining 20° backwards like the
+  // product renders — the crown rests flush with the back plane and the base
+  // lands on the frame's front edge (20° over the 44 cm cushion height spans
+  // 15 cm, exactly the frame depth, so the centre sits 13.2 cm off the back
+  // plane on every section). The rotation override replaces the default
+  // orientation, so it must carry the module's own yaw — otherwise cushions on
+  // turned legs face the wrong way. Offsets are expressed in the module's own
+  // frame and pre-rotated here, because add() applies offsets in world axes.
+  const yaw = (module.rotation * Math.PI) / 180;
+  const rotate = (ox: number, oy: number, oz: number) => ({
+    x: ox * Math.cos(yaw) + oz * Math.sin(yaw),
+    y: oy,
+    z: -ox * Math.sin(yaw) + oz * Math.cos(yaw),
+  });
+  const backDrop = rotate(0, 3, -11.3);
+  const backLean = { x: -20, y: module.rotation, z: 0 };
   if (spec.back)
     for (let i = 0; i < module.seats; i++)
       set(`back-${i}`, {
@@ -292,17 +299,18 @@ function styleNorsborgSection(doc: SofaDocument, module: SofaModule, kind: Norsb
   if (kind === 'corner') {
     // Second corner back cushion, on the return-leg side: 87 top / 76 base, 45
     // tall. Its mesh turns -90° relative to the module, so the long axis runs
-    // down the 88 cm side (centred at local z 0) and the 12 cm thickness rests
-    // against the side back wall at x 25. The wedge slopes its base away from
-    // the main back so both cushions' crowns converge on the corner.
+    // down the 88 cm side (centred at local z 0) and the 12 cm thickness
+    // reclines against the side back wall's top edge at x 27.5. The wedge
+    // slopes its base away from the main back so both cushions' crowns
+    // converge on the corner.
     set('corner-back-cushion', {
       width: 87,
       height: 45,
       depth: 12,
       taper: taperFor(87, 76),
       outline: 'wedge-left',
-      offset: { x: -2, y: 3, z: -15.5 },
-      rotation: { x: 20, y: module.rotation - 90, z: 0 },
+      offset: rotate(11.3, 3, -15.5),
+      rotation: { x: -20, y: module.rotation - 90, z: 0 },
       softness: 0.55,
       loft: 0.5,
       piping: true,
@@ -334,15 +342,6 @@ function styleNorsborgSection(doc: SofaDocument, module: SofaModule, kind: Norsb
       softness: 0.3,
       piping: true,
     });
-  // The three-seat section's back frame stands 60 cm tall (8 cm above the rest).
-  if (spec.frameHeight !== doc.construction.frameHeight) {
-    const floor = doc.dimensions.legHeight;
-    const base = doc.construction.frameHeight || doc.dimensions.armHeight;
-    set('back-frame', {
-      height: spec.frameHeight - floor,
-      offset: { x: 0, y: (spec.frameHeight - base) / 2, z: 0 },
-    });
-  }
 }
 
 /** Build an IKEA Norsborg combination from an ordered list of sections. */
@@ -380,7 +379,7 @@ export function createNorsborgDocument(kinds?: NorsborgSectionKind[]): SofaDocum
     kind: 'cw',
     reference: 'IKEA NORSBORG · Comfort Works section covers',
     notes: [
-      'Cushions match the CW PID measurements to the centimetre (Original VELC_WR): 88 cm-deep sections on 18 cm legs, seat height 43, 15 cm back frames; three-seat back frame 60 cm tall, all others 52 cm.',
+      'Cushions match the CW PID measurements to the centimetre (Original VELC_WR): 88 cm-deep sections on 18 cm legs, seat height 43, 15 cm back frames; every section shares the 52 cm back frame - the three-seat PID reports 60 cm, treated here as a back-panel measurement so all backrests align.',
       'Seat cushions: two-seat 65/60 × 73, three-seat 66/61 × 73, corner 72.5 × 72.5, chaise 78 × 142; thickness 11.5–12. Back cushions 44–45 tall, 12 thick, 61–87 wide.',
       'Reference order: Original, Everyday Weave Navy (EYL-44), velcro wrap fitting (VELC_WR); armrest covers without pockets (VELC_WR_NARM), PID measured in Signature (LSKT_SI).',
       'Each section needs one cover; add or remove sections below and the layout, arms and cover list reconfigure.',

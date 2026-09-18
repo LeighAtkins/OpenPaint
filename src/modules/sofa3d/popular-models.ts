@@ -44,7 +44,12 @@ export function createPopularModel(id: string): SofaDocument {
         piping: part.role !== 'pillow',
       });
   if (id === 'karlstad') {
-    Object.assign(doc.construction, { legStyle: 'square', legWidth: 6, backCushionHeight: 38 });
+    Object.assign(doc.construction, {
+      legStyle: 'square',
+      legWidth: 6,
+      backCushionHeight: 38,
+      frameHeight: doc.dimensions.height,
+    });
     for (let i = 0; i < 2; i++)
       set(`main:back-${i}`, {
         height: 38,
@@ -64,6 +69,7 @@ export function createPopularModel(id: string): SofaDocument {
       skirtPleatDepth: pb ? 5 : 2.5,
       skirtFlare: pb ? 3 : 1,
       backCushionHeight: pb ? 49 : 44,
+      frameHeight: pb ? 96.5 : 88,
     });
     for (let i = 0; i < 3; i++) {
       set(`main:back-${i}`, {
@@ -87,7 +93,7 @@ export function createPopularModel(id: string): SofaDocument {
     }
   }
   if (id === 'harmony') {
-    Object.assign(doc.construction, { legStyle: 'square', legWidth: 6.5, backCushionHeight: 43 });
+    Object.assign(doc.construction, { legStyle: 'square', legWidth: 6.5, backCushionHeight: 38 });
     doc.fabric.colour = '#c5b8a4';
     Object.assign(doc.dimensions, {
       armHeight: 55,
@@ -98,7 +104,7 @@ export function createPopularModel(id: string): SofaDocument {
     for (let i = 0; i < 2; i++) set(`main:seat-${i}`, { loft: 0.9, softness: 0.65, piping: true });
     for (let i = 0; i < 2; i++)
       set(`main:back-${i}`, {
-        height: 43,
+        height: 38,
         depth: 18,
         shape: 'knife',
         softness: 0.55,

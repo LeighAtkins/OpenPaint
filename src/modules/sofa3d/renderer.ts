@@ -8,7 +8,14 @@ import {
 import { fitCushionToSeats } from './cushion-contact';
 import * as THREE from 'three';
 import { cushionGeometry, skirtGeometry, cushionPiping } from './upholstery';
-import { extrudeArm, extrudeBack, backProfile, rolledArmOutline } from './profiles';
+import {
+  extrudeArm,
+  extrudeBack,
+  backProfile,
+  rolledArmOutline,
+  slopeArmGeometry,
+  slopeArmWelt,
+} from './profiles';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
@@ -333,6 +340,20 @@ export class SofaRenderer {
           doc.construction,
           doc.catalogueModel === 'pb-charleston' ? 13 : 0
         );
+      else if (part.role === 'arm' && doc.catalogueModel?.startsWith('pb-york-slope'))
+        geometry = slopeArmGeometry(part);
+      else if (doc.catalogueModel?.startsWith('pb-york-slope') && part.id.endsWith('back-frame')) {
+        geometry = roundedFrameGeometry(w, h, d, 3);
+        const positions = geometry.getAttribute('position');
+        for (let i = 0; i < positions.count; i++) {
+          const upper = THREE.MathUtils.clamp(positions.getY(i) / h + 0.5, 0, 1);
+          // Sweep the upper front face back so the backrest leans away above
+          // the arm tails instead of rising as a flat wall behind them.
+          const rake = THREE.MathUtils.smoothstep((upper - 0.55) / 0.45, 0, 1);
+          if (positions.getZ(i) > 0) positions.setZ(i, positions.getZ(i) - 4 * rake * rake);
+        }
+        geometry.computeVertexNormals();
+      }
       else if (doc.catalogueModel === 'pb-charleston' && part.id.endsWith('back-frame')) {
         geometry = roundedFrameGeometry(w, h, d, 5);
         const positions = geometry.getAttribute('position');
@@ -426,6 +447,8 @@ export class SofaRenderer {
         );
         group.add(new THREE.Mesh(seam, piping));
       }
+      if (part.role === 'arm' && doc.catalogueModel?.startsWith('pb-york-slope') && part.piping)
+        group.add(new THREE.Mesh(slopeArmWelt(part), piping));
       if (this.exploded) {
         if (part.role === 'seat') group.position.y += 28;
         if (part.role === 'back') group.position.y += 48;

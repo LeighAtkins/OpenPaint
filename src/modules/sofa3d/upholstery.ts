@@ -59,7 +59,9 @@ export function cushionGeometry(part: SofaPart): THREE.BufferGeometry {
   let geometry: THREE.BufferGeometry;
   if (part.outline !== 'rect') {
     // Use filled panels for notched seats too, rather than flat extruded caps.
-    geometry = cushionGeometry({ ...part, outline: 'rect' });
+    // The recursion drops taper: outlines consume it as their own inset amount,
+    // so a wedge (or notch) is not doubled by the symmetric taper pass.
+    geometry = cushionGeometry({ ...part, outline: 'rect', taper: 0 });
     const positions = geometry.getAttribute('position');
     const notch = Math.min(12, w * 0.15);
     for (let i = 0; i < positions.count; i++) {
@@ -90,13 +92,19 @@ export function cushionGeometry(part: SofaPart): THREE.BufferGeometry {
         positions.setZ(i, z + notch * rear * (0.5 - (side * x) / w));
       }
       if (part.outline.startsWith('wedge')) {
-        // One vertical edge, one edge sloping in from the full crown width to the
-        // narrower base (Norsborg corner back cushions meet in a V at the top).
+        // One vertical edge, one edge sloping in from the full crown width to
+        // the PID base width (Norsborg corner back cushions meet in a V at the
+        // top). The vertical edge stays at the full size.x extent, so the base
+        // measures exactly size.x / (1 + taper) — the PID "Width (Bottom)".
         const dir = part.outline === 'wedge-left' ? -1 : 1;
         const s = positions.getY(i) / h + 0.5;
         const inset = w * (part.taper / (1 + part.taper)) * (1 - s);
         const x2 = -w / 2 + left + (x / w + 0.5) * (w - left - right);
-        positions.setX(i, x2 * dir > 0 ? x2 * (1 - (2 * inset) / w) : x2);
+        const shrink = (w - inset) / w;
+        positions.setX(
+          i,
+          dir > 0 ? -w / 2 + (x2 + w / 2) * shrink : -w / 2 + inset + (x2 + w / 2) * shrink
+        );
       } else {
         positions.setX(i, -w / 2 + left + (x / w + 0.5) * (w - left - right));
       }
@@ -213,10 +221,12 @@ export function skirtGeometry(
         drop = 0.5 - y / h;
       const distance = length / 2 - Math.abs(x);
       // Folds emerge below the seam rather than cutting gaps into its attachment.
+      // drop is clamped: float32 vertex positions can round the top row a hair
+      // above the true height, and a negative base would poison Math.pow.
       const pleat =
         -construction.skirtPleatDepth *
         Math.exp(-Math.pow((distance - 7) / 1.8, 2)) *
-        Math.pow(drop, 0.6);
+        Math.pow(Math.max(0, drop), 0.6);
       const drape = Math.sin(x * 0.21) * 0.12 * drop * Math.min(1, distance / 3);
       let z = depth / 2 + construction.skirtFlare * drop + pleat + drape;
       x *= 1 + (2 * construction.skirtFlare * drop) / length;
