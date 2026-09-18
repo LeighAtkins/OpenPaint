@@ -1,219 +1,391 @@
 {
-  "id": "friheten",
-  "declared": {
-    "width": 230,
-    "depth": 151,
-    "height": 86,
-    "armWidth": 13,
-    "armHeight": 66,
-    "seatHeight": 44,
-    "seatThickness": 12,
-    "backThickness": 11,
-    "legHeight": 3,
-    "seatCount": 3
+ "id": "friheten",
+ "declared": {
+  "width": 230,
+  "depth": 151,
+  "height": 86,
+  "armWidth": 13,
+  "armHeight": 66,
+  "seatHeight": 44,
+  "seatThickness": 12,
+  "backThickness": 11,
+  "legHeight": 3,
+  "seatCount": 3
+ },
+ "ok": true,
+ "results": [
+  {
+   "name": "finite-transforms",
+   "pass": true,
+   "detail": "0 parts with non-finite transforms"
   },
-  "ok": true,
-  "results": [
-    {
-      "name": "finite-transforms",
-      "pass": true,
-      "detail": "0 parts with non-finite transforms"
-    },
-    {
-      "name": "positive-sizes",
-      "pass": true,
-      "detail": "0 parts with non-positive sizes"
-    },
-    {
-      "name": "unique-part-ids",
-      "pass": true,
-      "detail": "20 parts, 20 unique ids"
-    },
-    {
-      "name": "non-empty-geometry",
-      "pass": true,
-      "detail": "20 meshes, 0 empty"
-    },
-    {
-      "name": "overall-width",
-      "pass": true,
-      "detail": "target 230.0 cm, rendered 230.0 cm, tolerance ±2.3 cm"
-    },
-    {
-      "name": "overall-depth",
-      "pass": true,
-      "detail": "target 151.0 cm, rendered 151.0 cm, tolerance ±1.5 cm"
-    },
-    {
-      "name": "overall-height",
-      "pass": true,
-      "detail": "target 86.0 cm, rendered 86.4 cm, tolerance ±1.0 cm"
-    },
-    {
-      "name": "no-below-floor",
-      "pass": true,
-      "detail": "min y 0.00 cm"
-    },
-    {
-      "name": "floor-contact",
-      "pass": true,
-      "detail": "model rests at y=0.00 cm (0 = floor)"
-    },
-    {
-      "name": "seat-count",
-      "pass": true,
-      "detail": "3 seat cushions, spec 3"
-    },
-    {
-      "name": "arm-count",
-      "pass": true,
-      "detail": "2 arms for 2 armed modules"
-    },
-    {
-      "name": "chaise-handedness",
-      "pass": true,
-      "detail": "doc places chaise right of base, rendered right"
-    },
-    {
-      "name": "module-overlap",
-      "pass": true,
-      "detail": "main vs chaise: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
-    }
+  {
+   "name": "positive-sizes",
+   "pass": true,
+   "detail": "0 parts with non-positive sizes"
+  },
+  {
+   "name": "unique-part-ids",
+   "pass": true,
+   "detail": "20 parts, 20 unique ids"
+  },
+  {
+   "name": "non-empty-geometry",
+   "pass": true,
+   "detail": "20 meshes, 0 empty"
+  },
+  {
+   "name": "overall-width",
+   "pass": true,
+   "detail": "target 230.0 cm, rendered 230.0 cm, tolerance ±2.3 cm"
+  },
+  {
+   "name": "overall-depth",
+   "pass": true,
+   "detail": "target 151.0 cm, rendered 151.0 cm, tolerance ±1.5 cm"
+  },
+  {
+   "name": "overall-height",
+   "pass": true,
+   "detail": "target 86.0 cm, rendered 86.4 cm, tolerance ±1.0 cm"
+  },
+  {
+   "name": "no-below-floor",
+   "pass": true,
+   "detail": "min y 0.00 cm"
+  },
+  {
+   "name": "floor-contact",
+   "pass": true,
+   "detail": "model rests at y=0.00 cm (0 = floor)"
+  },
+  {
+   "name": "seat-count",
+   "pass": true,
+   "detail": "3 seat cushions, spec 3"
+  },
+  {
+   "name": "arm-count",
+   "pass": true,
+   "detail": "2 arms for 2 armed modules"
+  },
+  {
+   "name": "chaise-handedness",
+   "pass": true,
+   "detail": "doc places chaise right of base, rendered right"
+  },
+  {
+   "name": "module-overlap",
+   "pass": true,
+   "detail": "main vs chaise: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+  }
+ ],
+ "bounds": {
+  "min": [
+   -115,
+   0,
+   -75.5
   ],
-  "bounds": {
-    "min": [-115, 0, -75.5],
-    "max": [115, 86.38676080198972, 75.5],
-    "size": [230, 86.38676080198972, 151]
-  },
-  "counts": {
-    "seats": 3,
-    "backs": 3,
-    "arms": 2,
-    "pillows": 0,
-    "legs": 8,
-    "skirts": 0,
-    "frames": 4
-  },
-  "partBounds": [
-    {
-      "id": "main:frame",
-      "role": "frame",
-      "center": [-40.5, 17.5, -30.5],
-      "size": [149, 29, 90]
-    },
-    {
-      "id": "main:back-frame",
-      "role": "frame",
-      "center": [-40.5, 34.5, -70],
-      "size": [149, 63, 11]
-    },
-    {
-      "id": "main:arm-left",
-      "role": "arm",
-      "center": [-108.5, 34.5, -30.5],
-      "size": [13, 63, 90]
-    },
-    {
-      "id": "main:seat-0",
-      "role": "seat",
-      "center": [-68.35, 38, -25],
-      "size": [67.30000305175781, 12, 79]
-    },
-    {
-      "id": "main:back-0",
-      "role": "back",
-      "center": [-67.35, 63.5, -56.2],
-      "size": [66.30000305175781, 45.77352160397945, 14.442545401887529]
-    },
-    {
-      "id": "main:seat-1",
-      "role": "seat",
-      "center": [0.3500000000000014, 38, -25],
-      "size": [67.30000305175781, 12, 79]
-    },
-    {
-      "id": "main:back-1",
-      "role": "back",
-      "center": [1.3500000000000014, 63.5, -56.2],
-      "size": [66.30000305175781, 45.77352160397945, 14.442545401887529]
-    },
-    {
-      "id": "main:leg--1--1",
-      "role": "leg",
-      "center": [-106, 1.5, -66.5],
-      "size": [5, 3, 5]
-    },
-    {
-      "id": "main:leg--1-1",
-      "role": "leg",
-      "center": [-106, 1.5, 5.5],
-      "size": [5, 3, 5]
-    },
-    {
-      "id": "main:leg-1--1",
-      "role": "leg",
-      "center": [25, 1.5, -66.5],
-      "size": [5, 3, 5]
-    },
-    {
-      "id": "main:leg-1-1",
-      "role": "leg",
-      "center": [25, 1.5, 5.5],
-      "size": [5, 3, 5]
-    },
-    {
-      "id": "chaise:frame",
-      "role": "frame",
-      "center": [74.5, 17.5, 0],
-      "size": [81, 29, 151]
-    },
-    {
-      "id": "chaise:back-frame",
-      "role": "frame",
-      "center": [74.5, 34.5, -70],
-      "size": [81, 63, 11]
-    },
-    {
-      "id": "chaise:arm-right",
-      "role": "arm",
-      "center": [108.5, 34.5, 0],
-      "size": [13, 63, 151]
-    },
-    {
-      "id": "chaise:seat-0",
-      "role": "seat",
-      "center": [68, 38, 5.5],
-      "size": [68, 12, 140]
-    },
-    {
-      "id": "chaise:back-0",
-      "role": "back",
-      "center": [69, 63.5, -56.2],
-      "size": [66, 45.77352160397945, 14.442545401887529]
-    },
-    {
-      "id": "chaise:leg--1--1",
-      "role": "leg",
-      "center": [43, 1.5, -66.5],
-      "size": [5, 3, 5]
-    },
-    {
-      "id": "chaise:leg--1-1",
-      "role": "leg",
-      "center": [43, 1.5, 66.5],
-      "size": [5, 3, 5]
-    },
-    {
-      "id": "chaise:leg-1--1",
-      "role": "leg",
-      "center": [106, 1.5, -66.5],
-      "size": [5, 3, 5]
-    },
-    {
-      "id": "chaise:leg-1-1",
-      "role": "leg",
-      "center": [106, 1.5, 66.5],
-      "size": [5, 3, 5]
-    }
+  "max": [
+   115,
+   86.38676080198972,
+   75.5
+  ],
+  "size": [
+   230,
+   86.38676080198972,
+   151
   ]
+ },
+ "counts": {
+  "seats": 3,
+  "backs": 3,
+  "arms": 2,
+  "pillows": 0,
+  "legs": 8,
+  "skirts": 0,
+  "frames": 4
+ },
+ "partBounds": [
+  {
+   "id": "main:frame",
+   "role": "frame",
+   "center": [
+    -40.5,
+    17.5,
+    -30.5
+   ],
+   "size": [
+    149,
+    29,
+    90
+   ]
+  },
+  {
+   "id": "main:back-frame",
+   "role": "frame",
+   "center": [
+    -40.5,
+    34.5,
+    -70
+   ],
+   "size": [
+    149,
+    63,
+    11
+   ]
+  },
+  {
+   "id": "main:arm-left",
+   "role": "arm",
+   "center": [
+    -108.5,
+    34.5,
+    -30.5
+   ],
+   "size": [
+    13,
+    63,
+    90
+   ]
+  },
+  {
+   "id": "main:seat-0",
+   "role": "seat",
+   "center": [
+    -68.35,
+    38,
+    -25
+   ],
+   "size": [
+    67.30000305175781,
+    12,
+    79
+   ]
+  },
+  {
+   "id": "main:back-0",
+   "role": "back",
+   "center": [
+    -67.35,
+    63.5,
+    -56.2
+   ],
+   "size": [
+    66.30000305175781,
+    45.77352160397945,
+    14.442545401887529
+   ]
+  },
+  {
+   "id": "main:seat-1",
+   "role": "seat",
+   "center": [
+    0.3500000000000014,
+    38,
+    -25
+   ],
+   "size": [
+    67.30000305175781,
+    12,
+    79
+   ]
+  },
+  {
+   "id": "main:back-1",
+   "role": "back",
+   "center": [
+    1.3500000000000014,
+    63.5,
+    -56.2
+   ],
+   "size": [
+    66.30000305175781,
+    45.77352160397945,
+    14.442545401887529
+   ]
+  },
+  {
+   "id": "main:leg--1--1",
+   "role": "leg",
+   "center": [
+    -106,
+    1.5,
+    -66.5
+   ],
+   "size": [
+    5,
+    3,
+    5
+   ]
+  },
+  {
+   "id": "main:leg--1-1",
+   "role": "leg",
+   "center": [
+    -106,
+    1.5,
+    5.5
+   ],
+   "size": [
+    5,
+    3,
+    5
+   ]
+  },
+  {
+   "id": "main:leg-1--1",
+   "role": "leg",
+   "center": [
+    25,
+    1.5,
+    -66.5
+   ],
+   "size": [
+    5,
+    3,
+    5
+   ]
+  },
+  {
+   "id": "main:leg-1-1",
+   "role": "leg",
+   "center": [
+    25,
+    1.5,
+    5.5
+   ],
+   "size": [
+    5,
+    3,
+    5
+   ]
+  },
+  {
+   "id": "chaise:frame",
+   "role": "frame",
+   "center": [
+    74.5,
+    17.5,
+    0
+   ],
+   "size": [
+    81,
+    29,
+    151
+   ]
+  },
+  {
+   "id": "chaise:back-frame",
+   "role": "frame",
+   "center": [
+    74.5,
+    34.5,
+    -70
+   ],
+   "size": [
+    81,
+    63,
+    11
+   ]
+  },
+  {
+   "id": "chaise:arm-right",
+   "role": "arm",
+   "center": [
+    108.5,
+    34.5,
+    0
+   ],
+   "size": [
+    13,
+    63,
+    151
+   ]
+  },
+  {
+   "id": "chaise:seat-0",
+   "role": "seat",
+   "center": [
+    68,
+    38,
+    5.5
+   ],
+   "size": [
+    68,
+    12,
+    140
+   ]
+  },
+  {
+   "id": "chaise:back-0",
+   "role": "back",
+   "center": [
+    69,
+    63.5,
+    -56.2
+   ],
+   "size": [
+    66,
+    45.77352160397945,
+    14.442545401887529
+   ]
+  },
+  {
+   "id": "chaise:leg--1--1",
+   "role": "leg",
+   "center": [
+    43,
+    1.5,
+    -66.5
+   ],
+   "size": [
+    5,
+    3,
+    5
+   ]
+  },
+  {
+   "id": "chaise:leg--1-1",
+   "role": "leg",
+   "center": [
+    43,
+    1.5,
+    66.5
+   ],
+   "size": [
+    5,
+    3,
+    5
+   ]
+  },
+  {
+   "id": "chaise:leg-1--1",
+   "role": "leg",
+   "center": [
+    106,
+    1.5,
+    -66.5
+   ],
+   "size": [
+    5,
+    3,
+    5
+   ]
+  },
+  {
+   "id": "chaise:leg-1-1",
+   "role": "leg",
+   "center": [
+    106,
+    1.5,
+    66.5
+   ],
+   "size": [
+    5,
+    3,
+    5
+   ]
+  }
+ ]
 }

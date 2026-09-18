@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>sofa3d model render harness</title>
+    <style>
+      body { margin: 0; background: #e9e7e1; }
+      #host { width: 900px; height: 600px; }
+      #overlay { position: absolute; inset: 0; pointer-events: none; }
+      #sheet { display: none; }
+    </style>
+  </head>
+  <body>
+    <div id="host"></div>
+    <div id="overlay"></div>
+    <canvas id="sheet" width="1400" height="760"></canvas>
+    <script type="module">
+      import { SofaRenderer } from '/src/modules/sofa3d/renderer.ts';
+      import { createExtendedModel } from '/src/modules/sofa3d/extended-models.ts';
+      import { createPopularModel } from '/src/modules/sofa3d/popular-models';
+      import { createNorsborgDocument, isNorsborgModel, NORSBORG_CHAISE_CONFIGURATION } from '/src/modules/sofa3d/norsborg';
+
+      const host = document.getElementById('host');
+      const overlay = document.getElementById('overlay');
+      const stubs = { select() {}, move() {}, measure() {}, edit() {}, label() {} };
+      let renderer = null;
+
+      function buildDoc(id) {
+        if (isNorsborgModel(id))
+          return createNorsborgDocument(id === 'norsborg-chaise' ? [...NORSBORG_CHAISE_CONFIGURATION] : undefined);
+        if (createExtendedModel && (() => { try { createExtendedModel(id); return true; } catch { return false; } })())
+          return createExtendedModel(id);
+        return createPopularModel(id);
+      }
+
+      window.__sofa = {
+        async load(id, coverUrl) {
+          const doc = buildDoc(id);
+          if (!renderer) renderer = new SofaRenderer(host, overlay, stubs);
+          renderer.update(doc);
+          renderer.resize();
+          renderer.resume();
+          await new Promise(r => setTimeout(r, 900));
+          return {
+            width: doc.dimensions.width,
+            depth: doc.dimensions.depth,
+            height: doc.dimensions.height,
+            title: doc.title,
+          };
+        },
+        view(name) {
+          renderer.view(name);
+        },
+        canvasStats() {
+          const gl = host.querySelector('canvas');
+          const w = gl.width, h = gl.height;
+          const c2 = document.createElement('canvas');
+          c2.width = w; c2.height = h;
+          const ctx = c2.getContext('2d');
+          ctx.drawImage(gl, 0, 0);
+          const data = ctx.getImageData(0, 0, w, h).data;
+          let fg = 0, total = 0;
+          for (let i = 0; i < data.length; i += 16) {
+            total++;
+            const r = data[i], g = data[i + 1], b = data[i + 2];
+            if (Math.abs(r - 233) + Math.abs(g - 231) + Math.abs(b - 225) > 42) fg++;
+          }
+          return { sampled: total, foreground: fg, occupancy: fg / total };
+        },
+        async composeSheet(meta) {
+          // meta: {id, title, declared, coverUrl, views: [{name, dataUrl}]}
+          const sheet = document.getElementById('sheet');
+          sheet.style.display = 'block';
+          const ctx = sheet.getContext('2d');
+          ctx.fillStyle = '#f4efe3';
+          ctx.fillRect(0, 0, sheet.width, sheet.height);
+          ctx.fillStyle = '#221c12';
+          ctx.font = '600 22px serif';
+          ctx.fillText(`${meta.id} — ${meta.title}`, 20, 34);
+          ctx.font = '13px monospace';
+          ctx.fillStyle = '#6a5f4b';
+          ctx.fillText(`declared W/D/H: ${meta.declared.join(' / ')} cm`, 20, 56);
+          if (meta.coverUrl) {
+            const img = new Image();
+            img.src = meta.coverUrl;
+            await new Promise(r => { img.onload = r; img.onerror = r; });
+            ctx.strokeStyle = '#d9cfb6';
+            ctx.strokeRect(20, 80, 300, 200);
+            if (img.complete && img.naturalWidth > 0) ctx.drawImage(img, 22, 82, 296, 196);
+            ctx.fillStyle = '#6a5f4b';
+            ctx.fillText('CW product photo', 20, 298);
+          }
+          let x = 340, y = 80;
+          const names = Object.keys(meta.views);
+          for (let i = 0; i < names.length; i++) {
+            const v = new Image();
+            v.src = meta.views[names[i]];
+            await new Promise(r => { v.onload = r; v.onerror = r; });
+            ctx.drawImage(v, x, y, 330, 220);
+            ctx.strokeStyle = '#d9cfb6';
+            ctx.strokeRect(x, y, 330, 220);
+            ctx.fillStyle = '#221c12';
+            ctx.font = '12px monospace';
+            ctx.fillText(names[i], x + 4, y + 234);
+            x += 340;
+            if (x > 1050) { x = 20; y += 240; }
+          }
+          return sheet.toDataURL('image/png');
+        },
+      };
+    </script>
+  </body>
+</html>

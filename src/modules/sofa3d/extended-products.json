@@ -138,5 +138,47 @@
     },
     "version": "3 seat cushions + 3 back cushions \u00b7 Original style",
     "brand": "Pottery Barn"
+  },
+  {
+    "id": "klippan-2-seat",
+    "title": "Klippan 2 Seat Sofa",
+    "url": "https://comfort-works.com/products/klippan-2-seater-sofa-cover",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-2_STD_SV_VELC_SP_CVC-01.jpg?v=1741741755",
+    "reference": "IK-KN-2",
+    "dimensions": {
+      "width": 180,
+      "depth": 88,
+      "height": 66
+    },
+    "version": "Boxy low back \u00b7 slim square arms \u00b7 IKEA-sourced dimensions",
+    "brand": "IKEA"
+  },
+  {
+    "id": "klippan-4-seat",
+    "title": "Klippan 4 Seater Sofa",
+    "url": "https://comfort-works.com/products/klippan-4-seater-sofa-cover",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-4_SV_VELC_SP_CVC-01.jpg?v=1741741756",
+    "reference": "IK-KN-4",
+    "dimensions": {
+      "width": 247,
+      "depth": 88,
+      "height": 66
+    },
+    "version": "Boxy low back \u00b7 width estimated from tier-3 sources (246\u2013248) \u00b7 provisional",
+    "brand": "IKEA"
+  },
+  {
+    "id": "klippan-footstool",
+    "title": "Klippan Footstool",
+    "url": "https://comfort-works.com/products/klippan-footstool-cover",
+    "imageUrl": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/IK-KN-0_LV_VELC_SP_CVC-01.jpg?v=1741741764",
+    "reference": "IK-KN-0",
+    "dimensions": {
+      "width": 53,
+      "depth": 53,
+      "height": 32
+    },
+    "version": "Boxy ottoman \u00b7 tier-3 sourced dimensions (two cover makers concur)",
+    "brand": "IKEA"
   }
 ]

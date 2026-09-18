@@ -1,590 +1,1250 @@
 {
-  "id": "nammaro",
-  "declared": {
-    "width": 243,
-    "depth": 92,
-    "height": 86,
-    "armWidth": 4,
-    "armHeight": 70,
-    "seatHeight": 38,
-    "seatThickness": 8,
-    "backThickness": 12,
-    "legHeight": 24,
-    "seatCount": 3
+ "id": "nammaro",
+ "declared": {
+  "width": 243,
+  "depth": 92,
+  "height": 86,
+  "armWidth": 4,
+  "armHeight": 70,
+  "seatHeight": 38,
+  "seatThickness": 8,
+  "backThickness": 12,
+  "legHeight": 24,
+  "seatCount": 3
+ },
+ "ok": false,
+ "results": [
+  {
+   "name": "finite-transforms",
+   "pass": true,
+   "detail": "0 parts with non-finite transforms"
   },
-  "ok": false,
-  "results": [
-    {
-      "name": "finite-transforms",
-      "pass": true,
-      "detail": "0 parts with non-finite transforms"
-    },
-    {
-      "name": "positive-sizes",
-      "pass": true,
-      "detail": "0 parts with non-positive sizes"
-    },
-    {
-      "name": "unique-part-ids",
-      "pass": true,
-      "detail": "81 parts, 81 unique ids"
-    },
-    {
-      "name": "non-empty-geometry",
-      "pass": true,
-      "detail": "81 meshes, 0 empty"
-    },
-    {
-      "name": "overall-width",
-      "pass": true,
-      "detail": "target 243.0 cm, rendered 243.5 cm, tolerance ±2.4 cm"
-    },
-    {
-      "name": "overall-depth",
-      "pass": false,
-      "detail": "target 92.0 cm, rendered 93.7 cm, tolerance ±1.0 cm"
-    },
-    {
-      "name": "overall-height",
-      "pass": false,
-      "detail": "target 86.0 cm, rendered 88.7 cm, tolerance ±1.0 cm"
-    },
-    {
-      "name": "no-below-floor",
-      "pass": true,
-      "detail": "min y 0.00 cm"
-    },
-    {
-      "name": "floor-contact",
-      "pass": true,
-      "detail": "model rests at y=0.00 cm (0 = floor)"
-    },
-    {
-      "name": "seat-count",
-      "pass": true,
-      "detail": "3 seat cushions, spec 3"
-    },
-    {
-      "name": "arm-count",
-      "pass": true,
-      "detail": "0 arms for 0 armed modules"
-    },
-    {
-      "name": "module-overlap",
-      "pass": true,
-      "detail": "main vs module-1: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
-    },
-    {
-      "name": "module-overlap",
-      "pass": true,
-      "detail": "main vs module-2: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
-    },
-    {
-      "name": "module-overlap",
-      "pass": true,
-      "detail": "module-1 vs module-2: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
-    }
+  {
+   "name": "positive-sizes",
+   "pass": true,
+   "detail": "0 parts with non-positive sizes"
+  },
+  {
+   "name": "unique-part-ids",
+   "pass": true,
+   "detail": "81 parts, 81 unique ids"
+  },
+  {
+   "name": "non-empty-geometry",
+   "pass": true,
+   "detail": "81 meshes, 0 empty"
+  },
+  {
+   "name": "overall-width",
+   "pass": true,
+   "detail": "target 243.0 cm, rendered 243.5 cm, tolerance ±2.4 cm"
+  },
+  {
+   "name": "overall-depth",
+   "pass": false,
+   "detail": "target 92.0 cm, rendered 93.7 cm, tolerance ±1.0 cm"
+  },
+  {
+   "name": "overall-height",
+   "pass": false,
+   "detail": "target 86.0 cm, rendered 88.7 cm, tolerance ±1.0 cm"
+  },
+  {
+   "name": "no-below-floor",
+   "pass": true,
+   "detail": "min y 0.00 cm"
+  },
+  {
+   "name": "floor-contact",
+   "pass": true,
+   "detail": "model rests at y=0.00 cm (0 = floor)"
+  },
+  {
+   "name": "seat-count",
+   "pass": true,
+   "detail": "3 seat cushions, spec 3"
+  },
+  {
+   "name": "arm-count",
+   "pass": true,
+   "detail": "0 arms for 0 armed modules"
+  },
+  {
+   "name": "module-overlap",
+   "pass": true,
+   "detail": "main vs module-1: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+  },
+  {
+   "name": "module-overlap",
+   "pass": true,
+   "detail": "main vs module-2: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+  },
+  {
+   "name": "module-overlap",
+   "pass": true,
+   "detail": "module-1 vs module-2: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+  }
+ ],
+ "bounds": {
+  "min": [
+   -121.5,
+   0,
+   -47.71433851878808
   ],
-  "bounds": {
-    "min": [-121.5, 0, -47.71433851878808],
-    "max": [122, 88.67441058198308, 46],
-    "size": [243.5, 88.67441058198308, 93.71433851878808]
-  },
-  "counts": {
-    "seats": 3,
-    "backs": 3,
-    "arms": 0,
-    "pillows": 0,
-    "legs": 12,
-    "skirts": 0,
-    "frames": 63
-  },
-  "partBounds": [
-    {
-      "id": "main:seat-0",
-      "role": "seat",
-      "center": [-80.5, 34, 6],
-      "size": [80, 8, 80]
-    },
-    {
-      "id": "main:back-0",
-      "role": "back",
-      "center": [-80.5, 62.9, -38.5],
-      "size": [81, 51.54882116396617, 18.428677037576165]
-    },
-    {
-      "id": "main:rail--1",
-      "role": "frame",
-      "center": [-81, 27, -40],
-      "size": [81, 6, 4]
-    },
-    {
-      "id": "main:rail-1",
-      "role": "frame",
-      "center": [-81, 27, 40],
-      "size": [81, 6, 4]
-    },
-    {
-      "id": "main:slat-0",
-      "role": "frame",
-      "center": [-115.375, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "main:slat-1",
-      "role": "frame",
-      "center": [-109.125, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "main:slat-2",
-      "role": "frame",
-      "center": [-102.875, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "main:slat-3",
-      "role": "frame",
-      "center": [-96.625, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "main:slat-4",
-      "role": "frame",
-      "center": [-90.375, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "main:slat-5",
-      "role": "frame",
-      "center": [-84.125, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "main:slat-6",
-      "role": "frame",
-      "center": [-77.875, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "main:slat-7",
-      "role": "frame",
-      "center": [-71.625, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "main:slat-8",
-      "role": "frame",
-      "center": [-65.375, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "main:slat-9",
-      "role": "frame",
-      "center": [-59.125, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "main:slat-10",
-      "role": "frame",
-      "center": [-52.875, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "main:slat-11",
-      "role": "frame",
-      "center": [-46.625, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "main:back-post--1",
-      "role": "frame",
-      "center": [-116.5, 47, -43],
-      "size": [4, 46, 4]
-    },
-    {
-      "id": "main:back-post-1",
-      "role": "frame",
-      "center": [-45.5, 47, -43],
-      "size": [4, 46, 4]
-    },
-    {
-      "id": "main:back-slat-0",
-      "role": "frame",
-      "center": [-81, 42, -43],
-      "size": [75, 4.5, 3]
-    },
-    {
-      "id": "main:back-slat-1",
-      "role": "frame",
-      "center": [-81, 48, -43],
-      "size": [75, 4.5, 3]
-    },
-    {
-      "id": "main:back-slat-2",
-      "role": "frame",
-      "center": [-81, 54, -43],
-      "size": [75, 4.5, 3]
-    },
-    {
-      "id": "main:back-slat-3",
-      "role": "frame",
-      "center": [-81, 60, -43],
-      "size": [75, 4.5, 3]
-    },
-    {
-      "id": "main:back-slat-4",
-      "role": "frame",
-      "center": [-81, 66, -43],
-      "size": [75, 4.5, 3]
-    },
-    {
-      "id": "main:leg--1--1",
-      "role": "leg",
-      "center": [-112.5, 12, -37],
-      "size": [4, 24, 4]
-    },
-    {
-      "id": "main:leg--1-1",
-      "role": "leg",
-      "center": [-112.5, 12, 37],
-      "size": [4, 24, 4]
-    },
-    {
-      "id": "main:leg-1--1",
-      "role": "leg",
-      "center": [-49.5, 12, -37],
-      "size": [4, 24, 4]
-    },
-    {
-      "id": "main:leg-1-1",
-      "role": "leg",
-      "center": [-49.5, 12, 37],
-      "size": [4, 24, 4]
-    },
-    {
-      "id": "module-1:seat-0",
-      "role": "seat",
-      "center": [0.5, 34, 6],
-      "size": [80, 8, 80]
-    },
-    {
-      "id": "module-1:back-0",
-      "role": "back",
-      "center": [0.5, 62.9, -38.5],
-      "size": [81, 51.54882116396617, 18.428677037576165]
-    },
-    {
-      "id": "module-1:rail--1",
-      "role": "frame",
-      "center": [0, 27, -40],
-      "size": [81, 6, 4]
-    },
-    {
-      "id": "module-1:rail-1",
-      "role": "frame",
-      "center": [0, 27, 40],
-      "size": [81, 6, 4]
-    },
-    {
-      "id": "module-1:slat-0",
-      "role": "frame",
-      "center": [-34.375, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-1:slat-1",
-      "role": "frame",
-      "center": [-28.125, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-1:slat-2",
-      "role": "frame",
-      "center": [-21.875, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-1:slat-3",
-      "role": "frame",
-      "center": [-15.625, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-1:slat-4",
-      "role": "frame",
-      "center": [-9.375, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-1:slat-5",
-      "role": "frame",
-      "center": [-3.125, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-1:slat-6",
-      "role": "frame",
-      "center": [3.125, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-1:slat-7",
-      "role": "frame",
-      "center": [9.375, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-1:slat-8",
-      "role": "frame",
-      "center": [15.625, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-1:slat-9",
-      "role": "frame",
-      "center": [21.875, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-1:slat-10",
-      "role": "frame",
-      "center": [28.125, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-1:slat-11",
-      "role": "frame",
-      "center": [34.375, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-1:back-post--1",
-      "role": "frame",
-      "center": [-35.5, 47, -43],
-      "size": [4, 46, 4]
-    },
-    {
-      "id": "module-1:back-post-1",
-      "role": "frame",
-      "center": [35.5, 47, -43],
-      "size": [4, 46, 4]
-    },
-    {
-      "id": "module-1:back-slat-0",
-      "role": "frame",
-      "center": [0, 42, -43],
-      "size": [75, 4.5, 3]
-    },
-    {
-      "id": "module-1:back-slat-1",
-      "role": "frame",
-      "center": [0, 48, -43],
-      "size": [75, 4.5, 3]
-    },
-    {
-      "id": "module-1:back-slat-2",
-      "role": "frame",
-      "center": [0, 54, -43],
-      "size": [75, 4.5, 3]
-    },
-    {
-      "id": "module-1:back-slat-3",
-      "role": "frame",
-      "center": [0, 60, -43],
-      "size": [75, 4.5, 3]
-    },
-    {
-      "id": "module-1:back-slat-4",
-      "role": "frame",
-      "center": [0, 66, -43],
-      "size": [75, 4.5, 3]
-    },
-    {
-      "id": "module-1:leg--1--1",
-      "role": "leg",
-      "center": [-31.5, 12, -37],
-      "size": [4, 24, 4]
-    },
-    {
-      "id": "module-1:leg--1-1",
-      "role": "leg",
-      "center": [-31.5, 12, 37],
-      "size": [4, 24, 4]
-    },
-    {
-      "id": "module-1:leg-1--1",
-      "role": "leg",
-      "center": [31.5, 12, -37],
-      "size": [4, 24, 4]
-    },
-    {
-      "id": "module-1:leg-1-1",
-      "role": "leg",
-      "center": [31.5, 12, 37],
-      "size": [4, 24, 4]
-    },
-    {
-      "id": "module-2:seat-0",
-      "role": "seat",
-      "center": [81.5, 34, 6],
-      "size": [80, 8, 80]
-    },
-    {
-      "id": "module-2:back-0",
-      "role": "back",
-      "center": [81.5, 62.9, -38.5],
-      "size": [81, 51.54882116396617, 18.428677037576165]
-    },
-    {
-      "id": "module-2:rail--1",
-      "role": "frame",
-      "center": [81, 27, -40],
-      "size": [81, 6, 4]
-    },
-    {
-      "id": "module-2:rail-1",
-      "role": "frame",
-      "center": [81, 27, 40],
-      "size": [81, 6, 4]
-    },
-    {
-      "id": "module-2:slat-0",
-      "role": "frame",
-      "center": [46.625, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-2:slat-1",
-      "role": "frame",
-      "center": [52.875, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-2:slat-2",
-      "role": "frame",
-      "center": [59.125, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-2:slat-3",
-      "role": "frame",
-      "center": [65.375, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-2:slat-4",
-      "role": "frame",
-      "center": [71.625, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-2:slat-5",
-      "role": "frame",
-      "center": [77.875, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-2:slat-6",
-      "role": "frame",
-      "center": [84.125, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-2:slat-7",
-      "role": "frame",
-      "center": [90.375, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-2:slat-8",
-      "role": "frame",
-      "center": [96.625, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-2:slat-9",
-      "role": "frame",
-      "center": [102.875, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-2:slat-10",
-      "role": "frame",
-      "center": [109.125, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-2:slat-11",
-      "role": "frame",
-      "center": [115.375, 28.5, 0],
-      "size": [5.050000190734863, 3, 86]
-    },
-    {
-      "id": "module-2:back-post--1",
-      "role": "frame",
-      "center": [45.5, 47, -43],
-      "size": [4, 46, 4]
-    },
-    {
-      "id": "module-2:back-post-1",
-      "role": "frame",
-      "center": [116.5, 47, -43],
-      "size": [4, 46, 4]
-    },
-    {
-      "id": "module-2:back-slat-0",
-      "role": "frame",
-      "center": [81, 42, -43],
-      "size": [75, 4.5, 3]
-    },
-    {
-      "id": "module-2:back-slat-1",
-      "role": "frame",
-      "center": [81, 48, -43],
-      "size": [75, 4.5, 3]
-    },
-    {
-      "id": "module-2:back-slat-2",
-      "role": "frame",
-      "center": [81, 54, -43],
-      "size": [75, 4.5, 3]
-    },
-    {
-      "id": "module-2:back-slat-3",
-      "role": "frame",
-      "center": [81, 60, -43],
-      "size": [75, 4.5, 3]
-    },
-    {
-      "id": "module-2:back-slat-4",
-      "role": "frame",
-      "center": [81, 66, -43],
-      "size": [75, 4.5, 3]
-    },
-    {
-      "id": "module-2:leg--1--1",
-      "role": "leg",
-      "center": [49.5, 12, -37],
-      "size": [4, 24, 4]
-    },
-    {
-      "id": "module-2:leg--1-1",
-      "role": "leg",
-      "center": [49.5, 12, 37],
-      "size": [4, 24, 4]
-    },
-    {
-      "id": "module-2:leg-1--1",
-      "role": "leg",
-      "center": [112.5, 12, -37],
-      "size": [4, 24, 4]
-    },
-    {
-      "id": "module-2:leg-1-1",
-      "role": "leg",
-      "center": [112.5, 12, 37],
-      "size": [4, 24, 4]
-    }
+  "max": [
+   122,
+   88.67441058198308,
+   46
+  ],
+  "size": [
+   243.5,
+   88.67441058198308,
+   93.71433851878808
   ]
+ },
+ "counts": {
+  "seats": 3,
+  "backs": 3,
+  "arms": 0,
+  "pillows": 0,
+  "legs": 12,
+  "skirts": 0,
+  "frames": 63
+ },
+ "partBounds": [
+  {
+   "id": "main:seat-0",
+   "role": "seat",
+   "center": [
+    -80.5,
+    34,
+    6
+   ],
+   "size": [
+    80,
+    8,
+    80
+   ]
+  },
+  {
+   "id": "main:back-0",
+   "role": "back",
+   "center": [
+    -80.5,
+    62.9,
+    -38.5
+   ],
+   "size": [
+    81,
+    51.54882116396617,
+    18.428677037576165
+   ]
+  },
+  {
+   "id": "main:rail--1",
+   "role": "frame",
+   "center": [
+    -81,
+    27,
+    -40
+   ],
+   "size": [
+    81,
+    6,
+    4
+   ]
+  },
+  {
+   "id": "main:rail-1",
+   "role": "frame",
+   "center": [
+    -81,
+    27,
+    40
+   ],
+   "size": [
+    81,
+    6,
+    4
+   ]
+  },
+  {
+   "id": "main:slat-0",
+   "role": "frame",
+   "center": [
+    -115.375,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "main:slat-1",
+   "role": "frame",
+   "center": [
+    -109.125,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "main:slat-2",
+   "role": "frame",
+   "center": [
+    -102.875,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "main:slat-3",
+   "role": "frame",
+   "center": [
+    -96.625,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "main:slat-4",
+   "role": "frame",
+   "center": [
+    -90.375,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "main:slat-5",
+   "role": "frame",
+   "center": [
+    -84.125,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "main:slat-6",
+   "role": "frame",
+   "center": [
+    -77.875,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "main:slat-7",
+   "role": "frame",
+   "center": [
+    -71.625,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "main:slat-8",
+   "role": "frame",
+   "center": [
+    -65.375,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "main:slat-9",
+   "role": "frame",
+   "center": [
+    -59.125,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "main:slat-10",
+   "role": "frame",
+   "center": [
+    -52.875,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "main:slat-11",
+   "role": "frame",
+   "center": [
+    -46.625,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "main:back-post--1",
+   "role": "frame",
+   "center": [
+    -116.5,
+    47,
+    -43
+   ],
+   "size": [
+    4,
+    46,
+    4
+   ]
+  },
+  {
+   "id": "main:back-post-1",
+   "role": "frame",
+   "center": [
+    -45.5,
+    47,
+    -43
+   ],
+   "size": [
+    4,
+    46,
+    4
+   ]
+  },
+  {
+   "id": "main:back-slat-0",
+   "role": "frame",
+   "center": [
+    -81,
+    42,
+    -43
+   ],
+   "size": [
+    75,
+    4.5,
+    3
+   ]
+  },
+  {
+   "id": "main:back-slat-1",
+   "role": "frame",
+   "center": [
+    -81,
+    48,
+    -43
+   ],
+   "size": [
+    75,
+    4.5,
+    3
+   ]
+  },
+  {
+   "id": "main:back-slat-2",
+   "role": "frame",
+   "center": [
+    -81,
+    54,
+    -43
+   ],
+   "size": [
+    75,
+    4.5,
+    3
+   ]
+  },
+  {
+   "id": "main:back-slat-3",
+   "role": "frame",
+   "center": [
+    -81,
+    60,
+    -43
+   ],
+   "size": [
+    75,
+    4.5,
+    3
+   ]
+  },
+  {
+   "id": "main:back-slat-4",
+   "role": "frame",
+   "center": [
+    -81,
+    66,
+    -43
+   ],
+   "size": [
+    75,
+    4.5,
+    3
+   ]
+  },
+  {
+   "id": "main:leg--1--1",
+   "role": "leg",
+   "center": [
+    -112.5,
+    12,
+    -37
+   ],
+   "size": [
+    4,
+    24,
+    4
+   ]
+  },
+  {
+   "id": "main:leg--1-1",
+   "role": "leg",
+   "center": [
+    -112.5,
+    12,
+    37
+   ],
+   "size": [
+    4,
+    24,
+    4
+   ]
+  },
+  {
+   "id": "main:leg-1--1",
+   "role": "leg",
+   "center": [
+    -49.5,
+    12,
+    -37
+   ],
+   "size": [
+    4,
+    24,
+    4
+   ]
+  },
+  {
+   "id": "main:leg-1-1",
+   "role": "leg",
+   "center": [
+    -49.5,
+    12,
+    37
+   ],
+   "size": [
+    4,
+    24,
+    4
+   ]
+  },
+  {
+   "id": "module-1:seat-0",
+   "role": "seat",
+   "center": [
+    0.5,
+    34,
+    6
+   ],
+   "size": [
+    80,
+    8,
+    80
+   ]
+  },
+  {
+   "id": "module-1:back-0",
+   "role": "back",
+   "center": [
+    0.5,
+    62.9,
+    -38.5
+   ],
+   "size": [
+    81,
+    51.54882116396617,
+    18.428677037576165
+   ]
+  },
+  {
+   "id": "module-1:rail--1",
+   "role": "frame",
+   "center": [
+    0,
+    27,
+    -40
+   ],
+   "size": [
+    81,
+    6,
+    4
+   ]
+  },
+  {
+   "id": "module-1:rail-1",
+   "role": "frame",
+   "center": [
+    0,
+    27,
+    40
+   ],
+   "size": [
+    81,
+    6,
+    4
+   ]
+  },
+  {
+   "id": "module-1:slat-0",
+   "role": "frame",
+   "center": [
+    -34.375,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-1:slat-1",
+   "role": "frame",
+   "center": [
+    -28.125,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-1:slat-2",
+   "role": "frame",
+   "center": [
+    -21.875,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-1:slat-3",
+   "role": "frame",
+   "center": [
+    -15.625,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-1:slat-4",
+   "role": "frame",
+   "center": [
+    -9.375,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-1:slat-5",
+   "role": "frame",
+   "center": [
+    -3.125,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-1:slat-6",
+   "role": "frame",
+   "center": [
+    3.125,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-1:slat-7",
+   "role": "frame",
+   "center": [
+    9.375,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-1:slat-8",
+   "role": "frame",
+   "center": [
+    15.625,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-1:slat-9",
+   "role": "frame",
+   "center": [
+    21.875,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-1:slat-10",
+   "role": "frame",
+   "center": [
+    28.125,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-1:slat-11",
+   "role": "frame",
+   "center": [
+    34.375,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-1:back-post--1",
+   "role": "frame",
+   "center": [
+    -35.5,
+    47,
+    -43
+   ],
+   "size": [
+    4,
+    46,
+    4
+   ]
+  },
+  {
+   "id": "module-1:back-post-1",
+   "role": "frame",
+   "center": [
+    35.5,
+    47,
+    -43
+   ],
+   "size": [
+    4,
+    46,
+    4
+   ]
+  },
+  {
+   "id": "module-1:back-slat-0",
+   "role": "frame",
+   "center": [
+    0,
+    42,
+    -43
+   ],
+   "size": [
+    75,
+    4.5,
+    3
+   ]
+  },
+  {
+   "id": "module-1:back-slat-1",
+   "role": "frame",
+   "center": [
+    0,
+    48,
+    -43
+   ],
+   "size": [
+    75,
+    4.5,
+    3
+   ]
+  },
+  {
+   "id": "module-1:back-slat-2",
+   "role": "frame",
+   "center": [
+    0,
+    54,
+    -43
+   ],
+   "size": [
+    75,
+    4.5,
+    3
+   ]
+  },
+  {
+   "id": "module-1:back-slat-3",
+   "role": "frame",
+   "center": [
+    0,
+    60,
+    -43
+   ],
+   "size": [
+    75,
+    4.5,
+    3
+   ]
+  },
+  {
+   "id": "module-1:back-slat-4",
+   "role": "frame",
+   "center": [
+    0,
+    66,
+    -43
+   ],
+   "size": [
+    75,
+    4.5,
+    3
+   ]
+  },
+  {
+   "id": "module-1:leg--1--1",
+   "role": "leg",
+   "center": [
+    -31.5,
+    12,
+    -37
+   ],
+   "size": [
+    4,
+    24,
+    4
+   ]
+  },
+  {
+   "id": "module-1:leg--1-1",
+   "role": "leg",
+   "center": [
+    -31.5,
+    12,
+    37
+   ],
+   "size": [
+    4,
+    24,
+    4
+   ]
+  },
+  {
+   "id": "module-1:leg-1--1",
+   "role": "leg",
+   "center": [
+    31.5,
+    12,
+    -37
+   ],
+   "size": [
+    4,
+    24,
+    4
+   ]
+  },
+  {
+   "id": "module-1:leg-1-1",
+   "role": "leg",
+   "center": [
+    31.5,
+    12,
+    37
+   ],
+   "size": [
+    4,
+    24,
+    4
+   ]
+  },
+  {
+   "id": "module-2:seat-0",
+   "role": "seat",
+   "center": [
+    81.5,
+    34,
+    6
+   ],
+   "size": [
+    80,
+    8,
+    80
+   ]
+  },
+  {
+   "id": "module-2:back-0",
+   "role": "back",
+   "center": [
+    81.5,
+    62.9,
+    -38.5
+   ],
+   "size": [
+    81,
+    51.54882116396617,
+    18.428677037576165
+   ]
+  },
+  {
+   "id": "module-2:rail--1",
+   "role": "frame",
+   "center": [
+    81,
+    27,
+    -40
+   ],
+   "size": [
+    81,
+    6,
+    4
+   ]
+  },
+  {
+   "id": "module-2:rail-1",
+   "role": "frame",
+   "center": [
+    81,
+    27,
+    40
+   ],
+   "size": [
+    81,
+    6,
+    4
+   ]
+  },
+  {
+   "id": "module-2:slat-0",
+   "role": "frame",
+   "center": [
+    46.625,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-2:slat-1",
+   "role": "frame",
+   "center": [
+    52.875,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-2:slat-2",
+   "role": "frame",
+   "center": [
+    59.125,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-2:slat-3",
+   "role": "frame",
+   "center": [
+    65.375,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-2:slat-4",
+   "role": "frame",
+   "center": [
+    71.625,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-2:slat-5",
+   "role": "frame",
+   "center": [
+    77.875,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-2:slat-6",
+   "role": "frame",
+   "center": [
+    84.125,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-2:slat-7",
+   "role": "frame",
+   "center": [
+    90.375,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-2:slat-8",
+   "role": "frame",
+   "center": [
+    96.625,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-2:slat-9",
+   "role": "frame",
+   "center": [
+    102.875,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-2:slat-10",
+   "role": "frame",
+   "center": [
+    109.125,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-2:slat-11",
+   "role": "frame",
+   "center": [
+    115.375,
+    28.5,
+    0
+   ],
+   "size": [
+    5.050000190734863,
+    3,
+    86
+   ]
+  },
+  {
+   "id": "module-2:back-post--1",
+   "role": "frame",
+   "center": [
+    45.5,
+    47,
+    -43
+   ],
+   "size": [
+    4,
+    46,
+    4
+   ]
+  },
+  {
+   "id": "module-2:back-post-1",
+   "role": "frame",
+   "center": [
+    116.5,
+    47,
+    -43
+   ],
+   "size": [
+    4,
+    46,
+    4
+   ]
+  },
+  {
+   "id": "module-2:back-slat-0",
+   "role": "frame",
+   "center": [
+    81,
+    42,
+    -43
+   ],
+   "size": [
+    75,
+    4.5,
+    3
+   ]
+  },
+  {
+   "id": "module-2:back-slat-1",
+   "role": "frame",
+   "center": [
+    81,
+    48,
+    -43
+   ],
+   "size": [
+    75,
+    4.5,
+    3
+   ]
+  },
+  {
+   "id": "module-2:back-slat-2",
+   "role": "frame",
+   "center": [
+    81,
+    54,
+    -43
+   ],
+   "size": [
+    75,
+    4.5,
+    3
+   ]
+  },
+  {
+   "id": "module-2:back-slat-3",
+   "role": "frame",
+   "center": [
+    81,
+    60,
+    -43
+   ],
+   "size": [
+    75,
+    4.5,
+    3
+   ]
+  },
+  {
+   "id": "module-2:back-slat-4",
+   "role": "frame",
+   "center": [
+    81,
+    66,
+    -43
+   ],
+   "size": [
+    75,
+    4.5,
+    3
+   ]
+  },
+  {
+   "id": "module-2:leg--1--1",
+   "role": "leg",
+   "center": [
+    49.5,
+    12,
+    -37
+   ],
+   "size": [
+    4,
+    24,
+    4
+   ]
+  },
+  {
+   "id": "module-2:leg--1-1",
+   "role": "leg",
+   "center": [
+    49.5,
+    12,
+    37
+   ],
+   "size": [
+    4,
+    24,
+    4
+   ]
+  },
+  {
+   "id": "module-2:leg-1--1",
+   "role": "leg",
+   "center": [
+    112.5,
+    12,
+    -37
+   ],
+   "size": [
+    4,
+    24,
+    4
+   ]
+  },
+  {
+   "id": "module-2:leg-1-1",
+   "role": "leg",
+   "center": [
+    112.5,
+    12,
+    37
+   ],
+   "size": [
+    4,
+    24,
+    4
+   ]
+  }
+ ]
 }

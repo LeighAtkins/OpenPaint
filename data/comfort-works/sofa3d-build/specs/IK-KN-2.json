@@ -1,0 +1,34 @@
+{
+  "configurationId": "IK-KN-2",
+  "familyIds": ["ikea-klippan-slipcovers"],
+  "title": "Klippan 2 Seat Sofa",
+  "objectType": "sofa",
+  "dimensionStatus": "verified",
+  "sources": [
+    {
+      "tier": 2,
+      "url": "https://www.ikea.com/nl/en/p/klippan-2-seat-sofa-vissle-grey-s79010614/",
+      "excerpt": "Width 180 cm | Depth 88 cm | Height 66 cm | Free height under furniture 11 cm | Seat depth 54 cm | Seat height 43 cm",
+      "retrieved": "2026-09-18",
+      "confidence": "high (manufacturer PDP, server-rendered)"
+    }
+  ],
+  "envelope": { "width": 180, "depth": 88, "height": 66 },
+  "semantics": {
+    "height": "top of back frame/cushion crown, sofa unoccupied",
+    "depth": "front seat edge to back of backrest",
+    "seatDepthNote": "IKEA 'seat depth' 54 cm is compressed usable depth; rendered seat geometry spans frame depth minus back thickness and is expected to exceed 54 cm — recorded exception."
+  },
+  "construction": {
+    "armShape": "slim square boxy arm, full back height",
+    "armWidth": 11,
+    "armHeight": 66,
+    "seatHeight": 43,
+    "seatThickness": 14,
+    "legHeight": 11,
+    "legStyle": "square angled wood",
+    "backCushions": "1 loose per seat, slouchy, tops ≈ envelope height",
+    "skirt": "none — legs exposed"
+  },
+  "colourwayDefault": { "name": "provisional warm grey (sampled later)", "hex": "#c9c4b8" }
+}
