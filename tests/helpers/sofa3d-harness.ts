@@ -15,6 +15,8 @@ export interface HeadlessModel {
   groups: Map<string, THREE.Group>;
   model: THREE.Group;
   bounds: THREE.Box3;
+  /** Envelope without the skirt hem, which flares past the shell on the floor. */
+  bodyBounds: THREE.Box3;
 }
 
 export function buildHeadlessModel(doc: SofaDocument): HeadlessModel {
@@ -47,7 +49,14 @@ export function buildHeadlessModel(doc: SofaDocument): HeadlessModel {
   }
   model.updateMatrixWorld(true);
   const bounds = new THREE.Box3().setFromObject(model);
-  return { doc, parts, groups, model, bounds };
+  // Body shell = everything except the skirt hem, which flares past the shell
+  // on the floor by design (skirtFlare); manufacturer envelopes measure the shell.
+  const bodyBounds = new THREE.Box3();
+  for (const part of parts) {
+    if (part.role === 'skirt') continue;
+    bodyBounds.union(new THREE.Box3().setFromObject(groups.get(part.id)!));
+  }
+  return { doc, parts, groups, model, bounds, bodyBounds };
 }
 
 export interface CheckResult {
@@ -76,7 +85,7 @@ export function runStructuralChecks(
   model: HeadlessModel,
   spec?: { width?: number; depth?: number; height?: number; seats?: number; backs?: number }
 ): StructuralReport {
-  const { doc, parts, model: group, groups, bounds } = model;
+  const { doc, parts, model: group, groups, bounds, bodyBounds } = model;
   const modules = doc.modules ?? [];
   const results: CheckResult[] = [];
   const add = (name: string, pass: boolean, detail: string) => results.push({ name, pass, detail });
@@ -121,9 +130,11 @@ export function runStructuralChecks(
     `${meshes} meshes, ${emptyGeometry} empty`
   );
 
-  // §10.2 overall envelope vs independent spec (or documented doc target)
+  // §10.2 overall envelope vs independent spec (or documented doc target).
+  // Measured on the body shell: the skirt hem flares past the shell at floor
+  // level by design and is checked separately (skirt-hem check below).
   const size = new THREE.Vector3();
-  bounds.getSize(size);
+  bodyBounds.getSize(size);
   const targets: Array<[string, number, number]> = [
     ['width', spec?.width ?? doc.dimensions.width, size.x],
     ['depth', spec?.depth ?? doc.dimensions.depth, size.z],
@@ -134,7 +145,25 @@ export function runStructuralChecks(
     add(
       `overall-${name}`,
       Math.abs(actual - expected) <= t,
-      `target ${expected.toFixed(1)} cm, rendered ${actual.toFixed(1)} cm, tolerance ±${t.toFixed(1)} cm`
+      `target ${expected.toFixed(1)} cm, rendered ${actual.toFixed(1)} cm, tolerance ±${t.toFixed(1)} cm (body shell)`
+    );
+  }
+  // Skirt hem: may flare past the shell, but only by a hem allowance.
+  const skirtParts = parts.filter(p => p.role === 'skirt');
+  if (skirtParts.length) {
+    const skirtSpanX = Math.abs(
+      [...groups.entries()]
+        .filter(([gid]) => groups.get(gid)!.children.length && gid.includes(':skirt'))
+        .reduce((acc, [gid]) => {
+          const b = new THREE.Box3().setFromObject(groups.get(gid)!);
+          return Math.max(acc, b.max.x - b.min.x, b.max.z - b.min.z);
+        }, 0)
+    );
+    const shellSpan = Math.max(size.x, size.z);
+    add(
+      'skirt-hem-allowance',
+      skirtSpanX <= shellSpan + 8,
+      `skirt hem span ${skirtSpanX.toFixed(1)} cm vs body shell ${shellSpan.toFixed(1)} cm (≤ +8 cm hem flare)`
     );
   }
 

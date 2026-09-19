@@ -1,0 +1,6 @@
+{"ts":"run2","type":"york-sourcing","status":"done","method":"local relay public-measurements (tier-1)","configs":16,"evidence":"evidence/oms/"}
+{"ts":"run2","type":"york-family","status":"implemented","configs":16,"archetypes":["roll","slope","square"],"special":["corner 44X","54M sectional (split provisional)"]}
+{"ts":"run2","type":"harness-refinement","detail":"envelope measured on body shell (skirt hem excluded); skirt-hem-allowance check added"}
+{"ts":"run2-final","type":"validation","typeCheck":"pass","tests":"79/79","lintTouched":"clean"}
+{"ts":"run2-final","type":"coverage-flip","family":"pottery-barn-york-slipcovers","from":"partial","to":"built (16 new + 4 existing cushion variants)","via":"BUILT_3D + derive"}
+{"ts":"run2-final","type":"handover","report":"REPORT.md","resume":"checkpoint.json.nextItem"}

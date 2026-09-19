@@ -1,0 +1,40 @@
+{
+ "id": "pb-york-roll-deep-97:PB-YDRA-97",
+ "title": "York Roll Arm Deep Seat 97\" Grand Sofa",
+ "declared": {
+  "width": 246.38,
+  "depth": 110.49,
+  "height": 91.44
+ },
+ "pixelChecks": {
+  "perspective": {
+   "occupancy": 0.084,
+   "nonEmpty": true
+  },
+  "front": {
+   "occupancy": 0.09,
+   "nonEmpty": true
+  },
+  "side": {
+   "occupancy": 0.776,
+   "nonEmpty": true
+  },
+  "back": {
+   "occupancy": 0.167,
+   "nonEmpty": true
+  },
+  "top": {
+   "occupancy": 0.034,
+   "nonEmpty": true
+  }
+ },
+ "views": [
+  "perspective",
+  "front",
+  "side",
+  "back",
+  "top"
+ ],
+ "renderedAt": "2026-09-19T15:43:58.795Z",
+ "renderer": "SofaRenderer (real) via system Chrome"
+}

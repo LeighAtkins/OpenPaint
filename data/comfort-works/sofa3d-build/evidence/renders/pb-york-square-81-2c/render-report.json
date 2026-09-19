@@ -1,0 +1,40 @@
+{
+ "id": "pb-york-square-81-2c:PB-YSA-81-2C",
+ "title": "York Square Arm Sofa 80.5\"",
+ "declared": {
+  "width": 204.47,
+  "depth": 97.79,
+  "height": 88.9
+ },
+ "pixelChecks": {
+  "perspective": {
+   "occupancy": 0.108,
+   "nonEmpty": true
+  },
+  "front": {
+   "occupancy": 0.114,
+   "nonEmpty": true
+  },
+  "side": {
+   "occupancy": 0.816,
+   "nonEmpty": true
+  },
+  "back": {
+   "occupancy": 0.201,
+   "nonEmpty": true
+  },
+  "top": {
+   "occupancy": 0.036,
+   "nonEmpty": true
+  }
+ },
+ "views": [
+  "perspective",
+  "front",
+  "side",
+  "back",
+  "top"
+ ],
+ "renderedAt": "2026-09-19T15:44:24.734Z",
+ "renderer": "SofaRenderer (real) via system Chrome"
+}

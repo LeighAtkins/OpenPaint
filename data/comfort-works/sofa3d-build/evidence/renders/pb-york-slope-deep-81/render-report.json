@@ -1,0 +1,40 @@
+{
+ "id": "pb-york-slope-deep-81:PB-YDSA-80",
+ "title": "York Slope Arm Deep Seat 81\" Sofa",
+ "declared": {
+  "width": 205.74,
+  "depth": 110.49,
+  "height": 91.44
+ },
+ "pixelChecks": {
+  "perspective": {
+   "occupancy": 0.108,
+   "nonEmpty": true
+  },
+  "front": {
+   "occupancy": 0.111,
+   "nonEmpty": true
+  },
+  "side": {
+   "occupancy": 0.666,
+   "nonEmpty": true
+  },
+  "back": {
+   "occupancy": 0.214,
+   "nonEmpty": true
+  },
+  "top": {
+   "occupancy": 0.036,
+   "nonEmpty": true
+  }
+ },
+ "views": [
+  "perspective",
+  "front",
+  "side",
+  "back",
+  "top"
+ ],
+ "renderedAt": "2026-09-19T15:44:14.311Z",
+ "renderer": "SofaRenderer (real) via system Chrome"
+}

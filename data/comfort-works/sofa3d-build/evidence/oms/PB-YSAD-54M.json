@@ -1,0 +1,24 @@
+{
+ "reference": "PB-YSAD-54M",
+ "public": {
+  "ok": true,
+  "code": "CW_PUBLIC_MEASUREMENTS_OK",
+  "measurements": {
+   "width": {
+    "cm": 137.16,
+    "in": 54
+   },
+   "depth": {
+    "cm": 110.49,
+    "in": 43.5
+   },
+   "height": {
+    "cm": 91.44,
+    "in": 36
+   }
+  },
+  "scopedReference": "PB-YSAD-54M__R__SV",
+  "style": "Original",
+  "styleCode": "CNRP_SP"
+ }
+}

@@ -1,0 +1,24 @@
+{
+ "reference": "PB-YDSA-60",
+ "public": {
+  "ok": true,
+  "code": "CW_PUBLIC_MEASUREMENTS_OK",
+  "measurements": {
+   "width": {
+    "cm": 152.4,
+    "in": 60
+   },
+   "depth": {
+    "cm": 110.49,
+    "in": 43.5
+   },
+   "height": {
+    "cm": 91.44,
+    "in": 36
+   }
+  },
+  "scopedReference": "PB-YDSA-60__SV__1S-2B",
+  "style": "Original",
+  "styleCode": "CNRP_SP"
+ }
+}

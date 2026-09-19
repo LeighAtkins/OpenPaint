@@ -1,0 +1,24 @@
+{
+ "reference": "PB-YDRA-62",
+ "public": {
+  "ok": true,
+  "code": "CW_PUBLIC_MEASUREMENTS_OK",
+  "measurements": {
+   "width": {
+    "cm": 157.48,
+    "in": 62
+   },
+   "depth": {
+    "cm": 110.49,
+    "in": 43.5
+   },
+   "height": {
+    "cm": 91.44,
+    "in": 36
+   }
+  },
+  "scopedReference": "PB-YDRA-62__SV__1S-2B",
+  "style": "Original",
+  "styleCode": "CNRP_SP"
+ }
+}

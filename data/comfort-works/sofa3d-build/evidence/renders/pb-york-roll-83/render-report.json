@@ -1,0 +1,40 @@
+{
+ "id": "pb-york-roll-83:PB-YRA-83",
+ "title": "York Roll Arm 83\" Sofa",
+ "declared": {
+  "width": 210.82,
+  "depth": 95.25,
+  "height": 91.44
+ },
+ "pixelChecks": {
+  "perspective": {
+   "occupancy": 0.098,
+   "nonEmpty": true
+  },
+  "front": {
+   "occupancy": 0.107,
+   "nonEmpty": true
+  },
+  "side": {
+   "occupancy": 0.785,
+   "nonEmpty": true
+  },
+  "back": {
+   "occupancy": 0.192,
+   "nonEmpty": true
+  },
+  "top": {
+   "occupancy": 0.038,
+   "nonEmpty": true
+  }
+ },
+ "views": [
+  "perspective",
+  "front",
+  "side",
+  "back",
+  "top"
+ ],
+ "renderedAt": "2026-09-19T15:43:51.931Z",
+ "renderer": "SofaRenderer (real) via system Chrome"
+}

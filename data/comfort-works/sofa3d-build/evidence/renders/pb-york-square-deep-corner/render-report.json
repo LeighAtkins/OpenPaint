@@ -1,0 +1,40 @@
+{
+ "id": "pb-york-square-deep-corner:PB-YSAD-44X",
+ "title": "York Square Arm Deep Seat Corner Sectional",
+ "declared": {
+  "width": 110.49,
+  "depth": 110.49,
+  "height": 91.44
+ },
+ "pixelChecks": {
+  "perspective": {
+   "occupancy": 0.126,
+   "nonEmpty": true
+  },
+  "front": {
+   "occupancy": 0.109,
+   "nonEmpty": true
+  },
+  "side": {
+   "occupancy": 0.37,
+   "nonEmpty": true
+  },
+  "back": {
+   "occupancy": 0.181,
+   "nonEmpty": true
+  },
+  "top": {
+   "occupancy": 0.037,
+   "nonEmpty": true
+  }
+ },
+ "views": [
+  "perspective",
+  "front",
+  "side",
+  "back",
+  "top"
+ ],
+ "renderedAt": "2026-09-19T15:44:32.293Z",
+ "renderer": "SofaRenderer (real) via system Chrome"
+}

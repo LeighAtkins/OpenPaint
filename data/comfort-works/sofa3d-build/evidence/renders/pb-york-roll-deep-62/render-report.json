@@ -1,0 +1,40 @@
+{
+ "id": "pb-york-roll-deep-62:PB-YDRA-62",
+ "title": "York Roll Arm Deep Seat 62\" Loveseat",
+ "declared": {
+  "width": 157.48,
+  "depth": 110.49,
+  "height": 91.44
+ },
+ "pixelChecks": {
+  "perspective": {
+   "occupancy": 0.138,
+   "nonEmpty": true
+  },
+  "front": {
+   "occupancy": 0.138,
+   "nonEmpty": true
+  },
+  "side": {
+   "occupancy": 0.467,
+   "nonEmpty": true
+  },
+  "back": {
+   "occupancy": 0.239,
+   "nonEmpty": true
+  },
+  "top": {
+   "occupancy": 0.055,
+   "nonEmpty": true
+  }
+ },
+ "views": [
+  "perspective",
+  "front",
+  "side",
+  "back",
+  "top"
+ ],
+ "renderedAt": "2026-09-19T15:43:55.342Z",
+ "renderer": "SofaRenderer (real) via system Chrome"
+}

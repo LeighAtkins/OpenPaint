@@ -1,0 +1,40 @@
+{
+ "id": "pb-york-roll-62:PB-YRA-63",
+ "title": "York Roll Arm 62\" Loveseat",
+ "declared": {
+  "width": 157.48,
+  "depth": 95.25,
+  "height": 91.44
+ },
+ "pixelChecks": {
+  "perspective": {
+   "occupancy": 0.127,
+   "nonEmpty": true
+  },
+  "front": {
+   "occupancy": 0.132,
+   "nonEmpty": true
+  },
+  "side": {
+   "occupancy": 0.586,
+   "nonEmpty": true
+  },
+  "back": {
+   "occupancy": 0.227,
+   "nonEmpty": true
+  },
+  "top": {
+   "occupancy": 0.049,
+   "nonEmpty": true
+  }
+ },
+ "views": [
+  "perspective",
+  "front",
+  "side",
+  "back",
+  "top"
+ ],
+ "renderedAt": "2026-09-19T15:43:48.205Z",
+ "renderer": "SofaRenderer (real) via system Chrome"
+}

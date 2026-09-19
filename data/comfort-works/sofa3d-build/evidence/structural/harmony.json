@@ -37,17 +37,17 @@
   {
    "name": "overall-width",
    "pass": true,
-   "detail": "target 208.3 cm, rendered 208.3 cm, tolerance ±2.1 cm"
+   "detail": "target 208.3 cm, rendered 208.3 cm, tolerance ±2.1 cm (body shell)"
   },
   {
    "name": "overall-depth",
    "pass": true,
-   "detail": "target 119.4 cm, rendered 119.4 cm, tolerance ±1.2 cm"
+   "detail": "target 119.4 cm, rendered 119.4 cm, tolerance ±1.2 cm (body shell)"
   },
   {
    "name": "overall-height",
    "pass": true,
-   "detail": "target 86.4 cm, rendered 87.3 cm, tolerance ±1.0 cm"
+   "detail": "target 86.4 cm, rendered 87.3 cm, tolerance ±1.0 cm (body shell)"
   },
   {
    "name": "no-below-floor",

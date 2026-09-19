@@ -1,0 +1,40 @@
+{
+ "id": "pb-york-square-deep-54m:PB-YSAD-54M",
+ "title": "York Square Arm Deep Seat Left/Right 54\" Loveseat with Bench Cushion Sectional",
+ "declared": {
+  "width": 137.16,
+  "depth": 110.49,
+  "height": 91.44
+ },
+ "pixelChecks": {
+  "perspective": {
+   "occupancy": 0.123,
+   "nonEmpty": true
+  },
+  "front": {
+   "occupancy": 0.118,
+   "nonEmpty": true
+  },
+  "side": {
+   "occupancy": 0.446,
+   "nonEmpty": true
+  },
+  "back": {
+   "occupancy": 0.226,
+   "nonEmpty": true
+  },
+  "top": {
+   "occupancy": 0.042,
+   "nonEmpty": true
+  }
+ },
+ "views": [
+  "perspective",
+  "front",
+  "side",
+  "back",
+  "top"
+ ],
+ "renderedAt": "2026-09-19T15:44:36.051Z",
+ "renderer": "SofaRenderer (real) via system Chrome"
+}

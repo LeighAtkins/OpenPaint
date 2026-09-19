@@ -1,0 +1,40 @@
+{
+ "id": "pb-york-slope-deep-95:PB-YDSA-95",
+ "title": "York Slope Arm Deep Seat 95\" Grand Sofa",
+ "declared": {
+  "width": 241.3,
+  "depth": 111.76,
+  "height": 96.52
+ },
+ "pixelChecks": {
+  "perspective": {
+   "occupancy": 0.088,
+   "nonEmpty": true
+  },
+  "front": {
+   "occupancy": 0.093,
+   "nonEmpty": true
+  },
+  "side": {
+   "occupancy": 0.736,
+   "nonEmpty": true
+  },
+  "back": {
+   "occupancy": 0.187,
+   "nonEmpty": true
+  },
+  "top": {
+   "occupancy": 0.029,
+   "nonEmpty": true
+  }
+ },
+ "views": [
+  "perspective",
+  "front",
+  "side",
+  "back",
+  "top"
+ ],
+ "renderedAt": "2026-09-19T15:44:17.712Z",
+ "renderer": "SofaRenderer (real) via system Chrome"
+}

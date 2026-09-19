@@ -1,0 +1,40 @@
+{
+ "id": "pb-york-slope-60:PB-YSLA-60",
+ "title": "York Slope Arm 60\" Loveseat",
+ "declared": {
+  "width": 152.4,
+  "depth": 95.25,
+  "height": 91.44
+ },
+ "pixelChecks": {
+  "perspective": {
+   "occupancy": 0.127,
+   "nonEmpty": true
+  },
+  "front": {
+   "occupancy": 0.129,
+   "nonEmpty": true
+  },
+  "side": {
+   "occupancy": 0.598,
+   "nonEmpty": true
+  },
+  "back": {
+   "occupancy": 0.239,
+   "nonEmpty": true
+  },
+  "top": {
+   "occupancy": 0.041,
+   "nonEmpty": true
+  }
+ },
+ "views": [
+  "perspective",
+  "front",
+  "side",
+  "back",
+  "top"
+ ],
+ "renderedAt": "2026-09-19T15:44:02.693Z",
+ "renderer": "SofaRenderer (real) via system Chrome"
+}

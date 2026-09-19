@@ -1,0 +1,40 @@
+{
+ "id": "pb-york-square-81-1c:PB-YSA-81-1C",
+ "title": "York Square Arm Bench Seat Sofa 80.5\"",
+ "declared": {
+  "width": 204.47,
+  "depth": 97.79,
+  "height": 88.9
+ },
+ "pixelChecks": {
+  "perspective": {
+   "occupancy": 0.105,
+   "nonEmpty": true
+  },
+  "front": {
+   "occupancy": 0.111,
+   "nonEmpty": true
+  },
+  "side": {
+   "occupancy": 0.814,
+   "nonEmpty": true
+  },
+  "back": {
+   "occupancy": 0.201,
+   "nonEmpty": true
+  },
+  "top": {
+   "occupancy": 0.034,
+   "nonEmpty": true
+  }
+ },
+ "views": [
+  "perspective",
+  "front",
+  "side",
+  "back",
+  "top"
+ ],
+ "renderedAt": "2026-09-19T15:44:21.021Z",
+ "renderer": "SofaRenderer (real) via system Chrome"
+}

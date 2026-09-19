@@ -1,7 +1,7 @@
 [
   {
     "id": "nammaro",
-    "title": "N\u00c4MMAR\u00d6 outdoor three-seat",
+    "title": "NÄMMARÖ outdoor three-seat",
     "url": "https://www.ikea.com/kr/en/p/naemmaroe-3-seat-sofa-outdoor-light-brown-stained-kuddarna-light-grey-beige-s49621512/",
     "imageUrl": "",
     "reference": "IKEA NAMMARO",
@@ -10,12 +10,12 @@
       "depth": 92,
       "height": 86
     },
-    "version": "Armless \u00b7 81 cm modules",
+    "version": "Armless · 81 cm modules",
     "brand": "IKEA"
   },
   {
     "id": "soderhamn",
-    "title": "S\u00d6DERHAMN three-seat",
+    "title": "SÖDERHAMN three-seat",
     "url": "https://www.ikea.com/se/en/p/soederhamn-3-seat-sofa-blekinge-white-s29501761/",
     "imageUrl": "https://www.ikea.com/se/en/images/products/soederhamn-3-seat-sofa-blekinge-white__1577829_pe1033575_s5.jpg",
     "reference": "IKEA SODERHAMN",
@@ -24,12 +24,12 @@
       "depth": 99,
       "height": 83
     },
-    "version": "Thin arms \u00b7 loose cushions",
+    "version": "Thin arms · loose cushions",
     "brand": "IKEA"
   },
   {
     "id": "jattebo",
-    "title": "J\u00c4TTEBO double chaise sectional",
+    "title": "JÄTTEBO double chaise sectional",
     "url": "https://www.ikea.com/de/en/p/jaettebo-3-5-seat-mod-sofa-w-chaise-longues-armrests-johanneshov-brown-beige-s99607655/",
     "imageUrl": "https://www.ikea.com/de/en/images/products/jaettebo-3-5-seat-mod-sofa-w-chaise-longues-armrests-johanneshov-brown-beige__1578197_pe1033865_s5.jpg",
     "reference": "IKEA JATTEBO",
@@ -38,7 +38,7 @@
       "depth": 160,
       "height": 71
     },
-    "version": "3.5-seat \u00b7 double chaise",
+    "version": "3.5-seat · double chaise",
     "brand": "IKEA"
   },
   {
@@ -52,7 +52,7 @@
       "depth": 151,
       "height": 86
     },
-    "version": "Pull-out \u00b7 204 \u00d7 140 cm bed",
+    "version": "Pull-out · 204 × 140 cm bed",
     "brand": "IKEA"
   },
   {
@@ -66,7 +66,7 @@
       "depth": 91.44,
       "height": 93.98
     },
-    "version": "86 inch \u00b7 curved back \u00b7 scatter cushions",
+    "version": "86 inch · curved back · scatter cushions",
     "brand": "Pottery Barn"
   },
   {
@@ -80,63 +80,63 @@
       "depth": 97,
       "height": 91
     },
-    "version": "Scan-informed frame \u00b7 estimated dimensions",
+    "version": "Scan-informed frame · estimated dimensions",
     "brand": "Pottery Barn"
   },
   {
     "id": "pb-york-slope-95-1s2b",
-    "title": "York Slope Arm 95\" Cover \u00b7 Bench + 2 Back Cushions",
+    "title": "York Slope Arm 95\" Cover · Bench + 2 Back Cushions",
     "url": "https://comfort-works.com/products/york-slope-arm-95-sofa-slipcover",
     "imageUrl": "",
-    "reference": "PB-YSLA-95 \u00b7 1S-2B",
+    "reference": "PB-YSLA-95 · 1S-2B",
     "dimensions": {
       "width": 240.1,
       "depth": 96.5,
       "height": 91.4
     },
-    "version": "Bench cushion + 2 back cushions \u00b7 Original style",
+    "version": "Bench cushion + 2 back cushions · Original style",
     "brand": "Pottery Barn"
   },
   {
     "id": "pb-york-slope-95-1s3b",
-    "title": "York Slope Arm 95\" Cover \u00b7 Bench + 3 Back Cushions",
+    "title": "York Slope Arm 95\" Cover · Bench + 3 Back Cushions",
     "url": "https://comfort-works.com/products/york-slope-arm-95-sofa-slipcover",
     "imageUrl": "",
-    "reference": "PB-YSLA-95 \u00b7 1S-3B",
+    "reference": "PB-YSLA-95 · 1S-3B",
     "dimensions": {
       "width": 240.1,
       "depth": 96.5,
       "height": 91.4
     },
-    "version": "Bench cushion + 3 back cushions \u00b7 Original style",
+    "version": "Bench cushion + 3 back cushions · Original style",
     "brand": "Pottery Barn"
   },
   {
     "id": "pb-york-slope-95-2s2b",
-    "title": "York Slope Arm 95\" Cover \u00b7 2 Seat + 2 Back Cushions",
+    "title": "York Slope Arm 95\" Cover · 2 Seat + 2 Back Cushions",
     "url": "https://comfort-works.com/products/york-slope-arm-95-sofa-slipcover",
     "imageUrl": "https://comfort-works.com/cdn/shop/files/PB-YSLA-95_LV_2S-2B_CNRP_SP_CVC-01.jpg?v=1744676699",
-    "reference": "PB-YSLA-95 \u00b7 2S-2B",
+    "reference": "PB-YSLA-95 · 2S-2B",
     "dimensions": {
       "width": 240.1,
       "depth": 96.5,
       "height": 91.4
     },
-    "version": "2 seat cushions + 2 back cushions \u00b7 Original style",
+    "version": "2 seat cushions + 2 back cushions · Original style",
     "brand": "Pottery Barn"
   },
   {
     "id": "pb-york-slope-95-3s3b",
-    "title": "York Slope Arm 95\" Cover \u00b7 3 Seat + 3 Back Cushions",
+    "title": "York Slope Arm 95\" Cover · 3 Seat + 3 Back Cushions",
     "url": "https://comfort-works.com/products/york-slope-arm-95-sofa-slipcover",
     "imageUrl": "",
-    "reference": "PB-YSLA-95 \u00b7 3S-3B",
+    "reference": "PB-YSLA-95 · 3S-3B",
     "dimensions": {
       "width": 240.1,
       "depth": 96.5,
       "height": 91.4
     },
-    "version": "3 seat cushions + 3 back cushions \u00b7 Original style",
+    "version": "3 seat cushions + 3 back cushions · Original style",
     "brand": "Pottery Barn"
   },
   {
@@ -150,7 +150,7 @@
       "depth": 88,
       "height": 66
     },
-    "version": "Boxy low back \u00b7 slim square arms \u00b7 IKEA-sourced dimensions",
+    "version": "Boxy low back · slim square arms · IKEA-sourced dimensions",
     "brand": "IKEA"
   },
   {
@@ -164,7 +164,7 @@
       "depth": 88,
       "height": 66
     },
-    "version": "Boxy low back \u00b7 width estimated from tier-3 sources (246\u2013248) \u00b7 provisional",
+    "version": "Boxy low back · width estimated from tier-3 sources (246–248) · provisional",
     "brand": "IKEA"
   },
   {
@@ -178,7 +178,231 @@
       "depth": 53,
       "height": 32
     },
-    "version": "Boxy ottoman \u00b7 tier-3 sourced dimensions (two cover makers concur)",
+    "version": "Boxy ottoman · tier-3 sourced dimensions (two cover makers concur)",
     "brand": "IKEA"
+  },
+  {
+    "id": "pb-york-roll-deep-62",
+    "title": "York Roll Arm Deep Seat 62\" Loveseat",
+    "url": "https://comfort-works.com/products/york-roll-arm-deep-seat-62-loveseat-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YDRA-62",
+    "dimensions": {
+      "width": 157.48,
+      "depth": 110.49,
+      "height": 91.44
+    },
+    "version": "roll arm · 1S-2B · OMS-sourced dims · deep seat",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-roll-deep-97",
+    "title": "York Roll Arm Deep Seat 97\" Grand Sofa",
+    "url": "https://comfort-works.com/products/york-roll-arm-deep-seat-97-grand-sofa-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YDRA-97",
+    "dimensions": {
+      "width": 246.38,
+      "depth": 110.49,
+      "height": 91.44
+    },
+    "version": "roll arm · 1S-2B · OMS-sourced dims · deep seat",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-slope-deep-60",
+    "title": "York Slope Arm Deep Seat 60\" Loveseat",
+    "url": "https://comfort-works.com/products/york-slope-arm-deep-seat-60-loveseat-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YDSA-60",
+    "dimensions": {
+      "width": 152.4,
+      "depth": 110.49,
+      "height": 91.44
+    },
+    "version": "slope arm · 1S-2B · OMS-sourced dims · deep seat",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-slope-deep-81",
+    "title": "York Slope Arm Deep Seat 81\" Sofa",
+    "url": "https://comfort-works.com/products/york-slope-arm-deep-seat-81-sofa-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YDSA-80",
+    "dimensions": {
+      "width": 205.74,
+      "depth": 110.49,
+      "height": 91.44
+    },
+    "version": "slope arm · 1S-2B · OMS-sourced dims · deep seat",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-slope-deep-95",
+    "title": "York Slope Arm Deep Seat 95\" Grand Sofa",
+    "url": "https://comfort-works.com/products/york-slope-arm-deep-seat-95-grand-sofa-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YDSA-95",
+    "dimensions": {
+      "width": 241.3,
+      "depth": 111.76,
+      "height": 96.52
+    },
+    "version": "slope arm · 1S-2B · OMS-sourced dims · deep seat",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-roll-62",
+    "title": "York Roll Arm 62\" Loveseat",
+    "url": "https://comfort-works.com/products/york-roll-arm-62-loveseat-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YRA-63",
+    "dimensions": {
+      "width": 157.48,
+      "depth": 95.25,
+      "height": 91.44
+    },
+    "version": "roll arm · 1S-2B · OMS-sourced dims",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-roll-83",
+    "title": "York Roll Arm 83\" Sofa",
+    "url": "https://comfort-works.com/products/york-roll-arm-83-sofa-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YRA-83",
+    "dimensions": {
+      "width": 210.82,
+      "depth": 95.25,
+      "height": 91.44
+    },
+    "version": "roll arm · 1S-2B · OMS-sourced dims",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-square-81-1c",
+    "title": "York Square Arm Bench Seat Sofa 80.5\"",
+    "url": "https://comfort-works.com/products/york-square-arm-bench-seat-sofa-80-5-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YSA-81-1C",
+    "dimensions": {
+      "width": 204.47,
+      "depth": 97.79,
+      "height": 88.9
+    },
+    "version": "square arm · 1S-1B · OMS-sourced dims",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-square-81-2c",
+    "title": "York Square Arm Sofa 80.5\"",
+    "url": "https://comfort-works.com/products/york-square-arm-sofa-80-5-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YSA-81-2C",
+    "dimensions": {
+      "width": 204.47,
+      "depth": 97.79,
+      "height": 88.9
+    },
+    "version": "square arm · 2S-2B · OMS-sourced dims",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-square-96",
+    "title": "York Square Arm 95\" Grand Sofa",
+    "url": "https://comfort-works.com/products/york-square-arm-95-grand-sofa-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YSA-96",
+    "dimensions": {
+      "width": 241.3,
+      "depth": 95.25,
+      "height": 91.44
+    },
+    "version": "square arm · 1S-2B · OMS-sourced dims",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-square-deep-corner",
+    "title": "York Square Arm Deep Seat Corner Sectional",
+    "url": "https://comfort-works.com/products/york-square-arm-deep-seat-corner-sectional-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YSAD-44X",
+    "dimensions": {
+      "width": 110.49,
+      "depth": 110.49,
+      "height": 91.44
+    },
+    "version": "square arm · 1S-1B · OMS-sourced dims · deep seat · corner piece",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-square-deep-54m",
+    "title": "York Square Arm Deep Seat Left/Right 54\" Loveseat with Bench Cushion Sectional",
+    "url": "https://comfort-works.com/products/york-square-arm-deep-seat-left-right-54-loveseat-with-bench-cushion-sectional-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YSAD-54M",
+    "dimensions": {
+      "width": 137.16,
+      "depth": 110.49,
+      "height": 91.44
+    },
+    "version": "square arm · 1S-2B · OMS-sourced dims · deep seat · sectional (layout provisional)",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-square-deep-81",
+    "title": "York Square Arm Deep Seat 81\" Sofa",
+    "url": "https://comfort-works.com/products/york-square-arm-deep-seat-81-sofa-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YSAD-81",
+    "dimensions": {
+      "width": 205.74,
+      "depth": 110.49,
+      "height": 96.52
+    },
+    "version": "square arm · 1S-2B · OMS-sourced dims · deep seat",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-square-deep-95",
+    "title": "York Square Arm Deep Seat 95\" Grand Sofa",
+    "url": "https://comfort-works.com/products/york-square-arm-deep-seat-95-grand-sofa-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YSAD-94",
+    "dimensions": {
+      "width": 241.3,
+      "depth": 110.49,
+      "height": 96.52
+    },
+    "version": "square arm · 1S-2B · OMS-sourced dims · deep seat",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-slope-60",
+    "title": "York Slope Arm 60\" Loveseat",
+    "url": "https://comfort-works.com/products/york-slope-arm-60-loveseat-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YSLA-60",
+    "dimensions": {
+      "width": 152.4,
+      "depth": 95.25,
+      "height": 91.44
+    },
+    "version": "slope arm · 1S-2B · OMS-sourced dims",
+    "brand": "Pottery Barn"
+  },
+  {
+    "id": "pb-york-slope-81-2c",
+    "title": "York Slope Arm Sofa 80.5\"",
+    "url": "https://comfort-works.com/products/york-slope-arm-sofa-80-5-slipcover",
+    "imageUrl": "",
+    "reference": "PB-YSLA-81-2C",
+    "dimensions": {
+      "width": 204.47,
+      "depth": 97.79,
+      "height": 88.9
+    },
+    "version": "slope arm · 2S-2B · OMS-sourced dims",
+    "brand": "Pottery Barn"
   }
 ]

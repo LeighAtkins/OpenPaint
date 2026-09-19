@@ -1,0 +1,12 @@
+{
+  "run": 2,
+  "status": "finalised-clean",
+  "branch": "sofa3d/overnight-1",
+  "completed": ["york-sourcing-tier1", "york-family-implementation", "york-renders+review", "coverage-flip", "regenerated-outputs"],
+  "acceptedThisRun": ["16 York configurations (PB-YRA/YDRA/YSLA/YDSA/YSA/YSAD)"],
+  "nextItem": "ikea-backlog: Kivik (12 configs) first — source via ikea.com PDPs (tier-2, DDG route for /p/ URLs), then Landskrona, Söderhamn audit at config level",
+  "then": "sofa-bed mechanisms batch, then corners/sectionals, then US majors",
+  "inputHash": "sofas.json:ed40fd279421ce80",
+  "validation": "type-check pass; 79/79 sofa3d tests; touched-file eslint clean",
+  "notes": "CW OMS sourcing works headless via local relay + .env.local credentials (tools/cw-catalog/source-york.cjs is the template for other OMS families)"
+}

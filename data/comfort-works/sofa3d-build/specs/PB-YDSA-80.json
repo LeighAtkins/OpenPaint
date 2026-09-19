@@ -1,0 +1,42 @@
+{
+ "configurationId": "PB-YDSA-80",
+ "sofa3dModelId": "pb-york-slope-deep-81",
+ "familyIds": [
+  "pottery-barn-york-slipcovers"
+ ],
+ "title": "York Slope Arm Deep Seat 81\" Sofa Slipcover",
+ "objectType": "sofa",
+ "dimensionStatus": "verified",
+ "sources": [
+  {
+   "tier": 1,
+   "url": "cw40.comfort-works.com via OpenPaint CW relay (public product measurements)",
+   "excerpt": "scoped PB-YDSA-80__SV__1S-2B style Original (CNRP_SP)",
+   "retrieved": "2026-09-18",
+   "confidence": "high (OMS QC data)"
+  }
+ ],
+ "envelope": {
+  "width": 205.74,
+  "depth": 110.49,
+  "height": 91.44
+ },
+ "layout": {
+  "seats": 1,
+  "backs": 2,
+  "arm": "slope",
+  "deepSeat": true,
+  "corner": false,
+  "chaise": false
+ },
+ "semantics": {
+  "height": "top of backrest",
+  "depth": "front seat edge to back shell",
+  "cushionLayout": "scoped reference layout (1S-2B = bench seat + 2 backs)",
+  "seatHeightNote": "PB 45.7 cm is compressed front-edge seat height; rendered lofted crown peaks ~2.7 cm higher (loft 0.5) — recorded exception."
+ },
+ "colourwayDefault": {
+  "name": "provisional linen grey (sampled later)",
+  "hex": "#d8d1c2"
+ }
+}

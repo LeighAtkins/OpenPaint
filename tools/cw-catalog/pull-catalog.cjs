@@ -302,7 +302,7 @@ const BUILT_3D = {
   'pottery-barn-basic': 'built — benchmarks (pb-basic)',
   'pottery-barn-charleston': 'built — extended (pb-charleston)',
   'pottery-barn-english': 'built — extended (pb-english-sleeper, scanned frame)',
-  'pottery-barn-york': 'partial — York Slope Arm 95" built (4 cushion configs); Roll Arm / Deep Seat / other widths not built',
+  'pottery-barn-york': 'built — extended (full OMS-sourced family: slope/roll/square arms, deep-seat variants, corner + 54M sectional; visual review pending)',
   'west-elm-harmony': 'built — benchmarks (harmony)',
   'replacement-restoration-hardware-cloud': 'built — benchmarks (cloud-corner)',
 };

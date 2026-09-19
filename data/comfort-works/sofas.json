@@ -1,7 +1,7 @@
 {
  "_meta": {
   "source": "comfort-works.com (Shopify)",
-  "pulledAt": "2026-09-18T15:56:25.845Z",
+  "pulledAt": "2026-09-19T15:46:11.121Z",
   "generator": "tools/cw-catalog/pull-catalog.cjs",
   "counts": {
    "modelFamilies": 371,
@@ -18149,7 +18149,7 @@
    ],
    "cover": "https://cdn.shopify.com/s/files/1/0688/9560/5044/files/PB-YRA-83_LV_2S-2B_CNRP_SP_CVC-01.jpg?v=1741575839",
    "kind": "model-family",
-   "sofa3d": "partial — York Slope Arm 95\" built (4 cushion configs); Roll Arm / Deep Seat / other widths not built"
+   "sofa3d": "built — extended (full OMS-sourced family: slope/roll/square arms, deep-seat variants, corner + 54M sectional; visual review pending)"
   },
   {
    "id": "providence-wells-slipcovers",

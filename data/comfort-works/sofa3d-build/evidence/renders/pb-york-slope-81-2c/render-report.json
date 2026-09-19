@@ -1,0 +1,40 @@
+{
+ "id": "pb-york-slope-81-2c:PB-YSLA-81-2C",
+ "title": "York Slope Arm Sofa 80.5\"",
+ "declared": {
+  "width": 204.47,
+  "depth": 97.79,
+  "height": 88.9
+ },
+ "pixelChecks": {
+  "perspective": {
+   "occupancy": 0.103,
+   "nonEmpty": true
+  },
+  "front": {
+   "occupancy": 0.108,
+   "nonEmpty": true
+  },
+  "side": {
+   "occupancy": 0.791,
+   "nonEmpty": true
+  },
+  "back": {
+   "occupancy": 0.202,
+   "nonEmpty": true
+  },
+  "top": {
+   "occupancy": 0.036,
+   "nonEmpty": true
+  }
+ },
+ "views": [
+  "perspective",
+  "front",
+  "side",
+  "back",
+  "top"
+ ],
+ "renderedAt": "2026-09-19T15:44:06.681Z",
+ "renderer": "SofaRenderer (real) via system Chrome"
+}

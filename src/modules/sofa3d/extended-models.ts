@@ -10,6 +10,41 @@ const YORK_CONFIGS: Record<string, { seats: number; backs: number }> = {
   'pb-york-slope-95-3s3b': { seats: 3, backs: 3 },
 };
 
+/**
+ * The wider York family, OMS-sourced per PID (public product measurements via the
+ * CW relay, scoped layout embedded in the reference). Arm archetype selects the
+ * profile: roll → rounded extrusion, slope → slopeArmGeometry, square → box arm.
+ * Envelope dimensions come from each extended-products entry.
+ */
+const YORK_FAMILY: Record<
+  string,
+  {
+    arm: 'roll' | 'slope' | 'square';
+    seats: number;
+    backs: number;
+    deep?: boolean;
+    corner?: boolean;
+    chaise?: boolean;
+  }
+> = {
+  'pb-york-roll-62': { arm: 'roll', seats: 1, backs: 2 },
+  'pb-york-roll-83': { arm: 'roll', seats: 1, backs: 2 },
+  'pb-york-roll-deep-62': { arm: 'roll', seats: 1, backs: 2 },
+  'pb-york-roll-deep-97': { arm: 'roll', seats: 1, backs: 2 },
+  'pb-york-slope-60': { arm: 'slope', seats: 1, backs: 2 },
+  'pb-york-slope-81-2c': { arm: 'slope', seats: 2, backs: 2 },
+  'pb-york-slope-deep-60': { arm: 'slope', seats: 1, backs: 2 },
+  'pb-york-slope-deep-81': { arm: 'slope', seats: 1, backs: 2 },
+  'pb-york-slope-deep-95': { arm: 'slope', seats: 1, backs: 2 },
+  'pb-york-square-81-1c': { arm: 'square', seats: 1, backs: 1 },
+  'pb-york-square-81-2c': { arm: 'square', seats: 2, backs: 2 },
+  'pb-york-square-96': { arm: 'square', seats: 1, backs: 2 },
+  'pb-york-square-deep-corner': { arm: 'square', seats: 1, backs: 1, corner: true },
+  'pb-york-square-deep-54m': { arm: 'square', seats: 1, backs: 2, chaise: true },
+  'pb-york-square-deep-81': { arm: 'square', seats: 1, backs: 2 },
+  'pb-york-square-deep-95': { arm: 'square', seats: 1, backs: 2 },
+};
+
 export function createExtendedModel(id: string): SofaDocument {
   const product = products.find(p => p.id === id);
   if (!product) throw new Error('Unknown sofa model.');
@@ -175,6 +210,61 @@ export function createExtendedModel(id: string): SofaDocument {
     for (let i = 0; i < backs; i++)
       doc.overrides[`main:back-${i}`] = {
         height: 51,
+        depth: 19,
+        softness: 0.6,
+        loft: 0.6,
+        piping: true,
+        rotation: { x: -8, y: 0, z: 0 },
+        offset: { x: 0, y: 0, z: 2 },
+      };
+  }
+  // Wider York family (OMS-sourced per PID). Same archetype as the 95" slope
+  // recipe; arm archetype and cushion layout come from the scoped reference
+  // (1S-2B = bench seat + 2 backs is the family default). Back cushion height
+  // solves the seat-top + cushion equation against each PID's measured height.
+  if (YORK_FAMILY[id]) {
+    const y = YORK_FAMILY[id];
+    const d = doc.dimensions;
+    if (y.corner) {
+      doc.modules = [{ ...module('main', d.width, d.depth, 0, 0), corner: true }];
+    } else if (y.chaise) {
+      // 54" loveseat with bench cushion + right-facing chaise (layout
+      // provisional: CW lists left/right variants; split estimated).
+      const chaiseWidth = 42.2;
+      doc.modules = [
+        module('main', d.width - chaiseWidth, d.depth, -chaiseWidth / 2, 0, true, false),
+        module('chaise', chaiseWidth, d.depth, d.width / 2 - chaiseWidth / 2, 0, false, false),
+      ];
+      doc.modules[0].seats = 1;
+    }
+    doc.dimensions.seatCount = y.chaise ? y.seats + 1 : y.seats; // chaise adds its own seat
+    if (y.backs !== y.seats) doc.cushionLayout = { backs: y.backs };
+    Object.assign(doc.construction, {
+      legStyle: 'round',
+      legWidth: 5.7,
+      // Back cushion height solved against the measured envelope: nominal top
+      // (seat + height - 3) sits 1.4 cm under the seat-contact lift, so +1.6
+      // lands the rendered crown on the OMS height (verified empirically).
+      backCushionHeight: Math.round((d.height - d.seatHeight + 1.6) * 2) / 2,
+      frameHeight: Math.max(60, d.height - 10),
+      skirtPleatDepth: 3.5,
+      skirtFlare: 1.2,
+    });
+    if (y.arm === 'roll')
+      Object.assign(doc.construction, {
+        armRollRadius: 12,
+        armStemWidth: 12,
+        armFlare: 4,
+        armSetback: 0, // OMS overall depth includes the full arm depth
+      });
+    doc.style = { arm: y.arm === 'roll' ? 'round' : 'square', back: 'short', cushion: 'rounded', base: 'long-skirt' };
+    doc.fabric.colour = '#d8d1c2';
+    const seatDepth = y.deep ? 80.5 : 67;
+    for (let i = 0; i < y.seats; i++)
+      doc.overrides[`main:seat-${i}`] = { depth: seatDepth, loft: 0.5, softness: 0.4, piping: true };
+    for (let i = 0; i < y.backs; i++)
+      doc.overrides[`${y.chaise ? 'main' : 'main'}:back-${i}`] = {
+        height: doc.construction.backCushionHeight,
         depth: 19,
         softness: 0.6,
         loft: 0.6,

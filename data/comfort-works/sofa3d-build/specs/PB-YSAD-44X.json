@@ -1,0 +1,43 @@
+{
+ "configurationId": "PB-YSAD-44X",
+ "sofa3dModelId": "pb-york-square-deep-corner",
+ "familyIds": [
+  "pottery-barn-york-slipcovers"
+ ],
+ "title": "York Square Arm Deep Seat Corner Sectional Slipcover",
+ "objectType": "corner",
+ "dimensionStatus": "verified",
+ "sources": [
+  {
+   "tier": 1,
+   "url": "cw40.comfort-works.com via OpenPaint CW relay (public product measurements)",
+   "excerpt": "scoped PB-YSAD-44X__SV style Original (CNRP_SP)",
+   "retrieved": "2026-09-18",
+   "confidence": "high (OMS QC data)"
+  }
+ ],
+ "envelope": {
+  "width": 110.49,
+  "depth": 110.49,
+  "height": 91.44
+ },
+ "layout": {
+  "seats": 1,
+  "backs": 2,
+  "arm": "square",
+  "deepSeat": true,
+  "corner": true,
+  "chaise": false
+ },
+ "semantics": {
+  "height": "top of backrest",
+  "depth": "front seat edge to back shell",
+  "cushionLayout": "scoped reference layout (1S-2B = bench seat + 2 backs)",
+  "seatHeightNote": "PB 45.7 cm is compressed front-edge seat height; rendered lofted crown peaks ~2.7 cm higher (loft 0.5) — recorded exception."
+ },
+ "colourwayDefault": {
+  "name": "provisional linen grey (sampled later)",
+  "hex": "#d8d1c2"
+ },
+ "layoutNote": "Corner sections dress two faces: one back cushion per face (main + return), matching buildSofaParts corner treatment."
+}

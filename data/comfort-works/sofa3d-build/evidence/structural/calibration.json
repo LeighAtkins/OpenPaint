@@ -50,17 +50,17 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 205.0 cm, rendered 205.0 cm, tolerance ±2.0 cm"
+    "detail": "target 205.0 cm, rendered 205.0 cm, tolerance ±2.0 cm (body shell)"
    },
    {
     "name": "overall-depth",
     "pass": true,
-    "detail": "target 93.0 cm, rendered 93.0 cm, tolerance ±1.0 cm"
+    "detail": "target 93.0 cm, rendered 93.0 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": false,
-    "detail": "target 80.0 cm, rendered 81.9 cm, tolerance ±1.0 cm"
+    "detail": "target 80.0 cm, rendered 81.9 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "no-below-floor",
@@ -101,7 +101,7 @@
   "renderedSize": [
    218,
    88.36473310443992,
-   90.23997497558594
+   88
   ],
   "counts": {
    "seats": 3,
@@ -136,17 +136,22 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 218.0 cm, rendered 218.0 cm, tolerance ±2.2 cm"
+    "detail": "target 218.0 cm, rendered 218.0 cm, tolerance ±2.2 cm (body shell)"
    },
    {
     "name": "overall-depth",
-    "pass": false,
-    "detail": "target 88.0 cm, rendered 90.2 cm, tolerance ±1.0 cm"
+    "pass": true,
+    "detail": "target 88.0 cm, rendered 88.0 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": true,
-    "detail": "target 88.0 cm, rendered 88.4 cm, tolerance ±1.0 cm"
+    "detail": "target 88.0 cm, rendered 88.4 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 203.2 cm vs body shell 218.0 cm (≤ +8 cm hem flare)"
    },
    {
     "name": "no-below-floor",
@@ -169,7 +174,7 @@
     "detail": "2 arms (L 1 / R 1) on implicit main module"
    }
   ],
-  "ok": false
+  "ok": true
  },
  "pb-basic": {
   "declared": {
@@ -187,7 +192,7 @@
   "renderedSize": [
    209.5,
    96.5,
-   96.2397689819336
+   88.5
   ],
   "counts": {
    "seats": 3,
@@ -222,17 +227,22 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 209.5 cm, rendered 209.5 cm, tolerance ±2.1 cm"
+    "detail": "target 209.5 cm, rendered 209.5 cm, tolerance ±2.1 cm (body shell)"
    },
    {
     "name": "overall-depth",
     "pass": false,
-    "detail": "target 90.0 cm, rendered 96.2 cm, tolerance ±1.0 cm"
+    "detail": "target 90.0 cm, rendered 88.5 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": true,
-    "detail": "target 96.5 cm, rendered 96.5 cm, tolerance ±1.0 cm"
+    "detail": "target 96.5 cm, rendered 96.5 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 185.7 cm vs body shell 209.5 cm (≤ +8 cm hem flare)"
    },
    {
     "name": "no-below-floor",
@@ -308,17 +318,17 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 208.3 cm, rendered 208.3 cm, tolerance ±2.1 cm"
+    "detail": "target 208.3 cm, rendered 208.3 cm, tolerance ±2.1 cm (body shell)"
    },
    {
     "name": "overall-depth",
     "pass": true,
-    "detail": "target 119.4 cm, rendered 119.4 cm, tolerance ±1.2 cm"
+    "detail": "target 119.4 cm, rendered 119.4 cm, tolerance ±1.2 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": true,
-    "detail": "target 86.4 cm, rendered 87.3 cm, tolerance ±1.0 cm"
+    "detail": "target 86.4 cm, rendered 87.3 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "no-below-floor",
@@ -394,17 +404,17 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 114.3 cm, rendered 114.3 cm, tolerance ±1.1 cm"
+    "detail": "target 114.3 cm, rendered 114.3 cm, tolerance ±1.1 cm (body shell)"
    },
    {
     "name": "overall-depth",
     "pass": false,
-    "detail": "target 114.3 cm, rendered 122.7 cm, tolerance ±1.1 cm"
+    "detail": "target 114.3 cm, rendered 122.7 cm, tolerance ±1.1 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": false,
-    "detail": "target 80.0 cm, rendered 83.3 cm, tolerance ±1.0 cm"
+    "detail": "target 80.0 cm, rendered 83.3 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "no-below-floor",
@@ -480,17 +490,17 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 243.0 cm, rendered 243.5 cm, tolerance ±2.4 cm"
+    "detail": "target 243.0 cm, rendered 243.5 cm, tolerance ±2.4 cm (body shell)"
    },
    {
     "name": "overall-depth",
     "pass": false,
-    "detail": "target 92.0 cm, rendered 93.7 cm, tolerance ±1.0 cm"
+    "detail": "target 92.0 cm, rendered 93.7 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": false,
-    "detail": "target 86.0 cm, rendered 88.7 cm, tolerance ±1.0 cm"
+    "detail": "target 86.0 cm, rendered 88.7 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "no-below-floor",
@@ -581,17 +591,17 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 198.0 cm, rendered 198.0 cm, tolerance ±2.0 cm"
+    "detail": "target 198.0 cm, rendered 198.0 cm, tolerance ±2.0 cm (body shell)"
    },
    {
     "name": "overall-depth",
     "pass": true,
-    "detail": "target 99.0 cm, rendered 99.0 cm, tolerance ±1.0 cm"
+    "detail": "target 99.0 cm, rendered 99.0 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": true,
-    "detail": "target 83.0 cm, rendered 82.1 cm, tolerance ±1.0 cm"
+    "detail": "target 83.0 cm, rendered 82.1 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "no-below-floor",
@@ -667,17 +677,17 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 285.0 cm, rendered 285.0 cm, tolerance ±2.9 cm"
+    "detail": "target 285.0 cm, rendered 285.0 cm, tolerance ±2.9 cm (body shell)"
    },
    {
     "name": "overall-depth",
     "pass": true,
-    "detail": "target 160.0 cm, rendered 160.0 cm, tolerance ±1.6 cm"
+    "detail": "target 160.0 cm, rendered 160.0 cm, tolerance ±1.6 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": true,
-    "detail": "target 71.0 cm, rendered 71.0 cm, tolerance ±1.0 cm"
+    "detail": "target 71.0 cm, rendered 71.0 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "no-below-floor",
@@ -768,17 +778,17 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 230.0 cm, rendered 230.0 cm, tolerance ±2.3 cm"
+    "detail": "target 230.0 cm, rendered 230.0 cm, tolerance ±2.3 cm (body shell)"
    },
    {
     "name": "overall-depth",
     "pass": true,
-    "detail": "target 151.0 cm, rendered 151.0 cm, tolerance ±1.5 cm"
+    "detail": "target 151.0 cm, rendered 151.0 cm, tolerance ±1.5 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": true,
-    "detail": "target 86.0 cm, rendered 86.4 cm, tolerance ±1.0 cm"
+    "detail": "target 86.0 cm, rendered 86.4 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "no-below-floor",
@@ -829,7 +839,7 @@
   "renderedSize": [
    218.44,
    99.70731315168864,
-   95.6797103881836
+   91.44000244140625
   ],
   "counts": {
    "seats": 2,
@@ -864,17 +874,22 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 218.4 cm, rendered 218.4 cm, tolerance ±2.2 cm"
+    "detail": "target 218.4 cm, rendered 218.4 cm, tolerance ±2.2 cm (body shell)"
    },
    {
     "name": "overall-depth",
-    "pass": false,
-    "detail": "target 91.4 cm, rendered 95.7 cm, tolerance ±1.0 cm"
+    "pass": true,
+    "detail": "target 91.4 cm, rendered 91.4 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": false,
-    "detail": "target 94.0 cm, rendered 99.7 cm, tolerance ±1.0 cm"
+    "detail": "target 94.0 cm, rendered 99.7 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 186.7 cm vs body shell 218.4 cm (≤ +8 cm hem flare)"
    },
    {
     "name": "no-below-floor",
@@ -915,7 +930,7 @@
   "renderedSize": [
    222.4,
    91,
-   117.93980407714844
+   113.69999847412109
   ],
   "counts": {
    "seats": 2,
@@ -950,17 +965,22 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 221.0 cm, rendered 222.4 cm, tolerance ±2.2 cm"
+    "detail": "target 221.0 cm, rendered 222.4 cm, tolerance ±2.2 cm (body shell)"
    },
    {
     "name": "overall-depth",
     "pass": false,
-    "detail": "target 116.7 cm, rendered 117.9 cm, tolerance ±1.2 cm"
+    "detail": "target 116.7 cm, rendered 113.7 cm, tolerance ±1.2 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": true,
-    "detail": "target 91.0 cm, rendered 91.0 cm, tolerance ±1.0 cm"
+    "detail": "target 91.0 cm, rendered 91.0 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 222.2 cm vs body shell 222.4 cm (≤ +8 cm hem flare)"
    },
    {
     "name": "no-below-floor",
@@ -999,9 +1019,9 @@
    "seatCount": 1
   },
   "renderedSize": [
-   242.7399444580078,
+   240.10000610351562,
    94.77398025971438,
-   99.1399917602539
+   96.5
   ],
   "counts": {
    "seats": 1,
@@ -1035,18 +1055,23 @@
    },
    {
     "name": "overall-width",
-    "pass": false,
-    "detail": "target 240.1 cm, rendered 242.7 cm, tolerance ±2.4 cm"
+    "pass": true,
+    "detail": "target 240.1 cm, rendered 240.1 cm, tolerance ±2.4 cm (body shell)"
    },
    {
     "name": "overall-depth",
-    "pass": false,
-    "detail": "target 96.5 cm, rendered 99.1 cm, tolerance ±1.0 cm"
+    "pass": true,
+    "detail": "target 96.5 cm, rendered 96.5 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": false,
-    "detail": "target 91.4 cm, rendered 94.8 cm, tolerance ±1.0 cm"
+    "detail": "target 91.4 cm, rendered 94.8 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 242.7 cm vs body shell 240.1 cm (≤ +8 cm hem flare)"
    },
    {
     "name": "no-below-floor",
@@ -1085,9 +1110,9 @@
    "seatCount": 1
   },
   "renderedSize": [
-   242.7399444580078,
+   240.10000610351562,
    94.77398025971438,
-   99.1399917602539
+   96.5
   ],
   "counts": {
    "seats": 1,
@@ -1121,18 +1146,23 @@
    },
    {
     "name": "overall-width",
-    "pass": false,
-    "detail": "target 240.1 cm, rendered 242.7 cm, tolerance ±2.4 cm"
+    "pass": true,
+    "detail": "target 240.1 cm, rendered 240.1 cm, tolerance ±2.4 cm (body shell)"
    },
    {
     "name": "overall-depth",
-    "pass": false,
-    "detail": "target 96.5 cm, rendered 99.1 cm, tolerance ±1.0 cm"
+    "pass": true,
+    "detail": "target 96.5 cm, rendered 96.5 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": false,
-    "detail": "target 91.4 cm, rendered 94.8 cm, tolerance ±1.0 cm"
+    "detail": "target 91.4 cm, rendered 94.8 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 242.7 cm vs body shell 240.1 cm (≤ +8 cm hem flare)"
    },
    {
     "name": "no-below-floor",
@@ -1171,9 +1201,9 @@
    "seatCount": 2
   },
   "renderedSize": [
-   242.7399444580078,
+   240.10000610351562,
    94.77398025971438,
-   99.1399917602539
+   96.5
   ],
   "counts": {
    "seats": 2,
@@ -1207,18 +1237,23 @@
    },
    {
     "name": "overall-width",
-    "pass": false,
-    "detail": "target 240.1 cm, rendered 242.7 cm, tolerance ±2.4 cm"
+    "pass": true,
+    "detail": "target 240.1 cm, rendered 240.1 cm, tolerance ±2.4 cm (body shell)"
    },
    {
     "name": "overall-depth",
-    "pass": false,
-    "detail": "target 96.5 cm, rendered 99.1 cm, tolerance ±1.0 cm"
+    "pass": true,
+    "detail": "target 96.5 cm, rendered 96.5 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": false,
-    "detail": "target 91.4 cm, rendered 94.8 cm, tolerance ±1.0 cm"
+    "detail": "target 91.4 cm, rendered 94.8 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 242.7 cm vs body shell 240.1 cm (≤ +8 cm hem flare)"
    },
    {
     "name": "no-below-floor",
@@ -1257,9 +1292,9 @@
    "seatCount": 3
   },
   "renderedSize": [
-   242.7399444580078,
+   240.10000610351562,
    94.77398025971438,
-   99.1399917602539
+   96.5
   ],
   "counts": {
    "seats": 3,
@@ -1293,18 +1328,23 @@
    },
    {
     "name": "overall-width",
-    "pass": false,
-    "detail": "target 240.1 cm, rendered 242.7 cm, tolerance ±2.4 cm"
+    "pass": true,
+    "detail": "target 240.1 cm, rendered 240.1 cm, tolerance ±2.4 cm (body shell)"
    },
    {
     "name": "overall-depth",
-    "pass": false,
-    "detail": "target 96.5 cm, rendered 99.1 cm, tolerance ±1.0 cm"
+    "pass": true,
+    "detail": "target 96.5 cm, rendered 96.5 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": false,
-    "detail": "target 91.4 cm, rendered 94.8 cm, tolerance ±1.0 cm"
+    "detail": "target 91.4 cm, rendered 94.8 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 242.7 cm vs body shell 240.1 cm (≤ +8 cm hem flare)"
    },
    {
     "name": "no-below-floor",
@@ -1380,17 +1420,17 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 180.0 cm, rendered 180.0 cm, tolerance ±1.8 cm"
+    "detail": "target 180.0 cm, rendered 180.0 cm, tolerance ±1.8 cm (body shell)"
    },
    {
     "name": "overall-depth",
     "pass": true,
-    "detail": "target 88.0 cm, rendered 88.0 cm, tolerance ±1.0 cm"
+    "detail": "target 88.0 cm, rendered 88.0 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": true,
-    "detail": "target 66.0 cm, rendered 66.0 cm, tolerance ±1.0 cm"
+    "detail": "target 66.0 cm, rendered 66.0 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "no-below-floor",
@@ -1466,17 +1506,17 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 247.0 cm, rendered 247.0 cm, tolerance ±2.5 cm"
+    "detail": "target 247.0 cm, rendered 247.0 cm, tolerance ±2.5 cm (body shell)"
    },
    {
     "name": "overall-depth",
     "pass": true,
-    "detail": "target 88.0 cm, rendered 88.0 cm, tolerance ±1.0 cm"
+    "detail": "target 88.0 cm, rendered 88.0 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": true,
-    "detail": "target 66.0 cm, rendered 66.0 cm, tolerance ±1.0 cm"
+    "detail": "target 66.0 cm, rendered 66.0 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "no-below-floor",
@@ -1552,17 +1592,17 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 53.0 cm, rendered 53.0 cm, tolerance ±1.0 cm"
+    "detail": "target 53.0 cm, rendered 53.0 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "overall-depth",
     "pass": true,
-    "detail": "target 53.0 cm, rendered 53.0 cm, tolerance ±1.0 cm"
+    "detail": "target 53.0 cm, rendered 53.0 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": true,
-    "detail": "target 32.0 cm, rendered 32.0 cm, tolerance ±1.0 cm"
+    "detail": "target 32.0 cm, rendered 32.0 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "no-below-floor",
@@ -1583,6 +1623,1467 @@
     "name": "arm-count",
     "pass": true,
     "detail": "0 arms (L 0 / R 0) on implicit main module"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-roll-deep-62": {
+  "declared": {
+   "width": 157.48,
+   "depth": 110.49,
+   "height": 91.44,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 1
+  },
+  "renderedSize": [
+   157.48,
+   91.07884617765988,
+   110.48999893188477
+  ],
+  "counts": {
+   "seats": 1,
+   "backs": 2,
+   "arms": 2,
+   "pillows": 0,
+   "legs": 4,
+   "skirts": 1,
+   "frames": 2
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "12 parts, 12 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "12 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 157.5 cm, rendered 157.5 cm, tolerance ±1.6 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 110.5 cm, rendered 110.5 cm, tolerance ±1.1 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 91.4 cm, rendered 91.1 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 142.1 cm vs body shell 157.5 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "1 seat cushions, spec 1"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "2 arms (L 1 / R 1) on implicit main module"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-roll-deep-97": {
+  "declared": {
+   "width": 246.38,
+   "depth": 110.49,
+   "height": 91.44,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 1
+  },
+  "renderedSize": [
+   246.38,
+   91.07884617765988,
+   110.48999893188477
+  ],
+  "counts": {
+   "seats": 1,
+   "backs": 2,
+   "arms": 2,
+   "pillows": 0,
+   "legs": 4,
+   "skirts": 1,
+   "frames": 2
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "12 parts, 12 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "12 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 246.4 cm, rendered 246.4 cm, tolerance ±2.5 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 110.5 cm, rendered 110.5 cm, tolerance ±1.1 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 91.4 cm, rendered 91.1 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 231.0 cm vs body shell 246.4 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "1 seat cushions, spec 1"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "2 arms (L 1 / R 1) on implicit main module"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-slope-deep-60": {
+  "declared": {
+   "width": 152.4,
+   "depth": 110.49,
+   "height": 91.44,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 1
+  },
+  "renderedSize": [
+   152.4,
+   91.07884617765988,
+   110.48999893188477
+  ],
+  "counts": {
+   "seats": 1,
+   "backs": 2,
+   "arms": 2,
+   "pillows": 0,
+   "legs": 4,
+   "skirts": 1,
+   "frames": 2
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "12 parts, 12 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "12 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 152.4 cm, rendered 152.4 cm, tolerance ±1.5 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 110.5 cm, rendered 110.5 cm, tolerance ±1.1 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 91.4 cm, rendered 91.1 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 155.0 cm vs body shell 152.4 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "1 seat cushions, spec 1"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "2 arms (L 1 / R 1) on implicit main module"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-slope-deep-81": {
+  "declared": {
+   "width": 205.74,
+   "depth": 110.49,
+   "height": 91.44,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 1
+  },
+  "renderedSize": [
+   205.74000549316406,
+   91.07884617765988,
+   110.48999893188477
+  ],
+  "counts": {
+   "seats": 1,
+   "backs": 2,
+   "arms": 2,
+   "pillows": 0,
+   "legs": 4,
+   "skirts": 1,
+   "frames": 2
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "12 parts, 12 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "12 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 205.7 cm, rendered 205.7 cm, tolerance ±2.1 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 110.5 cm, rendered 110.5 cm, tolerance ±1.1 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 91.4 cm, rendered 91.1 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 208.4 cm vs body shell 205.7 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "1 seat cushions, spec 1"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "2 arms (L 1 / R 1) on implicit main module"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-slope-deep-95": {
+  "declared": {
+   "width": 241.3,
+   "depth": 111.76,
+   "height": 96.52,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 1
+  },
+  "renderedSize": [
+   241.3000030517578,
+   96.0545163495138,
+   111.76000213623047
+  ],
+  "counts": {
+   "seats": 1,
+   "backs": 2,
+   "arms": 2,
+   "pillows": 0,
+   "legs": 4,
+   "skirts": 1,
+   "frames": 2
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "12 parts, 12 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "12 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 241.3 cm, rendered 241.3 cm, tolerance ±2.4 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 111.8 cm, rendered 111.8 cm, tolerance ±1.1 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 96.5 cm, rendered 96.1 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 243.9 cm vs body shell 241.3 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "1 seat cushions, spec 1"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "2 arms (L 1 / R 1) on implicit main module"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-roll-62": {
+  "declared": {
+   "width": 157.48,
+   "depth": 95.25,
+   "height": 91.44,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 1
+  },
+  "renderedSize": [
+   157.48,
+   91.07884617765988,
+   95.25
+  ],
+  "counts": {
+   "seats": 1,
+   "backs": 2,
+   "arms": 2,
+   "pillows": 0,
+   "legs": 4,
+   "skirts": 1,
+   "frames": 2
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "12 parts, 12 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "12 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 157.5 cm, rendered 157.5 cm, tolerance ±1.6 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 95.3 cm, rendered 95.3 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 91.4 cm, rendered 91.1 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 142.1 cm vs body shell 157.5 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "1 seat cushions, spec 1"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "2 arms (L 1 / R 1) on implicit main module"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-roll-83": {
+  "declared": {
+   "width": 210.82,
+   "depth": 95.25,
+   "height": 91.44,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 1
+  },
+  "renderedSize": [
+   210.82,
+   91.07884617765988,
+   95.25
+  ],
+  "counts": {
+   "seats": 1,
+   "backs": 2,
+   "arms": 2,
+   "pillows": 0,
+   "legs": 4,
+   "skirts": 1,
+   "frames": 2
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "12 parts, 12 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "12 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 210.8 cm, rendered 210.8 cm, tolerance ±2.1 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 95.3 cm, rendered 95.3 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 91.4 cm, rendered 91.1 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 195.5 cm vs body shell 210.8 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "1 seat cushions, spec 1"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "2 arms (L 1 / R 1) on implicit main module"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-square-81-1c": {
+  "declared": {
+   "width": 204.47,
+   "depth": 97.79,
+   "height": 88.9,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 1
+  },
+  "renderedSize": [
+   204.47000122070312,
+   88.59101109173292,
+   97.79000091552734
+  ],
+  "counts": {
+   "seats": 1,
+   "backs": 1,
+   "arms": 2,
+   "pillows": 0,
+   "legs": 4,
+   "skirts": 1,
+   "frames": 2
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "11 parts, 11 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "11 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 204.5 cm, rendered 204.5 cm, tolerance ±2.0 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 97.8 cm, rendered 97.8 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 88.9 cm, rendered 88.6 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 207.1 cm vs body shell 204.5 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "1 seat cushions, spec 1"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "2 arms (L 1 / R 1) on implicit main module"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-square-81-2c": {
+  "declared": {
+   "width": 204.47,
+   "depth": 97.79,
+   "height": 88.9,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 2
+  },
+  "renderedSize": [
+   204.47000122070312,
+   88.59101109173292,
+   97.79000091552734
+  ],
+  "counts": {
+   "seats": 2,
+   "backs": 2,
+   "arms": 2,
+   "pillows": 0,
+   "legs": 4,
+   "skirts": 1,
+   "frames": 2
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "13 parts, 13 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "13 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 204.5 cm, rendered 204.5 cm, tolerance ±2.0 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 97.8 cm, rendered 97.8 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 88.9 cm, rendered 88.6 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 207.1 cm vs body shell 204.5 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "2 seat cushions, spec 2"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "2 arms (L 1 / R 1) on implicit main module"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-square-96": {
+  "declared": {
+   "width": 241.3,
+   "depth": 95.25,
+   "height": 91.44,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 1
+  },
+  "renderedSize": [
+   241.3000030517578,
+   91.07884617765988,
+   95.25
+  ],
+  "counts": {
+   "seats": 1,
+   "backs": 2,
+   "arms": 2,
+   "pillows": 0,
+   "legs": 4,
+   "skirts": 1,
+   "frames": 2
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "12 parts, 12 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "12 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 241.3 cm, rendered 241.3 cm, tolerance ±2.4 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 95.3 cm, rendered 95.3 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 91.4 cm, rendered 91.1 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 243.9 cm vs body shell 241.3 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "1 seat cushions, spec 1"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "2 arms (L 1 / R 1) on implicit main module"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-square-deep-corner": {
+  "declared": {
+   "width": 110.49,
+   "depth": 110.49,
+   "height": 91.44,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 1
+  },
+  "renderedSize": [
+   110.48999893188477,
+   91.07884617765988,
+   110.48999893188477
+  ],
+  "counts": {
+   "seats": 1,
+   "backs": 2,
+   "arms": 0,
+   "pillows": 0,
+   "legs": 4,
+   "skirts": 1,
+   "frames": 3
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "11 parts, 11 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "11 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 110.5 cm, rendered 110.5 cm, tolerance ±1.1 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 110.5 cm, rendered 110.5 cm, tolerance ±1.1 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 91.4 cm, rendered 91.1 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 113.1 cm vs body shell 110.5 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "1 seat cushions, spec 1"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "0 arms for 0 armed modules"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-square-deep-54m": {
+  "declared": {
+   "width": 137.16,
+   "depth": 110.49,
+   "height": 91.44,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 2
+  },
+  "renderedSize": [
+   137.16000038146973,
+   91.07884617765988,
+   110.48999893188477
+  ],
+  "counts": {
+   "seats": 2,
+   "backs": 2,
+   "arms": 1,
+   "pillows": 0,
+   "legs": 8,
+   "skirts": 2,
+   "frames": 4
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "19 parts, 19 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "19 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 137.2 cm, rendered 137.2 cm, tolerance ±1.4 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 110.5 cm, rendered 110.5 cm, tolerance ±1.1 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 91.4 cm, rendered 91.1 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 113.1 cm vs body shell 137.2 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "2 seat cushions, spec 2"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "1 arms for 1 armed modules"
+   },
+   {
+    "name": "module-overlap",
+    "pass": true,
+    "detail": "main vs chaise: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-square-deep-81": {
+  "declared": {
+   "width": 205.74,
+   "depth": 110.49,
+   "height": 96.52,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 1
+  },
+  "renderedSize": [
+   205.74000549316406,
+   96.0545163495138,
+   110.48999893188477
+  ],
+  "counts": {
+   "seats": 1,
+   "backs": 2,
+   "arms": 2,
+   "pillows": 0,
+   "legs": 4,
+   "skirts": 1,
+   "frames": 2
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "12 parts, 12 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "12 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 205.7 cm, rendered 205.7 cm, tolerance ±2.1 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 110.5 cm, rendered 110.5 cm, tolerance ±1.1 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 96.5 cm, rendered 96.1 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 208.4 cm vs body shell 205.7 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "1 seat cushions, spec 1"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "2 arms (L 1 / R 1) on implicit main module"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-square-deep-95": {
+  "declared": {
+   "width": 241.3,
+   "depth": 110.49,
+   "height": 96.52,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 1
+  },
+  "renderedSize": [
+   241.3000030517578,
+   96.0545163495138,
+   110.48999893188477
+  ],
+  "counts": {
+   "seats": 1,
+   "backs": 2,
+   "arms": 2,
+   "pillows": 0,
+   "legs": 4,
+   "skirts": 1,
+   "frames": 2
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "12 parts, 12 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "12 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 241.3 cm, rendered 241.3 cm, tolerance ±2.4 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 110.5 cm, rendered 110.5 cm, tolerance ±1.1 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 96.5 cm, rendered 96.1 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 243.9 cm vs body shell 241.3 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "1 seat cushions, spec 1"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "2 arms (L 1 / R 1) on implicit main module"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-slope-60": {
+  "declared": {
+   "width": 152.4,
+   "depth": 95.25,
+   "height": 91.44,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 1
+  },
+  "renderedSize": [
+   152.4,
+   91.07884617765988,
+   95.25
+  ],
+  "counts": {
+   "seats": 1,
+   "backs": 2,
+   "arms": 2,
+   "pillows": 0,
+   "legs": 4,
+   "skirts": 1,
+   "frames": 2
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "12 parts, 12 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "12 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 152.4 cm, rendered 152.4 cm, tolerance ±1.5 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 95.3 cm, rendered 95.3 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 91.4 cm, rendered 91.1 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 155.0 cm vs body shell 152.4 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "1 seat cushions, spec 1"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "2 arms (L 1 / R 1) on implicit main module"
+   }
+  ],
+  "ok": true
+ },
+ "pb-york-slope-81-2c": {
+  "declared": {
+   "width": 204.47,
+   "depth": 97.79,
+   "height": 88.9,
+   "armWidth": 17,
+   "armHeight": 62,
+   "seatHeight": 43,
+   "seatThickness": 17,
+   "backThickness": 16,
+   "legHeight": 9,
+   "seatCount": 2
+  },
+  "renderedSize": [
+   204.47000122070312,
+   88.59101109173292,
+   97.79000091552734
+  ],
+  "counts": {
+   "seats": 2,
+   "backs": 2,
+   "arms": 2,
+   "pillows": 0,
+   "legs": 4,
+   "skirts": 1,
+   "frames": 2
+  },
+  "results": [
+   {
+    "name": "finite-transforms",
+    "pass": true,
+    "detail": "0 parts with non-finite transforms"
+   },
+   {
+    "name": "positive-sizes",
+    "pass": true,
+    "detail": "0 parts with non-positive sizes"
+   },
+   {
+    "name": "unique-part-ids",
+    "pass": true,
+    "detail": "13 parts, 13 unique ids"
+   },
+   {
+    "name": "non-empty-geometry",
+    "pass": true,
+    "detail": "13 meshes, 0 empty"
+   },
+   {
+    "name": "overall-width",
+    "pass": true,
+    "detail": "target 204.5 cm, rendered 204.5 cm, tolerance ±2.0 cm (body shell)"
+   },
+   {
+    "name": "overall-depth",
+    "pass": true,
+    "detail": "target 97.8 cm, rendered 97.8 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "overall-height",
+    "pass": true,
+    "detail": "target 88.9 cm, rendered 88.6 cm, tolerance ±1.0 cm (body shell)"
+   },
+   {
+    "name": "skirt-hem-allowance",
+    "pass": true,
+    "detail": "skirt hem span 207.1 cm vs body shell 204.5 cm (≤ +8 cm hem flare)"
+   },
+   {
+    "name": "no-below-floor",
+    "pass": true,
+    "detail": "min y 0.00 cm"
+   },
+   {
+    "name": "floor-contact",
+    "pass": true,
+    "detail": "model rests at y=0.00 cm (0 = floor)"
+   },
+   {
+    "name": "seat-count",
+    "pass": true,
+    "detail": "2 seat cushions, spec 2"
+   },
+   {
+    "name": "arm-count",
+    "pass": true,
+    "detail": "2 arms (L 1 / R 1) on implicit main module"
    }
   ],
   "ok": true
@@ -1638,17 +3139,17 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 285.0 cm, rendered 285.1 cm, tolerance ±2.9 cm"
+    "detail": "target 285.0 cm, rendered 285.1 cm, tolerance ±2.9 cm (body shell)"
    },
    {
     "name": "overall-depth",
     "pass": true,
-    "detail": "target 285.0 cm, rendered 285.1 cm, tolerance ±2.9 cm"
+    "detail": "target 285.0 cm, rendered 285.1 cm, tolerance ±2.9 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": false,
-    "detail": "target 85.0 cm, rendered 88.7 cm, tolerance ±1.0 cm"
+    "detail": "target 85.0 cm, rendered 88.7 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "no-below-floor",
@@ -1673,7 +3174,7 @@
    {
     "name": "module-overlap",
     "pass": true,
-    "detail": "norsborg-mu755dgw-1 vs norsborg-mu755dgw-3: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+    "detail": "norsborg-mu8k8bzm-1 vs norsborg-mu8k8bzm-3: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
    }
   ],
   "ok": false
@@ -1729,17 +3230,17 @@
    {
     "name": "overall-width",
     "pass": true,
-    "detail": "target 293.0 cm, rendered 293.0 cm, tolerance ±2.9 cm"
+    "detail": "target 293.0 cm, rendered 293.0 cm, tolerance ±2.9 cm (body shell)"
    },
    {
     "name": "overall-depth",
     "pass": true,
-    "detail": "target 157.0 cm, rendered 157.0 cm, tolerance ±1.6 cm"
+    "detail": "target 157.0 cm, rendered 157.0 cm, tolerance ±1.6 cm (body shell)"
    },
    {
     "name": "overall-height",
     "pass": false,
-    "detail": "target 85.0 cm, rendered 88.2 cm, tolerance ±1.0 cm"
+    "detail": "target 85.0 cm, rendered 88.2 cm, tolerance ±1.0 cm (body shell)"
    },
    {
     "name": "no-below-floor",
@@ -1764,12 +3265,12 @@
    {
     "name": "chaise-handedness",
     "pass": true,
-    "detail": "doc places norsborg-mu755dib-6 right of base, rendered right"
+    "detail": "doc places norsborg-mu8k8c12-6 right of base, rendered right"
    },
    {
     "name": "module-overlap",
     "pass": true,
-    "detail": "norsborg-mu755dib-6 vs norsborg-mu755dib-7: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+    "detail": "norsborg-mu8k8c12-6 vs norsborg-mu8k8c12-7: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
    }
   ],
   "ok": false

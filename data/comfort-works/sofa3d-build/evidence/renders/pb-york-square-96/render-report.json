@@ -1,0 +1,40 @@
+{
+ "id": "pb-york-square-96:PB-YSA-96",
+ "title": "York Square Arm 95\" Grand Sofa",
+ "declared": {
+  "width": 241.3,
+  "depth": 95.25,
+  "height": 91.44
+ },
+ "pixelChecks": {
+  "perspective": {
+   "occupancy": 0.085,
+   "nonEmpty": true
+  },
+  "front": {
+   "occupancy": 0.094,
+   "nonEmpty": true
+  },
+  "side": {
+   "occupancy": 0.853,
+   "nonEmpty": true
+  },
+  "back": {
+   "occupancy": 0.169,
+   "nonEmpty": true
+  },
+  "top": {
+   "occupancy": 0.028,
+   "nonEmpty": true
+  }
+ },
+ "views": [
+  "perspective",
+  "front",
+  "side",
+  "back",
+  "top"
+ ],
+ "renderedAt": "2026-09-19T15:44:28.573Z",
+ "renderer": "SofaRenderer (real) via system Chrome"
+}

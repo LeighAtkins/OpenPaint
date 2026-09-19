@@ -1,9 +1,9 @@
 # Comfort Works Catalog → Sofa3D Checklist
 
-Pulled 2026-09-18 · 371 model families · 1198 base products (configurations) · 17 fabric types / 81 colourways.
+Pulled 2026-09-19 · 371 model families · 1198 base products (configurations) · 17 fabric types / 81 colourways.
 Regenerate with `node tools/cw-catalog/pull-catalog.cjs all` (raw cache in `data/comfort-works/raw/`).
 
-## Coverage: 13/371 model families built (14 touched)
+## Coverage: 14/371 model families built (14 touched)
 
 Legend: ✅ dedicated model built · 🟨 partial · ⬜ not built
 
@@ -594,7 +594,7 @@ Legend: ✅ dedicated model built · 🟨 partial · ⬜ not built
 | [Jamie](https://comfort-works.com/collections/pottery-barn-teen-jamie-slipcovers) | Jamie | 2 | ⬜ not built |
 | [Townsend Square Arm](https://comfort-works.com/collections/pottery-barn-townsend-slipcovers) | Townsend Square Arm, Townsend Roll Arm | 7 | ⬜ not built |
 | [Turner Roll Arm](https://comfort-works.com/collections/pottery-barn-turner-slipcovers) | Turner Roll Arm, Turner Square Arm | 8 | ⬜ not built |
-| [York Roll Arm](https://comfort-works.com/collections/pottery-barn-york-slipcovers) | York Roll Arm, York Slope Arm, York Square Arm | 17 | 🟨 partial — York Slope Arm 95" built (4 cushion configs); Roll Arm / Deep Seat / other widths not built |
+| [York Roll Arm](https://comfort-works.com/collections/pottery-barn-york-slipcovers) | York Roll Arm, York Slope Arm, York Square Arm | 17 | ✅ built — extended (full OMS-sourced family: slope/roll/square arms, deep-seat variants, corner + 54M sectional; visual review pending) |
 | [Trevor](https://comfort-works.com/collections/slipcovers-for-pottery-barn-trevor-sofas) | Trevor | 1 | ⬜ not built |
 
 ## Pottery Barn Kids families
