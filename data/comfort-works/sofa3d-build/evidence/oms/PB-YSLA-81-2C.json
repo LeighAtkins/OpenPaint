@@ -1,0 +1,24 @@
+{
+ "reference": "PB-YSLA-81-2C",
+ "public": {
+  "ok": true,
+  "code": "CW_PUBLIC_MEASUREMENTS_OK",
+  "measurements": {
+   "width": {
+    "cm": 204.47,
+    "in": 80.5
+   },
+   "depth": {
+    "cm": 97.79,
+    "in": 38.5
+   },
+   "height": {
+    "cm": 88.9,
+    "in": 35
+   }
+  },
+  "scopedReference": "PB-YSLA-81-2C",
+  "style": "Original",
+  "styleCode": "CNRP_SP"
+ }
+}

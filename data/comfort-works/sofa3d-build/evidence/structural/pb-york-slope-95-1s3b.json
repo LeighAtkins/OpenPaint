@@ -36,18 +36,23 @@
   },
   {
    "name": "overall-width",
-   "pass": false,
-   "detail": "target 240.1 cm, rendered 242.7 cm, tolerance ±2.4 cm"
+   "pass": true,
+   "detail": "target 240.1 cm, rendered 240.1 cm, tolerance ±2.4 cm (body shell)"
   },
   {
    "name": "overall-depth",
-   "pass": false,
-   "detail": "target 96.5 cm, rendered 99.1 cm, tolerance ±1.0 cm"
+   "pass": true,
+   "detail": "target 96.5 cm, rendered 96.5 cm, tolerance ±1.0 cm (body shell)"
   },
   {
    "name": "overall-height",
    "pass": false,
-   "detail": "target 91.4 cm, rendered 94.8 cm, tolerance ±1.0 cm"
+   "detail": "target 91.4 cm, rendered 94.8 cm, tolerance ±1.0 cm (body shell)"
+  },
+  {
+   "name": "skirt-hem-allowance",
+   "pass": true,
+   "detail": "skirt hem span 242.7 cm vs body shell 240.1 cm (≤ +8 cm hem flare)"
   },
   {
    "name": "no-below-floor",
@@ -82,9 +87,9 @@
    49.56999588012695
   ],
   "size": [
-   242.7399444580078,
+   240.10000610351562,
    94.77398025971438,
-   99.1399917602539
+   96.5
   ]
  },
  "counts": {

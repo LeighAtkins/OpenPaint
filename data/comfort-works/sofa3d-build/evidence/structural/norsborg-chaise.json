@@ -37,17 +37,17 @@
   {
    "name": "overall-width",
    "pass": true,
-   "detail": "target 293.0 cm, rendered 293.0 cm, tolerance ±2.9 cm"
+   "detail": "target 293.0 cm, rendered 293.0 cm, tolerance ±2.9 cm (body shell)"
   },
   {
    "name": "overall-depth",
    "pass": true,
-   "detail": "target 157.0 cm, rendered 157.0 cm, tolerance ±1.6 cm"
+   "detail": "target 157.0 cm, rendered 157.0 cm, tolerance ±1.6 cm (body shell)"
   },
   {
    "name": "overall-height",
    "pass": false,
-   "detail": "target 85.0 cm, rendered 88.2 cm, tolerance ±1.0 cm"
+   "detail": "target 85.0 cm, rendered 88.2 cm, tolerance ±1.0 cm (body shell)"
   },
   {
    "name": "no-below-floor",
@@ -72,12 +72,12 @@
   {
    "name": "chaise-handedness",
    "pass": true,
-   "detail": "doc places norsborg-mu755dib-6 right of base, rendered right"
+   "detail": "doc places norsborg-mu8k8c12-6 right of base, rendered right"
   },
   {
    "name": "module-overlap",
    "pass": true,
-   "detail": "norsborg-mu755dib-6 vs norsborg-mu755dib-7: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+   "detail": "norsborg-mu8k8c12-6 vs norsborg-mu8k8c12-7: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
   }
  ],
  "bounds": {
@@ -108,7 +108,7 @@
  },
  "partBounds": [
   {
-   "id": "norsborg-mu755dib-5:frame",
+   "id": "norsborg-mu8k8c12-5:frame",
    "role": "frame",
    "center": [
     8,
@@ -122,7 +122,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-5:arm-left",
+   "id": "norsborg-mu8k8c12-5:arm-left",
    "role": "arm",
    "center": [
     8,
@@ -136,7 +136,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-5:leg--1--1",
+   "id": "norsborg-mu8k8c12-5:leg--1--1",
    "role": "leg",
    "center": [
     9,
@@ -150,7 +150,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-5:leg--1-1",
+   "id": "norsborg-mu8k8c12-5:leg--1-1",
    "role": "leg",
    "center": [
     9,
@@ -164,7 +164,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-5:leg-1--1",
+   "id": "norsborg-mu8k8c12-5:leg-1--1",
    "role": "leg",
    "center": [
     7,
@@ -178,7 +178,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-5:leg-1-1",
+   "id": "norsborg-mu8k8c12-5:leg-1-1",
    "role": "leg",
    "center": [
     7,
@@ -192,7 +192,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-6:frame",
+   "id": "norsborg-mu8k8c12-6:frame",
    "role": "frame",
    "center": [
     56,
@@ -206,7 +206,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-6:back-frame",
+   "id": "norsborg-mu8k8c12-6:back-frame",
    "role": "frame",
    "center": [
     56,
@@ -220,7 +220,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-6:seat-0",
+   "id": "norsborg-mu8k8c12-6:seat-0",
    "role": "seat",
    "center": [
     56,
@@ -234,7 +234,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-6:back-0",
+   "id": "norsborg-mu8k8c12-6:back-0",
    "role": "back",
    "center": [
     56.5,
@@ -248,7 +248,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-6:leg--1--1",
+   "id": "norsborg-mu8k8c12-6:leg--1--1",
    "role": "leg",
    "center": [
     25,
@@ -262,7 +262,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-6:leg--1-1",
+   "id": "norsborg-mu8k8c12-6:leg--1-1",
    "role": "leg",
    "center": [
     25,
@@ -276,7 +276,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-6:leg-1--1",
+   "id": "norsborg-mu8k8c12-6:leg-1--1",
    "role": "leg",
    "center": [
     87,
@@ -290,7 +290,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-6:leg-1-1",
+   "id": "norsborg-mu8k8c12-6:leg-1-1",
    "role": "leg",
    "center": [
     87,
@@ -304,7 +304,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-7:frame",
+   "id": "norsborg-mu8k8c12-7:frame",
    "role": "frame",
    "center": [
     186.5,
@@ -318,7 +318,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-7:back-frame",
+   "id": "norsborg-mu8k8c12-7:back-frame",
    "role": "frame",
    "center": [
     186.5,
@@ -332,7 +332,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-7:seat-0",
+   "id": "norsborg-mu8k8c12-7:seat-0",
    "role": "seat",
    "center": [
     126.36666666666667,
@@ -346,7 +346,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-7:back-0",
+   "id": "norsborg-mu8k8c12-7:back-0",
    "role": "back",
    "center": [
     127,
@@ -360,7 +360,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-7:seat-1",
+   "id": "norsborg-mu8k8c12-7:seat-1",
    "role": "seat",
    "center": [
     186.5,
@@ -374,7 +374,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-7:back-1",
+   "id": "norsborg-mu8k8c12-7:back-1",
    "role": "back",
    "center": [
     189,
@@ -388,7 +388,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-7:seat-2",
+   "id": "norsborg-mu8k8c12-7:seat-2",
    "role": "seat",
    "center": [
     246.63333333333333,
@@ -402,7 +402,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-7:back-2",
+   "id": "norsborg-mu8k8c12-7:back-2",
    "role": "back",
    "center": [
     251,
@@ -416,7 +416,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-7:leg--1--1",
+   "id": "norsborg-mu8k8c12-7:leg--1--1",
    "role": "leg",
    "center": [
     105,
@@ -430,7 +430,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-7:leg--1-1",
+   "id": "norsborg-mu8k8c12-7:leg--1-1",
    "role": "leg",
    "center": [
     105,
@@ -444,7 +444,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-7:leg-1--1",
+   "id": "norsborg-mu8k8c12-7:leg-1--1",
    "role": "leg",
    "center": [
     268,
@@ -458,7 +458,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-7:leg-1-1",
+   "id": "norsborg-mu8k8c12-7:leg-1-1",
    "role": "leg",
    "center": [
     268,
@@ -472,7 +472,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-8:frame",
+   "id": "norsborg-mu8k8c12-8:frame",
    "role": "frame",
    "center": [
     285,
@@ -486,7 +486,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-8:arm-left",
+   "id": "norsborg-mu8k8c12-8:arm-left",
    "role": "arm",
    "center": [
     285,
@@ -500,7 +500,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-8:leg--1--1",
+   "id": "norsborg-mu8k8c12-8:leg--1--1",
    "role": "leg",
    "center": [
     286,
@@ -514,7 +514,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-8:leg--1-1",
+   "id": "norsborg-mu8k8c12-8:leg--1-1",
    "role": "leg",
    "center": [
     286,
@@ -528,7 +528,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-8:leg-1--1",
+   "id": "norsborg-mu8k8c12-8:leg-1--1",
    "role": "leg",
    "center": [
     284,
@@ -542,7 +542,7 @@
    ]
   },
   {
-   "id": "norsborg-mu755dib-8:leg-1-1",
+   "id": "norsborg-mu8k8c12-8:leg-1-1",
    "role": "leg",
    "center": [
     284,

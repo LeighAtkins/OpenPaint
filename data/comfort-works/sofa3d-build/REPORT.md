@@ -78,3 +78,46 @@ needs OMS session via CW Import; fallback tier-3 Pottery Barn factory pages), ex
 `YORK_CONFIGS`-style width map in `extended-models.ts`; 3. IKEA backlog by config
 count (Kivik 12, Söderhamn already built-audit, Landskrona, Ektorp subsets…).
 Do not re-run reconciliation unless `sofas.json` hash changed.
+
+
+---
+
+# Run 2 addendum — PB York family completed (2026-09-19)
+
+## Sourcing
+All 16 remaining York PIDs sourced at **tier-1** through the local CW relay
+(`tools/cw-catalog/source-york.cjs` → public product measurements endpoint;
+the env-configured OMS credentials in .env.local made this headless — no browser
+session was required). Evidence: `evidence/oms/PB-*.json`.
+
+Notable measured envelopes: regular seat depth 95.25 cm, deep seat 110.49 cm;
+standard height 91.44 cm, deep grand sofas 96.52 cm, 80.5" models 88.9 cm.
+Scoped references carry the cushion layout (family default 1S-2B = bench + 2 backs).
+
+## Implemented
+16 registry entries + the YORK_FAMILY construction table in extended-models.ts:
+roll / slope / square arm archetypes × regular/deep seats × 60–97" widths,
+plus the PB-YSAD-44X corner piece and PB-YSAD-54M loveseat+chaise sectional
+(sectional split provisional, flagged). Back-cushion height solved against the
+measured envelope (+1.6 cm offset compensates the seat-contact lift — empirical).
+
+## Harness refinement
+Envelope is now measured on the BODY SHELL (skirt hem excluded) — the skirt hem
+flares ~1.3 cm/side past the shell by design (skirtFlare); a `skirt-hem-allowance`
+check bounds the hem separately. This also resolved the earlier audit overflow
+notes for PB Charleston/York/English (their shells match declared dims).
+
+## Coverage
+- Accepted: 16 York configurations (structure pass + render pass + tier-1 dims)
+- Visual: needs_review (executor self-review of sheets; roll arms, bench layouts,
+  corner double-back and sectionals match CW photos on inspection)
+- Remaining family gap: none in furniture; PB-YSLA-95 retains its 4 cushion
+  variants; accessories (armrest protectors etc.) remain queued family-agnostic.
+
+## Validation
+type-check pass · 79/79 sofa3d tests · touched-file eslint clean · full validate
+still red only on the 180 pre-existing legacy lint errors (baseline log).
+
+Commits: harness 62f926f · Klippan 62be410 · York (this commit).
+Next queue: IKEA backlog by config count (Kivik 12 first) — sourcing via the same
+relay is NOT applicable (IKEA models source from ikea.com PDPs, tier-2).

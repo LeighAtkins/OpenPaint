@@ -1,0 +1,42 @@
+{
+ "configurationId": "PB-YSA-81-2C",
+ "sofa3dModelId": "pb-york-square-81-2c",
+ "familyIds": [
+  "pottery-barn-york-slipcovers"
+ ],
+ "title": "York Square Arm Sofa 80.5\" Slipcover",
+ "objectType": "sofa",
+ "dimensionStatus": "verified",
+ "sources": [
+  {
+   "tier": 1,
+   "url": "cw40.comfort-works.com via OpenPaint CW relay (public product measurements)",
+   "excerpt": "scoped PB-YSA-81-2C style Original (CNRP_SP)",
+   "retrieved": "2026-09-18",
+   "confidence": "high (OMS QC data)"
+  }
+ ],
+ "envelope": {
+  "width": 204.47,
+  "depth": 97.79,
+  "height": 88.9
+ },
+ "layout": {
+  "seats": 2,
+  "backs": 2,
+  "arm": "square",
+  "deepSeat": false,
+  "corner": false,
+  "chaise": false
+ },
+ "semantics": {
+  "height": "top of backrest",
+  "depth": "front seat edge to back shell",
+  "cushionLayout": "scoped reference layout (1S-2B = bench seat + 2 backs)",
+  "seatHeightNote": "PB 45.7 cm is compressed front-edge seat height; rendered lofted crown peaks ~2.7 cm higher (loft 0.5) — recorded exception."
+ },
+ "colourwayDefault": {
+  "name": "provisional linen grey (sampled later)",
+  "hex": "#d8d1c2"
+ }
+}

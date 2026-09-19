@@ -1,0 +1,24 @@
+{
+ "reference": "PB-YDSA-95",
+ "public": {
+  "ok": true,
+  "code": "CW_PUBLIC_MEASUREMENTS_OK",
+  "measurements": {
+   "width": {
+    "cm": 241.3,
+    "in": 95
+   },
+   "depth": {
+    "cm": 111.76,
+    "in": 44
+   },
+   "height": {
+    "cm": 96.52,
+    "in": 38
+   }
+  },
+  "scopedReference": "PB-YDSA-95",
+  "style": "Classic",
+  "styleCode": "CNRP_SP"
+ }
+}
