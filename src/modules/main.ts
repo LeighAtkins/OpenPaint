@@ -602,6 +602,10 @@ export class App {
           this.historyManager
         );
         this.measurementOverlayManager.initUI(this.projectManager);
+        // A ChatGPT/MCP draft link opens photos and editable seam placements.
+        void import('./measurement-assistant/editor-client').then(module =>
+          module.importDraftFromLocation(this)
+        );
       }
 
       if (this.metadataManager?.updateStrokeVisibilityControls) {

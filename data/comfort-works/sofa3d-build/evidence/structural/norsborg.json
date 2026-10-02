@@ -1,750 +1,370 @@
 {
- "id": "norsborg",
- "declared": {
-  "width": 285,
-  "depth": 285,
-  "height": 85,
-  "armWidth": 16,
-  "armHeight": 52,
-  "seatHeight": 43,
-  "seatThickness": 12,
-  "backThickness": 15,
-  "legHeight": 18,
-  "seatCount": 7
- },
- "ok": false,
- "results": [
-  {
-   "name": "finite-transforms",
-   "pass": true,
-   "detail": "0 parts with non-finite transforms"
+  "id": "norsborg",
+  "declared": {
+    "width": 285,
+    "depth": 285,
+    "height": 85,
+    "armWidth": 16,
+    "armHeight": 52,
+    "seatHeight": 43,
+    "seatThickness": 12,
+    "backThickness": 15,
+    "legHeight": 18,
+    "seatCount": 7
   },
-  {
-   "name": "positive-sizes",
-   "pass": true,
-   "detail": "0 parts with non-positive sizes"
-  },
-  {
-   "name": "unique-part-ids",
-   "pass": true,
-   "detail": "46 parts, 46 unique ids"
-  },
-  {
-   "name": "non-empty-geometry",
-   "pass": true,
-   "detail": "46 meshes, 0 empty"
-  },
-  {
-   "name": "overall-width",
-   "pass": true,
-   "detail": "target 285.0 cm, rendered 285.1 cm, tolerance ±2.9 cm (body shell)"
-  },
-  {
-   "name": "overall-depth",
-   "pass": true,
-   "detail": "target 285.0 cm, rendered 285.1 cm, tolerance ±2.9 cm (body shell)"
-  },
-  {
-   "name": "overall-height",
-   "pass": false,
-   "detail": "target 85.0 cm, rendered 88.7 cm, tolerance ±1.0 cm (body shell)"
-  },
-  {
-   "name": "no-below-floor",
-   "pass": true,
-   "detail": "min y 0.00 cm"
-  },
-  {
-   "name": "floor-contact",
-   "pass": true,
-   "detail": "model rests at y=0.00 cm (0 = floor)"
-  },
-  {
-   "name": "seat-count",
-   "pass": true,
-   "detail": "7 seat cushions, spec 7"
-  },
-  {
-   "name": "arm-count",
-   "pass": true,
-   "detail": "2 arms for 2 armed modules"
-  },
-  {
-   "name": "module-overlap",
-   "pass": true,
-   "detail": "norsborg-mu8k8bzm-1 vs norsborg-mu8k8bzm-3: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
-  }
- ],
- "bounds": {
-  "min": [
-   0,
-   0,
-   -0.13360894954299596
+  "ok": false,
+  "results": [
+    {
+      "name": "finite-transforms",
+      "pass": true,
+      "detail": "0 parts with non-finite transforms"
+    },
+    {
+      "name": "positive-sizes",
+      "pass": true,
+      "detail": "0 parts with non-positive sizes"
+    },
+    {
+      "name": "unique-part-ids",
+      "pass": true,
+      "detail": "46 parts, 46 unique ids"
+    },
+    {
+      "name": "non-empty-geometry",
+      "pass": true,
+      "detail": "46 meshes, 0 empty"
+    },
+    {
+      "name": "overall-width",
+      "pass": true,
+      "detail": "target 285.0 cm, rendered 285.1 cm, tolerance ±2.9 cm (body shell)"
+    },
+    {
+      "name": "overall-depth",
+      "pass": true,
+      "detail": "target 285.0 cm, rendered 285.1 cm, tolerance ±2.9 cm (body shell)"
+    },
+    {
+      "name": "overall-height",
+      "pass": false,
+      "detail": "target 85.0 cm, rendered 88.7 cm, tolerance ±1.0 cm (body shell)"
+    },
+    {
+      "name": "no-below-floor",
+      "pass": true,
+      "detail": "min y 0.00 cm"
+    },
+    {
+      "name": "floor-contact",
+      "pass": true,
+      "detail": "model rests at y=0.00 cm (0 = floor)"
+    },
+    {
+      "name": "seat-count",
+      "pass": true,
+      "detail": "7 seat cushions, spec 7"
+    },
+    {
+      "name": "arm-count",
+      "pass": true,
+      "detail": "2 arms for 2 armed modules"
+    },
+    {
+      "name": "module-overlap",
+      "pass": true,
+      "detail": "norsborg-munc2v8f-1 vs norsborg-munc2v8f-3: plan-view penetration 0.0 cm (tolerance 2 cm flush joins)"
+    }
   ],
-  "max": [
-   285.13360894954303,
-   88.69520482763696,
-   285
-  ],
-  "size": [
-   285.13360894954303,
-   88.69520482763696,
-   285.133608949543
+  "bounds": {
+    "min": [0, 0, -0.13360894954299596],
+    "max": [285.13360894954303, 88.69520482763696, 285],
+    "size": [285.13360894954303, 88.69520482763696, 285.133608949543]
+  },
+  "counts": {
+    "seats": 7,
+    "backs": 8,
+    "arms": 2,
+    "pillows": 0,
+    "legs": 20,
+    "skirts": 0,
+    "frames": 9
+  },
+  "partBounds": [
+    {
+      "id": "norsborg-munc2v8f-0:frame",
+      "role": "frame",
+      "center": [8, 24.5, 44],
+      "size": [16, 13, 88]
+    },
+    {
+      "id": "norsborg-munc2v8f-0:arm-left",
+      "role": "arm",
+      "center": [8, 35, 44],
+      "size": [16, 34, 88]
+    },
+    {
+      "id": "norsborg-munc2v8f-0:leg--1--1",
+      "role": "leg",
+      "center": [9, 9, 9],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-0:leg--1-1",
+      "role": "leg",
+      "center": [9, 9, 79],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-0:leg-1--1",
+      "role": "leg",
+      "center": [7, 9, 9],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-0:leg-1-1",
+      "role": "leg",
+      "center": [7, 9, 79],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-1:frame",
+      "role": "frame",
+      "center": [106.5, 24.5, 44],
+      "size": [181, 13, 88]
+    },
+    {
+      "id": "norsborg-munc2v8f-1:back-frame",
+      "role": "frame",
+      "center": [106.5, 35, 7.5],
+      "size": [181, 34, 15]
+    },
+    {
+      "id": "norsborg-munc2v8f-1:seat-0",
+      "role": "seat",
+      "center": [46.36666666666666, 37, 51.5],
+      "size": [66, 11.5, 73]
+    },
+    {
+      "id": "norsborg-munc2v8f-1:back-0",
+      "role": "back",
+      "center": [47, 65.5, 13.2],
+      "size": [62, 45.45071703448799, 26.32519775576032]
+    },
+    {
+      "id": "norsborg-munc2v8f-1:seat-1",
+      "role": "seat",
+      "center": [106.5, 37, 51.5],
+      "size": [66, 11.5, 73]
+    },
+    {
+      "id": "norsborg-munc2v8f-1:back-1",
+      "role": "back",
+      "center": [109, 65.5, 13.2],
+      "size": [62, 45.45071703448799, 26.32519775576032]
+    },
+    {
+      "id": "norsborg-munc2v8f-1:seat-2",
+      "role": "seat",
+      "center": [166.63333333333333, 37, 51.5],
+      "size": [66, 11.5, 73]
+    },
+    {
+      "id": "norsborg-munc2v8f-1:back-2",
+      "role": "back",
+      "center": [171, 65.5, 13.2],
+      "size": [62, 45.45071703448799, 26.32519775576032]
+    },
+    {
+      "id": "norsborg-munc2v8f-1:leg--1--1",
+      "role": "leg",
+      "center": [25, 9, 9],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-1:leg--1-1",
+      "role": "leg",
+      "center": [25, 9, 79],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-1:leg-1--1",
+      "role": "leg",
+      "center": [188, 9, 9],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-1:leg-1-1",
+      "role": "leg",
+      "center": [188, 9, 79],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-2:frame",
+      "role": "frame",
+      "center": [241, 24.5, 44],
+      "size": [88, 13, 88]
+    },
+    {
+      "id": "norsborg-munc2v8f-2:back-frame",
+      "role": "frame",
+      "center": [241, 35, 7.5],
+      "size": [88, 34, 15]
+    },
+    {
+      "id": "norsborg-munc2v8f-2:corner-back-frame",
+      "role": "frame",
+      "center": [277.5, 35, 51.5],
+      "size": [15, 34, 73]
+    },
+    {
+      "id": "norsborg-munc2v8f-2:seat-0",
+      "role": "seat",
+      "center": [233.5, 37, 51.5],
+      "size": [72.5, 12, 72.5]
+    },
+    {
+      "id": "norsborg-munc2v8f-2:back-0",
+      "role": "back",
+      "center": [234, 65.5, 13.2],
+      "size": [74.00000762939453, 46.39040965527391, 26.66721789908599]
+    },
+    {
+      "id": "norsborg-munc2v8f-2:corner-back-cushion",
+      "role": "back",
+      "center": [271.8, 65.5, 44],
+      "size": [26.66721789908604, 46.39040965527391, 87]
+    },
+    {
+      "id": "norsborg-munc2v8f-2:leg--1--1",
+      "role": "leg",
+      "center": [206, 9, 9],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-2:leg--1-1",
+      "role": "leg",
+      "center": [206, 9, 79],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-2:leg-1--1",
+      "role": "leg",
+      "center": [276, 9, 9],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-2:leg-1-1",
+      "role": "leg",
+      "center": [276, 9, 79],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-3:frame",
+      "role": "frame",
+      "center": [241, 24.5, 178.5],
+      "size": [88.00000000000003, 13, 181]
+    },
+    {
+      "id": "norsborg-munc2v8f-3:back-frame",
+      "role": "frame",
+      "center": [277.5, 35, 178.5],
+      "size": [15, 34, 181]
+    },
+    {
+      "id": "norsborg-munc2v8f-3:seat-0",
+      "role": "seat",
+      "center": [233.5, 37, 118.36666666666666],
+      "size": [73, 11.5, 66.00000000000003]
+    },
+    {
+      "id": "norsborg-munc2v8f-3:back-0",
+      "role": "back",
+      "center": [271.8, 65.5, 119],
+      "size": [26.325197755760314, 45.45071703448799, 62]
+    },
+    {
+      "id": "norsborg-munc2v8f-3:seat-1",
+      "role": "seat",
+      "center": [233.5, 37, 178.5],
+      "size": [73, 11.5, 66]
+    },
+    {
+      "id": "norsborg-munc2v8f-3:back-1",
+      "role": "back",
+      "center": [271.8, 65.5, 181],
+      "size": [26.325197755760314, 45.45071703448799, 62]
+    },
+    {
+      "id": "norsborg-munc2v8f-3:seat-2",
+      "role": "seat",
+      "center": [233.5, 37, 238.63333333333333],
+      "size": [73, 11.5, 66]
+    },
+    {
+      "id": "norsborg-munc2v8f-3:back-2",
+      "role": "back",
+      "center": [271.8, 65.5, 243],
+      "size": [26.325197755760314, 45.45071703448799, 62]
+    },
+    {
+      "id": "norsborg-munc2v8f-3:leg--1--1",
+      "role": "leg",
+      "center": [276, 9, 97],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-3:leg--1-1",
+      "role": "leg",
+      "center": [206, 9, 97],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-3:leg-1--1",
+      "role": "leg",
+      "center": [276, 9, 260],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-3:leg-1-1",
+      "role": "leg",
+      "center": [206, 9, 260],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-4:frame",
+      "role": "frame",
+      "center": [241, 24.5, 277],
+      "size": [88, 13, 16]
+    },
+    {
+      "id": "norsborg-munc2v8f-4:arm-left",
+      "role": "arm",
+      "center": [241, 35, 277],
+      "size": [88, 34, 16]
+    },
+    {
+      "id": "norsborg-munc2v8f-4:leg--1--1",
+      "role": "leg",
+      "center": [276, 9, 278],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-4:leg--1-1",
+      "role": "leg",
+      "center": [206, 9, 278],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-4:leg-1--1",
+      "role": "leg",
+      "center": [276, 9, 276],
+      "size": [3, 18, 3]
+    },
+    {
+      "id": "norsborg-munc2v8f-4:leg-1-1",
+      "role": "leg",
+      "center": [206, 9, 276],
+      "size": [3, 18, 3]
+    }
   ]
- },
- "counts": {
-  "seats": 7,
-  "backs": 8,
-  "arms": 2,
-  "pillows": 0,
-  "legs": 20,
-  "skirts": 0,
-  "frames": 9
- },
- "partBounds": [
-  {
-   "id": "norsborg-mu8k8bzm-0:frame",
-   "role": "frame",
-   "center": [
-    8,
-    24.5,
-    44
-   ],
-   "size": [
-    16,
-    13,
-    88
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-0:arm-left",
-   "role": "arm",
-   "center": [
-    8,
-    35,
-    44
-   ],
-   "size": [
-    16,
-    34,
-    88
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-0:leg--1--1",
-   "role": "leg",
-   "center": [
-    9,
-    9,
-    9
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-0:leg--1-1",
-   "role": "leg",
-   "center": [
-    9,
-    9,
-    79
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-0:leg-1--1",
-   "role": "leg",
-   "center": [
-    7,
-    9,
-    9
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-0:leg-1-1",
-   "role": "leg",
-   "center": [
-    7,
-    9,
-    79
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-1:frame",
-   "role": "frame",
-   "center": [
-    106.5,
-    24.5,
-    44
-   ],
-   "size": [
-    181,
-    13,
-    88
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-1:back-frame",
-   "role": "frame",
-   "center": [
-    106.5,
-    35,
-    7.5
-   ],
-   "size": [
-    181,
-    34,
-    15
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-1:seat-0",
-   "role": "seat",
-   "center": [
-    46.36666666666666,
-    37,
-    51.5
-   ],
-   "size": [
-    66,
-    11.5,
-    73
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-1:back-0",
-   "role": "back",
-   "center": [
-    47,
-    65.5,
-    13.2
-   ],
-   "size": [
-    62,
-    45.45071703448799,
-    26.32519775576032
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-1:seat-1",
-   "role": "seat",
-   "center": [
-    106.5,
-    37,
-    51.5
-   ],
-   "size": [
-    66,
-    11.5,
-    73
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-1:back-1",
-   "role": "back",
-   "center": [
-    109,
-    65.5,
-    13.2
-   ],
-   "size": [
-    62,
-    45.45071703448799,
-    26.32519775576032
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-1:seat-2",
-   "role": "seat",
-   "center": [
-    166.63333333333333,
-    37,
-    51.5
-   ],
-   "size": [
-    66,
-    11.5,
-    73
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-1:back-2",
-   "role": "back",
-   "center": [
-    171,
-    65.5,
-    13.2
-   ],
-   "size": [
-    62,
-    45.45071703448799,
-    26.32519775576032
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-1:leg--1--1",
-   "role": "leg",
-   "center": [
-    25,
-    9,
-    9
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-1:leg--1-1",
-   "role": "leg",
-   "center": [
-    25,
-    9,
-    79
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-1:leg-1--1",
-   "role": "leg",
-   "center": [
-    188,
-    9,
-    9
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-1:leg-1-1",
-   "role": "leg",
-   "center": [
-    188,
-    9,
-    79
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-2:frame",
-   "role": "frame",
-   "center": [
-    241,
-    24.5,
-    44
-   ],
-   "size": [
-    88,
-    13,
-    88
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-2:back-frame",
-   "role": "frame",
-   "center": [
-    241,
-    35,
-    7.5
-   ],
-   "size": [
-    88,
-    34,
-    15
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-2:corner-back-frame",
-   "role": "frame",
-   "center": [
-    277.5,
-    35,
-    51.5
-   ],
-   "size": [
-    15,
-    34,
-    73
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-2:seat-0",
-   "role": "seat",
-   "center": [
-    233.5,
-    37,
-    51.5
-   ],
-   "size": [
-    72.5,
-    12,
-    72.5
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-2:back-0",
-   "role": "back",
-   "center": [
-    234,
-    65.5,
-    13.2
-   ],
-   "size": [
-    74.00000762939453,
-    46.39040965527391,
-    26.66721789908599
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-2:corner-back-cushion",
-   "role": "back",
-   "center": [
-    271.8,
-    65.5,
-    44
-   ],
-   "size": [
-    26.66721789908604,
-    46.39040965527391,
-    87
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-2:leg--1--1",
-   "role": "leg",
-   "center": [
-    206,
-    9,
-    9
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-2:leg--1-1",
-   "role": "leg",
-   "center": [
-    206,
-    9,
-    79
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-2:leg-1--1",
-   "role": "leg",
-   "center": [
-    276,
-    9,
-    9
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-2:leg-1-1",
-   "role": "leg",
-   "center": [
-    276,
-    9,
-    79
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-3:frame",
-   "role": "frame",
-   "center": [
-    241,
-    24.5,
-    178.5
-   ],
-   "size": [
-    88.00000000000003,
-    13,
-    181
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-3:back-frame",
-   "role": "frame",
-   "center": [
-    277.5,
-    35,
-    178.5
-   ],
-   "size": [
-    15,
-    34,
-    181
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-3:seat-0",
-   "role": "seat",
-   "center": [
-    233.5,
-    37,
-    118.36666666666666
-   ],
-   "size": [
-    73,
-    11.5,
-    66.00000000000003
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-3:back-0",
-   "role": "back",
-   "center": [
-    271.8,
-    65.5,
-    119
-   ],
-   "size": [
-    26.325197755760314,
-    45.45071703448799,
-    62
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-3:seat-1",
-   "role": "seat",
-   "center": [
-    233.5,
-    37,
-    178.5
-   ],
-   "size": [
-    73,
-    11.5,
-    66
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-3:back-1",
-   "role": "back",
-   "center": [
-    271.8,
-    65.5,
-    181
-   ],
-   "size": [
-    26.325197755760314,
-    45.45071703448799,
-    62
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-3:seat-2",
-   "role": "seat",
-   "center": [
-    233.5,
-    37,
-    238.63333333333333
-   ],
-   "size": [
-    73,
-    11.5,
-    66
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-3:back-2",
-   "role": "back",
-   "center": [
-    271.8,
-    65.5,
-    243
-   ],
-   "size": [
-    26.325197755760314,
-    45.45071703448799,
-    62
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-3:leg--1--1",
-   "role": "leg",
-   "center": [
-    276,
-    9,
-    97
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-3:leg--1-1",
-   "role": "leg",
-   "center": [
-    206,
-    9,
-    97
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-3:leg-1--1",
-   "role": "leg",
-   "center": [
-    276,
-    9,
-    260
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-3:leg-1-1",
-   "role": "leg",
-   "center": [
-    206,
-    9,
-    260
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-4:frame",
-   "role": "frame",
-   "center": [
-    241,
-    24.5,
-    277
-   ],
-   "size": [
-    88,
-    13,
-    16
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-4:arm-left",
-   "role": "arm",
-   "center": [
-    241,
-    35,
-    277
-   ],
-   "size": [
-    88,
-    34,
-    16
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-4:leg--1--1",
-   "role": "leg",
-   "center": [
-    276,
-    9,
-    278
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-4:leg--1-1",
-   "role": "leg",
-   "center": [
-    206,
-    9,
-    278
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-4:leg-1--1",
-   "role": "leg",
-   "center": [
-    276,
-    9,
-    276
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  },
-  {
-   "id": "norsborg-mu8k8bzm-4:leg-1-1",
-   "role": "leg",
-   "center": [
-    206,
-    9,
-    276
-   ],
-   "size": [
-    3,
-    18,
-    3
-   ]
-  }
- ]
 }

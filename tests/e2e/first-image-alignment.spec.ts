@@ -20,6 +20,7 @@ interface Alignment {
   zoom: number;
   imgW: number;
   imgH: number;
+  edgeError: number;
 }
 
 async function measure(page: Page): Promise<Alignment | null> {
@@ -60,6 +61,10 @@ async function measure(page: Page): Promise<Alignment | null> {
       zoom: +(cm?.zoomLevel || 0).toFixed(4),
       imgW: bg.width || 0,
       imgH: bg.height || 0,
+      edgeError: Math.max(
+        Math.abs((bg.width || 0) * (bg.scaleX || 1) * (cm?.zoomLevel || 1) - frameRect.width),
+        Math.abs((bg.height || 0) * (bg.scaleY || 1) * (cm?.zoomLevel || 1) - frameRect.height)
+      ),
     };
   });
 }
@@ -184,6 +189,7 @@ for (const [name, w, h] of [
     // Background center must align with capture-frame center within a few px.
     expect(Math.abs(m.dx), `${name} dx`).toBeLessThan(4);
     expect(Math.abs(m.dy), `${name} dy`).toBeLessThan(4);
+    expect(m.edgeError, `${name} image fills its initial frame`).toBeLessThan(4);
   });
 }
 
@@ -235,3 +241,24 @@ test('first UI upload centers immediately after opening Images at compact width'
   expect(Math.abs(geometry!.imageCenterDeltaX)).toBeLessThanOrEqual(3);
   expect(Math.abs(geometry!.imageCenterDeltaY)).toBeLessThanOrEqual(3);
 });
+
+for (const pipeline of ['project', 'ui'] as const) {
+  test(`first ${pipeline} upload fits after an empty workspace viewport has been saved`, async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await waitForApp(page);
+    await page.evaluate(() => {
+      const pm = window.app!.projectManager;
+      window.app!.canvasManager.setViewportState({ zoom: 1.2, panX: 0, panY: -25 });
+      pm.saveCurrentViewState();
+    });
+    await (pipeline === 'ui' ? uploadImageThroughUiPipeline : uploadImage)(page, 1200, 800);
+    await page.waitForTimeout(1500);
+    const alignment = await measure(page);
+    expect(alignment).not.toBeNull();
+    expect(Math.abs(alignment!.dx)).toBeLessThan(4);
+    expect(Math.abs(alignment!.dy)).toBeLessThan(4);
+    expect(alignment!.edgeError).toBeLessThan(4);
+  });
+}

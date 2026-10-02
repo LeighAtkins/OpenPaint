@@ -925,16 +925,28 @@ export class FabricControls {
         : rawPointer;
 
       // Get absolute end point
-      const matrix = group.calcTransformMatrix();
-      const lineCenter = line.getCenterPoint();
       const points = line.calcLinePoints();
-      const endLocal = { x: points.x2 + lineCenter.x, y: points.y2 + lineCenter.y };
-      const endAbs = fabric.util.transformPoint(endLocal, matrix);
+      const endAbs = fabric.util.transformPoint(
+        { x: points.x2, y: points.y2 },
+        line.calcTransformMatrix()
+      );
 
       group._restoreObjectsState();
 
       // Now line and head are absolute.
-      line.set({ x1: pointer.x, y1: pointer.y, x2: endAbs.x, y2: endAbs.y });
+      line.set({
+        angle: 0,
+        scaleX: 1,
+        scaleY: 1,
+        skewX: 0,
+        skewY: 0,
+        flipX: false,
+        flipY: false,
+        x1: pointer.x,
+        y1: pointer.y,
+        x2: endAbs.x,
+        y2: endAbs.y,
+      });
       line._setWidthHeight();
 
       const dx2 = endAbs.x - pointer.x;
@@ -997,13 +1009,30 @@ export class FabricControls {
         ? FabricControls.getSnapPoint(canvas, rawPointer, group)
         : rawPointer;
 
+      // x1/y1 retain the original constructor coordinates after a group moves.
+      // Read the rendered fixed endpoint before restoring children, then bake
+      // both endpoints so subsequent drags cannot resurrect stale coordinates.
+      const points = line.calcLinePoints();
+      const startAbs = fabric.util.transformPoint(
+        { x: points.x1, y: points.y1 },
+        line.calcTransformMatrix()
+      );
       group._restoreObjectsState();
 
-      // Get current absolute start
-      const startAbs = { x: line.x1, y: line.y1 };
-
-      // Update Line
-      line.set({ x2: pointer.x, y2: pointer.y });
+      // Bake the group transform into fresh world-space line coordinates.
+      line.set({
+        angle: 0,
+        scaleX: 1,
+        scaleY: 1,
+        skewX: 0,
+        skewY: 0,
+        flipX: false,
+        flipY: false,
+        x1: startAbs.x,
+        y1: startAbs.y,
+        x2: pointer.x,
+        y2: pointer.y,
+      });
       line._setWidthHeight();
 
       // Update Head

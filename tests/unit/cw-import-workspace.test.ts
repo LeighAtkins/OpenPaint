@@ -12,9 +12,54 @@ import {
   resolveNextAvailableCwLabel,
   extractRows,
   isCwConfigurationSelectionReady,
+  collectSectionImageGroups,
 } from '../../src/modules/ui/cw-import-ui';
 
 describe('CW import measurement draw queue', () => {
+  test('archived images retain their component association instead of a flat list or undefined label', () => {
+    const frame = 'https://cw-archive.invalid/assets/' + 'a'.repeat(64) + '.png';
+    const seat = 'https://cw-archive.invalid/assets/' + 'b'.repeat(64) + '.png';
+    const groups = collectSectionImageGroups(
+      {
+        images: [frame, seat],
+        qcMeasurements: {
+          data: {
+            product_components: [
+              {
+                name: 'Frame Cover',
+                translations: { en: 'Frame Cover' },
+                slipcover_details_images: [{ name: 'SOFA_FR_01.png', url: frame }],
+              },
+              {
+                name: 'Seat Cushion Cover',
+                translations: { en: 'Seat Cushion Cover' },
+                slipcover_details_images: [{ name: 'SOFA_STCC.png', url: seat }],
+              },
+            ],
+          },
+        },
+      },
+      ''
+    );
+    expect(groups).toEqual({ 'Frame Cover': [[frame]], 'Seat Cushion Cover': [[seat]] });
+  });
+  test('unconfirmed models cannot load even when both selectors have values', () => {
+    expect(
+      isCwConfigurationSelectionReady({
+        versionOptions: [{ code: 'SV_STD__1S-3B', modelSetConfirmed: false }],
+        styleOptions: [{}],
+        selectedVersionCode: 'SV_STD__1S-3B',
+        selectedStyleKey: 'Original',
+      })
+    ).toBe(false);
+    expect(
+      isCwConfigurationSelectionReady({
+        measurementsUnconfirmed: true,
+        versionOptions: [],
+        styleOptions: [],
+      })
+    ).toBe(false);
+  });
   test('product variants remain blocked until configuration and style are explicitly selected', () => {
     const result = {
       versionOptions: [{ code: 'L' }, { code: 'R' }],

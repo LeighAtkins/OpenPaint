@@ -1338,11 +1338,6 @@ export class ProjectManager {
         // Save backgroundWorldRect so setBackgroundImage can restore the exact
         // position on the next visit. Split mode preserves the previous rect
         // because the live canvas is temporarily fitted to a half-width pane.
-        const activeTabState = window.captureTabsByLabel?.[targetViewId];
-        const activeTab = activeTabState?.tabs?.find?.(
-          tab => tab?.id === activeTabState?.activeTabId
-        );
-        const tabWorldRect = activeTab?.captureFrame?.worldRect || null;
         const liveBackgroundWorldRect = targetCanvasManager.getBackgroundWorldRect?.() || null;
         const backgroundImage = targetCanvasManager.fabricCanvas?.backgroundImage || null;
         const inferredBackgroundWorldRect = backgroundImage
@@ -1366,8 +1361,7 @@ export class ProjectManager {
         // Persisting it as the background rectangle makes a returning image adopt
         // the frame's size before its saved viewport is restored, which silently
         // turns a manual zoom back into a fit-to-frame view.
-        const backgroundWorldRect =
-          liveBackgroundWorldRect || inferredBackgroundWorldRect || tabWorldRect || null;
+        const backgroundWorldRect = liveBackgroundWorldRect || inferredBackgroundWorldRect || null;
         if (backgroundWorldRect) {
           this.views[targetViewId].backgroundWorldRect = JSON.parse(
             JSON.stringify(backgroundWorldRect)
@@ -2038,20 +2032,23 @@ export class ProjectManager {
           }
 
           const viewState = this.views?.[this.currentViewId] || null;
-          const hasPersistedLayout = Boolean(
-            viewState?.canvasData ||
-              viewState?.viewport ||
-              viewState?.tabs ||
-              viewState?.backgroundWorldRect
+          // Saving an empty workspace also writes canvasData and viewport.
+          // Those records do not describe an image placement: carrying their
+          // pan/zoom into the first upload leaves the image outside its frame.
+          // Preserve existing artwork and saved image geometry instead.
+          const hasPersistedLayout = !!(
+            viewState?.canvasData?.objects?.length ||
+            viewState?.canvasData?.backgroundImage ||
+            viewState?.backgroundWorldRect ||
+            viewState?.initialImageFrameApplied === true
           );
           // Size the capture frame to the uploaded image's aspect ratio on the
           // FIRST upload (no persisted layout). Previously this only ran for
           // portrait images; landscape/square images kept the default 4:3 frame
           // and the image was fit inside it, leaving empty gaps on the shorter
           // dimension — the "image smaller than frame" symptom.
-          const shouldInitializeFrameForImage = Boolean(
-            !hasPersistedLayout && viewState?.initialImageFrameApplied !== true
-          );
+          const shouldInitializeFrameForImage =
+            !hasPersistedLayout && viewState?.initialImageFrameApplied !== true;
           let initialFrameApplied = false;
           if (shouldInitializeFrameForImage) {
             initialFrameApplied = Boolean(
@@ -2059,6 +2056,8 @@ export class ProjectManager {
             );
             if (initialFrameApplied && viewState) {
               viewState.initialImageFrameApplied = true;
+              viewState.viewport = null;
+              delete viewState.viewportTransform;
             }
           }
 
@@ -2085,7 +2084,6 @@ export class ProjectManager {
               };
               activeFrame.viewportTransform = [1, 0, 0, 1, 0, 0];
             }
-            window.__openpaintResetCaptureResizeAnchor?.();
           }
 
           // Frame initialization updates the live capture frame, so read
@@ -2480,6 +2478,11 @@ export class ProjectManager {
                   };
                 }
               }
+            }
+            if (initialFrameApplied) {
+              // Refresh the pending resize anchor only after the background and
+              // tab viewport describe the newly fitted image, not the empty canvas.
+              window.__openpaintResetCaptureResizeAnchor?.();
             }
           });
 

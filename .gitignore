@@ -4,6 +4,7 @@ jspm_packages/
 
 # Build outputs
 dist/
+server/vercel-routes/cw/generated/
 build/
 coverage/
 *.tsbuildinfo
@@ -133,3 +134,8 @@ public/tesseract/
 
 # Built by scripts/build-cw-server.ts during the Vercel build
 server/vercel-routes/cw/generated/
+
+# MCP development credentials and local Cloudflare state
+/mcp/.dev.vars
+/.wrangler/
+/mcp/.wrangler/

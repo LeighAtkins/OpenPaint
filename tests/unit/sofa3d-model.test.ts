@@ -91,6 +91,7 @@ describe('Gallery construction profiles', () => {
 
 import { createPopularModel, POPULAR_MODELS } from '../../src/modules/sofa3d/popular-models';
 import { cushionGeometry, skirtGeometry } from '../../src/modules/sofa3d/upholstery';
+import * as THREE from 'three';
 describe('Popular sofa refinements', () => {
   it('opens and round-trips every popular model with finite geometry', () => {
     for (const product of POPULAR_MODELS) {
@@ -129,6 +130,34 @@ describe('Popular sofa refinements', () => {
     geometry.computeBoundingBox();
     expect(geometry.boundingBox!.max.y - geometry.boundingBox!.min.y).toBeCloseTo(skirt.size.y, 3);
     geometry.dispose();
+  });
+  it('places Harmony cushions against their support without raising the side pillows above the sofa', () => {
+    const doc = createPopularModel('harmony');
+    const parts = buildSofaParts(doc);
+    const frame = parts.find(p => p.id === 'main:back-frame')!;
+    const seat = parts.find(p => p.id === 'main:seat-0')!;
+    const back = parts.find(p => p.id === 'main:back-0')!;
+    const lumbar = parts.find(p => p.id === 'main:pillow-2')!;
+    const frameFront = frame.position.z + frame.size.z / 2;
+    const backRear = back.position.z - back.size.z / 2;
+    const backFront = back.position.z + back.size.z / 2;
+    const lumbarRear = lumbar.position.z - lumbar.size.z / 2;
+    expect(Math.abs(backRear - frameFront)).toBeLessThan(3);
+    expect(Math.abs(lumbarRear - backFront)).toBeLessThan(3);
+    expect(
+      Math.abs(lumbar.position.y - lumbar.size.y / 2 - (seat.position.y + seat.size.y / 2))
+    ).toBeLessThan(3);
+
+    for (const id of ['main:pillow-0', 'main:pillow-1']) {
+      const pillow = parts.find(p => p.id === id)!;
+      expect(pillow.position.z).toBeLessThan(lumbar.position.z);
+      const geometry = cushionGeometry(pillow);
+      const mesh = new THREE.Mesh(geometry);
+      mesh.position.set(pillow.position.x, pillow.position.y, pillow.position.z);
+      mesh.rotation.set(pillow.rotation.x, pillow.rotation.y, pillow.rotation.z, 'YXZ');
+      expect(new THREE.Box3().setFromObject(mesh).max.y).toBeLessThan(doc.dimensions.height + 2);
+      geometry.dispose();
+    }
   });
   it('keeps independent rotation and shape edits through save/load', () => {
     const doc = createPopularModel('harmony');

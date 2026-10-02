@@ -101,6 +101,7 @@ export function createPopularModel(id: string): SofaDocument {
       seatThickness: 21,
       legHeight: 11,
     });
+    // Seat the large backs against the frame, then place the lumbar pillows just in front.
     for (let i = 0; i < 2; i++) set(`main:seat-${i}`, { loft: 0.9, softness: 0.65, piping: true });
     for (let i = 0; i < 2; i++)
       set(`main:back-${i}`, {
@@ -111,7 +112,7 @@ export function createPopularModel(id: string): SofaDocument {
         loft: 0.75,
         piping: false,
         rotation: { x: -9, y: 0, z: i === 0 ? -1 : 1 },
-        offset: { x: 0, y: 2, z: 12 },
+        offset: { x: 0, y: 2, z: 0 },
       });
     for (let i = 0; i < 4; i++) {
       const side = i % 2 === 0 ? -1 : 1;
@@ -123,7 +124,7 @@ export function createPopularModel(id: string): SofaDocument {
         loft: 0.85,
         piping: false,
         rotation: { x: -10, y: side * (i < 2 ? 78 : 0), z: side * (i < 2 ? -14 : 1) },
-        offset: { x: side * (i < 2 ? 20 : 11), y: i < 2 ? -6 : -11, z: i < 2 ? 15 : 22 },
+        offset: { x: side * (i < 2 ? 12 : 11), y: i < 2 ? -6 : -3, z: i < 2 ? 24 : -3 },
       });
     }
   }

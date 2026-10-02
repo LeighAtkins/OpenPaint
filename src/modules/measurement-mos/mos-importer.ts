@@ -478,7 +478,9 @@ function extractElementGeometry(
       tag === 'polyline'
         ? parsePoints(el.getAttribute('points') || '')
         : extractPathPoints(el.getAttribute('d') || '');
-    if (tag === 'polyline') baseElement.curveInterpolation = 'linear';
+    if (tag === 'polyline')
+      baseElement.curveInterpolation =
+        el.getAttribute('data-curve-interpolation') === 'smooth' ? 'smooth' : 'linear';
     if (points.length >= 2) {
       baseElement.curvePoints = points.map(point => ({ x: toMosX(point.x), y: toMosY(point.y) }));
     }
@@ -526,7 +528,9 @@ function createFabricObjectsForElement(
   };
 
   const strokeColor = element.style?.strokeColor || DEFAULT_STROKE_COLOR;
-  const measurementStrokeWidth = 4;
+  const measurementStrokeWidth = element.style?.strokeWidth
+    ? (element.style.strokeWidth * imageRect.width) / 1000
+    : 4;
   if (element.ellipse && element.endpoints.length === 2) {
     const a = mosToCanvas(element.endpoints[0].point, imageRect);
     const b = mosToCanvas(element.endpoints[1].point, imageRect);
@@ -610,7 +614,8 @@ function createFabricObjectsForElement(
       const startArrow = new fabric.Triangle({
         width: arrowSize,
         height: arrowSize,
-        fill: strokeColor,
+        fill: element.style?.arrowStyle === 'open' ? 'transparent' : strokeColor,
+        visible: element.style?.arrowStyle !== 'none',
         stroke: strokeColor,
         strokeWidth: Math.max(1, measurementStrokeWidth * 0.4),
         originX: 'center',
@@ -623,7 +628,8 @@ function createFabricObjectsForElement(
       const endArrow = new fabric.Triangle({
         width: arrowSize,
         height: arrowSize,
-        fill: strokeColor,
+        fill: element.style?.arrowStyle === 'open' ? 'transparent' : strokeColor,
+        visible: element.style?.arrowStyle !== 'none',
         stroke: strokeColor,
         strokeWidth: Math.max(1, measurementStrokeWidth * 0.4),
         originX: 'center',
@@ -690,7 +696,8 @@ function createFabricObjectsForElement(
     const head = new fabric.Triangle({
       width: arrowSize,
       height: arrowSize,
-      fill: strokeColor,
+      fill: element.style?.arrowStyle === 'open' ? 'transparent' : strokeColor,
+      visible: element.style?.arrowStyle !== 'none',
       stroke: strokeColor,
       strokeWidth: Math.max(1, measurementStrokeWidth * 0.4),
       originX: 'center',
@@ -706,7 +713,8 @@ function createFabricObjectsForElement(
     const tailHead = new fabric.Triangle({
       width: arrowSize,
       height: arrowSize,
-      fill: strokeColor,
+      fill: element.style?.arrowStyle === 'open' ? 'transparent' : strokeColor,
+      visible: element.style?.arrowStyle !== 'none',
       stroke: strokeColor,
       strokeWidth: Math.max(1, measurementStrokeWidth * 0.4),
       originX: 'center',

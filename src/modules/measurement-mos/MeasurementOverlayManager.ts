@@ -193,6 +193,67 @@ export class MeasurementOverlayManager {
     return overlay.id;
   }
 
+  /** Mount validated assistant geometry without routing it through an AI image API. */
+  async importPlacement(input: unknown, imageId: string, viewId: string): Promise<string> {
+    const { buildPlacementOverlayElements } = await import(
+      '../measurement-assistant/overlay-elements'
+    );
+    const { measurementPlacementSchema } = await import('../measurement-assistant/placement-model');
+    const { remountOverlayObjects } = await import('./mos-importer');
+    const placement = measurementPlacementSchema.parse(input);
+    const sourceElements = buildPlacementOverlayElements(placement, imageId);
+    this._removeOverlaysForView(viewId);
+    const overlayIndex = this.store.nextOverlayIndex++;
+    const overlayId = `mos_overlay_${overlayIndex}`;
+    const assistantLabels: Record<string, string> = {};
+    const elements = new Map<string, MeasurementOverlayElement>();
+    const reservedLabels = new Set(
+      sourceElements.map(element => (element.displayLabel || '').trim().toUpperCase())
+    );
+    sourceElements.forEach((element, index) => {
+      const label = (element.displayLabel || '').trim().toUpperCase();
+      // Use the customer's guide tags in measurement entry as well as on the canvas.
+      // Non-standard or repeated labels retain a unique internal fallback.
+      const unique =
+        sourceElements.filter(
+          candidate => (candidate.displayLabel || '').trim().toUpperCase() === label
+        ).length === 1;
+      let fallback = `ASSISTANT${index + 1}`;
+      while (reservedLabels.has(fallback) || assistantLabels[fallback]) fallback += 'X';
+      const role = /^[A-Z][A-Z0-9-]{0,15}$/.test(label) && unique ? label : fallback;
+      assistantLabels[role] = element.displayLabel || '';
+      element.opId = `m${role}cm`;
+      element.id = `mos${overlayIndex}_${element.opId}`;
+      element.roleToken = role;
+      elements.set(element.id, element);
+    });
+    const overlay: MeasurementOverlay = {
+      id: overlayId,
+      viewId,
+      overlayIndex,
+      svgText: '',
+      elements,
+      dirty: false,
+      assistantPlacement: placement,
+      assistantImageId: imageId,
+      assistantLabels,
+    };
+    overlay.svgText = exportMosSvg(overlay, getImageRect(this.canvasManager.fabricCanvas));
+    this.store.byId.set(overlayId, overlay);
+    this.store.order.push(overlayId);
+    this.store.activeId = overlayId;
+    if (window.app?.projectManager?.currentViewId === viewId) {
+      remountOverlayObjects(
+        overlay,
+        getImageRect(this.canvasManager.fabricCanvas),
+        this.canvasManager.fabricCanvas
+      );
+      this._syncOverlayTags(overlayId);
+      this.canvasManager.fabricCanvas.requestRenderAll();
+    }
+    return overlayId;
+  }
+
   private _removeOverlaysForView(viewId: string): void {
     const ids = this.store.order.filter(id => this.store.byId.get(id)?.viewId === viewId);
     ids.forEach(id => this.removeOverlay(id));
@@ -528,6 +589,9 @@ export class MeasurementOverlayManager {
         tagOffsets: overlay.tagOffsets || {},
         sourceR2Key: overlay.sourceR2Key,
         supabaseId: overlay.supabaseId,
+        assistantPlacement: overlay.assistantPlacement,
+        assistantImageId: overlay.assistantImageId,
+        assistantLabels: overlay.assistantLabels,
       });
     }
     return {
@@ -554,6 +618,13 @@ export class MeasurementOverlayManager {
 
       const restored = this.store.byId.get(restoredId);
       if (restored) {
+        restored.assistantPlacement = entry.assistantPlacement;
+        restored.assistantImageId = entry.assistantImageId;
+        restored.assistantLabels = entry.assistantLabels;
+        for (const element of restored.elements.values()) {
+          const label = entry.assistantLabels?.[element.roleToken || ''];
+          if (typeof label === 'string') element.displayLabel = label;
+        }
         restored.tagOffsets = readTagOffsets(entry.tagOffsets);
         // Discard import-time tags before applying saved positions.
         this._clearOverlayTags(restoredId, { preserveMetadata: true });

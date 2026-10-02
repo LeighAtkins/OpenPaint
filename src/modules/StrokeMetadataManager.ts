@@ -130,7 +130,9 @@ export class StrokeMetadataManager {
       existingStrokeVisible !== undefined ? existingStrokeVisible !== false : true;
     const labelVisible = existingLabelVisible !== undefined ? existingLabelVisible !== false : true;
 
+    const displayLabel = obj.strokeMetadata?.displayLabel;
     obj.strokeMetadata = {
+      ...(displayLabel ? { displayLabel } : {}),
       imageLabel: scopedLabel,
       strokeLabel: strokeLabel,
       type: 'line',

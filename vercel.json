@@ -3,6 +3,7 @@
   "buildCommand": "bun run build:vercel",
   "outputDirectory": "dist",
   "rewrites": [
+    { "source": "/search/:path*", "destination": "/search.html" },
     { "source": "/api/share-project", "destination": "/api/[...all]" },
     { "source": "/api/shared/:path*", "destination": "/api/[...all]" },
     { "source": "/api/cloud-projects/:path*", "destination": "/api/[...all]" },
