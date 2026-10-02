@@ -7,16 +7,17 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { CallToolResultSchema } from '@modelcontextprotocol/sdk/types.js';
 import { measurementPlacementSchema } from '../src/modules/measurement-assistant/placement-model';
 import { escapeXml } from '../src/modules/measurement-assistant/svg-preview';
+import { exportNativeMeasurementPdf } from '../src/modules/measurement-assistant/native-pdf-export';
 
 const [stage, inputPath, folder, runName = stage] = process.argv.slice(2);
 if (
-  !['import', 'draw', 'review', 'export'].includes(stage) ||
+  !['import', 'guides', 'draw', 'review', 'export', 'export-local'].includes(stage) ||
   !isAbsolute(inputPath || '') ||
   !isAbsolute(folder || '') ||
   !/^[a-z0-9-]+$/.test(runName || '')
 )
   throw new Error(
-    'Usage: bundled-script import|draw|review|export absolute-input-json absolute-private-folder [unique-run-name]'
+    'Usage: bundled-script import|guides|draw|review|export|export-local absolute-input-json absolute-private-folder [unique-run-name]'
   );
 if (stage === 'import') await mkdir(folder);
 const output = join(folder, runName);
@@ -191,6 +192,24 @@ try {
       );
     }
     report.status = 'awaiting-landmark-authoring';
+  } else if (stage === 'guides') {
+    await getCurrent();
+    if (!Array.isArray(input.guides) || !input.guides.length || input.guides.length > 10)
+      throw new Error('Supply one to ten named guide IDs.');
+    const names = new Set<string>();
+    for (const guide of input.guides) {
+      if (
+        !/^[a-z0-9-]+$/.test(guide.name) ||
+        names.has(guide.name) ||
+        typeof guide.guideId !== 'string' ||
+        guide.guideId.length > 300
+      )
+        throw new Error('Invalid or duplicated guide name.');
+      names.add(guide.name);
+    }
+    for (const guide of input.guides)
+      await call('get_measurement_guide', { guideId: guide.guideId }, guide.name);
+    report.status = 'awaiting-guide-visual-inspection';
   } else if (stage === 'draw') {
     await getCurrent();
     const placement = measurementPlacementSchema.parse(input.placement);
@@ -205,6 +224,9 @@ try {
     });
     placement.guideSelections?.forEach(selection => {
       selection.imageId = id(selection.imageId);
+    });
+    placement.omittedGuideRoles?.forEach(omission => {
+      omission.imageId = id(omission.imageId);
     });
     placement.features.forEach(feature =>
       feature.observations.forEach(observation => {
@@ -269,7 +291,7 @@ try {
     );
     report.status = 'awaiting-agent-visual-confirmation';
   } else {
-    await getCurrent();
+    const current = await getCurrent();
     if (
       !state!.lastReviewRun ||
       input.agentVisuallyInspected !== true ||
@@ -297,17 +319,63 @@ try {
       { ...access(), expectedRevision: state!.revision, measurements: input.measurements },
       'record-visual-review'
     );
-    const pdf = await call(
-      'export_measurement_pdf',
-      {
-        ...access(),
-        fillable: true,
-        units: 'cm',
-        title: `${state!.caseId} visible-surface measurement pilot`,
-      },
-      'native-pdf'
-    );
-    const bytes = await ownedDownload(String(pdf.url));
+    let bytes: Uint8Array;
+    if (stage === 'export-local') {
+      if (!current.placement) throw new Error('No current drawing to export.');
+      const placement = measurementPlacementSchema.parse(current.placement);
+      const provenance: unknown[] = [];
+      bytes = await exportNativeMeasurementPdf(
+        placement,
+        state!.images,
+        async photo => {
+          const source = await readFile(
+            join(folder, state!.lastReviewRun!, `${photo.view}-full.png`)
+          );
+          const before = await sharp(source).metadata();
+          const raster = await sharp(source)
+            .jpeg({ quality: 95, chromaSubsampling: '4:4:4' })
+            .toBuffer();
+          const after = await sharp(raster).metadata();
+          if (before.width !== after.width || before.height !== after.height)
+            throw new Error('Export raster changed photo dimensions.');
+          provenance.push({
+            view: photo.view,
+            sourceSha256: digest(source),
+            exportSha256: digest(raster),
+            width: after.width,
+            height: after.height,
+            quality: 95,
+            chromaSubsampling: '4:4:4',
+            bytes: raster.length,
+          });
+          return { bytes: raster, mimeType: 'image/jpeg' };
+        },
+        {
+          fillable: true,
+          units: 'cm',
+          title: `${state!.caseId} visible-surface measurement pilot`,
+        },
+        'https://sofapaint.vercel.app/api/pdf/render'
+      );
+      const after = await call('get_measurement_project', access(), 'after-native-render');
+      if (after.revision !== current.revision)
+        throw new Error('Drawing changed during native rendering.');
+      await json(join(output, 'raster-provenance.json'), provenance);
+      report.exportRoute =
+        'Explicit local invocation of existing SofaPaint Save as PDF; unchanged reviewed raster dimensions, JPEG quality 95. Not cached as a hosted MCP download.';
+    } else {
+      const pdf = await call(
+        'export_measurement_pdf',
+        {
+          ...access(),
+          fillable: true,
+          units: 'cm',
+          title: `${state!.caseId} visible-surface measurement pilot`,
+        },
+        'native-pdf'
+      );
+      bytes = await ownedDownload(String(pdf.url));
+    }
     if (new TextDecoder().decode(bytes.slice(0, 5)) !== '%PDF-')
       throw new Error('Native PDF download is not a PDF.');
     await writeFile(join(output, 'measurement-pilot.pdf'), bytes, { flag: 'wx', mode: 0o600 });
