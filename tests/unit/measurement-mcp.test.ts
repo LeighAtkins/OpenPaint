@@ -69,21 +69,24 @@ describe('MCP protocol drawing flow', () => {
       remoteKeys: async () => [],
       remoteSvg: async () => null,
     });
+    const cachedEvidence = {
+      schema: 'sofapaint-masks-v1',
+      coordinateSystem: 'normalized-full-photo',
+      image: { width: 1200, height: 800, sha256: 'a'.repeat(64) },
+      model: { id: 'reviewed-model', sha256: 'b'.repeat(64), classes: MASK_CLASSES },
+      instances: [],
+      warnings: [],
+    } satisfies MaskEvidence;
+    const readMaskEvidence = vi.fn(async (): Promise<MaskEvidence | undefined> => cachedEvidence);
     const segmentImage = vi.fn(async () => ({
-      evidence: {
-        schema: 'sofapaint-masks-v1',
-        coordinateSystem: 'normalized-full-photo',
-        image: { width: 1200, height: 800, sha256: 'a'.repeat(64) },
-        model: { id: 'reviewed-model', sha256: 'b'.repeat(64), classes: MASK_CLASSES },
-        instances: [],
-        warnings: [],
-      } satisfies MaskEvidence,
+      evidence: cachedEvidence,
       preview: 'iVBORw0KGgo=',
     }));
     const server = createMeasurementMcpServer({
       drafts,
       guides,
       segmentImage,
+      readMaskEvidence,
       confirmReview: async () => undefined,
       assertReviewed: async () => undefined,
       exportPdf: async () => ({
@@ -223,6 +226,38 @@ describe('MCP protocol drawing flow', () => {
       });
       expect(corrected.isError).not.toBe(true);
       expect((corrected.structuredContent as { revision: number }).revision).toBe(4);
+      const checked = await client.callTool({
+        name: 'check_measurement_drawing',
+        arguments: access,
+      });
+      expect(checked.isError).not.toBe(true);
+      expect(checked.structuredContent).toMatchObject({
+        revision: 4,
+        maskDiagnostics: [
+          {
+            imageId: draft.images[0].id,
+            status: 'no-predictions',
+            advisoryOnly: true,
+            claimsPhysicalAccuracy: false,
+          },
+        ],
+      });
+      expect(readMaskEvidence).toHaveBeenCalledWith(
+        draft.projectId,
+        draft.projectToken,
+        draft.images[0].id
+      );
+      expect(segmentImage).toHaveBeenCalledTimes(1);
+      readMaskEvidence.mockResolvedValueOnce(undefined);
+      const unchecked = await client.callTool({
+        name: 'check_measurement_drawing',
+        arguments: access,
+      });
+      expect(unchecked.structuredContent).toMatchObject({
+        maskDiagnostics: [{ status: 'not-available' }],
+      });
+      expect(segmentImage).toHaveBeenCalledTimes(1);
+      expect((await drafts.read(draft.projectId, draft.projectToken)).draft.revision).toBe(4);
       const exported = await client.callTool({
         name: 'export_measurement_drawing',
         arguments: { ...access, imageId: draft.images[0].id },

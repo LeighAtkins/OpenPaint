@@ -26,6 +26,7 @@ import type { PreviewRegion } from './raster-preview';
 import type { MeasurementPdfOptions } from '../pdf-export';
 import { assertLandmarkPlan, assertPreparedDrawing, selectedGuideIds } from './construction-plan';
 import { MASK_INSTRUCTIONS, type MaskEvidence } from './mask-service';
+import { maskPathDiagnostics } from './mask-path-diagnostics';
 
 export interface McpServices {
   drafts: DraftService;
@@ -45,6 +46,7 @@ export interface McpServices {
     token: string,
     imageId: string
   ): Promise<{ evidence: MaskEvidence; preview: string }>;
+  readMaskEvidence?(id: string, token: string, imageId: string): Promise<MaskEvidence | undefined>;
   renderGuide(svg: string, width?: number): Promise<string>;
   reviewImage(
     id: string,
@@ -555,7 +557,7 @@ export function createMeasurementMcpServer(services: McpServices): Server {
     {
       title: 'Check measurement coverage and junctions',
       description:
-        'Run before finishing a draft. Returns coverage, endpoint evidence and key junction problems. This does not detect seams from pixels; visually inspect the original photo and close-ups too.',
+        'Run before finishing a draft. Returns coverage, endpoint evidence and key junction problems, plus advisory path-agreement checks against already cached exact mask bitmaps when available. Does not run inference or detect seams. Inspect suggested close-ups against the original photo; do not move lines just to match predictions.',
       inputSchema: access,
       annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
     },
@@ -563,10 +565,40 @@ export function createMeasurementMcpServer(services: McpServices): Server {
       safely(async () => {
         const { draft } = await services.drafts.read(args.projectId, args.projectToken);
         if (!draft.placement) throw new Error('Draw the project first.');
+        const maskDiagnostics: Array<
+          | ReturnType<typeof maskPathDiagnostics>
+          | {
+              imageId: string;
+              status: 'not-available';
+              advisoryOnly: true;
+              claimsPhysicalAccuracy: false;
+              instructions: string;
+            }
+        > = [];
+        for (const image of draft.placement.images) {
+          const evidence = await services.readMaskEvidence?.(
+            args.projectId,
+            args.projectToken,
+            image.id
+          );
+          maskDiagnostics.push(
+            evidence
+              ? maskPathDiagnostics(draft.placement, image.id, evidence)
+              : {
+                  imageId: image.id,
+                  status: 'not-available',
+                  advisoryOnly: true,
+                  claimsPhysicalAccuracy: false,
+                  instructions:
+                    'No cached masks were checked. Use segment_project_image when configured, then inspect the original photo. This is not a drawing-quality pass.',
+                }
+          );
+        }
         return {
           revision: draft.revision,
           ...drawingQualityReport(draft.placement),
           guideCoverage: await getSvgGuideCoverage(draft.placement, services.guides),
+          maskDiagnostics,
         };
       })
   );

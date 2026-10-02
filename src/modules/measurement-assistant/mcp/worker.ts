@@ -21,6 +21,7 @@ import {
   fetchMaskEvidence,
   normalizeMaskInput,
   renderMaskOverlay,
+  validateMaskEvidence,
   type MaskEvidence,
 } from './mask-service';
 
@@ -113,8 +114,19 @@ function createServices(env: RuntimeEnv, origin: string): McpServices {
       if (!photo) throw new Error('Original photo unavailable.');
       const bytes = new Uint8Array(await photo.arrayBuffer());
       let evidence: MaskEvidence;
-      if (cached) evidence = await cached.json<MaskEvidence>();
-      else {
+      if (cached) {
+        if (cached.size > 4 * 1024 * 1024)
+          throw new Error('Cached mask evidence exceeds the response budget.');
+        const hash = await crypto.subtle.digest('SHA-256', bytes);
+        const sha256 = Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, '0')).join(
+          ''
+        );
+        evidence = validateMaskEvidence(
+          await cached.json(),
+          { ...image, sha256 },
+          env.SOFA_MASK_MODEL_SHA256
+        );
+      } else {
         await claimBudget(env, 'mask-inferences', 1, 500);
         evidence = await fetchMaskEvidence(bytes, image, {
           url: env.SOFA_MASK_SERVICE_URL,
@@ -144,6 +156,29 @@ function createServices(env: RuntimeEnv, origin: string): McpServices {
         customMetadata: { expiresAt: String(draft.expiresAt) },
       });
       return { evidence, preview: bytesToBase64(rendered) };
+    },
+    async readMaskEvidence(id, token, imageId) {
+      const { draft } = await drafts.read(id, token);
+      const image = draft.images.find(item => item.id === imageId);
+      if (!image) throw new Error('Unknown project photo.');
+      if (!env.SOFA_MASK_MODEL_SHA256) return undefined;
+      const cached = await env.DRAFTS.get(
+        `drafts/${id}/masks/${imageId}-${env.SOFA_MASK_MODEL_SHA256}.json`
+      );
+      if (!cached) return undefined;
+      if (cached.size > 4 * 1024 * 1024)
+        throw new Error('Cached mask evidence exceeds the response budget.');
+      const photo = await env.DRAFTS.get(image.storageKey);
+      if (!photo) throw new Error('Original photo unavailable.');
+      const hash = await crypto.subtle.digest('SHA-256', await photo.arrayBuffer());
+      const sha256 = Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, '0')).join(
+        ''
+      );
+      return validateMaskEvidence(
+        await cached.json(),
+        { ...image, sha256 },
+        env.SOFA_MASK_MODEL_SHA256
+      );
     },
     async confirmReview(id, token, revision, report) {
       const { draft } = await drafts.read(id, token);
