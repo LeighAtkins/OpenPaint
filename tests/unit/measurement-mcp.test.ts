@@ -15,6 +15,10 @@ import {
 } from '../../src/modules/measurement-assistant/mcp/image-input';
 import { measurementPlacementSchema } from '../../src/modules/measurement-assistant/placement-model';
 import { assistantPlacement } from '../helpers/assistant-placement';
+import {
+  MASK_CLASSES,
+  type MaskEvidence,
+} from '../../src/modules/measurement-assistant/mcp/mask-service';
 
 function memoryStorage(): DraftStorage {
   const records = new Map<string, { draft: MeasurementDraft; version: string }>();
@@ -65,9 +69,21 @@ describe('MCP protocol drawing flow', () => {
       remoteKeys: async () => [],
       remoteSvg: async () => null,
     });
+    const segmentImage = vi.fn(async () => ({
+      evidence: {
+        schema: 'sofapaint-masks-v1',
+        coordinateSystem: 'normalized-full-photo',
+        image: { width: 1200, height: 800, sha256: 'a'.repeat(64) },
+        model: { id: 'reviewed-model', sha256: 'b'.repeat(64), classes: MASK_CLASSES },
+        instances: [],
+        warnings: [],
+      } satisfies MaskEvidence,
+      preview: 'iVBORw0KGgo=',
+    }));
     const server = createMeasurementMcpServer({
       drafts,
       guides,
+      segmentImage,
       confirmReview: async () => undefined,
       assertReviewed: async () => undefined,
       exportPdf: async () => ({
@@ -130,6 +146,23 @@ describe('MCP protocol drawing flow', () => {
       };
       expect(draft.category.category).toBe('sofa');
       const access = { projectId: draft.projectId, projectToken: draft.projectToken };
+      expect(list.tools.some(tool => tool.name === 'segment_project_image')).toBe(true);
+      const masked = await client.callTool({
+        name: 'segment_project_image',
+        arguments: { ...access, imageId: draft.images[0].id },
+      });
+      expect(masked.isError).not.toBe(true);
+      expect(masked.content).toEqual(
+        expect.arrayContaining([expect.objectContaining({ type: 'image', mimeType: 'image/png' })])
+      );
+      expect(segmentImage).toHaveBeenCalledWith(
+        draft.projectId,
+        draft.projectToken,
+        draft.images[0].id
+      );
+      expect((await drafts.read(draft.projectId, draft.projectToken)).draft.revision).toBe(
+        draft.revision
+      );
       const placement = assistantPlacement(draft.images[0].id);
       const unprepared = await client.callTool({
         name: 'generate_measurement_drawing',
