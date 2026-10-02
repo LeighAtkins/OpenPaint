@@ -92,7 +92,7 @@ export async function normalizeMaskInput(
   if (!url.pathname.endsWith('/normalize')) throw new Error('Mask endpoint must end in /segment.');
   const response = await fetcher(url, {
     method: 'POST',
-    redirect: 'error',
+    redirect: 'manual',
     headers: {
       Authorization: `Bearer ${config.token}`,
       'Content-Type': 'application/octet-stream',
@@ -117,7 +117,7 @@ export async function fetchMaskEvidence(
   const url = serviceUrl(config);
   const response = await fetcher(url, {
     method: 'POST',
-    redirect: 'error',
+    redirect: 'manual',
     headers: {
       Authorization: `Bearer ${config.token}`,
       'Content-Type': 'application/octet-stream',

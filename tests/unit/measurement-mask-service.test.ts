@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   fetchMaskEvidence,
+  normalizeMaskInput,
   renderMaskOverlay,
   MASK_CLASSES,
 } from '../../src/modules/measurement-assistant/mcp/mask-service';
@@ -47,7 +48,7 @@ describe('reviewed segmentation bridge', () => {
   it('binds predictions to the exact input bytes and checkpoint', async () => {
     const data = await evidence();
     const fetcher = async (_url: unknown, options?: RequestInit) => {
-      expect(options?.redirect).toBe('error');
+      expect(options?.redirect).toBe('manual');
       expect(options?.headers).toEqual({
         Authorization: 'Bearer private',
         'Content-Type': 'application/octet-stream',
@@ -88,6 +89,29 @@ describe('reviewed segmentation bridge', () => {
       'not configured'
     );
   });
+  it.each([301, 302, 307, 308])(
+    'rejects %s redirects without forwarding the bearer token',
+    async status => {
+      for (const endpoint of ['segment', 'normalize']) {
+        let calls = 0;
+        const fetcher = async (url: unknown, options?: RequestInit) => {
+          calls++;
+          expect(String(url)).toBe(`https://mask.example/${endpoint}`);
+          expect(options?.redirect).toBe('manual');
+          return new Response(null, {
+            status,
+            headers: { Location: 'https://other.example/leak' },
+          });
+        };
+        await expect(
+          endpoint === 'segment'
+            ? fetchMaskEvidence(bytes, { width: 4, height: 3 }, config, fetcher as typeof fetch)
+            : normalizeMaskInput(bytes, config, fetcher as typeof fetch)
+        ).rejects.toThrow(`(${status})`);
+        expect(calls).toBe(1);
+      }
+    }
+  );
   it('renders occlusion holes with even-odd paths on original coordinates', async () => {
     const data = await evidence();
     const validated = await fetchMaskEvidence(
