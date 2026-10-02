@@ -13,6 +13,11 @@ import {
   readJsonBody,
 } from './shared.js';
 
+const [{ requireCwMeasurementAccess }, { handleCwArchiveRequest }] = await Promise.all([
+  process.env.VERCEL ? import('./generated/access.mjs') : import('./access.ts'),
+  process.env.VERCEL ? import('./generated/archive.mjs') : import('./archive.ts'),
+]);
+
 const mtTokenCache = new Map();
 const FALLBACK_STYLE_CODES = [
   'BKPT_SP',
@@ -261,9 +266,6 @@ async function fetchStorefrontProduct(searchTerm, measurementReference = '') {
   if (!search) return null;
 
   try {
-    const publicMeasurementsPromise = measurementReference
-      ? fetchPublicProductMeasurements({ productReference: measurementReference }).catch(() => null)
-      : Promise.resolve(null);
     const query = new URLSearchParams({
       q: search,
       'resources[type]': 'product',
@@ -320,27 +322,15 @@ async function fetchStorefrontProduct(searchTerm, measurementReference = '') {
       }
     }
 
-    const publicMeasurements =
-      (await publicMeasurementsPromise) ||
-      (await fetchPublicProductMeasurements({
-        productReference: measurementReference || search,
-      }).catch(() => null));
-
     return {
       title: String(product?.title || search).trim(),
       url: productUrl,
       imageUrl,
       imageUrls,
-      dimensions: publicMeasurements?.data
-        ? {
-            width: publicMeasurements.data.width || null,
-            depth: publicMeasurements.data.depth || null,
-            height: publicMeasurements.data.height || null,
-          }
-        : null,
-      measurementReference: publicMeasurements?.productReference || '',
-      measurementStyle: publicMeasurements?.style || '',
-      measurementStyleCode: publicMeasurements?.styleCode || '',
+      dimensions: null,
+      measurementReference: '',
+      measurementStyle: '',
+      measurementStyleCode: '',
     };
   } catch {
     return null;
@@ -6052,6 +6042,11 @@ export default async function handler(req, res) {
 
   try {
     const body = req.method === 'POST' ? await readJsonBody(req) : {};
+    const publicCataloguePhase =
+      formId === 'search' &&
+      ['storefront-product', 'storefront-comparison', 'sectional-pricing'].includes(body?.phase);
+    if (!publicCataloguePhase && !(await requireCwMeasurementAccess(req, res))) return;
+    if (await handleCwArchiveRequest(req, res, body)) return;
 
     if (formId === 'probe-terms') {
       if (req.method !== 'POST') {

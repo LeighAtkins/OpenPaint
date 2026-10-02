@@ -101,5 +101,9 @@ export default tseslint.config(
       eqeqeq: ['error', 'always'],
     },
   },
+  {
+    files: ['src/modules/measurement-assistant/mcp/**/*.ts'],
+    languageOptions: { parserOptions: { project: ['./mcp/tsconfig.json'] } },
+  },
   prettier
 );

@@ -5,6 +5,7 @@
 // Creates draggable, resizable tag objects that connect to strokes
 import { StrokeMetadataManager } from './StrokeMetadataManager.js';
 import { PathUtils } from './utils/PathUtils.js';
+import { measurementTagShape } from './measurement-assistant/tag-presentation';
 import { getNextTagValue } from './ui/next-tag-control.js';
 
 export class TagManager {
@@ -676,7 +677,9 @@ export class TagManager {
     const storedBackgroundStyle = String(scopeStyle.backgroundStyle || 'solid');
     const backgroundStyle =
       this.tagDisplayMode === 'measurements-only' ? 'frosted' : storedBackgroundStyle;
-    const tagShape = scopeStyle.tagShape === 'circle' ? 'circle' : 'square';
+    const tagShape = measurementTagShape(
+      this.metadataManager?.getMeasurementString?.(imageLabel, strokeLabel, { context: 'tag' })
+    );
     const connectorColorMode = scopeStyle.connectorColorMode || 'same-as-line';
     const connectorDash = Array.isArray(scopeStyle.connectorDash)
       ? scopeStyle.connectorDash
@@ -764,7 +767,10 @@ export class TagManager {
   getTagDisplayLabel(strokeLabel, imageLabel) {
     const scopedImageLabel = this.normalizeImageLabel(imageLabel);
     const strokeObject =
-      this.metadataManager?.vectorStrokesByImage?.[scopedImageLabel]?.[strokeLabel];
+      this.metadataManager?.vectorStrokesByImage?.[scopedImageLabel]?.[strokeLabel] ||
+      this.metadataManager?.vectorStrokesByImage?.[scopedImageLabel.split('::tab:')[0]]?.[
+        strokeLabel
+      ];
     return String(strokeObject?.strokeMetadata?.displayLabel || strokeLabel || '').trim();
   }
 
@@ -790,7 +796,9 @@ export class TagManager {
     const resolvedStyle = this.getResolvedTagStyle(strokeLabel, imageLabel, strokeObject);
     const displayLabel = this.getTagDisplayLabel(strokeLabel, imageLabel);
     const tagSize = resolvedStyle.tagSize;
-    const tagShape = resolvedStyle.tagShape || 'square';
+    const tagShape = measurementTagShape(
+      this.metadataManager?.getMeasurementString?.(imageLabel, strokeLabel, { context: 'tag' })
+    );
     this.tagSize = tagSize;
 
     // Snapshot canvases deliberately do not own the primary tag registry. They
@@ -883,7 +891,7 @@ export class TagManager {
 
     let background;
     let width = textWidth + padding * 2;
-    const height = textHeight + padding * 2;
+    let height = textHeight + padding * 2;
 
     // Square mode keeps a rounded-rectangle profile.
     // Circle mode uses full rounding.
@@ -893,6 +901,7 @@ export class TagManager {
 
     let radius;
     if (tagShape === 'circle') {
+      width = height = Math.max(width, height);
       radius = height / 2;
     } else {
       radius = 4;
@@ -1858,7 +1867,7 @@ export class TagManager {
       const textWidth = textObj.width || 30;
       const textHeight = textObj.height || this.tagSize;
       let width = textWidth + padding * 2;
-      const height = textHeight + padding * 2;
+      let height = textHeight + padding * 2;
       const resolvedStyle =
         tagObj?.resolvedTagStyle ||
         this.getResolvedTagStyle(
@@ -1866,11 +1875,18 @@ export class TagManager {
           tagObj?.scopedLabel || tagObj?.imageLabel,
           null
         );
-      const tagShape = resolvedStyle.tagShape || 'square';
+      const tagShape = measurementTagShape(
+        this.metadataManager?.getMeasurementString?.(
+          this.getTagScopeLabel(tagObj) || '',
+          tagObj?.strokeLabel || '',
+          { context: 'tag' }
+        )
+      );
       if (tagShape === 'square') width = Math.max(width, height);
 
       let radius;
       if (tagShape === 'circle') {
+        width = height = Math.max(width, height);
         radius = height / 2;
       } else {
         radius = 4;
@@ -1969,7 +1985,7 @@ export class TagManager {
             );
             const textHeight = textObj.height || requestedSize;
             let width = textWidth + padding * 2;
-            const height = textHeight + padding * 2;
+            let height = textHeight + padding * 2;
             const resolvedStyle =
               tagObj?.resolvedTagStyle ||
               this.getResolvedTagStyle(
@@ -1977,11 +1993,18 @@ export class TagManager {
                 tagObj?.scopedLabel || tagObj?.imageLabel,
                 strokeObj
               );
-            const tagShape = resolvedStyle.tagShape || 'square';
+            const tagShape = measurementTagShape(
+              this.metadataManager?.getMeasurementString?.(
+                this.getTagScopeLabel(tagObj) || '',
+                tagObj?.strokeLabel || '',
+                { context: 'tag' }
+              )
+            );
             if (tagShape === 'square') width = Math.max(width, height);
 
             let radius;
             if (tagShape === 'circle') {
+              width = height = Math.max(width, height);
               radius = height / 2;
             } else {
               radius = 4;

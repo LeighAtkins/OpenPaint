@@ -3713,11 +3713,7 @@ export function initToolbarController() {
       const baseLabel = toBaseLabel(label) || 'front';
       const state = ensureCaptureTabsForLabel(baseLabel);
       const targetTab = state.tabs.find(tab => tab.id === tabId);
-      if (!targetTab) {
-        document.title = `[stepper] ${baseLabel}: tab ${tabId} not found (tabs: ${state.tabs.map(t => t.id).join(',')})`;
-        return;
-      }
-      document.title = `[stepper] ${baseLabel} → ${targetTab.id}`;
+      if (!targetTab) return;
       // Re-selecting the already-active frame is a no-op: without this guard,
       // event listeners reacting to the frame-tab-changed dispatch re-enter
       // this function and ping-pong the frame application indefinitely.

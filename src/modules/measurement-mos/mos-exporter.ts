@@ -77,6 +77,14 @@ function exportElement(
       const dy = p2.y - p1.y;
       if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) return null;
 
+      if (Array.isArray(element.curvePoints) && element.curvePoints.length >= 2) {
+        if (!element.curvePoints.every(isValidMosPoint)) return null;
+        const points = element.curvePoints
+          .map(point => `${round(point.x)},${round(point.y)}`)
+          .join(' ');
+        return `<polyline id="${escapeAttr(id)}" points="${points}" fill="none" stroke="${escapeAttr(strokeColor)}" stroke-width="${round(strokeWidth)}" data-curve-interpolation="${element.curveInterpolation || 'smooth'}"/>`;
+      }
+
       let fragment = `  <line id="${escapeAttr(id)}" class="mos-line"`;
       fragment += ` x1="${round(p1.x)}" y1="${round(p1.y)}"`;
       fragment += ` x2="${round(p2.x)}" y2="${round(p2.y)}"`;

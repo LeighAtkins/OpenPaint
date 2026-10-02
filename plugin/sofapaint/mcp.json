@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "sofapaint": {
+      "type": "streamable-http",
+      "url": "https://sofapaint-mcp.sofapaint-api.workers.dev/public/mcp"
+    }
+  }
+}

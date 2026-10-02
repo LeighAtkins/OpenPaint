@@ -24,3 +24,31 @@ output/
 sofapaint-api/
 services/mos-sam/__pycache__/
 scripts/__pycache__/
+
+# Local captures, diagnostics and test fixtures are not deployment inputs.
+tmp/
+tests/
+coverage/
+playwright-report/
+
+# Local user uploads must never be packaged into serverless functions.
+uploads/
+
+# Local credentials are supplied through Vercel's server environment instead.
+.env
+.env.*
+
+# Private MCP credentials, draft links and development diagnostics.
+.wrangler/
+mcp/.dev.vars
+mcp/.dev.vars.*
+/data/
+
+# Cloudflare-only runtime code is deployed separately from the Vercel editor.
+/mcp/
+src/modules/measurement-assistant/mcp/worker.ts
+src/modules/measurement-assistant/mcp/server.ts
+src/modules/measurement-assistant/mcp/raster-preview.ts
+src/modules/measurement-assistant/mcp/usage-budget.ts
+src/modules/measurement-assistant/mcp/wasm.d.ts
+/plugin/

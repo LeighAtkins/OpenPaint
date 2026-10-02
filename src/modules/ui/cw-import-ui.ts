@@ -19,6 +19,8 @@ import {
   setReplayInProgress,
 } from './cw-line-library';
 import { FabricControls } from '../utils/FabricControls.js';
+import { getCwMeasurementIdentity, getCwRequestHeaders } from '../../services/auth/cwAccess';
+import { authService } from '../../services/auth/authService';
 
 interface ImportedRow {
   id: string;
@@ -43,6 +45,7 @@ interface VersionOption {
   scopedReference?: string;
   isDefault?: boolean;
   confirmed?: boolean | null;
+  modelSetConfirmed?: boolean;
   source?: string;
 }
 
@@ -59,15 +62,23 @@ interface SearchResultItem {
   selected: boolean;
   selectedVersionCode: string;
   selectedStyleKey: string;
+  measurementsUnconfirmed?: boolean;
 }
 
 export function isCwConfigurationSelectionReady(item: {
-  versionOptions?: unknown[];
+  versionOptions?: Array<{ code?: string; modelSetConfirmed?: boolean }>;
   styleOptions?: unknown[];
   selectedVersionCode?: string;
   selectedStyleKey?: string;
+  measurementsUnconfirmed?: boolean;
 }): boolean {
+  if (item.measurementsUnconfirmed) return false;
   const versionOptions = Array.isArray(item.versionOptions) ? item.versionOptions : [];
+  if (
+    versionOptions.find(option => option.code === item.selectedVersionCode)?.modelSetConfirmed ===
+    false
+  )
+    return false;
   const styleOptions = Array.isArray(item.styleOptions) ? item.styleOptions : [];
   return (
     (versionOptions.length === 0 || Boolean(item.selectedVersionCode?.trim())) &&
@@ -260,9 +271,8 @@ const MODAL_ID = 'cwImportModalOverlay';
 const STYLE_ID = 'cwImportStyles';
 const CW_UI_STATE_KEY = 'openpaint:cw-import-ui:v1';
 const CW_SESSION_PASSWORD_KEY = 'openpaint:cw-import-password:session';
-// Bump when a cached API payload gains fields that change the available UI.
-// v4 adds exact per-product configuration option labels to comparison responses.
-const CW_REQUEST_CACHE_PREFIX = 'openpaint:cw-import-cache:v5:';
+// v7 public storefront responses contain photos/pricing only, without measurements.
+const CW_REQUEST_CACHE_PREFIX = 'openpaint:cw-import-cache:v7:';
 const CW_REQUEST_CACHE_TTL_MS = 10 * 60 * 1000;
 const STAGED_PROBE_BATCH_SIZES = [50, 250] as const;
 const STAGED_PROBE_NON_JSON_STOP_COUNT = 10;
@@ -1270,7 +1280,10 @@ function extractImageUrls(payload: any, baseUrl: string): string[] {
   return Array.from(urls);
 }
 
-function collectSectionImageGroups(payload: any, baseUrl: string): Record<string, string[][]> {
+export function collectSectionImageGroups(
+  payload: any,
+  baseUrl: string
+): Record<string, string[][]> {
   const bucketNames = new Set<string>();
   collectBucketNames(payload, bucketNames);
   const bySection = new Map<string, Map<string, string[]>>();
@@ -1301,6 +1314,10 @@ function collectSectionImageGroups(payload: any, baseUrl: string): Record<string
 
   const walk = (node: unknown, sectionHint = ''): void => {
     if (!node) return;
+    if (typeof node === 'string') {
+      if (isLikelyImagePath(node)) addImageGroup(sectionHint || 'General', node);
+      return;
+    }
     if (Array.isArray(node)) {
       node.forEach(item => walk(item, sectionHint));
       return;
@@ -1314,7 +1331,7 @@ function collectSectionImageGroups(payload: any, baseUrl: string): Record<string
       return '';
     };
     const derivedSection =
-      normalizeSectionName(String(obj?.translations && (obj.translations as any)?.en)) ||
+      normalizeSectionName(toStr((obj?.translations as any)?.en)) ||
       normalizeSectionName(toStr(obj?.component_name) || toStr(obj?.name) || sectionHint);
 
     const sectionFromPath = sectionFromImageName(
@@ -1330,10 +1347,15 @@ function collectSectionImageGroups(payload: any, baseUrl: string): Record<string
     if (filePath && isLikelyImagePath(filePath)) addImageGroup(sectionName, filePath);
     if (url && isLikelyImagePath(url)) addImageGroup(sectionName, url);
     if (!filePath && !url && name && isLikelyImagePath(name)) addImageGroup(sectionName, name);
-    extractAbsoluteImageUrlsFromString(JSON.stringify(obj)).forEach(abs => {
-      const inferred = normalizeSectionName(sectionFromImageName(abs) || sectionName || 'General');
-      addImageGroup(inferred, abs);
-    });
+    Object.values(obj)
+      .filter(value => typeof value === 'string')
+      .flatMap(value => extractAbsoluteImageUrlsFromString(value as string))
+      .forEach(abs => {
+        const inferred = normalizeSectionName(
+          sectionFromImageName(abs) || sectionName || 'General'
+        );
+        addImageGroup(inferred, abs);
+      });
 
     Object.values(obj).forEach(value => walk(value, sectionName));
   };
@@ -1341,8 +1363,20 @@ function collectSectionImageGroups(payload: any, baseUrl: string): Record<string
   walk(payload, '');
 
   const result: Record<string, string[][]> = {};
-  bySection.forEach((groups, section) => {
-    result[section] = Array.from(groups.values());
+  const seen = new Set<string>();
+  // A flat image list must not override the component association on its detail.
+  const sections = [...bySection.entries()].sort(
+    ([left], [right]) => Number(right !== 'General') - Number(left !== 'General')
+  );
+  sections.forEach(([section, groups]) => {
+    const unique = [...groups.entries()]
+      .filter(([key]) => {
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .map(([, candidates]) => candidates);
+    if (unique.length) result[section] = unique;
   });
   return result;
 }
@@ -1360,6 +1394,8 @@ function mergeSectionImageGroups(
 
   (extraGroups || []).forEach(group => {
     if (!group?.length) return;
+    const existingKey = imageKeyFromUrl(group[0] || '');
+    if (Object.values(seenBySection).some(keys => keys.has(existingKey))) return;
     const sectionGuess =
       normalizeSectionName(group.map(url => sectionFromImageName(url)).find(Boolean) || '') ||
       'Frame Cover';
@@ -1408,12 +1444,14 @@ async function fetchProxyImageDataUrl(
   password: string
 ): Promise<string> {
   try {
+    const measurementUserId = getCwMeasurementIdentity();
     const response = await fetch('/api/integrations/cw/measurements/image-proxy', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await getCwRequestHeaders(),
       body: JSON.stringify({ candidates, baseUrl, username, password }),
     });
     const data = await response.json().catch(() => ({}));
+    if (measurementUserId !== getCwMeasurementIdentity()) return '';
     if (!response.ok || !data?.success || typeof data?.url !== 'string' || !data.url) {
       return '';
     }
@@ -1888,6 +1926,19 @@ function createModal(): HTMLElement {
     string,
     { at: number; status: number; contentType: string; rawText: string; data: any }
   >();
+  try {
+    for (let index = window.sessionStorage.length - 1; index >= 0; index--) {
+      const key = window.sessionStorage.key(index);
+      if (
+        key?.startsWith('openpaint:cw-import-cache:') &&
+        !key.startsWith(CW_REQUEST_CACHE_PREFIX)
+      ) {
+        window.sessionStorage.removeItem(key);
+      }
+    }
+  } catch {
+    // Storage may be disabled; protected responses are still never restored.
+  }
 
   const setLoadProgress = (
     percent: number,
@@ -1959,7 +2010,7 @@ function createModal(): HTMLElement {
       probeTerms: probeTermsEl?.value || '',
       probeTermsPath: (probeTermsPathEl?.value || '').trim(),
       probeEnabled: probeEnabledEl?.checked ?? false,
-      lastProbeReport,
+      lastProbeReport: null,
     });
   };
 
@@ -1976,7 +2027,7 @@ function createModal(): HTMLElement {
     probeEnabledEl.checked = persisted.probeEnabled;
   }
   if (persisted.lastProbeReport && typeof persisted.lastProbeReport === 'object') {
-    lastProbeReport = persisted.lastProbeReport;
+    writePersistedCwUiState({ ...persisted, lastProbeReport: null });
   }
   // Auto-collapse login settings when username is already saved
   const loginDetails = body.querySelector<HTMLDetailsElement>('#cwLoginDetails');
@@ -2171,7 +2222,10 @@ function createModal(): HTMLElement {
         : undefined,
       probeMode: options.probeMode === 'turbo' ? 'turbo' : 'default',
     };
-    const canCache = Boolean(options.phase) && !renderedHtml.trim();
+    const canCache =
+      ['storefront-product', 'storefront-comparison', 'sectional-pricing'].includes(
+        options.phase || ''
+      ) && !renderedHtml.trim();
     const cacheKey = canCache ? makeRequestCacheKey(requestPayload) : '';
     const cachedValue = cacheKey ? readCachedRequest(cacheKey) : null;
     if (cachedValue) {
@@ -2189,13 +2243,19 @@ function createModal(): HTMLElement {
     }
 
     const transientStatuses = new Set([429, 502, 503, 504]);
+    const publicPhase = [
+      'storefront-product',
+      'storefront-comparison',
+      'sectional-pricing',
+    ].includes(options.phase || '');
+    const measurementUserId = getCwMeasurementIdentity();
     let response: Response | null = null;
     let requestError: unknown = null;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
         response = await fetch('/api/integrations/cw/measurements/search', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await getCwRequestHeaders(),
           body: JSON.stringify(requestPayload),
         });
         if (!transientStatuses.has(response.status) || attempt === 1) break;
@@ -2211,6 +2271,9 @@ function createModal(): HTMLElement {
         : new Error('Comfort Works product request failed');
     }
     const rawText = await response.text().catch(() => '');
+    if (!publicPhase && measurementUserId !== getCwMeasurementIdentity()) {
+      throw new Error('Your Sofapaint session changed. Sign in again to access measurements.');
+    }
     const contentType = response.headers.get('content-type') || '';
     let data: any = null;
     let jsonParseError: string | null = null;
@@ -2746,7 +2809,7 @@ function createModal(): HTMLElement {
     if (!basketItem.selectionKey || privateDetailsInFlight.has(basketItem.selectionKey)) return;
     privateDetailsInFlight.add(basketItem.selectionKey);
     try {
-      setLoadProgress(92, 'Measurements ready', 'Loading full CW40 measurements...');
+      setLoadProgress(92, 'Measurements ready', 'Loading component measurements...');
       const velcroVariant = /__(?:VH|VS)$/i.test(basketItem.scopedReference || '');
       const detailBasketItem: BasketItem = {
         ...basketItem,
@@ -2772,6 +2835,18 @@ function createModal(): HTMLElement {
           (item: any) => item?.success === false
         );
         const message = String(failure?.message || data?.message || '').trim();
+        const accessDenied = response.status === 401 || response.status === 403;
+        if (accessDenied) {
+          setLoadProgress(100, 'Sign in required', 'Comfort Works measurement library', {
+            complete: true,
+          });
+          setStatus(
+            message ||
+              'Sign in to Sofapaint with a verified @comfort-works.com account to access measurements.',
+            'info'
+          );
+          return;
+        }
         const needsLogin = /missing cw credentials|username\/password/i.test(message);
         setLoadProgress(
           100,
@@ -2798,10 +2873,7 @@ function createModal(): HTMLElement {
         row => !/^(?:width|depth|height)$/i.test(String(row.sourceLabel || '').trim())
       );
       if (!detailedRows.length) {
-        setStatus(
-          'Overall dimensions are ready. CW40 returned no component measurements for this selection.',
-          'info'
-        );
+        setStatus('No component measurements are available for this selection.', 'info');
         setLoadProgress(
           100,
           'Overall dimensions ready',
@@ -2813,7 +2885,7 @@ function createModal(): HTMLElement {
       setStatus(`Ready: ${loaded?.rows.length || 0} measurements and ${photoCount} photos.`, 'ok');
       setLoadProgress(
         100,
-        'CW40 measurements ready',
+        'Component measurements ready',
         `${loaded?.rows.length || 0} measurements, ${photoCount} photos`,
         { complete: true }
       );
@@ -2894,7 +2966,7 @@ function createModal(): HTMLElement {
             imagesWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
           );
         }
-        void loadPrivateProductDetails(basketItem);
+        if (data?.source !== 'private-archive') void loadPrivateProductDetails(basketItem);
       } else {
         setLoadProgress(100, 'Could not load product', 'Check the connection details');
         setStatus(
@@ -2967,8 +3039,15 @@ function createModal(): HTMLElement {
         item.versionOptions.forEach(option => {
           const code = String(option.code || (option as any).value || '').trim();
           const label = String(option.label || code).trim();
-          const suffix = option.confirmed === true ? ' · measurements available' : '';
-          versionSelect.appendChild(new Option(`${label}${suffix}`, code));
+          const suffix =
+            option.modelSetConfirmed === false
+              ? ' · measurements unconfirmed'
+              : option.confirmed === true
+                ? ' · measurements available'
+                : '';
+          const choice = new Option(`${label}${suffix}`, code);
+          choice.disabled = option.modelSetConfirmed === false;
+          versionSelect.appendChild(choice);
         });
         versionSelect.value = item.selectedVersionCode;
       } else {
@@ -3014,7 +3093,9 @@ function createModal(): HTMLElement {
       const loadAction = document.createElement('div');
       loadAction.className = 'cw-result-action';
       const loadHint = document.createElement('small');
-      loadHint.textContent = 'Choose both options';
+      loadHint.textContent = item.measurementsUnconfirmed
+        ? 'Measurements unconfirmed'
+        : 'Choose both options';
       loadAction.append(loadHint, loadButton);
 
       const syncSelection = () => {
@@ -4605,7 +4686,9 @@ function createModal(): HTMLElement {
       sectionEl.textContent = entry.section || 'General';
       const nameEl = document.createElement('div');
       nameEl.className = 'cw-image-name';
-      nameEl.textContent = fileStemFromUrl(group[0] || '');
+      nameEl.textContent = group[0]?.startsWith('https://cw-archive.invalid/')
+        ? 'Measurement image'
+        : fileStemFromUrl(group[0] || '');
       meta.appendChild(itemEl);
       meta.appendChild(sectionEl);
       meta.appendChild(nameEl);
@@ -5427,6 +5510,7 @@ function createModal(): HTMLElement {
           status: item?.status || item?.product?.status || null,
           translations: Array.isArray(item?.translations) ? item.translations : [],
           configParsed: item?.configParsed === true,
+          measurementsUnconfirmed: item?.measurementsUnconfirmed === true,
           versionOptions,
           styleOptions,
           derivedScopedReferences: Array.isArray(item?.derivedScopedReferences)
@@ -5530,6 +5614,72 @@ function createModal(): HTMLElement {
       setProbeButtonsDisabled(false);
     }
   };
+
+  // The search page hands over identifiers only. Resolve against the protected
+  // archive again and reuse the existing drawing/import flow.
+  window.addEventListener('openpaint:measurement-search-selection', event => {
+    const selection = (event as CustomEvent).detail;
+    void (async () => {
+      openModal();
+      setStatus('Opening this model from the measurement library...');
+      try {
+        await authService.initialize();
+        const session = await authService.getCurrentSession();
+        if (!session.success || !session.data?.user)
+          throw new Error('Sign in to SofaPaint to open measurements.');
+        if (!authService.getCurrentUser()) {
+          await new Promise<void>((resolve, reject) => {
+            let unsubscribe = () => {};
+            const timeout = setTimeout(() => {
+              unsubscribe();
+              reject(new Error('Your session is still opening. Please try again.'));
+            }, 8000);
+            unsubscribe = authService.onAuthStateChange(user => {
+              if (!user) return;
+              clearTimeout(timeout);
+              unsubscribe();
+              resolve();
+            });
+          });
+        }
+        openModal();
+        const { response, data } = await requestSearchPayload(selection.productReference, '', {
+          phase: 'discover',
+        });
+        const result = data?.results?.find(
+          (item: any) =>
+            item.id === selection.productId && item.productReference === selection.productReference
+        );
+        if (!response.ok || !result)
+          throw new Error(data?.message || 'The selected product could not be found.');
+        const style = result.styleOptions?.find(
+          (item: any) => item.style === selection.style && item.styleCode === selection.styleCode
+        );
+        const version = result.versionOptions?.find(
+          (item: any) =>
+            item.code === selection.versionCode &&
+            item.scopedReference === selection.scopedReference
+        );
+        if (!style || (result.versionOptions?.length && !version))
+          throw new Error('This model or style is not available.');
+        const item: SearchResultItem = {
+          ...result,
+          translations: [],
+          selected: true,
+          selectedVersionCode: version?.code || '',
+          selectedStyleKey: makeStyleKey(style.productReference, style.style, style.styleCode),
+        };
+        if (!isCwConfigurationSelectionReady(item))
+          throw new Error('This model has unconfirmed measurements.');
+        searchTermEl.value = selection.productReference;
+        state.searchResults = [item];
+        renderSearchResults();
+        await reloadSearchResultItem(item);
+      } catch (error) {
+        setStatus(error instanceof Error ? error.message : 'The model could not be opened.', 'bad');
+      }
+    })();
+  });
 
   const addSelectedToBasket = () => {
     const selectedResults = state.searchResults.filter(item => item.selected);
@@ -6076,7 +6226,7 @@ function createModal(): HTMLElement {
 
           const response = await fetch('/api/integrations/cw/measurements/probe-terms', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await getCwRequestHeaders(),
             body: JSON.stringify({ filePath }),
           });
           const text = await response.text();
@@ -6962,6 +7112,26 @@ function createModal(): HTMLElement {
   const close = () => {
     overlay.style.display = 'none';
   };
+
+  // Drop the library view when the Sofapaint identity changes. Protected
+  // responses are never restored from the previous session's response cache.
+  let measurementUserId = getCwMeasurementIdentity();
+  authService.onAuthStateChange(user => {
+    const nextId = getCwMeasurementIdentity(user);
+    if (nextId === measurementUserId) return;
+    measurementUserId = nextId;
+    requestPayloadCache.clear();
+    lastProbeReport = null;
+    renderProbeReport();
+    state.loadedItems = [];
+    state.selectedImageKeys = [];
+    state.activeItemKey = '';
+    state.activeSection = '';
+    state.armedRowKey = '';
+    state.activeDrawIntentByScope = {};
+    syncUi();
+    close();
+  });
 
   renderProbeReport();
   syncUi();

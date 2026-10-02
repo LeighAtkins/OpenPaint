@@ -3,53 +3,77 @@
   "buildCommand": "bun run build:vercel",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/api/share-project", "destination": "/api/[...all]" },
-    { "source": "/api/shared/:path*", "destination": "/api/[...all]" },
-    { "source": "/api/cloud-projects/:path*", "destination": "/api/[...all]" },
-    { "source": "/api/projects/:path*", "destination": "/api/[...all]" },
-    { "source": "/api/cloud-assets/:path*", "destination": "/api/[...all]" },
-    { "source": "/api/wallet/:path*", "destination": "/api/[...all]" },
-    { "source": "/api/pets/:path*", "destination": "/api/[...all]" },
-    { "source": "/shared/:shareId", "destination": "/api/[...all]" },
-    { "source": "/open/:projectId", "destination": "/api/[...all]" },
-    { "source": "/production/:shareId", "destination": "/api/[...all]" },
-    { "source": "/wallet/:path*", "destination": "/api/[...all]" },
-    { "source": "/pets/:path*", "destination": "/api/[...all]" }
+    {
+      "source": "/search/:path*",
+      "destination": "/search.html"
+    },
+    {
+      "source": "/api/share-project",
+      "destination": "/api/[...all]"
+    },
+    {
+      "source": "/api/shared/:path*",
+      "destination": "/api/[...all]"
+    },
+    {
+      "source": "/api/cloud-projects/:path*",
+      "destination": "/api/[...all]"
+    },
+    {
+      "source": "/api/projects/:path*",
+      "destination": "/api/[...all]"
+    },
+    {
+      "source": "/api/cloud-assets/:path*",
+      "destination": "/api/[...all]"
+    },
+    {
+      "source": "/api/wallet/:path*",
+      "destination": "/api/[...all]"
+    },
+    {
+      "source": "/api/pets/:path*",
+      "destination": "/api/[...all]"
+    },
+    {
+      "source": "/shared/:shareId",
+      "destination": "/api/[...all]"
+    },
+    {
+      "source": "/open/:projectId",
+      "destination": "/api/[...all]"
+    },
+    {
+      "source": "/production/:shareId",
+      "destination": "/api/[...all]"
+    },
+    {
+      "source": "/wallet/:path*",
+      "destination": "/api/[...all]"
+    },
+    {
+      "source": "/pets/:path*",
+      "destination": "/api/[...all]"
+    }
   ],
   "functions": {
+    "api/integrations/cw/[action]/[formId].js": {
+      "includeFiles": "server/vercel-routes/cw/generated/**"
+    },
     "api/[...all].js": {
-      "includeFiles": "{server/**,app.js,index.html,shared.html,shared.js,css/**,src/**,public/assets/**,public/css/**,public/favicon.ico,public/measurement-guides/manifest.json}"
+      "includeFiles": "{server/**,app.js,index.html,shared.html,shared.js,css/**,src/**,public/assets/**,public/css/**,public/favicon.ico,public/measurement-guides/manifest.json}",
+      "excludeFiles": "{uploads/**,tmp/**,server/pdf/**,node_modules/@sparticuz/**,node_modules/puppeteer*/**,node_modules/@puppeteer/**,node_modules/chromium-bidi/**}"
     },
     "api/pdf/render.js": {
-      "includeFiles": "server/pdf/**",
       "maxDuration": 60
     },
-    "api/integrations/cw/[action].js": {
-      "includeFiles": "server/**"
-    },
-    "api/integrations/cw/[action]/[formId].js": {
-      "includeFiles": "server/**"
-    },
-    "api/integrations/cw/images/[formId].js": {
-      "includeFiles": "server/**"
-    },
-    "api/integrations/cw/images/[formId]/upload.js": {
-      "includeFiles": "server/**"
-    },
-    "api/integrations/cw/images/[formId]/delete.js": {
-      "includeFiles": "server/**"
-    },
     "api/measurement-guides/svg.js": {
-      "includeFiles": "{server/**,public/measurement-guides/manifest.json}"
+      "includeFiles": "public/measurement-guides/manifest.json"
     },
     "api/measurement-guides/file.js": {
       "includeFiles": "{public/measurement-guides/manifest.json}"
     },
-    "api/storage/r2/[action].js": {
-      "includeFiles": "server/**"
-    },
     "api/measurements/generate.js": {
-      "includeFiles": "server/**",
       "maxDuration": 60
     }
   }

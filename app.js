@@ -462,6 +462,12 @@ app.get('/', (req, res) => {
   res.send(html);
 });
 
+// The measurement browser uses the same runtime entry with a small HTML shell.
+app.get(['/search', '/search/*'], (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.sendFile(path.join(__dirname, 'search.html'));
+});
+
 // Serve static files from public directory
 app.use(express.static('public'));
 // Serve static files from root directory (but index.html is handled by route above)
@@ -533,66 +539,69 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.post('/api/pdf/render', async (req, res) => {
-  const startedAt = Date.now();
-  const requestId = crypto.randomUUID();
-  res.setHeader('X-Pdf-Request-Id', requestId);
-  try {
-    const [
-      { pdfRenderRequestSchema, sanitizePdfFilename },
-      { renderPdfFromRequest, resolvePdfRendererMode },
-    ] = await Promise.all([import('./server/pdf/schema.js'), import('./server/pdf/service.js')]);
+// Vercel serves this URL through api/pdf/render.js, keeping Chromium out of
+// the catch-all bundle. Express retains the renderer for local development.
+if (!isVercelServerless)
+  app.post('/api/pdf/render', async (req, res) => {
+    const startedAt = Date.now();
+    const requestId = crypto.randomUUID();
+    res.setHeader('X-Pdf-Request-Id', requestId);
+    try {
+      const [
+        { pdfRenderRequestSchema, sanitizePdfFilename },
+        { renderPdfFromRequest, resolvePdfRendererMode },
+      ] = await Promise.all([import('./server/pdf/schema.js'), import('./server/pdf/service.js')]);
 
-    const parsed = pdfRenderRequestSchema.safeParse(req.body || {});
-    if (!parsed.success) {
-      return res.status(400).json({
-        success: false,
-        code: 'PDF_RENDER_BAD_REQUEST',
+      const parsed = pdfRenderRequestSchema.safeParse(req.body || {});
+      if (!parsed.success) {
+        return res.status(400).json({
+          success: false,
+          code: 'PDF_RENDER_BAD_REQUEST',
+          requestId,
+          errors: parsed.error.issues,
+        });
+      }
+
+      const payload = parsed.data;
+      const mode = resolvePdfRendererMode(payload.options?.renderer);
+      const pdfBuffer = await renderPdfFromRequest(payload, mode);
+      const filename = sanitizePdfFilename(
+        payload.options?.filename || payload.report?.projectName || 'openpaint-report.pdf'
+      );
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+      res.setHeader('X-Pdf-Renderer', mode);
+      res.setHeader('X-Pdf-Duration-Ms', String(Date.now() - startedAt));
+      console.log('[PDF] Render success', {
         requestId,
-        errors: parsed.error.issues,
+        mode,
+        source: payload.source,
+        pageSize: payload.options?.pageSize,
+        durationMs: Date.now() - startedAt,
+      });
+      return res.status(200).send(pdfBuffer);
+    } catch (error) {
+      const code = error?.code || 'PDF_RENDER_FAILED';
+      const detail = error?.details || error?.message || String(error);
+      console.error('[PDF] Render failed:', {
+        requestId,
+        code,
+        durationMs: Date.now() - startedAt,
+        error,
+      });
+      if (code === 'PDF_RENDERER_UNSUPPORTED' || code === 'PDF_RENDERER_MISSING_DEPENDENCY') {
+        return res.status(501).json({ success: false, code, requestId, message: detail });
+      }
+      return res.status(500).json({
+        success: false,
+        code,
+        requestId,
+        message: 'Failed to render PDF',
+        detail,
       });
     }
-
-    const payload = parsed.data;
-    const mode = resolvePdfRendererMode(payload.options?.renderer);
-    const pdfBuffer = await renderPdfFromRequest(payload, mode);
-    const filename = sanitizePdfFilename(
-      payload.options?.filename || payload.report?.projectName || 'openpaint-report.pdf'
-    );
-
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-    res.setHeader('X-Pdf-Renderer', mode);
-    res.setHeader('X-Pdf-Duration-Ms', String(Date.now() - startedAt));
-    console.log('[PDF] Render success', {
-      requestId,
-      mode,
-      source: payload.source,
-      pageSize: payload.options?.pageSize,
-      durationMs: Date.now() - startedAt,
-    });
-    return res.status(200).send(pdfBuffer);
-  } catch (error) {
-    const code = error?.code || 'PDF_RENDER_FAILED';
-    const detail = error?.details || error?.message || String(error);
-    console.error('[PDF] Render failed:', {
-      requestId,
-      code,
-      durationMs: Date.now() - startedAt,
-      error,
-    });
-    if (code === 'PDF_RENDERER_UNSUPPORTED' || code === 'PDF_RENDERER_MISSING_DEPENDENCY') {
-      return res.status(501).json({ success: false, code, requestId, message: detail });
-    }
-    return res.status(500).json({
-      success: false,
-      code,
-      requestId,
-      message: 'Failed to render PDF',
-      detail,
-    });
-  }
-});
+  });
 
 // Save project
 app.post('/api/projects/save', (req, res) => {

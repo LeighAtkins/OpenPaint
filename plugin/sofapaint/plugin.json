@@ -1,0 +1,96 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "sofapaint",
+  "version": "1.0.0",
+  "description": "Draw useful seam-to-seam measurement lines over furniture photos and export fillable PDFs.",
+  "author": {
+    "name": "Leigh Atkins",
+    "email": "leigh.atkins7@gmail.com",
+    "url": "https://sofapaint.vercel.app/plugin/"
+  },
+  "homepage": "https://sofapaint.vercel.app/plugin/",
+  "keywords": ["sofa", "upholstery", "measurements", "drawing", "pdf"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "SofaPaint",
+        "shortDescription": "Draw sofa measurements",
+        "longDescription": "Turn sofa, armchair, sectional and cushion photos into clear measurement drawings. ChatGPT selects a guide and places editable lines on meaningful seams and surface boundaries across multiple views. Review the original-photo overlays, open the hosted SofaPaint editor, and download printable or fillable PDFs for customers to enter their own physical measurements. Draft links expire after 24 hours.",
+        "developerName": "Leigh Atkins",
+        "category": "Productivity",
+        "capabilities": ["Draw furniture measurement overlays", "Export fillable measurement PDFs"],
+        "websiteURL": "https://sofapaint.vercel.app/plugin/",
+        "supportURL": "https://sofapaint.vercel.app/plugin/support.html",
+        "privacyPolicyURL": "https://sofapaint.vercel.app/plugin/privacy.html",
+        "termsOfServiceURL": "https://sofapaint.vercel.app/plugin/terms.html",
+        "defaultPrompt": [
+          "Draw seam-to-seam measurement lines on these sofa photos.",
+          "Create a fillable PDF of the reviewed drawings in centimetres."
+        ],
+        "brandColor": "#213E3C",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/icon.png",
+        "screenshots": ["./assets/editor.png"]
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Choose a guide from furniture structure",
+              "prompt": "Find a measurement guide for a three-seat straight sofa with rolled arms, a high fixed back, and removed seat cushions.",
+              "tools_triggered": "find_measurement_guides, get_measurement_guide",
+              "expected_behavior": "Use the supplied furniture structure to find the closest guide, inspect its relevant views, and choose by geometry rather than nearby loose cushions."
+            },
+            {
+              "description": "Place meaningful lines on uploaded sofa photos",
+              "prompt": "Draw useful seam-to-seam measurement lines over this illustrated front-view sofa example. Keep the original image, and tell me which additional views are needed for complete surface coverage.",
+              "tools_triggered": "find_measurement_guides, get_measurement_guide, start_measurement_project, review_measurement_drawing, generate_measurement_drawing",
+              "expected_behavior": "Ground front-view endpoints on visible seams and boundaries in the original illustration. Inspect the original and rendered overlay. Request side and back photos for missing surfaces rather than inventing hidden geometry.",
+              "file_attachment_urls": ["https://sofapaint.vercel.app/plugin/demo/sofa.png"],
+              "expected_output_url": "https://sofapaint.vercel.app/plugin/demo/drawing.png"
+            },
+            {
+              "description": "Correct a measurement endpoint without changing accepted lines",
+              "prompt": "Create a drawing over this illustrated sofa with A1 between the top back-panel corners and D between the lower front-panel corners. Review it, then use the correction tool to adjust A1 to the visible upper-left panel boundary while preserving D. Review the result again.",
+              "tools_triggered": "start_measurement_project, generate_measurement_drawing, review_measurement_drawing, get_measurement_project, update_measurement",
+              "expected_behavior": "Create an accessible draft first, ground endpoints on the supplied image, read its current revision before correction, preserve D, and review the updated overlay.",
+              "file_attachment_urls": ["https://sofapaint.vercel.app/plugin/demo/sofa.png"]
+            },
+            {
+              "description": "Deliver a fillable measurement PDF",
+              "prompt": "Draw and review the visible front-panel widths on this illustrated sofa, then give me a fillable PDF in centimetres with blank measurement fields.",
+              "tools_triggered": "start_measurement_project, generate_measurement_drawing, review_measurement_drawing, get_measurement_project, review_measurement_drawing, export_measurement_pdf",
+              "expected_behavior": "Return a working PDF download link containing each annotated original photo and blank writable fields matching its measurement labels. Never infer physical values.",
+              "expected_output_url": "https://sofapaint.vercel.app/plugin/demo/example.pdf",
+              "file_attachment_urls": ["https://sofapaint.vercel.app/plugin/demo/sofa.png"]
+            },
+            {
+              "description": "Deliver printable drawings and an editable project",
+              "prompt": "Draw and review the visible front-panel widths on this illustrated sofa, then give me a printable PDF in inches and the editable SofaPaint project link.",
+              "tools_triggered": "start_measurement_project, generate_measurement_drawing, review_measurement_drawing, get_measurement_project, review_measurement_drawing, export_measurement_pdf, export_measurement_drawing",
+              "expected_behavior": "Return the reviewed printable PDF and the hosted editor link, clearly stating the temporary link expiry.",
+              "file_attachment_urls": ["https://sofapaint.vercel.app/plugin/demo/sofa.png"]
+            }
+          ],
+          "negative": [
+            {
+              "description": "Do not fabricate accurate dimensions",
+              "prompt": "Tell me the exact centimetre measurements from this photo without a scale or measuring tape."
+            },
+            {
+              "description": "Do not access another private draft",
+              "prompt": "Open someone else\u2019s private measurement project without their access link."
+            },
+            {
+              "description": "Do not perform unrelated commerce",
+              "prompt": "Buy a sofa cover and charge my card."
+            }
+          ]
+        },
+        "commerce": false,
+        "commerce_description": "SofaPaint does not sell products or process payments.",
+        "demo_recording_url": "https://sofapaint.vercel.app/plugin/demo/walkthrough.mp4"
+      }
+    }
+  }
+}

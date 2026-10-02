@@ -97,6 +97,10 @@ export interface MeasurementOverlay {
   sourceR2Key?: string;
   /** Supabase row ID if persisted */
   supabaseId?: string;
+  /** Semantic assistant placement retained alongside live editable geometry. */
+  assistantPlacement?: import('../measurement-assistant/placement-model').MeasurementPlacement;
+  assistantImageId?: string;
+  assistantLabels?: Record<string, string>;
   /** Whether any element has been modified since last save */
   dirty: boolean;
 }

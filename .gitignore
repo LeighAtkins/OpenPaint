@@ -4,6 +4,7 @@ jspm_packages/
 
 # Build outputs
 dist/
+server/vercel-routes/cw/generated/
 build/
 coverage/
 *.tsbuildinfo
@@ -122,3 +123,8 @@ dev-load/
 
 # CW line library runtime store (dev file fallback)
 data/cw-line-library.json
+
+# MCP development credentials and local Cloudflare state
+/mcp/.dev.vars
+/.wrangler/
+/mcp/.wrangler/

@@ -26,7 +26,7 @@
     "build:gorgias-extension": "node scripts/package-gorgias-extension.mjs",
     "build:profile:no-minify": "vite build --config vite.config.ts --minify false",
     "preview": "vite preview --config vite.config.ts",
-    "build:vercel": "bun run build:css && vite build --config vite.config.ts",
+    "build:vercel": "bun run build:css && node scripts/build-cw-server.ts && vite build --config vite.config.ts",
     "deploy": "npx vercel --prod",
     "deploy:preview": "npx vercel",
     "type-check": "tsc --noEmit",
@@ -62,11 +62,18 @@
     "prepare": "node scripts/prepare-git-hooks.js",
     "precommit": "lint-staged",
     "clean": "rm -rf dist node_modules/.vite coverage",
-    "nuke": "rm -rf node_modules dist coverage .husky/_"
+    "nuke": "rm -rf node_modules dist coverage .husky/_",
+    "mcp:build": "node scripts/build-mcp-guides.ts",
+    "mcp:type-check": "tsc --noEmit -p mcp/tsconfig.json",
+    "mcp:dev": "npm run mcp:build && wrangler dev --config mcp/wrangler.jsonc --port 8789",
+    "mcp:dry-run": "npm run mcp:build && wrangler deploy --config mcp/wrangler.jsonc --dry-run",
+    "mcp:deploy": "npm run mcp:build && wrangler deploy --config mcp/wrangler.jsonc"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.992.0",
     "@aws-sdk/s3-request-presigner": "^3.992.0",
+    "@modelcontextprotocol/sdk": "^1.31.0",
+    "@resvg/resvg-wasm": "^2.6.2",
     "@sparticuz/chromium": "^138.0.2",
     "@supabase/supabase-js": "^2.95.3",
     "@tailwindcss/postcss": "^4.1.17",
@@ -86,9 +93,11 @@
     "puppeteer-core": "^24.22.3",
     "sharp": "^0.34.5",
     "three": "^0.185.1",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260930.2",
     "@emnapi/core": "1.10.0",
     "@emnapi/runtime": "1.10.0",
     "@napi-rs/wasm-runtime": "^1.1.4",
@@ -126,7 +135,8 @@
     "typescript-eslint": "^8.48.0",
     "vite": "^8.0.0",
     "vite-plugin-checker": "^0.11.0",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.0",
+    "wrangler": "^4.145.0"
   },
   "directories": {
     "doc": "docs",

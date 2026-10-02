@@ -904,7 +904,7 @@ code: COS-105,
     await expect(page.locator('#cwRows')).toContainText('Front panel width');
     await expect(page.locator('#cwRows')).toContainText('180.5');
     await expect(page.locator('#cwRows .cw-measure-row')).toHaveCount(2);
-    await expect(page.locator('#cwLoadProgressLabel')).toHaveText('CW40 measurements ready');
+    await expect(page.locator('#cwLoadProgressLabel')).toHaveText('Component measurements ready');
   });
 
   test('keeps every loaded CW measurement available in Elements and allows repeated draws', async ({
