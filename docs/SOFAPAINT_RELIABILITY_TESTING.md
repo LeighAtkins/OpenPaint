@@ -24,6 +24,10 @@ Validate the native output with `scripts/check-sofapaint-native-pdf.py`. It chec
 
 An independent partial pilot is not a complete furniture measurement set or a production-accuracy claim. Record hidden surfaces and avoid duplicate independently fillable fields for the same physical measurement across views. Keep authored candidates and reconstructed human references separate.
 
+`scripts/check-sofapaint-live-editor.ts` opens the actual private draft in fresh desktop/mobile browser contexts. It verifies canonical photo dimensions, exact line and surface-path geometry, canvas labels, settled measurement rows and absence of horizontal overflow. It performs a browser-local label drag, switches away and back, and restores serialized overlays. Hosted project writes are blocked and the project response hash must remain unchanged. Supply the private state path and a new private output folder; the optional third argument `http://127.0.0.1:5173` tests a local editor configured for the same Worker origin. Keep screenshots and draft capabilities outside Git.
+
+Inspect these screenshots separately: matching stored geometry and counting tags can miss misplaced or clipped labels. Assistant placements store label anchors on measurement elements, while legacy SVG guides use separate label elements; both must retain their anchors without overriding saved user offsets. This QA is not evidence of physical seam accuracy.
+
 ## Human correction round
 
 Use fresh ChatGPT conversations after refreshing the SofaPaint connection. Use the same ordinary request for each case:
