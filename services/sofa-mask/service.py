@@ -37,10 +37,13 @@ def normalize_photo(raw):
     if not raw or len(raw) > MAX_BYTES:
         raise ValueError('Expected an image no larger than 20 MB.')
     with Image.open(io.BytesIO(raw)) as photo:
-        if photo.format not in ('PNG', 'JPEG', 'WEBP') or photo.width * photo.height > MAX_SOURCE_PIXELS:
-            raise ValueError('Expected JPEG, PNG or WebP, up to 80 megapixels for normalization.')
-        mime = {'PNG': 'image/png', 'JPEG': 'image/jpeg', 'WEBP': 'image/webp'}[photo.format]
-        if photo.getexif().get(274, 1) == 1 and photo.width * photo.height <= MAX_PIXELS:
+        if photo.format not in ('PNG', 'JPEG', 'WEBP', 'MPO') or photo.width * photo.height > MAX_SOURCE_PIXELS:
+            raise ValueError('Expected JPEG, PNG, WebP or phone MPO, up to 80 megapixels for normalization.')
+        multi_picture = photo.format == 'MPO'
+        if multi_picture:
+            photo.seek(0)
+        mime = {'PNG': 'image/png', 'JPEG': 'image/jpeg', 'WEBP': 'image/webp', 'MPO': 'image/jpeg'}[photo.format]
+        if not multi_picture and photo.getexif().get(274, 1) == 1 and photo.width * photo.height <= MAX_PIXELS:
             photo.load()
             return raw, mime
         upright = ImageOps.exif_transpose(photo).convert('RGB')

@@ -47,6 +47,12 @@ is configured, the Worker uses this before storing each original project photo,
 so the editor, photo review, masks and measurement lines share one coordinate
 system. Legacy drafts with unnormalized rotation need reimporting.
 
+Phone MPO files (JPEGs containing multiple picture frames) are normalized using
+their primary frame only, re-encoded as a standard JPEG. The hidden auxiliary
+frame is not concatenated with the visible photo. Tall phone screenshots retain
+their full framing: raster previews fit within 1200 by 2400 pixels without
+cropping or changing aspect ratio.
+
 ## Hosted Worker configuration
 
 ChatGPT cannot reach localhost. For this PC pilot, expose the service through
@@ -73,7 +79,36 @@ tracked SVGs directly from Git, preserving the production Linux catalogue IDs.
 Deploy the updated MCP Worker to advertise the additional tool; the Vercel
 editor already accepts the resulting measurement drawings. Refresh the ChatGPT
 connection's tools after deployment. If the PC or service is offline, the tool
-returns an explicit error and the existing original-photo workflow is available.
+returns an explicit error. Existing drafts can still use their stored original
+photos, but new imports also require the PC normalizer while these settings are
+enabled. Remove all three masking settings to restore normal imports when the
+PC service is unavailable.
+
+The initial HTTPS connection is a temporary Cloudflare Quick Tunnel running in
+WSL. Its endpoint changes if that tunnel is restarted, so its new `/segment` URL
+must be set in the Worker before further imports. It is a pilot connection, not
+an unattended production service. Inference and normalization require the shared
+bearer secret; `/health` exposes only readiness and model identity. TLS checking
+remains enabled. A named tunnel and stable hostname are required for a durable
+deployment.
+
+## Supplied customer-image checks
+
+The private `SofaPaint-PC-testing.zip` contains image-link CSVs, not embedded
+photos. Use the 37 visually reviewed cases rather than the 1,693-row unreviewed
+pool. Its S3 source host is included in the existing bounded image-handoff
+allowlist. Do not commit those customer links, draft capabilities or photos.
+
+`scripts/test-sofapaint-pc-images.ts` tests the deployed public MCP, including
+normalization, model provenance, native overlays, cache consistency and denied
+access with an invalid project capability. It requires a private JSON manifest
+and stores credentials separately from the local review HTML. It stops on a
+failed hosted request and does not retry automatically.
+
+`scripts/review-sofapaint-pc-images.py` generates a broader local contact sheet
+using the same running RTX service, with full bitmap evidence, image hashes and
+coordinate checks. Local completion is not proof that every hosted import works,
+nor is it an accuracy measurement or an automatic measurement-drawing review.
 
 ## Acceptance before relying on it
 

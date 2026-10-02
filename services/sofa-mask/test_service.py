@@ -57,6 +57,22 @@ class MaskContractTests(unittest.TestCase):
         Image.new('RGB', (60, 40), 'white').save(stream, format='JPEG')
         self.assertEqual(normalize_photo(stream.getvalue()), (stream.getvalue(), 'image/jpeg'))
 
+    def test_phone_mpo_uses_only_the_primary_frame_in_canonical_jpeg(self):
+        stream = io.BytesIO()
+        Image.new('RGB', (60, 40), 'red').save(stream, format='MPO', save_all=True,
+            append_images=[Image.new('RGB', (60, 40), 'blue')])
+        with Image.open(io.BytesIO(stream.getvalue())) as source:
+            self.assertEqual(source.format, 'MPO')
+            self.assertEqual(source.n_frames, 2)
+        normalized, mime = normalize_photo(stream.getvalue())
+        self.assertEqual(mime, 'image/jpeg')
+        with Image.open(io.BytesIO(normalized)) as canonical:
+            self.assertEqual(canonical.format, 'JPEG')
+        pixels = decode_image(normalized)
+        self.assertEqual(pixels.shape, (40, 60, 3))
+        self.assertGreater(pixels[:, :, 0].mean(), 240)
+        self.assertLess(pixels[:, :, 2].mean(), 10)
+
     def test_large_phone_photo_is_stored_in_one_bounded_coordinate_system(self):
         stream = io.BytesIO()
         Image.new('RGB', (60, 40), 'white').save(stream, format='JPEG')
