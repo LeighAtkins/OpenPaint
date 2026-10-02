@@ -10,6 +10,10 @@ Generate from those landmark identities and selected guides. New endpoints or gu
 
 These checks constrain the workflow, not photographic truth. GPT can still misidentify a boundary or describe it incorrectly. Human correction and unseen-photo evaluation remain essential. Unknown construction is explicit; hidden surfaces request another view rather than invented endpoints.
 
+When masks are already cached, `check_measurement_drawing` also checks sampled length-weighted path agreement against the exact row-major instance bitmaps. Photo bytes, dimensions, checkpoint and bitmap integrity are revalidated on cache reads. The tool does not launch inference or change the drawing. It reports instance membership, endpoints unsupported even within a small neighbourhood, lengthy outside-mask segments and suggested close-up regions. Holes and disconnected instances remain intact; overlapping instance fractions must not be summed as union coverage. Sampling spacing is recorded and small missed defects remain possible.
+
+These are advisory warnings, not export gates. Correct spans can cross background and correct seams can lie outside imperfect model predictions. No predictions or no cached evidence is explicit, never a quality pass. Inspect the actual photo before changing a line; matching a predicted boundary is not evidence that the seam is correct.
+
 ## Human correction round
 
 Use fresh ChatGPT conversations after refreshing the SofaPaint connection. Use the same ordinary request for each case:
@@ -30,4 +34,8 @@ bun scripts/score-measurement-correction.ts reference.json candidate.json report
 
 References support the stored geometry fixtures and simple centred, unrotated Fabric line vectors from S2280. The manual vectors are authoritative for added B2/E1/E2; its stale MOS SVG is not. Unsupported geometry is explicitly reported; complex Fabric transforms are rejected. Pass the actual photo-view order. Only use identical original photo framing; the flag records that explicit assertion and cannot verify it from pixels.
 
-The report lists missing and unexpected labels, ambiguous duplicated labels, normalized endpoint errors, path-type differences and unscored views. It does not measure millimetres, prove seams are correct, or establish contour quality. Compare generated and corrected projects on the same photos. A successful PDF or high self-reported confidence is not a drawing-quality pass.
+The report lists missing and unexpected labels, ambiguous duplicated labels, normalized endpoint errors, sampled symmetric path deviation (including a sampling-error upper bound), path-type differences and unscored photos/views. Photo identity is resolved only for a unique image of the stated view; pass an additional comma-separated image-ID list when there are multiple photos of one view. Conflicting correction geometry and off-image coordinates are rejected. Existing reports are never overwritten.
+
+Legacy fixtures do not contain the original photo hashes, so historical framing remains explicitly unverified. The scorer's programmatic API additionally supports binding references and candidates to image SHA-256 and dimensions; mismatches do not receive geometry scores. Pixel-distance scores require that binding. None of these metrics measures millimetres, proves seam identity, or establishes physical accuracy. Compare independently generated and corrected projects, never copied references against themselves. A successful PDF or high self-reported confidence is not a drawing-quality pass.
+
+For a private visual reconstruction of the four existing human corrections over the supplied customer photos, bundle `scripts/review-sofapaint-corrected-references.ts` with the existing Resvg WASM loader. Supply the absolute private mask-review directory and a new output directory. This generates original/mask/reference comparisons and records unverified historical framing. It is not an independent model evaluation and does not invent numeric measurement values.

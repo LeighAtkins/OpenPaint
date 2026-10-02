@@ -4,6 +4,7 @@ import {
   normalizeMaskInput,
   renderMaskOverlay,
   MASK_CLASSES,
+  validateMaskEvidence,
 } from '../../src/modules/measurement-assistant/mcp/mask-service';
 
 const bytes = new Uint8Array([1, 2, 3]);
@@ -45,6 +46,18 @@ async function evidence() {
   };
 }
 describe('reviewed segmentation bridge', () => {
+  it('applies model, photo and exact bitmap validation to cached evidence too', async () => {
+    const data = await evidence();
+    expect(validateMaskEvidence(data, data.image, modelSha256)).toEqual(data);
+    expect(() =>
+      validateMaskEvidence(data, { ...data.image, sha256: 'b'.repeat(64) }, modelSha256)
+    ).toThrow('does not match');
+    expect(() => validateMaskEvidence(data, data.image, 'b'.repeat(64))).toThrow(
+      'unexpected checkpoint'
+    );
+    data.instances[0].bitmap.counts = [0, 12];
+    expect(() => validateMaskEvidence(data, data.image, modelSha256)).toThrow('Malformed');
+  });
   it('binds predictions to the exact input bytes and checkpoint', async () => {
     const data = await evidence();
     const fetcher = async (_url: unknown, options?: RequestInit) => {

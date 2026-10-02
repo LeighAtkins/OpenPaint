@@ -129,19 +129,30 @@ export async function fetchMaskEvidence(
     throw new Error(
       `Masking service failed (${response.status}); original-photo drawing remains available.`
     );
-  const evidence = maskEvidenceSchema.parse(
-    JSON.parse(new TextDecoder().decode(await readBoundedBody(response.body, 4 * 1024 * 1024)))
+  const raw = JSON.parse(
+    new TextDecoder().decode(await readBoundedBody(response.body, 4 * 1024 * 1024))
   );
-  const hash = await crypto.subtle.digest('SHA-256', bytes);
+  const hash = await crypto.subtle.digest('SHA-256', new Uint8Array(bytes));
   const inputSha = Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, '0')).join('');
+  return validateMaskEvidence(raw, { ...image, sha256: inputSha }, config.modelSha256!);
+}
+
+/** Cache hits must satisfy the same photo/model/bitmap checks as fresh predictions. */
+export function validateMaskEvidence(
+  raw: unknown,
+  image: { width: number; height: number; sha256: string },
+  modelSha256: string
+): MaskEvidence {
+  const evidence = maskEvidenceSchema.parse(raw);
   if (
     evidence.image.width !== image.width ||
     evidence.image.height !== image.height ||
-    evidence.image.sha256 !== inputSha
+    evidence.image.sha256 !== image.sha256 ||
+    image.width * image.height > 12000000
   )
     throw new Error('Mask evidence does not match this original photo and coordinate system.');
   if (
-    evidence.model.sha256 !== config.modelSha256 ||
+    evidence.model.sha256 !== modelSha256 ||
     JSON.stringify(evidence.model.classes) !== JSON.stringify(MASK_CLASSES)
   )
     throw new Error('Mask evidence came from an unexpected checkpoint or class schema.');
