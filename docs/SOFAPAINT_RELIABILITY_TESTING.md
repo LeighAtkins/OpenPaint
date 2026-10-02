@@ -14,6 +14,16 @@ When masks are already cached, `check_measurement_drawing` also checks sampled l
 
 These are advisory warnings, not export gates. Correct spans can cross background and correct seams can lie outside imperfect model predictions. No predictions or no cached evidence is explicit, never a quality pass. Inspect the actual photo before changing a line; matching a predicted boundary is not evidence that the seam is correct.
 
+## Independent live pilot
+
+`scripts/run-sofapaint-drawing-pilot.ts` exercises the actual hosted MCP in explicit `import`, `draw`, `review` and `export` stages. It accepts private local JSON inputs, a new private output directory and unique stage-run names. It is not a vision API client or an unattended landmark detector: candidate landmarks must be authored from the original photos. It never retries a failed stage or automatically confirms visual review.
+
+Import uses the reviewed source-image list, verifies hosted photo bytes against the reviewed model evidence, retains canonical photo bytes, and obtains full and detail original-photo previews. Draw validates a supplied normalized placement and maps its front/side IDs to actual draft photo UUIDs before preparing and generating. Review captures both full/detail overlays at the current revision plus live coverage and bitmap diagnostics. Export requires an explicit per-line visual report bound to all current preview hashes, then uses only the existing SofaPaint Save as PDF service. Stage markers refuse overwrite; stale draft revisions fail. Private state and capability-bearing editor links must remain outside Git.
+
+Validate the native output with `scripts/check-sofapaint-native-pdf.py`. It checks the native manifest, blank measurement fields, per-page centimetre selections, widget/canonical-field ownership and values, unclipped widget rectangles and an in-memory fill/save round trip. The delivered source PDF is never filled or rewritten. Separately render and inspect every PDF page; structural QA cannot prove seam placement or visual quality.
+
+An independent partial pilot is not a complete furniture measurement set or a production-accuracy claim. Record hidden surfaces and avoid duplicate independently fillable fields for the same physical measurement across views. Keep authored candidates and reconstructed human references separate.
+
 ## Human correction round
 
 Use fresh ChatGPT conversations after refreshing the SofaPaint connection. Use the same ordinary request for each case:
