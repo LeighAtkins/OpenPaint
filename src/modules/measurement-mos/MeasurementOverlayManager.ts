@@ -1302,7 +1302,13 @@ export class MeasurementOverlayManager {
   private _collectRoleAnchors(overlay: MeasurementOverlay): Map<string, { x: number; y: number }> {
     const anchors = new Map<string, { x: number; y: number }>();
     for (const element of overlay.elements.values()) {
-      if (element.kind !== 'label') continue;
+      // Assistant placements carry their explicit anchor on the measurement,
+      // unlike SVG guides whose labels are separate elements.
+      if (
+        element.kind !== 'label' &&
+        !(overlay.assistantPlacement && element.kind === 'measureLine')
+      )
+        continue;
       // Illustrator's b-groups contain numeric entry placeholders, not tag anchors.
       // Prefer the source c-group circles and named labels.
       if (element.label && !/[A-Za-z]/.test(element.label.text || '')) continue;

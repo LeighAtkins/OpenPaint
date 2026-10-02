@@ -45,16 +45,29 @@ export async function renderSvgPng(
   width = 1200
 ): Promise<Uint8Array> {
   await ready;
-  const renderer = new Resvg(svg, {
+  const options = {
     font: { fontBuffers: [font], defaultFontFamily: 'Roboto', sansSerifFamily: 'Roboto' },
     background: 'white',
-    fitTo: { mode: 'width', value: Math.max(1, Math.min(1200, Math.round(width))) },
-  });
+  };
+  const dimensions = new Resvg(svg, options);
+  let ratio: number;
   try {
-    if (renderer.height / renderer.width > 2 || renderer.height / renderer.width < 0.15)
-      throw new Error('Preview aspect ratio is outside the supported range.');
+    ratio = dimensions.height / dimensions.width;
+    if (!Number.isFinite(ratio) || ratio <= 0 || !Number.isFinite(width))
+      throw new Error('Preview requires finite positive dimensions.');
+  } finally {
+    dimensions.free();
+  }
+  // Fit the full photo, including tall phone screenshots, within the raster budget.
+  const rasterWidth = Math.max(1, Math.min(1200, Math.round(width), Math.floor(2400 / ratio)));
+  if (Math.ceil(rasterWidth * ratio) > 2400)
+    throw new Error('Preview aspect ratio exceeds the raster budget.');
+  const renderer = new Resvg(svg, { ...options, fitTo: { mode: 'width', value: rasterWidth } });
+  try {
     const rendered = renderer.render();
     try {
+      if (rendered.width > 1200 || rendered.height > 2400)
+        throw new Error('Preview raster exceeds the pixel budget.');
       return rendered.asPng().slice();
     } finally {
       rendered.free();

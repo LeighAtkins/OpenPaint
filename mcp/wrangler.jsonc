@@ -9,7 +9,7 @@
   "vars": {
     "EDITOR_URL": "https://sofapaint.vercel.app/",
     "ALLOWED_ORIGINS": "https://sofapaint.vercel.app,https://sofapaint-leigh-atkins-projects.vercel.app,http://127.0.0.1:5173,http://localhost:5173",
-    "ALLOWED_IMAGE_HOSTS": "files.oaiusercontent.com,oaiusercontent.com,sofapaint.vercel.app,oaisdmntprseasia.blob.core.windows.net,oaisdmntprindiasocentral.blob.core.windows.net",
+    "ALLOWED_IMAGE_HOSTS": "files.oaiusercontent.com,oaiusercontent.com,sofapaint.vercel.app,oaisdmntprseasia.blob.core.windows.net,oaisdmntprindiasocentral.blob.core.windows.net,s3-us-west-1.amazonaws.com",
     "LOCAL_DEVELOPMENT": "false",
     "PUBLIC_MCP_ENABLED": "true",
     "OPENAI_DOMAIN_CHALLENGE": "P7IvbeeG7IDOKhCvCeN2V7LlhTmbZcUwbD1D-2sl8x8",

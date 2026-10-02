@@ -52,7 +52,7 @@ describe('Imported measurement tags', () => {
   });
   it('restores saved offsets after the SVG import and before tag remount', async () => {
     const manager = Object.create(MeasurementOverlayManager.prototype) as any;
-    const restored = { tagOffsets: { A1: { x: 0, y: 0 } } };
+    const restored = { elements: new Map(), tagOffsets: { A1: { x: 0, y: 0 } } };
     manager.store = { byId: new Map([['restored', restored]]) };
     manager._resetOverlaysForLoad = vi.fn();
     manager.importSvg = vi.fn().mockResolvedValue('restored');
@@ -118,4 +118,36 @@ it('uses the circular guide label instead of the numeric input box as its anchor
     ]),
   };
   expect(manager._collectRoleAnchors(overlay).get('E1')).toEqual({ x: 760, y: 200 });
+});
+
+it('uses explicit assistant measurement anchors without reinterpreting legacy line labels', () => {
+  const manager = Object.create(MeasurementOverlayManager.prototype) as any;
+  const overlay = {
+    assistantPlacement: {},
+    elements: new Map([
+      [
+        'seat',
+        {
+          kind: 'measureLine',
+          roleToken: 'SW',
+          label: { text: 'SW', cx: 520, cy: 540 },
+          endpoints: [],
+        },
+      ],
+      [
+        'cap',
+        {
+          kind: 'measureLine',
+          roleToken: 'AC',
+          label: { text: 'AC', cx: 880, cy: 400 },
+          endpoints: [],
+        },
+      ],
+    ]),
+  };
+  expect([...manager._collectRoleAnchors(overlay)]).toEqual([
+    ['SW', { x: 520, y: 540 }],
+    ['AC', { x: 880, y: 400 }],
+  ]);
+  expect(manager._collectRoleAnchors({ ...overlay, assistantPlacement: undefined }).size).toBe(0);
 });
