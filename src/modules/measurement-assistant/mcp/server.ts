@@ -25,6 +25,7 @@ import {
 import type { PreviewRegion } from './raster-preview';
 import type { MeasurementPdfOptions } from '../pdf-export';
 import { assertLandmarkPlan, assertPreparedDrawing, selectedGuideIds } from './construction-plan';
+import { MASK_INSTRUCTIONS, type MaskEvidence } from './mask-service';
 
 export interface McpServices {
   drafts: DraftService;
@@ -39,6 +40,11 @@ export interface McpServices {
   confirmReview(id: string, token: string, revision: number, report: unknown): Promise<void>;
   assertGrounded?(id: string, token: string, imageId: string): Promise<void>;
   assertReviewed(id: string, token: string, imageId: string): Promise<void>;
+  segmentImage?(
+    id: string,
+    token: string,
+    imageId: string
+  ): Promise<{ evidence: MaskEvidence; preview: string }>;
   renderGuide(svg: string, width?: number): Promise<string>;
   reviewImage(
     id: string,
@@ -91,7 +97,11 @@ export function createMeasurementMcpServer(services: McpServices): Server {
     { name: 'SofaPaint', version: '0.1.0' },
     {
       capabilities: { tools: {} },
-      instructions: MEASUREMENT_PLACEMENT_INSTRUCTIONS + CORRECTED_REFERENCE_REVIEW_RULES,
+      instructions:
+        MEASUREMENT_PLACEMENT_INSTRUCTIONS +
+        CORRECTED_REFERENCE_REVIEW_RULES +
+        '\nBefore preparing landmarks, use segment_project_image when the reviewed masking service is configured, then compare its overlay with the original photo. ' +
+        MASK_INSTRUCTIONS,
     }
   );
   const tools: Tool[] = [];
@@ -439,6 +449,43 @@ export function createMeasurementMcpServer(services: McpServices): Server {
           args.projectToken
         );
       })
+  );
+  registerTool(
+    'segment_project_image',
+    {
+      title: 'Find sofa parts with the reviewed masking model',
+      description:
+        'Analyze an original project photo with the configured reviewed sofa segmentation checkpoint before preparing seam landmarks. Returns a labeled mask overlay and normalized contours with model provenance. Inspect the original photo alongside it. Mask boundaries are proposals; they do not determine internal seams or measurement values.',
+      inputSchema: { ...access, imageId: z.string().uuid() },
+      annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
+    },
+    async args => {
+      if (!services.segmentImage)
+        return {
+          isError: true,
+          content: [
+            { type: 'text', text: 'The masking service is not configured for this deployment.' },
+          ],
+        };
+      const { evidence, preview } = await services.segmentImage(
+        args.projectId,
+        args.projectToken,
+        args.imageId
+      );
+      // Exact bitmaps are cached by the service; avoid filling the model context with RLE runs.
+      const summary = {
+        ...evidence,
+        instances: evidence.instances.map(({ bitmap: _bitmap, ...item }) => item),
+        instructions: MASK_INSTRUCTIONS,
+      };
+      return {
+        structuredContent: summary,
+        content: [
+          { type: 'text', text: JSON.stringify(summary) },
+          { type: 'image', mimeType: 'image/png', data: preview },
+        ],
+      };
+    }
   );
   registerTool(
     'review_measurement_drawing',
