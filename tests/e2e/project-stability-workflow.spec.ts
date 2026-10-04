@@ -80,8 +80,23 @@ async function buildProject(page: Page): Promise<void> {
     }
     if (viewId === 'v07-large') {
       const frame = await page.locator('#captureFrame').boundingBox();
-      await page.mouse.move(frame!.x + frame!.width * 0.4, frame!.y + frame!.height * 0.45);
-      await page.mouse.wheel(0, -240);
+      // Zoom into a corner so the crop is clearly off-centre on the image.
+      await page.mouse.move(frame!.x + frame!.width * 0.2, frame!.y + frame!.height * 0.25);
+      await page.mouse.wheel(0, -480);
+      await page.waitForTimeout(400);
+      // ...and pan with Shift+drag, as a user framing one detail would.
+      await page.keyboard.down('Shift');
+      await page.mouse.move(frame!.x + frame!.width * 0.5, frame!.y + frame!.height * 0.5);
+      await page.mouse.down();
+      await page.mouse.move(
+        frame!.x + frame!.width * 0.5 + 110,
+        frame!.y + frame!.height * 0.5 + 50,
+        {
+          steps: 8,
+        }
+      );
+      await page.mouse.up();
+      await page.keyboard.up('Shift');
       await page.waitForTimeout(400);
     }
 
@@ -190,6 +205,10 @@ test.describe('Project stability workflow', () => {
 
     const baseline = await captureAllViews(page, VIEW_IDS, shots('00-baseline'));
     report('00-baseline', [], baseline);
+    // The zoomed image must really be framed off-centre, otherwise the checks
+    // below would not notice a crop being recentred.
+    const zoomedCrop = baseline.get('v07-large')!.frame.crop;
+    expect(Math.abs(zoomedCrop.left + zoomedCrop.width / 2 - 0.5)).toBeGreaterThan(0.03);
     for (const snapshot of baseline.values()) {
       expect(snapshot.objects.length, `${snapshot.viewId}: objects drawn`).toBeGreaterThanOrEqual(
         3
