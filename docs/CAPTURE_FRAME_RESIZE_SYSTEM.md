@@ -6,10 +6,13 @@ The capture frame is the visible dashed-border rectangle on the canvas that defi
 
 ## Core Principles
 
-1. **Stable base ratio**: The frame's proportional size uses `baseWidth / baseWindowWidth` (set on initial frame creation or manual +/- adjustments). This ratio is **never overwritten by passive window resizes**, ensuring the frame grows back when the window gets larger.
-2. **Two-step resize pipeline**: The coordinator (`replayCaptureFrameForCurrentResize`) owns frame geometry and viewport correction; CanvasManager's `applyResize` handles canvas element resizing and scale-to-page fitting.
-3. **Five critical data structures** must be preserved during image operations (replacement, background removal, etc): `vectorStrokesByImage`, `lineStrokesByImage`, `strokeVisibilityByImage`, `strokeLabelVisibility`, `strokeMeasurements`.
-4. **Tab-based state**: Each view/label stores per-tab `captureFrame` (including `worldRect`) and `viewport` (zoom/pan/rotation) in `window.captureTabsByLabel`.
+1. **Two stored facts per frame tab**: the authored size (`baseWidth x baseHeight` at `baseWindowWidth x baseWindowHeight`) and the crop (`worldRect`). Zoom, pan and on-screen position are derived from them. The helpers in `src/modules/utils/captureFrameModel.ts` are the only place that decides which numbers are trusted.
+2. **Idempotent sizing**: the frame scales uniformly with the window, measured in window units on both sides. At the window size it was authored for, the result is exactly the authored frame, so revisiting an image can never shrink it.
+3. **One placement rule**: every layout pass (view restore, recentre, window resize) sizes the frame with `calculateTargetFrameSize` and places it with `buildCenteredRectFromSize`. Passes that used different rules took turns moving the frame.
+4. **What you see is what is stored**: `saveActiveTabState` records the crop the frame is showing. Navigation saves keep the stored crop only when it matches the live one within a rounding error, which prevents drift without hiding a real change.
+5. **Passive layout keeps the base; deliberate edits rebase**: window resizes and view switches preserve the authored base so a shrunken frame grows back. The +/- keys and the frame handles make the new size the base.
+6. **Five critical data structures** must be preserved during image operations (replacement, background removal, etc): `vectorStrokesByImage`, `lineStrokesByImage`, `strokeVisibilityByImage`, `strokeLabelVisibility`, `strokeMeasurements`.
+7. **Tab-based state**: Each view/label stores per-tab `captureFrame` (including `worldRect`) and `viewport` (zoom/pan/rotation) in `window.captureTabsByLabel`.
 
 ## Key Data Structures
 
@@ -31,7 +34,8 @@ window.captureTabsByLabel = {
           relativeWidth, relativeHeight,
           baseWidth, baseHeight,               // STABLE — set on create/manual, preserved on resize
           baseWindowWidth, baseWindowHeight,   // STABLE — preserves baseWidth/baseWindowWidth ratio
-          worldRect: { left, top, width, height }  // world-space crop
+          worldRect: { left, top, width, height }, // world-space crop
+          frameVersion: 2                      // written by the consistent model
         },
         viewport: {
           zoom, panX, panY, rotation,
@@ -56,56 +60,44 @@ window.captureTabsByLabel = {
 | `baseWindowWidth`, `baseWindowHeight` | number | Window size when baseWidth/Height were set | Frame creation, +/- keys |
 | `windowWidth`, `windowHeight` | number | Window size at last save | Every save |
 | `relativeWidth`, `relativeHeight` | number | Fraction of window (legacy) | Every save |
-| `worldRect` | rect | Background image crop in world-space pixels | Every save |
+| `worldRect` | rect | Crop shown by the frame, in world-space pixels | Every save (kept when unchanged) |
+| `frameVersion` | number | `2` once written by `captureFrameModel`; absent on older saves | Every save |
 | `left`, `top` | number | CSS pixel position relative to viewport | Every save |
 
 ## Frame Size Computation
 
-### `calculateTargetFrameSize(canvasWidth, canvasHeight)` — CanvasManager.ts ~line 2279
+### `calculateTargetFrameSize(canvasWidth, canvasHeight, imageLabel?)` — CanvasManager.ts
 
 The canonical function for computing proportional frame size. Used by:
 - `replayCaptureFrameForCurrentResize` during window resizes
-- `applyCaptureFrameForLabel` during view switching (via delegation)
-
-**Logic (Path B — has stored aspect ratio):**
+- `applyCaptureFrameForLabel` during view and tab switching
+- `__recenterCaptureFrame` after a view switch settles
 
 ```
-widthRatio = baseDimensions exist
-  ? baseWidth / baseWindowWidth      // STABLE — never changes
-  : storedWidth / storedWindowWidth  // FALLBACK — may shrink
-heightRatio = baseDimensions exist
-  ? baseHeight / baseWindowHeight
-  : storedHeight / storedWindowHeight
+reference = resolveCaptureFrameSizeReference(activeTab.captureFrame)
+  // base size when it has the same shape as the frame, otherwise the frame
+  // as it was last laid out (width/height at windowWidth/windowHeight)
 
-widthLimit = canvasWidth * widthRatio
-heightLimit = canvasHeight * heightRatio
+scale = min(window.innerWidth / reference.windowWidth,
+            window.innerHeight / reference.windowHeight)
 
-frameWidth = min(widthLimit, heightLimit * aspectRatio)
-frameHeight = frameWidth / aspectRatio
+frameWidth  = reference.width  * scale
+frameHeight = reference.height * scale
 ```
 
-**Key insight**: The `baseWidth / baseWindowWidth` ratio is set once (on frame creation or manual +/- key) and preserved across passive resizes. This means when the window shrinks then grows back, the ratio stays the same and the frame returns to its original proportional size.
+Both sides of the ratio are window sizes. An earlier version multiplied a window-based ratio by the canvas size (which is shorter than the window by the toolbar height), so every frame lost about 6% the first time its image was revisited.
 
-### `buildCaptureFrameRecord(rect)` — toolbar-controller.ts ~line 1973
+### `mergeCaptureFrameRecord(existing, measured, { rebase })` — captureFrameModel.ts
 
-Creates a frame record from a DOM rect. **Always sets `baseWidth: width`** using the current frame size. Base dimension stability is achieved at the save site by the `existing.baseWidth || record.baseWidth` pattern:
+Every site that writes a measured frame back to a tab goes through this helper. It keeps the stored base unless `rebase` is set or the frame changed shape, in which case the measured frame becomes the base. Do not assign `buildCaptureFrameRecord(...)` to a tab directly; that would overwrite the base with whatever the layout currently allows.
 
-```javascript
-activeTab.captureFrame = {
-  ...existing,
-  ...record,
-  baseWidth: existing.baseWidth || record.baseWidth,     // Keep original if exists
-  baseHeight: existing.baseHeight || record.baseHeight,
-  baseWindowWidth: existing.baseWindowWidth || record.baseWindowWidth,
-  baseWindowHeight: existing.baseWindowHeight || record.baseWindowHeight,
-};
-```
+### Older saves
 
-**Important**: The spread order matters — `...record` sets current values, then explicit `baseWidth:` overrides with the stable value.
+`normalizeCaptureFrameBase` runs when tab state is normalised. Saves from before this model can carry a base that no longer has the frame's shape (frame handles did not update it; the intended size only lived in the session-only `window.manualFrameRatios`, which no longer exists). Such a base is rebuilt from the frame as it was last laid out. Records without `frameVersion` also keep the legacy repair that replaces a crop larger than the image with the image bounds.
 
 ### `buildCenteredRectFromSize(width, height)` — toolbar-controller.ts ~line 3273
 
-Wraps a given size into a rect centered within the preferred capture area (the space between left/right panels). Contains a `Math.min(1, preferredArea.width / sourceWidth, ...)` fitScale that ensures the frame doesn't exceed the usable area. During proportional resize, `fitScale` stays at 1 because the frame always fits within the canvas bounds.
+Wraps a given size into a rect centered within the preferred capture area (the space between left/right panels). Contains a `Math.min(1, preferredArea.width / sourceWidth, ...)` fitScale that ensures the frame doesn't exceed the usable area. When panels narrow the usable area the frame is scaled down uniformly here; the stored base is unaffected, so it grows back when the space returns.
 
 ## Resize Pipeline
 
@@ -180,32 +172,23 @@ click tab button
 | Tab switch | `applyCaptureFrameForLabel` → `calculateTargetFrameSize` | Proportional via base ratio |
 | +/- keys (manual resize) | `resizeCaptureFrameProportionally()` | ±10% of current size, UPDATES base dimensions |
 | Capture frame drag | `capture-frame.ts` drag handlers → `saveActiveTabState()` | Live position, preserves existing worldRect |
-| Capture frame corner drag | `capture-frame.ts` resize handlers → `saveActiveTabState()` | Live size/position, preserves existing worldRect |
+| Capture frame handle drag | `stopResize` in toolbar-controller.ts → `saveActiveTabState({ rebase: true })` | Live size becomes the new base; crop taken from the live frame |
 
 ## Base Dimension Lifecycle
 
 ```
-Frame creation (buildCaptureFrameRecord)
-  → baseWidth = current rect width
-  → baseWindowWidth = window.innerWidth
-  → ratio = baseWidth / baseWindowWidth  (e.g., 0.75)
+Frame creation (initializeCaptureFrameForImageAspect / createDefaultTabState)
+  → base = frame size at the current window
 
-+/- key press (resizeCaptureFrameProportionally)
-  → baseWidth = new frame width (e.g., 800 → 880)
-  → baseWindowWidth = window.innerWidth
-  → ratio = 880 / currentWindowWidth  (NEW ratio)
++/- keys (resizeCaptureFrameProportionally) and frame handles (stopResize)
+  → base = new frame size at the current window (rebase)
 
-Window shrink (passive)
-  → calculateTargetFrameSize: widthLimit = canvasWidth * 0.75
-  → Frame shrinks (e.g., to 700px)
-  → replayCaptureFrameForCurrentResize saves:
-    → existing.baseWidth = 880 || record.baseWidth = 700
-    → saved baseWidth = 880 (ORIGINAL preserved!)
-  → ratio stays 0.75
+Window shrink, view switch, recentre (passive)
+  → frame = base * min(window / baseWindow), clamped to the usable area
+  → stored width/height change, base is kept
 
 Window grow back (passive)
-  → calculateTargetFrameSize: widthLimit = canvasWidth * 0.75
-  → Frame grows to 880px (MATCHES original!)
+  → frame returns to the base size
 ```
 
 ## Early Returns and Guards
@@ -237,18 +220,23 @@ The gallery thumbnail drag-and-drop system does NOT directly interact with `capt
 
 ## Common Pitfalls
 
-1. **Forgot to update baseWidth after +/- resize**: The +/- key handler in `main.ts:resizeCaptureFrameProportionally()` MUST update `baseWidth/Height` and `baseWindowWidth/Height` before saving the tab state. Otherwise the next window resize will revert the manual adjustment.
+1. **Writing a frame record without `mergeCaptureFrameRecord`**: `buildCaptureFrameRecord` always reports the measured size as the base. Assigning it directly promotes a temporarily constrained frame to the authored size and ratchets the frame smaller.
 
-2. **buildCaptureFrameRecord always sets baseWidth**: Every function that calls `buildCaptureFrameRecord` followed by `activeTab.captureFrame = {...record}` will OVERWRITE the stable base dimensions unless the save site explicitly preserves them (as `replayCaptureFrameForCurrentResize` does).
+2. **A second size authority**: keep frame size on the tab record. Session-only state (the removed `manualFrameRatios`) is lost on project save/load and makes a loaded project lay out differently from the one that was saved.
 
-3. **isScalePageSizeMode() check**: When computing frame size during resize, the code previously only called `calculateTargetFrameSize` for scale-page-size mode. Now it calls it for ALL fit modes. Any new code that computes frame geometry should follow the same pattern.
+3. **Mixing window and canvas units**: the base is stored against the window size. Scale it by the window size, not by the canvas size.
 
-4. **Floating layout early return**: `updateCaptureFrameOnResize` returns early for the floating layout primary canvas. If frame geometry needs to change during resize, rely on `replayCaptureFrameForCurrentResize` instead.
+4. **Placing the frame with a different rule**: use `buildCenteredRectFromSize` in every pass. A pass that centres on the raw canvas box, or skips the usable-area clamp, will be undone by the next pass and the frame visibly jumps.
+
+5. **Preserving a stale crop**: `preserveWorldRect` only keeps the stored crop when it matches what the frame shows. Code that changes the visible crop (rotation, zoom, handles) does not need to clear it first.
+
+6. **Floating layout early return**: `updateCaptureFrameOnResize` returns early for the floating layout primary canvas. If frame geometry needs to change during resize, rely on `replayCaptureFrameForCurrentResize` instead.
 
 ## Relevant Files
 
 | File | Role |
 |------|------|
+| `src/modules/utils/captureFrameModel.ts` | Size reference, base merge/normalisation, crop comparison (unit tested) |
 | `src/modules/CanvasManager.ts` | `calculateTargetFrameSize`, `applyResize`, `updateCaptureFrameOnResize` |
 | `src/modules/ui/toolbar-controller.ts` | `replayCaptureFrameForCurrentResize`, `buildCaptureFrameRecord`, `applyCaptureFrameForLabel`, `resolveCaptureFrameRect`, viewport tracking |
 | `src/modules/ui/image-gallery.ts` | Gallery thumbnails, drag-and-drop reorder |

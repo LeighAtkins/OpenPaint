@@ -6,6 +6,8 @@
 import { FabricControls } from './utils/FabricControls.js';
 import { PathUtils } from './utils/PathUtils.js';
 import { fitViewportToWorldRect, normalizeViewportRecord } from './utils/viewportRestore.ts';
+import { resolveCaptureFrameSizeReference } from './utils/captureFrameModel.ts';
+import { watchFontLoads } from './utils/fabricFontSync.ts';
 import { attachHighlighterRendering } from './tools/HighlighterTool.js';
 
 declare const fabric: typeof import('fabric');
@@ -46,7 +48,6 @@ interface CanvasManagerOptions {
 declare global {
   interface Window {
     app?: any;
-    manualFrameRatios?: Record<string, CaptureFrameRatios>;
     currentImageLabel?: string;
     multiviewEditContext?: {
       baseViewId: string;
@@ -73,6 +74,7 @@ export class CanvasManager {
   resizeOverlayCanvas: HTMLCanvasElement | null;
   resizeOverlayCleanupId: number | null;
   captureFrameImageRatios: CaptureFrameRatios | null;
+  stopFontWatch: (() => void) | null = null;
   strokeScalingTimeout: ReturnType<typeof setTimeout> | null;
   pendingStrokeScale: number | null;
   lastResizeTime: number | null;
@@ -218,6 +220,11 @@ export class CanvasManager {
       preserveObjectStacking: true,
       backgroundColor: '#ffffff', // Default white background
     });
+
+    // Text is measured when it is created; re-measure it whenever a web font
+    // finishes loading so notes never keep fallback-font metrics.
+    this.stopFontWatch?.();
+    this.stopFontWatch = watchFontLoads(() => (this.isDisposed ? null : this.fabricCanvas));
 
     // Prefer tolerance-based hit testing over per-pixel readbacks for smoother dragging.
     this.fabricCanvas.perPixelTargetFind = false;
@@ -2323,71 +2330,32 @@ export class CanvasManager {
    * Calculate target frame size based on canvas dimensions
    * Centralized logic to ensure consistency between image scaling and frame resizing
    */
-  calculateTargetFrameSize(canvasWidth: number, canvasHeight: number): FrameState {
-    const currentImageLabel = window.app?.projectManager?.currentViewId || 'default';
-    const scopedImageLabel = window.currentImageLabel || '';
-    const savedRatios =
-      window.manualFrameRatios?.[currentImageLabel] ||
-      (scopedImageLabel ? window.manualFrameRatios?.[scopedImageLabel] : null);
+  calculateTargetFrameSize(
+    canvasWidth: number,
+    canvasHeight: number,
+    imageLabel?: string | null
+  ): FrameState {
+    const currentImageLabel = imageLabel || window.app?.projectManager?.currentViewId || 'default';
     const tabState = window.captureTabsByLabel?.[currentImageLabel];
     const activeTab = tabState?.tabs?.find?.(tab => tab.id === tabState.activeTabId) || null;
-    const storedFrame = activeTab?.captureFrame || null;
-    const storedWidth = Number(storedFrame?.width);
-    const storedHeight = Number(storedFrame?.height);
-    const storedAspectRatio =
-      storedWidth > 0 && storedHeight > 0 ? storedWidth / storedHeight : null;
-    const hasStoredAspect = Number.isFinite(storedAspectRatio) && Number(storedAspectRatio) > 0;
-    const storedWindowWidth = Math.max(1, Number(storedFrame?.windowWidth) || canvasWidth);
-    const storedWindowHeight = Math.max(1, Number(storedFrame?.windowHeight) || canvasHeight);
+    const reference = resolveCaptureFrameSizeReference(activeTab?.captureFrame || null);
 
-    if (savedRatios) {
-      // manualFrameRatios are user-intended, always use them directly
-      const widthLimit = Math.max(1, canvasWidth * savedRatios.widthRatio);
-      const heightLimit = Math.max(1, canvasHeight * savedRatios.heightRatio);
-      const aspectRatio =
-        Number(savedRatios.aspectRatio) > 0
-          ? Number(savedRatios.aspectRatio)
-          : hasStoredAspect
-            ? Number(storedAspectRatio)
-            : widthLimit / heightLimit;
-      let frameWidth = Math.min(widthLimit, heightLimit * aspectRatio);
-      let frameHeight = frameWidth / aspectRatio;
-      const fitScale = Math.min(
-        1,
-        canvasWidth / Math.max(frameWidth, 1),
-        canvasHeight / Math.max(frameHeight, 1)
+    if (reference) {
+      // The frame keeps one authored size per reference window and scales
+      // uniformly with the window. Measuring both sides in window units makes
+      // this idempotent: at the reference window size the result is exactly the
+      // authored frame, so revisiting an image can never shrink it. Secondary
+      // panes have no window-sized canvas, so they scale against their own box.
+      const isPrimaryCanvas =
+        this.enableFloatingLayoutMode && this.containerId === 'main-canvas-wrapper';
+      const availableWidth = isPrimaryCanvas ? Math.max(window.innerWidth, 1) : canvasWidth;
+      const availableHeight = isPrimaryCanvas ? Math.max(window.innerHeight, 1) : canvasHeight;
+      const scale = Math.min(
+        availableWidth / reference.windowWidth,
+        availableHeight / reference.windowHeight
       );
-      frameWidth *= fitScale;
-      frameHeight *= fitScale;
-
-      return {
-        width: frameWidth,
-        height: frameHeight,
-        left: Math.max(0, (canvasWidth - frameWidth) / 2),
-        top: Math.max(0, (canvasHeight - frameHeight) / 2),
-      };
-    } else if (hasStoredAspect) {
-      // Use stable base dimensions (set on frame creation / manual adjustment)
-      // instead of storedWidth/storedWindowWidth (which gets overwritten by
-      // replayCaptureFrameForCurrentResize with shrunken values on resize).
-      // This ensures the frame grows back when the window gets larger.
-      const baseWidth = Number(storedFrame?.baseWidth) || 0;
-      const baseHeight = Number(storedFrame?.baseHeight) || 0;
-      const baseWindowWidth = Math.max(1, Number(storedFrame?.baseWindowWidth) || canvasWidth);
-      const baseWindowHeight = Math.max(1, Number(storedFrame?.baseWindowHeight) || canvasHeight);
-      const hasBaseDimensions =
-        baseWidth > 0 && baseHeight > 0 && baseWindowWidth > 0 && baseWindowHeight > 0;
-
-      const widthRatio = hasBaseDimensions
-        ? baseWidth / baseWindowWidth
-        : storedWidth / storedWindowWidth;
-      const heightRatio = hasBaseDimensions
-        ? baseHeight / baseWindowHeight
-        : storedHeight / storedWindowHeight;
-      const widthLimit = Math.max(1, canvasWidth * widthRatio);
-      const heightLimit = Math.max(1, canvasHeight * heightRatio);
-      let frameWidth = Math.min(widthLimit, heightLimit * storedAspectRatio);
-      let frameHeight = frameWidth / storedAspectRatio;
+      const frameWidth = reference.width * scale;
+      const frameHeight = reference.height * scale;
 
       return {
         width: frameWidth,
@@ -3144,6 +3112,8 @@ export class CanvasManager {
     if (this.isDisposed) return;
     this.isDisposed = true;
 
+    this.stopFontWatch?.();
+    this.stopFontWatch = null;
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     if (this.pendingResizeFrame !== null) cancelAnimationFrame(this.pendingResizeFrame);
