@@ -2288,7 +2288,6 @@ export class App {
         const repeat = this.toolManager.tools.curve?.repeatMode === true;
         updateDrawingToggleLabels(repeat ? 'Curved Line ∞' : 'Curved Line');
       } else if (currentTool === this.toolManager.tools.highlighter) {
-        const style = this.toolManager.tools.highlighter?.getStyle?.() || 'marker';
         setActiveDrawingModeOption('highlighter');
         updateDrawingToggleLabels('Highlight');
       } else if (currentTool === this.toolManager.tools.privacy) {
@@ -3115,6 +3114,7 @@ export class App {
       });
 
       geometryRow?.querySelectorAll<HTMLButtonElement>('[data-line-geometry]').forEach(button => {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises -- async DOM event handler
         button.addEventListener('click', async () => {
           const geometry = button.dataset.lineGeometry;
           if (geometry === 'curve') {
@@ -3575,6 +3575,7 @@ export class App {
       });
 
       panel.querySelectorAll<HTMLButtonElement>('[data-highlighter-style]').forEach(button => {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises -- async DOM event handler
         button.addEventListener('click', async () => {
           const style = 'marker';
           const tool = await this.toolManager.ensureTool('highlighter');
@@ -4191,7 +4192,6 @@ export class App {
 
   setupUnitToggle(): void {
     const unitToggle = document.getElementById('unitToggleBtn');
-    const unitToggleSecondary = document.getElementById('unitToggleBtnSecondary');
     const unitToggles = [unitToggle].filter((el): el is HTMLElement => el instanceof HTMLElement);
     const unitSegmentButtons = Array.from(
       document.querySelectorAll<HTMLButtonElement>('button[data-unit], button[data-quick-unit]')
@@ -4417,7 +4417,7 @@ export class App {
         const target = e.target as HTMLElement | null;
         const isMeasurement = target?.classList && target.classList.contains('stroke-measurement');
         const inputType =
-          target instanceof HTMLInputElement ? String(target.type || 'text').toLowerCase() : '';
+          target instanceof HTMLInputElement ? (target.type || 'text').toLowerCase() : '';
         const isTextInput =
           target instanceof HTMLTextAreaElement ||
           (target instanceof HTMLInputElement &&

@@ -199,9 +199,9 @@ export function computeScaleForDimension(
   initialScale: number,
   targetCm: number
 ): number {
-  const base = Number(baseCm);
-  const initial = Number(initialScale);
-  const target = Number(targetCm);
+  const base = baseCm;
+  const initial = initialScale;
+  const target = targetCm;
   if (!(base > 0) || !(initial > 0) || !(target > 0)) return initial || 1;
   return initial * (target / base);
 }
@@ -475,6 +475,7 @@ export function deriveGuideCode(piece: SectionalPiece): string {
 }
 
 /** Pip geometry in local (pre-transform) cell coordinates. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- parked: not wired up yet
 const CONNECTOR_PIPS: Record<ConnectorSide, string> = {
   top: '<rect x="52" y="3" width="14" height="8" rx="2.5"',
   right: '<rect x="107" y="52" width="8" height="14" rx="2.5"',
@@ -910,8 +911,6 @@ const scaleLadder = (
     CW_US_FABRIC_PRICES['boxed-seat-left-round-arm-chaise-section-cover'];
 }
 
-const CW_SECTIONAL_COLLECTION = 'custom-sectional-slipcovers';
-const CW_OTTOMAN_COLLECTION = 'custom-ottoman-slipcovers';
 const CW_BASE = 'https://comfort-works.com';
 
 function cwUrl(handle: string): string {
@@ -928,7 +927,7 @@ function localizedCwUrl(handle: string, country: SectionalPricingCountry): strin
 }
 
 function localizeCwProductUrl(url: string | undefined, country: SectionalPricingCountry): string {
-  const match = String(url || '').match(/\/products\/([^?#/]+)/);
+  const match = /\/products\/([^?#/]+)/.exec(url || '');
   return localizedCwUrl(match?.[1] || '', country);
 }
 
@@ -938,7 +937,6 @@ function cwProduct(handle: string, title: string, price: number, ref: string): C
 
 /** Map a sectional piece to its CW unbranded slipcover product. */
 export function getPiecePricing(piece: SectionalPiece): CwProduct | null {
-  const facing = piece.mirrored ? 'R' : 'L';
   switch (piece.kind) {
     case 'left-arm':
       return piece.mirrored
@@ -1845,10 +1843,8 @@ export function applySectionalMeasurementEdit(
   code: string,
   valueCm: number
 ): number {
-  const normalized = String(code || '')
-    .trim()
-    .toUpperCase();
-  const value = Number(valueCm);
+  const normalized = (code || '').trim().toUpperCase();
+  const value = valueCm;
   if (!normalized || !Number.isFinite(value) || value <= 0) return 0;
 
   const scalePieces = (
@@ -1894,7 +1890,7 @@ export function applySectionalMeasurementEdit(
   if (normalized === 'A1') return scalePieces(pieces, 'width', value, piece => String(piece.col));
   if (normalized === 'A2') return scalePieces(pieces, 'depth', value, piece => String(piece.row));
 
-  const moduleMatch = normalized.match(/^A(\d+)$/);
+  const moduleMatch = /^A(\d+)$/.exec(normalized);
   if (moduleMatch) {
     const moduleIndex = Number(moduleMatch[1]) - 3; // A3 → column 0
     const col = occupiedCols[moduleIndex];
@@ -1907,7 +1903,7 @@ export function applySectionalMeasurementEdit(
     );
   }
 
-  const depthMatch = normalized.match(/^D(\d+)$/);
+  const depthMatch = /^D(\d+)$/.exec(normalized);
   if (depthMatch) {
     const rowIndex = Number(depthMatch[1]);
     const row = occupiedRows[rowIndex];
@@ -2126,7 +2122,7 @@ function resolveProductStyle(
 }
 
 function shadeHex(hex: string, amount: number): string {
-  const normalized = String(hex || '').replace('#', '');
+  const normalized = (hex || '').replace('#', '');
   if (!/^[0-9a-f]{6}$/i.test(normalized)) return hex;
   const value = Number.parseInt(normalized, 16);
   const channel = (shift: number) => Math.max(0, Math.min(255, ((value >> shift) & 255) + amount));
@@ -2161,7 +2157,6 @@ function productProjection(
   // the render read as an object instead of a tilted diagram. Only the
   // canonical front-right camera exists; front-left mirrors the finished
   // render in sectionalProductMarkup, so one camera serves every view.
-  const sightLen = Math.hypot(-0.72, 1, 0.72);
   const sceneCx = (bounds.x0 + bounds.x1) / 2;
   const sceneCy = (bounds.y0 + bounds.y1) / 2;
   const sceneCz = 62;
@@ -3515,7 +3510,7 @@ function sectionalProductPieceLayers(
       [armThickness, armTop],
       [0, armTop],
     ];
-    const profileAt = (localY: number): Array<readonly [number, number]> => squareProfile;
+    const profileAt = (_localY: number): Array<readonly [number, number]> => squareProfile;
     // End-cap path for the square arm: the two top corners are softly
     // rounded like a padded arm panel. Corner walking is direction-aware so
     // left- and right-arm (mirrored u) panels round identically.
@@ -3543,7 +3538,7 @@ function sectionalProductPieceLayers(
       );
     };
     // Inner / outer vertical panels are mutually exclusive faces of the arm.
-    const visiblePanelTop = (localY: number): number => {
+    const visiblePanelTop = (_localY: number): number => {
       if (style.arm === 'round') return rollBoxTop;
       return armTop;
     };
@@ -4103,7 +4098,7 @@ function buildProductDimensionMarkup(
   });
   Array.from(cols.entries())
     .sort(([a], [b]) => a - b)
-    .forEach(([col, entry], index) => {
+    .forEach(([_col, entry], index) => {
       dims.push(
         dimLine(
           { x: entry.x0, y: maxY, z: 0 },
@@ -4131,7 +4126,6 @@ function buildProductDimensionMarkup(
   );
 
   // Inner seat span (B1): between the arm inner edges on the front row.
-  const frontRow = minY; // front row starts at the rear line
   const frontPieces = placements.filter(
     ({ piece, placement }) => piece.row === 0 || placement!.originY === minY
   );
@@ -4328,8 +4322,6 @@ export function serializeSectionalSvg(
   const report = evaluateSectionalConnections(pieces);
   const dimensions = sectionalDimensionsMarkup(pieces);
   const content = pieces.map(piece => pieceMarkup(piece, false, true, report, theme)).join('');
-  const minCol = pieces.length ? Math.min(...pieces.map(piece => piece.col)) : 0;
-  const maxCol = pieces.length ? Math.max(...pieces.map(piece => piece.col)) : 0;
   const minRow = pieces.length ? Math.min(...pieces.map(piece => piece.row)) : 0;
   const maxRow = pieces.length ? Math.max(...pieces.map(piece => piece.row)) : 0;
   const viewBox = getSectionalPlanViewBox(pieces);
@@ -4853,7 +4845,7 @@ export function createPieceFabricGroup(
       // vertical slice, but use one canonical key everywhere going forward.
       assemblyId,
       pieceId: piece.id,
-      mirrored: piece.mirrored === true,
+      mirrored: piece.mirrored,
       initialScaleX: 1,
       initialScaleY: 1,
     },
@@ -4935,7 +4927,7 @@ export function initSectionalBuilder(): void {
   });
   let pieces = createSectionalPreset('sofa');
   let selectedId: string | null = pieces[1]?.id || null;
-  let selectedIds: Set<string> = new Set(selectedId ? [selectedId] : []);
+  let selectedIds = new Set<string>(selectedId ? [selectedId] : []);
   let assemblyId: string | null = null;
   let assemblyName = '3-seat sofa';
   let theme: SectionalThemeId = DEFAULT_THEME;
@@ -5038,9 +5030,7 @@ export function initSectionalBuilder(): void {
       (window as any).app?.projectManager?.getProjectMetadata?.()?.sectionalAssemblies || {};
     const list = Object.values(saved) as SectionalAssemblyRecord[];
     if (!list.length) return null;
-    return list.sort((a, b) =>
-      String(b.updatedAt || '').localeCompare(String(a.updatedAt || ''))
-    )[0];
+    return list.sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))[0];
   };
 
   const restoreAssembly = (record: SectionalAssemblyRecord) => {
@@ -5086,9 +5076,6 @@ export function initSectionalBuilder(): void {
     if (!groups.length) return false;
 
     const viewBox = getSectionalPlanViewBox(pieces.length ? pieces : createSectionalPreset('sofa'));
-    const scaleX = worldRect.width / viewBox.width;
-    const scaleY = worldRect.height / viewBox.height;
-    const viewId = app.projectManager?.currentViewId || '';
     const piecesFromCanvas: SectionalPiece[] = [];
 
     groups.forEach((group: any) => {
@@ -5104,8 +5091,8 @@ export function initSectionalBuilder(): void {
       } as SectionalPiece);
       const centerX = Number(group.left) || 0;
       const centerY = Number(group.top) || 0;
-      const pieceSvgW = Number(unrot.bodyW) || 1;
-      const pieceSvgH = Number(unrot.bodyH) || 1;
+      const pieceSvgW = unrot.bodyW || 1;
+      const pieceSvgH = unrot.bodyH || 1;
 
       // Map world center back to SVG coordinates, then to grid cells.
       const svgCenterX = viewBox.x + ((centerX - worldRect.left) / worldRect.width) * viewBox.width;
@@ -5120,7 +5107,7 @@ export function initSectionalBuilder(): void {
         Math.min(3, Math.round((svgCenterY - GRID_ORIGIN_Y - pieceSvgH / 2) / CELL))
       );
 
-      const existing = pieces.find(p => String(p.id) === String(cd.pieceId));
+      const existing = pieces.find(p => p.id === String(cd.pieceId));
       if (existing) {
         existing.col = col;
         existing.row = row;
@@ -5177,6 +5164,7 @@ export function initSectionalBuilder(): void {
   };
 
   /** Bind a measurement-guide code to a module's image so the guide indicator appears automatically. */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- parked: not wired up yet
   const bindModuleGuideCode = (viewId: string, piece: SectionalPiece) => {
     const manager = (window as any).app?.projectManager;
     if (!manager?.setProjectMetadata) return;
@@ -5203,6 +5191,7 @@ export function initSectionalBuilder(): void {
    * on the freshly imported plan image. Strokes land on the dimension lines
    * baked into the PNG, so the document starts pre-measured and stays editable.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- parked: not wired up yet
   const seedMeasurementStrokes = async (
     viewId: string | undefined,
     seedPieces: SectionalPiece[]
@@ -5282,24 +5271,24 @@ export function initSectionalBuilder(): void {
   const updateInspector = () => {
     const bounds = calculateSectionalBounds(pieces);
     const selected = pieces.find(piece => piece.id === selectedId);
-    (document.getElementById('sbAssemblyName') as HTMLElement).textContent = assemblyName;
-    (document.getElementById('sbPieceCount') as HTMLElement).textContent =
+    document.getElementById('sbAssemblyName')!.textContent = assemblyName;
+    document.getElementById('sbPieceCount')!.textContent =
       `${pieces.length} piece${pieces.length === 1 ? '' : 's'}`;
-    (document.getElementById('sbMetricPieces') as HTMLElement).textContent = String(pieces.length);
-    (document.getElementById('sbMetricWidth') as HTMLElement).textContent = `${bounds.width} cm`;
-    (document.getElementById('sbMetricDepth') as HTMLElement).textContent = `${bounds.depth} cm`;
-    const inspector = document.getElementById('sbSelectionInspector') as HTMLElement;
+    document.getElementById('sbMetricPieces')!.textContent = String(pieces.length);
+    document.getElementById('sbMetricWidth')!.textContent = `${bounds.width} cm`;
+    document.getElementById('sbMetricDepth')!.textContent = `${bounds.depth} cm`;
+    const inspector = document.getElementById('sbSelectionInspector')!;
     inspector.classList.toggle('is-empty', !selected);
-    (document.getElementById('sbSelectedName') as HTMLElement).textContent = selected
+    document.getElementById('sbSelectedName')!.textContent = selected
       ? PIECES[selected.kind].name
       : 'Select a piece';
     if (selected) {
       const dims = getPieceDimensions(selected);
       const sockets = getConnectorWorldSides(selected);
-      (document.getElementById('sbSelectedSize') as HTMLElement).textContent =
+      document.getElementById('sbSelectedSize')!.textContent =
         `${dims.width} × ${dims.depth} cm · Cell ${selected.col + 1}, ${selected.row + 1} · Sockets: ${sockets.join(', ') || 'none'} · Guide: ${deriveGuideCode(selected)}`;
     } else {
-      (document.getElementById('sbSelectedSize') as HTMLElement).textContent =
+      document.getElementById('sbSelectedSize')!.textContent =
         'Drag pieces on the board to arrange them.';
     }
     updateMeasurementChecks();
@@ -5328,7 +5317,7 @@ export function initSectionalBuilder(): void {
       scopes.forEach((scopeKey: string) => {
         const bucket = metadataManager.strokeMeasurements[scopeKey] || {};
         Object.entries(bucket).forEach(([strokeLabel, entry]: [string, any]) => {
-          const code = String(strokeLabel).trim().toUpperCase();
+          const code = strokeLabel.trim().toUpperCase();
           if (!wantedCodes.has(code)) return;
           const raw =
             typeof entry === 'object' && entry !== null
@@ -5721,7 +5710,9 @@ export function initSectionalBuilder(): void {
         .then(() => {
           (window as any).showStatusMessage?.('Pricing links copied to clipboard', 'success');
         })
-        .catch(() => {});
+        .catch(() => {
+          // Clipboard access can be denied; the links stay visible in the dialog.
+        });
     }
   });
 
@@ -5936,15 +5927,17 @@ export function initSectionalBuilder(): void {
     render();
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- parked: not wired up yet
   const fileToDataUrl = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
       reader.onerror = () => reject(reader.error || new Error('Could not read image'));
       reader.readAsDataURL(file);
     });
 
   /** Seeded strokes for this assembly still live on the canvas of the given view. */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- parked: not wired up yet
   const removeSeededStrokes = (viewId: string): void => {
     const app = (window as any).app;
     const fabricCanvas = app?.canvasManager?.fabricCanvas;
@@ -6324,7 +6317,7 @@ export function initSectionalBuilder(): void {
   const ensureParametricListener = () => {
     const canvas = (window as any).app?.canvasManager?.fabricCanvas;
     if (!canvas) return;
-    if (measurementListenerRegistered === false) {
+    if (!measurementListenerRegistered) {
       measurementListenerRegistered = true;
       window.addEventListener('openpaint:project-mutated', (event: Event) => {
         applyMeasurementToLiveAssembly((event as CustomEvent).detail || {});
@@ -6571,6 +6564,7 @@ export function initSectionalBuilder(): void {
     if (removable.length) fabricCanvas.requestRenderAll?.();
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises -- async DOM event handler
   dialog.querySelector('[data-sb-update]')?.addEventListener('click', async event => {
     const manager = (window as any).app?.projectManager;
     const targetView = assemblyId
@@ -6609,6 +6603,7 @@ export function initSectionalBuilder(): void {
     );
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises -- async DOM event handler
   dialog.querySelector('[data-sb-use]')?.addEventListener('click', async event => {
     if (!pieces.length) return;
     const button = event.currentTarget as HTMLButtonElement;
@@ -6636,6 +6631,7 @@ export function initSectionalBuilder(): void {
     }
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises -- async DOM event handler
   dialog.querySelector('[data-sb-use-product]')?.addEventListener('click', async event => {
     if (!pieces.length || viewMode === 'plan') return;
     const selectedView = viewMode;

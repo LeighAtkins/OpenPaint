@@ -14,9 +14,7 @@ const PRODUCT_REFERENCE = /\b([A-Z]{2,}(?:-[A-Z0-9]+){1,4})\b/i;
 const PRODUCT_URL = /https?:\/\/[^\s)]+\/products\/([a-z0-9-]+)/i;
 
 function cleanToken(value: string): string {
-  return String(value || '')
-    .trim()
-    .replace(/^[\s*`_\-:]+|[\s*`_,.;:]+$/g, '');
+  return (value || '').trim().replace(/^[\s*`_\-:]+|[\s*`_,.;:]+$/g, '');
 }
 
 const ORDER_LINE_PRICE =
@@ -24,7 +22,7 @@ const ORDER_LINE_PRICE =
 
 /** Removes the price/quantity suffix added by copied CW internal order lines. */
 export function cleanCatalogueComparisonTitle(value: string): string {
-  return cleanToken(String(value || '').replace(ORDER_LINE_PRICE, ''));
+  return cleanToken((value || '').replace(ORDER_LINE_PRICE, ''));
 }
 
 function isFabricCode(value: string): boolean {
@@ -39,10 +37,7 @@ function isFabricName(value: string): boolean {
 }
 
 function applyConfigurationNames(item: CatalogueComparisonRequestItem, value: string): void {
-  const parts = String(value || '')
-    .split(',')
-    .map(cleanToken)
-    .filter(Boolean);
+  const parts = (value || '').split(',').map(cleanToken).filter(Boolean);
   const fabricName = parts.find(isFabricName) || '';
   if (!fabricName) return;
   item.fabricName = fabricName;
@@ -50,12 +45,12 @@ function applyConfigurationNames(item: CatalogueComparisonRequestItem, value: st
 }
 
 function inferredReferenceFromHandle(handle: string): string {
-  const match = decodeURIComponent(handle || '').match(PRODUCT_REFERENCE);
+  const match = PRODUCT_REFERENCE.exec(decodeURIComponent(handle || ''));
   return match?.[1]?.toUpperCase() || '';
 }
 
 function normalizeWords(value: string): string[] {
-  return String(value || '')
+  return (value || '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .split(/\s+/)
@@ -122,84 +117,80 @@ export function parseCatalogueComparisonInput(
     items.push(item);
   };
 
-  String(value || '')
-    .split(/\r?\n/)
-    .forEach(rawLine => {
-      const line = rawLine.trim();
-      if (!line) return;
+  (value || '').split(/\r?\n/).forEach(rawLine => {
+    const line = rawLine.trim();
+    if (!line) return;
 
-      if (/^swatch\s+fabric samples?/i.test(line)) {
-        if (current) pushItem(current);
-        current = {
-          kind: 'fabric-sample',
-          productReference: 'FABRIC-SAMPLE',
-          title: 'Fabric Sample',
-          url: 'https://comfort-works.com/pages/fabric-samples',
-          handle: 'fabric-samples',
-          codes: [],
-          fabricCode: '',
-          styleName: '',
-          fabricName: '',
-        };
-        return;
-      }
-
-      const urlMatch = line.match(PRODUCT_URL);
-      if (urlMatch) {
-        const url = urlMatch[0].replace(/[),.;]+$/, '');
-        const handle = urlMatch[1];
-        looseUrls.push({ url, handle });
-        if (current && !current.url) {
-          current.url = url;
-          current.handle = handle;
-        }
-      }
-
-      const nonUrlText = line.replace(/https?:\/\/[^\s)]+/gi, ' ').trim();
-      if (!nonUrlText) return;
-
-      const codeLine = nonUrlText.match(/^codes?\s*:\s*(.+)$/i);
-      if (codeLine && current) {
-        current.codes = codeLine[1]
-          .split(/[,|]/)
-          .map(cleanToken)
-          .filter(Boolean)
-          .map(code => code.toUpperCase());
-        current.fabricCode =
-          [...current.codes].reverse().find(isFabricCode) || current.codes.at(-1) || '';
-        if (current.kind === 'fabric-sample' && current.fabricName) {
-          current.title = current.fabricName;
-        }
-        return;
-      }
-
-      const referenceMatch = nonUrlText.match(PRODUCT_REFERENCE);
-      if (!referenceMatch) {
-        if (current) {
-          applyConfigurationNames(current, nonUrlText);
-          if (current.kind === 'fabric-sample' && current.fabricName) {
-            current.title = current.fabricName;
-          }
-        }
-        return;
-      }
-      const productReference = referenceMatch[1].toUpperCase();
+    if (/^swatch\s+fabric samples?/i.test(line)) {
       if (current) pushItem(current);
-      const afterReference = nonUrlText.slice(
-        (referenceMatch.index || 0) + referenceMatch[0].length
-      );
       current = {
-        kind: 'product',
-        productReference,
-        title: cleanCatalogueComparisonTitle(afterReference.replace(/^\s*[-–—:]?\s*/, '')),
-        url: urlMatch?.[0]?.replace(/[),.;]+$/, '') || '',
-        handle: urlMatch?.[1] || '',
+        kind: 'fabric-sample',
+        productReference: 'FABRIC-SAMPLE',
+        title: 'Fabric Sample',
+        url: 'https://comfort-works.com/pages/fabric-samples',
+        handle: 'fabric-samples',
         codes: [],
         fabricCode: '',
         styleName: '',
         fabricName: '',
       };
-    });
+      return;
+    }
+
+    const urlMatch = PRODUCT_URL.exec(line);
+    if (urlMatch) {
+      const url = urlMatch[0].replace(/[),.;]+$/, '');
+      const handle = urlMatch[1];
+      looseUrls.push({ url, handle });
+      if (current && !current.url) {
+        current.url = url;
+        current.handle = handle;
+      }
+    }
+
+    const nonUrlText = line.replace(/https?:\/\/[^\s)]+/gi, ' ').trim();
+    if (!nonUrlText) return;
+
+    const codeLine = /^codes?\s*:\s*(.+)$/i.exec(nonUrlText);
+    if (codeLine && current) {
+      current.codes = codeLine[1]
+        .split(/[,|]/)
+        .map(cleanToken)
+        .filter(Boolean)
+        .map(code => code.toUpperCase());
+      current.fabricCode =
+        [...current.codes].reverse().find(isFabricCode) || current.codes.at(-1) || '';
+      if (current.kind === 'fabric-sample' && current.fabricName) {
+        current.title = current.fabricName;
+      }
+      return;
+    }
+
+    const referenceMatch = PRODUCT_REFERENCE.exec(nonUrlText);
+    if (!referenceMatch) {
+      if (current) {
+        applyConfigurationNames(current, nonUrlText);
+        if (current.kind === 'fabric-sample' && current.fabricName) {
+          current.title = current.fabricName;
+        }
+      }
+      return;
+    }
+    const productReference = referenceMatch[1].toUpperCase();
+    if (current) pushItem(current);
+    const afterReference = nonUrlText.slice((referenceMatch.index || 0) + referenceMatch[0].length);
+    current = {
+      kind: 'product',
+      productReference,
+      title: cleanCatalogueComparisonTitle(afterReference.replace(/^\s*[-–—:]?\s*/, '')),
+      url: urlMatch?.[0]?.replace(/[),.;]+$/, '') || '',
+      handle: urlMatch?.[1] || '',
+      codes: [],
+      fabricCode: '',
+      styleName: '',
+      fabricName: '',
+    };
+  });
 
   if (current) pushItem(current);
 

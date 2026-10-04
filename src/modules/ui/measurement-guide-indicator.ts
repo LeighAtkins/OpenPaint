@@ -109,6 +109,7 @@ function setIndicatorSize(size: IndicatorSize, manual = true): void {
   setWindowPrefs({ indicatorSize: size, indicatorManualSize: manual });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- parked: not wired up yet
 function resolveIndicatorSize(activeTool: string): IndicatorSize {
   const prefs = getWindowPrefs();
   if (prefs.indicatorManualSize === true) {
@@ -291,6 +292,7 @@ function getCwScopedViewKey(viewId: string): string {
   return (resolveScopedImageLabel(viewId) || viewId).trim();
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- parked: not wired up yet
 function getLegacyCwScopeCandidates(viewId: string): string[] {
   const scoped = getCwScopedViewKey(viewId);
   const base = toBaseViewId(viewId);
@@ -823,6 +825,7 @@ function clampIndicatorRect(rect: { x: number; y: number; width: number; height:
   return { x, y, width, height };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- parked: not wired up yet
 function applyIndicatorPreset(root: HTMLElement, size: IndicatorSize): void {
   const widthBySize: Record<IndicatorSize, number> = { S: 240, M: 320, L: 420, XL: 560 };
   const heroBySize: Record<IndicatorSize, number> = { S: 92, M: 130, L: 180, XL: 240 };

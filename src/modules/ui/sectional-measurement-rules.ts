@@ -71,7 +71,7 @@ function checkSum(rule: SumRule, values: MeasurementValueMap): MeasurementRuleIs
   const filledParts = parts.filter(part => isFilled(part.value));
   // Need at least two filled parts for a meaningful partition check.
   if (filledParts.length < 2) return null;
-  const sum = filledParts.reduce((total, part) => total + (part.value as number), 0);
+  const sum = filledParts.reduce((total, part) => total + part.value!, 0);
   const drift = Math.abs(sum - target);
   if (drift <= rule.toleranceCm) return null;
   const missing = parts.filter(part => !isFilled(part.value)).map(part => part.code);
@@ -95,9 +95,9 @@ function checkEquality(
   for (const group of rule.codeGroups) {
     const filled = group.filter(code => isFilled(values[code]));
     if (filled.length < 2) continue;
-    const first = values[filled[0]] as number;
+    const first = values[filled[0]]!;
     const drift = filled.reduce(
-      (worst, code) => Math.max(worst, Math.abs((values[code] as number) - first)),
+      (worst, code) => Math.max(worst, Math.abs(values[code]! - first)),
       0
     );
     if (drift <= rule.toleranceCm) continue;
@@ -150,7 +150,7 @@ function hasArmOnSide(pieces: SectionalPiece[], side: 'left' | 'right'): boolean
 export function buildSectionalMeasurementRules(
   context: SectionalRuleContext
 ): SectionalMeasurementRuleSet {
-  const { pieces, values } = context;
+  const { pieces } = context;
   const seatModules = pieces.filter(piece => piece.kind === 'seat').length;
   const seatCount = Math.max(1, seatModules);
   const hasLeftArm = hasArmOnSide(pieces, 'left');

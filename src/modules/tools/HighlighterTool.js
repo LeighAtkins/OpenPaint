@@ -176,19 +176,6 @@ export class HighlighterTool extends BaseTool {
     window.addEventListener('pointerup', this.onWindowPointerUp);
   }
 
-  onWindowPointerUp() {
-    const brush = this.canvas?.freeDrawingBrush;
-    if (!brush || !Array.isArray(brush._points) || brush._points.length === 0) return;
-    // End the in-flight freehand stroke exactly as fabric's own mouseup would.
-    this.canvas.isDrawingMode = true;
-    try {
-      brush.onMouseUp({});
-    } catch {
-      // A double finalize (canvas mouseup raced us) is harmless — the path
-      // was already committed.
-    }
-  }
-
   deactivate() {
     if (this.canvas) {
       window.removeEventListener('pointerup', this.onWindowPointerUp);
