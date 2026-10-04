@@ -713,52 +713,7 @@ export class ProjectManager {
             // start those loads so it is re-measured with the real font.
             requestFontsForCanvasText(this.canvasManager.fabricCanvas);
 
-            // Recreate tags for all strokes with visible labels
-            if (window.app?.tagManager && window.app?.metadataManager) {
-              // Clear all tags to avoid collisions between views (e.g., multiple A1 labels)
-              if (typeof window.app.tagManager.clearAllTags === 'function') {
-                window.app.tagManager.clearAllTags();
-              }
-
-              // If the active frame is empty but restored strokes belong to another
-              // frame scope, the frame visibility gate hides all vectors. This can
-              // happen after CW import image switching creates/normalizes frame tabs
-              // in a different order than the drawn stroke scopes.
-              this.repairActiveCaptureTabForLoadedObjects(viewId);
-
-              const scopedKeys = Object.keys(
-                window.app.metadataManager.vectorStrokesByImage || {}
-              ).filter(scopeKey => this.isScopeLabelForView(scopeKey, viewId));
-              const activeScope =
-                (typeof window.getCaptureTabScopedLabel === 'function' &&
-                  window.getCaptureTabScopedLabel(viewId)) ||
-                window.app.metadataManager.resolveActiveImageLabel?.(viewId) ||
-                viewId;
-
-              const activeStrokes =
-                window.app.metadataManager.vectorStrokesByImage[activeScope] || {};
-              const activeLabelVisibility =
-                window.app.metadataManager.strokeLabelVisibility[activeScope] || {};
-
-              console.log(
-                `[Load] Recreating tags for ${Object.keys(activeStrokes).length} active strokes`,
-                { viewId, activeScope, scopedKeys }
-              );
-
-              Object.entries(activeStrokes).forEach(([strokeLabel, strokeObj]) => {
-                // Skip guide-scoped strokes that shouldn't appear on the primary canvas
-                if (typeof strokeLabel === 'string' && strokeLabel.startsWith('__guide__:')) return;
-                const isLabelVisible = activeLabelVisibility[strokeLabel] !== false;
-                if (isLabelVisible) {
-                  window.app.tagManager.createTag(strokeLabel, activeScope, strokeObj);
-                }
-              });
-
-              // Ensure tab-scoped visibility is applied immediately after load.
-              if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
-                window.syncCaptureTabCanvasVisibility(viewId);
-              }
-            }
+            this.recreateTagsForView(viewId);
 
             // Ensure background image is re-applied after JSON load (JSON can clear it)
             if (view.image) {
@@ -4531,6 +4486,7 @@ export class ProjectManager {
       this.showProjectLoadOverlay('Loading cloud project...');
       this.revokeLoadedProjectObjectUrls();
 
+      await this.waitForDeferredManagers();
       await this._restoreFromProjectData(normalizedProjectData);
     } catch (error) {
       console.error('[Load] Failed to load project from data:', error);
@@ -4558,6 +4514,7 @@ export class ProjectManager {
 
       console.log('[Load] Parsed project data:', projectData.projectName || projectData.name);
 
+      await this.waitForDeferredManagers();
       await this._restoreFromProjectData(projectData);
     } catch (error) {
       console.error('[Load] Failed to load project:', error);
@@ -4568,6 +4525,77 @@ export class ProjectManager {
       this.suspendSave = false;
       this.hideProjectLoadOverlay();
     }
+  }
+
+  /**
+   * Rebuild the measurement tags of the displayed view from its stroke
+   * metadata and apply per-frame visibility. Tags are never serialised; this
+   * runs after a view's objects are restored, and again if the lazily loaded
+   * tag manager only becomes available after the view is already on screen.
+   */
+  recreateTagsForView(viewId) {
+    const tagManager = window.app?.tagManager;
+    const metadataManager = window.app?.metadataManager;
+    if (tagManager && metadataManager) {
+      // Clear all tags to avoid collisions between views (e.g., multiple A1 labels)
+      if (typeof tagManager.clearAllTags === 'function') {
+        tagManager.clearAllTags();
+      }
+
+      // If the active frame is empty but restored strokes belong to another
+      // frame scope, the frame visibility gate hides all vectors. This can
+      // happen after CW import image switching creates/normalizes frame tabs
+      // in a different order than the drawn stroke scopes.
+      this.repairActiveCaptureTabForLoadedObjects(viewId);
+
+      const scopedKeys = Object.keys(metadataManager.vectorStrokesByImage || {}).filter(scopeKey =>
+        this.isScopeLabelForView(scopeKey, viewId)
+      );
+      const activeScope =
+        (typeof window.getCaptureTabScopedLabel === 'function' &&
+          window.getCaptureTabScopedLabel(viewId)) ||
+        metadataManager.resolveActiveImageLabel?.(viewId) ||
+        viewId;
+
+      const activeStrokes = metadataManager.vectorStrokesByImage[activeScope] || {};
+      const activeLabelVisibility = metadataManager.strokeLabelVisibility[activeScope] || {};
+
+      console.log(
+        `[Load] Recreating tags for ${Object.keys(activeStrokes).length} active strokes`,
+        { viewId, activeScope, scopedKeys }
+      );
+
+      Object.entries(activeStrokes).forEach(([strokeLabel, strokeObj]) => {
+        // Skip guide-scoped strokes that shouldn't appear on the primary canvas
+        if (typeof strokeLabel === 'string' && strokeLabel.startsWith('__guide__:')) return;
+        const isLabelVisible = activeLabelVisibility[strokeLabel] !== false;
+        if (isLabelVisible) {
+          tagManager.createTag(strokeLabel, activeScope, strokeObj);
+        }
+      });
+    }
+
+    // Frame visibility does not depend on the tag manager; a stroke drawn in
+    // another frame tab must stay hidden either way.
+    if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+      window.syncCaptureTabCanvasVisibility(viewId);
+    }
+  }
+
+  /**
+   * Restoring a view recreates tags and applies per-frame visibility through
+   * managers that load shortly after startup. A project opened before they are
+   * ready (a slow connection, or a load triggered right at boot) would come up
+   * without them, so wait here. Bounded so a stalled download cannot block the
+   * load itself.
+   */
+  async waitForDeferredManagers(timeoutMs = 15000) {
+    const ready = window.app?.ensureDeferredManagers?.();
+    if (!ready) return;
+    await Promise.race([
+      Promise.resolve(ready).catch(() => undefined),
+      new Promise(resolve => setTimeout(resolve, timeoutMs)),
+    ]);
   }
 
   async _restoreFromProjectData(projectData) {
