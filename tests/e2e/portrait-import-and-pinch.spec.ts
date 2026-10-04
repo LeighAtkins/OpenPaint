@@ -115,11 +115,13 @@ test.describe('Portrait import and trackpad zoom', () => {
   test('a portrait image does not replace an existing saved frame layout', async ({ page }) => {
     await page.goto('/');
     await waitForApp(page);
+    // A view only has a saved frame layout once an image has been placed in it
+    // (an empty workspace's frame record does not count), so place a 4:3 image
+    // first and then replace it with a portrait one.
+    await addGeneratedImage(page, 'front', 800, 600);
     const beforeRatio = await page.evaluate(() => {
-      const manager = window.app?.projectManager;
       const frame = document.getElementById('captureFrame')?.getBoundingClientRect();
-      if (!manager || !frame) throw new Error('Initial frame missing');
-      manager.views.front.tabs = structuredClone(window.captureTabsByLabel?.front || {});
+      if (!frame) throw new Error('Initial frame missing');
       return frame.width / frame.height;
     });
 

@@ -140,8 +140,13 @@ test.describe('Guide Image Position Shift', () => {
       '#getStartedBtn, #guideToggle, #measurementGuideToggle, [data-action="measurement-guide"], .guide-toggle-btn'
     );
     let clicked = false;
-    const count = await guideBtn.count();
-    if (count > 0) {
+    // The toggle exists in the DOM before any guide is bound, but is hidden.
+    if (
+      await guideBtn
+        .first()
+        .isVisible()
+        .catch(() => false)
+    ) {
       await guideBtn.first().click();
       clicked = true;
     }
