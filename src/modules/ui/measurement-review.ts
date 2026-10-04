@@ -4,11 +4,11 @@ import { PDFDocument, PDFTextField, PDFRadioGroup } from 'pdf-lib';
 const MANIFEST_PREFIX = 'SOFAPAINT_REVIEW_V1:';
 
 function baseViewId(scope = ''): string {
-  return String(scope).split('::tab:')[0];
+  return scope.split('::tab:')[0];
 }
 
 function fieldPart(value = ''): string {
-  return String(value)
+  return value
     .trim()
     .replace(/[^A-Za-z0-9_-]+/g, '_')
     .replace(/^_+|_+$/g, '');
@@ -383,6 +383,7 @@ export function initMeasurementReview(): void {
       }
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises -- async DOM event handler
     overlay.addEventListener('click', async event => {
       const target = event.target.closest('button');
       if (!target) return;
@@ -448,6 +449,7 @@ export function initMeasurementReview(): void {
       overlay.querySelector('[data-review-count]').textContent = String(selected.size);
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises -- async DOM event handler
     overlay.querySelector('input[type="file"]').addEventListener('change', async event => {
       const file = event.target.files?.[0];
       if (!file) return;

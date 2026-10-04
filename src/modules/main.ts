@@ -3129,6 +3129,7 @@ export class App {
       });
 
       geometryRow?.querySelectorAll<HTMLButtonElement>('[data-line-geometry]').forEach(button => {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises -- async DOM event handler
         button.addEventListener('click', async () => {
           const geometry = button.dataset.lineGeometry;
           if (geometry === 'curve') {
@@ -3589,6 +3590,7 @@ export class App {
       });
 
       panel.querySelectorAll<HTMLButtonElement>('[data-highlighter-style]').forEach(button => {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises -- async DOM event handler
         button.addEventListener('click', async () => {
           const style = 'marker';
           const tool = await this.toolManager.ensureTool('highlighter');
@@ -4430,7 +4432,7 @@ export class App {
         const target = e.target as HTMLElement | null;
         const isMeasurement = target?.classList && target.classList.contains('stroke-measurement');
         const inputType =
-          target instanceof HTMLInputElement ? String(target.type || 'text').toLowerCase() : '';
+          target instanceof HTMLInputElement ? (target.type || 'text').toLowerCase() : '';
         const isTextInput =
           target instanceof HTMLTextAreaElement ||
           (target instanceof HTMLInputElement &&

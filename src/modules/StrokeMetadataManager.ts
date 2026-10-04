@@ -1229,12 +1229,7 @@ export class StrokeMetadataManager {
         .querySelectorAll('#strokesList .stroke-visibility-item, #strokesList .cw-measure-row')
         .forEach(item => {
           item.dataset.searchHidden =
-            query &&
-            !String(item.textContent || '')
-              .toLowerCase()
-              .includes(query)
-              ? 'true'
-              : 'false';
+            query && !(item.textContent || '').toLowerCase().includes(query) ? 'true' : 'false';
         });
     };
     const searchInput = document.getElementById('elementsSearchInput');
