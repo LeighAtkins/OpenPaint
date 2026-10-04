@@ -139,16 +139,14 @@ const IMPORT_DESTINATION_STYLES = /* css */ `
 
 function normalizedContext(value: GorgiasTicketContext | undefined): GorgiasTicketContext {
   const context = value && typeof value === 'object' ? value : {};
-  const productSku = String(context.productSku || '').trim();
+  const productSku = (context.productSku || '').trim();
   return {
-    ticketId: String(context.ticketId || '').trim(),
-    ticketUrl: String(context.ticketUrl || '').trim(),
-    customerName: String(context.customerName || '').trim(),
-    productName: String(context.productName || '').trim(),
+    ticketId: (context.ticketId || '').trim(),
+    ticketUrl: (context.ticketUrl || '').trim(),
+    customerName: (context.customerName || '').trim(),
+    productName: (context.productName || '').trim(),
     productSku,
-    guideCode: String(context.guideCode || productSku.split('__')[0] || '')
-      .trim()
-      .toUpperCase(),
+    guideCode: (context.guideCode || productSku.split('__')[0] || '').trim().toUpperCase(),
   };
 }
 
@@ -231,11 +229,7 @@ function extensionProjectStatus(ticketId: string): Record<string, unknown> {
     sameTicket: Boolean(ticket),
     importedImageHashes: Array.isArray(ticket?.importedImageHashes)
       ? ticket.importedImageHashes
-          .map((hash: unknown) =>
-            String(hash || '')
-              .trim()
-              .toLowerCase()
-          )
+          .map((hash: unknown) => (typeof hash === 'string' ? hash : '').trim().toLowerCase())
           .filter(Boolean)
       : [],
   };
@@ -545,8 +539,8 @@ function renderTicketSourceLink(context?: GorgiasTicketContext): void {
   const subtitle = document.querySelector('.images-panel-subtitle');
   if (!subtitle?.parentElement) return;
   let link = document.getElementById('gorgiasTicketSourceLink') as HTMLAnchorElement | null;
-  const ticketId = String(context?.ticketId || '').trim();
-  const ticketUrl = String(context?.ticketUrl || '').trim();
+  const ticketId = (context?.ticketId || '').trim();
+  const ticketUrl = (context?.ticketUrl || '').trim();
   let safeUrl = '';
   try {
     const parsed = new URL(ticketUrl);
@@ -581,7 +575,7 @@ function renderStoredTicketSource(): void {
     GorgiasTicketContext & { lastImportedAt?: string }
   >;
   const latest = tickets.sort((left, right) =>
-    String(right.lastImportedAt || '').localeCompare(String(left.lastImportedAt || ''))
+    (right.lastImportedAt || '').localeCompare(left.lastImportedAt || '')
   )[0];
   renderTicketSourceLink(latest);
 }
@@ -590,14 +584,12 @@ function applyTicketContext(context: GorgiasTicketContext): Set<string> {
   const manager = getProjectManager();
   if (!manager?.getProjectMetadata || !manager?.setProjectMetadata) return new Set();
   const metadata = manager.getProjectMetadata() || {};
-  const ticketId = String(context.ticketId || '').trim();
+  const ticketId = (context.ticketId || '').trim();
   const existingTickets = metadata.externalSources?.gorgiasTickets || {};
   const existing = ticketId ? existingTickets[ticketId] || {} : {};
-  const guideCode = String(context.guideCode || '')
-    .trim()
-    .toUpperCase();
-  const customerName = String(context.customerName || '').trim();
-  const productName = String(context.productName || '').trim();
+  const guideCode = (context.guideCode || '').trim().toUpperCase();
+  const customerName = (context.customerName || '').trim();
+  const productName = (context.productName || '').trim();
   const contextFields = presentContextFields(context);
   const naming = {
     ...(metadata.naming || {}),
@@ -664,20 +656,14 @@ function applyTicketContext(context: GorgiasTicketContext): Set<string> {
 
   return new Set(
     (Array.isArray(existing.importedImageHashes) ? existing.importedImageHashes : [])
-      .map((hash: unknown) =>
-        String(hash || '')
-          .trim()
-          .toLowerCase()
-      )
+      .map((hash: unknown) => (typeof hash === 'string' ? hash : '').trim().toLowerCase())
       .filter(Boolean)
   );
 }
 
 function persistImportedHash(context: GorgiasTicketContext, hash: string): void {
-  const ticketId = String(context.ticketId || '').trim();
-  const normalizedHash = String(hash || '')
-    .trim()
-    .toLowerCase();
+  const ticketId = (context.ticketId || '').trim();
+  const normalizedHash = (hash || '').trim().toLowerCase();
   const manager = getProjectManager();
   if (!ticketId || !normalizedHash || !manager?.getProjectMetadata || !manager?.setProjectMetadata)
     return;
@@ -705,26 +691,26 @@ function persistImportedHash(context: GorgiasTicketContext, hash: string): void 
 }
 
 function sanitizeFilename(value: string, fallbackIndex: number): string {
-  const filename = String(value || '')
+  const filename = (value || '')
     .split(/[\\/]/)
     .pop()
+    // eslint-disable-next-line no-control-regex -- control characters are stripped from file names on purpose
     ?.replace(/[\u0000-\u001f<>:"|?*]/g, '-')
     .trim();
   return filename || `gorgias-image-${fallbackIndex + 1}.jpg`;
 }
 
 function normalizeImagePartLabel(value: unknown): string {
-  const match = String(value || '')
-    .trim()
-    .toLowerCase()
-    .match(/^(front|side|back|cushion)$/);
+  const match = /^(front|side|back|cushion)$/.exec(
+    (typeof value === 'string' ? value : '').trim().toLowerCase()
+  );
   return match?.[1] || '';
 }
 
 function inferImagePartLabel(payload: Pick<ExtensionImagePayload, 'partLabel' | 'name'>): string {
   const explicit = normalizeImagePartLabel(payload.partLabel);
   if (explicit) return explicit;
-  const basename = String(payload.name || '')
+  const basename = (payload.name || '')
     .split(/[\\/]/)
     .pop()
     ?.replace(/\.[^.]+$/, '')
@@ -736,7 +722,7 @@ function filenameForPartLabel(payload: ExtensionImagePayload): string {
   const originalName = sanitizeFilename(payload.name || '', payload.index || 0);
   const partLabel = inferImagePartLabel(payload);
   if (!partLabel) return originalName;
-  const extension = originalName.match(/\.(jpe?g|png|webp|gif|heic|heif|avif)$/i)?.[0];
+  const extension = /\.(jpe?g|png|webp|gif|heic|heif|avif)$/i.exec(originalName)?.[0];
   return `${partLabel}${extension || '.jpg'}`;
 }
 
@@ -763,8 +749,8 @@ function setImportedImagePartLabel(viewId: string, partLabel: string): void {
 }
 
 async function dataUrlToFile(payload: ExtensionImagePayload): Promise<File> {
-  const dataUrl = String(payload.dataUrl || '');
-  const mime = String(payload.mime || '').toLowerCase();
+  const dataUrl = payload.dataUrl || '';
+  const mime = (payload.mime || '').toLowerCase();
   if (!/^image\/[a-z0-9.+-]+$/i.test(mime) || !dataUrl.startsWith(`data:${mime};base64,`)) {
     throw new Error('The browser extension sent an invalid image');
   }
@@ -956,7 +942,7 @@ export function initExtensionImageImport(uploadManager: ExtensionUploadManager):
       statusRequest.type === 'OPEN_PROJECT_REQUEST' &&
       statusRequest.requestId
     ) {
-      const projectId = String(statusRequest.projectId || '').trim();
+      const projectId = (statusRequest.projectId || '').trim();
       void (projectId ? loadCloudProjectForImport(projectId) : Promise.resolve(false)).then(
         opened => {
           if (!opened) {
@@ -979,7 +965,7 @@ export function initExtensionImageImport(uploadManager: ExtensionUploadManager):
         {
           source: 'sofapaint-gorgias-project-status',
           requestId: statusRequest.requestId,
-          status: extensionProjectStatus(String(statusRequest.ticketId || '').trim()),
+          status: extensionProjectStatus((statusRequest.ticketId || '').trim()),
         },
         window.location.origin
       );
@@ -1045,9 +1031,7 @@ export function initExtensionImageImport(uploadManager: ExtensionUploadManager):
     if (payload.type === 'IMPORT_IMAGE') {
       const index = Number(payload.index);
       if (!Number.isInteger(index) || index < 0 || batch.files.has(index)) return;
-      const hash = String(payload.hash || '')
-        .trim()
-        .toLowerCase();
+      const hash = (payload.hash || '').trim().toLowerCase();
       if (hash && batch.knownHashes.has(hash)) {
         batch.skipped.add(index);
         void drainBatch(payload.batchId, uploadManager);

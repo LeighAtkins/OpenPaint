@@ -404,7 +404,6 @@ export function initScrollSelectSystem() {
       const stepButtons = Array.from(
         stepper?.querySelectorAll<HTMLButtonElement>('button[data-target]') || []
       );
-      const framesVisible = document.body.classList.contains('frames-visible');
       const tabState =
         window.captureTabsByLabel?.[currentLabel] || window.captureTabsByLabel?.[rawCurrentLabel];
       const activeTabId = String(tabState?.activeTabId || tabState?.masterTabId || 'master');
@@ -1321,7 +1320,7 @@ export function initScrollSelectSystem() {
     }
 
     function escapeStepperAttribute(value: string): string {
-      return String(value)
+      return value
         .replace(/&/g, '&amp;')
         .replace(/"/g, '&quot;')
         .replace(/</g, '&lt;')
@@ -1551,6 +1550,7 @@ export function initScrollSelectSystem() {
 
       // Click to switch to image and center the pill
       stepButtons.forEach(btn => {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises -- async DOM event handler
         btn.addEventListener('click', async () => {
           const label = btn.dataset.target;
           const tabId = btn.dataset.tabId;

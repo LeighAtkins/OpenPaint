@@ -314,10 +314,8 @@ export class MeasurementOverlayManager {
    * object or mountView() will recreate it on the next image switch.
    */
   removeMeasurement(viewId: string, strokeLabel: string): boolean {
-    const normalizedViewId = String(viewId || '').split('::tab:')[0];
-    const normalizedLabel = String(strokeLabel || '')
-      .trim()
-      .toUpperCase();
+    const normalizedViewId = (viewId || '').split('::tab:')[0];
+    const normalizedLabel = (strokeLabel || '').trim().toUpperCase();
     if (!normalizedViewId || !normalizedLabel) return false;
 
     const canvas = this.canvasManager.fabricCanvas;
@@ -331,12 +329,7 @@ export class MeasurementOverlayManager {
 
       const elementIds = new Set<string>();
       for (const [elementId, element] of overlay.elements.entries()) {
-        if (
-          String(element.roleToken || '')
-            .trim()
-            .toUpperCase() !== normalizedLabel
-        )
-          continue;
+        if ((element.roleToken || '').trim().toUpperCase() !== normalizedLabel) continue;
         elementIds.add(elementId);
       }
       if (!elementIds.size) continue;
@@ -348,9 +341,7 @@ export class MeasurementOverlayManager {
             customData?.layerType === 'mos-overlay' &&
             customData.overlayId === overlayId &&
             (elementIds.has(customData.elementId) ||
-              String(customData.roleToken || '')
-                .trim()
-                .toUpperCase() === normalizedLabel)
+              (customData.roleToken || '').trim().toUpperCase() === normalizedLabel)
           );
         });
         objects.forEach((obj: any) => canvas.remove(obj));
@@ -363,7 +354,7 @@ export class MeasurementOverlayManager {
       const tagKeys = this._overlayTagKeys.get(overlayId) || [];
       this._overlayTagKeys.set(
         overlayId,
-        tagKeys.filter(label => String(label).trim().toUpperCase() !== normalizedLabel)
+        tagKeys.filter(label => label.trim().toUpperCase() !== normalizedLabel)
       );
     }
 
@@ -1302,7 +1293,13 @@ export class MeasurementOverlayManager {
   private _collectRoleAnchors(overlay: MeasurementOverlay): Map<string, { x: number; y: number }> {
     const anchors = new Map<string, { x: number; y: number }>();
     for (const element of overlay.elements.values()) {
-      if (element.kind !== 'label') continue;
+      // Assistant placements carry their explicit anchor on the measurement,
+      // unlike SVG guides whose labels are separate elements.
+      if (
+        element.kind !== 'label' &&
+        !(overlay.assistantPlacement && element.kind === 'measureLine')
+      )
+        continue;
       // Illustrator's b-groups contain numeric entry placeholders, not tag anchors.
       // Prefer the source c-group circles and named labels.
       if (element.label && !/[A-Za-z]/.test(element.label.text || '')) continue;

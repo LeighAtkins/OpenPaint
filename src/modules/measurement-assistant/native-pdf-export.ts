@@ -1,6 +1,11 @@
 import type { MeasurementPlacement } from './placement-model';
 import type { MeasurementPdfOptions, MeasurementPdfPhoto } from './pdf-export';
 
+export interface NativePdfRaster {
+  bytes: Uint8Array;
+  mimeType: 'image/png' | 'image/jpeg';
+}
+
 /** Same report contract used by the editor's Save as PDF action. */
 export function buildNativePdfReport(
   placement: MeasurementPlacement,
@@ -51,17 +56,19 @@ export function buildNativePdfReport(
 export async function exportNativeMeasurementPdf(
   placement: MeasurementPlacement,
   photos: MeasurementPdfPhoto[],
-  renderPhoto: (photo: MeasurementPdfPhoto) => Promise<Uint8Array>,
+  renderPhoto: (photo: MeasurementPdfPhoto) => Promise<Uint8Array | NativePdfRaster>,
   options: MeasurementPdfOptions,
   endpoint: string
 ): Promise<Uint8Array> {
   const images: Array<MeasurementPdfPhoto & { src: string }> = [];
   for (const photo of photos) {
-    const bytes = await renderPhoto(photo);
+    const rendered = await renderPhoto(photo);
+    const bytes = rendered instanceof Uint8Array ? rendered : rendered.bytes;
+    const mimeType = rendered instanceof Uint8Array ? 'image/png' : rendered.mimeType;
     const chunks: string[] = [];
     for (let offset = 0; offset < bytes.length; offset += 8192)
       chunks.push(String.fromCharCode(...bytes.subarray(offset, offset + 8192)));
-    images.push({ ...photo, src: `data:image/png;base64,${btoa(chunks.join(''))}` });
+    images.push({ ...photo, src: `data:${mimeType};base64,${btoa(chunks.join(''))}` });
   }
   const body = JSON.stringify(buildNativePdfReport(placement, images, options));
   if (new TextEncoder().encode(body).byteLength > 4_000_000)
@@ -78,7 +85,15 @@ export async function exportNativeMeasurementPdf(
     throw new Error(
       `SofaPaint Save as PDF failed (${response.status}). No substitute PDF was generated.`
     );
-  const bytes = new Uint8Array(await response.arrayBuffer());
+  let bytes: Uint8Array;
+  try {
+    bytes = new Uint8Array(await response.arrayBuffer());
+  } catch (error) {
+    throw new Error(
+      `SofaPaint PDF response was incomplete (${response.status}; content-length ${response.headers.get('content-length') || 'unspecified'}; request ${response.headers.get('x-pdf-request-id') || 'unspecified'}). No PDF was saved.`,
+      { cause: error }
+    );
+  }
   if (new TextDecoder().decode(bytes.subarray(0, 5)) !== '%PDF-')
     throw new Error('SofaPaint returned an invalid PDF.');
   return bytes;

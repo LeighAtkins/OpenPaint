@@ -17,6 +17,13 @@ import { bytesToBase64, cropSvg, renderSvgPng } from './raster-preview';
 import { exportNativeMeasurementPdf } from '../native-pdf-export';
 import { DurableObject } from 'cloudflare:workers';
 import { consumeDailyBudget } from './usage-budget';
+import {
+  fetchMaskEvidence,
+  normalizeMaskInput,
+  renderMaskOverlay,
+  validateMaskEvidence,
+  type MaskEvidence,
+} from './mask-service';
 
 /** Each daily resource budget has its own strongly consistent counter. */
 export class UsageBudget extends DurableObject {
@@ -39,6 +46,9 @@ type RuntimeEnv = Omit<SofaPaintMcpEnv, 'LOCAL_DEVELOPMENT'> & {
   MCP_ACCESS_TOKEN?: string;
   OPENAI_DOMAIN_CHALLENGE?: string;
   LOCAL_DEVELOPMENT: string;
+  SOFA_MASK_SERVICE_URL?: string;
+  SOFA_MASK_API_TOKEN?: string;
+  SOFA_MASK_MODEL_SHA256?: string;
 };
 const objectKey = (id: string) => `drafts/${id}/project.json`;
 function createServices(env: RuntimeEnv, origin: string): McpServices {
@@ -88,6 +98,88 @@ function createServices(env: RuntimeEnv, origin: string): McpServices {
     drafts,
     guides,
     previewUrl,
+    async segmentImage(id, token, imageId) {
+      const { draft } = await drafts.read(id, token);
+      const image = draft.images.find(item => item.id === imageId);
+      if (!image) throw new Error('Unknown project photo.');
+      if (image.width * image.height > 12000000)
+        throw new Error('Mask review supports photos up to 12 megapixels.');
+      if (!env.SOFA_MASK_SERVICE_URL || !env.SOFA_MASK_API_TOKEN || !env.SOFA_MASK_MODEL_SHA256)
+        throw new Error('The masking service is not configured for this deployment.');
+      const key = `drafts/${id}/masks/${imageId}-${env.SOFA_MASK_MODEL_SHA256}`;
+      const [cached, photo] = await Promise.all([
+        env.DRAFTS.get(`${key}.json`),
+        env.DRAFTS.get(image.storageKey),
+      ]);
+      if (!photo) throw new Error('Original photo unavailable.');
+      const bytes = new Uint8Array(await photo.arrayBuffer());
+      let evidence: MaskEvidence;
+      if (cached) {
+        if (cached.size > 4 * 1024 * 1024)
+          throw new Error('Cached mask evidence exceeds the response budget.');
+        const hash = await crypto.subtle.digest('SHA-256', bytes);
+        const sha256 = Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, '0')).join(
+          ''
+        );
+        evidence = validateMaskEvidence(
+          await cached.json(),
+          { ...image, sha256 },
+          env.SOFA_MASK_MODEL_SHA256
+        );
+      } else {
+        await claimBudget(env, 'mask-inferences', 1, 500);
+        evidence = await fetchMaskEvidence(bytes, image, {
+          url: env.SOFA_MASK_SERVICE_URL,
+          token: env.SOFA_MASK_API_TOKEN,
+          modelSha256: env.SOFA_MASK_MODEL_SHA256,
+          local: env.LOCAL_DEVELOPMENT === 'true',
+        });
+        await env.DRAFTS.put(`${key}.json`, JSON.stringify(evidence), {
+          httpMetadata: { contentType: 'application/json' },
+          customMetadata: { expiresAt: String(draft.expiresAt) },
+        });
+      }
+      const raster = await env.DRAFTS.get(`${key}.png`);
+      if (raster)
+        return { evidence, preview: bytesToBase64(new Uint8Array(await raster.arrayBuffer())) };
+      await claimBudget(env, 'renders', 1, 3000);
+      const font = await env.GUIDES.fetch(new Request('https://guides.local/preview-font.ttf'));
+      if (!font.ok) throw new Error('Preview font unavailable.');
+      const url = `data:${image.mimeType};base64,${bytesToBase64(bytes)}`;
+      const rendered = await renderSvgPng(
+        renderMaskOverlay(evidence, url),
+        new Uint8Array(await font.arrayBuffer()),
+        Math.min(800, image.width)
+      );
+      await env.DRAFTS.put(`${key}.png`, rendered, {
+        httpMetadata: { contentType: 'image/png' },
+        customMetadata: { expiresAt: String(draft.expiresAt) },
+      });
+      return { evidence, preview: bytesToBase64(rendered) };
+    },
+    async readMaskEvidence(id, token, imageId) {
+      const { draft } = await drafts.read(id, token);
+      const image = draft.images.find(item => item.id === imageId);
+      if (!image) throw new Error('Unknown project photo.');
+      if (!env.SOFA_MASK_MODEL_SHA256) return undefined;
+      const cached = await env.DRAFTS.get(
+        `drafts/${id}/masks/${imageId}-${env.SOFA_MASK_MODEL_SHA256}.json`
+      );
+      if (!cached) return undefined;
+      if (cached.size > 4 * 1024 * 1024)
+        throw new Error('Cached mask evidence exceeds the response budget.');
+      const photo = await env.DRAFTS.get(image.storageKey);
+      if (!photo) throw new Error('Original photo unavailable.');
+      const hash = await crypto.subtle.digest('SHA-256', await photo.arrayBuffer());
+      const sha256 = Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, '0')).join(
+        ''
+      );
+      return validateMaskEvidence(
+        await cached.json(),
+        { ...image, sha256 },
+        env.SOFA_MASK_MODEL_SHA256
+      );
+    },
     async confirmReview(id, token, revision, report) {
       const { draft } = await drafts.read(id, token);
       if (draft.revision !== revision) throw new Error('Drawing changed during review.');
@@ -265,7 +357,15 @@ function createServices(env: RuntimeEnv, origin: string): McpServices {
           .filter(Boolean),
         env.LOCAL_DEVELOPMENT === 'true'
       );
-      const input = await downloadInputImage(url);
+      let input = await downloadInputImage(url);
+      if (env.SOFA_MASK_SERVICE_URL && env.SOFA_MASK_API_TOKEN && env.SOFA_MASK_MODEL_SHA256) {
+        input = await normalizeMaskInput(input.bytes, {
+          url: env.SOFA_MASK_SERVICE_URL,
+          token: env.SOFA_MASK_API_TOKEN,
+          modelSha256: env.SOFA_MASK_MODEL_SHA256,
+          local: env.LOCAL_DEVELOPMENT === 'true',
+        });
+      }
       await claimBudget(env, 'upload-bytes', input.bytes.byteLength, 1024 * 1024 * 1024);
       const imageId = crypto.randomUUID();
       const storageKey = `drafts/${id}/images/${imageId}`;

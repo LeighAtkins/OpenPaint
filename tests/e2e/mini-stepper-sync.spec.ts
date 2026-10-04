@@ -825,6 +825,12 @@ test.describe('Complex multi-frame drift guards', () => {
     await expect(
       page.locator('#authCloudSaveBtn, #authMyProjectsBtn, #cloudToolbarGroup')
     ).toHaveCount(0);
+    // The primary/secondary swap is driven by the cloud UI, which only starts
+    // when sign-in and Supabase are configured for the build under test.
+    const cloudUiActive = await page.evaluate(
+      () => typeof (window as any).syncCloudPrimaryAction === 'function'
+    );
+    test.skip(!cloudUiActive, 'Cloud UI is not enabled in this build');
     await expect(page.locator('#canvasCloudSaveBtn')).toContainText('My Projects');
     await expect(page.locator('#canvasMyProjectsBtn')).toContainText('Cloud Save');
 

@@ -1,4 +1,4 @@
-type MeasurementMetadataManager = {
+interface MeasurementMetadataManager {
   getMeasurementString: (imageLabel: string, strokeLabel: string) => string;
   parseAndSaveMeasurement: (imageLabel: string, strokeLabel: string, value: string) => boolean;
   renameStrokeLabel?: (
@@ -7,20 +7,20 @@ type MeasurementMetadataManager = {
     newLabel: string
   ) => { ok: boolean; label?: string; reason?: string };
   updateStrokeVisibilityControls?: () => void;
-};
+}
 
 type QuickMeasurementWindow = Window & {
   focusQuickMeasurementInput?: (strokeLabel: string, imageLabel: string) => void;
   hideQuickMeasurementInput?: () => void;
 };
 
-type QueuedMeasurementDetail = {
+interface QueuedMeasurementDetail {
   active?: boolean;
   rowKey?: string;
   label?: string;
   value?: string;
   sourceLabel?: string;
-};
+}
 
 export function initQuickMeasurementEntry(metadataManager: MeasurementMetadataManager): void {
   if (document.getElementById('quickMeasurementEntry')) return;
@@ -73,9 +73,8 @@ export function initQuickMeasurementEntry(metadataManager: MeasurementMetadataMa
   unitToggle.append(inchButton, cmButton);
   entry.append(label, input, unitToggle);
   const copyButton = document.getElementById('copyCanvasBtn');
-  copyButton?.parentElement === dock
-    ? copyButton.insertAdjacentElement('afterend', entry)
-    : dock.prepend(entry);
+  if (copyButton?.parentElement === dock) copyButton.insertAdjacentElement('afterend', entry);
+  else dock.prepend(entry);
 
   let activeImageLabel = '';
   let activeStrokeLabel = '';
@@ -103,10 +102,8 @@ export function initQuickMeasurementEntry(metadataManager: MeasurementMetadataMa
     editorMode = 'queue';
     activeImageLabel = '';
     activeStrokeLabel = '';
-    originalStrokeLabel = String(queuedMeasurement.label || '')
-      .trim()
-      .toUpperCase();
-    originalValue = String(queuedMeasurement.value || '').trim();
+    originalStrokeLabel = (queuedMeasurement.label || '').trim().toUpperCase();
+    originalValue = (queuedMeasurement.value || '').trim();
     label.value = originalStrokeLabel;
     input.value = originalValue;
     input.setAttribute(
@@ -254,9 +251,9 @@ export function initQuickMeasurementEntry(metadataManager: MeasurementMetadataMa
       return;
     }
     editorMode = 'stroke';
-    activeStrokeLabel = String(strokeLabel || '').trim();
+    activeStrokeLabel = (strokeLabel || '').trim();
     originalStrokeLabel = activeStrokeLabel;
-    activeImageLabel = String(imageLabel || '').trim();
+    activeImageLabel = (imageLabel || '').trim();
     if (!activeStrokeLabel || !activeImageLabel) return;
 
     label.value = activeStrokeLabel;

@@ -249,7 +249,9 @@ test.describe('Capture frame sizing in split mode', () => {
     expect(overlayRect!.width).toBeGreaterThan(0);
   });
 
-  test('left split pane uses one edge-aligned canvas frame', async ({ appPage: page }) => {
+  test('split pane frame follows the image and stays inside the pane', async ({
+    appPage: page,
+  }) => {
     await setupMultiImageProject(page, 2);
     const enabled = await enableGuideSplit(page);
     test.skip(!enabled, 'setGuideSplitEnabled not available');
@@ -260,12 +262,23 @@ test.describe('Capture frame sizing in split mode', () => {
     expect(frameRect).not.toBeNull();
     expect(canvasRect).not.toBeNull();
 
+    // The frame keeps the shape it took from the image on import (800x600)
+    // rather than stretching to the pane...
+    expect(frameRect!.width / frameRect!.height).toBeCloseTo(4 / 3, 1);
+
+    // ...and sits centred, fully inside the live pane.
     const frameRight = frameRect!.left + frameRect!.width;
     const frameBottom = frameRect!.top + frameRect!.height;
-    expect(Math.abs(frameRect!.left - canvasRect!.left)).toBeLessThanOrEqual(2);
-    expect(Math.abs(frameRect!.top - canvasRect!.top)).toBeLessThanOrEqual(2);
-    expect(Math.abs(frameRight - canvasRect!.right)).toBeLessThanOrEqual(2);
-    expect(Math.abs(frameBottom - canvasRect!.bottom)).toBeLessThanOrEqual(2);
+    expect(frameRect!.left).toBeGreaterThanOrEqual(canvasRect!.left - 1);
+    expect(frameRect!.top).toBeGreaterThanOrEqual(canvasRect!.top - 1);
+    expect(frameRight).toBeLessThanOrEqual(canvasRect!.right + 1);
+    expect(frameBottom).toBeLessThanOrEqual(canvasRect!.bottom + 1);
+    expect(
+      Math.abs(frameRect!.left - canvasRect!.left - (canvasRect!.right - frameRight))
+    ).toBeLessThanOrEqual(2);
+    expect(
+      Math.abs(frameRect!.top - canvasRect!.top - (canvasRect!.bottom - frameBottom))
+    ).toBeLessThanOrEqual(2);
   });
 
   test('sequential view switching in split mode does not crash or produce zero-size frames', async ({
@@ -349,15 +362,19 @@ test.describe('Capture frame sizing in split mode', () => {
 
     // Switch to tall image
     await switchToView(page, 'tall-img');
-    const rectTall = await getCaptureFrameRect(page);
-    expect(rectTall).not.toBeNull();
-    expect(rectTall!.width).toBeGreaterThan(0);
-    expect(rectTall!.height).toBeGreaterThan(0);
 
-    // The aspect ratios should differ since the images are different
+    // The frame follows the image it now shows: wide before, tall after. The
+    // split layout settles over a few passes, so wait for the final shape.
     const aspectWide = rectWide!.width / rectWide!.height;
-    const aspectTall = rectTall!.width / rectTall!.height;
-    // Wide image should have wider aspect than tall image
-    expect(aspectWide).toBeGreaterThan(aspectTall);
+    expect(aspectWide).toBeGreaterThan(1);
+    await expect
+      .poll(
+        async () => {
+          const rect = await getCaptureFrameRect(page);
+          return rect && rect.height > 0 ? rect.width / rect.height : Number.NaN;
+        },
+        { timeout: 5_000 }
+      )
+      .toBeLessThan(1);
   });
 });

@@ -2433,7 +2433,7 @@ export class TagManager {
     let cleared = false;
     for (const tagKey of keys) {
       // tagKey format: "<imageLabel>::<strokeLabel>"
-      const strokeLabel = String(tagKey.split('::').pop() || '');
+      const strokeLabel = tagKey.split('::').pop() || '';
       const matches =
         (target === 'lettersOnly' && this.isLettersOnlyTag(strokeLabel)) ||
         (target === 'lettersNumbers' && this.isLettersNumbersTag(strokeLabel));

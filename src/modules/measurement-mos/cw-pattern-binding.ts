@@ -1,6 +1,6 @@
 import { detectCwPatternLines, type PatternLine } from './cw-pattern-lines';
 
-export type PatternPoint = { x: number; y: number };
+export interface PatternPoint { x: number; y: number }
 export type PatternRole =
   | 'width'
   | 'height'

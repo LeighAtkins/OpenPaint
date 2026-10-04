@@ -2074,9 +2074,9 @@ function createModal(): HTMLElement {
 
   const getOriginalRowValue = (row: VisibleImportedRow | ImportedRow): string => {
     const rowKey = 'rowKey' in row ? row.rowKey : '';
-    if (!rowKey) return String(row.value || '').trim();
+    if (!rowKey) return (row.value || '').trim();
     if (!(rowKey in state.rowOriginalValues)) {
-      state.rowOriginalValues[rowKey] = String(row.value || '').trim();
+      state.rowOriginalValues[rowKey] = (row.value || '').trim();
     }
     return state.rowOriginalValues[rowKey];
   };
@@ -2483,7 +2483,7 @@ function createModal(): HTMLElement {
           optionEl.value = option.code;
           optionEl.textContent = option.label;
           optionEl.selected =
-            option.code.toUpperCase() === String(item.codes[group.codeIndex] || '').toUpperCase();
+            option.code.toUpperCase() === (item.codes[group.codeIndex] || '').toUpperCase();
           select.appendChild(optionEl);
         });
         field.append(label, select);
@@ -2565,7 +2565,7 @@ function createModal(): HTMLElement {
   });
 
   const loadPublicOverallDimensions = async (productReference: string) => {
-    const reference = String(productReference || '').trim();
+    const reference = (productReference || '').trim();
     if (!reference || !/^[A-Z0-9][A-Z0-9._-]*(?:__[A-Z0-9._-]+)*$/i.test(reference)) return;
     try {
       const { response, data } = await requestSearchPayload(reference, '', {
@@ -2770,7 +2770,7 @@ function createModal(): HTMLElement {
     const storefrontUrls = Array.from(
       new Set(
         [state.storefrontProduct?.imageUrl, ...(state.storefrontProduct?.imageUrls || [])]
-          .map(value => String(value || '').trim())
+          .map(value => (value || '').trim())
           .filter(Boolean)
       )
     );
@@ -2870,7 +2870,7 @@ function createModal(): HTMLElement {
       const loaded = state.loadedItems.find(item => item.selectionKey === basketItem.selectionKey);
       const photoCount = allImageEntries().length;
       const detailedRows = (loaded?.rows || []).filter(
-        row => !/^(?:width|depth|height)$/i.test(String(row.sourceLabel || '').trim())
+        row => !/^(?:width|depth|height)$/i.test((row.sourceLabel || '').trim())
       );
       if (!detailedRows.length) {
         setStatus('No component measurements are available for this selection.', 'info');
@@ -3038,7 +3038,7 @@ function createModal(): HTMLElement {
         versionSelect.appendChild(new Option('Choose configuration', '', true, false));
         item.versionOptions.forEach(option => {
           const code = String(option.code || (option as any).value || '').trim();
-          const label = String(option.label || code).trim();
+          const label = (option.label || code).trim();
           const suffix =
             option.modelSetConfirmed === false
               ? ' · measurements unconfirmed'
@@ -3405,7 +3405,7 @@ function createModal(): HTMLElement {
       window.dispatchEvent(
         new CustomEvent('openpaint:guide-next-tag-changed', {
           detail: {
-            viewId: String(scopeLabel || '').split('::')[0] || 'front',
+            viewId: (scopeLabel || '').split('::')[0] || 'front',
             tag: normalizedTargetLabel,
             imageLabel: w.currentImageLabel,
             nextTag: normalizedTargetLabel,
@@ -3729,6 +3729,7 @@ function createModal(): HTMLElement {
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- parked: not wired up yet
   const getCompletedWorkspaceRowKeys = (scopeLabel: string): Set<string> => {
     const completed = new Set<string>();
     getWorkspaceTagScopeKeys(scopeLabel).forEach(key => {
@@ -3864,7 +3865,7 @@ function createModal(): HTMLElement {
 
   window.addEventListener('openpaint:cw-queue-label-change', event => {
     const detail = (event as CustomEvent<{ rowKey?: string; label?: string }>).detail || {};
-    const rowKey = String(detail.rowKey || '');
+    const rowKey = detail.rowKey || '';
     const row = allLoadedRows().find(item => item.rowKey === rowKey);
     if (!row) return;
     const configuredLabel = normalizeGuideLabel(detail.label || '');
@@ -3915,10 +3916,10 @@ function createModal(): HTMLElement {
 
   window.addEventListener('openpaint:cw-queue-value-change', event => {
     const detail = (event as CustomEvent<{ rowKey?: string; value?: string }>).detail || {};
-    const rowKey = String(detail.rowKey || '');
+    const rowKey = detail.rowKey || '';
     const row = allLoadedRows().find(item => item.rowKey === rowKey);
     if (!row) return;
-    const value = String(detail.value || '').trim();
+    const value = (detail.value || '').trim();
     if (parseImportedCentimeterValue(value) === null) {
       setStatus(`Enter a valid value for ${row.sourceLabel}.`, 'bad');
       return;
@@ -4583,7 +4584,7 @@ function createModal(): HTMLElement {
       const idle = !projectManager.isSwitchingView && !projectManager.pendingSwitchViewId;
       const correctView = projectManager.currentViewId === viewId;
       const viewport = Array.isArray(canvas?.viewportTransform)
-        ? canvas.viewportTransform.map((value: number) => Number(value || 0).toFixed(3)).join(',')
+        ? canvas.viewportTransform.map((value: number) => (value || 0).toFixed(3)).join(',')
         : '';
       const signature = `${projectManager.currentViewId}|${source.slice(-160)}|${canvas?.width || 0}x${canvas?.height || 0}|${viewport}`;
 
@@ -5358,7 +5359,7 @@ function createModal(): HTMLElement {
         ...(state.storefrontProduct?.imageUrls || []),
       ];
       storefrontUrls.forEach(url => {
-        const imageKey = imageKeyFromUrl(String(url || '').trim());
+        const imageKey = imageKeyFromUrl((url || '').trim());
         if (imageKey) nextSelectedImageKeys.add(`${loadedItem.selectionKey}::${imageKey}`);
       });
     });
@@ -5629,7 +5630,9 @@ function createModal(): HTMLElement {
           throw new Error('Sign in to SofaPaint to open measurements.');
         if (!authService.getCurrentUser()) {
           await new Promise<void>((resolve, reject) => {
-            let unsubscribe = () => {};
+            let unsubscribe = () => {
+              // replaced by the real unsubscribe below
+            };
             const timeout = setTimeout(() => {
               unsubscribe();
               reject(new Error('Your session is still opening. Please try again.'));
@@ -6380,7 +6383,7 @@ function createModal(): HTMLElement {
     const blob = await response.blob();
     return await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
       reader.onerror = () => reject(reader.error || new Error('Image conversion failed'));
       reader.readAsDataURL(blob);
     });
@@ -6403,7 +6406,7 @@ function createModal(): HTMLElement {
         ? 'Right arm'
         : '';
     const displayName = [item.productReference, sideLabel, item.title]
-      .map(value => String(value || '').trim())
+      .map(value => (value || '').trim())
       .filter(Boolean)
       .join(' · ');
     const fileName = `${displayName || item.productReference || `Catalogue ${index + 1}`}.jpg`;

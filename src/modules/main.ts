@@ -32,6 +32,7 @@ export class App {
   measurementExporter: DeferredManager | null;
   measurementOverlayManager: DeferredManager | null;
   deferredInitStarted: boolean;
+  deferredManagersReady: Promise<void> | null;
   deferredToolPreloadStarted: boolean;
   hasDrawnFirstStroke: boolean;
   hasUploadedFirstImage: boolean;
@@ -77,6 +78,7 @@ export class App {
     imageRegistry.start();
 
     this.deferredInitStarted = false;
+    this.deferredManagersReady = null;
     this.deferredToolPreloadStarted = false;
     this.hasDrawnFirstStroke = false;
     this.hasUploadedFirstImage = false;
@@ -475,8 +477,7 @@ export class App {
     }
 
     const runDeferred = () => {
-      this.deferredInitStarted = true;
-      void this.initDeferredManagers();
+      void this.ensureDeferredManagers();
     };
 
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
@@ -548,6 +549,25 @@ export class App {
     console.log(`[Perf] ${name}: ${entry.duration.toFixed(1)}ms`);
   }
 
+  /**
+   * Tags, arrows and measurements live in managers that load after first
+   * paint. Anything that restores a drawing (project load, draft import) must
+   * wait for them, otherwise it comes up without tags or frame visibility.
+   */
+  ensureDeferredManagers(): Promise<void> {
+    if (!this.deferredManagersReady) {
+      this.deferredInitStarted = true;
+      this.deferredManagersReady = this.initDeferredManagers().then(() => {
+        // A chunk that failed to download leaves the managers missing; let the
+        // next caller try again instead of staying broken for the session.
+        if (!this.tagManager) {
+          this.deferredManagersReady = null;
+        }
+      });
+    }
+    return this.deferredManagersReady;
+  }
+
   async initDeferredManagers(): Promise<void> {
     try {
       const [
@@ -568,6 +588,7 @@ export class App {
         import('./measurement-mos/index'),
       ]);
 
+      const tagManagerArrivedLate = !this.tagManager;
       if (!this.tagManager) {
         this.tagManager = new TagManager(this.canvasManager, this.metadataManager);
       }
@@ -614,6 +635,18 @@ export class App {
 
       if (setupDebugHelpers) {
         setupDebugHelpers(this);
+      }
+
+      // Strokes that reached the canvas before the tag manager existed (a
+      // project or draft restored during a slow startup) have no tags yet.
+      const displayedViewId = this.projectManager?.currentViewId;
+      if (
+        tagManagerArrivedLate &&
+        displayedViewId &&
+        !this.projectManager.isLoadingProject &&
+        !this.projectManager.isSwitchingView
+      ) {
+        this.projectManager.recreateTagsForView(displayedViewId);
       }
     } catch (error) {
       console.error('Deferred init failed', error);
@@ -2255,7 +2288,6 @@ export class App {
         const repeat = this.toolManager.tools.curve?.repeatMode === true;
         updateDrawingToggleLabels(repeat ? 'Curved Line ∞' : 'Curved Line');
       } else if (currentTool === this.toolManager.tools.highlighter) {
-        const style = this.toolManager.tools.highlighter?.getStyle?.() || 'marker';
         setActiveDrawingModeOption('highlighter');
         updateDrawingToggleLabels('Highlight');
       } else if (currentTool === this.toolManager.tools.privacy) {
@@ -3082,6 +3114,7 @@ export class App {
       });
 
       geometryRow?.querySelectorAll<HTMLButtonElement>('[data-line-geometry]').forEach(button => {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises -- async DOM event handler
         button.addEventListener('click', async () => {
           const geometry = button.dataset.lineGeometry;
           if (geometry === 'curve') {
@@ -3542,6 +3575,7 @@ export class App {
       });
 
       panel.querySelectorAll<HTMLButtonElement>('[data-highlighter-style]').forEach(button => {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises -- async DOM event handler
         button.addEventListener('click', async () => {
           const style = 'marker';
           const tool = await this.toolManager.ensureTool('highlighter');
@@ -4158,7 +4192,6 @@ export class App {
 
   setupUnitToggle(): void {
     const unitToggle = document.getElementById('unitToggleBtn');
-    const unitToggleSecondary = document.getElementById('unitToggleBtnSecondary');
     const unitToggles = [unitToggle].filter((el): el is HTMLElement => el instanceof HTMLElement);
     const unitSegmentButtons = Array.from(
       document.querySelectorAll<HTMLButtonElement>('button[data-unit], button[data-quick-unit]')
@@ -4384,7 +4417,7 @@ export class App {
         const target = e.target as HTMLElement | null;
         const isMeasurement = target?.classList && target.classList.contains('stroke-measurement');
         const inputType =
-          target instanceof HTMLInputElement ? String(target.type || 'text').toLowerCase() : '';
+          target instanceof HTMLInputElement ? (target.type || 'text').toLowerCase() : '';
         const isTextInput =
           target instanceof HTMLTextAreaElement ||
           (target instanceof HTMLInputElement &&

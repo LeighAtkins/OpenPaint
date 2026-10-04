@@ -68,7 +68,7 @@ function getGuideSplitEnabled(viewId = ''): boolean {
 }
 
 function getCanonicalScopeLabel(scopeLabel: string): string {
-  const raw = String(scopeLabel || '').trim();
+  const raw = (scopeLabel || '').trim();
   if (!raw) return '';
   const normalized = (window as any).app?.metadataManager?.normalizeImageLabel?.(raw);
   return String(normalized || raw).trim();
@@ -218,6 +218,7 @@ function dispatchWorkspaceChange(): void {
   window.dispatchEvent(new Event('openpaint:measurement-split-workspace-change'));
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- parked: not wired up yet
 function ensureMountSyncObserver(): void {
   if (mountSyncObserver || typeof MutationObserver === 'undefined') return;
 
@@ -365,7 +366,7 @@ export function resumeMeasurementSplitWorkspace(viewId = ''): boolean {
     getCanonicalScopeLabel(viewId) ||
     getCanonicalScopeLabel(workspaceState.activeImportedViewId) ||
     getCanonicalScopeLabel((window as any).app?.projectManager?.currentViewId || '') ||
-    String(viewId || '').trim();
+    (viewId || '').trim();
 
   if (!nextViewId) {
     return false;
@@ -383,7 +384,7 @@ export function openMeasurementSplitWorkspace(viewId: string): boolean {
   const nextViewId =
     getCanonicalScopeLabel(viewId) ||
     getCanonicalScopeLabel((window as any).app?.projectManager?.currentViewId || '') ||
-    String(viewId || '').trim();
+    (viewId || '').trim();
 
   resumeMeasurementSplitWorkspace(nextViewId);
 
