@@ -14,6 +14,12 @@ import {
   normalizeWorldRect as normalizeSharedWorldRect,
 } from '../utils/viewportRestore.ts';
 import {
+  CAPTURE_FRAME_VERSION,
+  mergeCaptureFrameRecord,
+  normalizeCaptureFrameBase,
+  worldRectsMatch,
+} from '../utils/captureFrameModel.ts';
+import {
   focusNextTagValue,
   getNextTagElement,
   getNextTagValue,
@@ -2340,14 +2346,8 @@ export function initToolbarController() {
 
       const writtenRect = writeCaptureFrameFromViewportRect(mappedRect, borderColor);
       if (writtenRect) {
-        const rec = buildCaptureFrameRecord(writtenRect);
         activeTab.captureFrame = {
-          ...(activeTab.captureFrame || {}),
-          ...rec,
-          baseWidth: activeTab.captureFrame?.baseWidth || rec.width,
-          baseHeight: activeTab.captureFrame?.baseHeight || rec.height,
-          baseWindowWidth: activeTab.captureFrame?.baseWindowWidth || rec.windowWidth,
-          baseWindowHeight: activeTab.captureFrame?.baseWindowHeight || rec.windowHeight,
+          ...mergeCaptureFrameRecord(activeTab.captureFrame, buildCaptureFrameRecord(writtenRect)),
           worldRect,
         };
       }
@@ -2419,7 +2419,9 @@ export function initToolbarController() {
           name: typeof tab.name === 'string' ? tab.name : 'Frame',
           type,
           color,
-          captureFrame: tab.captureFrame || null,
+          // Older saves kept a stale base size after a frame was reshaped by
+          // its handles; rebuild it from the frame as it was last laid out.
+          captureFrame: normalizeCaptureFrameBase(tab.captureFrame || null),
           viewport: normalizeViewportRecord(tab.viewport),
           viewportTransform: cloneViewportTransform(tab.viewportTransform),
           linkedTarget: tab.linkedTarget || null,
@@ -2521,26 +2523,32 @@ export function initToolbarController() {
       };
       activeTab.viewport = nextViewport;
       activeTab.viewportTransform = getExactViewportTransform();
-      const worldRect = computeWorldRectFromViewportRect(
-        {
-          left: frameRecord.left,
-          top: frameRecord.top,
-          width: frameRecord.width,
-          height: frameRecord.height,
-        },
-        nextViewport
+      // The crop is whatever the frame shows right now. Navigation saves pass
+      // `preserveWorldRect` so an unchanged crop keeps its stored value (no
+      // rounding drift across many switches), but a crop that really differs
+      // from the stored one is what the user is looking at and must win.
+      const liveWorldRect = normalizeWorldRect(
+        computeWorldRectFromViewportRect(
+          {
+            left: frameRecord.left,
+            top: frameRecord.top,
+            width: frameRecord.width,
+            height: frameRecord.height,
+          },
+          nextViewport
+        )
       );
-      const preservedWorldRect =
-        options?.preserveWorldRect === true
-          ? normalizeWorldRect(activeTab.captureFrame?.worldRect)
-          : null;
+      const storedWorldRect = normalizeWorldRect(activeTab.captureFrame?.worldRect);
+      const keepStoredWorldRect =
+        options?.preserveWorldRect === true &&
+        storedWorldRect &&
+        (!liveWorldRect || worldRectsMatch(storedWorldRect, liveWorldRect));
       activeTab.captureFrame = {
-        ...frameRecord,
-        baseWidth: activeTab.captureFrame?.baseWidth || frameRecord.width,
-        baseHeight: activeTab.captureFrame?.baseHeight || frameRecord.height,
-        baseWindowWidth: activeTab.captureFrame?.baseWindowWidth || frameRecord.windowWidth,
-        baseWindowHeight: activeTab.captureFrame?.baseWindowHeight || frameRecord.windowHeight,
-        worldRect: preservedWorldRect || normalizeWorldRect(worldRect),
+        ...mergeCaptureFrameRecord(activeTab.captureFrame, frameRecord, {
+          rebase: options?.rebase === true,
+        }),
+        worldRect: keepStoredWorldRect ? storedWorldRect : liveWorldRect || storedWorldRect,
+        frameVersion: CAPTURE_FRAME_VERSION,
       };
       if (activeTab.type !== 'master') {
         state.lastNonMasterId = activeTab.id;
@@ -2882,13 +2890,15 @@ export function initToolbarController() {
 
       const applyCenteredFrameAndViewport = (stored, borderColor) => {
         const canvasManager = window.app?.canvasManager;
-        const rect =
-          typeof canvasManager?.calculateTargetFrameSize === 'function'
-            ? canvasManager.calculateTargetFrameSize(
-                Number(canvasManager.fabricCanvas?.width) || window.innerWidth,
-                Number(canvasManager.fabricCanvas?.height) || window.innerHeight
-              )
-            : resolveCaptureFrameRect(stored);
+        const hasProportionalFrameSize =
+          typeof canvasManager?.calculateTargetFrameSize === 'function';
+        const rect = hasProportionalFrameSize
+          ? canvasManager.calculateTargetFrameSize(
+              Number(canvasManager.fabricCanvas?.width) || window.innerWidth,
+              Number(canvasManager.fabricCanvas?.height) || window.innerHeight,
+              toBaseLabel(resolved)
+            )
+          : resolveCaptureFrameRect(stored);
         const fallbackWorldRect = resolveViewRestoreWorldRect(resolved);
         const savedBackgroundWorldRect = normalizeWorldRect(
           (window.projectManager || window.app?.projectManager)?.views?.[toBaseLabel(resolved)]
@@ -2899,10 +2909,13 @@ export function initToolbarController() {
         const rawStoredWorldRect = normalizeWorldRect(stored?.worldRect);
         // Some earlier saves calculated frame world coordinates through a CSS-
         // scaled canvas, producing a crop larger than the saved image itself.
-        // A frame crop may be smaller than the image, but it cannot legitimately
-        // exceed the authoritative saved background bounds on either axis.
+        // That repair only applies to those older records: a current record is
+        // measured from the live frame, which may legitimately show margin
+        // around the image (a zoomed-out or rotated image in a wider frame).
+        const isLegacyFrameRecord = Number(stored?.frameVersion) !== CAPTURE_FRAME_VERSION;
         const storedWorldRectExceedsImage = Boolean(
-          rawStoredWorldRect &&
+          isLegacyFrameRecord &&
+            rawStoredWorldRect &&
             authoritativeBackgroundWorldRect &&
             (rawStoredWorldRect.width > authoritativeBackgroundWorldRect.width * 1.05 ||
               rawStoredWorldRect.height > authoritativeBackgroundWorldRect.height * 1.05)
@@ -2945,9 +2958,12 @@ export function initToolbarController() {
         });
 
         if (targetWorldRect) {
-          const targetRect = storedWorldRect
-            ? rect
-            : buildCenteredRectFromSize(rect.width, rect.height);
+          // Every layout pass (restore, recentre, window resize) must place the
+          // frame with the same rule, otherwise they take turns moving it.
+          const targetRect =
+            hasProportionalFrameSize || !storedWorldRect
+              ? buildCenteredRectFromSize(rect.width, rect.height)
+              : rect;
           const liveFrameRect = getLiveCaptureFrameRectForViewport();
           const frameSizeDiffers =
             Math.abs(liveFrameRect.width - targetRect.width) > 2 ||
@@ -2962,14 +2978,12 @@ export function initToolbarController() {
           const worldRectTolerance = targetWorldRect
             ? Math.max(0.5, Math.min(targetWorldRect.width, targetWorldRect.height) * 0.002)
             : 0.5;
-          const viewportCropDiffers = Boolean(
-            targetWorldRect &&
-              (!viewportWorldRect ||
-                Math.abs(viewportWorldRect.left - targetWorldRect.left) > worldRectTolerance ||
-                Math.abs(viewportWorldRect.top - targetWorldRect.top) > worldRectTolerance ||
-                Math.abs(viewportWorldRect.width - targetWorldRect.width) > worldRectTolerance ||
-                Math.abs(viewportWorldRect.height - targetWorldRect.height) > worldRectTolerance)
-          );
+          const viewportCropDiffers =
+            !viewportWorldRect ||
+            Math.abs(viewportWorldRect.left - targetWorldRect.left) > worldRectTolerance ||
+            Math.abs(viewportWorldRect.top - targetWorldRect.top) > worldRectTolerance ||
+            Math.abs(viewportWorldRect.width - targetWorldRect.width) > worldRectTolerance ||
+            Math.abs(viewportWorldRect.height - targetWorldRect.height) > worldRectTolerance;
 
           // If we already have a saved viewport (user zoomed/panned before),
           // use it directly instead of re-fitting to the world rect.
@@ -3015,20 +3029,14 @@ export function initToolbarController() {
             );
           }
           activeTab.viewport = normalizeViewportRecord(nextViewport);
-          const existingCaptureFrame = stored || activeTab.captureFrame || {};
-          const nextCaptureFrame = buildCaptureFrameRecord(targetRect);
+          // View restoration is passive layout. Keep the authored base size
+          // so revisiting an image cannot promote a constrained frame size
+          // into the next resize baseline and ratchet the frame smaller.
           activeTab.captureFrame = {
-            ...existingCaptureFrame,
-            ...nextCaptureFrame,
-            // View restoration is passive layout. Keep the authored base ratio
-            // so revisiting an image cannot promote a constrained frame size
-            // into the next resize baseline and ratchet the frame smaller.
-            baseWidth: existingCaptureFrame.baseWidth || nextCaptureFrame.baseWidth,
-            baseHeight: existingCaptureFrame.baseHeight || nextCaptureFrame.baseHeight,
-            baseWindowWidth:
-              existingCaptureFrame.baseWindowWidth || nextCaptureFrame.baseWindowWidth,
-            baseWindowHeight:
-              existingCaptureFrame.baseWindowHeight || nextCaptureFrame.baseWindowHeight,
+            ...mergeCaptureFrameRecord(
+              stored || activeTab.captureFrame,
+              buildCaptureFrameRecord(targetRect)
+            ),
             worldRect: targetWorldRect,
           };
 
@@ -3466,18 +3474,6 @@ export function initToolbarController() {
       state.lastNonMasterId = activeTab.id;
       renderTabBar(resolvedLabel);
       return true;
-    }
-    function buildCenteredRectPreservingSize(width, height) {
-      const preferredArea = getPreferredCaptureArea();
-      const sourceWidth = Math.max(1, Math.round(Number(width) || 800));
-      const sourceHeight = Math.max(1, Math.round(Number(height) || 600));
-
-      return {
-        left: Math.round(preferredArea.left + (preferredArea.width - sourceWidth) / 2),
-        top: Math.round(preferredArea.top + (preferredArea.height - sourceHeight) / 2),
-        width: sourceWidth,
-        height: sourceHeight,
-      };
     }
     function updateTabFromMasterOverlayRect(label, tabId, masterRect) {
       const state = ensureCaptureTabsForLabel(label);
@@ -4131,7 +4127,8 @@ export function initToolbarController() {
         typeof canvasManager?.calculateTargetFrameSize === 'function'
           ? canvasManager.calculateTargetFrameSize(
               Number(canvasManager.fabricCanvas?.width) || window.innerWidth,
-              Number(canvasManager.fabricCanvas?.height) || window.innerHeight
+              Number(canvasManager.fabricCanvas?.height) || window.innerHeight,
+              toBaseLabel(activeLabel)
             )
           : liveRect;
       const targetRect =
@@ -4235,19 +4232,14 @@ export function initToolbarController() {
           normalizeWorldRect(getCurrentBackgroundWorldRect());
 
         if (writtenRect) {
-          const existing = activeTab.captureFrame || {};
-          const record = buildCaptureFrameRecord(writtenRect);
-          // Preserve stable base dimensions across passive resizes so the
-          // baseWidth/baseWindowWidth ratio used by calculateTargetFrameSize
-          // is not ratcheted down to a smaller value every time the window shrinks.
-          // Manual resizes (+/- keys) update base dimensions before saving.
+          // Preserve the authored base size across passive resizes so the
+          // frame is not ratcheted down every time the window shrinks.
+          // Deliberate edits (+/- keys, frame handles) rebase before saving.
           activeTab.captureFrame = {
-            ...existing,
-            ...record,
-            baseWidth: existing.baseWidth || record.baseWidth,
-            baseHeight: existing.baseHeight || record.baseHeight,
-            baseWindowWidth: existing.baseWindowWidth || record.baseWindowWidth,
-            baseWindowHeight: existing.baseWindowHeight || record.baseWindowHeight,
+            ...mergeCaptureFrameRecord(
+              activeTab.captureFrame,
+              buildCaptureFrameRecord(writtenRect)
+            ),
             worldRect,
           };
         }
@@ -4328,12 +4320,14 @@ export function initToolbarController() {
         typeof canvasManager?.calculateTargetFrameSize === 'function'
           ? canvasManager.calculateTargetFrameSize(
               Number(canvasManager.fabricCanvas?.width) || window.innerWidth,
-              Number(canvasManager.fabricCanvas?.height) || window.innerHeight
+              Number(canvasManager.fabricCanvas?.height) || window.innerHeight,
+              toBaseLabel(resolvedLabel)
             )
           : resolveCaptureFrameRect(tab.captureFrame);
+      // Same placement rule as applyCaptureFrameForLabel and the resize replay.
       const targetRect =
         proportionalRect.width > 0 && proportionalRect.height > 0
-          ? buildCenteredRectPreservingSize(proportionalRect.width, proportionalRect.height)
+          ? buildCenteredRectFromSize(proportionalRect.width, proportionalRect.height)
           : null;
       if (!targetRect) return;
 
@@ -4391,17 +4385,10 @@ export function initToolbarController() {
       const borderColor = tab.type === 'master' ? '#0f172a' : tab.color || '#22c55e';
       const writtenRect = writeCaptureFrameFromViewportRect(targetRect, borderColor);
       if (writtenRect) {
-        const rec = buildCaptureFrameRecord(writtenRect);
-        const existingCaptureFrame = tab.captureFrame || {};
+        // Recentring moves the current presentation only. It must not reset
+        // the authored base size used by passive window resizes.
         tab.captureFrame = {
-          ...existingCaptureFrame,
-          ...rec,
-          // Recentring moves the current presentation only. It must not reset
-          // the stable base dimensions used by passive window resizes.
-          baseWidth: existingCaptureFrame.baseWidth || rec.baseWidth,
-          baseHeight: existingCaptureFrame.baseHeight || rec.baseHeight,
-          baseWindowWidth: existingCaptureFrame.baseWindowWidth || rec.baseWindowWidth,
-          baseWindowHeight: existingCaptureFrame.baseWindowHeight || rec.baseWindowHeight,
+          ...mergeCaptureFrameRecord(tab.captureFrame, buildCaptureFrameRecord(writtenRect)),
           worldRect: savedWorldRect || undefined,
         };
       }
@@ -5930,30 +5917,11 @@ export function initToolbarController() {
       currentHandle = null;
       document.removeEventListener('mousemove', handleResize);
       document.removeEventListener('mouseup', stopResize);
-      // Save per-image frame when resizing ends
+      // A handle resize is a deliberate edit: the new size becomes the frame's
+      // authored size and is stored on the tab, so it survives image switches,
+      // window resizes and project save/load alike.
       if (typeof window.currentImageLabel !== 'undefined') {
-        const activeLabel = getActiveLabel();
-        saveCurrentCaptureFrameForLabel(activeLabel);
-
-        // Store the frame dimensions as a ratio of canvas size
-        const canvas = document.getElementById('canvas');
-        const frameRect = captureFrame.getBoundingClientRect();
-
-        if (!window.manualFrameRatios) {
-          window.manualFrameRatios = {};
-        }
-
-        window.manualFrameRatios[activeLabel] = {
-          widthRatio: frameRect.width / canvas.clientWidth,
-          heightRatio: frameRect.height / canvas.clientHeight,
-          leftRatio: frameRect.left / canvas.clientWidth,
-          topRatio: frameRect.top / canvas.clientHeight,
-          aspectRatio: frameRect.width / Math.max(frameRect.height, 1),
-        };
-
-        console.log(
-          `[FRAME] Saved ${activeLabel} frame ratios: ${(window.manualFrameRatios[activeLabel].widthRatio * 100).toFixed(1)}% width, ${(window.manualFrameRatios[activeLabel].heightRatio * 100).toFixed(1)}% height`
-        );
+        saveActiveTabState(toBaseLabel(getActiveLabel()), { rebase: true });
       }
     }
 

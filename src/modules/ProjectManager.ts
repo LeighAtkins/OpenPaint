@@ -16,6 +16,8 @@ import { normalizeCloudError } from './cloud/error-normalizer.js';
 import { CLOUD_COPY } from './cloud/messages.js';
 import { decideFinalSaveMessageKey, formatSaveOutcomeLines } from './cloud/result-factory.js';
 import { fitViewportToWorldRect, getCenteredBoxWorldRect } from './utils/viewportRestore.ts';
+import { TEXT_ANNOTATION_RUNTIME_DEFAULTS } from './tools/text-annotation-defaults.ts';
+import { requestFontsForCanvasText } from './utils/fabricFontSync.ts';
 import JSZip from 'jszip';
 
 export class ProjectManager {
@@ -691,6 +693,9 @@ export class ProjectManager {
                 (obj.type === 'i-text' || obj.type === 'text') &&
                 obj.strokeMetadata?.type === 'text'
               ) {
+                // Fabric does not serialise these, so a reloaded note would
+                // otherwise render and select differently from a new one.
+                obj.set(TEXT_ANNOTATION_RUNTIME_DEFAULTS);
                 // Reattach event handlers for text elements loaded from JSON
                 obj.on('editing:exited', () => {
                   if (window.app?.historyManager) {
@@ -699,6 +704,10 @@ export class ProjectManager {
                 });
               }
             });
+
+            // Restored text is measured before its web font may have loaded;
+            // start those loads so it is re-measured with the real font.
+            requestFontsForCanvasText(this.canvasManager.fabricCanvas);
 
             // Recreate tags for all strokes with visible labels
             if (window.app?.tagManager && window.app?.metadataManager) {
@@ -3232,6 +3241,7 @@ export class ProjectManager {
       'arrowSettings',
       'customPoints',
       'isArrow',
+      'isPrivacyErase',
       'tagOffset',
       'isTag',
       'isTagText',

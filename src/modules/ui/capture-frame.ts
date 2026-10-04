@@ -266,26 +266,6 @@
         typeof window.saveCurrentCaptureFrameForLabel === 'function'
       ) {
         window.saveCurrentCaptureFrameForLabel(window.currentImageLabel);
-
-        // Store the frame dimensions as a ratio of canvas size
-        const canvas = document.getElementById('canvas');
-        const frameRect = captureFrame.getBoundingClientRect();
-
-        if (!window.manualFrameRatios) {
-          window.manualFrameRatios = {};
-        }
-
-        window.manualFrameRatios[window.currentImageLabel] = {
-          widthRatio: frameRect.width / canvas.clientWidth,
-          heightRatio: frameRect.height / canvas.clientHeight,
-          leftRatio: frameRect.left / canvas.clientWidth,
-          topRatio: frameRect.top / canvas.clientHeight,
-          aspectRatio: frameRect.width / Math.max(frameRect.height, 1),
-        };
-
-        console.log(
-          `[FRAME] Saved ${window.currentImageLabel} frame ratios: ${(window.manualFrameRatios[window.currentImageLabel].widthRatio * 100).toFixed(1)}% width, ${(window.manualFrameRatios[window.currentImageLabel].heightRatio * 100).toFixed(1)}% height`
-        );
       }
     }
 
