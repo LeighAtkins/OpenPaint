@@ -36,6 +36,7 @@
     "lint:legacy": "eslint . --ignore-pattern src/",
     "format": "prettier --write \"src/**/*.{ts,tsx,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json}\"",
+    "pretest": "node scripts/build-cw-server.ts",
     "test": "vitest --config vitest.config.ts run",
     "test:watch": "vitest --config vitest.config.ts",
     "test:ui": "vitest --config vitest.config.ts --ui",

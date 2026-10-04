@@ -3,7 +3,10 @@ import { test, expect } from '@playwright/test';
 const SITE_URL = 'https://sofapaint-ny879rgf2-leigh-atkins-projects.vercel.app';
 
 test.describe('PDF Export with Multiple Frames', () => {
-  test('should include tags on all frames in PDF export', async ({ page }) => {
+  // A diagnostic written against a preview deployment that no longer exists,
+  // and it needs the hosted PDF render service. Kept for reference; point
+  // SITE_URL at a live deployment to use it.
+  test.fixme('should include tags on all frames in PDF export', async ({ page }) => {
     // Navigate to the site
     await page.goto(SITE_URL);
     await page.waitForLoadState('networkidle');
