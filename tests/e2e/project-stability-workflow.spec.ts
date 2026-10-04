@@ -358,6 +358,70 @@ test.describe('Project stability workflow', () => {
     expect(differences, formatDifferences(differences)).toEqual([]);
   });
 
+  test('tags and frame visibility are restored when a project loads before startup finishes', async ({
+    page,
+  }) => {
+    const views = [VIEW_SPECS[0], VIEW_SPECS[11]];
+    const viewIds = views.map(spec => spec.id);
+
+    await openApp(page);
+    for (const spec of views) await seedView(page, spec);
+    for (const viewId of viewIds) {
+      await openView(page, viewId);
+      await drawStroke(page, 'line', [0.15, 0.3], [0.7, 0.4], { color: '#ef4444', width: 3 });
+      await drawStroke(page, 'line', [0.2, 0.7], [0.8, 0.6], { color: '#22c55e', width: 3 });
+    }
+    // A second frame tab whose stroke must stay hidden while Frame 1 is active.
+    await page.evaluate(id => (window as any).createCaptureTabForLabel(id), viewIds[1]);
+    await waitForIdle(page);
+    await drawStroke(page, 'line', [0.3, 0.5], [0.6, 0.5], { color: '#3b82f6', width: 4 });
+    const baseline = await captureAllViews(page, viewIds);
+    await openView(page, viewIds[1]);
+    const saved = await cloudSavePayload(page);
+
+    // A new session where the lazily loaded tag manager is still downloading
+    // long after the project has been restored, as on a stalled connection.
+    const context = await page
+      .context()
+      .browser()!
+      .newContext({
+        viewport: { width: 1280, height: 800 },
+      });
+    const freshPage = await context.newPage();
+    // DebugHelpers is only ever loaded lazily, together with the tag manager.
+    await freshPage.route(/DebugHelpers/, async route => {
+      await new Promise(resolve => setTimeout(resolve, 18_000));
+      await route.continue().catch(() => undefined);
+    });
+    await freshPage.goto(BASE_URL === '/' ? new URL('/', page.url()).toString() : BASE_URL, {
+      waitUntil: 'domcontentloaded',
+      timeout: 90_000,
+    });
+    await waitForApp(freshPage, 60_000);
+    await cloudLoadPayload(freshPage, saved);
+    const managersWereLate = await freshPage.evaluate(() => !window.app!.tagManager);
+    // A deployed build may name its chunks differently; locally the delay must bite.
+    if (BASE_URL === '/') expect(managersWereLate).toBe(true);
+
+    // Without switching images, the displayed one gains its tags as soon as
+    // the manager arrives.
+    await freshPage.waitForFunction(() => Boolean(window.app!.tagManager), { timeout: 40_000 });
+    await freshPage.waitForTimeout(500);
+    const displayed = await captureAllViews(freshPage, [viewIds[1]]);
+    const displayedDifferences = compareAll(
+      new Map([[viewIds[1], baseline.get(viewIds[1])!]]),
+      displayed
+    );
+    const loaded = await captureAllViews(freshPage, viewIds);
+    const differences = compareAll(baseline, loaded);
+    report('13-late-startup', [...displayedDifferences, ...differences], loaded);
+    await context.close();
+
+    expect(baseline.get(viewIds[0])!.tags.length).toBe(2);
+    expect(displayedDifferences, formatDifferences(displayedDifferences)).toEqual([]);
+    expect(differences, formatDifferences(differences)).toEqual([]);
+  });
+
   test('projects saved by earlier builds reopen with a stable frame', async ({ page }) => {
     const legacyViews = [VIEW_SPECS[0], VIEW_SPECS[3], VIEW_SPECS[7], VIEW_SPECS[2]];
     const legacyViewIds = legacyViews.map(spec => spec.id);
