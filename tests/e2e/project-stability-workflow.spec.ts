@@ -209,6 +209,15 @@ test.describe('Project stability workflow', () => {
     // below would not notice a crop being recentred.
     const zoomedCrop = baseline.get('v07-large')!.frame.crop;
     expect(Math.abs(zoomedCrop.left + zoomedCrop.width / 2 - 0.5)).toBeGreaterThan(0.03);
+    // On import the frame takes the shape of the image. Images whose frame was
+    // only scaled (never reshaped) must still have exactly that shape.
+    for (const viewId of ['v01-landscape', 'v03-square', 'v06-small', 'v07-large']) {
+      const spec = VIEW_SPECS.find(candidate => candidate.id === viewId)!;
+      expect(baseline.get(viewId)!.frame.aspect, `${viewId}: frame follows the image`).toBeCloseTo(
+        spec.width / spec.height,
+        1
+      );
+    }
     for (const snapshot of baseline.values()) {
       expect(snapshot.objects.length, `${snapshot.viewId}: objects drawn`).toBeGreaterThanOrEqual(
         3
