@@ -2539,10 +2539,15 @@ export function initToolbarController() {
         )
       );
       const storedWorldRect = normalizeWorldRect(activeTab.captureFrame?.worldRect);
+      // While a view is still being restored (its layout passes run for a few
+      // hundred milliseconds after a switch) the live viewport can be an
+      // intermediate state. Leaving the view that quickly must not record it.
+      const restoreInFlight =
+        Number(window.__captureTabsSuspendViewportTrackingUntil || 0) > Date.now();
       const keepStoredWorldRect =
         options?.preserveWorldRect === true &&
         storedWorldRect &&
-        (!liveWorldRect || worldRectsMatch(storedWorldRect, liveWorldRect));
+        (restoreInFlight || !liveWorldRect || worldRectsMatch(storedWorldRect, liveWorldRect));
       activeTab.captureFrame = {
         ...mergeCaptureFrameRecord(activeTab.captureFrame, frameRecord, {
           rebase: options?.rebase === true,
@@ -4363,7 +4368,12 @@ export function initToolbarController() {
         panY: Number(cm.panY) || 0,
         rotation: resolveViewportRotation(tab.viewport, resolvedLabel),
       });
-      const centerWorldRect = bgWorldRect || savedWorldRect;
+      // Centre on the crop the frame is meant to show, the same crop that
+      // applyCaptureFrameForLabel fits. Centring on the whole background instead
+      // would silently discard a panned (off-centre) crop whenever the exact
+      // saved matrix cannot be reused, e.g. after opening a project at a
+      // different window size.
+      const centerWorldRect = savedWorldRect || bgWorldRect;
       const mappedBackground = mapWorldRectToViewport(centerWorldRect, seedViewport);
       if (!mappedBackground || mappedBackground.width <= 0 || mappedBackground.height <= 0) {
         return;

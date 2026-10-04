@@ -230,7 +230,9 @@ The gallery thumbnail drag-and-drop system does NOT directly interact with `capt
 
 5. **Preserving a stale crop**: `preserveWorldRect` only keeps the stored crop when it matches what the frame shows. Code that changes the visible crop (rotation, zoom, handles) does not need to clear it first.
 
-6. **Floating layout early return**: `updateCaptureFrameOnResize` returns early for the floating layout primary canvas. If frame geometry needs to change during resize, rely on `replayCaptureFrameForCurrentResize` instead.
+6. **Recentring on the image instead of the crop**: `__recenterCaptureFrame` centres the tab's saved crop in the frame, the same crop `applyCaptureFrameForLabel` fits. Centring the whole background discards a panned crop whenever the exact saved matrix cannot be reused (a project opened at another window size).
+
+7. **Floating layout early return**: `updateCaptureFrameOnResize` returns early for the floating layout primary canvas. If frame geometry needs to change during resize, rely on `replayCaptureFrameForCurrentResize` instead.
 
 ## Relevant Files
 
