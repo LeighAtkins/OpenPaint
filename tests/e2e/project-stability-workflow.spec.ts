@@ -45,8 +45,10 @@ const FONTS = ['Nunito', 'Caveat', 'Space Mono', 'Georgia'];
 const COLORS = ['#ef4444', '#22c55e', '#3b82f6', '#f59e0b', '#111827', '#a855f7'];
 
 async function openApp(page: Page): Promise<void> {
-  await page.goto(BASE_URL);
-  await waitForApp(page, 45_000);
+  // A deployed build pulls third-party assets; the app being ready is what
+  // matters, not every late resource finishing.
+  await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 90_000 });
+  await waitForApp(page, 60_000);
   await page.evaluate(() => document.fonts.ready);
 }
 
@@ -329,7 +331,10 @@ test.describe('Project stability workflow', () => {
       await new Promise(resolve => setTimeout(resolve, 1_500));
       await route.continue().catch(() => undefined);
     });
-    await freshPage.goto(BASE_URL === '/' ? new URL('/', page.url()).toString() : BASE_URL);
+    await freshPage.goto(BASE_URL === '/' ? new URL('/', page.url()).toString() : BASE_URL, {
+      waitUntil: 'domcontentloaded',
+      timeout: 90_000,
+    });
     await waitForApp(freshPage, 45_000);
     await cloudLoadPayload(freshPage, saved);
     // Visit every image once so each font starts loading, then give the slow
