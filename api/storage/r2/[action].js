@@ -6,6 +6,7 @@ import {
   handlePresignUpload,
   handleSignedUrl,
 } from '../../../server/vercel-routes/r2/shared.js';
+import { getR2ErrorStatus } from '../../../server/r2-access.js';
 
 const ACTIONS = {
   health: {
@@ -61,7 +62,7 @@ export default async function handler(req, res) {
       'signed-url': 'Failed to create signed URL',
     };
 
-    return res.status(400).json({
+    return res.status(getR2ErrorStatus(error)).json({
       success: false,
       message:
         error instanceof Error ? error.message : fallbackByAction[action] || 'R2 request failed',

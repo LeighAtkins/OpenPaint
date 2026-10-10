@@ -8,14 +8,12 @@ import { AppError, ErrorCode } from '@/types/app.types';
 interface SupabaseConfig {
   url: string;
   anonKey: string;
-  serviceKey?: string;
 }
 
 // Configuration constants
 export const SUPABASE_CONFIG: SupabaseConfig = {
   url: import.meta.env.VITE_SUPABASE_URL || '',
   anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-  serviceKey: import.meta.env['VITE_SUPABASE_SERVICE_KEY'] || '',
 };
 
 // Storage bucket names
