@@ -1,4 +1,4 @@
-import { requireUserOrRespond } from '../../supabase-auth.js';
+import { requireStaffOrRespond } from '../../supabase-auth.js';
 import {
   createCwSession,
   cwGraphqlRequest,
@@ -6034,9 +6034,9 @@ export default async function handler(req, res) {
       .toLowerCase();
 
     // Everything except public storefront lookups acts with the server's CW account,
-    // so only signed-in users may call it.
+    // so only Comfort Works staff may call it.
     const isPublicLookup = formId === 'search' && PUBLIC_SEARCH_PHASES.has(phase);
-    if (!isPublicLookup && !(await requireUserOrRespond(req, res))) return;
+    if (!isPublicLookup && !(await requireStaffOrRespond(req, res))) return;
 
     if (formId === 'image-proxy') {
       if (req.method !== 'POST') {

@@ -15,6 +15,8 @@
  * across browsers and devices.
  */
 
+import { getStoredAuthHeaders } from '@/services/auth/storedAuth';
+
 const STORAGE_KEY = 'cwLineLibrary:v1';
 const API_ENDPOINT = '/api/cw-line-library';
 const R2_LIBRARY_KEY = 'cw-line-library/v1.json';
@@ -268,7 +270,7 @@ async function fetchServerLibrary(): Promise<void> {
   try {
     const response = await fetch(`${API_ENDPOINT}?key=${encodeURIComponent(R2_LIBRARY_KEY)}`, {
       method: 'GET',
-      headers: { accept: 'application/json' },
+      headers: { ...getStoredAuthHeaders(), accept: 'application/json' },
     });
     if (!response.ok) return;
     const payload = await response.json();
@@ -287,7 +289,7 @@ function scheduleServerSync(): void {
     writeLocalStore();
     fetch(API_ENDPOINT, {
       method: 'PUT',
-      headers: { 'content-type': 'application/json' },
+      headers: { ...getStoredAuthHeaders(), 'content-type': 'application/json' },
       body: JSON.stringify({
         key: R2_LIBRARY_KEY,
         library: { version: 1, recipes: state.recipes },

@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mask Editor</title>
+<style>
+:root { --bg:#0f141b; --panel:#1a2330; --ink:#e8edf4; --muted:#8295a8; --line:#2a3a4e; --blue:#1f6feb; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:Inter,ui-sans-serif,system-ui,sans-serif; background:var(--bg); color:var(--ink); overflow:hidden; }
+.app { display:grid; grid-template-rows:auto 1fr auto; height:100vh; }
+header { padding:8px 16px; background:var(--panel); border-bottom:1px solid var(--line); display:flex; gap:16px; align-items:center; }
+h1 { margin:0; font-size:15px; }
+.progress { color:var(--muted); font-size:13px; }
+#status { color:var(--muted); font-size:12px; margin-left:auto; }
+.stage { display:flex; align-items:center; justify-content:center; overflow:hidden; background:#0a0e13; position:relative; }
+#canvasWrap { position:relative; }
+canvas { position:absolute; top:0; left:0; }
+#imgCanvas { position:relative; }
+.toolbar { position:absolute; top:8px; right:8px; display:flex; flex-direction:column; gap:4px; }
+.toolbar button { background:rgba(26,35,48,0.9); border:1px solid var(--line); color:var(--ink); border-radius:4px; padding:6px 10px; font-size:12px; cursor:pointer; }
+.toolbar button:hover { border-color:var(--blue); }
+footer { padding:8px 16px; background:var(--panel); border-top:1px solid var(--line); display:flex; gap:8px; align-items:center; }
+.class-bar { display:flex; gap:4px; flex:1; flex-wrap:wrap; }
+.class-chip { display:flex; align-items:center; gap:4px; padding:4px 10px; border-radius:14px; font-size:12px; cursor:pointer; border:2px solid transparent; background:#1e2d3f; }
+.class-chip.active { border-color:var(--blue); }
+.class-chip .swatch { width:12px; height:12px; border-radius:2px; }
+.class-chip kbd { background:#2a3a4e; border-radius:3px; padding:0 4px; font-size:10px; }
+.hint { color:var(--muted); font-size:11px; }
+.error { display:none; position:fixed; bottom:60px; left:50%; transform:translateX(-50%); background:#fff4e5; color:#604412; border:1px solid #e8c98c; border-radius:8px; padding:8px 16px; font-size:13px; z-index:10; }
+.error.visible { display:block; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Mask Editor</h1>
+    <span class="progress" id="progress">Loading…</span>
+    <span id="status"></span>
+  </header>
+  <main class="stage">
+    <div id="canvasWrap">
+      <canvas id="imgCanvas"></canvas>
+      <canvas id="maskCanvas"></canvas>
+      <canvas id="brushCanvas"></canvas>
+      <canvas id="drawCanvas"></canvas>
+    </div>
+    <div class="toolbar">
+      <button id="prevBtn" title="[">◀ Prev</button>
+      <button id="nextBtn" title="]">Next ▶</button>
+      <button id="saveBtn" title="Ctrl+S">Save</button>
+    </div>
+  </main>
+  <footer>
+    <div class="class-bar" id="classBar"></div>
+    <span class="hint" id="modeHint"><kbd>click empty</kbd>add pts <kbd>dbl-click/Enter</kbd>finish <kbd>click mask</kbd>select <kbd>Q/E</kbd>brush <kbd>S</kbd>save</span>
+  </footer>
+</div>
+<div class="error" id="error"></div>
+<script>
+const API = '/api/mask-editor';
+const _qp = new URLSearchParams(window.location.search);
+const _queue = _qp.get('queue');
+const _qs = _queue ? `&queue=${_queue}` : '';
+const OUTPUT_DIRS = {
+  gold_recheck: 'C:\\dataset_pipeline_seg\\audit_grid_v2\\gold_recheck_corrected',
+  test_set: 'C:\\dataset_pipeline_seg\\r2_production_test_v1\\labels',
+  al_round1: 'C:\\dataset_pipeline_seg\\active_learning_round1\\labels',
+  al_round2: 'C:\\dataset_pipeline_seg\\active_learning_round2\\labels',
+  al_round3: 'C:\\dataset_pipeline_seg\\active_learning_round3\\labels',
+  al_round4: 'C:\\dataset_pipeline_seg\\active_learning_round4\\labels',
+};
+const MASK_EDITOR_OUTPUT = OUTPUT_DIRS[_queue] || OUTPUT_DIRS.al_round4;
+const SAM_URL = 'http://127.0.0.1:8770/predict';
+const CLASSES = [
+  {id:0, name:'L arm', color:'#39ff14'},
+  {id:1, name:'R arm', color:'#ff1493'},
+  {id:2, name:'seat', color:'#00ffff'},
+  {id:3, name:'back+base', color:'#ffff00'},
+  {id:4, name:'sofa_back', color:'#bf00ff'},
+];
+const CLASS_MAP = Object.fromEntries(CLASSES.map(c => [c.id, c]));
+
+let items = [], index = 0;
+let masks = [];
+let selectedMask = -1;
+let activeClass = 2;
+let imgEl = new Image();
+let scale = 1, imgW = 0, imgH = 0;
+let drawing = false, drawStart = null, drawEnd = null;
+let decisions = {};
+let brushMode = null;
+let brushRadius = 20;
+let brushing = false, brushPath = [];
+let editBitmap = null;
+let polyPoints = [];
+let polyDrawing = false;
+let mousePos = {x:-100, y:-100};
+let squareBrush = false;
+let undoStack = [];
+let maskUndoStack = [];
+
+const imgCanvas = document.getElementById('imgCanvas');
+const maskCanvas = document.getElementById('maskCanvas');
+const brushCanvas = document.getElementById('brushCanvas');
+const drawCanvas = document.getElementById('drawCanvas');
+const wrap = document.getElementById('canvasWrap');
+
+function showError(msg) { const e = document.getElementById('error'); e.textContent = msg; e.classList.add('visible'); setTimeout(() => e.classList.remove('visible'), 4000); }
+
+// Build class bar
+const classBar = document.getElementById('classBar');
+CLASSES.forEach(c => {
+  const chip = document.createElement('div');
+  chip.className = 'class-chip' + (c.id === activeClass ? ' active' : '');
+  chip.dataset.classId = c.id;
+  chip.innerHTML = `<span class="swatch" style="background:${c.color}"></span>${c.name}<kbd>${c.id+1}</kbd>`;
+  chip.addEventListener('click', () => { activeClass = c.id; updateClassBar(); if (selectedMask >= 0) { masks[selectedMask].class_id = c.id; render(); } });
+  classBar.appendChild(chip);
+});
+function updateClassBar() { document.querySelectorAll('.class-chip').forEach(ch => ch.classList.toggle('active', parseInt(ch.dataset.classId) === activeClass)); }
+
+function saveMaskState() { maskUndoStack.push(JSON.parse(JSON.stringify(masks))); if (maskUndoStack.length > 30) maskUndoStack.shift(); }
+function undoMaskState() { if (!maskUndoStack.length) return false; masks = maskUndoStack.pop(); return true; }
+function saveUndoSnapshot() { if (!editBitmap) return; const ectx = editBitmap.getContext('2d', {willReadFrequently:true}); undoStack.push(ectx.getImageData(0, 0, editBitmap.width, editBitmap.height)); if (undoStack.length > 20) undoStack.shift(); }
+function undoStroke() { if (!undoStack.length || !editBitmap) return; const ectx = editBitmap.getContext('2d', {willReadFrequently:true}); ectx.putImageData(undoStack.pop(), 0, 0); renderBrush(); }
+
+async function boot() {
+  try {
+    const res = await fetch(`${API}/queue${_qs ? '?'+_qs.slice(1) : ''}`);
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || 'Failed to load queue');
+    items = data.items || [];
+    decisions = data.decisions || {};
+    const firstTodo = items.findIndex(i => !decisions[i.image_id]);
+    loadItem(firstTodo >= 0 ? firstTodo : 0);
+  } catch (err) { showError(err.message); }
+}
+
+function loadItem(i) {
+  if (brushMode) exitBrushMode(false);
+  brushMode = null; polyDrawing = false; polyPoints = [];
+  updateModeHint();
+  index = Math.max(0, Math.min(i, items.length - 1));
+  const item = items[index];
+  if (!item) return;
+  selectedMask = -1;
+  masks = (item.existing_parent || []).map(m => ({
+    class_id: m.class_id !== undefined ? m.class_id : 0,
+    polygons: [m.points || m].flat ? [m.points || m] : [m.points || m],
+    deleted: false,
+  }));
+  // Group by class into multi-component masks
+  if ((item.existing_parent || []).length) {
+    const byClass = {};
+    for (const m of item.existing_parent) {
+      const cid = m.class_id !== undefined ? m.class_id : 0;
+      const pts = m.points || m;
+      if (!byClass[cid]) byClass[cid] = [];
+      byClass[cid].push(Array.isArray(pts) ? pts : []);
+    }
+    masks = Object.entries(byClass).map(([cid, polys]) => ({
+      class_id: parseInt(cid), polygons: polys, deleted: false
+    }));
+  }
+  // Load saved labels if available
+  if (decisions[item.image_id]?.saved) {
+    const labelPath = MASK_EDITOR_OUTPUT + '\\' + item.image_id + '.txt';
+    fetch(`${API}/file?path=${encodeURIComponent(labelPath)}${_qs}`)
+      .then(r => r.ok ? r.text() : null)
+      .then(text => {
+        if (text && text.trim()) {
+          const byClass = {};
+          for (const line of text.trim().split('\n').filter(Boolean)) {
+            const vals = line.trim().split(/\s+/).map(Number);
+            const cid = vals[0]; const coords = vals.slice(1);
+            const pts = [];
+            for (let j = 0; j + 1 < coords.length; j += 2) pts.push([coords[j], coords[j+1]]);
+            if (!byClass[cid]) byClass[cid] = [];
+            byClass[cid].push(pts);
+          }
+          masks = Object.entries(byClass).map(([cid, polys]) => ({
+            class_id: parseInt(cid), polygons: polys, deleted: false
+          }));
+          render();
+        }
+      }).catch(() => {});
+  }
+  const savedBadge = decisions[item.image_id]?.saved ? ' ✓' : '';
+  document.getElementById('progress').textContent = `${index+1}/${items.length} · ${Object.keys(decisions).length} saved${savedBadge}`;
+  imgEl.onload = () => { imgW = imgEl.naturalWidth; imgH = imgEl.naturalHeight; fitCanvas(); render(); };
+  imgEl.onerror = () => showError('Failed to load image');
+  imgEl.src = `${API}/file?path=${encodeURIComponent(item.image_path)}${_qs}`;
+}
+
+function fitCanvas() {
+  const stage = document.querySelector('.stage');
+  const availW = Math.max(320, stage.clientWidth - 40);
+  const availH = Math.max(320, stage.clientHeight - 40);
+  scale = Math.min(1, availW / imgW, availH / imgH);
+  const w = Math.round(imgW * scale), h = Math.round(imgH * scale);
+  for (const c of [imgCanvas, maskCanvas, brushCanvas, drawCanvas]) { c.width = w; c.height = h; }
+  wrap.style.width = w + 'px'; wrap.style.height = h + 'px';
+}
+
+function render() {
+  const w = imgCanvas.width, h = imgCanvas.height;
+  const ictx = imgCanvas.getContext('2d');
+  ictx.clearRect(0,0,w,h);
+  if (imgEl.complete && imgEl.naturalWidth) ictx.drawImage(imgEl, 0, 0, w, h);
+  const bctx = brushCanvas.getContext('2d');
+  if (brushMode === null) bctx.clearRect(0,0,w,h);
+  const mctx = maskCanvas.getContext('2d');
+  mctx.clearRect(0,0,w,h);
+  masks.forEach((m, i) => {
+    if (m.deleted) return;
+    const polys = m.polygons || [];
+    if (!polys.length) return;
+    const c = CLASS_MAP[m.class_id] || CLASS_MAP[0];
+    const isSel = i === selectedMask;
+    for (const poly of polys) {
+      if (poly.length < 3) continue;
+      mctx.beginPath();
+      poly.forEach((p, j) => { const x = p[0]*w, y = p[1]*h; if (j===0) mctx.moveTo(x,y); else mctx.lineTo(x,y); });
+      mctx.closePath();
+      mctx.fillStyle = c.color + (isSel ? '88' : '44');
+      mctx.fill();
+      mctx.strokeStyle = isSel ? '#ffffff' : c.color;
+      mctx.lineWidth = isSel ? 3 : 1.5;
+      mctx.stroke();
+    }
+  });
+  const dctx = drawCanvas.getContext('2d');
+  dctx.clearRect(0,0,w,h);
+  if (polyDrawing && polyPoints.length > 0) {
+    const cls = CLASS_MAP[activeClass];
+    dctx.strokeStyle = cls.color;
+    dctx.lineWidth = 2;
+    dctx.beginPath();
+    polyPoints.forEach((p, i) => { if (i===0) dctx.moveTo(p.x,p.y); else dctx.lineTo(p.x,p.y); });
+    if (mousePos.x >= 0) { dctx.setLineDash([4,4]); dctx.lineTo(mousePos.x, mousePos.y); dctx.setLineDash([]); }
+    dctx.stroke();
+    for (let pi = 0; pi < polyPoints.length; pi++) {
+      const p = polyPoints[pi];
+      const isFirst = pi === 0 && polyPoints.length >= 3;
+      dctx.fillStyle = isFirst ? '#fff' : cls.color;
+      dctx.beginPath(); dctx.arc(p.x, p.y, isFirst ? 7 : 4, 0, Math.PI*2); dctx.fill();
+      dctx.strokeStyle = isFirst ? cls.color : '#fff'; dctx.lineWidth = isFirst ? 3 : 1.5; dctx.stroke();
+    }
+    dctx.fillStyle = '#fff'; dctx.font = '12px Arial';
+    dctx.fillText(`${polyPoints.length} pts — dbl-click/Enter to finish`, 10, 20);
+  }
+  const sel = selectedMask >= 0 ? masks[selectedMask] : null;
+  const statusParts = [];
+  if (sel && !sel.deleted) statusParts.push(`selected: ${CLASS_MAP[sel.class_id]?.name || sel.class_id}`);
+  statusParts.push(`${masks.filter(m => !m.deleted).length} masks`);
+  document.getElementById('status').textContent = statusParts.join(' · ');
+}
+
+function pointInPolygon(px, py, points) {
+  let inside = false;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+    const xi = points[i][0]*imgCanvas.width, yi = points[i][1]*imgCanvas.height;
+    const xj = points[j][0]*imgCanvas.width, yj = points[j][1]*imgCanvas.height;
+    if (((yi>py)!==(yj>py)) && (px<(xj-xi)*(py-yi)/(yj-yi)+xi)) inside = !inside;
+  }
+  return inside;
+}
+function pointInMask(px, py, mask) {
+  const polys = mask.polygons || [];
+  return polys.some(poly => poly.length >= 3 && pointInPolygon(px, py, poly));
+}
+
+function getMousePos(e) { const rect = drawCanvas.getBoundingClientRect(); return {x:e.clientX-rect.left, y:e.clientY-rect.top}; }
+
+drawCanvas.addEventListener('mousedown', (e) => {
+  if (e.detail > 1) return;
+  const pos = getMousePos(e);
+  mousePos = pos;
+  if (brushMode !== null) { brushing = true; brushPath = [pos]; saveUndoSnapshot(); return; }
+  if (polyDrawing) {
+    if (polyPoints.length >= 3) {
+      const first = polyPoints[0];
+      if (Math.hypot(pos.x-first.x, pos.y-first.y) < 15) { finishPolygon(); return; }
+    }
+    polyPoints.push(pos); render(); return;
+  }
+  let clicked = -1;
+  for (let i = masks.length-1; i >= 0; i--) {
+    if (!masks[i].deleted && pointInMask(pos.x, pos.y, masks[i])) { clicked = i; break; }
+  }
+  if (clicked >= 0) { selectedMask = clicked; activeClass = masks[clicked].class_id; updateClassBar(); render(); }
+  else { selectedMask = -1; polyDrawing = true; polyPoints = [pos]; render(); }
+});
+
+drawCanvas.addEventListener('mousemove', (e) => {
+  const pos = getMousePos(e); mousePos = pos;
+  if (brushMode !== null) {
+    if (brushing) { brushPath.push(pos); applyBrushStroke(); }
+    else { renderBrush(); }
+    return;
+  }
+  if (polyDrawing) { render(); return; }
+});
+
+drawCanvas.addEventListener('mouseleave', () => {
+  brushing = false;
+  if (brushMode !== null) { mousePos = {x:-100,y:-100}; renderBrush(); }
+});
+
+drawCanvas.addEventListener('wheel', (e) => {
+  if (brushMode === null) return;
+  e.preventDefault();
+  brushRadius = Math.max(3, Math.min(80, brushRadius - Math.sign(e.deltaY)*3));
+  mousePos = getMousePos(e); renderBrush();
+}, {passive:false});
+
+window.addEventListener('mouseup', () => { brushing = false; });
+
+drawCanvas.addEventListener('dblclick', (e) => {
+  if (!polyDrawing) return;
+  e.preventDefault();
+  brushing = false; brushPath = [];
+  finishPolygon();
+});
+
+function finishPolygon() {
+  if (!polyDrawing || polyPoints.length < 3) { polyDrawing = false; polyPoints = []; render(); return; }
+  polyDrawing = false;
+  const xs = polyPoints.map(p=>p.x), ys = polyPoints.map(p=>p.y);
+  const x1 = Math.min(...xs), y1 = Math.min(...ys);
+  const x2 = Math.max(...xs), y2 = Math.max(...ys);
+  polyPoints = [];
+  if (x2-x1 < 8 || y2-y1 < 8) { render(); return; }
+  const w = drawCanvas.width, h = drawCanvas.height;
+  const boxNorm = [x1/w, y1/h, x2/w, y2/h];
+  createMaskFromBox(boxNorm);
+}
+
+async function createMaskFromBox(boxNorm) {
+  document.getElementById('status').textContent = 'Getting SAM2 mask…';
+  try {
+    const item = items[index];
+    const res = await fetch(SAM_URL, {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({image_path:item.image_path, box_norm:boxNorm})});
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (data.polygon && data.polygon.length >= 3) {
+      saveMaskState();
+      const clippedPoly = await clipPolygonAgainstMasks(data.polygon, activeClass);
+      if (!clippedPoly || clippedPoly.length < 3) { showError('Fully covered'); render(); return; }
+      const existingIdx = masks.findIndex(m => !m.deleted && m.class_id === activeClass);
+      if (existingIdx >= 0) { await mergeMaskInto(existingIdx, clippedPoly); }
+      else if (selectedMask >= 0 && !masks[selectedMask].deleted) { await mergeMaskInto(selectedMask, clippedPoly); }
+      else { masks.push({class_id:activeClass, polygons:[clippedPoly], deleted:false}); await resolveOverlaps(); }
+    }
+  } catch (err) { showError('SAM2 failed: '+err.message); }
+  render();
+}
+
+async function clipPolygonAgainstMasks(polygon, classId) {
+  const w = maskCanvas.width, h = maskCanvas.height;
+  if (!w || !h) return polygon;
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const ctx = c.getContext('2d', {willReadFrequently:true});
+  ctx.fillStyle = '#fff'; ctx.beginPath();
+  polygon.forEach((p,i) => { const x=p[0]*w, y=p[1]*h; if(i===0)ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+  ctx.closePath(); ctx.fill();
+  let changed = false;
+  for (const m of masks) {
+    if (m.deleted || m.class_id === classId) continue;
+    const mc = rasterizeMask(m, w, h);
+    ctx.globalCompositeOperation = 'destination-out'; ctx.drawImage(mc, 0, 0); ctx.globalCompositeOperation = 'source-over';
+    changed = true;
+  }
+  if (!changed) return polygon;
+  try {
+    const dataUrl = c.toDataURL('image/png');
+    const res = await fetch(SAM_URL.replace('/predict','/rasterize'), {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_base64:dataUrl})});
+    const data = await res.json();
+    if (data.polygons && data.polygons.length) return data.polygons[0];
+    if (data.polygon && data.polygon.length >= 3) return data.polygon;
+    return null;
+  } catch { return polygon; }
+}
+
+function rasterizeMask(mask, w, h) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const ctx = c.getContext('2d', {willReadFrequently:true});
+  ctx.fillStyle = '#fff';
+  const polys = mask.polygons || [];
+  for (const poly of polys) {
+    if (poly.length < 3) continue;
+    ctx.beginPath();
+    poly.forEach((p,i) => { const x=p[0]*w, y=p[1]*h; if(i===0)ctx.moveTo(x,y); else ctx.lineTo(x,y); });
+    ctx.closePath(); ctx.fill();
+  }
+  return c;
+}
+
+async function resolveOverlaps() {
+  if (_resolvingOverlaps) return;
+  _resolvingOverlaps = true;
+  try { await _resolveOverlapsInner(); } finally { _resolvingOverlaps = false; }
+}
+let _resolvingOverlaps = false;
+async function _resolveOverlapsInner() {
+  const w = maskCanvas.width, h = maskCanvas.height;
+  if (!w || !h) return;
+  const activeMasks = masks.map((m,i) => ({idx:i, m})).filter(x => !x.m.deleted);
+  if (activeMasks.length < 2) return;
+  const bitmaps = activeMasks.map(am => ({am, canvas: rasterizeMask(am.m, w, h), changed:false}));
+  for (let i = 0; i < bitmaps.length; i++) {
+    const ctx = bitmaps[i].canvas.getContext('2d');
+    for (let j = i+1; j < bitmaps.length; j++) {
+      if (bitmaps[i].am.m.class_id === bitmaps[j].am.m.class_id) continue;
+      ctx.globalCompositeOperation = 'destination-out'; ctx.drawImage(bitmaps[j].canvas, 0, 0); ctx.globalCompositeOperation = 'source-over';
+      bitmaps[i].changed = true;
+    }
+  }
+  for (const bm of bitmaps) {
+    if (!bm.changed) continue;
+    const target = masks[bm.am.idx];
+    if (!target || target.deleted) continue;
+    try {
+      const dataUrl = bm.canvas.toDataURL('image/png');
+      const res = await fetch(SAM_URL.replace('/predict','/rasterize'), {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_base64:dataUrl})});
+      const data = await res.json();
+      const t2 = masks[bm.am.idx];
+      if (!t2 || t2.deleted) continue;
+      if (data.polygons && data.polygons.length) { t2.polygons = data.polygons; }
+      else if (data.polygon && data.polygon.length >= 3) { t2.polygons = [data.polygon]; }
+      else { t2.deleted = true; }
+    } catch {}
+  }
+}
+
+function enterBrushMode(initialTool) {
+  if (selectedMask < 0 || masks[selectedMask]?.deleted) return;
+  brushMode = initialTool; undoStack = [];
+  const w = maskCanvas.width, h = maskCanvas.height;
+  editBitmap = rasterizeMask(masks[selectedMask], w, h);
+  renderBrush(); updateModeHint();
+}
+async function exitBrushMode(commit) {
+  if (commit) { await commitBrush(); }
+  else { editBitmap = null; undoStack = []; brushMode = null; updateModeHint(); render(); }
+}
+
+function updateModeHint() {
+  const hint = document.getElementById('modeHint');
+  const shape = squareBrush ? 'square' : 'circle';
+  if (brushMode === 'add') hint.innerHTML = `<kbd>Q</kbd>brush <kbd>E</kbd>erase <kbd>W</kbd>commit <kbd>X</kbd>${shape} <kbd>Ctrl+Z</kbd>undo · scroll=size · <kbd>Esc</kbd>deselect`;
+  else if (brushMode === 'erase') hint.innerHTML = `<kbd>Q</kbd>brush <kbd>E</kbd>erase <kbd>W</kbd>commit <kbd>X</kbd>${shape} <kbd>Ctrl+Z</kbd>undo · scroll=size · <kbd>Esc</kbd>deselect`;
+  else hint.innerHTML = '<kbd>click empty</kbd>add pts <kbd>dbl-click/Enter</kbd>finish <kbd>click mask</kbd>select <kbd>Q/E</kbd>brush <kbd>S</kbd>save+next';
+}
+
+function renderBrush() {
+  const w = brushCanvas.width, h = brushCanvas.height;
+  const bctx = brushCanvas.getContext('2d');
+  bctx.clearRect(0,0,w,h);
+  if (!editBitmap || brushMode === null) return;
+  bctx.drawImage(editBitmap, 0, 0, w, h);
+  bctx.globalCompositeOperation = 'source-in';
+  const c = CLASS_MAP[masks[selectedMask]?.class_id ?? 0] || CLASS_MAP[0];
+  bctx.fillStyle = c.color + 'aa'; bctx.fillRect(0,0,w,h);
+  bctx.globalCompositeOperation = 'source-over';
+  if (mousePos.x >= 0) {
+    bctx.strokeStyle = brushMode === 'erase' ? '#ff5555' : '#ffffff';
+    bctx.fillStyle = brushMode === 'erase' ? 'rgba(255,80,80,0.15)' : 'rgba(255,255,255,0.15)';
+    bctx.lineWidth = 2;
+    if (squareBrush) { bctx.fillRect(mousePos.x-brushRadius, mousePos.y-brushRadius, brushRadius*2, brushRadius*2); bctx.strokeRect(mousePos.x-brushRadius, mousePos.y-brushRadius, brushRadius*2, brushRadius*2); }
+    else { bctx.beginPath(); bctx.arc(mousePos.x, mousePos.y, brushRadius, 0, Math.PI*2); bctx.fill(); bctx.stroke(); }
+  }
+}
+
+function applyBrushStroke() {
+  if (!editBitmap || !brushPath.length) return;
+  const ectx = editBitmap.getContext('2d', {willReadFrequently:true});
+  ectx.globalCompositeOperation = brushMode === 'erase' ? 'destination-out' : 'source-over';
+  ectx.strokeStyle = '#fff'; ectx.fillStyle = '#fff'; ectx.lineWidth = brushRadius*2; ectx.lineCap = 'round'; ectx.lineJoin = 'round';
+  ectx.beginPath();
+  brushPath.forEach((p,i) => { if(i===0)ectx.moveTo(p.x,p.y); else ectx.lineTo(p.x,p.y); });
+  ectx.stroke();
+  for (const p of brushPath) {
+    if (squareBrush) ectx.fillRect(p.x-brushRadius, p.y-brushRadius, brushRadius*2, brushRadius*2);
+    else { ectx.beginPath(); ectx.arc(p.x, p.y, brushRadius, 0, Math.PI*2); ectx.fill(); }
+  }
+  ectx.globalCompositeOperation = 'source-over';
+  renderBrush();
+}
+
+async function commitBrush() {
+  if (!editBitmap || selectedMask < 0) { editBitmap=null; brushMode=null; undoStack=[]; updateModeHint(); return; }
+  const idx = selectedMask;
+  if (!masks[idx] || masks[idx].deleted) { editBitmap=null; brushMode=null; undoStack=[]; updateModeHint(); return; }
+  saveMaskState();
+  try {
+    const dataUrl = editBitmap.toDataURL('image/png');
+    const res = await fetch(SAM_URL.replace('/predict','/rasterize'), {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_base64:dataUrl})});
+    const data = await res.json();
+    if (!masks[idx] || masks[idx].deleted) { editBitmap=null; brushMode=null; undoStack=[]; updateModeHint(); return; }
+    if (data.polygons && data.polygons.length) { masks[idx].polygons = data.polygons; await resolveOverlaps(); }
+    else if (data.polygon && data.polygon.length >= 3) { masks[idx].polygons = [data.polygon]; await resolveOverlaps(); }
+  } catch (err) { showError('Rasterize failed'); }
+  editBitmap = null; undoStack = []; brushMode = null; updateModeHint(); render();
+}
+
+// Keyboard
+document.addEventListener('keydown', async (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const key = e.key.toLowerCase();
+  if (e.ctrlKey && key === 'z') { e.preventDefault(); if (brushMode !== null && undoStack.length) { undoStroke(); return; } if (undoMaskState()) { selectedMask = -1; render(); } return; }
+  if (key === 'escape') { if (polyDrawing) { polyDrawing=false; polyPoints=[]; } if (brushMode !== null) exitBrushMode(false); selectedMask = -1; render(); return; }
+  if (key === 'x') { squareBrush = !squareBrush; if (brushMode !== null) renderBrush(); updateModeHint(); return; }
+  if (brushMode !== null) {
+    if (key === 'q') { brushing=false; brushPath=[]; brushMode='add'; updateModeHint(); renderBrush(); return; }
+    if (key === 'e') { brushing=false; brushPath=[]; brushMode='erase'; updateModeHint(); renderBrush(); return; }
+    if (key === 'w') { await exitBrushMode(true); selectedMask=-1; render(); return; }
+    if (key === 'delete' || key === 'backspace') { exitBrushMode(false); if (selectedMask>=0) { masks[selectedMask].deleted=true; selectedMask=-1; render(); } return; }
+    if (key === '[' || key === ']') return;
+    return;
+  }
+  if (key >= '1' && key <= '5') {
+    const cid = parseInt(key)-1; activeClass = cid; updateClassBar();
+    if (selectedMask >= 0 && !masks[selectedMask].deleted) { masks[selectedMask].class_id = cid; render(); }
+  } else if (key === 'q' || key === 'e') {
+    if (selectedMask >= 0 && !masks[selectedMask].deleted) enterBrushMode(key === 'q' ? 'add' : 'erase');
+  } else if (key === 'delete' || key === 'backspace') {
+    if (selectedMask >= 0) { masks[selectedMask].deleted = true; selectedMask = -1; render(); }
+  } else if (key === '[') { loadItem(index-1); }
+  else if (key === ']') { loadItem(index+1); }
+  else if (key === 's' && !e.ctrlKey) { e.preventDefault(); await save(); loadItem(index+1); }
+  else if (e.ctrlKey && key === 's') { e.preventDefault(); save(); }
+});
+
+async function save() {
+  if (brushMode) await commitBrush();
+  const item = items[index];
+  if (!item) return;
+  const kept = masks.filter(m => !m.deleted);
+  const flatMasks = [];
+  for (const m of kept) {
+    const polys = m.polygons || [];
+    for (const poly of polys) { if (poly.length >= 3) flatMasks.push({class_id:m.class_id, points:poly}); }
+  }
+  try {
+    const res = await fetch(`${API}/save${_qs ? '?'+_qs.slice(1) : ''}`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({image_id:item.image_id, masks:flatMasks})});
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || 'Save failed');
+    decisions[item.image_id] = {saved:true, mask_count:flatMasks.length};
+    document.getElementById('progress').textContent = `${index+1}/${items.length} · ${Object.keys(decisions).length} saved`;
+    document.getElementById('status').textContent = `Saved ${flatMasks.length} masks`;
+  } catch (err) { showError(err.message); }
+}
+
+document.getElementById('prevBtn').addEventListener('click', () => loadItem(index-1));
+document.getElementById('nextBtn').addEventListener('click', () => loadItem(index+1));
+document.getElementById('saveBtn').addEventListener('click', save);
+window.addEventListener('resize', () => { if (imgW) { fitCanvas(); render(); } });
+
+boot();
+</script>
+</body>
+</html>
