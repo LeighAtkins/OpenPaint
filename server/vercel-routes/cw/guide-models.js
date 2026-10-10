@@ -1,4 +1,4 @@
-import { requireUserOrRespond } from '../../supabase-auth.js';
+import { requireStaffOrRespond } from '../../supabase-auth.js';
 import { cwGraphqlRequest, readJsonBody } from './shared.js';
 
 function parseMaybeJson(value) {
@@ -129,7 +129,7 @@ export default async function handler(req, res) {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
-  if (!(await requireUserOrRespond(req, res))) return;
+  if (!(await requireStaffOrRespond(req, res))) return;
 
   try {
     const body = await readJsonBody(req);

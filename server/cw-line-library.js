@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { createPresignedDownloadUrl, isR2Configured, uploadR2Object } from './r2-storage.js';
+import { requireStaffOrRespond } from './supabase-auth.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -89,7 +90,9 @@ async function writeLocalLibrary(json) {
 }
 
 export function registerCwLineLibraryRoutes(app, basePath = '/api/cw-line-library') {
+  // CW tooling: staff only, for reading and for overwriting the shared library.
   app.get(`${basePath}`, async (req, res) => {
+    if (!(await requireStaffOrRespond(req, res))) return;
     try {
       const r2Json = await fetchR2LibraryJson();
       const localJson = r2Json ? '' : await readLocalLibrary();
@@ -116,6 +119,7 @@ export function registerCwLineLibraryRoutes(app, basePath = '/api/cw-line-librar
   });
 
   app.put(`${basePath}`, async (req, res) => {
+    if (!(await requireStaffOrRespond(req, res))) return;
     try {
       const library = normalizeLibraryPayload(req.body);
       if (!library) {

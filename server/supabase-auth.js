@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 
 export class AuthError extends Error {
-  constructor(status, message) {
+  constructor(status, message, code) {
     super(message);
     this.status = status;
-    this.code = status === 401 ? 'AUTH_REQUIRED' : 'AUTH_UNAVAILABLE';
+    this.code = code || (status === 401 ? 'AUTH_REQUIRED' : 'AUTH_UNAVAILABLE');
   }
 }
 
@@ -38,10 +38,21 @@ export async function requireRequestUser(req) {
   return data.user;
 }
 
-// Sends the auth error response and returns null, or returns the user.
-export async function requireUserOrRespond(req, res) {
+// Comfort Works staff only: a confirmed email on the staff domain. The confirmation check
+// matters because unconfirmed sign-ups could otherwise claim any address on the domain.
+export async function requireStaffUser(req) {
+  const user = await requireRequestUser(req);
+  const domain = (process.env.STAFF_EMAIL_DOMAIN || 'comfort-works.com').trim().toLowerCase();
+  const email = String(user.email || '').toLowerCase();
+  if (!email.endsWith(`@${domain}`) || !user.email_confirmed_at) {
+    throw new AuthError(403, `A confirmed @${domain} account is required`, 'STAFF_ONLY');
+  }
+  return user;
+}
+
+async function respondOnAuthError(res, check) {
   try {
-    return await requireRequestUser(req);
+    return await check();
   } catch (error) {
     const status = error instanceof AuthError ? error.status : 401;
     res.status(status).json({
@@ -51,4 +62,13 @@ export async function requireUserOrRespond(req, res) {
     });
     return null;
   }
+}
+
+// Sends the auth error response and returns null, or returns the user.
+export function requireUserOrRespond(req, res) {
+  return respondOnAuthError(res, () => requireRequestUser(req));
+}
+
+export function requireStaffOrRespond(req, res) {
+  return respondOnAuthError(res, () => requireStaffUser(req));
 }
