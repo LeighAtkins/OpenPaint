@@ -6,6 +6,12 @@ import {
   deleteR2Objects,
   copyR2Object,
 } from '../../../server/r2-storage.js';
+import {
+  authorizeR2Read,
+  authorizeR2Upload,
+  authorizeR2Write,
+  getSafeObjectHeaders,
+} from '../../../server/r2-access.js';
 
 export function parsePositiveNumber(value, fallback) {
   const parsed = Number(value);
@@ -58,10 +64,11 @@ export async function handlePresignUpload(req, res) {
   const body = await readJsonBody(req);
   const { key, contentType, cacheControl, expiresIn } = body || {};
   const ttl = parsePositiveNumber(expiresIn, 300);
+  const upload = await authorizeR2Upload(req, key, contentType);
 
   const result = await createPresignedUploadUrl({
-    key,
-    contentType,
+    key: upload.key,
+    contentType: upload.contentType,
     cacheControl,
     expiresIn: ttl,
   });
@@ -83,7 +90,7 @@ export async function handleSignedUrl(req, res) {
   const { key, expiresIn } = body || {};
 
   const result = await createPresignedDownloadUrl({
-    key,
+    key: await authorizeR2Read(req, key),
     expiresIn: parsePositiveNumber(expiresIn, 3600),
   });
 
@@ -101,7 +108,12 @@ export async function handleDelete(req, res) {
 
   const body = await readJsonBody(req);
   const { key, keys } = body || {};
-  const deleted = await deleteR2Objects(Array.isArray(keys) ? keys : key);
+  const requestedKeys = Array.isArray(keys) ? keys : [key];
+  const allowedKeys = [];
+  for (const requestedKey of requestedKeys) {
+    allowedKeys.push(await authorizeR2Write(req, requestedKey));
+  }
+  const deleted = await deleteR2Objects(allowedKeys);
 
   return res.status(200).json({
     success: true,
@@ -115,7 +127,10 @@ export async function handleCopy(req, res) {
 
   const body = await readJsonBody(req);
   const { sourceKey, destinationKey } = body || {};
-  const result = await copyR2Object({ sourceKey, destinationKey });
+  const result = await copyR2Object({
+    sourceKey: await authorizeR2Write(req, sourceKey),
+    destinationKey: await authorizeR2Write(req, destinationKey),
+  });
 
   return res.status(200).json({
     success: true,
@@ -135,7 +150,10 @@ export async function handleObject(req, res) {
     });
   }
 
-  const { signedUrl } = await createPresignedDownloadUrl({ key, expiresIn: 300 });
+  const { signedUrl } = await createPresignedDownloadUrl({
+    key: await authorizeR2Read(req, key),
+    expiresIn: 300,
+  });
   const upstream = await fetch(signedUrl);
 
   if (!upstream.ok) {
@@ -155,7 +173,9 @@ export async function handleObject(req, res) {
   const lastModified = upstream.headers.get('last-modified');
   const contentLength = upstream.headers.get('content-length');
 
-  res.setHeader('Content-Type', contentType);
+  Object.entries(getSafeObjectHeaders(contentType)).forEach(([name, value]) =>
+    res.setHeader(name, value)
+  );
   res.setHeader('Cache-Control', cacheControl);
   if (etag) res.setHeader('ETag', etag);
   if (lastModified) res.setHeader('Last-Modified', lastModified);

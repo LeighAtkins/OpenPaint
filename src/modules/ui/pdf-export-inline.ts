@@ -4,6 +4,7 @@
 // @ts-nocheck
 // Extracted from index.html inline scripts
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { getStoredAuthHeaders } from '@/services/auth/storedAuth';
 import JSZip from 'jszip';
 import { buildImageExportFilename, sanitizeFilenamePart } from '../utils/naming-utils.js';
 import {
@@ -940,7 +941,7 @@ async function fetchGuideModelCards(selections) {
   if (!Array.isArray(selections) || selections.length === 0) return new Map();
   const response = await fetch('/api/integrations/cw/guide-models', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { ...getStoredAuthHeaders(), 'Content-Type': 'application/json' },
     body: JSON.stringify({ selections }),
   });
   const payload = await response.json().catch(() => ({}));

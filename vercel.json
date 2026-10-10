@@ -30,15 +30,6 @@
     "api/integrations/cw/[action]/[formId].js": {
       "includeFiles": "server/**"
     },
-    "api/integrations/cw/images/[formId].js": {
-      "includeFiles": "server/**"
-    },
-    "api/integrations/cw/images/[formId]/upload.js": {
-      "includeFiles": "server/**"
-    },
-    "api/integrations/cw/images/[formId]/delete.js": {
-      "includeFiles": "server/**"
-    },
     "api/measurement-guides/svg.js": {
       "includeFiles": "{server/**,public/measurement-guides/manifest.json}"
     },

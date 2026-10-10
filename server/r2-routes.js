@@ -7,6 +7,13 @@ import {
   deleteR2Objects,
   copyR2Object,
 } from './r2-storage.js';
+import {
+  authorizeR2Read,
+  authorizeR2Upload,
+  authorizeR2Write,
+  getR2ErrorStatus,
+  getSafeObjectHeaders,
+} from './r2-access.js';
 
 function parsePositiveNumber(value, fallback) {
   const parsed = Number(value);
@@ -36,9 +43,10 @@ export function registerR2Routes(app, basePath) {
       }
 
       const { key, contentType, cacheControl, expiresIn } = req.body || {};
+      const upload = await authorizeR2Upload(req, key, contentType);
       const result = await createPresignedUploadUrl({
-        key,
-        contentType,
+        key: upload.key,
+        contentType: upload.contentType,
         cacheControl,
         expiresIn: parsePositiveNumber(expiresIn, 300),
       });
@@ -52,7 +60,7 @@ export function registerR2Routes(app, basePath) {
         expiresIn: parsePositiveNumber(expiresIn, 300),
       });
     } catch (error) {
-      return res.status(400).json({
+      return res.status(getR2ErrorStatus(error)).json({
         success: false,
         message: error instanceof Error ? error.message : 'Failed to create presigned upload URL',
       });
@@ -88,10 +96,11 @@ export function registerR2Routes(app, basePath) {
         });
       }
 
+      const upload = await authorizeR2Upload(req, key, req.get('content-type'));
       const result = await uploadR2Object({
-        key,
+        key: upload.key,
         body,
-        contentType: req.get('content-type') || 'application/octet-stream',
+        contentType: upload.contentType,
         cacheControl: req.get('cache-control') || undefined,
       });
 
@@ -102,7 +111,7 @@ export function registerR2Routes(app, basePath) {
         publicUrl: result.publicUrl,
       });
     } catch (error) {
-      return res.status(400).json({
+      return res.status(getR2ErrorStatus(error)).json({
         success: false,
         message: error instanceof Error ? error.message : 'Failed to upload object',
       });
@@ -121,7 +130,7 @@ export function registerR2Routes(app, basePath) {
 
       const { key, expiresIn } = req.body || {};
       const result = await createPresignedDownloadUrl({
-        key,
+        key: await authorizeR2Read(req, key),
         expiresIn: parsePositiveNumber(expiresIn, 3600),
       });
 
@@ -133,7 +142,7 @@ export function registerR2Routes(app, basePath) {
         publicUrl: result.publicUrl,
       });
     } catch (error) {
-      return res.status(400).json({
+      return res.status(getR2ErrorStatus(error)).json({
         success: false,
         message: error instanceof Error ? error.message : 'Failed to create signed URL',
       });
@@ -151,14 +160,19 @@ export function registerR2Routes(app, basePath) {
       }
 
       const { key, keys } = req.body || {};
-      const deleted = await deleteR2Objects(Array.isArray(keys) ? keys : key);
+      const requestedKeys = Array.isArray(keys) ? keys : [key];
+      const allowedKeys = [];
+      for (const requestedKey of requestedKeys) {
+        allowedKeys.push(await authorizeR2Write(req, requestedKey));
+      }
+      const deleted = await deleteR2Objects(allowedKeys);
       return res.json({
         success: true,
         provider: 'r2',
         deleted,
       });
     } catch (error) {
-      return res.status(400).json({
+      return res.status(getR2ErrorStatus(error)).json({
         success: false,
         message: error instanceof Error ? error.message : 'Failed to delete object(s)',
       });
@@ -176,7 +190,10 @@ export function registerR2Routes(app, basePath) {
       }
 
       const { sourceKey, destinationKey } = req.body || {};
-      const result = await copyR2Object({ sourceKey, destinationKey });
+      const result = await copyR2Object({
+        sourceKey: await authorizeR2Write(req, sourceKey),
+        destinationKey: await authorizeR2Write(req, destinationKey),
+      });
 
       return res.json({
         success: true,
@@ -184,7 +201,7 @@ export function registerR2Routes(app, basePath) {
         ...result,
       });
     } catch (error) {
-      return res.status(400).json({
+      return res.status(getR2ErrorStatus(error)).json({
         success: false,
         message: error instanceof Error ? error.message : 'Failed to copy object',
       });
@@ -209,7 +226,10 @@ export function registerR2Routes(app, basePath) {
         });
       }
 
-      const { signedUrl } = await createPresignedDownloadUrl({ key, expiresIn: 300 });
+      const { signedUrl } = await createPresignedDownloadUrl({
+        key: await authorizeR2Read(req, key),
+        expiresIn: 300,
+      });
       const upstream = await fetch(signedUrl);
 
       if (!upstream.ok) {
@@ -225,7 +245,9 @@ export function registerR2Routes(app, basePath) {
       const lastModified = upstream.headers.get('last-modified');
       const contentLength = upstream.headers.get('content-length');
 
-      res.setHeader('Content-Type', contentType);
+      Object.entries(getSafeObjectHeaders(contentType)).forEach(([name, value]) =>
+        res.setHeader(name, value)
+      );
       res.setHeader('Cache-Control', cacheControl);
       if (etag) res.setHeader('ETag', etag);
       if (lastModified) res.setHeader('Last-Modified', lastModified);
@@ -234,7 +256,7 @@ export function registerR2Routes(app, basePath) {
       const buffer = Buffer.from(await upstream.arrayBuffer());
       return res.status(200).send(buffer);
     } catch (error) {
-      return res.status(400).json({
+      return res.status(getR2ErrorStatus(error)).json({
         success: false,
         message: error instanceof Error ? error.message : 'Failed to proxy object',
       });

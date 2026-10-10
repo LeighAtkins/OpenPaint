@@ -112,11 +112,18 @@ export class StorageService {
     payload: Record<string, unknown>
   ): Promise<Result<T, AppError>> {
     try {
+      // R2 routes only allow access to `<userId>/...` keys for the signed-in user.
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const clientResult = await this.getClient();
+      if (clientResult.success) {
+        const { data } = await clientResult.data.auth.getSession();
+        const accessToken = data.session?.access_token;
+        if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+      }
+
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(payload),
       });
 

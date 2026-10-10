@@ -1,9 +1,7 @@
 import measurementsHandler from '../../../../server/vercel-routes/cw/measurements.js';
-import testSaveHandler from '../../../../server/vercel-routes/cw/test-save.js';
 
 const ACTIONS = {
   measurements: measurementsHandler,
-  'test-save': testSaveHandler,
 };
 
 export default async function handler(req, res) {

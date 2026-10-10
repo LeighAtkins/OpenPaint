@@ -49,3 +49,9 @@ export function getStoredSupabaseAuth(): StoredAuthSession | null {
 
   return null;
 }
+
+// Authorization header for our own API routes that require a signed-in user.
+export function getStoredAuthHeaders(): Record<string, string> {
+  const auth = getStoredSupabaseAuth();
+  return auth ? { Authorization: `Bearer ${auth.accessToken}` } : {};
+}

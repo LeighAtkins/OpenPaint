@@ -17,6 +17,7 @@ import { CLOUD_COPY } from './cloud/messages.js';
 import { decideFinalSaveMessageKey, formatSaveOutcomeLines } from './cloud/result-factory.js';
 import { fitViewportToWorldRect, getCenteredBoxWorldRect } from './utils/viewportRestore.ts';
 import JSZip from 'jszip';
+import { getStoredSupabaseAuth } from '@/services/auth/storedAuth';
 
 export class ProjectManager {
   constructor(canvasManager, historyManager) {
@@ -1792,10 +1793,10 @@ export class ProjectManager {
     if (projectData.views && Object.keys(projectData.views).length) return false;
     return Boolean(
       Array.isArray(projectData.imageLabels) ||
-        projectData.currentImageLabel ||
-        Object.keys(projectData.originalImages || {}).length ||
-        Object.keys(projectData.strokes || {}).length ||
-        Object.keys(projectData.strokeMeasurements || {}).length
+      projectData.currentImageLabel ||
+      Object.keys(projectData.originalImages || {}).length ||
+      Object.keys(projectData.strokes || {}).length ||
+      Object.keys(projectData.strokeMeasurements || {}).length
     );
   }
 
@@ -1976,9 +1977,9 @@ export class ProjectManager {
           const viewState = this.views?.[this.currentViewId] || null;
           const hasPersistedLayout = Boolean(
             viewState?.canvasData ||
-              viewState?.viewport ||
-              viewState?.tabs ||
-              viewState?.backgroundWorldRect
+            viewState?.viewport ||
+            viewState?.tabs ||
+            viewState?.backgroundWorldRect
           );
           // Size the capture frame to the uploaded image's aspect ratio on the
           // FIRST upload (no persisted layout). Previously this only ran for
@@ -2123,11 +2124,11 @@ export class ProjectManager {
             (Boolean(activeTab?.viewport) || Boolean(activeTab?.captureFrame?.worldRect));
           const viewHasSavedDrawingState = Boolean(
             viewState?.canvasData ||
-              viewState?.viewport ||
-              viewState?.tabs ||
-              liveTabState?.tabs?.length ||
-              viewState?.metadata ||
-              viewState?.backgroundWorldRect
+            viewState?.viewport ||
+            viewState?.tabs ||
+            liveTabState?.tabs?.length ||
+            viewState?.metadata ||
+            viewState?.backgroundWorldRect
           );
           const hasSavedBackgroundWorldRect =
             restoreSavedPlacement && Boolean(preferredRestoreWorldRect) && viewHasSavedDrawingState;
@@ -3898,9 +3899,15 @@ export class ProjectManager {
       blob = new Blob([blob], { type: contentType });
     }
 
+    // R2 storage only accepts signed-in uploads under the user's own key prefix.
+    const auth = getStoredSupabaseAuth();
+    if (!auth) {
+      throw new Error(`Sign in to save images to cloud storage (${viewId})`);
+    }
+    const authHeaders = { Authorization: `Bearer ${auth.accessToken}` };
     const ext = this.inferImageExtension(blob, viewId);
     const safeViewId = sanitizeFilenamePart(viewId, 'view');
-    const objectKey = `projects/views/${safeViewId}/${Date.now()}.${ext}`;
+    const objectKey = `${auth.userId}/views/${safeViewId}/${Date.now()}.${ext}`;
 
     const contentTypeHeader = blob.type || 'image/png';
     const cacheControl = 'public, max-age=31536000, immutable';
@@ -3910,6 +3917,7 @@ export class ProjectManager {
         {
           method: 'PUT',
           headers: {
+            ...authHeaders,
             'Content-Type': contentTypeHeader,
             'Cache-Control': cacheControl,
           },
@@ -3929,7 +3937,7 @@ export class ProjectManager {
       ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
     const presignResponse = await fetch('/api/storage/r2/presign-upload', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...authHeaders, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         key: objectKey,
         contentType: contentTypeHeader,
@@ -4061,7 +4069,11 @@ export class ProjectManager {
 
     const proxyUrl = `/api/storage/r2/object?key=${encodeURIComponent(objectKey)}`;
     try {
-      const response = await fetch(proxyUrl, { cache: 'no-store' });
+      const auth = getStoredSupabaseAuth();
+      const response = await fetch(proxyUrl, {
+        cache: 'no-store',
+        headers: auth ? { Authorization: `Bearer ${auth.accessToken}` } : {},
+      });
       if (!response.ok) {
         console.warn('[Load] Failed to fetch R2 image proxy', {
           objectKey,
