@@ -326,16 +326,190 @@ app.all('/api/measurement-guides/file', (req, res) => measurementGuideFileHandle
 app.get('/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
 
 if (!isVercelDeployment) {
-  app.get('/arm-annotation', (req, res) => {
+  // ---------------------------------------------------------------------------
+  // Mask editor + labeling routes (re-added after git pull wiped them)
+  // ---------------------------------------------------------------------------
+  // The server listens on 0.0.0.0, so only loopback is trusted by default. Set
+  // MASK_EDITOR_ALLOW_LAN=1 to also allow private LAN ranges (10/8, 172.16/12, 192.168/16).
+  function isPrivateLanIp(ip) {
+    const v4 = ip.startsWith('::ffff:') ? ip.slice(7) : ip;
+    const parts = v4.split('.').map(Number);
+    if (parts.length !== 4 || parts.some(n => !Number.isInteger(n) || n < 0 || n > 255))
+      return false;
+    return (
+      parts[0] === 10 ||
+      (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) ||
+      (parts[0] === 192 && parts[1] === 168)
+    );
+  }
+
+  function localSegLabelerOnly(req, res, next) {
+    const ip = req.socket?.remoteAddress || '';
+    const isLoopback = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+    if (isLoopback || (process.env.MASK_EDITOR_ALLOW_LAN === '1' && isPrivateLanIp(ip))) {
+      return next();
+    }
+    return res.status(403).json({ success: false, message: 'Local only' });
+  }
+
+  function isPathInside(child, root) {
+    const relative = path.relative(path.resolve(root), path.resolve(child));
+    return relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+  }
+
+  const MASK_EDITOR_QUEUES = {
+    al_round4: {
+      title: 'Active Learning Round 4 (50 images)',
+      manifestPath: 'C:\\dataset_pipeline_seg\\active_learning_round4\\label_queue.json',
+      outputDir: 'C:\\dataset_pipeline_seg\\active_learning_round4\\labels',
+      decisionsJson: 'C:\\dataset_pipeline_seg\\active_learning_round4\\decisions.json',
+      allowedRoots: [
+        'C:\\dataset_pipeline_seg\\r2_clean_images',
+        'C:\\dataset_pipeline_seg\\active_learning_round4',
+      ],
+    },
+    gold_recheck: {
+      title: 'Gold Label Recheck',
+      manifestPath: 'C:\\dataset_pipeline_seg\\audit_grid_v2\\flagged_gold_queue.json',
+      outputDir: 'C:\\dataset_pipeline_seg\\audit_grid_v2\\gold_recheck_corrected',
+      decisionsJson: 'C:\\dataset_pipeline_seg\\audit_grid_v2\\gold_recheck_decisions.json',
+      allowedRoots: [
+        'C:\\dataset_pipeline_seg\\yolo_seg_reviewed660_gold_parentclipped_parts_20260615',
+        'C:\\dataset_pipeline_seg\\audit_grid_v2',
+      ],
+    },
+    test_set: {
+      title: 'Frozen Production Test Set',
+      manifestPath: 'C:\\dataset_pipeline_seg\\r2_production_test_v1\\test_manifest.json',
+      outputDir: 'C:\\dataset_pipeline_seg\\r2_production_test_v1\\labels',
+      decisionsJson: 'C:\\dataset_pipeline_seg\\r2_production_test_v1\\labeling_decisions.json',
+      allowedRoots: [
+        'C:\\dataset_pipeline_seg\\r2_production_test_v1',
+        'C:\\dataset_pipeline_seg\\r2_clean_images',
+      ],
+    },
+  };
+
+  function getMaskEditorConfig(req) {
+    return MASK_EDITOR_QUEUES[req.query.queue || 'al_round4'] || MASK_EDITOR_QUEUES.al_round4;
+  }
+  function maskEditorAllowedPath(filePath, cfg) {
+    return cfg.allowedRoots.some(
+      root => path.resolve(filePath) === path.resolve(root) || isPathInside(filePath, root)
+    );
+  }
+  function readMaskEditorDecisions(cfg) {
+    if (!fs.existsSync(cfg.decisionsJson)) return {};
+    try {
+      const d = JSON.parse(fs.readFileSync(cfg.decisionsJson, 'utf8'));
+      return d.decisions || d;
+    } catch {
+      return {};
+    }
+  }
+
+  app.get('/mask-editor', localSegLabelerOnly, (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.sendFile(path.join(__dirname, 'public', 'mask_editor.html'));
+  });
+  app.get('/api/mask-editor/queue', localSegLabelerOnly, (req, res) => {
+    const cfg = getMaskEditorConfig(req);
+    try {
+      if (!fs.existsSync(cfg.manifestPath))
+        return res
+          .status(404)
+          .json({ success: false, message: 'Manifest not found: ' + cfg.manifestPath });
+      const manifest = JSON.parse(fs.readFileSync(cfg.manifestPath, 'utf8'));
+      res.json({
+        success: true,
+        title: cfg.title,
+        decided_count: Object.keys(readMaskEditorDecisions(cfg)).length,
+        decisions: readMaskEditorDecisions(cfg),
+        items: manifest.items || [],
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+  app.get('/api/mask-editor/file', localSegLabelerOnly, async (req, res) => {
+    const cfg = getMaskEditorConfig(req);
+    const filePath = path.resolve(String(req.query.path || ''));
+    if (!filePath || !maskEditorAllowedPath(filePath, cfg) || !fs.existsSync(filePath))
+      return res.status(404).send('Not found');
+    try {
+      const { default: sharp } = await import('sharp');
+      const stat = fs.statSync(filePath);
+      const ext = path.extname(filePath).toLowerCase();
+      if (ext === '.heic' || ext === '.heif' || stat.size > 2000000) {
+        const cacheDir = path.join(path.dirname(filePath), '_preview_cache');
+        const cachePath = path.join(cacheDir, path.basename(filePath, ext) + '.jpg');
+        if (fs.existsSync(cachePath)) return res.sendFile(cachePath);
+        fs.mkdirSync(cacheDir, { recursive: true });
+        await sharp(filePath)
+          .rotate()
+          .jpeg({ quality: 88 })
+          .resize({ width: 2000, withoutEnlargement: true })
+          .toFile(cachePath);
+        return res.sendFile(cachePath);
+      }
+    } catch {}
+    res.sendFile(filePath);
+  });
+  app.post('/api/mask-editor/save', localSegLabelerOnly, (req, res) => {
+    const cfg = getMaskEditorConfig(req);
+    const { image_id: imageId, masks: maskList } = req.body || {};
+    if (!imageId) return res.status(400).json({ success: false, message: 'image_id required' });
+    // image_id becomes a filename, so it must not contain path separators or `..`.
+    const labelPath = path.join(cfg.outputDir, `${imageId}.txt`);
+    if (
+      typeof imageId !== 'string' ||
+      !/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(imageId) ||
+      !isPathInside(labelPath, cfg.outputDir)
+    ) {
+      return res.status(400).json({ success: false, message: 'Invalid image_id' });
+    }
+    try {
+      const lines = (maskList || []).map(m => {
+        const coords = (m.points || [])
+          .map(p => `${Number(p[0]).toFixed(6)} ${Number(p[1]).toFixed(6)}`)
+          .join(' ');
+        return `${parseInt(m.class_id) || 0} ${coords}`;
+      });
+      fs.mkdirSync(cfg.outputDir, { recursive: true });
+      fs.writeFileSync(labelPath, lines.join('\n') + (lines.length ? '\n' : ''), 'utf8');
+      const decisions = readMaskEditorDecisions(cfg);
+      decisions[imageId] = {
+        saved: true,
+        mask_count: (maskList || []).length,
+        updated_at: new Date().toISOString(),
+      };
+      const payload = {
+        schema: 'mask_editor_decisions.v1',
+        updated_at: new Date().toISOString(),
+        decisions,
+      };
+      fs.mkdirSync(path.dirname(cfg.decisionsJson), { recursive: true });
+      fs.writeFileSync(cfg.decisionsJson, JSON.stringify(payload, null, 2) + '\n', 'utf8');
+      res.json({
+        success: true,
+        mask_count: (maskList || []).length,
+        decided_count: Object.keys(decisions).length,
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  app.get('/arm-annotation', localSegLabelerOnly, (req, res) => {
     res.sendFile(armAnnotationPagePath);
   });
 
-  app.put('/arm-annotation/annotations.json', (req, res) => {
+  app.put('/arm-annotation/annotations.json', localSegLabelerOnly, (req, res) => {
     fs.writeFileSync(armAnnotationAnnotationsPath, JSON.stringify(req.body, null, 2));
     res.json({ ok: true });
   });
 
-  app.get('/arm-annotation/annotations.json', (req, res) => {
+  app.get('/arm-annotation/annotations.json', localSegLabelerOnly, (req, res) => {
     if (fs.existsSync(armAnnotationAnnotationsPath)) {
       res.sendFile(armAnnotationAnnotationsPath);
       return;
