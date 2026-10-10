@@ -2,6 +2,15 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { ProjectManager } from '../../src/modules/ProjectManager.ts';
 
+const TEST_USER_ID = '11111111-2222-3333-4444-555555555555';
+
+function signIn() {
+  localStorage.setItem(
+    'sb-test-auth-token',
+    JSON.stringify({ access_token: 'test-token', user: { id: TEST_USER_ID } })
+  );
+}
+
 function makePngBlob(type = 'text/plain') {
   const pngHeader = new Uint8Array([
     0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
@@ -21,6 +30,7 @@ describe('ProjectManager cloud image persistence', () => {
   beforeEach(() => {
     document.body.innerHTML = '<input id="projectName" value="Cloud image test">';
     window.app = {};
+    localStorage.clear();
   });
 
   test('loads R2 image bytes even when proxy metadata says text/plain', async () => {
@@ -112,7 +122,19 @@ describe('ProjectManager cloud image persistence', () => {
     );
   });
 
+  test('refuses to upload view images when signed out', async () => {
+    const manager = makeManager();
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(manager.uploadViewImageToR2('front', makePngBlob('image/png'))).rejects.toThrow(
+      'Sign in to save images'
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   test('retries local R2 uploads through the API proxy when direct PUT fails', async () => {
+    signIn();
     const manager = makeManager();
     const fetchMock = vi
       .fn()
@@ -149,6 +171,7 @@ describe('ProjectManager cloud image persistence', () => {
   });
 
   test('uploads an original file directly without fetching its blob URL', async () => {
+    signIn();
     const manager = makeManager();
     const originalFile = makePngBlob('image/png');
     const fetchMock = vi
@@ -170,6 +193,10 @@ describe('ProjectManager cloud image persistence', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock.mock.calls[0][0]).toBe('/api/storage/r2/presign-upload');
+    expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer test-token');
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).key).toMatch(
+      new RegExp(`^${TEST_USER_ID}/views/front/\\d+\\.png$`)
+    );
     expect(fetchMock.mock.calls[1][0]).toBe('https://r2.example/upload');
   });
 

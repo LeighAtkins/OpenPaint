@@ -1,7 +1,5 @@
-import fs from 'fs/promises';
+import { requireUserOrRespond } from '../../supabase-auth.js';
 import {
-  analyzeMeasureFormPayload,
-  buildMeasureSavePayloadFromTable,
   createCwSession,
   cwGraphqlRequest,
   cwPublicGraphqlRequest,
@@ -10,7 +8,10 @@ import {
   fetchCwMeasurementsTable,
   mapOrderImagesToMeasurementItems,
   parseProductConfiguration,
+  isCwSessionUrl,
   readJsonBody,
+  resolveCwBaseUrl,
+  resolveCwPidBaseUrl,
 } from './shared.js';
 
 const mtTokenCache = new Map();
@@ -47,7 +48,6 @@ const FALLBACK_STYLE_CODES = [
   'WR',
 ];
 const MAX_QC_ATTEMPTS = 80;
-const MAX_PROBE_TERMS_FILE_BYTES = 25 * 1024 * 1024;
 const SEARCH_TURBO_PROFILE = 'compact-v1';
 const SEARCH_DEFAULT_PROFILE = 'full-v1';
 const SEARCH_TURBO_LIMITS = {
@@ -1394,55 +1394,6 @@ function decodeHtmlEntities(value) {
     .replace(/&gt;/gi, '>');
 }
 
-function stripHtml(value) {
-  return decodeHtmlEntities(String(value || '').replace(/<[^>]*>/g, ' '))
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function parseProbeTermsFromExportHtml(html) {
-  const rowMatches = html.match(/<tr[^>]*>[\s\S]*?<\/tr>/gi) || [];
-  const rows = rowMatches.map(rowHtml => {
-    const cellMatches = rowHtml.match(/<t[dh][^>]*>[\s\S]*?<\/t[dh]>/gi) || [];
-    return cellMatches.map(cellHtml => {
-      const inner = cellHtml.replace(/^<t[dh][^>]*>/i, '').replace(/<\/t[dh]>$/i, '');
-      return stripHtml(inner);
-    });
-  });
-
-  if (rows.length < 2) {
-    return {
-      terms: [],
-      totalRows: 0,
-      referenceColumnIndex: -1,
-    };
-  }
-
-  const header = rows[1] || [];
-  const referenceColumnIndex = header.findIndex(
-    col =>
-      String(col || '')
-        .trim()
-        .toUpperCase() === 'REFERENCE'
-  );
-  const dataRows = rows.slice(2);
-  const terms = [];
-  const seen = new Set();
-
-  dataRows.forEach(row => {
-    const value = referenceColumnIndex >= 0 ? String(row[referenceColumnIndex] || '').trim() : '';
-    if (!value || seen.has(value)) return;
-    seen.add(value);
-    terms.push(value);
-  });
-
-  return {
-    terms,
-    totalRows: dataRows.length,
-    referenceColumnIndex,
-  };
-}
-
 function extractProductMeasurementLinks(sourceText, baseUrl) {
   const text = String(sourceText || '');
   if (!text) return [];
@@ -1670,22 +1621,51 @@ async function cwGetWithSession(session, url, referer) {
   };
 }
 
-async function cwGetImageWithSession(session, url, referer) {
-  const response = await fetchWithTimeout(
-    url,
-    {
-      method: 'GET',
-      headers: {
-        accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+async function cwGetImageWithSession(session, url, referer, redirectsLeft = 3) {
+  if (!/^https?:\/\//i.test(String(url || ''))) {
+    return {
+      ok: false,
+      status: 400,
+      url,
+      contentType: '',
+      bytes: new ArrayBuffer(0),
+      byteLength: 0,
+    };
+  }
+  // Only attach the CW session to CW's own host; other hosts get a plain request.
+  const sessionHeaders = isCwSessionUrl(session, url)
+    ? {
         cookie: buildCookieHeader(session.cookieJar),
         origin: session.baseUrl,
         referer: referer || `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
         'x-requested-with': 'XMLHttpRequest',
+      }
+    : {};
+  const response = await fetchWithTimeout(
+    url,
+    {
+      method: 'GET',
+      redirect: 'manual',
+      headers: {
+        accept: 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+        ...sessionHeaders,
         'user-agent': 'OpenPaint-CW-Vercel/1.0',
       },
     },
     { label: 'cwGetImageWithSession' }
   );
+
+  // Follow redirects by hand so the session check above applies to every hop.
+  const location = response.headers.get('location');
+  if (response.status >= 300 && response.status < 400 && location && redirectsLeft > 0) {
+    let nextUrl = '';
+    try {
+      nextUrl = new URL(location, url).toString();
+    } catch {
+      nextUrl = '';
+    }
+    if (nextUrl) return cwGetImageWithSession(session, nextUrl, referer, redirectsLeft - 1);
+  }
 
   const contentType = String(response.headers.get('content-type') || '').toLowerCase();
   const okContentType = contentType.startsWith('image/');
@@ -3443,9 +3423,7 @@ async function handleProductSearchDiscover({ req, res, body, startedAt }) {
     });
   }
 
-  const baseUrl = String(req.query?.baseUrl || body?.baseUrl || 'https://cw40.comfort-works.com')
-    .trim()
-    .replace(/\/+$/, '');
+  const baseUrl = resolveCwBaseUrl(req.query?.baseUrl || body?.baseUrl);
   const fastPathAttempts = [];
   const publicDiscoveryPromise = discoverPublicProducts({
     baseUrl,
@@ -3619,11 +3597,7 @@ async function loadSelectedQcItems({ body = {}, publicFirst = true }) {
     username: body?.username,
     password: body?.password,
   };
-  const pidBaseUrl = String(
-    body?.pidBaseUrl || process.env.CW_PID_BASE_URL || 'https://cw-pid-qylyewlgca-uc.a.run.app'
-  )
-    .trim()
-    .replace(/\/+$/, '');
+  const pidBaseUrl = resolveCwPidBaseUrl(body?.pidBaseUrl);
   const bucketName = String(
     body?.bucketName ||
       process.env.CW_PID_STORAGE_BUCKET ||
@@ -4007,11 +3981,7 @@ async function handleProductSearch({ req, res, body, startedAt }) {
   ).trim();
   const mtPassword = String(body?.mtPassword || override.password || '').trim();
 
-  const pidBaseUrl = String(
-    body?.pidBaseUrl || process.env.CW_PID_BASE_URL || 'https://cw-pid-qylyewlgca-uc.a.run.app'
-  )
-    .trim()
-    .replace(/\/+$/, '');
+  const pidBaseUrl = resolveCwPidBaseUrl(body?.pidBaseUrl);
 
   const providedStyle = String(body?.style || inferredSearchTuple.style || '').trim();
   const providedStyleCode = String(
@@ -6034,6 +6004,13 @@ async function handleProductSearch({ req, res, body, startedAt }) {
   );
 }
 
+const PUBLIC_SEARCH_PHASES = new Set([
+  'storefront-product',
+  'storefront-comparison',
+  'sectional-pricing',
+  'public-measurements',
+]);
+
 export default async function handler(req, res) {
   const startedAt = Date.now();
   const formId = String(req.query?.formId || '').trim();
@@ -6052,41 +6029,14 @@ export default async function handler(req, res) {
 
   try {
     const body = req.method === 'POST' ? await readJsonBody(req) : {};
+    const phase = String(body?.phase || '')
+      .trim()
+      .toLowerCase();
 
-    if (formId === 'probe-terms') {
-      if (req.method !== 'POST') {
-        return res.status(405).json({ success: false, message: 'Method not allowed' });
-      }
-      const filePath = String(body?.filePath || '').trim();
-      if (!filePath) {
-        return res.status(400).json({ success: false, message: 'filePath is required' });
-      }
-      if (filePath.includes('\u0000')) {
-        return res.status(400).json({ success: false, message: 'Invalid filePath' });
-      }
-      if (!/\.html?$/i.test(filePath)) {
-        return res.status(400).json({ success: false, message: 'Expected an .html export file' });
-      }
-
-      const stat = await fs.stat(filePath);
-      if (!stat.isFile()) {
-        return res.status(400).json({ success: false, message: 'Path is not a file' });
-      }
-      if (stat.size > MAX_PROBE_TERMS_FILE_BYTES) {
-        return res.status(400).json({ success: false, message: 'File is too large' });
-      }
-
-      const html = await fs.readFile(filePath, 'utf8');
-      const parsed = parseProbeTermsFromExportHtml(html);
-      return res.status(200).json({
-        success: true,
-        filePath,
-        count: parsed.terms.length,
-        totalRows: parsed.totalRows,
-        referenceColumnIndex: parsed.referenceColumnIndex,
-        terms: parsed.terms,
-      });
-    }
+    // Everything except public storefront lookups acts with the server's CW account,
+    // so only signed-in users may call it.
+    const isPublicLookup = formId === 'search' && PUBLIC_SEARCH_PHASES.has(phase);
+    if (!isPublicLookup && !(await requireUserOrRespond(req, res))) return;
 
     if (formId === 'image-proxy') {
       if (req.method !== 'POST') {
@@ -6150,9 +6100,6 @@ export default async function handler(req, res) {
     }
 
     if (formId === 'search') {
-      const phase = String(body?.phase || '')
-        .trim()
-        .toLowerCase();
       if (phase === 'storefront-product') {
         const product = await fetchStorefrontProduct(
           body?.search,
@@ -6214,46 +6161,14 @@ export default async function handler(req, res) {
       return await handleProductSearch({ req, res, body, startedAt });
     }
 
-    const lang = String(req.query?.lang || body?.lang || 'en').trim() || 'en';
-    const override = {
-      baseUrl: req.query?.baseUrl || body?.baseUrl,
-      username: body?.username,
-      password: body?.password,
-    };
-
-    const result = await fetchCwMeasurementsTable({ formId, lang, override });
-    const payloadTemplate = buildMeasureSavePayloadFromTable(result.content, formId, {
-      employeeName: body?.employeeName,
-      user: body?.user,
-      unit: body?.unit,
-    });
-    const validation = analyzeMeasureFormPayload(payloadTemplate);
-
-    return res.status(result.ok ? 200 : 502).json({
-      success: result.ok,
-      code: result.ok ? 'CW_MEASUREMENTS_FETCH_OK' : 'CW_MEASUREMENTS_FETCH_FAILED',
-      formId,
-      lang,
-      durationMs: Date.now() - startedAt,
-      targetUrl: result.targetUrl,
-      upstreamStatus: result.status,
-      session: result.session,
-      summary: {
-        unit: result.content?.unit || null,
-        confirmed: result.content?.confirmed ?? null,
-        productsCount: Array.isArray(result.content?.products_list)
-          ? result.content.products_list.length
-          : Array.isArray(result.content?.products)
-            ? result.content.products.length
-            : 0,
-      },
-      payloadTemplate,
-      validation,
-      upstreamBody: result.body,
+    return res.status(404).json({
+      success: false,
+      code: 'CW_ROUTE_NOT_FOUND',
+      message: 'CW measurements route not found',
     });
   } catch (error) {
     const isProductSearch = formId === 'search';
-    return res.status(500).json({
+    return res.status(error?.status || 500).json({
       success: false,
       code:
         error?.code ||

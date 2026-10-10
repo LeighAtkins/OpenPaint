@@ -2,6 +2,7 @@ import {
   openMeasurementSplitWorkspace,
   shouldAllowMeasurementSplitEdit,
 } from './measurement-split-workspace';
+import { getStoredAuthHeaders } from '@/services/auth/storedAuth';
 import { imageRegistry } from '../ImageRegistry.js';
 import { getNextTagValue, setNextTagValue } from './next-tag-control.js';
 import {
@@ -281,7 +282,6 @@ interface CwUiPersistedState {
   username?: string;
   searchTerm?: string;
   probeTerms?: string;
-  probeTermsPath?: string;
   probeEnabled?: boolean;
   lastProbeReport?: Record<string, unknown> | null;
 }
@@ -1411,7 +1411,7 @@ async function fetchProxyImageDataUrl(
   try {
     const response = await fetch('/api/integrations/cw/measurements/image-proxy', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...getStoredAuthHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ candidates, baseUrl, username, password }),
     });
     const data = await response.json().catch(() => ({}));
@@ -1783,12 +1783,6 @@ function createModal(): HTMLElement {
           <label for="cwProbeTermsFile">Export HTML file (recommended)</label>
           <div class="cw-row" style="margin-top:0;">
             <input id="cwProbeTermsFile" type="file" accept=".html,.htm,text/html" />
-          </div>
-        </div>
-        <div>
-          <label for="cwProbeTermsPath">Server file path (local/dev only)</label>
-          <div class="cw-row" style="margin-top:0;">
-            <input id="cwProbeTermsPath" value="/mnt/c/Users/Leigh Atkins/Downloads/4.0 products export/4.0 products export.html" />
             <button type="button" class="cw-btn" id="cwLoadProbeTermsBtn">Load Terms From Export</button>
           </div>
         </div>
@@ -1879,7 +1873,6 @@ function createModal(): HTMLElement {
   const copyProbeBtn = body.querySelector<HTMLButtonElement>('#cwCopyProbeBtn')!;
   const loadProbeTermsBtn = body.querySelector<HTMLButtonElement>('#cwLoadProbeTermsBtn')!;
   const probeTermsFileEl = body.querySelector<HTMLInputElement>('#cwProbeTermsFile')!;
-  const probeTermsPathEl = body.querySelector<HTMLInputElement>('#cwProbeTermsPath')!;
   const probeTermsEl = body.querySelector<HTMLTextAreaElement>('#cwProbeTerms')!;
   const probeSummary = body.querySelector<HTMLDivElement>('#cwProbeSummary')!;
   const probeOutput = body.querySelector<HTMLPreElement>('#cwProbeOutput')!;
@@ -1958,7 +1951,6 @@ function createModal(): HTMLElement {
       username: (usernameEl?.value || '').trim(),
       searchTerm: (searchTermEl?.value || '').trim(),
       probeTerms: probeTermsEl?.value || '',
-      probeTermsPath: (probeTermsPathEl?.value || '').trim(),
       probeEnabled: probeEnabledEl?.checked ?? false,
       lastProbeReport,
     });
@@ -1971,8 +1963,6 @@ function createModal(): HTMLElement {
   if (passwordEl) passwordEl.value = readSessionCwPassword();
   if (persisted.searchTerm && searchTermEl) searchTermEl.value = persisted.searchTerm;
   if (persisted.probeTerms && probeTermsEl) probeTermsEl.value = persisted.probeTerms;
-  if (persisted.probeTermsPath && probeTermsPathEl)
-    probeTermsPathEl.value = persisted.probeTermsPath;
   if (typeof persisted.probeEnabled === 'boolean' && probeEnabledEl) {
     probeEnabledEl.checked = persisted.probeEnabled;
   }
@@ -1985,7 +1975,7 @@ function createModal(): HTMLElement {
     loginDetails.open = false;
   }
 
-  [baseUrlEl, formIdEl, usernameEl, passwordEl, searchTermEl, probeTermsPathEl].forEach(el => {
+  [baseUrlEl, formIdEl, usernameEl, passwordEl, searchTermEl].forEach(el => {
     el?.addEventListener('input', persistUiState);
     el?.addEventListener('change', persistUiState);
   });
@@ -2196,7 +2186,7 @@ function createModal(): HTMLElement {
       try {
         response = await fetch('/api/integrations/cw/measurements/search', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...getStoredAuthHeaders(), 'Content-Type': 'application/json' },
           body: JSON.stringify(requestPayload),
         });
         if (!transientStatuses.has(response.status) || attempt === 1) break;
@@ -4500,10 +4490,10 @@ function createModal(): HTMLElement {
       );
       const imageLoaded = Boolean(
         background &&
-          source &&
-          (!element || element.complete !== false) &&
-          Number(background.width || element?.naturalWidth || 0) > 0 &&
-          Number(background.height || element?.naturalHeight || 0) > 0
+        source &&
+        (!element || element.complete !== false) &&
+        Number(background.width || element?.naturalWidth || 0) > 0 &&
+        Number(background.height || element?.naturalHeight || 0) > 0
       );
       const idle = !projectManager.isSwitchingView && !projectManager.pendingSwitchViewId;
       const correctView = projectManager.currentViewId === viewId;
@@ -6057,63 +6047,24 @@ function createModal(): HTMLElement {
     loadProbeTermsBtn.addEventListener('click', () => {
       void (async () => {
         const selectedFile = probeTermsFileEl?.files?.[0] || null;
-        const filePath = (probeTermsPathEl?.value || '').trim();
-        if (!selectedFile && !filePath) {
-          setStatus('Choose an export HTML file or provide a server file path.', 'bad');
+        if (!selectedFile) {
+          setStatus('Choose an export HTML file.', 'bad');
           return;
         }
         loadProbeTermsBtn.disabled = true;
         setStatus('Loading probe terms from export file...');
         try {
-          if (selectedFile) {
-            const html = await selectedFile.text();
-            const parsed = parseProbeTermsFromExportHtml(html);
-            probeTermsEl.value = parsed.terms.join('\n');
-            if (!(searchTermEl?.value || '').trim() && parsed.terms[0]) {
-              searchTermEl.value = parsed.terms[0];
-            }
-            persistUiState();
-            setStatus(
-              `Loaded ${parsed.terms.length} terms from ${selectedFile.name} (${parsed.totalRows} rows scanned).`,
-              'ok'
-            );
-            return;
-          }
-
-          const response = await fetch('/api/integrations/cw/measurements/probe-terms', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ filePath }),
-          });
-          const text = await response.text();
-          let data: any = null;
-          try {
-            data = text ? JSON.parse(text) : null;
-          } catch {
-            setStatus(
-              'Failed to load terms from server path. Use file upload above on hosted environments.',
-              'bad'
-            );
-            return;
-          }
-          if (!response.ok || !data?.success) {
-            setStatus(
-              `Failed to load terms: ${String(data?.message || data?.code || response.status)}`,
-              'bad'
-            );
-            return;
-          }
-          const terms = Array.isArray(data?.terms)
-            ? (data.terms as unknown[])
-                .map(item => (typeof item === 'string' ? item.trim() : ''))
-                .filter(Boolean)
-            : [];
-          probeTermsEl.value = terms.join('\n');
-          if (!(searchTermEl?.value || '').trim() && terms[0]) {
-            searchTermEl.value = terms[0];
+          const html = await selectedFile.text();
+          const parsed = parseProbeTermsFromExportHtml(html);
+          probeTermsEl.value = parsed.terms.join('\n');
+          if (!(searchTermEl?.value || '').trim() && parsed.terms[0]) {
+            searchTermEl.value = parsed.terms[0];
           }
           persistUiState();
-          setStatus(`Loaded ${terms.length} terms from server file path.`, 'ok');
+          setStatus(
+            `Loaded ${parsed.terms.length} terms from ${selectedFile.name} (${parsed.totalRows} rows scanned).`,
+            'ok'
+          );
         } catch (error) {
           setStatus(
             `Failed to load terms: ${error instanceof Error ? error.message : 'Unknown error'}`,

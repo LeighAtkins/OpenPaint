@@ -1,5 +1,6 @@
 declare const fabric: any;
 
+import { getStoredAuthHeaders } from '@/services/auth/storedAuth';
 import {
   buildSectionalMeasurementRules,
   countFilledMeasurements,
@@ -5442,7 +5443,7 @@ export function initSectionalBuilder(): void {
     try {
       const response = await fetch('/api/integrations/cw/measurements/search', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...getStoredAuthHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phase: 'sectional-pricing',
           country: pricingCountry,

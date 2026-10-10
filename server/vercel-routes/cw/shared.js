@@ -113,12 +113,56 @@ export async function readJsonBody(req) {
   }
 }
 
+const DEFAULT_CW_BASE_URL = 'https://cw40.comfort-works.com';
+const DEFAULT_CW_PID_BASE_URL = 'https://cw-pid-qylyewlgca-uc.a.run.app';
+
+function toOrigin(value) {
+  try {
+    const url = new URL(String(value || '').trim());
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.origin : '';
+  } catch {
+    return '';
+  }
+}
+
+// Client-supplied base URLs may only point at the configured CW hosts. Without this,
+// a caller could redirect the server's CW login (and env credentials) to any host.
+function resolveAllowedOrigin(candidate, configured, fallback, code) {
+  const defaultOrigin = toOrigin(configured) || fallback;
+  const raw = String(candidate || '').trim();
+  if (!raw) return defaultOrigin;
+  const origin = toOrigin(raw);
+  if (origin && (origin === defaultOrigin || origin === fallback)) return origin;
+  const err = new Error('Base URL is not an allowed CW host');
+  err.code = code;
+  err.status = 400;
+  throw err;
+}
+
+export function resolveCwBaseUrl(candidate) {
+  return resolveAllowedOrigin(
+    candidate,
+    process.env.CW_BASE_URL,
+    DEFAULT_CW_BASE_URL,
+    'CW_BASE_URL_NOT_ALLOWED'
+  );
+}
+
+export function resolveCwPidBaseUrl(candidate) {
+  return resolveAllowedOrigin(
+    candidate,
+    process.env.CW_PID_BASE_URL,
+    DEFAULT_CW_PID_BASE_URL,
+    'CW_PID_BASE_URL_NOT_ALLOWED'
+  );
+}
+
+export function isCwSessionUrl(session, url) {
+  return Boolean(session?.baseUrl) && toOrigin(url) === toOrigin(session.baseUrl);
+}
+
 export function getCwCredentials(override = {}) {
-  const baseUrl = (
-    override.baseUrl ||
-    process.env.CW_BASE_URL ||
-    'https://cw40.comfort-works.com'
-  ).trim();
+  const baseUrl = resolveCwBaseUrl(override.baseUrl);
   const username = (override.username || process.env.CW_USERNAME || '').trim();
   const password = (override.password || process.env.CW_PASSWORD || '').trim();
   return { baseUrl, username, password };
@@ -371,9 +415,7 @@ export async function cwPublicGraphqlRequest({
   query,
   variables = null,
 }) {
-  const targetBase = String(baseUrl || process.env.CW_BASE_URL || 'https://cw40.comfort-works.com')
-    .trim()
-    .replace(/\/+$/, '');
+  const targetBase = resolveCwBaseUrl(baseUrl);
   const params = new URLSearchParams();
   params.set('operationName', String(operationName || 'null'));
   params.set('query', String(query || '').trim());
@@ -445,7 +487,8 @@ export async function createCwSession(override = {}) {
     if (!location) break;
 
     const nextUrl = resolveUrl(loginPageUrl, location);
-    if (!nextUrl) break;
+    // Credentials are posted to the final login URL, so never follow off-host redirects.
+    if (!nextUrl || toOrigin(nextUrl) !== toOrigin(creds.baseUrl)) break;
 
     redirectChain.push({ from: loginPageUrl, status: loginPage.status, to: nextUrl });
     loginPageUrl = nextUrl;
@@ -744,482 +787,6 @@ export function mapOrderImagesToMeasurementItems(measurementsContent, orderLines
   const unmatched = lines.filter(line => !matchedLineIds.has(line.lineId));
 
   return { byItemCode, lineMappingByItemCode, unmatchedLines: unmatched };
-}
-
-function normalizeBase64(input) {
-  const text = String(input || '').trim();
-  if (!text) return '';
-  const marker = 'base64,';
-  const idx = text.indexOf(marker);
-  if (idx >= 0) return text.slice(idx + marker.length).trim();
-  return text;
-}
-
-export async function uploadOrderImage({
-  formId,
-  override = {},
-  orderReference,
-  orderlineId,
-  fileIndex,
-  fileName,
-  mimeType,
-  fileBase64,
-  photoType = 'sofa_photos',
-  accountType = 'customer',
-  lang = 'en',
-}) {
-  const session = await createCwSession(override);
-  const targetUrl = `${session.baseUrl.replace(/\/+$/, '')}/${encodeURIComponent(lang)}/my-account/uploadphotos`;
-
-  const cleanBase64 = normalizeBase64(fileBase64);
-  if (!cleanBase64) {
-    const err = new Error('fileBase64 is required');
-    err.code = 'CW_IMAGE_MISSING_FILE';
-    throw err;
-  }
-
-  const bytes = Buffer.from(cleanBase64, 'base64');
-  const blob = new Blob([bytes], { type: mimeType || 'application/octet-stream' });
-  const form = new FormData();
-  form.append('product_photo', blob, fileName || 'upload.jpg');
-  form.append('order_reference', String(orderReference || `CW-${formId}`));
-  form.append('orderline_id', String(orderlineId || ''));
-  form.append('file_index', String(fileIndex || 1));
-  form.append('photo_type', String(photoType || 'sofa_photos'));
-  form.append('account_type', String(accountType || 'customer'));
-
-  const response = await fetchWithTimeout(
-    targetUrl,
-    {
-      method: 'POST',
-      headers: {
-        accept: '*/*',
-        cookie: buildCookieHeader(session.cookieJar),
-        origin: session.baseUrl,
-        referer: `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
-        'x-csrftoken': session.csrfToken,
-        'x-requested-with': 'XMLHttpRequest',
-        'user-agent': 'OpenPaint-CW-Vercel/1.0',
-      },
-      body: form,
-    },
-    { label: 'uploadOrderImage' }
-  );
-
-  const rawText = await response.text().catch(() => '');
-  let body = null;
-  try {
-    body = rawText ? JSON.parse(rawText) : null;
-  } catch {
-    body = rawText;
-  }
-
-  const businessOk = Boolean(body?.is_valid);
-  return {
-    ok: response.ok && businessOk,
-    status: response.status,
-    targetUrl,
-    body,
-    session: {
-      loginStatus: session.loginStatus,
-      loginLocation: session.loginLocation,
-      hasSessionId: Boolean(session.cookieJar.sessionid),
-    },
-  };
-}
-
-export async function deleteOrderImage({
-  formId,
-  override = {},
-  orderReference,
-  orderlineId,
-  fileIndex,
-  photoType = 'sofa_photos',
-  accountType = 'customer',
-  lang = 'en',
-}) {
-  const session = await createCwSession(override);
-  const base = `${session.baseUrl.replace(/\/+$/, '')}`;
-  const candidateUrls = [
-    // Verified by user capture
-    `${base}/dashboard/order/photo-delete`,
-    // Legacy fallbacks
-    `${base}/${encodeURIComponent(lang)}/my-account/deletephoto`,
-    `${base}/${encodeURIComponent(lang)}/my-account/deletephotos`,
-    `${base}/${encodeURIComponent(lang)}/my-account/removephoto`,
-    `${base}/${encodeURIComponent(lang)}/my-account/removephotos`,
-  ];
-
-  const buildForm = () => {
-    const form = new FormData();
-    form.append('order_reference', String(orderReference || `CW-${formId}`));
-    form.append('orderline_id', String(orderlineId || ''));
-    form.append('file_index', String(fileIndex || 1));
-    form.append('photo_type', String(photoType || 'sofa_photos'));
-    form.append('account_type', String(accountType || 'customer'));
-    return form;
-  };
-
-  const attempts = [];
-  for (const targetUrl of candidateUrls) {
-    const response = await fetchWithTimeout(
-      targetUrl,
-      {
-        method: 'POST',
-        headers: {
-          accept: '*/*',
-          cookie: buildCookieHeader(session.cookieJar),
-          origin: session.baseUrl,
-          referer: `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
-          'x-csrftoken': session.csrfToken,
-          'x-requested-with': 'XMLHttpRequest',
-          'user-agent': 'OpenPaint-CW-Vercel/1.0',
-        },
-        body: buildForm(),
-      },
-      { label: 'deleteOrderImage' }
-    );
-
-    const rawText = await response.text().catch(() => '');
-    let body = null;
-    try {
-      body = rawText ? JSON.parse(rawText) : null;
-    } catch {
-      body = rawText;
-    }
-
-    attempts.push({
-      targetUrl,
-      status: response.status,
-      body,
-    });
-
-    if (
-      response.ok &&
-      (body?.is_valid === true || body?.status === 'success' || body?.status === 'ok')
-    ) {
-      return {
-        ok: true,
-        status: response.status,
-        targetUrl,
-        body,
-        attempts,
-        session: {
-          loginStatus: session.loginStatus,
-          loginLocation: session.loginLocation,
-          hasSessionId: Boolean(session.cookieJar.sessionid),
-        },
-      };
-    }
-  }
-
-  return {
-    ok: false,
-    status: attempts[attempts.length - 1]?.status || 500,
-    targetUrl: attempts[attempts.length - 1]?.targetUrl || `${base}/deletephoto`,
-    body: attempts[attempts.length - 1]?.body || null,
-    attempts,
-    session: {
-      loginStatus: session.loginStatus,
-      loginLocation: session.loginLocation,
-      hasSessionId: Boolean(session.cookieJar.sessionid),
-    },
-  };
-}
-
-export async function submitCwMeasureForm({ formId, payload = {}, override = {} }) {
-  const session = await createCwSession(override);
-  const isFormSavePayload =
-    Boolean(payload && typeof payload === 'object') &&
-    (Boolean(payload.form_data && typeof payload.form_data === 'object') ||
-      typeof payload.postdata === 'string');
-  const isGraphqlPayload =
-    !isFormSavePayload &&
-    Boolean(payload && typeof payload === 'object') &&
-    (typeof payload.query === 'string' || typeof payload.operationName === 'string');
-
-  const targetUrl = isGraphqlPayload
-    ? `${session.baseUrl.replace(/\/+$/, '')}/api/`
-    : isFormSavePayload
-      ? `${session.baseUrl.replace(/\/+$/, '')}/order-management/measure-tool/form/save/`
-      : `${session.baseUrl.replace(/\/+$/, '')}/order-management/measure-tool/measure-form/save-measure-form/${encodeURIComponent(formId)}/`;
-
-  let requestBody;
-  let contentType;
-  if (isGraphqlPayload) {
-    requestBody = JSON.stringify(payload);
-    contentType = 'application/json';
-  } else if (isFormSavePayload) {
-    const form = new FormData();
-    const postdata =
-      typeof payload.postdata === 'string'
-        ? payload.postdata
-        : JSON.stringify({ form_data: payload.form_data || {} });
-    form.append('postdata', postdata);
-    requestBody = form;
-    contentType = null;
-  } else {
-    const legacyBody = {
-      ...(payload && typeof payload === 'object' ? payload : {}),
-      form_ID: String(payload?.form_ID || formId),
-    };
-    requestBody = JSON.stringify(legacyBody);
-    contentType = 'text/plain;charset=UTF-8';
-  }
-
-  const headers = {
-    accept: '*/*',
-    cookie: buildCookieHeader(session.cookieJar),
-    origin: session.baseUrl,
-    referer: `${session.baseUrl.replace(/\/+$/, '')}/dashboard/`,
-    'x-csrftoken': session.csrfToken,
-    'x-requested-with': 'XMLHttpRequest',
-    'user-agent': 'OpenPaint-CW-Vercel/1.0',
-  };
-  if (contentType) headers['content-type'] = contentType;
-
-  const upstreamRes = await fetchWithTimeout(
-    targetUrl,
-    {
-      method: 'POST',
-      headers,
-      body: requestBody,
-    },
-    { label: 'submitCwMeasureForm' }
-  );
-
-  const rawText = await upstreamRes.text().catch(() => '');
-  let parsedBody = null;
-  try {
-    parsedBody = rawText ? JSON.parse(rawText) : null;
-  } catch {
-    parsedBody = null;
-  }
-
-  const bodyValue = parsedBody || rawText;
-  let businessStatus = '';
-  let businessOk = true;
-
-  if (isGraphqlPayload) {
-    const gqlErrors = Array.isArray(bodyValue?.errors) ? bodyValue.errors : [];
-    const orderUpdateErrors = Array.isArray(bodyValue?.data?.orderUpdate?.errors)
-      ? bodyValue.data.orderUpdate.errors
-      : [];
-    businessOk = gqlErrors.length === 0 && orderUpdateErrors.length === 0;
-    businessStatus = businessOk ? 'success' : 'error';
-  } else {
-    businessStatus =
-      bodyValue && typeof bodyValue === 'object'
-        ? String(
-            bodyValue?.status ||
-              bodyValue?.content?.status ||
-              bodyValue?.content?.content?.status ||
-              ''
-          ).toLowerCase()
-        : '';
-    businessOk = businessStatus ? businessStatus === 'success' || businessStatus === 'ok' : true;
-  }
-
-  return {
-    ok: upstreamRes.ok && businessOk,
-    status: upstreamRes.status,
-    requestType: isGraphqlPayload ? 'graphql' : isFormSavePayload ? 'form-save' : 'measure-form',
-    targetUrl,
-    businessStatus: businessStatus || null,
-    body: bodyValue,
-    session: {
-      loginStatus: session.loginStatus,
-      loginLocation: session.loginLocation,
-      hasSessionId: Boolean(session.cookieJar.sessionid),
-    },
-  };
-}
-
-function toNumber(value) {
-  if (value === null || value === undefined) return NaN;
-  if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
-  const normalized = String(value).trim();
-  if (!normalized || normalized === '-') return NaN;
-  const parsed = Number.parseFloat(normalized);
-  return Number.isFinite(parsed) ? parsed : NaN;
-}
-
-function buildRuleContext(model) {
-  const ctx = {
-    abs: Math.abs,
-    min: Math.min,
-    max: Math.max,
-    pow: Math.pow,
-    round: Math.round,
-  };
-  const files = Array.isArray(model?.files) ? model.files : [];
-  files.forEach(file => {
-    Object.entries(file?.field_data || {}).forEach(([key, raw]) => {
-      ctx[key] = toNumber(raw);
-    });
-  });
-  return ctx;
-}
-
-function evaluateRuleExpression(expression, context) {
-  if (!expression || typeof expression !== 'string') return false;
-  try {
-    const keys = Object.keys(context);
-    const values = keys.map(key => context[key]);
-    const fn = new Function(...keys, `return Boolean(${expression});`);
-    return Boolean(fn(...values));
-  } catch {
-    return false;
-  }
-}
-
-export function analyzeMeasureFormPayload(payload) {
-  const products = Array.isArray(payload?.products) ? payload.products : [];
-  const issues = [];
-  const missingFields = [];
-
-  products.forEach(product => {
-    const modelList = Array.isArray(product?.model_list) ? product.model_list : [];
-    modelList.forEach(model => {
-      const files = Array.isArray(model?.files) ? model.files : [];
-      const rulesByField = model?.rules && typeof model.rules === 'object' ? model.rules : {};
-      const context = buildRuleContext(model);
-
-      files.forEach(file => {
-        Object.entries(file?.field_data || {}).forEach(([fieldKey, fieldValue]) => {
-          const raw =
-            fieldValue === null || fieldValue === undefined ? '' : String(fieldValue).trim();
-          if (raw === '') {
-            missingFields.push({
-              reference: product?.reference || null,
-              model: model?.name || null,
-              file: file?.name || null,
-              field: fieldKey,
-            });
-          }
-        });
-      });
-
-      Object.entries(rulesByField).forEach(([fieldKey, ruleList]) => {
-        if (!Array.isArray(ruleList)) return;
-        ruleList.forEach(rule => {
-          const expression = rule?.eval;
-          const triggered = evaluateRuleExpression(expression, context);
-          if (!triggered) return;
-          issues.push({
-            reference: product?.reference || null,
-            model: model?.name || null,
-            field: fieldKey,
-            behaviour: String(rule?.behaviour || 'error').toLowerCase(),
-            message: String(rule?.message || ''),
-            eval: expression,
-          });
-        });
-      });
-    });
-  });
-
-  const errorCount = issues.filter(item => item.behaviour === 'error').length;
-  const warningCount = issues.filter(item => item.behaviour === 'warning').length;
-  const noticeCount = issues.filter(item => item.behaviour === 'notice').length;
-  const blockingCount = errorCount + warningCount + missingFields.length;
-
-  return {
-    totals: {
-      products: products.length,
-      issues: issues.length,
-      errorCount,
-      warningCount,
-      noticeCount,
-      missingFieldCount: missingFields.length,
-      blockingCount,
-    },
-    issues,
-    missingFields,
-    canConfirm: blockingCount === 0,
-  };
-}
-
-export function buildFormSavePayloadFromFetched({
-  formId,
-  fetchedContent,
-  confirmed,
-  employeeName,
-  user,
-  lang = 'en',
-}) {
-  const products = Array.isArray(fetchedContent?.products)
-    ? fetchedContent.products.map(product => ({
-        reference: product.reference,
-        name: product.name || product.label || '',
-        enabled: product.enabled !== false,
-        measurement_id: product.measurement_id || product.measurements_id,
-        measurement_data: {
-          model_list: Array.isArray(product?.measurement_data?.model_list)
-            ? product.measurement_data.model_list
-            : Array.isArray(product?.model_list)
-              ? product.model_list
-              : [],
-        },
-      }))
-    : [];
-
-  return {
-    form_data: {
-      id: Number(formId),
-      products,
-      confirmed: Boolean(confirmed),
-      link: fetchedContent?.link || '',
-      raw_link: fetchedContent?.raw_link || '',
-      lang: fetchedContent?.lang || lang,
-      user: user || 'Admin',
-      employeeName: employeeName || 'OpenPaint Relay',
-    },
-  };
-}
-
-export function buildMeasureSavePayloadFromTable(tableContent, formId, defaults = {}) {
-  const sourceProducts = Array.isArray(tableContent?.products_list)
-    ? tableContent.products_list
-    : Array.isArray(tableContent?.products)
-      ? tableContent.products
-      : [];
-
-  const products = sourceProducts.map(product => {
-    const sourceModelList = Array.isArray(product.model_list)
-      ? product.model_list
-      : Array.isArray(product.measurement_data?.model_list)
-        ? product.measurement_data.model_list
-        : [];
-
-    return {
-      form_product_ID: product.measurements_id || product.measurement_id,
-      reference: product.reference,
-      label: product.label || product.name,
-      enabled: product.enabled !== false,
-      model_list: sourceModelList.map(model => ({
-        set_model_ID: model.set_model_ID,
-        name: model.name,
-        label: model.label,
-        files: Array.isArray(model.files)
-          ? model.files.map(file => ({
-              name: file.name,
-              label: file.label,
-              field_data: file.field_data || {},
-              quantity: file.quantity || 1,
-            }))
-          : [],
-      })),
-    };
-  });
-
-  return {
-    form_ID: String(formId),
-    employeeName: defaults.employeeName || 'OpenPaint Relay',
-    user: defaults.user || 'Admin',
-    unit: tableContent?.unit || defaults.unit || 'cm',
-    products,
-  };
 }
 
 export async function fetchCwMeasurementsTable({ formId, lang = 'en', override = {} }) {
