@@ -3,6 +3,10 @@
 
 import { imageRegistry } from './ImageRegistry.js';
 
+function isPdfFile(file) {
+  return file?.type === 'application/pdf' || /\.pdf$/i.test(file?.name || '');
+}
+
 const DEFAULT_HEIC_WORKER_URL = 'https://YOUR-CLOUDFLARE-WORKER.example.com/convert';
 const VIEW_PREFERENCE = ['front', 'side', 'back', 'cushion'];
 
@@ -83,7 +87,7 @@ export class UploadManager {
     input.id = '__uploadInput';
     input.type = 'file';
     input.multiple = true;
-    input.accept = 'image/*,.heic,.heif';
+    input.accept = 'image/*,.heic,.heif,.pdf,application/pdf';
     input.style.display = 'none';
     input.addEventListener('change', e => {
       const files = e.target.files;
@@ -103,7 +107,7 @@ export class UploadManager {
       return [];
     }
 
-    const files = Array.from(fileList || []);
+    let files = Array.from(fileList || []);
     if (!files.length) return;
 
     if (window.app && !window.app.hasUploadedFirstImage) {
@@ -120,6 +124,22 @@ export class UploadManager {
         }
       }
       window.dispatchEvent(new CustomEvent('firstupload'));
+    }
+
+    // Comfort Works measuring-diagram PDFs import as labelled measurements.
+    const pdfFiles = files.filter(file => isPdfFile(file));
+    if (pdfFiles.length) {
+      files = files.filter(file => !isPdfFile(file));
+      this.isHandlingUpload = true;
+      try {
+        const { handleCwFormPdfFile } = await import('./ui/cw-form-pdf-import');
+        for (const file of pdfFiles) {
+          await handleCwFormPdfFile(file);
+        }
+      } finally {
+        this.isHandlingUpload = false;
+      }
+      if (!files.length) return [];
     }
 
     this.isHandlingUpload = true;
