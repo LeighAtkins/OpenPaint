@@ -9,6 +9,11 @@ import {
   measureIssues,
   parseMeasure,
   soleModelForReference,
+  modelGroups,
+  defaultFieldFor,
+  suggestTargets,
+  pdfValueToForm,
+  refineTargets,
 } from '../../src/modules/ui/noms-link-core';
 import { normalizeSofaMetadata, mergeSofaMetadata } from '../../src/modules/sofa-metadata.js';
 
@@ -136,5 +141,195 @@ describe('NOMS measurement link helpers', () => {
     const merged = mergeSofaMetadata(metadata, { naming: { customerName: 'Jason' } });
     expect(merged.externalSources.nomsOrders['126202'].formId).toBe('6988281905460');
     expect(merged.externalSources.gorgiasTickets).toEqual({});
+  });
+});
+
+describe('Filling the form from a measuring PDF', () => {
+  // Ben's order: chaise frame model (front/side/back files) and armless frame.
+  const benForm = {
+    unit: 'cm',
+    products: [
+      {
+        reference: 'CS5L-SSA-L',
+        enabled: false,
+        model_list: [
+          {
+            name: 'CS5L-SSA-HB2-L',
+            label: 'Sofa Frame',
+            files: [
+              {
+                label: 'Front',
+                field_data: {
+                  A1: '',
+                  A2: '',
+                  A3: '',
+                  B1: '',
+                  B2: '',
+                  C1: '',
+                  C2: '',
+                  C4: '',
+                  D: '',
+                },
+              },
+              {
+                label: 'Side',
+                field_data: {
+                  F1: '',
+                  F2: '',
+                  F3: '',
+                  F4: '',
+                  G1: '',
+                  G2: '',
+                  H1: '',
+                  H3: '',
+                  M1: '',
+                  M2: '',
+                  M3: '',
+                },
+              },
+              { label: 'Back', field_data: { J1: '', L1: '', L2: '', M4: '' } },
+            ],
+          },
+        ],
+      },
+      {
+        reference: 'CS3X-NA',
+        model_list: [
+          {
+            name: 'CS3B-NA',
+            label: 'Frame',
+            files: [
+              { label: 'Front', field_data: { A2: '', A3: '', C: '', D: '' } },
+              {
+                label: 'Side',
+                field_data: { F: '', G1: '', G2: '', H1: '', H2: '', H3: '', M4: '' },
+              },
+              { label: 'Back', field_data: { J1: '', L1: '', L2: '' } },
+            ],
+          },
+          {
+            name: 'CC-ST-BE',
+            label: 'Seat Cushion',
+            files: [{ field_data: { A: '', B: '', C: '', D: '' } }],
+          },
+        ],
+      },
+    ],
+  };
+  const groups = modelGroups(formModels(benForm, { includeDisabled: true }));
+
+  it('groups a model’s front, side and back files', () => {
+    expect(groups[0].title).toBe('CS5L-SSA-L · Sofa Frame (not enabled on the form)');
+    expect(groups.map(g => [g.key, Object.keys(g.fields).length])).toEqual([
+      ['0:0', 24],
+      ['1:0', 14],
+      ['1:1', 4],
+    ]);
+    expect(groups[0].fields.F1).toBe('0:0:1');
+    expect(groups[0].fields.J1).toBe('0:0:2');
+    expect(formModels(benForm).map(m => m.key)).not.toContain('0:0:0');
+    expect(formModels(benForm, { includeDisabled: true })[0].title).toMatch(
+      /not enabled on the form/
+    );
+  });
+
+  it('maps PDF letters onto form fields, including D1 to D', () => {
+    const fields = Object.keys(groups[0].fields);
+    expect(defaultFieldFor('A1', fields)).toBe('A1');
+    expect(defaultFieldFor('D1', fields)).toBe('D');
+    expect(defaultFieldFor('C3', fields)).toBe('');
+    expect(defaultFieldFor('F*', ['F'])).toBe('F');
+  });
+
+  it('suggests the models that share most of a diagram’s letters', () => {
+    const chaise = [
+      'A1',
+      'A2',
+      'A3',
+      'B1',
+      'B2',
+      'C1',
+      'C2',
+      'C3',
+      'D1',
+      'F1',
+      'F2',
+      'F3',
+      'F4',
+      'G1',
+      'G2',
+      'H3',
+      'M1',
+      'M2',
+      'M3',
+    ];
+    expect(suggestTargets(chaise, groups)).toEqual(['0:0']);
+    const middle = [
+      'A1',
+      'A2',
+      'A3',
+      'B',
+      'C',
+      'D',
+      'F',
+      'G1',
+      'G2',
+      'H1',
+      'H2',
+      'H3',
+      'J1',
+      'L1',
+      'L2',
+    ];
+    expect(suggestTargets(middle, groups)).toEqual(['1:0']);
+  });
+
+  it('converts PDF inches to the form unit', () => {
+    expect(pdfValueToForm(22.25, 'inch', 'cm')).toBe('56.52');
+    expect(pdfValueToForm(22.25, 'inch', 'in')).toBe('22.25');
+    expect(pdfValueToForm(81.28, 'cm', 'in')).toBe('32');
+  });
+
+  it('keeps a PDF to the products its frame matched, and picks seat/back by title', () => {
+    const models = modelGroups(formModels(benForm, { includeDisabled: true }));
+    const labels = Object.fromEntries(models.map(m => [m.key, m.title]));
+    const picks = refineTargets(
+      [
+        {
+          file: 'R and L',
+          title: 'Front and Side',
+          labels: [
+            'A1',
+            'A2',
+            'A3',
+            'B1',
+            'B2',
+            'C1',
+            'C2',
+            'D1',
+            'F1',
+            'G1',
+            'G2',
+            'M1',
+            'M2',
+            'M3',
+          ],
+        },
+        { file: 'R and L', title: 'Back', labels: ['J1', 'L1', 'L2'] },
+        {
+          file: 'Middle',
+          title: 'Page 1',
+          labels: ['A2', 'A3', 'C', 'D', 'F', 'G1', 'G2', 'H1', 'H2', 'H3', 'J1', 'L1', 'L2'],
+        },
+        {
+          file: 'Middle',
+          title: 'BOX SHAPED CUSHION, seat cushions',
+          labels: ['A', 'B', 'C', 'D'],
+        },
+      ],
+      models,
+      labels
+    );
+    expect(picks).toEqual([['0:0'], ['0:0'], ['1:0'], ['1:1']]);
   });
 });

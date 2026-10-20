@@ -162,11 +162,11 @@ export async function extractCwPageData(
   const flip = (p: CwPoint): CwPoint => ({ x: p.x - vx0, y: height - (p.y - vy0) });
 
   const annotations = await page.getAnnotations();
-  const fields: CwField[] = annotations
-    .filter(a => a?.fieldType === 'Tx' && String(a.fieldValue ?? '').trim() !== '')
+  const textFields = annotations
+    .filter(a => a?.fieldType === 'Tx')
     .map(a => ({
       name: String(a.fieldName || ''),
-      value: String(a.fieldValue).trim(),
+      value: String(a.fieldValue ?? '').trim(),
       rect: rectFromPdf(
         [a.rect[0] - vx0, a.rect[1] - vy0, a.rect[2] - vx0, a.rect[3] - vy0],
         height
@@ -174,7 +174,7 @@ export async function extractCwPageData(
     }));
 
   const textContent = await page.getTextContent();
-  const texts: CwTextItem[] = textContent.items
+  const allTexts: CwTextItem[] = textContent.items
     .filter(item => typeof item?.str === 'string' && item.str.trim())
     .map(item => {
       const [, , , d, e, f] = item.transform;
@@ -186,6 +186,23 @@ export async function extractCwPageData(
         rect: { x0: x, y0: baseline - h, x1: x + (item.width || 0), y1: baseline },
       };
     });
+  // A form that was printed or flattened keeps its (now empty) fields, with the
+  // typed values drawn as page text inside them. Read those back as values.
+  const absorbed = new Set<CwTextItem>();
+  const fields: CwField[] = textFields
+    .map(field => {
+      if (field.value) return field;
+      const inside = allTexts.filter(t => contains(field.rect, center(t.rect), 2));
+      const value = inside
+        .map(t => t.str)
+        .join(' ')
+        .trim();
+      if (!value || parseNumericValue(value) === null) return field;
+      inside.forEach(t => absorbed.add(t));
+      return { ...field, value };
+    })
+    .filter(field => field.value !== '');
+  const texts = allTexts.filter(t => !absorbed.has(t));
 
   const strokes: CwStroke[] = [];
   const { fnArray, argsArray } = await page.getOperatorList();
@@ -336,10 +353,36 @@ function cleanText(raw: string): string {
     .trim();
 }
 
+const VULGAR_FRACTIONS: Record<string, number> = {
+  '¼': 0.25,
+  '½': 0.5,
+  '¾': 0.75,
+  '⅛': 0.125,
+  '⅜': 0.375,
+  '⅝': 0.625,
+  '⅞': 0.875,
+};
+/** "71", "33.5", "33,5 cm", 22-1/4", 36 3/4", "8¼", "45'" (a typo for inches) -> number. A bare "1/2" is not a measurement. */
 export function parseNumericValue(raw: string): number | null {
-  const match = /^\s*(\d+(?:[.,]\d+)?)\s*(?:cm|in|"|inch(?:es)?)?\s*$/i.exec(raw);
-  if (!match) return null;
-  const value = Number(match[1].replace(',', '.'));
+  let text = String(raw || '')
+    .trim()
+    .replace(/\s*(?:cm|in|inch(?:es)?|["”″']+)\s*$/i, '')
+    .trim();
+  let extra = 0;
+  text = text
+    .replace(/[¼½¾⅛⅜⅝⅞]/g, c => {
+      extra += VULGAR_FRACTIONS[c] || 0;
+      return '';
+    })
+    .trim();
+  let value: number | null = null;
+  let match: RegExpExecArray | null;
+  if (!text && extra) value = 0;
+  else if ((match = /^(\d+)\s*(?:-|\s)\s*(\d+)\s*\/\s*(\d+)$/.exec(text)))
+    value = Number(match[1]) + Number(match[2]) / Number(match[3]);
+  else if ((match = /^(\d+(?:[.,]\d+)?)$/.exec(text))) value = Number(match[1].replace(',', '.'));
+  if (value === null) return null;
+  value += extra;
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 
@@ -689,5 +732,11 @@ export function detectDocumentUnit(pages: CwPageData[]): { unit: 'cm' | 'inch'; 
     const unit = detectUnit(page.texts);
     if (!unit.assumed) return unit;
   }
+  // Values typed with their own unit marks (71", 22-1/4", 33 cm) settle it.
+  const values = pages.flatMap(page => page.fields.map(field => field.value));
+  const inches = values.filter(v => /(?:["”″]|\bin(?:ch(?:es)?)?)\s*$/i.test(v)).length;
+  const cms = values.filter(v => /\bcm\s*$/i.test(v)).length;
+  if (inches > cms && inches >= 2) return { unit: 'inch', assumed: false };
+  if (cms > inches && cms >= 2) return { unit: 'cm', assumed: false };
   return { unit: 'cm', assumed: true };
 }

@@ -36,6 +36,9 @@ export interface NomsModelEntry {
   fields: string[];
   values: Record<string, string>;
   rules: NonNullable<NomsFormModel['rules']>;
+  enabled?: boolean;
+  /** "CS5L-SSA-L · Sofa Frame": the model without the file view. */
+  modelTitle?: string;
 }
 
 const STAFF_EMAIL = /^[^@\s]+@comfort-works\.com$/i;
@@ -48,23 +51,38 @@ export function isComfortWorksStaff(
 }
 
 /** One entry per measured file on the form, keyed "product:model:file". */
-export function formModels(content: NomsFormContent | null | undefined): NomsModelEntry[] {
+export function formModels(
+  content: NomsFormContent | null | undefined,
+  options: { includeDisabled?: boolean } = {}
+): NomsModelEntry[] {
   const out: NomsModelEntry[] = [];
   (content?.products || []).forEach((product, p) => {
-    if (product?.enabled === false) return;
+    if (product?.enabled === false && !options.includeDisabled) return;
     (product?.model_list || []).forEach((model, m) => {
       const files = model?.files || [];
       files.forEach((file, f) => {
         const reference = String(product?.reference || model?.name || '').trim();
         const label = String(model?.label || model?.name || '').trim();
         const parts = [reference, label].filter(Boolean);
-        if (files.length > 1 && file?.label) parts.push(String(file.label));
+        if (files.length > 1) {
+          // Frame files are named Front_<model>, Side_<model>, Back_<model>.
+          const view = /^(Front|Side|Back)_/i.exec(String(file?.name || ''))?.[1];
+          if (view) parts.push(view);
+          else if (file?.label && file.label !== label) parts.push(String(file.label));
+        }
         const quantity = Number(file?.quantity) > 1 ? ` × ${file.quantity}` : '';
         out.push({
           key: `${p}:${m}:${f}`,
           reference,
           modelName: String(model?.name || reference),
-          title: parts.join(' · ') + quantity,
+          title:
+            parts.join(' · ') +
+            quantity +
+            (product?.enabled === false ? ' (not enabled on the form)' : ''),
+          enabled: product?.enabled !== false,
+          modelTitle:
+            [reference, label].filter(Boolean).join(' · ') +
+            (product?.enabled === false ? ' (not enabled on the form)' : ''),
           fields: Object.keys(file?.field_data || {}),
           values: { ...(file?.field_data || {}) },
           rules: model?.rules || {},
@@ -281,4 +299,124 @@ export function changedFields(
     }
   }
   return out;
+}
+
+// ---------------------------------------------------------------- PDF mapping
+// A filled measuring PDF (one diagram per group) is applied to one or more form
+// models (a model = all the files of one product model, e.g. a frame's front,
+// side and back). Letters that exist on the model map straight across; the rest
+// are chosen by hand.
+
+export interface NomsModelGroup {
+  key: string; // "product:model"
+  title: string;
+  /** field -> file key ("product:model:file") holding it */
+  fields: Record<string, string>;
+}
+
+export function modelGroups(models: NomsModelEntry[]): NomsModelGroup[] {
+  const groups = new Map<string, NomsModelGroup>();
+  for (const model of models) {
+    const [p, m] = model.key.split(':');
+    const key = `${p}:${m}`;
+    const group = groups.get(key) || {
+      key,
+      title: model.modelTitle || model.title,
+      fields: {},
+    };
+    for (const field of model.fields) if (!group.fields[field]) group.fields[field] = model.key;
+    groups.set(key, group);
+  }
+  return Array.from(groups.values());
+}
+
+/** The form field a PDF label most likely is on a model (exact, D1<->D), or ''. */
+export function defaultFieldFor(label: string, fields: Iterable<string>): string {
+  const set = new Set(fields);
+  const clean = String(label || '')
+    .replace(/\*$/, '')
+    .trim()
+    .toUpperCase();
+  if (set.has(clean)) return clean;
+  const bare = /^([A-Z])1$/.exec(clean);
+  if (bare && set.has(bare[1]) && !set.has(`${bare[1]}2`)) return bare[1];
+  if (/^[A-Z]$/.test(clean) && set.has(`${clean}1`) && !set.has(`${clean}2`)) return `${clean}1`;
+  return '';
+}
+
+/** Models that share most of a PDF diagram's letters. */
+export function suggestTargets(
+  labels: string[],
+  groups: NomsModelGroup[],
+  minShare = 0.6
+): string[] {
+  if (!labels.length) return [];
+  const scored = groups.map(group => {
+    const hits = labels.filter(label => defaultFieldFor(label, Object.keys(group.fields))).length;
+    return { key: group.key, share: hits / labels.length, size: Object.keys(group.fields).length };
+  });
+  const best = Math.max(0, ...scored.map(s => s.share));
+  if (best < minShare) return [];
+  return scored.filter(s => s.share >= best - 0.05).map(s => s.key);
+}
+
+/** PDF value (number in `fromUnit`) as form text in `toUnit` ("cm" / "in"). */
+export function pdfValueToForm(value: number, fromUnit: 'cm' | 'inch', toUnit: string): string {
+  const inches = fromUnit === 'inch' ? value : value / 2.54;
+  const out = toUnit === 'cm' ? inches * 2.54 : inches;
+  return String(Math.round(out * 100) / 100);
+}
+
+export interface PdfGroupLike {
+  file: string;
+  title: string;
+  labels: string[];
+}
+
+/**
+ * Pick the form models each PDF diagram fills. A file's largest diagram (its
+ * frame) picks the products; the file's other diagrams are kept to those
+ * products. Among equally good models a "seat"/"back" word in the diagram title
+ * decides; a tie that is still open is left for the person to choose.
+ */
+export function refineTargets(
+  groups: PdfGroupLike[],
+  models: NomsModelGroup[],
+  modelLabels: Record<string, string>
+): string[][] {
+  const productOf = (key: string): string => key.split(':')[0];
+  const anchors = new Map<string, Set<string>>();
+  for (const file of new Set(groups.map(g => g.file))) {
+    const inFile = groups.filter(g => g.file === file);
+    const biggest = inFile.reduce((a, b) => (b.labels.length > a.labels.length ? b : a));
+    const products = new Set(suggestTargets(biggest.labels, models).map(productOf));
+    if (products.size) anchors.set(file, products);
+  }
+  return groups.map(group => {
+    const allowed = anchors.get(group.file);
+    const pool = allowed ? models.filter(m => allowed.has(productOf(m.key))) : models;
+    let picks = suggestTargets(group.labels, pool.length ? pool : models);
+    // One model per product: break ties with the title, else leave it open.
+    const byProduct = new Map<string, string[]>();
+    for (const key of picks)
+      byProduct.set(productOf(key), [...(byProduct.get(productOf(key)) || []), key]);
+    const title = group.title.toLowerCase();
+    const word =
+      /\bseat/.test(title) && !/\bback/.test(title)
+        ? 'seat'
+        : /\bback/.test(title) && !/\bseat/.test(title)
+          ? 'back'
+          : '';
+    picks = [];
+    for (const keys of byProduct.values()) {
+      if (keys.length === 1) picks.push(keys[0]);
+      else if (word) {
+        const named = keys.filter(key =>
+          new RegExp(`\\b${word}`, 'i').test(modelLabels[key] || '')
+        );
+        if (named.length === 1) picks.push(named[0]);
+      }
+    }
+    return picks;
+  });
 }

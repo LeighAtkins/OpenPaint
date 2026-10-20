@@ -366,7 +366,7 @@ export function normalizeNomsOrders(raw) {
         const entry = value && typeof value === 'object' ? value : {};
         const orderNumber = String(entry.orderNumber || orderKey || '').trim();
         const formId = String(entry.formId || '').trim();
-        if (!/^\d{3,10}$/.test(orderNumber) || !/^\d{10,16}$/.test(formId)) return null;
+        if (!/^\d{3,10}$/.test(orderNumber) || !/^\d{5,16}$/.test(formId)) return null;
         const viewBindings = {};
         for (const [viewId, key] of Object.entries(entry.viewBindings || {})) {
           if (typeof key === 'string' && NOMS_MODEL_KEY.test(key) && viewId)

@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   analyzeCwFormPage,
+  extractCwPageData,
+  detectDocumentUnit,
   detectUnit,
   parseNumericValue,
   type CwPageData,
@@ -202,10 +204,69 @@ describe('CW form values and units', () => {
     expect(parseNumericValue('n/a')).toBeNull();
   });
 
+  it('reads values typed with inch marks and fractions', () => {
+    expect(parseNumericValue('22-1/4"')).toBe(22.25);
+    expect(parseNumericValue('36 3/4"')).toBe(36.75);
+    expect(parseNumericValue('8¼')).toBe(8.25);
+    expect(parseNumericValue('71"')).toBe(71);
+    expect(parseNumericValue("45'")).toBe(45);
+    expect(parseNumericValue('33,5 cm')).toBe(33.5);
+  });
+
+  it('takes the unit from values typed with inch marks', () => {
+    const page = (values: string[]) => ({
+      pageNumber: 1,
+      width: 600,
+      height: 800,
+      texts: [],
+      strokes: [],
+      fields: values.map((value, i) => ({
+        name: `f${i}`,
+        value,
+        rect: { x0: 0, y0: i * 20, x1: 40, y1: i * 20 + 15 },
+      })),
+    });
+    expect(detectDocumentUnit([page(['71"', '22-1/4"', '6'])])).toEqual({
+      unit: 'inch',
+      assumed: false,
+    });
+    expect(detectDocumentUnit([page(['180 cm', '90 cm'])])).toEqual({ unit: 'cm', assumed: false });
+    expect(detectDocumentUnit([page(['71', '22'])])).toEqual({ unit: 'cm', assumed: true });
+  });
+
   it('stores cm values converted from clean inches as inches', () => {
     expect(measurementInput(104.78, 'cm')).toBe('41.25 in');
     expect(measurementInput(48.9, 'cm')).toBe('19.25 in');
     expect(measurementInput(100, 'cm')).toBe('100cm');
     expect(measurementInput(25, 'inch')).toBe('25 in');
+  });
+});
+
+describe('Flattened forms', () => {
+  it('reads values printed inside empty form fields', async () => {
+    const page = {
+      pageNumber: 1,
+      view: [0, 0, 600, 800],
+      getAnnotations: async () => [
+        { fieldType: 'Tx', fieldName: 'Text Field 1', fieldValue: '', rect: [523, 571, 559, 587] },
+        { fieldType: 'Tx', fieldName: 'Text Field 2', fieldValue: '', rect: [523, 551, 559, 568] },
+        { fieldType: 'Tx', fieldName: 'Text Field 3', fieldValue: '', rect: [523, 531, 559, 547] },
+      ],
+      // A1 label and the typed value 71" inside field 1; 22-1/4" inside field 2.
+      getTextContent: async () => ({
+        items: [
+          { str: 'A1', transform: [1, 0, 0, 11, 500, 583], width: 12, height: 11 },
+          { str: '71"', transform: [1, 0, 0, 11, 524, 573], width: 16, height: 11 },
+          { str: '22-1/4"', transform: [1, 0, 0, 11, 526, 553], width: 30, height: 11 },
+        ],
+      }),
+      getOperatorList: async () => ({ fnArray: [], argsArray: [] }),
+    };
+    const data = await extractCwPageData(page as any, {} as any);
+    expect(data.fields.map(f => [f.name, f.value])).toEqual([
+      ['Text Field 1', '71"'],
+      ['Text Field 2', '22-1/4"'],
+    ]);
+    expect(data.texts.map(t => t.str)).toEqual(['A1']);
   });
 });
