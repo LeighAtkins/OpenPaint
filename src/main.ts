@@ -106,6 +106,7 @@ import { authService } from '@/services/auth/authService';
 import { initAuthUI } from './modules/ui/auth-ui';
 import { initCloudUI } from './modules/ui/cloud-ui';
 import { initCwImportUI } from './modules/ui/cw-import-ui';
+import { initNomsMeasureLink } from './modules/ui/noms-measure-link';
 import { initQuickSaveMenu } from './modules/ui/quick-save-menu';
 import { initSofa3dStudio } from './modules/ui/sofa3d-entry';
 import { initSectionalBuilder } from './modules/ui/sectional-builder';
@@ -204,6 +205,10 @@ async function bootstrap(): Promise<void> {
 
   // Initialize CW/PID product measurement import modal
   initCwImportUI();
+
+  // NOMS order link: staff-only measurements panel synced with the CW40 form
+  // through OMNOMS (the person's own CW40 sign-in).
+  initNomsMeasureLink();
 
   // Modular sectional assembly workspace. It remains isolated until the user
   // explicitly turns the assembly into a normal SofaPaint image.

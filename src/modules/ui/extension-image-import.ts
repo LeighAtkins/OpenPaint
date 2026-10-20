@@ -25,6 +25,8 @@ interface ExtensionImagePayload {
   hash?: string;
   dataUrl?: string;
   partLabel?: string;
+  /** NOMS imports: the form product reference this photo was uploaded for. */
+  nomsRef?: string;
   total?: number;
   importedCount?: number;
   duplicateCount?: number;
@@ -47,6 +49,10 @@ interface GorgiasTicketContext {
   productName?: string;
   productSku?: string;
   guideCode?: string;
+  /** Set when the photos come from a NOMS order (OMNOMS) instead of a ticket. */
+  nomsOrder?: string;
+  nomsForm?: string;
+  nomsLang?: string;
 }
 
 type CloudSaveStatus = 'not-saved' | 'saving' | 'saved' | 'dirty' | 'error';
@@ -63,6 +69,7 @@ interface ImportBatch {
   skipped: Set<number>;
   hashesByIndex: Map<number, string>;
   partLabelsByIndex: Map<number, string>;
+  nomsRefsByIndex: Map<number, string>;
   knownHashes: Set<string>;
   pending: Set<Promise<void>>;
   complete: boolean;
@@ -149,8 +156,18 @@ function normalizedContext(value: GorgiasTicketContext | undefined): GorgiasTick
     guideCode: String(context.guideCode || productSku.split('__')[0] || '')
       .trim()
       .toUpperCase(),
+    nomsOrder: /^\d{3,10}$/.test(String(context.nomsOrder || '').trim())
+      ? String(context.nomsOrder).trim()
+      : '',
+    nomsForm: /^\d{10,16}$/.test(String(context.nomsForm || '').trim())
+      ? String(context.nomsForm).trim()
+      : '',
+    nomsLang: /^[a-z]{2}$/.test(String(context.nomsLang || '')) ? String(context.nomsLang) : '',
   };
 }
+
+const isNomsContext = (context: GorgiasTicketContext): boolean =>
+  Boolean(context.nomsOrder && context.nomsForm);
 
 function presentContextFields(context: GorgiasTicketContext): GorgiasTicketContext {
   return Object.fromEntries(
@@ -159,6 +176,12 @@ function presentContextFields(context: GorgiasTicketContext): GorgiasTicketConte
 }
 
 function expectedProjectName(context: GorgiasTicketContext): string {
+  if (isNomsContext(context)) {
+    return [`#${context.nomsOrder}`, context.customerName, context.guideCode || context.productName]
+      .map(value => (value || '').trim())
+      .filter(Boolean)
+      .join(' - ');
+  }
   return [context.customerName, context.productName]
     .map(value => (value || '').trim())
     .filter(Boolean)
@@ -177,6 +200,9 @@ function projectMatchesContext(
   project: CloudProjectSummary,
   context: GorgiasTicketContext
 ): boolean {
+  if (isNomsContext(context)) {
+    return new RegExp(`#${context.nomsOrder}(?!\\d)`).test(String(project.name || ''));
+  }
   const projectName = normalizedProjectName(project.name);
   const expectedName = normalizedProjectName(expectedProjectName(context));
   const customer = normalizedProjectName(context.customerName);
@@ -201,6 +227,7 @@ function currentProjectHasContent(): boolean {
   if (hasImageOrCanvas) return true;
   const metadata = manager?.getProjectMetadata?.() || {};
   if (Object.keys(metadata.externalSources?.gorgiasTickets || {}).length > 0) return true;
+  if (Object.keys(metadata.externalSources?.nomsOrders || {}).length > 0) return true;
   const projectName = (document.getElementById('projectName') as HTMLInputElement | null)?.value;
   const normalizedName = normalizedProjectName(projectName);
   return Boolean(normalizedName && normalizedName !== 'openpaint project');
@@ -463,6 +490,11 @@ function chooseImportDestination(
 async function prepareImportDestination(context: GorgiasTicketContext): Promise<boolean> {
   const ticketId = (context.ticketId || '').trim();
   if (ticketId && currentProjectHasTicket(ticketId)) return true;
+  if (
+    isNomsContext(context) &&
+    getProjectManager()?.getProjectMetadata?.()?.externalSources?.nomsOrders?.[context.nomsOrder!]
+  )
+    return true;
 
   const hasCurrentProject = currentProjectHasContent();
   let projects: CloudProjectSummary[] = [];
@@ -586,7 +618,63 @@ function renderStoredTicketSource(): void {
   renderTicketSourceLink(latest);
 }
 
+function applyNomsContext(context: GorgiasTicketContext): Set<string> {
+  const manager = getProjectManager();
+  if (!manager?.getProjectMetadata || !manager?.setProjectMetadata) return new Set();
+  const metadata = manager.getProjectMetadata() || {};
+  const orders = metadata.externalSources?.nomsOrders || {};
+  const order = context.nomsOrder as string;
+  const existing = orders[order] || {};
+  manager.setProjectMetadata({
+    naming: {
+      ...(metadata.naming || {}),
+      customerName: context.customerName || metadata.naming?.customerName || '',
+      sofaTypeLabel: context.productName || metadata.naming?.sofaTypeLabel || '',
+    },
+    externalSources: {
+      ...(metadata.externalSources || {}),
+      nomsOrders: {
+        ...orders,
+        [order]: {
+          ...existing,
+          orderNumber: order,
+          formId: context.nomsForm,
+          lang: context.nomsLang || existing.lang || 'en',
+          customerName: context.customerName || existing.customerName || '',
+          productName: context.productName || existing.productName || '',
+          productSku: context.productSku || existing.productSku || '',
+        },
+      },
+    },
+  });
+  const projectNameInput = document.getElementById('projectName') as HTMLInputElement | null;
+  const nextName = expectedProjectName(context);
+  const currentName = projectNameInput?.value.trim() || '';
+  if (
+    projectNameInput &&
+    nextName &&
+    (!currentName ||
+      currentName === 'OpenPaint Project' ||
+      currentName === String(metadata.naming?.autoProjectTitle || ''))
+  ) {
+    projectNameInput.value = nextName;
+    manager.setProjectMetadata({
+      naming: { ...(manager.getProjectMetadata()?.naming || {}), autoProjectTitle: nextName },
+    });
+  }
+  return new Set(
+    (Array.isArray(existing.importedImageHashes) ? existing.importedImageHashes : [])
+      .map((hash: unknown) =>
+        String(hash || '')
+          .trim()
+          .toLowerCase()
+      )
+      .filter(Boolean)
+  );
+}
+
 function applyTicketContext(context: GorgiasTicketContext): Set<string> {
+  if (isNomsContext(context)) return applyNomsContext(context);
   const manager = getProjectManager();
   if (!manager?.getProjectMetadata || !manager?.setProjectMetadata) return new Set();
   const metadata = manager.getProjectMetadata() || {};
@@ -679,6 +767,28 @@ function persistImportedHash(context: GorgiasTicketContext, hash: string): void 
     .trim()
     .toLowerCase();
   const manager = getProjectManager();
+  if (isNomsContext(context) && normalizedHash && manager?.setProjectMetadata) {
+    const metadata = manager.getProjectMetadata() || {};
+    const orders = metadata.externalSources?.nomsOrders || {};
+    const existing = orders[context.nomsOrder as string];
+    if (!existing) return;
+    manager.setProjectMetadata({
+      externalSources: {
+        ...(metadata.externalSources || {}),
+        nomsOrders: {
+          ...orders,
+          [context.nomsOrder as string]: {
+            ...existing,
+            importedImageHashes: Array.from(
+              new Set([...(existing.importedImageHashes || []), normalizedHash])
+            ),
+            lastImportedAt: new Date().toISOString(),
+          },
+        },
+      },
+    });
+    return;
+  }
   if (!ticketId || !normalizedHash || !manager?.getProjectMetadata || !manager?.setProjectMetadata)
     return;
   const metadata = manager.getProjectMetadata() || {};
@@ -814,6 +924,13 @@ function showBatchProgress(batch: ImportBatch, message: string): void {
 
 function finishBatch(batchId: string, batch: ImportBatch): void {
   batches.delete(batchId);
+  if (isNomsContext(batch.ticketContext)) {
+    window.dispatchEvent(
+      new CustomEvent('openpaint:noms-import-complete', {
+        detail: { nomsOrder: batch.ticketContext.nomsOrder, added: batch.processedCount },
+      })
+    );
+  }
   const totalErrors = batch.rejectedCount + batch.sourceErrorCount;
   const elapsedSeconds = Math.max(0.1, (Date.now() - batch.startedAt) / 1000);
   const detail = [
@@ -911,6 +1028,17 @@ async function drainBatch(batchId: string, uploadManager: ExtensionUploadManager
       }
       const partLabel = batch.partLabelsByIndex.get(batch.nextIndex) || '';
       if (uploaded?.viewId && partLabel) setImportedImagePartLabel(uploaded.viewId, partLabel);
+      if (isNomsContext(batch.ticketContext)) {
+        window.dispatchEvent(
+          new CustomEvent('openpaint:noms-photo-imported', {
+            detail: {
+              viewId: uploaded.viewId,
+              nomsOrder: batch.ticketContext.nomsOrder,
+              nomsRef: batch.nomsRefsByIndex.get(batch.nextIndex) || '',
+            },
+          })
+        );
+      }
       const hash = batch.hashesByIndex.get(batch.nextIndex) || '';
       if (hash) {
         batch.knownHashes.add(hash);
@@ -1003,6 +1131,7 @@ export function initExtensionImageImport(uploadManager: ExtensionUploadManager):
         skipped: new Set(),
         hashesByIndex: new Map(),
         partLabelsByIndex: new Map(),
+        nomsRefsByIndex: new Map(),
         knownHashes: new Set(),
         pending: new Set(),
         complete: false,
@@ -1032,7 +1161,7 @@ export function initExtensionImageImport(uploadManager: ExtensionUploadManager):
       batches.set(payload.batchId, batch);
       notifyOpenPaint({
         kind: 'loading',
-        title: 'Gorgias',
+        title: isNomsContext(ticketContext) ? `NOMS #${ticketContext.nomsOrder}` : 'Gorgias',
         message: `Preparing ${Math.max(0, Number(payload.total) || 0)} photos`,
         progress: 0,
       });
@@ -1056,6 +1185,10 @@ export function initExtensionImageImport(uploadManager: ExtensionUploadManager):
       if (hash) batch.hashesByIndex.set(index, hash);
       const partLabel = inferImagePartLabel(payload);
       if (partLabel) batch.partLabelsByIndex.set(index, partLabel);
+      const nomsRef = String(payload.nomsRef || '')
+        .trim()
+        .toUpperCase();
+      if (/^[A-Z0-9][A-Z0-9_-]{1,40}$/.test(nomsRef)) batch.nomsRefsByIndex.set(index, nomsRef);
       let task: Promise<void>;
       task = dataUrlToFile(payload)
         .then(file => {

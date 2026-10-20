@@ -167,6 +167,7 @@ export function createDefaultSofaMetadata() {
     checkSessions: [],
     externalSources: {
       gorgiasTickets: {},
+      nomsOrders: {},
     },
     sectionalAssemblies: {},
     photos: [],
@@ -328,6 +329,79 @@ function normalizeSectionalAssemblies(source) {
                 ? entry.pricingFabric
                 : undefined,
             liveTransforms,
+          },
+        ];
+      })
+      .filter(Boolean)
+  );
+}
+
+// NOMS order links (one per order): which form the project measures, which
+// image belongs to which form model ("product:model:file"), and the values last
+// read from or saved to the CW40 measure form. Values are text in `unit`.
+const NOMS_MODEL_KEY = /^\d{1,3}:\d{1,3}:\d{1,3}$/;
+const NOMS_FIELD = /^[A-Za-z0-9_]{1,16}$/;
+function cleanNomsText(value, max = 200) {
+  return typeof value === 'string' ? value.trim().slice(0, max) : '';
+}
+function normalizeNomsValues(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object') return out;
+  for (const [key, fields] of Object.entries(raw)) {
+    if (!NOMS_MODEL_KEY.test(key) || !fields || typeof fields !== 'object') continue;
+    const clean = {};
+    for (const [field, value] of Object.entries(fields)) {
+      if (NOMS_FIELD.test(field) && (typeof value === 'string' || typeof value === 'number'))
+        clean[field] = String(value).trim().slice(0, 32);
+    }
+    out[key] = clean;
+  }
+  return out;
+}
+export function normalizeNomsOrders(raw) {
+  if (!raw || typeof raw !== 'object') return {};
+  return Object.fromEntries(
+    Object.entries(raw)
+      .map(([orderKey, value]) => {
+        const entry = value && typeof value === 'object' ? value : {};
+        const orderNumber = String(entry.orderNumber || orderKey || '').trim();
+        const formId = String(entry.formId || '').trim();
+        if (!/^\d{3,10}$/.test(orderNumber) || !/^\d{10,16}$/.test(formId)) return null;
+        const viewBindings = {};
+        for (const [viewId, key] of Object.entries(entry.viewBindings || {})) {
+          if (typeof key === 'string' && NOMS_MODEL_KEY.test(key) && viewId)
+            viewBindings[viewId] = key;
+        }
+        const diagramViews = {};
+        for (const [key, viewId] of Object.entries(entry.diagramViews || {})) {
+          if (NOMS_MODEL_KEY.test(key) && typeof viewId === 'string' && viewId)
+            diagramViews[key] = viewId;
+        }
+        return [
+          orderNumber,
+          {
+            orderNumber,
+            formId,
+            lang: /^[a-z]{2}$/.test(entry.lang || '') ? entry.lang : 'en',
+            customerName: cleanNomsText(entry.customerName),
+            productName: cleanNomsText(entry.productName),
+            productSku: cleanNomsText(entry.productSku),
+            unit: entry.unit === 'cm' ? 'cm' : 'in',
+            confirmed: entry.confirmed === true,
+            values: normalizeNomsValues(entry.values),
+            viewBindings,
+            diagramViews,
+            importedImageHashes: Array.isArray(entry.importedImageHashes)
+              ? Array.from(
+                  new Set(
+                    entry.importedImageHashes
+                      .map(hash => (typeof hash === 'string' ? hash.trim().toLowerCase() : ''))
+                      .filter(Boolean)
+                  )
+                )
+              : [],
+            lastImportedAt: cleanNomsText(entry.lastImportedAt, 40),
+            lastSyncedAt: cleanNomsText(entry.lastSyncedAt, 40),
           },
         ];
       })
@@ -538,6 +612,7 @@ export function normalizeSofaMetadata(input) {
       })
       .filter(Boolean)
   );
+  const nomsOrders = normalizeNomsOrders(source.externalSources?.nomsOrders);
   const naming =
     source.naming && typeof source.naming === 'object'
       ? {
@@ -582,7 +657,7 @@ export function normalizeSofaMetadata(input) {
     imagePartLabels,
     measurementNotes,
     checkSessions,
-    externalSources: { gorgiasTickets },
+    externalSources: { gorgiasTickets, nomsOrders },
     sectionalAssemblies: normalizeSectionalAssemblies(source.sectionalAssemblies),
     naming,
     photos,
