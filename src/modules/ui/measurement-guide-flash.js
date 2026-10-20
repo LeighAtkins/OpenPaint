@@ -3704,7 +3704,7 @@ function setStatusMessage(message, kind = 'info') {
   }
 }
 
-async function waitForGuideImportReady(viewId, timeoutMs = 5000) {
+export async function waitForGuideImportReady(viewId, timeoutMs = 5000) {
   const manager = window.app?.projectManager || window.projectManager;
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -3961,7 +3961,7 @@ async function applyGuideAsBackground(code, view) {
  * @param {string} imageLabel - Target image label
  * @returns {Promise<Object>} Import result
  */
-async function importSvgMeasurements(code, view, imageLabel, options = {}) {
+export async function importSvgMeasurements(code, view, imageLabel, options = {}) {
   try {
     console.log(`[SVG Import] Starting import for ${code}-${view} to image ${imageLabel}`);
 
