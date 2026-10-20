@@ -26,7 +26,7 @@ export function isPdfFile(file: File): boolean {
   return file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
 }
 
-async function loadPdfjs() {
+export async function loadPdfjs() {
   const pdfjs = await import('pdfjs-dist');
   if (!pdfjs.GlobalWorkerOptions.workerSrc) {
     const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
@@ -196,6 +196,46 @@ async function mountMeasurements(viewId: string, view: CwFormView): Promise<numb
   }
   window.app?.canvasManager?.fabricCanvas?.requestRenderAll?.();
   return saved;
+}
+
+/** One diagram's values from a filled form, without adding anything to the project. */
+export interface CwFormValueGroup {
+  file: string;
+  pageNumber: number;
+  title: string;
+  unit: 'cm' | 'inch';
+  unitAssumed: boolean;
+  values: Array<{ label: string; value: number }>;
+}
+
+/** Read the label/value pairs of every diagram in a filled CW measuring PDF. */
+export async function readCwFormPdfValues(file: File): Promise<CwFormValueGroup[]> {
+  const pdfjs = await loadPdfjs();
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  const pages: CwPageData[] = [];
+  for (let n = 1; n <= doc.numPages; n += 1) {
+    pages.push(await extractCwPageData(await doc.getPage(n), pdfjs.OPS));
+  }
+  const documentUnit = detectDocumentUnit(pages);
+  const groups: CwFormValueGroup[] = [];
+  for (const data of pages) {
+    for (const view of analyzeCwFormPage(data, documentUnit)) {
+      const values = [...view.measurements, ...view.unplaced].map(m => ({
+        label: m.label,
+        value: m.value,
+      }));
+      if (!values.length) continue;
+      groups.push({
+        file: file.name,
+        pageNumber: view.pageNumber,
+        title: view.title,
+        unit: view.unit,
+        unitAssumed: view.unitAssumed,
+        values,
+      });
+    }
+  }
+  return groups;
 }
 
 export async function importCwFormPdf(file: File): Promise<CwFormImportResult> {

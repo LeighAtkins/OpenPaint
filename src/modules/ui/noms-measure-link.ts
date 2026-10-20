@@ -19,9 +19,19 @@ import {
   waitForGuideImportReady,
 } from './measurement-guide-flash.js';
 import {
+  importCwFormPdf,
+  isPdfFile,
+  readCwFormPdfValues,
+  type CwFormValueGroup,
+} from './cw-form-pdf-import';
+import {
   changedFields,
   convertMeasure,
+  defaultFieldFor,
   formModels,
+  modelGroups,
+  pdfValueToForm,
+  refineTargets,
   fromCanvasMeasurement,
   isComfortWorksStaff,
   measureIssues,
@@ -289,7 +299,7 @@ async function loadForm(options: { preferNoms?: boolean } = {}): Promise<void> {
     return;
   }
   state.content = content;
-  state.models = formModels(content);
+  state.models = formModels(content, { includeDisabled: true });
   state.confirmed = Boolean(content.confirmed);
   const formUnit: 'in' | 'cm' = content.unit === 'cm' ? 'cm' : 'in';
   const fromForm: Values = Object.fromEntries(
@@ -564,6 +574,303 @@ async function onImportComplete(event: Event): Promise<void> {
   render();
 }
 
+// ---------------------------------------------------------------- PDF drop
+// Drop the customer's filled measuring PDFs: each diagram is matched to the
+// form models it measures (suggested from shared letters, changeable), letters
+// map straight across where they match, the rest are picked by hand, and the
+// values fill the panel in the form's unit. Nothing is saved until Save.
+function pdfDropZone(): HTMLElement {
+  const zone = el('div', 'nml-drop', 'Drop filled measurement PDFs here, or click to choose');
+  const input = el('input');
+  input.type = 'file';
+  input.accept = 'application/pdf,.pdf';
+  input.multiple = true;
+  input.hidden = true;
+  zone.appendChild(input);
+  const take = (files: FileList | null) => {
+    const pdfs = Array.from(files || []).filter(isPdfFile);
+    if (pdfs.length) void readPdfs(pdfs);
+  };
+  zone.addEventListener('click', () => input.click());
+  input.addEventListener('change', () => take(input.files));
+  zone.addEventListener('dragover', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    zone.classList.add('over');
+  });
+  zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+  zone.addEventListener('drop', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    zone.classList.remove('over');
+    take(event.dataTransfer?.files || null);
+  });
+  return zone;
+}
+
+async function readPdfs(files: File[]): Promise<void> {
+  setStatus(`Reading ${files.map(f => f.name).join(', ')}…`);
+  const groups: CwFormValueGroup[] = [];
+  for (const file of files) {
+    try {
+      const found = await readCwFormPdfValues(file);
+      if (!found.length) setStatus(`${file.name}: no filled measurements found.`, 'error');
+      groups.push(...found);
+    } catch (error) {
+      setStatus(`${file.name} could not be read: ${(error as Error).message}`, 'error');
+    }
+  }
+  if (!groups.length) return;
+  const choice = await chooseMapping(groups);
+  if (!choice) {
+    setStatus('PDF values not used.', 'info');
+    return;
+  }
+  let filled = 0;
+  const skipped: string[] = [];
+  for (const { group, targets, mapping } of choice.groups) {
+    for (const { label, value } of group.values) {
+      const field = mapping[label];
+      if (!field) {
+        skipped.push(`${label} (${group.file} p${group.pageNumber})`);
+        continue;
+      }
+      for (const target of targets) {
+        const fileKey = modelGroups(state.models).find(g => g.key === target)?.fields[field];
+        if (!fileKey) continue;
+        setValue(fileKey, field, pdfValueToForm(value, group.unit, state.unit));
+        filled += 1;
+      }
+    }
+  }
+  if (choice.addImages) {
+    for (const file of files) {
+      try {
+        await importCwFormPdf(file);
+      } catch (error) {
+        console.warn('[NOMS link] PDF pages could not be added as images', error);
+      }
+    }
+  }
+  render();
+  const unsaved = changedFields(state.saved, state.values).length;
+  setStatus(
+    `Filled ${filled} value${filled === 1 ? '' : 's'} from the PDF${files.length > 1 ? 's' : ''}` +
+      (skipped.length ? `. Not used: ${skipped.join(', ')}` : '') +
+      `. ${unsaved} change${unsaved === 1 ? '' : 's'} to review, then Save to NOMS.`,
+    skipped.length ? 'info' : 'ok'
+  );
+}
+
+interface MappingChoice {
+  addImages: boolean;
+  groups: Array<{ group: CwFormValueGroup; targets: string[]; mapping: Record<string, string> }>;
+}
+
+function chooseMapping(groups: CwFormValueGroup[]): Promise<MappingChoice | null> {
+  ensureStyles();
+  const models = modelGroups(state.models);
+  return new Promise(resolve => {
+    const overlay = el('div', 'nml-map');
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Match PDF measurements to the form');
+    const card = el('section', 'nml-map-card');
+    card.append(
+      el('h2', '', 'Match the PDF to the form'),
+      el(
+        'p',
+        '',
+        `Check what each diagram fills. Letters that match the form are filled as they are; only the ones that need a choice are listed. Values are converted to ${state.unit === 'in' ? 'inches' : 'cm'}.`
+      )
+    );
+    const suggested = refineTargets(
+      groups.map(group => ({
+        file: group.file,
+        title: group.title,
+        labels: group.values.map(v => v.label),
+      })),
+      models,
+      Object.fromEntries(models.map(m => [m.key, m.title]))
+    );
+    const state2 = groups.map((group, i) => ({
+      group,
+      targets: new Set(suggested[i]),
+      mapping: {} as Record<string, string>,
+      showAll: false,
+      editTargets: suggested[i].length === 0,
+    }));
+    const summaries: Array<() => void> = [];
+    const sharedWith = (entry: (typeof state2)[number]): string[] => {
+      // Two diagrams writing the same letter onto the same model.
+      const mine = new Set(Object.values(entry.mapping).filter(Boolean));
+      return models
+        .filter(
+          m =>
+            entry.targets.has(m.key) &&
+            state2.some(
+              other =>
+                other !== entry &&
+                other.targets.has(m.key) &&
+                Object.values(other.mapping).some(
+                  field => field && mine.has(field) && field in m.fields
+                )
+            )
+        )
+        .map(m => m.title);
+    };
+    state2.forEach(entry => {
+      const box = el('div', 'nml-map-group');
+      const unitNote = entry.group.unitAssumed
+        ? `${entry.group.unit} (assumed)`
+        : entry.group.unit === 'inch'
+          ? 'inches'
+          : 'cm';
+      box.appendChild(
+        el(
+          'h3',
+          '',
+          `${entry.group.file} · page ${entry.group.pageNumber} · ${entry.group.title} · ${unitNote}`
+        )
+      );
+      const summary = el('div', 'nml-map-summary');
+      const targets = el('div', 'nml-map-targets');
+      const table = el('div', 'nml-map-table');
+      const more = el('button', 'nml-map-link', '');
+      more.type = 'button';
+      const renderSummary = () => {
+        summary.replaceChildren();
+        const names = models.filter(m => entry.targets.has(m.key)).map(m => m.title);
+        summary.append(
+          el(
+            'span',
+            names.length ? '' : 'nml-map-none',
+            names.length
+              ? `Fills: ${names.join(', ')}`
+              : 'Fills: nothing yet (choose below, or leave it out)'
+          )
+        );
+        const shared = sharedWith(entry);
+        if (shared.length) {
+          summary.appendChild(
+            el(
+              'span',
+              'nml-map-none',
+              `Another diagram also fills ${shared.join(', ')}. Check which one is right.`
+            )
+          );
+        }
+        const change = el('button', 'nml-map-link', entry.editTargets ? 'Done' : 'Change');
+        change.type = 'button';
+        change.addEventListener('click', () => {
+          entry.editTargets = !entry.editTargets;
+          targets.hidden = !entry.editTargets;
+          renderSummary();
+        });
+        summary.appendChild(change);
+      };
+      const renderTable = () => {
+        table.replaceChildren();
+        const fields = Array.from(
+          new Set(models.filter(m => entry.targets.has(m.key)).flatMap(m => Object.keys(m.fields)))
+        ).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        for (const { label, value } of entry.group.values) {
+          if (
+            !(label in entry.mapping) ||
+            (entry.mapping[label] && !fields.includes(entry.mapping[label]))
+          )
+            entry.mapping[label] = defaultFieldFor(label, fields);
+          const row = el('label', `nml-map-row${entry.mapping[label] ? '' : ' unmapped'}`);
+          const select = el('select');
+          const none = el('option', '', 'Not used');
+          none.value = '';
+          select.appendChild(none);
+          for (const field of fields) {
+            const option = el('option', '', `→ ${field}`);
+            option.value = field;
+            option.selected = field === entry.mapping[label];
+            select.appendChild(option);
+          }
+          select.addEventListener('change', () => {
+            entry.mapping[label] = select.value;
+            row.classList.toggle('unmapped', !select.value);
+          });
+          row.append(el('b', '', label), el('span', '', String(+value.toFixed(3))), select);
+          // Same letter on the form: nothing to decide, so keep it out of the way.
+          row.hidden = !entry.showAll && entry.mapping[label] === label.replace(/\*$/, '');
+          table.appendChild(row);
+        }
+        const hidden = Array.from(table.children).filter(row => (row as HTMLElement).hidden).length;
+        more.hidden = !hidden && !entry.showAll;
+        summaries.forEach(refresh => refresh());
+        more.textContent = entry.showAll
+          ? 'Show only letters that need a choice'
+          : `Show all ${entry.group.values.length} letters (${hidden} match the form)`;
+      };
+      summaries.push(renderSummary);
+      more.addEventListener('click', () => {
+        entry.showAll = !entry.showAll;
+        renderTable();
+      });
+      for (const model of models) {
+        const label = el('label');
+        const box2 = el('input');
+        box2.type = 'checkbox';
+        box2.checked = entry.targets.has(model.key);
+        box2.addEventListener('change', () => {
+          if (box2.checked) entry.targets.add(model.key);
+          else entry.targets.delete(model.key);
+          renderTable();
+        });
+        label.append(box2, document.createTextNode(` ${model.title}`));
+        targets.appendChild(label);
+      }
+      targets.hidden = !entry.editTargets;
+      renderTable();
+      box.append(summary, targets, table, more);
+      card.appendChild(box);
+    });
+    const foot = el('div', 'nml-map-foot');
+    const addImagesLabel = el('label');
+    const addImages = el('input');
+    addImages.type = 'checkbox';
+    addImages.checked = true;
+    addImagesLabel.append(
+      addImages,
+      document.createTextNode(' Also add the PDF diagrams to the project')
+    );
+    const cancel = el('button', '', 'Cancel');
+    cancel.type = 'button';
+    const apply = el('button', 'primary', 'Fill in the form');
+    apply.type = 'button';
+    const finish = (value: MappingChoice | null) => {
+      overlay.remove();
+      resolve(value);
+    };
+    cancel.addEventListener('click', () => finish(null));
+    apply.addEventListener('click', () =>
+      finish({
+        addImages: addImages.checked,
+        groups: state2
+          .filter(entry => entry.targets.size)
+          .map(entry => ({
+            group: entry.group,
+            targets: Array.from(entry.targets),
+            mapping: entry.mapping,
+          })),
+      })
+    );
+    foot.append(addImagesLabel, cancel, apply);
+    card.appendChild(foot);
+    overlay.appendChild(card);
+    overlay.addEventListener('keydown', event => {
+      if (event.key === 'Escape') finish(null);
+    });
+    document.body.appendChild(overlay);
+    apply.focus();
+  });
+}
+
 // ---------------------------------------------------------------- panel
 function setStatus(message: string, kind: 'info' | 'error' | 'ok' = 'info'): void {
   state.status = message;
@@ -602,6 +909,29 @@ function ensureStyles(): void {
     #${PANEL_ID} .nml-hint.warn { color: #8a5a00; }
     #${PANEL_ID} .nml-line { color: #16a34a; font-weight: 700; }
     #${PANEL_ID}.collapsed .nml-body { display: none; }
+    #${PANEL_ID} .nml-drop { margin: 8px 0; padding: 10px; border: 2px dashed #f4a77a; border-radius: 8px;
+      background: #fffaf4; color: #9a3412; text-align: center; cursor: pointer; }
+    #${PANEL_ID} .nml-drop.over { background: #ffedd5; border-color: #f47636; }
+    .nml-map { position: fixed; inset: 0; z-index: 12100; display: flex; align-items: center; justify-content: center;
+      padding: 20px; background: rgba(15, 23, 42, .44); font: 12px/1.4 system-ui, sans-serif; color: #0f172a; }
+    .nml-map-card { width: min(760px, 100%); max-height: calc(100vh - 40px); overflow: auto; padding: 16px 18px;
+      background: #fff; border-radius: 10px; box-shadow: 0 24px 64px rgba(15, 23, 42, .24); }
+    .nml-map h2 { margin: 0 0 4px; font-size: 16px; }
+    .nml-map-group { margin-top: 12px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .nml-map-group h3 { margin: 0 0 6px; font-size: 13px; }
+    .nml-map-targets { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 8px; }
+    .nml-map-summary { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; }
+    .nml-map-none { color: #b45309; font-weight: 600; }
+    .nml-map button.nml-map-link { height: auto; padding: 0; border: 0; background: none; color: #2563eb; font-weight: 600; text-decoration: underline; }
+    .nml-map-targets[hidden], .nml-map-row[hidden], .nml-map button[hidden] { display: none; }
+    .nml-map-table { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 10px; }
+    .nml-map-row { display: grid; grid-template-columns: 34px 52px 1fr; gap: 4px; align-items: center; }
+    .nml-map-row select { height: 24px; font: inherit; }
+    .nml-map-row.unmapped b { color: #b45309; }
+    .nml-map-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 14px; }
+    .nml-map-foot label { margin-right: auto; }
+    .nml-map button { height: 30px; padding: 0 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; font: inherit; font-weight: 650; cursor: pointer; }
+    .nml-map button.primary { background: #f47636; border-color: #f47636; color: #fff; }
   `;
   document.head.appendChild(style);
 }
@@ -745,6 +1075,7 @@ function render(): void {
   const unitRow = el('div', 'nml-row');
   unitRow.appendChild(el('span', '', `Form unit: ${state.unit === 'in' ? 'inches' : 'cm'}`));
   body.appendChild(unitRow);
+  body.appendChild(pdfDropZone());
 
   const other = state.unit === 'in' ? 'cm' : 'in';
   for (const model of state.models) {

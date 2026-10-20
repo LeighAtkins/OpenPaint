@@ -159,7 +159,7 @@ function normalizedContext(value: GorgiasTicketContext | undefined): GorgiasTick
     nomsOrder: /^\d{3,10}$/.test(String(context.nomsOrder || '').trim())
       ? String(context.nomsOrder).trim()
       : '',
-    nomsForm: /^\d{10,16}$/.test(String(context.nomsForm || '').trim())
+    nomsForm: /^\d{5,16}$/.test(String(context.nomsForm || '').trim())
       ? String(context.nomsForm).trim()
       : '',
     nomsLang: /^[a-z]{2}$/.test(String(context.nomsLang || '')) ? String(context.nomsLang) : '',
