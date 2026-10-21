@@ -3,6 +3,8 @@
 // written in centimetres ("A>0", "abs(A-C)<5"). Kept free of DOM and app state
 // so they can be tested directly.
 
+import { parseCustomerValue, rangeValue } from '../utils/customer-value';
+
 export interface NomsFormFile {
   name?: string;
   label?: string;
@@ -689,4 +691,501 @@ export function mappingNeedsReview(
     }
   });
   return Array.from(new Set(reasons));
+}
+
+// ---------------------------------------------------------------- drop review
+// Everything a dropped PDF carries lands in the panel. Each value is first
+// resolved to the form letters it fills (CW form: by diagram and letter;
+// SofaPaint review PDF: by view and line link), then classified here: every
+// touched letter is either matched or flagged with a one-line reason, and a
+// value with no letter is listed as an extra. Flags never block a save.
+
+export type DropUnit = 'cm' | 'inch';
+
+/** One value read from a dropped PDF, with the form letters it fills. */
+export interface DropValue {
+  /** Unique within a drop: "file|page|view|label". */
+  id: string;
+  file: string;
+  pageNumber: number;
+  /** Diagram or view title, for messages. */
+  title: string;
+  label: string;
+  /** The number used (a range's default end), in `unit`. */
+  value: number;
+  unit: DropUnit;
+  unitAssumed?: boolean;
+  /** Both numbers when the customer wrote a range. */
+  range?: number[];
+  /** What the customer typed, tidied. */
+  text?: string;
+  /** SofaPaint review PDFs: the project view the value was measured on. */
+  viewId?: string;
+  /** Form letters this value fills: file key ("product:model:file") and field. */
+  targets: Array<{ key: string; field: string }>;
+  /** Why the value fills nothing, when `targets` is empty. */
+  why?: string;
+  /** Titles of the other models the same diagram filled, when it filled more than one. */
+  alsoFills?: string[];
+}
+
+export type DropFlagKind =
+  | 'not-in-pdf'
+  | 'duplicate'
+  | 'rule'
+  | 'range'
+  | 'unit-assumed'
+  | 'shared'
+  | 'changed';
+
+export interface DropFlag {
+  kind: DropFlagKind;
+  reason: string;
+}
+
+export interface DropRow {
+  key: string;
+  field: string;
+  /** Id of the drop value that filled the row, '' when none did. */
+  from: string;
+  flags: DropFlag[];
+}
+
+export interface DropReview {
+  /** Values to write: file key, field, form text in the form's unit. */
+  placements: Array<{ key: string; field: string; value: string; from: string }>;
+  /** "key|field" -> row status, for every letter on a model the drop touched. */
+  rows: Record<string, DropRow>;
+  /** PDF values that fill no form letter (PDF letter not on the form). */
+  extras: Array<{ id: string; label: string; where: string; text: string; reason: string }>;
+  /** Number of letters filled from the PDF. */
+  filled: number;
+  /** Flagged rows plus extras. */
+  toCheck: number;
+}
+
+const unitWord = (unit: DropUnit): string => (unit === 'inch' ? 'in' : 'cm');
+const shortNumber = (n: number): string => String(Math.round(n * 1000) / 1000);
+const sourceOf = (v: DropValue): string =>
+  `${v.file}${v.pageNumber ? ` p${v.pageNumber}` : ''}${v.viewId ? ` ${v.title}` : ''} ${v.label}`;
+
+/** The number a drop value gives (a picked range end when there is one), in its own unit. */
+export function dropNumber(value: DropValue, picks?: Record<string, number> | null): number {
+  const picked = picks?.[value.id];
+  return value.range && typeof picked === 'number' && Number.isFinite(picked)
+    ? picked
+    : value.value;
+}
+
+/**
+ * Classify a drop. `current` holds the form's values before the drop (form
+ * text in `formUnit`); rule checks run on those values with the placements
+ * applied. `picks` holds a chosen number per ranged value id.
+ */
+export function classifyDropResult(
+  values: DropValue[],
+  models: NomsModelEntry[],
+  formUnit: string,
+  current: Record<string, Record<string, string>> = {},
+  options: { picks?: Record<string, number> | null } = {}
+): DropReview {
+  const placements: DropReview['placements'] = [];
+  const rows: Record<string, DropRow> = {};
+  const extras: DropReview['extras'] = [];
+  const byKey = new Map(models.map(model => [model.key, model]));
+  const groupOf = (key: string): string => key.split(':').slice(0, 2).join(':');
+  const touchedGroups = new Set<string>();
+  const row = (key: string, field: string): DropRow => {
+    const id = `${key}|${field}`;
+    rows[id] = rows[id] || { key, field, from: '', flags: [] };
+    return rows[id];
+  };
+  const flag = (r: DropRow, kind: DropFlagKind, reason: string): void => {
+    if (!r.flags.some(f => f.kind === kind && f.reason === reason)) r.flags.push({ kind, reason });
+  };
+
+  for (const value of values) {
+    const targets = value.targets.filter(t => byKey.get(t.key)?.fields.includes(t.field));
+    if (!targets.length) {
+      extras.push({
+        id: value.id,
+        label: value.label,
+        where: sourceOf(value).replace(/ \S+$/, ''),
+        text: value.text || `${shortNumber(value.value)} ${unitWord(value.unit)}`,
+        reason:
+          value.why ||
+          (value.targets.length
+            ? `${value.targets.map(t => t.field).join(', ')} is not on the form`
+            : `no form letter for ${value.label}`),
+      });
+      continue;
+    }
+    const number = dropNumber(value, options.picks);
+    const text = pdfValueToForm(number, value.unit, formUnit);
+    for (const target of targets) {
+      touchedGroups.add(groupOf(target.key));
+      const r = row(target.key, target.field);
+      if (r.from) {
+        const first = values.find(v => v.id === r.from);
+        const firstText = placements.find(p => p.key === target.key && p.field === target.field);
+        const same =
+          firstText &&
+          Math.abs(Number(firstText.value) - Number(text)) < (formUnit === 'cm' ? 0.05 : 0.02);
+        if (!same)
+          flag(
+            r,
+            'duplicate',
+            `PDF also gives ${value.text || shortNumber(number)} at ${sourceOf(value)}; kept ${
+              first
+                ? `${first.text || shortNumber(dropNumber(first, options.picks))} from ${sourceOf(first)}`
+                : 'the first'
+            }`
+          );
+        continue;
+      }
+      r.from = value.id;
+      placements.push({ key: target.key, field: target.field, value: text, from: value.id });
+      if (value.range)
+        flag(
+          r,
+          'range',
+          `Customer wrote ${value.text || value.range.map(shortNumber).join(' - ')}; used ${shortNumber(number)} ${unitWord(value.unit)}`
+        );
+      if (value.unitAssumed)
+        flag(
+          r,
+          'unit-assumed',
+          `Unit not stated in the PDF; read as ${value.unit === 'inch' ? 'inches' : 'cm'}`
+        );
+      if (value.alsoFills?.length)
+        flag(r, 'shared', `The same diagram also filled ${value.alsoFills.join(', ')}`);
+    }
+  }
+
+  // Letters on a touched model that the PDF did not give.
+  for (const model of models) {
+    if (!touchedGroups.has(groupOf(model.key))) continue;
+    for (const field of model.fields) {
+      const r = row(model.key, field);
+      if (r.from) continue;
+      const had = current?.[model.key]?.[field] ?? '';
+      flag(
+        r,
+        'not-in-pdf',
+        hasMeasure(had)
+          ? `Not in the PDF; keeps ${had} ${formUnit}`
+          : 'Not in the PDF and empty on the form'
+      );
+    }
+  }
+
+  // Rules run on the form as it will be saved.
+  const after: Record<string, Record<string, string>> = {};
+  for (const model of models) after[model.key] = { ...(current?.[model.key] || {}) };
+  for (const p of placements) after[p.key] = { ...(after[p.key] || {}), [p.field]: p.value };
+  for (const model of models) {
+    if (!touchedGroups.has(groupOf(model.key))) continue;
+    const issues = measureIssues(model.rules, after[model.key] || {}, formUnit);
+    for (const [field, message] of Object.entries({ ...issues.warnings, ...issues.errors })) {
+      if (!model.fields.includes(field)) continue;
+      flag(row(model.key, field), 'rule', message);
+    }
+  }
+
+  const flagged = Object.values(rows).filter(r => r.flags.length).length;
+  return {
+    placements,
+    rows,
+    extras,
+    filled: placements.length,
+    toCheck: flagged + extras.length,
+  };
+}
+
+/**
+ * The live review: the drop's classification against the values now in the
+ * panel. A placed value a person has since changed is flagged as changed
+ * (its rule flags follow the new value).
+ */
+export function liveDropReview(
+  values: DropValue[],
+  models: NomsModelEntry[],
+  formUnit: string,
+  before: Record<string, Record<string, string>>,
+  now: Record<string, Record<string, string>>,
+  picks?: Record<string, number> | null
+): DropReview {
+  const review = classifyDropResult(values, models, formUnit, before, { picks });
+  // Rules on what the panel holds now, not on the drop's own numbers.
+  for (const r of Object.values(review.rows)) r.flags = r.flags.filter(f => f.kind !== 'rule');
+  const touched = new Set(Object.values(review.rows).map(r => r.key));
+  for (const model of models) {
+    if (!touched.has(model.key)) continue;
+    const issues = measureIssues(model.rules, now?.[model.key] || {}, formUnit);
+    for (const [field, message] of Object.entries({ ...issues.warnings, ...issues.errors })) {
+      const r = review.rows[`${model.key}|${field}`];
+      if (r) r.flags.push({ kind: 'rule', reason: message });
+    }
+  }
+  for (const p of review.placements) {
+    const r = review.rows[`${p.key}|${p.field}`];
+    const held = String(now?.[p.key]?.[p.field] ?? '');
+    if (r && held !== p.value) {
+      r.flags = r.flags.filter(f => f.kind !== 'range' && f.kind !== 'duplicate');
+      r.flags.push({
+        kind: 'changed',
+        reason: `Changed by hand from ${p.value} ${formUnit} in the PDF`,
+      });
+    }
+  }
+  for (const r of Object.values(review.rows)) {
+    if (r.flags.some(f => f.kind === 'not-in-pdf') && hasMeasure(now?.[r.key]?.[r.field])) {
+      const held = now[r.key][r.field];
+      r.flags = r.flags.map(f =>
+        f.kind === 'not-in-pdf'
+          ? { kind: f.kind, reason: `Not in the PDF; keeps ${held} ${formUnit}` }
+          : f
+      );
+    }
+  }
+  review.toCheck =
+    Object.values(review.rows).filter(r => r.flags.length).length + review.extras.length;
+  return review;
+}
+
+/** One line per flagged letter and extra, for the save confirm and the SZ summary. */
+export function dropFlagLines(review: DropReview, models: NomsModelEntry[]): string[] {
+  const titles = new Map(models.map(m => [m.key, m.title]));
+  const out: string[] = [];
+  for (const r of Object.values(review.rows)) {
+    if (!r.flags.length) continue;
+    out.push(`${titles.get(r.key) || r.key} ${r.field}: ${r.flags.map(f => f.reason).join('; ')}`);
+  }
+  for (const extra of review.extras)
+    out.push(`${extra.where} ${extra.label} (${extra.text}): ${extra.reason}`);
+  return out;
+}
+
+/** Plain text for the SZ production email: product, values in cm by model and letter, flags. */
+export function szSummaryText(input: {
+  orderNumber: string;
+  customerName?: string;
+  product?: string;
+  models: NomsModelEntry[];
+  values: Record<string, Record<string, string>>;
+  unit: string;
+  flags?: string[];
+  pdfName?: string;
+}): string {
+  const lines: string[] = [];
+  lines.push(`NOMS #${input.orderNumber}${input.customerName ? ` - ${input.customerName}` : ''}`);
+  const products = Array.from(new Set(input.models.map(m => m.reference).filter(Boolean)));
+  const product = input.product || products.join(', ');
+  if (product) lines.push(`Product: ${product}`);
+  lines.push('Measurements in cm');
+  for (const model of input.models) {
+    const rows = model.fields.map(field => {
+      const raw = input.values?.[model.key]?.[field] ?? '';
+      const parsed = parseMeasure(raw);
+      if (!parsed || !hasMeasure(parsed)) return `${field}: -`;
+      const cm = input.unit === 'in' ? Number(parsed) * 2.54 : Number(parsed);
+      return `${field}: ${(Math.round(cm * 10) / 10).toFixed(1)}`;
+    });
+    if (!rows.length) continue;
+    lines.push('', model.title, ...rows);
+  }
+  const flags = input.flags || [];
+  lines.push('');
+  if (flags.length) {
+    lines.push(`To check (${flags.length}):`, ...flags.map(f => `- ${f}`));
+  } else lines.push('No flagged values.');
+  if (input.pdfName) lines.push('', `Attached: ${input.pdfName}`);
+  return lines.join('\n');
+}
+
+/** "<order> - <customer> - measurements cm.pdf", safe for a file name. */
+export function cmPdfFileName(orderNumber: string, customerName?: string): string {
+  const clean = (s: string) =>
+    String(s || '')
+      .replace(/[\\/:*?"<>|]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  return [clean(orderNumber), clean(customerName || ''), 'measurements cm']
+    .filter(Boolean)
+    .join(' - ')
+    .concat('.pdf');
+}
+
+/** A CW form diagram's values, as the PDF reader returns them. */
+export interface DropGroupLike {
+  file: string;
+  pageNumber: number;
+  title: string;
+  unit: DropUnit;
+  unitAssumed?: boolean;
+  values: Array<{ label: string; value: number; range?: number[]; text?: string }>;
+}
+
+/**
+ * CW form diagrams to drop values: each letter fills its mapped field on every
+ * target model. `targets[i]` and `mappings[i]` belong to `groups[i]`.
+ */
+export function cwGroupsToDropValues(
+  groups: DropGroupLike[],
+  targets: string[][],
+  mappings: Array<Record<string, string>>,
+  models: NomsModelGroup[]
+): DropValue[] {
+  const byKey = new Map(models.map(m => [m.key, m]));
+  const out: DropValue[] = [];
+  groups.forEach((group, i) => {
+    const picks = (targets[i] || []).filter(key => byKey.has(key));
+    const mapping = mappings[i] || {};
+    const titles = picks.map(key => byKey.get(key)!.title);
+    for (const v of group.values) {
+      const field = mapping[v.label] || '';
+      const found = field
+        ? picks
+            .map(key => ({ key: byKey.get(key)!.fields[field], field }))
+            .filter(t => Boolean(t.key))
+        : [];
+      let why = '';
+      if (!picks.length) why = `${group.title || 'this diagram'} matched no form model`;
+      else if (!found.length) why = `${v.label} is not a letter on ${titles.join(', ')}`;
+      out.push({
+        id: `${group.file}|${group.pageNumber}|${group.title}|${v.label}`,
+        file: group.file,
+        pageNumber: group.pageNumber,
+        title: group.title,
+        label: v.label,
+        value: v.value,
+        unit: group.unit,
+        unitAssumed: group.unitAssumed,
+        range: v.range,
+        text: v.text,
+        targets: found,
+        why: why || undefined,
+        alsoFills: picks.length > 1 ? titles : undefined,
+      });
+    }
+  });
+  // "Also filled" names only the other models.
+  for (const v of out)
+    if (v.alsoFills) {
+      const mine = new Set(
+        v.targets.map(t => byKey.get(t.key.split(':').slice(0, 2).join(':'))?.title)
+      );
+      v.alsoFills = v.alsoFills.filter(title => !mine.has(title));
+      if (!v.alsoFills.length) delete v.alsoFills;
+    }
+  return out;
+}
+
+/** A SofaPaint review PDF's manifest, as parseSofaPaintReviewPdf returns it. */
+export interface ReviewManifestLike {
+  unit?: string | null;
+  views?: Array<{
+    viewId: string;
+    title?: string;
+    measurements?: Array<{ label: string; value?: string }>;
+  }>;
+}
+
+/**
+ * Values from a SofaPaint review PDF (one per view and drawn label) to drop
+ * values. A value fills the form letter whose line it was measured on: an
+ * explicit line link, else the same label on a view linked to the letter's
+ * model. Lines that are not in this project still bind by view and label.
+ */
+export function reviewToDropValues(
+  file: string,
+  manifest: ReviewManifestLike,
+  models: NomsModelEntry[],
+  options: {
+    lineLinks?: LineLinks | null;
+    lines?: MeasuredLine[];
+    viewsByKey?: Record<string, string[]>;
+    viewBindings?: Record<string, string>;
+    fallbackUnit?: DropUnit;
+  } = {}
+): DropValue[] {
+  const docUnit: DropUnit | null =
+    manifest?.unit === 'inch' || manifest?.unit === 'in'
+      ? 'inch'
+      : manifest?.unit === 'cm'
+        ? 'cm'
+        : null;
+  const raw: Array<{ viewId: string; title: string; label: string; text: string; page: number }> =
+    [];
+  (manifest?.views || []).forEach((view, index) => {
+    for (const m of view.measurements || []) {
+      const text = String(m?.value ?? '').trim();
+      if (!text || !m?.label) continue;
+      raw.push({
+        viewId: String(view.viewId || ''),
+        title: String(view.title || view.viewId || ''),
+        label: String(m.label),
+        text,
+        page: index + 1,
+      });
+    }
+  });
+  const lines: MeasuredLine[] = [...(options.lines || [])];
+  for (const r of raw)
+    if (!lines.some(l => l.viewId === r.viewId && l.label === r.label))
+      lines.push({ viewId: r.viewId, scope: r.viewId, label: r.label, value: '' });
+  const owners = new Map<string, Array<{ key: string; field: string }>>();
+  for (const model of models) {
+    for (const field of model.fields) {
+      const resolved = resolveLineForLetter(
+        model.key,
+        field,
+        options.lineLinks,
+        lines,
+        options.viewsByKey?.[model.key] || []
+      );
+      for (const line of resolved.lines) {
+        const id = `${line.viewId}|${line.label}`;
+        owners.set(id, [...(owners.get(id) || []), { key: model.key, field }]);
+      }
+    }
+  }
+  const titleOf = new Map(models.map(m => [m.key, m.title]));
+  return raw.map(r => {
+    const parsed = parseCustomerValue(r.text);
+    const unit: DropUnit =
+      parsed.unit === 'in'
+        ? 'inch'
+        : parsed.unit === 'cm'
+          ? 'cm'
+          : docUnit || options.fallbackUnit || 'inch';
+    const targets = parsed.kind === 'none' ? [] : owners.get(`${r.viewId}|${r.label}`) || [];
+    const bound = options.viewBindings?.[r.viewId];
+    let why: string | undefined;
+    if (parsed.kind === 'none') why = `not a number: ${r.text}`;
+    else if (!targets.length)
+      why = bound
+        ? `${r.label} on ${r.title} is not linked to a letter on ${titleOf.get(bound) || bound}`
+        : `${r.title} is not linked to a form model`;
+    return {
+      id: `${file}|${r.page}|${r.viewId}|${r.label}`,
+      file,
+      pageNumber: r.page,
+      title: r.title,
+      label: r.label,
+      value:
+        parsed.kind === 'none'
+          ? 0
+          : parsed.kind === 'range'
+            ? rangeValue(parsed)
+            : parsed.values[0],
+      unit,
+      unitAssumed: !parsed.unit && !docUnit,
+      range: parsed.kind === 'range' ? parsed.values : undefined,
+      text: parsed.text,
+      viewId: r.viewId,
+      targets,
+      why,
+    };
+  });
 }
