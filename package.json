@@ -37,6 +37,8 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json}\"",
     "test": "vitest --config vitest.config.ts run",
+    "pdf-library:build": "node scripts/build-pdf-registry.mjs",
+    "pdf-library:check": "node scripts/build-pdf-registry.mjs --check",
     "test:watch": "vitest --config vitest.config.ts",
     "test:ui": "vitest --config vitest.config.ts --ui",
     "test:coverage": "vitest --config vitest.config.ts run --coverage",

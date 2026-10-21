@@ -16,6 +16,13 @@ import {
   type CwPoint,
 } from '../cw-form-pdf/parse-cw-form';
 import { formatCustomerNumber } from '../utils/customer-value';
+import { readCustomerPdfDocument, type CustomerPdfResult } from '../cw-form-pdf/read-customer-pdf';
+
+export type {
+  CustomerPdfPage,
+  CustomerPdfResult,
+  CustomerPdfValue,
+} from '../cw-form-pdf/read-customer-pdf';
 
 export interface CwFormImportResult {
   views: Array<{ viewId: string; title: string; measurements: number }>;
@@ -286,6 +293,23 @@ export async function readCwFormPdfValues(file: File): Promise<CwFormValueGroup[
     }
   }
   return groups;
+}
+
+/**
+ * Identify a PDF a customer sent back and read every value on it.
+ * `kind: 'sofapaint-review'` means a SofaPaint check-request sheet (pages empty;
+ * the check-request reader handles those). Each page names the library
+ * template it matched, with a confidence, its unit, and the values (a range
+ * keeps both numbers; words alone come back with `value: null`).
+ */
+export async function readCustomerPdf(file: File): Promise<CustomerPdfResult> {
+  const pdfjs = await loadPdfjs();
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  try {
+    return await readCustomerPdfDocument(doc as any, pdfjs.OPS, file.name);
+  } finally {
+    await doc.cleanup?.();
+  }
 }
 
 export async function importCwFormPdf(

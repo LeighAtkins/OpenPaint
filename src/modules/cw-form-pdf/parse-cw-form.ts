@@ -41,11 +41,26 @@ export interface CwField {
   rect: CwRect;
 }
 
+/** Every form widget on the page, filled or not (the template's fingerprint). */
+export interface CwFormWidget {
+  name: string;
+  type: 'text' | 'button' | 'choice' | 'other';
+  rect: CwRect;
+  /** Text value as stored in the field (before printed text is absorbed). */
+  value: string;
+  /** For check boxes and radio buttons: whether this widget is selected. */
+  checked?: boolean;
+}
+
 export interface CwPageData {
   pageNumber: number;
   width: number;
   height: number;
   fields: CwField[];
+  /** All widgets including empty ones; absent on hand-built test pages. */
+  widgets?: CwFormWidget[];
+  /** All page text, including values absorbed into fields. */
+  allTexts?: CwTextItem[];
   texts: CwTextItem[];
   strokes: CwStroke[];
 }
@@ -56,6 +71,8 @@ export interface CwFieldValue {
   range?: number[];
   /** What the customer typed, tidied. */
   text?: string;
+  /** Name of the form field the value came from. */
+  field?: string;
 }
 
 export interface CwMeasurement extends CwFieldValue {
@@ -93,6 +110,11 @@ type Matrix = [number, number, number, number, number, number];
 
 const IDENTITY: Matrix = [1, 0, 0, 1, 0, 0];
 const LABEL_PATTERN = /^[A-Z]\d{0,2}\*?$/;
+
+/** A printed measurement letter such as "A1", "D" or "F*". */
+export function isLabelText(raw: string): boolean {
+  return LABEL_PATTERN.test(cleanText(raw));
+}
 
 function multiply(m1: Matrix, m2: Matrix): Matrix {
   return [
@@ -171,6 +193,34 @@ export async function extractCwPageData(
   const flip = (p: CwPoint): CwPoint => ({ x: p.x - vx0, y: height - (p.y - vy0) });
 
   const annotations = await page.getAnnotations();
+  const widgetRect = (a: any): CwRect =>
+    rectFromPdf([a.rect[0] - vx0, a.rect[1] - vy0, a.rect[2] - vx0, a.rect[3] - vy0], height);
+  const widgets: CwFormWidget[] = annotations
+    .filter(a => a?.fieldType && Array.isArray(a.rect))
+    .map(a => {
+      const type =
+        a.fieldType === 'Tx'
+          ? 'text'
+          : a.fieldType === 'Btn'
+            ? 'button'
+            : a.fieldType === 'Ch'
+              ? 'choice'
+              : 'other';
+      const raw = Array.isArray(a.fieldValue) ? a.fieldValue.join(', ') : a.fieldValue;
+      const value = String(raw ?? '').trim();
+      const widget: CwFormWidget = {
+        name: String(a.fieldName || ''),
+        type,
+        rect: widgetRect(a),
+        value,
+      };
+      if (type === 'button' && !a.pushButton) {
+        widget.checked = a.radioButton
+          ? value !== '' && value !== 'Off' && String(a.buttonValue ?? '') === value
+          : value !== '' && value !== 'Off' && (!a.exportValue || a.exportValue === value);
+      }
+      return widget;
+    });
   const textFields = annotations
     .filter(a => a?.fieldType === 'Tx')
     .map(a => ({
@@ -296,7 +346,7 @@ export async function extractCwPageData(
     }
   }
 
-  return { pageNumber: page.pageNumber, width, height, fields, texts, strokes };
+  return { pageNumber: page.pageNumber, width, height, fields, texts, strokes, widgets, allTexts };
 }
 
 // ── Analysis ──────────────────────────────────────────────────────────────
@@ -385,7 +435,7 @@ export function parseFieldValue(raw: string): CwFieldValue | null {
 }
 
 /** Find the label printed immediately left of a field in the same table row. */
-function findRowLabel(field: CwField, texts: CwTextItem[]): string | null {
+export function findRowLabel(field: Pick<CwField, 'rect'>, texts: CwTextItem[]): string | null {
   const midY = (field.rect.y0 + field.rect.y1) / 2;
   let best: { label: string; gap: number } | null = null;
   for (const text of texts) {
@@ -636,8 +686,14 @@ export function analyzeCwFormPage(
   const strokes = measurementStrokes(data, circles);
   const components = outlineComponents(data);
   const fieldRects = data.fields.map(f => f.rect);
+  // The customer's ticked CM / INCH box wins, then a printed statement, then the document hint.
+  const ticked = detectWidgetUnit(data);
   const pageUnit = detectUnit(data.texts);
-  const unit = pageUnit.assumed && fallbackUnit ? fallbackUnit : pageUnit;
+  const unit = ticked
+    ? { unit: ticked, assumed: false }
+    : pageUnit.assumed && fallbackUnit
+      ? fallbackUnit
+      : pageUnit;
 
   return groups.map(group => {
     const tableBox = union(group.map(entry => entry.field.rect));
@@ -663,6 +719,7 @@ export function analyzeCwFormPage(
           value: entry.value,
           range: entry.range,
           text: entry.text,
+          field: entry.field.name,
         });
         continue;
       }
@@ -674,6 +731,7 @@ export function analyzeCwFormPage(
         value: entry.value,
         range: entry.range,
         text: entry.text,
+        field: entry.field.name,
         points,
         color: resolved.line.color,
       });
@@ -746,4 +804,43 @@ export function detectDocumentUnit(pages: CwPageData[]): { unit: 'cm' | 'inch'; 
   if (inches > cms && inches >= 2) return { unit: 'inch', assumed: false };
   if (cms > inches && cms >= 2) return { unit: 'cm', assumed: false };
   return { unit: 'cm', assumed: true };
+}
+
+/**
+ * The CM / INCH box the customer ticked, if any. Reads the unit from the
+ * widget name (unit_cm, CC-BOL-unit-inch), its value (SofaPaint review
+ * sheets store "cm" / "inch"), or the CM / INCH caption printed beside it
+ * (Adobe "Radio Button 1", Universal "checkbox_1lahn"). An "x" printed
+ * over an empty box counts as ticked.
+ */
+export function detectWidgetUnit(data: CwPageData): 'cm' | 'inch' | null {
+  const texts = data.allTexts || data.texts;
+  // A flattened or printed form keeps the box but the tick is page text ("x" typed over it).
+  const marks = texts.filter(t => /^[xX\u2713\u2714\u221A\u25CF\u2715\u2716]$/.test(t.str.trim()));
+  const ticked = (data.widgets || []).filter(
+    w =>
+      w.type === 'button' &&
+      (w.checked || (w.checked === false && marks.some(m => contains(w.rect, center(m.rect), 4))))
+  );
+  const units = new Set<'cm' | 'inch'>();
+  for (const widget of ticked) {
+    const fromWord = (raw: string): 'cm' | 'inch' | null =>
+      /(^|[^a-z])(cm|centimet\w*)$/i.test(raw)
+        ? 'cm'
+        : /(^|[^a-z])(in|inch|inches)$/i.test(raw)
+          ? 'inch'
+          : null;
+    let unit = fromWord(widget.name) || fromWord(widget.value);
+    if (!unit) {
+      const mid = center(widget.rect);
+      const caption = texts
+        .filter(t => /^(cm|inch|inches)$/i.test(t.str.trim()))
+        .map(t => ({ t, d: Math.hypot(center(t.rect).x - mid.x, center(t.rect).y - mid.y) }))
+        .filter(e => e.d <= 70)
+        .sort((a, b) => a.d - b.d)[0];
+      if (caption) unit = /^c/i.test(caption.t.str.trim()) ? 'cm' : 'inch';
+    }
+    if (unit) units.add(unit);
+  }
+  return units.size === 1 ? [...units][0] : null;
 }
