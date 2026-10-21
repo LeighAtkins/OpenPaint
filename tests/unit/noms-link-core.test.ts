@@ -14,6 +14,8 @@ import {
   suggestTargets,
   pdfValueToForm,
   refineTargets,
+  autoMapping,
+  mappingNeedsReview,
 } from '../../src/modules/ui/noms-link-core';
 import { normalizeSofaMetadata, mergeSofaMetadata } from '../../src/modules/sofa-metadata.js';
 
@@ -331,5 +333,102 @@ describe('Filling the form from a measuring PDF', () => {
       labels
     );
     expect(picks).toEqual([['0:0'], ['0:0'], ['1:0'], ['1:1']]);
+  });
+});
+
+describe('Deciding whether a dropped PDF needs the mapping window', () => {
+  const form = {
+    unit: 'in',
+    products: [
+      {
+        reference: 'CS3X-NA',
+        model_list: [
+          {
+            name: 'CS3B-NA',
+            label: 'Frame',
+            files: [
+              { label: 'Front', field_data: { A2: '', A3: '', C: '', D: '' } },
+              { label: 'Side', field_data: { F: '', G1: '', G2: '', H1: '', H2: '', H3: '' } },
+              { label: 'Back', field_data: { J1: '', L1: '', L2: '' } },
+            ],
+          },
+          {
+            name: 'CC-ST-BE',
+            label: 'Seat Cushion',
+            files: [{ field_data: { A: '', B: '', C: '', D: '' } }],
+          },
+        ],
+      },
+    ],
+  };
+  const models = modelGroups(formModels(form));
+  const frame = {
+    file: 'Sofa.pdf',
+    title: 'Front and Side',
+    labels: ['A2', 'A3', 'C', 'D', 'F', 'G1', 'G2', 'H1', 'H2', 'H3'],
+  };
+  const back = { file: 'Sofa.pdf', title: 'Back', labels: ['J1', 'L1', 'L2'] };
+  const cushion = { file: 'Sofa.pdf', title: 'Seat cushion', labels: ['A', 'B', 'C', 'D'] };
+
+  it('needs nothing when every letter lands on one field of one model', () => {
+    expect(mappingNeedsReview([frame, back, cushion], [['0:0'], ['0:0'], ['0:1']], models)).toEqual(
+      []
+    );
+  });
+
+  it('accepts D1 for D and bare letters for numbered fields, as the mapping does', () => {
+    const group = { ...frame, labels: ['A2', 'A3', 'C', 'D1', 'F', 'G1', 'G2', 'H1', 'H2', 'H3'] };
+    expect(mappingNeedsReview([group], [['0:0']], models)).toEqual([]);
+    expect(
+      autoMapping(
+        ['D1', 'C', 'Z'],
+        models.filter(m => m.key === '0:0')
+      )
+    ).toEqual({
+      D1: 'D',
+      C: 'C',
+      Z: '',
+    });
+  });
+
+  it('asks when a diagram matched no model', () => {
+    const reasons = mappingNeedsReview([cushion], [[]], models);
+    expect(reasons).toEqual(['Sofa.pdf (Seat cushion): no form model matched']);
+  });
+
+  it('asks when a diagram could fill more than one model', () => {
+    expect(mappingNeedsReview([cushion], [['0:0', '0:1']], models)).toEqual([
+      'Sofa.pdf (Seat cushion): could fill 2 models',
+    ]);
+  });
+
+  it('asks when a letter has no field on the chosen model', () => {
+    const group = { ...frame, labels: [...frame.labels, 'Q', 'M4'] };
+    expect(mappingNeedsReview([group], [['0:0']], models)).toEqual([
+      'Sofa.pdf (Front and Side): no field for Q, M4',
+    ]);
+  });
+
+  it('asks when two diagrams write the same field on the same model', () => {
+    const second = { file: 'Other.pdf', title: 'Front', labels: ['A2', 'C'] };
+    const reasons = mappingNeedsReview([frame, second], [['0:0'], ['0:0']], models);
+    expect(reasons).toEqual([
+      'CS3X-NA · Frame A2: filled by both Sofa.pdf (Front and Side) and Other.pdf (Front)',
+      'CS3X-NA · Frame C: filled by both Sofa.pdf (Front and Side) and Other.pdf (Front)',
+    ]);
+  });
+
+  it('asks when the PDF did not state its unit', () => {
+    expect(mappingNeedsReview([{ ...back, unitAssumed: true }], [['0:0']], models)).toEqual([
+      'Sofa.pdf (Back): unit not stated in the PDF',
+    ]);
+  });
+
+  it('works end to end with refineTargets on a clean customer PDF', () => {
+    const labels = Object.fromEntries(models.map(m => [m.key, m.title]));
+    const groups = [frame, back, cushion];
+    const picks = refineTargets(groups, models, labels);
+    expect(picks).toEqual([['0:0'], ['0:0'], ['0:1']]);
+    expect(mappingNeedsReview(groups, picks, models)).toEqual([]);
   });
 });

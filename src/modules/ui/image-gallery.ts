@@ -7,6 +7,7 @@
  * Single authoritative owner of the gallery + paint.js (addImageToSidebar) interop.
  */
 import { CanvasManager } from '../CanvasManager';
+import { createRotateButtons } from './rotate-image';
 
 export function initImageGalleryModule() {
   'use strict';
@@ -2237,6 +2238,7 @@ export function initImageGalleryModule() {
       }
     });
     container.appendChild(deleteBtn);
+    container.appendChild(createRotateButtons(label));
 
     container.onclick = () => {
       if (window.__imageListReorderInProgress) return;

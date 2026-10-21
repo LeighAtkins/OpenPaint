@@ -10,6 +10,8 @@ type NotifyPayload =
       durationMs?: number;
       replace?: boolean;
       progress?: number;
+      /** One button on the toast, such as Undo. Clicking it closes the toast. */
+      action?: { label: string; onClick: () => void };
     };
 
 type NotificationElement = HTMLDivElement & { timer?: ReturnType<typeof setTimeout> | null };
@@ -98,6 +100,29 @@ function ensureNotificationStyles(): void {
       border: 2px solid rgba(255, 255, 255, 0.35);
       border-top-color: #fff;
       animation: openpaint-toast-spin 780ms linear infinite;
+    }
+
+    .openpaint-toast.has-action,
+    .openpaint-toast-action {
+      pointer-events: auto;
+    }
+
+    .openpaint-toast-action {
+      flex: 0 0 auto;
+      height: 24px;
+      padding: 0 10px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .openpaint-toast-action:hover {
+      background: rgba(255, 255, 255, 0.24);
     }
 
     .openpaint-toast-text {
@@ -285,6 +310,20 @@ export function notifyOpenPaint(payload: NotifyPayload, fallbackKind = 'info'): 
   body.textContent = message;
   text.appendChild(body);
   toast.appendChild(text);
+
+  if (normalized.action?.label && typeof normalized.action.onClick === 'function') {
+    const action = normalized.action;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'openpaint-toast-action';
+    button.textContent = action.label;
+    button.addEventListener('click', () => {
+      hideOpenPaintNotification();
+      action.onClick();
+    });
+    toast.appendChild(button);
+    toast.classList.add('has-action');
+  }
 
   const progress = Number(normalized.progress);
   if (Number.isFinite(progress)) {

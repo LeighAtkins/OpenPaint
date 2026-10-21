@@ -12,6 +12,7 @@
 
 import { authService } from '../../services/auth/authService';
 import { imageRegistry } from '../ImageRegistry.js';
+import { notifyOpenPaint } from './notification-center';
 import { setNextTagValue } from './next-tag-control';
 import {
   importSvgMeasurements,
@@ -25,8 +26,10 @@ import {
   type CwFormValueGroup,
 } from './cw-form-pdf-import';
 import {
+  autoMapping,
   changedFields,
   convertMeasure,
+  mappingNeedsReview,
   defaultFieldFor,
   formModels,
   modelGroups,
@@ -82,6 +85,11 @@ const state: {
   signIn: string;
   canvasSnapshot: Map<string, string>;
   collapsed: boolean;
+  /** File names of PDFs being read right now, '' when idle. */
+  reading: string;
+  /** Inputs filled from a PDF, lit until highlightUntil. */
+  highlight: Set<string>;
+  highlightUntil: number;
 } = {
   order: '',
   content: null,
@@ -96,6 +104,9 @@ const state: {
   signIn: '',
   canvasSnapshot: new Map(),
   collapsed: false,
+  reading: '',
+  highlight: new Set(),
+  highlightUntil: 0,
 };
 let initialized = false;
 let requestCounter = 0;
@@ -575,58 +586,143 @@ async function onImportComplete(event: Event): Promise<void> {
 }
 
 // ---------------------------------------------------------------- PDF drop
-// Drop the customer's filled measuring PDFs: each diagram is matched to the
-// form models it measures (suggested from shared letters, changeable), letters
-// map straight across where they match, the rest are picked by hand, and the
-// values fill the panel in the form's unit. Nothing is saved until Save.
+// Drop the customer's filled measuring PDF anywhere on the panel: each diagram
+// is matched to the form model it measures and its letters to the form fields.
+// When that is unambiguous the values go straight in (with Undo); the mapping
+// window only opens when a choice is needed. Nothing is saved until Save.
+function takePdfFiles(files: FileList | File[] | null): void {
+  const pdfs = Array.from(files || []).filter(isPdfFile);
+  if (!pdfs.length) return;
+  if (state.reading) {
+    setStatus(`Still reading ${state.reading}. Drop the next PDF when that finishes.`, 'info');
+    return;
+  }
+  void readPdfs(pdfs);
+}
 function pdfDropZone(): HTMLElement {
-  const zone = el('div', 'nml-drop', 'Drop filled measurement PDFs here, or click to choose');
+  const zone = el('div', `nml-drop${state.reading ? ' busy' : ''}`);
+  zone.setAttribute('role', 'button');
+  zone.tabIndex = 0;
+  if (state.reading) {
+    zone.append(el('span', 'nml-drop-spinner'), el('span', '', `Reading ${state.reading}…`));
+    zone.setAttribute('aria-busy', 'true');
+    return zone;
+  }
+  zone.append(
+    el('strong', '', "Drop the customer's filled measuring PDF here"),
+    el('span', '', '(or click to choose)')
+  );
   const input = el('input');
   input.type = 'file';
   input.accept = 'application/pdf,.pdf';
   input.multiple = true;
   input.hidden = true;
   zone.appendChild(input);
-  const take = (files: FileList | null) => {
-    const pdfs = Array.from(files || []).filter(isPdfFile);
-    if (pdfs.length) void readPdfs(pdfs);
-  };
   zone.addEventListener('click', () => input.click());
-  input.addEventListener('change', () => take(input.files));
-  zone.addEventListener('dragover', event => {
-    event.preventDefault();
-    event.stopPropagation();
-    zone.classList.add('over');
+  zone.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      input.click();
+    }
   });
-  zone.addEventListener('dragleave', () => zone.classList.remove('over'));
-  zone.addEventListener('drop', event => {
-    event.preventDefault();
-    event.stopPropagation();
-    zone.classList.remove('over');
-    take(event.dataTransfer?.files || null);
-  });
+  input.addEventListener('change', () => takePdfFiles(input.files));
   return zone;
+}
+/** The whole panel accepts a PDF drop, not only the zone. */
+function attachPanelDrop(panel: HTMLElement): void {
+  if (panel.dataset.nmlDrop === '1') return;
+  panel.dataset.nmlDrop = '1';
+  const hasFiles = (event: DragEvent): boolean =>
+    Array.from(event.dataTransfer?.types || []).includes('Files');
+  panel.addEventListener('dragover', event => {
+    if (!hasFiles(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy';
+    panel.classList.add('nml-over');
+  });
+  panel.addEventListener('dragleave', event => {
+    if (event.relatedTarget && panel.contains(event.relatedTarget as Node)) return;
+    panel.classList.remove('nml-over');
+  });
+  panel.addEventListener('drop', event => {
+    if (!hasFiles(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    panel.classList.remove('nml-over');
+    const files = Array.from(event.dataTransfer?.files || []);
+    if (files.length && !files.some(isPdfFile)) {
+      setStatus('Only measuring PDFs fill the form. Drop photos on the canvas instead.', 'info');
+      return;
+    }
+    takePdfFiles(files);
+  });
+}
+
+function pdfGroupsForMatching(groups: CwFormValueGroup[]) {
+  return groups.map(group => ({
+    file: group.file,
+    title: group.title,
+    labels: group.values.map(v => v.label),
+    unitAssumed: group.unitAssumed,
+  }));
 }
 
 async function readPdfs(files: File[]): Promise<void> {
-  setStatus(`Reading ${files.map(f => f.name).join(', ')}…`);
+  const names = files.map(f => f.name).join(', ');
+  state.reading = names;
+  setStatus(`Reading ${names}…`);
   const groups: CwFormValueGroup[] = [];
-  for (const file of files) {
-    try {
-      const found = await readCwFormPdfValues(file);
-      if (!found.length) setStatus(`${file.name}: no filled measurements found.`, 'error');
-      groups.push(...found);
-    } catch (error) {
-      setStatus(`${file.name} could not be read: ${(error as Error).message}`, 'error');
+  try {
+    for (const file of files) {
+      try {
+        const found = await readCwFormPdfValues(file);
+        if (!found.length) setStatus(`${file.name}: no filled measurements found.`, 'error');
+        groups.push(...found);
+      } catch (error) {
+        setStatus(`${file.name} could not be read: ${(error as Error).message}`, 'error');
+      }
     }
+  } finally {
+    state.reading = '';
   }
-  if (!groups.length) return;
-  const choice = await chooseMapping(groups);
+  if (!groups.length) {
+    render();
+    return;
+  }
+  const models = modelGroups(state.models);
+  const matchable = pdfGroupsForMatching(groups);
+  const suggested = refineTargets(
+    matchable,
+    models,
+    Object.fromEntries(models.map(m => [m.key, m.title]))
+  );
+  const reasons = mappingNeedsReview(matchable, suggested, models);
+  let choice: MappingChoice | null;
+  if (reasons.length) {
+    console.info('[NOMS link] PDF mapping needs a look:', reasons);
+    setStatus('Check how the PDF matches the form.', 'info');
+    choice = await chooseMapping(groups, suggested);
+  } else {
+    choice = {
+      addImages: true,
+      groups: groups.map((group, i) => ({
+        group,
+        targets: suggested[i],
+        mapping: autoMapping(
+          group.values.map(v => v.label),
+          models.filter(m => suggested[i].includes(m.key))
+        ),
+      })),
+    };
+  }
   if (!choice) {
     setStatus('PDF values not used.', 'info');
     return;
   }
+  const before = state.values;
   let filled = 0;
+  const filledIds: string[] = [];
   const skipped: string[] = [];
   for (const { group, targets, mapping } of choice.groups) {
     for (const { label, value } of group.values) {
@@ -636,10 +732,11 @@ async function readPdfs(files: File[]): Promise<void> {
         continue;
       }
       for (const target of targets) {
-        const fileKey = modelGroups(state.models).find(g => g.key === target)?.fields[field];
+        const fileKey = models.find(g => g.key === target)?.fields[field];
         if (!fileKey) continue;
         setValue(fileKey, field, pdfValueToForm(value, group.unit, state.unit));
         filled += 1;
+        filledIds.push(`${fileKey}|${field}`);
       }
     }
   }
@@ -652,7 +749,9 @@ async function readPdfs(files: File[]): Promise<void> {
       }
     }
   }
-  render();
+  state.collapsed = false;
+  state.highlight = new Set(filledIds);
+  state.highlightUntil = Date.now() + 4000;
   const unsaved = changedFields(state.saved, state.values).length;
   setStatus(
     `Filled ${filled} value${filled === 1 ? '' : 's'} from the PDF${files.length > 1 ? 's' : ''}` +
@@ -660,6 +759,35 @@ async function readPdfs(files: File[]): Promise<void> {
       `. ${unsaved} change${unsaved === 1 ? '' : 's'} to review, then Save to NOMS.`,
     skipped.length ? 'info' : 'ok'
   );
+  scrollToFirstFilled(filledIds);
+  notifyOpenPaint({
+    message: `Filled ${filled} value${filled === 1 ? '' : 's'} from ${names}. Check and press Save to NOMS.`,
+    kind: 'success',
+    durationMs: 9000,
+    action: { label: 'Undo', onClick: () => undoFill(before) },
+  });
+}
+
+function undoFill(before: Values): void {
+  state.values = before;
+  state.highlight = new Set();
+  patchEntry({ values: state.values, unit: state.unit });
+  state.canvasSnapshot.clear();
+  pushAll();
+  setStatus('PDF values undone. Lines that took a value keep it until you edit them.', 'info');
+}
+
+function scrollToFirstFilled(ids: string[]): void {
+  const panel = document.getElementById(PANEL_ID);
+  if (!panel || !ids.length) return;
+  const first = panel.querySelector<HTMLElement>(`input[data-nml-id="${CSS.escape(ids[0])}"]`);
+  const box = first?.closest<HTMLElement>('.nml-model');
+  if (!box) return;
+  const header = panel.querySelector<HTMLElement>('header');
+  panel.scrollTo({
+    top: Math.max(0, box.offsetTop - (header?.offsetHeight || 0) - 6),
+    behavior: 'smooth',
+  });
 }
 
 interface MappingChoice {
@@ -667,7 +795,10 @@ interface MappingChoice {
   groups: Array<{ group: CwFormValueGroup; targets: string[]; mapping: Record<string, string> }>;
 }
 
-function chooseMapping(groups: CwFormValueGroup[]): Promise<MappingChoice | null> {
+function chooseMapping(
+  groups: CwFormValueGroup[],
+  suggested: string[][]
+): Promise<MappingChoice | null> {
   ensureStyles();
   const models = modelGroups(state.models);
   return new Promise(resolve => {
@@ -683,15 +814,6 @@ function chooseMapping(groups: CwFormValueGroup[]): Promise<MappingChoice | null
         '',
         `Check what each diagram fills. Letters that match the form are filled as they are; only the ones that need a choice are listed. Values are converted to ${state.unit === 'in' ? 'inches' : 'cm'}.`
       )
-    );
-    const suggested = refineTargets(
-      groups.map(group => ({
-        file: group.file,
-        title: group.title,
-        labels: group.values.map(v => v.label),
-      })),
-      models,
-      Object.fromEntries(models.map(m => [m.key, m.title]))
     );
     const state2 = groups.map((group, i) => ({
       group,
@@ -909,9 +1031,18 @@ function ensureStyles(): void {
     #${PANEL_ID} .nml-hint.warn { color: #8a5a00; }
     #${PANEL_ID} .nml-line { color: #16a34a; font-weight: 700; }
     #${PANEL_ID}.collapsed .nml-body { display: none; }
-    #${PANEL_ID} .nml-drop { margin: 8px 0; padding: 10px; border: 2px dashed #f4a77a; border-radius: 8px;
-      background: #fffaf4; color: #9a3412; text-align: center; cursor: pointer; }
-    #${PANEL_ID} .nml-drop.over { background: #ffedd5; border-color: #f47636; }
+    #${PANEL_ID} .nml-drop { display: flex; flex-direction: column; gap: 2px; align-items: center; margin: 10px 0;
+      padding: 14px 12px; border: 2px dashed #f47636; border-radius: 10px; background: #fff4ea; color: #9a3412;
+      text-align: center; cursor: pointer; font-size: 12px; }
+    #${PANEL_ID} .nml-drop strong { font-size: 13px; }
+    #${PANEL_ID} .nml-drop:hover, #${PANEL_ID}.nml-over .nml-drop { background: #ffe4cc; border-color: #ea580c; }
+    #${PANEL_ID}.nml-over { outline: 3px solid #f47636; outline-offset: -3px; }
+    #${PANEL_ID} .nml-drop.busy { cursor: progress; flex-direction: row; gap: 8px; opacity: .85; }
+    #${PANEL_ID} .nml-drop-spinner { width: 14px; height: 14px; border-radius: 999px; border: 2px solid #fcd3b8;
+      border-top-color: #f47636; animation: nml-spin .8s linear infinite; }
+    #${PANEL_ID} input.nml-filled { animation: nml-flash 4s ease-out forwards; }
+    @keyframes nml-spin { to { transform: rotate(360deg); } }
+    @keyframes nml-flash { 0%, 50% { background: #fde68a; border-color: #f59e0b; } 100% { background: #fff; border-color: #cbd5e1; } }
     .nml-map { position: fixed; inset: 0; z-index: 12100; display: flex; align-items: center; justify-content: center;
       padding: 20px; background: rgba(15, 23, 42, .44); font: 12px/1.4 system-ui, sans-serif; color: #0f172a; }
     .nml-map-card { width: min(760px, 100%); max-height: calc(100vh - 40px); overflow: auto; padding: 16px 18px;
@@ -1008,6 +1139,7 @@ function render(): void {
     panel.setAttribute('aria-label', 'NOMS measurements');
     document.body.appendChild(panel);
   }
+  attachPanelDrop(panel);
   panel.classList.toggle('collapsed', state.collapsed);
   panel.replaceChildren();
 
@@ -1111,6 +1243,8 @@ function render(): void {
       input.inputMode = 'decimal';
       input.value = value;
       input.dataset.nmlId = `${model.key}|${field}`;
+      if (state.highlight.has(input.dataset.nmlId) && Date.now() < state.highlightUntil)
+        input.classList.add('nml-filled');
       input.setAttribute('aria-label', `${field} in ${state.unit}`);
       input.addEventListener('change', () => {
         const next = parseMeasure(input.value);
