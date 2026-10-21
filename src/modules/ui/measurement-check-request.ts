@@ -1104,6 +1104,87 @@ export async function savePdfValuesToProject(
   return { saved, updated, failures, noteCount, plan, ranges };
 }
 
+// ── Range pills (shared by both PDF loaders) ─────────────────────────
+
+/**
+ * Table rows for values the customer wrote as two numbers: one pill per
+ * option (low, mid, high) with the current choice pressed. Buttons carry
+ * data-check-pill (planEntryKey) and data-check-pill-value; handle clicks
+ * with applyRangePillClick.
+ */
+export function rangeChooserRowsHtml(
+  plan: PdfValueSavePlan,
+  choices?: Record<string, number> | null
+): string {
+  return plan.entries
+    .filter(entry => entry.range)
+    .map(entry => {
+      const key = planEntryKey(entry);
+      const written = parseCustomerValue(entry.valueText);
+      const current = choices?.[key] ?? rangeValue(written);
+      const pills = rangeOptions(written)
+        .map(
+          option =>
+            `<button type="button" class="measurement-check-pill${option.value === current ? ' on' : ''}" data-check-pill="${escapeHtml(key)}" data-check-pill-value="${option.value}" aria-pressed="${option.value === current ? 'true' : 'false'}">${option.choice === 'mid' ? 'mid ' : ''}${escapeHtml(formatCustomerNumber(option.value))}</button>`
+        )
+        .join('');
+      return `<tr><td>${escapeHtml(entry.label)}</td><td><span class="measurement-check-written">${escapeHtml(entry.viewTitle)} · wrote ${escapeHtml(written.text)}</span><span class="measurement-check-pills" role="group">${pills}</span></td></tr>`;
+    })
+    .join('');
+}
+
+/** Record a pill click in `choices` and update the pressed state; null when not a pill. */
+export function applyRangePillClick(
+  target: Element,
+  choices: Record<string, number> | null
+): Record<string, number> | null {
+  if (!target.matches('[data-check-pill]')) return null;
+  const key = target.getAttribute('data-check-pill') || '';
+  const value = Number(target.getAttribute('data-check-pill-value'));
+  if (!key || !Number.isFinite(value)) return choices || {};
+  Array.from(target.parentElement?.children || []).forEach(pill => {
+    pill.classList.toggle('on', pill === target);
+    pill.setAttribute('aria-pressed', pill === target ? 'true' : 'false');
+  });
+  return { ...(choices || {}), [key]: value };
+}
+
+// ── Stale notes after a hand edit ────────────────────────────────────
+
+export const HAND_EDIT_EVENT = 'openpaint:measurement-hand-edited';
+
+/**
+ * Drop the customer note kept beside a value (measurementNotes, keyed
+ * scope|label). Used when the value is typed by hand later, so "16.5" from
+ * an old "16.25-16.5" no longer sits next to a corrected 16.375.
+ */
+export function clearMeasurementNote(scope: string, label: string): boolean {
+  const projectManager = (window as any).app?.projectManager;
+  if (!projectManager?.setProjectMetadata || !scope || !label) return false;
+  const current = projectManager.getProjectMetadata?.()?.measurementNotes || {};
+  const key = `${scope}|${label}`;
+  if (!Object.prototype.hasOwnProperty.call(current, key)) return false;
+  const next = { ...current };
+  delete next[key];
+  projectManager.setProjectMetadata({ measurementNotes: next });
+  return true;
+}
+
+let handEditListenerInstalled = false;
+
+export function installHandEditNoteClearing(): void {
+  if (handEditListenerInstalled) return;
+  handEditListenerInstalled = true;
+  window.addEventListener(HAND_EDIT_EVENT, event => {
+    const detail = (event as CustomEvent).detail || {};
+    try {
+      clearMeasurementNote(String(detail.imageLabel || ''), String(detail.strokeLabel || ''));
+    } catch (error) {
+      console.warn('[Measurement Check] Could not clear the measurement note:', error);
+    }
+  });
+}
+
 // ── Review manifest (round-trips through parseSofaPaintReviewPdf) ────
 
 export function buildCheckReviewManifest(
@@ -1574,6 +1655,7 @@ interface DialogState {
 }
 
 export function initMeasurementCheckRequest(): void {
+  installHandEditNoteClearing();
   const trigger = document.getElementById('measurementCheckBtn');
   if (!trigger || trigger.dataset.bound === 'true') return;
   trigger.dataset.bound = 'true';
@@ -1591,9 +1673,9 @@ export function initMeasurementCheckRequest(): void {
     const overlay = document.createElement('div');
     overlay.className = 'measurement-review-overlay';
     overlay.innerHTML = `
-      <section class="measurement-review-shell measurement-check-shell" role="dialog" aria-modal="true" aria-label="Measurement check request">
+      <section class="measurement-review-shell measurement-check-shell" role="dialog" aria-modal="true" aria-label="Export a check request">
         <header class="measurement-review-header">
-          <div><span class="measurement-review-kicker">CUSTOMER CHECKS</span><h2>Measurement check request</h2></div>
+          <div><span class="measurement-review-kicker">CUSTOMER CHECKS</span><h2>Export a check request</h2></div>
           <div class="measurement-review-header-actions">
             <button type="button" data-check-close aria-label="Close">×</button>
           </div>
@@ -1753,21 +1835,7 @@ export function initMeasurementCheckRequest(): void {
     // pills with the RANGE_DEFAULT end picked, so nothing is reduced unseen.
     const renderRangeChooser = (plan: PdfValueSavePlan) => {
       const entries = plan.entries.filter(entry => entry.range);
-      const choices = state.rangeChoices || {};
-      const rows = entries
-        .map(entry => {
-          const key = planEntryKey(entry);
-          const written = parseCustomerValue(entry.valueText);
-          const current = choices[key] ?? rangeValue(written);
-          const pills = rangeOptions(written)
-            .map(
-              option =>
-                `<button type="button" class="measurement-check-pill${option.value === current ? ' on' : ''}" data-check-pill="${escapeHtml(key)}" data-check-pill-value="${option.value}" aria-pressed="${option.value === current ? 'true' : 'false'}">${option.choice === 'mid' ? 'mid ' : ''}${escapeHtml(formatCustomerNumber(option.value))}</button>`
-            )
-            .join('');
-          return `<tr><td>${escapeHtml(entry.label)}</td><td><span class="measurement-check-written">${escapeHtml(entry.viewTitle)} · wrote ${escapeHtml(written.text)}</span><span class="measurement-check-pills" role="group">${pills}</span></td></tr>`;
-        })
-        .join('');
+      const rows = rangeChooserRowsHtml(plan, state.rangeChoices);
       report.innerHTML = `
         <div class="measurement-check-summary">Two numbers written for ${entries.length} value(s). Pick the one to use (the ${RANGE_DEFAULT} one is picked to start); the customer's words are kept as a note.</div>
         <section class="measurement-check-page">
@@ -1842,15 +1910,7 @@ export function initMeasurementCheckRequest(): void {
       }
 
       if (target.matches('[data-check-pill]')) {
-        const key = target.getAttribute('data-check-pill') || '';
-        const value = Number(target.getAttribute('data-check-pill-value'));
-        if (key && Number.isFinite(value)) {
-          state.rangeChoices = { ...(state.rangeChoices || {}), [key]: value };
-          Array.from(target.parentElement?.children || []).forEach(pill => {
-            pill.classList.toggle('on', pill === target);
-            pill.setAttribute('aria-pressed', pill === target ? 'true' : 'false');
-          });
-        }
+        state.rangeChoices = applyRangePillClick(target, state.rangeChoices);
         return;
       }
 

@@ -13,15 +13,14 @@ export const LAST_EXPORT_UNIT_KEY = 'sofapaint:pdf-export-unit';
 
 /** cm with one decimal, rounded half up on the exact value: 6.35 prints "6.4 cm". */
 export function formatCmForExport(cm: number, decimals = 1): string {
-  const value = Number(cm);
-  if (!Number.isFinite(value) || value <= 0) return '';
-  return `${formatHalfUp(value, decimals, true)} cm`;
+  if (!Number.isFinite(cm) || cm <= 0) return '';
+  return `${formatHalfUp(cm, decimals, true)} cm`;
 }
 
 // ── Unit ────────────────────────────────────────────────────────────
 
 export function normalizeExportUnit(value: unknown): ExportUnit | null {
-  const text = String(value || '')
+  const text = (typeof value === 'string' ? value : '')
     .trim()
     .toLowerCase();
   if (text === 'cm') return 'cm';
@@ -76,11 +75,13 @@ export function rememberExportUnit(unit: ExportUnit): void {
  * the manifest all agree, and return a function that puts the project's own
  * display unit back.
  */
+const keepDisplayUnit = (): void => undefined;
+
 export function applyTemporaryDisplayUnit(unit: ExportUnit): () => void {
   const selector = document.getElementById('unitSelector') as HTMLSelectElement | null;
-  if (!selector) return () => {};
+  if (!selector) return keepDisplayUnit;
   const previous: ExportUnit = selector.value === 'cm' ? 'cm' : 'inch';
-  if (previous === unit) return () => {};
+  if (previous === unit) return keepDisplayUnit;
   const apply = (next: ExportUnit) => {
     selector.value = next;
     selector.dispatchEvent(new Event('change', { bubbles: true }));

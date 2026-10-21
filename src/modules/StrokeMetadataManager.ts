@@ -1792,6 +1792,15 @@ export class StrokeMetadataManager {
 
         if (newValue !== originalMeasurement) {
           const success = this.parseAndSaveMeasurement(strokeScopeId, strokeLabel, newValue);
+          if (success) {
+            // A hand-typed value replaces whatever the customer wrote, so
+            // listeners drop the stale note kept from an imported PDF.
+            window.dispatchEvent(
+              new CustomEvent('openpaint:measurement-hand-edited', {
+                detail: { imageLabel: this.normalizeImageLabel(strokeScopeId), strokeLabel },
+              })
+            );
+          }
           if (!success) {
             // Restore original if parsing failed
             measurementSpan.textContent = originalMeasurement;
