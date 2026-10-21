@@ -5,6 +5,10 @@ import {
   evalRule,
   formModels,
   fromCanvasMeasurement,
+  canvasMeasurementCm,
+  formToTyped,
+  typedToForm,
+  pickInputUnit,
   isComfortWorksStaff,
   measureIssues,
   parseMeasure,
@@ -94,6 +98,72 @@ describe('NOMS measurement link helpers', () => {
     expect(fromCanvasMeasurement({ cm: 81.28, inch: 32 }, 'in')).toBe('32');
     expect(fromCanvasMeasurement({ cm: 81.28, inch: 32 }, 'cm')).toBe('81.28');
     expect(fromCanvasMeasurement({ cm: 0, inch: 0 }, 'in')).toBe('');
+  });
+
+  it('fills the box from a line that has a number in either unit', () => {
+    // Saved by older code or loaded from a project where only one unit survived.
+    expect(fromCanvasMeasurement({ cm: 0, inch: 23 }, 'cm')).toBe('58.42');
+    expect(fromCanvasMeasurement({ inch: 23.5 }, 'cm')).toBe('59.69');
+    expect(fromCanvasMeasurement({ cm: 58.42 }, 'in')).toBe('23');
+    expect(fromCanvasMeasurement({ cm: NaN, inch: 23 }, 'cm')).toBe('58.42');
+    expect(fromCanvasMeasurement({ cm: 0, inch: 0, inchWhole: 23, inchFraction: 0.5 }, 'cm')).toBe(
+      '59.69'
+    );
+    expect(fromCanvasMeasurement({ cm: 0, inch: 0, inchWhole: 23, inchFraction: 0.5 }, 'in')).toBe(
+      '23.5'
+    );
+    // inputUnit missing or odd does not matter.
+    expect(fromCanvasMeasurement({ cm: 58.42, inch: 23, inputUnit: undefined }, 'in')).toBe('23');
+    expect(fromCanvasMeasurement({ cm: 58.42, inch: 23, inputUnit: 'see photos' }, 'cm')).toBe(
+      '58.42'
+    );
+    // The stored value in the asked-for unit wins over a conversion.
+    expect(fromCanvasMeasurement({ cm: 129, inch: 50.8125 }, 'in')).toBe('50.81');
+    expect(fromCanvasMeasurement({ cm: 129, inch: 50.8125 }, 'cm')).toBe('129');
+  });
+
+  it('treats a note or a bare value stored on a line sensibly', () => {
+    expect(fromCanvasMeasurement('see photos', 'cm')).toBe('');
+    expect(fromCanvasMeasurement({ cm: 'see photos', inch: 'see photos' }, 'cm')).toBe('');
+    expect(fromCanvasMeasurement({}, 'in')).toBe('');
+    expect(fromCanvasMeasurement(null, 'in')).toBe('');
+    expect(fromCanvasMeasurement('23"', 'cm')).toBe('58.42');
+    expect(fromCanvasMeasurement('58.42 cm', 'in')).toBe('23');
+    expect(fromCanvasMeasurement('23 1/2', 'in')).toBe('23.5');
+    expect(fromCanvasMeasurement('60', 'cm')).toBe('60');
+    expect(canvasMeasurementCm({ cm: 0, inch: 10 })).toBe(25.4);
+    expect(canvasMeasurementCm({ cm: 0, inch: 0 })).toBeNull();
+    expect(canvasMeasurementCm('see photos')).toBeNull();
+  });
+
+  it('converts what is typed in one unit to the form unit and back', () => {
+    expect(typedToForm('23', 'in', 'cm')).toBe('58.42');
+    expect(typedToForm('23 1/2', 'in', 'cm')).toBe('59.69');
+    expect(typedToForm('23.5', 'in', 'cm')).toBe('59.69');
+    expect(typedToForm('23½', 'in', 'cm')).toBe('59.69');
+    expect(typedToForm('58.42', 'cm', 'in')).toBe('23');
+    expect(typedToForm('60', 'cm', 'in')).toBe('23.62');
+    expect(typedToForm('60', 'cm', 'cm')).toBe('60');
+    expect(typedToForm('32 1/2', 'in', 'in')).toBe('32.5');
+    expect(typedToForm('', 'in', 'cm')).toBe('');
+    expect(typedToForm('abc', 'in', 'cm')).toBeNull();
+    expect(formToTyped('58.42', 'cm', 'in')).toBe('23');
+    expect(formToTyped('59.69', 'cm', 'in')).toBe('23.5');
+    expect(formToTyped('23.5', 'in', 'cm')).toBe('59.69');
+    expect(formToTyped('23.5', 'in', 'in')).toBe('23.5');
+    expect(formToTyped('abc', 'cm', 'in')).toBe('abc');
+    expect(formToTyped('', 'cm', 'in')).toBe('');
+    // Round trips at two decimals.
+    for (const typed of ['23', '23.5', '23.25', '40.75', '12.13']) {
+      expect(formToTyped(typedToForm(typed, 'in', 'cm') as string, 'cm', 'in')).toBe(typed);
+    }
+    for (const typed of ['58.42', '2.54', '25.4', '127']) {
+      expect(formToTyped(typedToForm(typed, 'cm', 'in') as string, 'in', 'cm')).toBe(typed);
+    }
+    expect(pickInputUnit('in', 'cm')).toBe('in');
+    expect(pickInputUnit('cm', 'in')).toBe('cm');
+    expect(pickInputUnit(null, 'cm')).toBe('cm');
+    expect(pickInputUnit('inches', 'cm')).toBe('cm');
   });
 
   it('checks rules in centimetres without running code', () => {
