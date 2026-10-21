@@ -10,14 +10,46 @@ import {
   analyzeCwFormPage,
   detectDocumentUnit,
   extractCwPageData,
+  type CwFieldValue,
   type CwFormView,
   type CwPageData,
   type CwPoint,
 } from '../cw-form-pdf/parse-cw-form';
+import { formatCustomerNumber } from '../utils/customer-value';
 
 export interface CwFormImportResult {
   views: Array<{ viewId: string; title: string; measurements: number }>;
   warnings: string[];
+  /** Ranges the customer wrote and the number each line took. */
+  ranges: Array<{ pageNumber: number; label: string; text: string; used: number }>;
+}
+
+export interface CwFormImportOptions {
+  /** Number to use for a range, keyed `${pageNumber}:${label}`; otherwise the parser's default pick. */
+  chosen?: Record<string, number>;
+}
+
+/** Key for a value's range choice: page and letter. */
+export const rangeKey = (pageNumber: number, label: string): string => `${pageNumber}:${label}`;
+
+/**
+ * Keep a customer's words beside a measurement (project metadata
+ * measurementNotes, keyed scope|label), the same place the check-request
+ * dialog stores them. An empty note removes the entry.
+ */
+export function rememberMeasurementNote(scope: string, label: string, note: string): void {
+  const manager = window.app?.projectManager;
+  if (!manager?.setProjectMetadata) return;
+  try {
+    const current = manager.getProjectMetadata?.()?.measurementNotes || {};
+    const next = { ...current };
+    const key = `${scope}|${label}`;
+    if (note) next[key] = note;
+    else delete next[key];
+    manager.setProjectMetadata({ measurementNotes: next });
+  } catch (error) {
+    console.warn('[CW form] Could not store the measurement note:', error);
+  }
 }
 
 const TARGET_CROP_WIDTH_PX = 1800;
@@ -175,7 +207,12 @@ export function measurementInput(value: number, unit: 'cm' | 'inch'): string {
   return Math.abs(inches - eighths) < 0.003 ? `${eighths} in` : `${value}cm`;
 }
 
-async function mountMeasurements(viewId: string, view: CwFormView): Promise<number> {
+async function mountMeasurements(
+  viewId: string,
+  view: CwFormView,
+  options: CwFormImportOptions,
+  result: CwFormImportResult
+): Promise<number> {
   let overlayManager = window.app?.measurementOverlayManager;
   if (!overlayManager?.importSvg && window.app?.initDeferredManagers) {
     await window.app.initDeferredManagers();
@@ -187,10 +224,20 @@ async function mountMeasurements(viewId: string, view: CwFormView): Promise<numb
   const metadata = window.app?.metadataManager;
   let saved = 0;
   for (const m of view.measurements) {
-    if (
-      metadata?.parseAndSaveMeasurement?.(viewId, m.label, measurementInput(m.value, view.unit))
-    ) {
+    const picked = options.chosen?.[rangeKey(view.pageNumber, m.label)];
+    const value = m.range && typeof picked === 'number' ? picked : m.value;
+    if (metadata?.parseAndSaveMeasurement?.(viewId, m.label, measurementInput(value, view.unit))) {
       saved += 1;
+      if (m.range) {
+        // The line carries one number; the customer's two stay in the note.
+        rememberMeasurementNote(viewId, m.label, `customer wrote ${m.text || m.range.join(' - ')}`);
+        result.ranges.push({
+          pageNumber: view.pageNumber,
+          label: m.label,
+          text: m.text || m.range.join(' - '),
+          used: value,
+        });
+      }
     }
     window.app?.tagManager?.updateTagText?.(m.label, viewId);
   }
@@ -205,7 +252,8 @@ export interface CwFormValueGroup {
   title: string;
   unit: 'cm' | 'inch';
   unitAssumed: boolean;
-  values: Array<{ label: string; value: number }>;
+  /** `range` holds both numbers when the customer wrote two; `value` is the default pick. */
+  values: Array<CwFieldValue & { label: string }>;
 }
 
 /** Read the label/value pairs of every diagram in a filled CW measuring PDF. */
@@ -223,6 +271,8 @@ export async function readCwFormPdfValues(file: File): Promise<CwFormValueGroup[
       const values = [...view.measurements, ...view.unplaced].map(m => ({
         label: m.label,
         value: m.value,
+        range: m.range,
+        text: m.text,
       }));
       if (!values.length) continue;
       groups.push({
@@ -238,7 +288,10 @@ export async function readCwFormPdfValues(file: File): Promise<CwFormValueGroup[
   return groups;
 }
 
-export async function importCwFormPdf(file: File): Promise<CwFormImportResult> {
+export async function importCwFormPdf(
+  file: File,
+  options: CwFormImportOptions = {}
+): Promise<CwFormImportResult> {
   const pdfjs = await loadPdfjs();
   const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
   const warnings: string[] = [];
@@ -250,7 +303,7 @@ export async function importCwFormPdf(file: File): Promise<CwFormImportResult> {
   const documentUnit = detectDocumentUnit(pages.map(p => p.data));
 
   const manager = window.app?.projectManager;
-  const result: CwFormImportResult = { views: [], warnings };
+  const result: CwFormImportResult = { views: [], warnings, ranges: [] };
   const baseName = file.name.replace(/\.pdf$/i, '');
 
   for (const { page, data } of pages) {
@@ -273,7 +326,7 @@ export async function importCwFormPdf(file: File): Promise<CwFormImportResult> {
         warnings.push(`${view.title}: image did not finish loading`);
         continue;
       }
-      const saved = await mountMeasurements(viewId, view);
+      const saved = await mountMeasurements(viewId, view, options, result);
       result.views.push({ viewId, title: view.title, measurements: saved });
     }
   }
@@ -292,7 +345,12 @@ export async function handleCwFormPdfFile(file: File): Promise<boolean> {
       : console.log(`[CW form] ${message}`);
   try {
     status(`Reading ${file.name}...`);
-    const { views, warnings } = await importCwFormPdf(file);
+    const { views, warnings, ranges } = await importCwFormPdf(file);
+    for (const range of ranges) {
+      warnings.push(
+        `${range.label}: customer wrote ${range.text}, used ${formatCustomerNumber(range.used)}`
+      );
+    }
     if (!views.length) {
       status(
         `${file.name}: no filled Comfort Works measuring diagram found${

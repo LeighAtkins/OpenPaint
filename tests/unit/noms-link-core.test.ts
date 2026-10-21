@@ -5,6 +5,8 @@ import {
   evalRule,
   formModels,
   fromCanvasMeasurement,
+  hasMeasure,
+  refreshLineTag,
   canvasMeasurementCm,
   formToTyped,
   typedToForm,
@@ -120,6 +122,36 @@ describe('NOMS measurement link helpers', () => {
     // The stored value in the asked-for unit wins over a conversion.
     expect(fromCanvasMeasurement({ cm: 129, inch: 50.8125 }, 'in')).toBe('50.81');
     expect(fromCanvasMeasurement({ cm: 129, inch: 50.8125 }, 'cm')).toBe('129');
+  });
+
+  it('reads a line stored as inchWhole/inchFraction only, as the line list shows it', () => {
+    // Leigh's project: the list showed H3 = 11.5" while the panel box said 0.
+    const parts = { cm: 0, inch: 0, inchWhole: 11, inchFraction: 0.5, inputUnit: 'inches' };
+    expect(fromCanvasMeasurement(parts, 'in')).toBe('11.5');
+    expect(fromCanvasMeasurement(parts, 'cm')).toBe('29.21');
+    expect(fromCanvasMeasurement({ cm: 0, inch: 11.5 }, 'in')).toBe('11.5');
+    expect(fromCanvasMeasurement({ cm: 0, inch: 11.5 }, 'cm')).toBe('29.21');
+  });
+
+  it('treats "0" or text on the form as no measurement so the line can fill it', () => {
+    expect(hasMeasure('0')).toBe(false);
+    expect(hasMeasure('')).toBe(false);
+    expect(hasMeasure(undefined)).toBe(false);
+    expect(hasMeasure('abc')).toBe(false);
+    expect(hasMeasure('11.5')).toBe(true);
+    expect(hasMeasure('11 1/2')).toBe(true);
+  });
+
+  it('refreshes the canvas label of a line after its measurement was written', () => {
+    const calls: string[] = [];
+    const tags = {
+      getTagObject: (label: string, scope: string) => (label === 'H3' ? { scope } : null),
+      updateTagText: (label: string, scope: string) => calls.push(`${scope}|${label}`),
+    };
+    expect(refreshLineTag(tags, 'side', 'H3')).toBe(true);
+    expect(refreshLineTag(tags, 'side', 'Z9')).toBe(false);
+    expect(refreshLineTag(null, 'side', 'H3')).toBe(false);
+    expect(calls).toEqual(['side|H3']);
   });
 
   it('treats a note or a bare value stored on a line sensibly', () => {
