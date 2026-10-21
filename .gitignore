@@ -122,3 +122,6 @@ dev-load/
 
 # CW line library runtime store (dev file fallback)
 data/cw-line-library.json
+
+# Customer measuring PDFs used by tests: kept locally, never committed
+tests/fixtures/private/

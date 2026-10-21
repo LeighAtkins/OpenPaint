@@ -23,7 +23,7 @@ import {
 
 const FIXTURES = resolve(__dirname, '../fixtures/pdf-library');
 const BEN = '/tmp/cw-mt/ben';
-const NOMS_FIXTURES = resolve(__dirname, '../fixtures/noms-pdfs');
+const NOMS_FIXTURES = resolve(__dirname, '../fixtures/private');
 /** The returned PDF from /tmp when present, else the committed copy. */
 const firstExisting = (...paths: string[]) => paths.find(p => existsSync(p)) || paths[0];
 const RIA = firstExisting('/tmp/cw-mt/ria/ria-filled.pdf', join(NOMS_FIXTURES, 'ria-filled.pdf'));

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { PDFDocument, PDFRadioGroup, PDFTextField } from 'pdf-lib';
@@ -12,8 +12,10 @@ import {
 } from '../../src/modules/ui/pdf-cm-convert';
 import { parseSofaPaintReviewPdf } from '../../src/modules/ui/measurement-review';
 
+const PRIVATE = resolve(__dirname, '../fixtures/private');
+const havePrivate = existsSync(resolve(PRIVATE, 'ria-filled.pdf'));
 const fixture = (name: string): Uint8Array =>
-  new Uint8Array(readFileSync(resolve(__dirname, '../fixtures/noms-pdfs', name)));
+  new Uint8Array(readFileSync(resolve(__dirname, '../fixtures/private', name)));
 const DATE = new Date(2026, 9, 21);
 
 async function pageText(bytes: Uint8Array): Promise<string[]> {
@@ -41,7 +43,7 @@ describe('cm text', () => {
   });
 });
 
-describe('convertPdfToCm on a SofaPaint review PDF (Ria)', () => {
+describe.skipIf(!havePrivate)('convertPdfToCm on a SofaPaint review PDF (Ria)', () => {
   it('writes cm into the m_ fields, sets the unit radios to cm and keeps the manifest readable', async () => {
     const result = await convertPdfToCm(fixture('ria-filled.pdf'), {
       orderNumber: '125964',
@@ -85,7 +87,7 @@ describe('convertPdfToCm on a SofaPaint review PDF (Ria)', () => {
   });
 });
 
-describe('convertPdfToCm on CW forms typed over as page text (Ben)', () => {
+describe.skipIf(!havePrivate)('convertPdfToCm on CW forms typed over as page text (Ben)', () => {
   it('draws a cm box beside each printed inch value and sets CM', async () => {
     const bytes = fixture('ben-middle-sofa-section.pdf');
     const scan = await scanPdfText(bytes, pdfjs);
