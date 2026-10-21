@@ -1189,3 +1189,90 @@ export function reviewToDropValues(
     };
   });
 }
+
+// ---------------------------------------------------------------- NOMS drift
+// The panel remembers the form as it last read it from NOMS (the snapshot).
+// Someone can change the form on NOMS meanwhile; these say which letters
+// moved, so neither a reopen nor a send overwrites them without asking.
+
+export interface FormDrift {
+  key: string;
+  field: string;
+  /** Form text in the snapshot, on NOMS now, and in the panel. */
+  was: string;
+  now: string;
+  mine: string;
+  /** True when the panel's value differs from the snapshot (the person changed it). */
+  touched: boolean;
+}
+
+const sameMeasure = (a: unknown, b: unknown): boolean => {
+  const pa = parseMeasure(a);
+  const pb = parseMeasure(b);
+  if (pa === null || pb === null) return String(a ?? '').trim() === String(b ?? '').trim();
+  return pa === pb || (pa !== '' && pb !== '' && Math.abs(Number(pa) - Number(pb)) < 0.005);
+};
+
+/**
+ * Letters whose NOMS value changed since `snapshot` was read. All three value
+ * sets are form text in the same unit. Letters missing from the snapshot are
+ * skipped: there is nothing to compare with.
+ */
+export function formDrift(
+  snapshot: Record<string, Record<string, string>> | null | undefined,
+  fresh: Record<string, Record<string, string>>,
+  mine: Record<string, Record<string, string>>
+): FormDrift[] {
+  const out: FormDrift[] = [];
+  if (!snapshot) return out;
+  for (const [key, fields] of Object.entries(fresh || {})) {
+    for (const [field, now] of Object.entries(fields || {})) {
+      if (!(field in (snapshot[key] || {}))) continue;
+      const was = snapshot[key][field] ?? '';
+      if (sameMeasure(was, now)) continue;
+      const held = mine?.[key]?.[field] ?? was;
+      out.push({
+        key,
+        field,
+        was,
+        now: now ?? '',
+        mine: held,
+        touched: !sameMeasure(held, was),
+      });
+    }
+  }
+  return out;
+}
+
+/** Drift that would be lost: NOMS changed it and the panel would write something else. */
+export function conflictingDrift(drift: FormDrift[]): FormDrift[] {
+  return drift.filter(d => !sameMeasure(d.mine, d.now));
+}
+
+/** "2 h ago", "5 min ago", "just now", "3 days ago" for an ISO time. */
+export function agoText(iso: string | undefined, now = Date.now()): string {
+  const then = Date.parse(String(iso || ''));
+  if (!Number.isFinite(then)) return 'earlier';
+  const minutes = Math.max(0, Math.round((now - then) / 60000));
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 48) return `${hours} h ago`;
+  return `${Math.round(hours / 24)} days ago`;
+}
+
+/** Values with every model's letters converted from one unit to another. */
+export function convertValues(
+  values: Record<string, Record<string, string>> | null | undefined,
+  from: string,
+  to: string
+): Record<string, Record<string, string>> {
+  return Object.fromEntries(
+    Object.entries(values || {}).map(([key, fields]) => [
+      key,
+      Object.fromEntries(
+        Object.entries(fields || {}).map(([f, v]) => [f, convertMeasure(String(v ?? ''), from, to)])
+      ),
+    ])
+  );
+}
