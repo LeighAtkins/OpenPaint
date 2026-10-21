@@ -72,15 +72,18 @@ const mockContext = {
 };
 
 // Patch createElement so <canvas> elements return our mock context
-const origCreateElement = document.createElement.bind(document);
-document.createElement = vi.fn((tag, options) => {
-  const el = origCreateElement(tag, options);
-  if (tag === 'canvas') {
-    el.getContext = vi.fn(() => mockContext);
-    el.toDataURL = vi.fn(() => 'data:image/png;base64,mock');
-  }
-  return el;
-});
+// (files that run in the node environment have no document).
+if (typeof document !== 'undefined') {
+  const origCreateElement = document.createElement.bind(document);
+  document.createElement = vi.fn((tag, options) => {
+    const el = origCreateElement(tag, options);
+    if (tag === 'canvas') {
+      el.getContext = vi.fn(() => mockContext);
+      el.toDataURL = vi.fn(() => 'data:image/png;base64,mock');
+    }
+    return el;
+  });
+}
 
 // Mock performance.memory (not available in all environments)
 if (!performance.memory) {

@@ -307,12 +307,21 @@ export async function readCwFormPdfValues(file: File): Promise<CwFormValueGroup[
  * template it matched, with a confidence, its unit, and the values (a range
  * keeps both numbers; words alone come back with `value: null`).
  */
-export async function readCustomerPdf(file: File): Promise<CustomerPdfResult> {
+export async function readCustomerPdf(
+  file: File,
+  options: { onScanPage?: (pageNumber: number, total: number) => void } = {}
+): Promise<CustomerPdfResult> {
   const pdfjs = await loadPdfjs();
   const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  // Scanned pages are read by OCR in a worker that only starts when a page needs it.
+  const { createWorkerOcrEngine, renderPageGray } = await import('../cw-form-pdf/scan-ocr-client');
+  const engine = createWorkerOcrEngine();
   try {
-    return await readCustomerPdfDocument(doc as any, pdfjs.OPS, file.name);
+    return await readCustomerPdfDocument(doc as any, pdfjs.OPS, file.name, undefined, {
+      ocr: { engine, render: page => renderPageGray(page), onPage: options.onScanPage },
+    });
   } finally {
+    engine.terminate();
     await doc.cleanup?.();
   }
 }

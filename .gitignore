@@ -125,3 +125,6 @@ data/cw-line-library.json
 
 # Customer measuring PDFs used by tests: kept locally, never committed
 tests/fixtures/private/
+
+# Tesseract OCR files, copied from node_modules at build time
+public/tesseract/

@@ -63,6 +63,8 @@ export interface CwPageData {
   allTexts?: CwTextItem[];
   texts: CwTextItem[];
   strokes: CwStroke[];
+  /** Small filled shapes (a flattened radio dot, a drawn tick); absent on hand-built pages. */
+  fills?: Array<{ bbox: CwRect; color: string }>;
 }
 
 /** A field's number; `range` holds both numbers when the customer wrote two (value is the default pick). */
@@ -264,10 +266,15 @@ export async function extractCwPageData(
   const texts = allTexts.filter(t => !absorbed.has(t));
 
   const strokes: CwStroke[] = [];
+  const fills: Array<{ bbox: CwRect; color: string }> = [];
   const { fnArray, argsArray } = await page.getOperatorList();
   let ctm: Matrix = IDENTITY;
   let strokeColor = '#000000';
-  const stack: Array<{ ctm: Matrix; strokeColor: string }> = [];
+  let fillColor = '#000000';
+  const stack: Array<{ ctm: Matrix; strokeColor: string; fillColor: string }> = [];
+  const fillPaints = new Set(
+    ['fill', 'eoFill'].map(name => OPS[name]).filter(value => value !== undefined)
+  );
   const strokePaints = new Set(
     ['stroke', 'closeStroke', 'fillStroke', 'eoFillStroke', 'closeFillStroke', 'closeEOFillStroke']
       .map(name => OPS[name])
@@ -278,21 +285,35 @@ export async function extractCwPageData(
     const fn = fnArray[i];
     const args = argsArray[i];
     if (fn === OPS.save) {
-      stack.push({ ctm, strokeColor });
+      stack.push({ ctm, strokeColor, fillColor });
     } else if (fn === OPS.restore) {
       const state = stack.pop();
-      if (state) ({ ctm, strokeColor } = state);
+      if (state) ({ ctm, strokeColor, fillColor } = state);
     } else if (fn === OPS.transform) {
       ctm = multiply(ctm, args as Matrix);
     } else if (fn === OPS.paintFormXObjectBegin) {
-      stack.push({ ctm, strokeColor });
+      stack.push({ ctm, strokeColor, fillColor });
       if (Array.isArray(args?.[0]) && args[0].length === 6) ctm = multiply(ctm, args[0] as Matrix);
     } else if (fn === OPS.paintFormXObjectEnd) {
       const state = stack.pop();
-      if (state) ({ ctm, strokeColor } = state);
+      if (state) ({ ctm, strokeColor, fillColor } = state);
     } else if (fn === OPS.setStrokeRGBColor) {
       strokeColor = normalizeHex(args?.[0]);
+    } else if (fn === OPS.setFillRGBColor) {
+      fillColor = normalizeHex(args?.[0]);
     } else if (fn === OPS.constructPath) {
+      if (fillPaints.has(args?.[0])) {
+        // Only the extent matters: a dot inside a radio circle, a drawn tick.
+        const minMax: ArrayLike<number> | undefined = args?.[2];
+        if (minMax && minMax.length === 4 && Number.isFinite(minMax[0])) {
+          const a = flip(apply(ctm, minMax[0], minMax[1]));
+          const b = flip(apply(ctm, minMax[2], minMax[3]));
+          const bbox = bboxOf([a, b]);
+          if (bbox.x1 - bbox.x0 < 30 && bbox.y1 - bbox.y0 < 30)
+            fills.push({ bbox, color: fillColor });
+        }
+        continue;
+      }
       if (!strokePaints.has(args?.[0])) continue;
       const data: ArrayLike<number> = args?.[1]?.[0] || [];
       let current: CwPoint[] = [];
@@ -346,7 +367,17 @@ export async function extractCwPageData(
     }
   }
 
-  return { pageNumber: page.pageNumber, width, height, fields, texts, strokes, widgets, allTexts };
+  return {
+    pageNumber: page.pageNumber,
+    width,
+    height,
+    fields,
+    texts,
+    strokes,
+    fills,
+    widgets,
+    allTexts,
+  };
 }
 
 // ── Analysis ──────────────────────────────────────────────────────────────
@@ -806,6 +837,40 @@ export function detectDocumentUnit(pages: CwPageData[]): { unit: 'cm' | 'inch'; 
   return { unit: 'cm', assumed: true };
 }
 
+const unitFromWord = (raw: string): 'cm' | 'inch' | null =>
+  /(^|[^a-z])(cm|centimet\w*)$/i.test(raw)
+    ? 'cm'
+    : /(^|[^a-z])(in|inch|inches)$/i.test(raw)
+      ? 'inch'
+      : null;
+
+/**
+ * Unit a CM / INCH box stands for: its name (unit_cm, CC-BOL-unit-inch), its
+ * value ("cm" / "inch") or the CM / INCH caption printed beside it.
+ */
+export function unitFromCaption(
+  widget: Pick<CwFormWidget, 'name' | 'value' | 'rect'>,
+  texts: CwTextItem[]
+): 'cm' | 'inch' | null {
+  const unit = unitFromWord(widget.name) || unitFromWord(widget.value);
+  if (unit) return unit;
+  const mid = center(widget.rect);
+  // Captions end a printed line ("Please select unit : CM"); place the word at its end.
+  const captions = texts.flatMap(t => {
+    const m = /(?:^|[\s:])(cm|inch|inches)\s*$/i.exec(t.str.trim());
+    if (!m) return [];
+    const width = t.rect.x1 - t.rect.x0;
+    const share = m[1].length / Math.max(1, t.str.trim().length);
+    const rect = { ...t.rect, x0: t.rect.x1 - width * share };
+    return [{ word: m[1], rect }];
+  });
+  const caption = captions
+    .map(c => ({ c, d: Math.hypot(center(c.rect).x - mid.x, center(c.rect).y - mid.y) }))
+    .filter(e => e.d <= 70)
+    .sort((a, b) => a.d - b.d)[0];
+  return caption ? (/^c/i.test(caption.c.word) ? 'cm' : 'inch') : null;
+}
+
 /**
  * The CM / INCH box the customer ticked, if any. Reads the unit from the
  * widget name (unit_cm, CC-BOL-unit-inch), its value (SofaPaint review
@@ -824,22 +889,7 @@ export function detectWidgetUnit(data: CwPageData): 'cm' | 'inch' | null {
   );
   const units = new Set<'cm' | 'inch'>();
   for (const widget of ticked) {
-    const fromWord = (raw: string): 'cm' | 'inch' | null =>
-      /(^|[^a-z])(cm|centimet\w*)$/i.test(raw)
-        ? 'cm'
-        : /(^|[^a-z])(in|inch|inches)$/i.test(raw)
-          ? 'inch'
-          : null;
-    let unit = fromWord(widget.name) || fromWord(widget.value);
-    if (!unit) {
-      const mid = center(widget.rect);
-      const caption = texts
-        .filter(t => /^(cm|inch|inches)$/i.test(t.str.trim()))
-        .map(t => ({ t, d: Math.hypot(center(t.rect).x - mid.x, center(t.rect).y - mid.y) }))
-        .filter(e => e.d <= 70)
-        .sort((a, b) => a.d - b.d)[0];
-      if (caption) unit = /^c/i.test(caption.t.str.trim()) ? 'cm' : 'inch';
-    }
+    const unit = unitFromCaption(widget, texts);
     if (unit) units.add(unit);
   }
   return units.size === 1 ? [...units][0] : null;

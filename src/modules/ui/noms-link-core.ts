@@ -768,7 +768,16 @@ export interface DropValue {
   alsoFills?: string[];
   /** The customer wrote words only ("n/a", "see photo"): shown as a note, never placed. */
   textOnly?: boolean;
+  /** Reasons the PDF reader gives to check the value ("Read by OCR, check it", ...). */
+  review?: string[];
+  /** Picture of the box the value was read from, shown beside the flag. */
+  thumb?: string;
+  /** Read by OCR from a scanned page. */
+  ocr?: boolean;
 }
+
+/** Flag on every value read by OCR from a scan. */
+export const OCR_FLAG = 'Read by OCR, check it';
 
 export type DropFlagKind =
   | 'not-in-pdf'
@@ -778,11 +787,15 @@ export type DropFlagKind =
   | 'unit-assumed'
   | 'shared'
   | 'changed'
-  | 'text-only';
+  | 'text-only'
+  | 'ocr'
+  | 'check';
 
 export interface DropFlag {
   kind: DropFlagKind;
   reason: string;
+  /** Picture of the box the value came from (OCR), so a person can confirm at a glance. */
+  thumb?: string;
 }
 
 export interface DropRow {
@@ -842,8 +855,9 @@ export function classifyDropResult(
     rows[id] = rows[id] || { key, field, from: '', flags: [] };
     return rows[id];
   };
-  const flag = (r: DropRow, kind: DropFlagKind, reason: string): void => {
-    if (!r.flags.some(f => f.kind === kind && f.reason === reason)) r.flags.push({ kind, reason });
+  const flag = (r: DropRow, kind: DropFlagKind, reason: string, thumb?: string): void => {
+    if (!r.flags.some(f => f.kind === kind && f.reason === reason))
+      r.flags.push({ kind, reason, ...(thumb ? { thumb } : {}) });
   };
 
   for (const value of values) {
@@ -914,6 +928,9 @@ export function classifyDropResult(
         );
       if (value.alsoFills?.length)
         flag(r, 'shared', `The same diagram also filled ${value.alsoFills.join(', ')}`);
+      if (value.ocr)
+        flag(r, 'ocr', `${OCR_FLAG}: read "${value.text || shortNumber(number)}"`, value.thumb);
+      for (const reason of value.review || []) if (reason !== OCR_FLAG) flag(r, 'check', reason);
     }
   }
 
@@ -1078,7 +1095,18 @@ export interface DropGroupLike {
   title: string;
   unit: DropUnit;
   unitAssumed?: boolean;
-  values: Array<{ label: string; value: number; range?: number[]; text?: string }>;
+  values: Array<{
+    label: string;
+    value: number;
+    range?: number[];
+    text?: string;
+    /** Reasons to check the value (from the PDF reader). */
+    review?: string[];
+    /** Picture of the box it was read from (scans). */
+    thumb?: string;
+    /** Read by OCR from a scan. */
+    ocr?: boolean;
+  }>;
   /** Letters the customer answered with words only. */
   notes?: Array<{ label: string; text: string }>;
 }
@@ -1104,7 +1132,14 @@ export function cwGroupsToDropValues(
       ...group.values.map(v => ({ ...v, textOnly: false })),
       ...(group.notes || []).map(n => ({ label: n.label, value: 0, text: n.text, textOnly: true })),
     ];
-    for (const v of entries as Array<(typeof entries)[number] & { range?: number[] }>) {
+    for (const v of entries as Array<
+      (typeof entries)[number] & {
+        range?: number[];
+        review?: string[];
+        thumb?: string;
+        ocr?: boolean;
+      }
+    >) {
       const field =
         (v.label in mapping ? mapping[v.label] : defaultFieldFor(v.label, fieldsHere)) || '';
       const found = field
@@ -1130,6 +1165,9 @@ export function cwGroupsToDropValues(
         why: why || undefined,
         alsoFills: picks.length > 1 ? titles : undefined,
         ...(v.textOnly ? { textOnly: true } : {}),
+        ...(v.review?.length ? { review: v.review } : {}),
+        ...(v.thumb ? { thumb: v.thumb } : {}),
+        ...(v.ocr ? { ocr: true } : {}),
       });
     }
   });
@@ -1159,7 +1197,15 @@ export interface CustomerPdfLike {
       views?: string[];
     } | null;
     confidence: number;
-    values: Array<{ label: string; value: CustomerValue | null; text: string }>;
+    values: Array<{
+      label: string;
+      value: CustomerValue | null;
+      text: string;
+      from?: string;
+      section?: string;
+      review?: string[];
+      thumb?: string;
+    }>;
     unit: DropUnit;
     unitAssumed: boolean;
   }>;
@@ -1168,6 +1214,8 @@ export interface CustomerPdfLike {
 /** One page of a customer PDF, ready for matching and the drop review. */
 export interface CustomerDropGroup extends DropGroupLike {
   notes: Array<{ label: string; text: string }>;
+  /** Cushion tables: how many cushions of this type ("Qty"). */
+  quantity?: number;
   /** Template model codes when the page matched the library confidently, else []. */
   modelCodes: string[];
   view: string | null;
@@ -1185,23 +1233,6 @@ export const TEMPLATE_CONFIDENCE = 0.8;
 export function customerPdfToGroups(result: CustomerPdfLike): CustomerDropGroup[] {
   const out: CustomerDropGroup[] = [];
   for (const page of result.pages || []) {
-    const values: CustomerDropGroup['values'] = [];
-    const notes: CustomerDropGroup['notes'] = [];
-    for (const v of page.values || []) {
-      const parsed = v.value;
-      if (!parsed || parsed.kind === 'none' || !parsed.values.length) {
-        const text = String(v.text || parsed?.text || '').trim();
-        if (text) notes.push({ label: v.label, text });
-        continue;
-      }
-      values.push({
-        label: v.label,
-        value: parsed.kind === 'range' ? rangeValue(parsed) : parsed.values[0],
-        ...(parsed.kind === 'range' ? { range: [...parsed.values] } : {}),
-        text: v.text || parsed.text,
-      });
-    }
-    if (!values.length && !notes.length) continue;
     const template = page.template;
     const confident = Boolean(template) && page.confidence >= TEMPLATE_CONFIDENCE;
     const codes = confident
@@ -1209,18 +1240,53 @@ export function customerPdfToGroups(result: CustomerPdfLike): CustomerDropGroup[
         ? template!.modelCodes
         : result.modelCodes || []
       : [];
-    out.push({
-      file: result.fileName,
-      pageNumber: page.pageNumber,
-      title: template?.title || `Page ${page.pageNumber}`,
-      unit: page.unit,
-      unitAssumed: Boolean(page.unitAssumed),
-      values,
-      notes,
-      modelCodes: codes.map(normaliseCode).filter(Boolean),
-      view: confident ? template!.view || null : null,
-      views: confident ? template!.views || [] : [],
-    });
+    // Cushion tables each make their own group: "Box seat cushions, type 1".
+    const sections = Array.from(new Set((page.values || []).map(v => v.section || '')));
+    for (const section of sections) {
+      const values: CustomerDropGroup['values'] = [];
+      const notes: CustomerDropGroup['notes'] = [];
+      let quantity: number | undefined;
+      for (const v of page.values || []) {
+        if ((v.section || '') !== section) continue;
+        const parsed = v.value;
+        if (v.label === 'Qty') {
+          if (parsed && parsed.kind !== 'none' && parsed.values.length) quantity = parsed.values[0];
+          continue;
+        }
+        if (!parsed || parsed.kind === 'none' || !parsed.values.length) {
+          const text = String(v.text || parsed?.text || '').trim();
+          if (text) notes.push({ label: v.label, text });
+          continue;
+        }
+        values.push({
+          label: v.label,
+          value: parsed.kind === 'range' ? rangeValue(parsed) : parsed.values[0],
+          ...(parsed.kind === 'range' ? { range: [...parsed.values] } : {}),
+          text: v.text || parsed.text,
+          ...(v.review?.length ? { review: v.review } : {}),
+          ...(v.thumb ? { thumb: v.thumb } : {}),
+          ...(v.from === 'ocr' ? { ocr: true } : {}),
+        });
+      }
+      if (!values.length && !notes.length) continue;
+      const base = template?.title || `Page ${page.pageNumber}`;
+      const title = section
+        ? `${section}${quantity !== undefined ? ` (qty ${quantity})` : ''}`
+        : base;
+      out.push({
+        file: result.fileName,
+        pageNumber: page.pageNumber,
+        title,
+        unit: page.unit,
+        unitAssumed: Boolean(page.unitAssumed),
+        values,
+        notes,
+        ...(quantity !== undefined ? { quantity } : {}),
+        modelCodes: codes.map(normaliseCode).filter(Boolean),
+        view: confident ? template!.view || null : null,
+        views: confident ? template!.views || [] : [],
+      });
+    }
   }
   return out;
 }

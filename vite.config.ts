@@ -8,6 +8,16 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
+      // OCR for scanned PDFs loads Tesseract from this app, never a CDN.
+      {
+        name: 'openpaint-tesseract-assets',
+        async buildStart() {
+          if (mode === 'test') return;
+          // @ts-ignore plain ESM script without types
+          const { copyTesseractAssets } = await import('./scripts/copy-tesseract-assets.mjs');
+          copyTesseractAssets();
+        },
+      },
       // Auto-start the Express backend so /api proxy never 502s.
       {
         name: 'openpaint-express-backend',

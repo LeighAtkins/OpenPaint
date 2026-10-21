@@ -32,6 +32,7 @@ const option = (name, fallback) => {
 };
 const LIBRARY = resolve(option('--library', '/tmp/cw-mt/pdf-library'));
 const OUT_JSON = resolve(ROOT, option('--out', 'src/data/pdf-templates.json'));
+const OUT_GEOMETRY = resolve(dirname(OUT_JSON), 'pdf-template-geometry.json');
 const SVG_DIR = resolve(ROOT, 'public/cw-svgs');
 
 async function loadModules() {
@@ -39,7 +40,8 @@ async function loadModules() {
     stdin: {
       contents: `export * from './src/modules/cw-form-pdf/pdf-fingerprint';
 export * from './src/modules/cw-form-pdf/pdf-template-match';
-export { extractCwPageData } from './src/modules/cw-form-pdf/parse-cw-form';`,
+export { extractCwPageData } from './src/modules/cw-form-pdf/parse-cw-form';
+export { buildTemplateGeometry } from './src/modules/cw-form-pdf/template-geometry';`,
       resolveDir: ROOT,
       loader: 'ts',
     },
@@ -64,6 +66,16 @@ function walk(dir) {
     else out.push(full);
   }
   return out;
+}
+
+/** FNV-1a, 32 bit, base 36. */
+function hashText(text) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i += 1) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(36);
 }
 
 const slug = s =>
@@ -132,15 +144,18 @@ async function readPdf(mod, pdfjs, path, rel, fileName = rel) {
   const meta = await doc.getMetadata().catch(() => null);
   const subject = String(meta?.info?.Subject || '');
   const pages = [];
+  const geometries = [];
   for (let n = 1; n <= doc.numPages; n += 1) {
     const page = await doc.getPage(n);
     const data = await mod.extractCwPageData(page, pdfjs.OPS);
-    pages.push(mod.fingerprintPage(data, { fileName }));
+    const fp = mod.fingerprintPage(data, { fileName });
+    pages.push(fp);
+    geometries.push(mod.buildTemplateGeometry(data, fp.fieldMap));
     page.cleanup();
   }
   await doc.cleanup?.();
   await doc.loadingTask?.destroy?.();
-  return { pages, subject };
+  return { pages, subject, geometries };
 }
 
 const jaccard = (a, b) => {
@@ -187,12 +202,13 @@ async function buildRegistry(mod, pdfjs) {
   const pdfs = files.filter(f => /\.pdf$/i.test(f));
   const svgs = files.filter(f => /\.svg$/i.test(f)).map(f => svgInfo(f, relative(LIBRARY, f)));
   const templates = [];
+  const geometryOf = new Map();
   const failures = [];
   for (const path of pdfs) {
     const rel = relative(LIBRARY, path);
     try {
-      const { pages } = await readPdf(mod, pdfjs, path, rel);
-      for (const fp of pages) {
+      const { pages, geometries } = await readPdf(mod, pdfjs, path, rel);
+      for (const [index, fp] of pages.entries()) {
         const kind = mod.classifyTemplate(rel, fp);
         // Super-Template pages carry order details and photo boxes, not measurements.
         if (kind === 'super') {
@@ -220,6 +236,7 @@ async function buildRegistry(mod, pdfjs) {
           svgUrl: null,
           language: fp.language,
         });
+        geometryOf.set(templates[templates.length - 1].id, geometries[index]);
       }
     } catch (error) {
       failures.push(`${rel}: ${error.message}`);
@@ -285,6 +302,19 @@ async function buildRegistry(mod, pdfjs) {
     labelIds: s.labelIds,
   }));
   writeFileSync(OUT_JSON, `${JSON.stringify({ version: 1, templates, svgs: svgIndex })}\n`);
+  // Box and printed-word positions, shared by forms with the same layout; loaded only for
+  // flattened and scanned PDFs.
+  const shapes = {};
+  const byTemplate = {};
+  for (const template of templates) {
+    const geometry = geometryOf.get(template.id);
+    if (!geometry || (!geometry.cells.length && !geometry.anchors.length)) continue;
+    const text = JSON.stringify(geometry);
+    const key = hashText(text);
+    shapes[key] = geometry;
+    byTemplate[template.id] = key;
+  }
+  writeFileSync(OUT_GEOMETRY, `${JSON.stringify({ version: 1, shapes, byTemplate })}\n`);
   console.log(
     `Wrote ${templates.length} template pages from ${pdfs.length} PDFs to ${relative(ROOT, OUT_JSON)}; ${svgs.length} SVGs to ${relative(ROOT, SVG_DIR)}`
   );

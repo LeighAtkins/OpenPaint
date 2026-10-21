@@ -1067,7 +1067,19 @@ async function readPdfs(files: File[]): Promise<void> {
           originals.push({ name: file.name, bytes, unit: fromReview[0]?.unit });
           continue;
         }
-        const read = await readCustomerPdf(file);
+        const read = await readCustomerPdf(file, {
+          onScanPage: (page, total) =>
+            setStatus(`Reading ${file.name}: scanned page ${page} by OCR (${total} to read)…`),
+        });
+        const noOcr = read.pages.filter(p => p.read === 'no-ocr');
+        if (noOcr.length) {
+          const why = noOcr.flatMap(p => p.notes || []).find(n => n.startsWith('OCR failed'));
+          unread.push(
+            `${file.name}: scanned page${noOcr.length === 1 ? '' : 's'} ${noOcr
+              .map(p => p.pageNumber)
+              .join(', ')} not read${why ? ` (${why})` : ''}`
+          );
+        }
         if (read.kind === 'sofapaint-review') {
           unread.push(`${file.name}: SofaPaint check request with no values filled in`);
           continue;
@@ -2117,6 +2129,7 @@ function ensureStyles(): void {
     #${PANEL_ID} .nml-mark.ok { color: #16a34a; }
     #${PANEL_ID} .nml-mark.warn { color: #b45309; }
     #${PANEL_ID} .nml-why { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; margin: -2px 0 4px; color: #8a5a00; font-size: 11px; }
+    #${PANEL_ID} .nml-ocr-thumb { height: 24px; max-width: 120px; border: 1px solid #d0d4da; border-radius: 3px; background: #fff; image-rendering: auto; }
     #${PANEL_ID} .nml-review { margin: 8px 0; padding: 6px 8px; border-radius: 8px; background: #e9f8ee; border: 1px solid #bfe6cc; }
     #${PANEL_ID} .nml-review.warn { background: #fff7e6; border-color: #f5d49a; }
     #${PANEL_ID} .nml-review .nml-row { margin: 0; }
@@ -2494,6 +2507,16 @@ function render(): void {
       if (row?.flags.length) {
         const why = el('div', 'nml-why');
         why.appendChild(el('span', '', row.flags.map(f => f.reason).join('; ')));
+        // OCR'd values show the box they were read from, so a person can confirm at a glance.
+        for (const f of row.flags) {
+          if (!f.thumb) continue;
+          const img = document.createElement('img');
+          img.className = 'nml-ocr-thumb';
+          img.src = f.thumb;
+          img.alt = `Box read by OCR for ${field}`;
+          img.title = f.reason;
+          why.appendChild(img);
+        }
         const from = dropValues.get(row.from);
         if (from?.range && row.flags.some(f => f.kind === 'range')) {
           why.appendChild(

@@ -189,6 +189,64 @@ export interface PdfDocumentMatch {
   candidates: Array<{ source: string; score: number }>;
   /** Closest library file that is a different form, when one exists. */
   rival: { source: string; score: number } | null;
+  /**
+   * Runs of pages printed from different library files (a customer who joined
+   * two forms into one PDF). One entry when the whole document is one form.
+   */
+  segments?: Array<{
+    source: string | null;
+    /** 0-based page indexes, inclusive. */
+    first: number;
+    last: number;
+    confidence: number;
+    modelCodes: string[];
+  }>;
+}
+
+/** Score cost of starting another run of pages from a different library file. */
+const SEGMENT_PENALTY = 0.25;
+
+/**
+ * Split pages into runs that each fit one library file: the best total page
+ * score, less a penalty for each extra run, so a single form never splits.
+ */
+export function segmentPages(
+  fps: readonly PdfPageFingerprint[],
+  templates: readonly PdfTemplate[],
+  candidateSources: Iterable<string>
+): Array<{ first: number; last: number }> {
+  const n = fps.length;
+  if (n < 2) return [{ first: 0, last: Math.max(0, n - 1) }];
+  const bySource = new Map<string, PdfTemplate[]>();
+  for (const t of templates) bySource.set(t.source, [...(bySource.get(t.source) || []), t]);
+  const sources = [...new Set(candidateSources)];
+  const score = sources.map(source => {
+    const pages = bySource.get(source) || [];
+    return fps.map(fp => Math.max(0, ...pages.map(t => scoreTemplate(fp, t))));
+  });
+  // best[j]: best total for pages [0, j); from[j]: where its last run starts.
+  const best = new Array<number>(n + 1).fill(-Infinity);
+  const from = new Array<number>(n + 1).fill(0);
+  best[0] = 0;
+  for (let j = 1; j <= n; j += 1) {
+    for (let i = 0; i < j; i += 1) {
+      let run = -Infinity;
+      for (const row of score) {
+        let total = 0;
+        for (let k = i; k < j; k += 1) total += row[k];
+        if (total > run) run = total;
+      }
+      const value = best[i] + run - (i > 0 ? SEGMENT_PENALTY : 0);
+      // On a tie the page stays with the run before it (a shared cushion page follows its frame).
+      if (value >= best[j] - 1e-9) {
+        best[j] = value;
+        from[j] = i;
+      }
+    }
+  }
+  const runs: Array<{ first: number; last: number }> = [];
+  for (let j = n; j > 0; j = from[j]) runs.unshift({ first: from[j], last: j - 1 });
+  return runs;
 }
 
 /**
@@ -196,6 +254,53 @@ export interface PdfDocumentMatch {
  * from, so a page shared by many forms (the cushion page) follows the frame page.
  */
 export function matchPdfDocument(
+  fps: readonly PdfPageFingerprint[],
+  templates: readonly PdfTemplate[]
+): PdfDocumentMatch {
+  if (fps.length > 1) {
+    const pageSources = fps.map(fp =>
+      matchPdfTemplate(fp, templates, 40).candidates.map(c => c.template.source)
+    );
+    const runs = segmentPages(fps, templates, pageSources.flat());
+    if (runs.length > 1) {
+      const parts = runs.map(run => ({
+        run,
+        match: matchSingleDocument(fps.slice(run.first, run.last + 1), templates),
+      }));
+      const first = parts[0].match;
+      return {
+        source: first.source,
+        confidence: Math.min(...parts.map(p => p.match.confidence)),
+        modelCodes: [...new Set(parts.flatMap(p => p.match.modelCodes))],
+        pages: parts.flatMap(p => p.match.pages),
+        candidates: first.candidates,
+        rival: first.rival,
+        segments: parts.map(p => ({
+          source: p.match.source,
+          first: p.run.first,
+          last: p.run.last,
+          confidence: p.match.confidence,
+          modelCodes: p.match.modelCodes,
+        })),
+      };
+    }
+  }
+  const single = matchSingleDocument(fps, templates);
+  return {
+    ...single,
+    segments: [
+      {
+        source: single.source,
+        first: 0,
+        last: Math.max(0, fps.length - 1),
+        confidence: single.confidence,
+        modelCodes: single.modelCodes,
+      },
+    ],
+  };
+}
+
+function matchSingleDocument(
   fps: readonly PdfPageFingerprint[],
   templates: readonly PdfTemplate[]
 ): PdfDocumentMatch {
