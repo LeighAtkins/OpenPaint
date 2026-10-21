@@ -420,3 +420,60 @@ export function refineTargets(
     return picks;
   });
 }
+
+/** Letter -> form field for one diagram on the given models, '' where no match. */
+export function autoMapping(labels: string[], models: NomsModelGroup[]): Record<string, string> {
+  const fields = Array.from(new Set(models.flatMap(m => Object.keys(m.fields))));
+  return Object.fromEntries(labels.map(label => [label, defaultFieldFor(label, fields)]));
+}
+
+export interface PdfGroupForReview extends PdfGroupLike {
+  unitAssumed?: boolean;
+}
+
+/**
+ * Why a dropped PDF needs the mapping window before its values are used. An
+ * empty list means every diagram fills exactly one model, every letter has a
+ * field there, the unit was stated, and no two diagrams write the same field
+ * on the same model: the values can go straight in.
+ */
+export function mappingNeedsReview(
+  groups: PdfGroupForReview[],
+  targets: string[][],
+  models: NomsModelGroup[]
+): string[] {
+  const reasons: string[] = [];
+  const byKey = new Map(models.map(m => [m.key, m]));
+  const writes = new Map<string, string>(); // "model|field" -> diagram title
+  groups.forEach((group, i) => {
+    const where = group.title ? `${group.file} (${group.title})` : group.file;
+    const picks = targets[i] || [];
+    if (!picks.length) {
+      reasons.push(`${where}: no form model matched`);
+      return;
+    }
+    if (picks.length > 1) {
+      reasons.push(`${where}: could fill ${picks.length} models`);
+      return;
+    }
+    if (group.unitAssumed) reasons.push(`${where}: unit not stated in the PDF`);
+    const model = byKey.get(picks[0]);
+    if (!model) {
+      reasons.push(`${where}: model ${picks[0]} is not on the form`);
+      return;
+    }
+    const fields = Object.keys(model.fields);
+    const unmatched = group.labels.filter(label => !defaultFieldFor(label, fields));
+    if (unmatched.length) reasons.push(`${where}: no field for ${unmatched.join(', ')}`);
+    for (const label of group.labels) {
+      const field = defaultFieldFor(label, fields);
+      if (!field) continue;
+      const id = `${model.key}|${field}`;
+      const other = writes.get(id);
+      if (other && other !== where)
+        reasons.push(`${model.title} ${field}: filled by both ${other} and ${where}`);
+      else writes.set(id, where);
+    }
+  });
+  return Array.from(new Set(reasons));
+}

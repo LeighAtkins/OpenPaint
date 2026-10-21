@@ -2,6 +2,7 @@
 // Handles file selection, drag/drop, paste uploads, and HEIC conversion via Cloudflare Worker
 
 import { imageRegistry } from './ImageRegistry.js';
+import { uprightImageFile } from './utils/exif-orientation';
 
 function isPdfFile(file) {
   return file?.type === 'application/pdf' || /\.pdf$/i.test(file?.name || '');
@@ -228,6 +229,22 @@ export class UploadManager {
           console.warn('[Perf] Measure HEIC convert failed', error);
         }
       }
+    }
+
+    // Phone photos carry an EXIF orientation note instead of upright pixels.
+    // Bake it in once so the image is upright on the canvas, in exports and in
+    // anything sent on. Unchanged files keep their original bytes.
+    try {
+      const upright = await uprightImageFile(workingFile);
+      if (upright.changed) {
+        console.log('[UploadManager] Uprighted image', {
+          name: workingFile.name,
+          orientation: upright.orientation,
+        });
+        workingFile = upright.file;
+      }
+    } catch (error) {
+      console.warn('[UploadManager] Could not apply EXIF orientation', workingFile.name, error);
     }
 
     const objectUrl = URL.createObjectURL(workingFile);
