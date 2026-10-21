@@ -1006,7 +1006,7 @@ export function szSummaryText(input: {
 /** "<order> - <customer> - measurements cm.pdf", safe for a file name. */
 export function cmPdfFileName(orderNumber: string, customerName?: string): string {
   const clean = (s: string) =>
-    String(s || '')
+    (s || '')
       .replace(/[\\/:*?"<>|]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
@@ -1119,12 +1119,12 @@ export function reviewToDropValues(
     [];
   (manifest?.views || []).forEach((view, index) => {
     for (const m of view.measurements || []) {
-      const text = String(m?.value ?? '').trim();
+      const text = (m?.value ?? '').trim();
       if (!text || !m?.label) continue;
       raw.push({
-        viewId: String(view.viewId || ''),
-        title: String(view.title || view.viewId || ''),
-        label: String(m.label),
+        viewId: view.viewId || '',
+        title: view.title || view.viewId || '',
+        label: m.label,
         text,
         page: index + 1,
       });
@@ -1206,10 +1206,10 @@ export interface FormDrift {
   touched: boolean;
 }
 
-const sameMeasure = (a: unknown, b: unknown): boolean => {
+const sameMeasure = (a: string | undefined, b: string | undefined): boolean => {
   const pa = parseMeasure(a);
   const pb = parseMeasure(b);
-  if (pa === null || pb === null) return String(a ?? '').trim() === String(b ?? '').trim();
+  if (pa === null || pb === null) return (a ?? '').trim() === (b ?? '').trim();
   return pa === pb || (pa !== '' && pb !== '' && Math.abs(Number(pa) - Number(pb)) < 0.005);
 };
 
@@ -1251,7 +1251,7 @@ export function conflictingDrift(drift: FormDrift[]): FormDrift[] {
 
 /** "2 h ago", "5 min ago", "just now", "3 days ago" for an ISO time. */
 export function agoText(iso: string | undefined, now = Date.now()): string {
-  const then = Date.parse(String(iso || ''));
+  const then = Date.parse(iso || '');
   if (!Number.isFinite(then)) return 'earlier';
   const minutes = Math.max(0, Math.round((now - then) / 60000));
   if (minutes < 1) return 'just now';
@@ -1271,7 +1271,7 @@ export function convertValues(
     Object.entries(values || {}).map(([key, fields]) => [
       key,
       Object.fromEntries(
-        Object.entries(fields || {}).map(([f, v]) => [f, convertMeasure(String(v ?? ''), from, to)])
+        Object.entries(fields || {}).map(([f, v]) => [f, convertMeasure(v ?? '', from, to)])
       ),
     ])
   );

@@ -339,3 +339,48 @@ describe('formDrift', () => {
     expect(agoText('', now)).toBe('earlier');
   });
 });
+
+describe('order metadata keeps the send state', () => {
+  it('keeps the snapshot, the drop review and the confirm choice, and drops junk', async () => {
+    const { normalizeNomsOrders } = await import('../../src/modules/sofa-metadata.js');
+    const out = normalizeNomsOrders({
+      '125964': {
+        orderNumber: '125964',
+        formId: '12345678',
+        formSnapshot: { [FRONT]: { A1: '30' }, junk: { A: '1' } },
+        snapshotAt: '2026-10-21T10:00:00Z',
+        skipFlagConfirm: true,
+        cmPdfName: '125964 - Ria - measurements cm.pdf',
+        lastSentAt: '2026-10-21T11:00:00Z',
+        dropReview: {
+          at: '2026-10-21T10:00:00Z',
+          before: { [FRONT]: { A1: '' } },
+          picks: { a: 24.5, bad: 'x' },
+          values: [
+            value({
+              id: 'a',
+              range: [24.5, 25],
+              text: 'approx 24.5 - 25"',
+              targets: [
+                { key: FRONT, field: 'A1' },
+                { key: 'nope', field: 'A1' },
+              ],
+            }),
+            { id: 'broken', value: 'x', unit: 'inch' },
+          ],
+        },
+      },
+    }) as any;
+    const entry = out['125964'];
+    expect(entry.formSnapshot).toEqual({ [FRONT]: { A1: '30' } });
+    expect(entry.skipFlagConfirm).toBe(true);
+    expect(entry.cmPdfName).toBe('125964 - Ria - measurements cm.pdf');
+    expect(entry.dropReview.picks).toEqual({ a: 24.5 });
+    expect(entry.dropReview.values).toHaveLength(1);
+    expect(entry.dropReview.values[0]).toMatchObject({
+      id: 'a',
+      range: [24.5, 25],
+      targets: [{ key: FRONT, field: 'A1' }],
+    });
+  });
+});

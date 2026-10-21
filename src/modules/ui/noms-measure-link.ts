@@ -6,9 +6,11 @@
 // form model, adds the CW40 diagram for a model as an image with editable lines,
 // puts the same lines on a photo, and keeps the values in step: a value typed
 // here goes onto every linked line with that letter, and a value changed on a
-// line comes back here. "Save to NOMS" writes the form through OMNOMS, using
-// the person's own CW40 sign-in in this browser; SofaPaint's server is never
-// involved in the save.
+// line comes back here. A dropped PDF (CW form or SofaPaint check request)
+// fills every letter it can and flags the rest. "Send to NOMS" writes the form
+// through OMNOMS, using the person's own CW40 sign-in in this browser
+// (SofaPaint's server is never involved), then makes the customer's PDF in cm
+// for the SZ email and shows a summary to copy.
 
 import { authService } from '../../services/auth/authService';
 import { imageRegistry } from '../ImageRegistry.js';
@@ -22,21 +24,45 @@ import {
 import {
   importCwFormPdf,
   isPdfFile,
+  loadPdfjs,
   rangeKey,
   readCwFormPdfValues,
   rememberMeasurementNote,
   type CwFormValueGroup,
 } from './cw-form-pdf-import';
 import { formatCustomerNumber, RANGE_DEFAULT } from '../utils/customer-value';
+import { parseSofaPaintReviewPdf } from './measurement-review';
 import {
+  convertPdfToCm,
+  loadOrderPdfs,
+  mergeCmPdfs,
+  saveOrderPdfs,
+  scanPdfText,
+  type PdfUnit,
+  type StoredOrderPdfs,
+} from './pdf-cm-convert';
+import {
+  agoText,
+  classifyDropResult,
+  cmPdfFileName,
+  conflictingDrift,
+  convertValues,
+  cwGroupsToDropValues,
+  dropFlagLines,
+  dropNumber,
+  formDrift,
+  liveDropReview,
+  reviewToDropValues,
+  szSummaryText,
+  type DropReview,
+  type DropValue,
+  type FormDrift,
   autoMapping,
   changedFields,
   convertMeasure,
-  mappingNeedsReview,
   defaultFieldFor,
   formModels,
   modelGroups,
-  pdfValueToForm,
   refineTargets,
   fromCanvasMeasurement,
   formToTyped,
@@ -67,6 +93,7 @@ interface NomsOrderEntry {
   formId: string;
   lang: string;
   customerName?: string;
+  productName?: string;
   productSku?: string;
   unit: 'in' | 'cm';
   confirmed: boolean;
@@ -76,6 +103,21 @@ interface NomsOrderEntry {
   /** "product:model:file:LETTER" -> the drawn line that feeds that letter, whatever its label. */
   lineLinks?: LineLinks;
   lastSyncedAt?: string;
+  /** The form as last read from NOMS (form unit), and when. */
+  formSnapshot?: Values;
+  snapshotAt?: string;
+  /** Send without the flagged-values question for this order. */
+  skipFlagConfirm?: boolean;
+  /** The PDF drop being reviewed: values read, the form before, range picks. */
+  dropReview?: StoredDropReview;
+  cmPdfName?: string;
+  lastSentAt?: string;
+}
+interface StoredDropReview {
+  at: string;
+  values: DropValue[];
+  before: Values;
+  picks: Record<string, number>;
 }
 interface BridgeReply {
   ok: boolean;
@@ -110,6 +152,19 @@ const state: {
   /** Inputs filled from a PDF, lit until highlightUntil. */
   highlight: Set<string>;
   highlightUntil: number;
+  /** Show only flagged rows of the drop review. */
+  onlyFlagged: boolean;
+  /** Tick beside Send: confirm the form on NOMS as well. */
+  confirmTick: boolean | null;
+  /** Send to NOMS progress, one line per step. */
+  progress: Array<{ text: string; kind: 'run' | 'ok' | 'error' | 'skip' }>;
+  sending: boolean;
+  /** NOMS changed letters since the panel read them; the person picks a side. */
+  drift: { items: FormDrift[]; fresh: Values; at: string } | null;
+  /** PDFs dropped this session (bytes kept for the cm copy). */
+  originals: StoredOrderPdfs['originals'];
+  /** CW form diagrams of the last drop, for "Change matching". */
+  lastGroups: CwFormValueGroup[];
 } = {
   order: '',
   content: null,
@@ -127,6 +182,13 @@ const state: {
   reading: '',
   highlight: new Set(),
   highlightUntil: 0,
+  onlyFlagged: false,
+  confirmTick: null,
+  progress: [],
+  sending: false,
+  drift: null,
+  originals: [],
+  lastGroups: [],
 };
 let initialized = false;
 let requestCounter = 0;
@@ -428,9 +490,37 @@ async function loadForm(options: { preferNoms?: boolean } = {}): Promise<void> {
     const [key, field] = id.split('|');
     return Boolean(localInFormUnit[key]?.[field]);
   });
+  const snapshot = current.formSnapshot
+    ? convertValues(current.formSnapshot, current.unit, formUnit)
+    : null;
   state.unit = formUnit;
   state.saved = fromForm;
-  if (options.preferNoms || !differs.length || !current.lastSyncedAt) {
+  state.drift = null;
+  let tookFromNoms: FormDrift[] = [];
+  if (options.preferNoms) {
+    state.values = fromForm;
+  } else if (snapshot) {
+    // Letters the person changed since the last read are theirs; letters NOMS
+    // changed meanwhile are NOMS's; both changed is asked.
+    const drift = formDrift(snapshot, fromForm, localInFormUnit);
+    const conflicts = conflictingDrift(drift).filter(d => d.touched);
+    tookFromNoms = drift.filter(d => !d.touched);
+    state.values = Object.fromEntries(
+      state.models.map(model => {
+        const mine = localInFormUnit[model.key] || {};
+        const was = snapshot[model.key] || {};
+        const fields = { ...fromForm[model.key] };
+        for (const [field, value] of Object.entries(mine)) {
+          const changedHere = (value ?? '') !== (was[field] ?? '');
+          const nomsMoved = tookFromNoms.some(d => d.key === model.key && d.field === field);
+          if (changedHere && !nomsMoved) fields[field] = value;
+        }
+        return [model.key, fields];
+      })
+    );
+    if (conflicts.length)
+      state.drift = { items: conflicts, fresh: fromForm, at: current.snapshotAt || '' };
+  } else if (!differs.length || !current.lastSyncedAt) {
     state.values = fromForm;
   } else {
     // Unsaved SofaPaint values win until the person chooses otherwise.
@@ -441,21 +531,65 @@ async function loadForm(options: { preferNoms?: boolean } = {}): Promise<void> {
       ])
     );
   }
-  patchEntry({ values: state.values, unit: state.unit, confirmed: state.confirmed });
+  patchEntry({
+    values: state.values,
+    unit: state.unit,
+    confirmed: state.confirmed,
+    // Keep the old snapshot while a conflict is open, so it is asked again after a reload.
+    ...(state.drift ? {} : { formSnapshot: fromForm, snapshotAt: new Date().toISOString() }),
+  });
   state.canvasSnapshot.clear();
   pushAll();
   const unsaved = changedFields(state.saved, state.values);
+  const took = tookFromNoms.length
+    ? ` Took ${tookFromNoms.length} newer NOMS value${tookFromNoms.length === 1 ? '' : 's'} (${fieldList(tookFromNoms)}).`
+    : '';
   setStatus(
-    unsaved.length
+    (unsaved.length
       ? `SofaPaint has ${unsaved.length} value${unsaved.length === 1 ? '' : 's'} not saved to NOMS yet.`
-      : `In step with NOMS${state.confirmed ? ' (confirmed)' : ''}.`,
+      : `In step with NOMS${state.confirmed ? ' (confirmed)' : ''}.`) + took,
     unsaved.length ? 'info' : 'ok'
   );
 }
 
-async function saveForm(confirm: boolean): Promise<void> {
+/** "A1, B2" for drift items; the model is named when letters repeat across models. */
+function fieldList(items: Array<{ key: string; field: string }>): string {
+  const repeated = new Set(items.map(i => i.field).filter((f, i, all) => all.indexOf(f) !== i));
+  return items
+    .map(i =>
+      repeated.has(i.field)
+        ? `${state.models.find(m => m.key === i.key)?.title || i.key} ${i.field}`
+        : i.field
+    )
+    .join(', ');
+}
+
+/** Settle letters both NOMS and the panel changed: keep the panel's, or take NOMS's. */
+function resolveDrift(useNoms: boolean): void {
+  const drift = state.drift;
+  if (!drift) return;
+  if (useNoms) {
+    for (const item of drift.items) setValue(item.key, item.field, item.now);
+    state.canvasSnapshot.clear();
+    pushAll();
+  }
+  state.drift = null;
+  patchEntry({ formSnapshot: drift.fresh, snapshotAt: new Date().toISOString() });
+  setStatus(
+    useNoms
+      ? `Took NOMS's values for ${fieldList(drift.items)}.`
+      : `Kept your values for ${fieldList(drift.items)}. Send to NOMS to save them.`,
+    'ok'
+  );
+}
+
+/** Write the panel's values to the CW40 form. Resolves false (with the reason in the status) on failure. */
+async function saveForm(confirm: boolean): Promise<boolean> {
   const current = entry();
-  if (!current || !state.content) return;
+  if (!current || !state.content) {
+    setStatus('Load the form from NOMS first.', 'error');
+    return false;
+  }
   const bad: string[] = [];
   for (const model of state.models) {
     for (const field of model.fields) {
@@ -464,15 +598,18 @@ async function saveForm(confirm: boolean): Promise<void> {
   }
   if (bad.length) {
     setStatus(`Fix ${bad.join(', ')} first: not a number.`, 'error');
-    return;
+    return false;
   }
   if (confirm) {
     const missing = state.models.flatMap(model =>
       Object.keys(measureIssues(model.rules, state.values[model.key] || {}, state.unit).errors)
     );
     if (missing.length) {
-      setStatus(`Fill in ${missing.join(', ')} before confirming.`, 'error');
-      return;
+      setStatus(
+        `Fill in ${missing.join(', ')} before confirming, or untick Confirm the form.`,
+        'error'
+      );
+      return false;
     }
   }
   setStatus('Saving to NOMS through OMNOMS…');
@@ -491,11 +628,33 @@ async function saveForm(confirm: boolean): Promise<void> {
   if (!reply.ok) {
     state.signIn = reply.signIn || '';
     setStatus(`${reply.error || 'The save failed.'} Your values are still here.`, 'error');
-    return;
+    return false;
   }
   patchEntry({ lastSyncedAt: new Date().toISOString() });
   await loadForm({ preferNoms: true });
   setStatus(`Saved to NOMS${confirm || state.confirmed ? ' and confirmed' : ''}.`, 'ok');
+  return true;
+}
+
+/** Read the form from NOMS without touching the panel: its values in the panel's unit. */
+async function fetchFormValues(): Promise<
+  { ok: true; values: Values } | { ok: false; error: string }
+> {
+  const current = entry();
+  if (!current) return { ok: false, error: 'No NOMS order on this project.' };
+  const reply = await ask('load', { formId: current.formId, lang: current.lang });
+  if (!reply.ok) {
+    state.signIn = reply.signIn || '';
+    return { ok: false, error: reply.error || 'The measure form could not be read.' };
+  }
+  const content = reply.data?.content as NomsFormContent;
+  if (String(content?.form_ID) !== current.formId)
+    return { ok: false, error: 'OMNOMS returned a different form.' };
+  const unit = content.unit === 'cm' ? 'cm' : 'in';
+  const values: Values = Object.fromEntries(
+    formModels(content, { includeDisabled: true }).map(model => [model.key, { ...model.values }])
+  );
+  return { ok: true, values: convertValues(values, unit, state.unit) };
 }
 
 // ---------------------------------------------------------------- images
@@ -708,8 +867,8 @@ function pdfDropZone(): HTMLElement {
     return zone;
   }
   zone.append(
-    el('strong', '', "Drop the customer's filled measuring PDF here"),
-    el('span', '', '(or click to choose)')
+    el('strong', '', "Drop the customer's measuring PDF here"),
+    el('span', '', 'CW form or SofaPaint check request (or click to choose)')
   );
   const input = el('input');
   input.type = 'file';
@@ -767,147 +926,299 @@ function pdfGroupsForMatching(groups: CwFormValueGroup[]) {
   }));
 }
 
+function viewsByKey(): Record<string, string[]> {
+  return Object.fromEntries(state.models.map(model => [model.key, viewsForModel(model.key)]));
+}
+
+/** The stored drop, classified against what the panel holds now. */
+function currentReview(): DropReview | null {
+  const stored = entry()?.dropReview;
+  if (!stored?.values?.length || !state.models.length) return null;
+  return liveDropReview(
+    stored.values,
+    state.models,
+    state.unit,
+    stored.before || {},
+    state.values,
+    stored.picks
+  );
+}
+
+/** True when a dropped file is a SofaPaint check-request PDF with values filled in. */
+async function readReviewPdf(file: File, bytes: Uint8Array): Promise<DropValue[] | null> {
+  let manifest: any = null;
+  try {
+    manifest = await parseSofaPaintReviewPdf(bytes.slice());
+  } catch {
+    return null;
+  }
+  const filled = (manifest?.views || []).some((view: any) =>
+    (view?.measurements || []).some((m: any) => String(m?.value ?? '').trim())
+  );
+  if (!filled) return null;
+  const current = entry();
+  return reviewToDropValues(file.name, manifest, state.models, {
+    lineLinks: current?.lineLinks,
+    lines: allLines(),
+    viewsByKey: viewsByKey(),
+    viewBindings: current?.viewBindings || {},
+    fallbackUnit: 'inch',
+  });
+}
+
+/**
+ * Read dropped PDFs of any kind (a filled CW measuring form, or a SofaPaint
+ * check-request PDF) and put every value in the panel. Nothing waits on a
+ * dialog: values that need a look are flagged on their rows instead.
+ */
 async function readPdfs(files: File[]): Promise<void> {
   const names = files.map(f => f.name).join(', ');
   state.reading = names;
   setStatus(`Reading ${names}…`);
-  const groups: CwFormValueGroup[] = [];
+  const cwGroups: CwFormValueGroup[] = [];
+  const cwFiles: File[] = [];
+  const reviewValues: DropValue[] = [];
+  const originals: StoredOrderPdfs['originals'] = [];
+  const unread: string[] = [];
   try {
     for (const file of files) {
       try {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const fromReview = await readReviewPdf(file, bytes);
+        if (fromReview) {
+          reviewValues.push(...fromReview);
+          originals.push({ name: file.name, bytes, unit: fromReview[0]?.unit });
+          continue;
+        }
         const found = await readCwFormPdfValues(file);
-        if (!found.length) setStatus(`${file.name}: no filled measurements found.`, 'error');
-        groups.push(...found);
+        if (!found.length) {
+          unread.push(`${file.name}: no filled measurements found`);
+          continue;
+        }
+        cwGroups.push(...found);
+        cwFiles.push(file);
+        const stated = found.find(g => !g.unitAssumed);
+        originals.push({ name: file.name, bytes, unit: stated?.unit as PdfUnit | undefined });
       } catch (error) {
-        setStatus(`${file.name} could not be read: ${(error as Error).message}`, 'error');
+        unread.push(`${file.name} could not be read: ${(error as Error).message}`);
       }
     }
   } finally {
     state.reading = '';
   }
-  if (!groups.length) {
-    render();
+  if (!cwGroups.length && !reviewValues.length) {
+    setStatus(unread.join('. ') || 'No values found in the PDF.', 'error');
     return;
   }
+  // Keep the originals for the cm copy, in memory and in this browser's storage.
+  state.originals = [
+    ...state.originals.filter(o => !originals.some(n => n.name === o.name)),
+    ...originals,
+  ];
+  void storeOriginals();
+
   const models = modelGroups(state.models);
-  const matchable = pdfGroupsForMatching(groups);
+  const matchable = pdfGroupsForMatching(cwGroups);
   const suggested = refineTargets(
     matchable,
     models,
     Object.fromEntries(models.map(m => [m.key, m.title]))
   );
-  const reasons = mappingNeedsReview(matchable, suggested, models);
-  // Two numbers in one field ("approx 24.5 - 25") are shown, never picked silently.
-  const ranges = groups.flatMap(g =>
-    g.values.filter(v => v.range).map(v => `${v.label} ${v.text}`)
+  const mappings = cwGroups.map((group, i) =>
+    autoMapping(
+      group.values.map(v => v.label),
+      models.filter(m => suggested[i].includes(m.key))
+    )
   );
-  let choice: MappingChoice | null;
-  if (reasons.length || ranges.length) {
-    if (reasons.length) console.info('[NOMS link] PDF mapping needs a look:', reasons);
-    if (ranges.length) console.info('[NOMS link] PDF has ranges to choose from:', ranges);
-    setStatus(
-      ranges.length && !reasons.length
-        ? 'The customer wrote two numbers for some letters. Choose which to use.'
-        : 'Check how the PDF matches the form.',
-      'info'
-    );
-    choice = await chooseMapping(groups, suggested);
-  } else {
-    choice = {
-      addImages: true,
-      groups: groups.map((group, i) => ({
-        group,
-        targets: suggested[i],
-        mapping: autoMapping(
-          group.values.map(v => v.label),
-          models.filter(m => suggested[i].includes(m.key))
-        ),
-        values: Object.fromEntries(group.values.map(v => [v.label, v.value])),
-      })),
-    };
+  state.lastGroups = cwGroups;
+  const cwValues = cwGroupsToDropValues(cwGroups, suggested, mappings, models);
+  const filledIds = applyDrop(
+    [...cwValues, ...reviewValues],
+    originals.map(o => o.name),
+    {},
+    names
+  );
+  // The CW diagrams also go into the project as images with their lines.
+  const picks = entry()?.dropReview?.picks || {};
+  for (const file of cwFiles) {
+    const chosen: Record<string, number> = {};
+    for (const v of cwValues)
+      if (v.file === file.name && v.range)
+        chosen[rangeKey(v.pageNumber, v.label)] = dropNumber(v, picks);
+    try {
+      await importCwFormPdf(file, { chosen });
+    } catch (error) {
+      console.warn('[NOMS link] PDF pages could not be added as images', error);
+    }
   }
-  if (!choice) {
-    setStatus('PDF values not used.', 'info');
-    return;
-  }
-  const before = state.values;
-  let filled = 0;
+  if (unread.length) setStatus(`${state.status} Not read: ${unread.join('; ')}.`, 'info');
+  scrollToFirstFilled(filledIds);
+}
+
+/**
+ * Put a drop's values in the panel. Values from `files` replace an earlier
+ * drop of the same files; other files' values stay in the review. Returns the
+ * "key|field" ids filled.
+ */
+function applyDrop(
+  values: DropValue[],
+  files: string[],
+  picks: Record<string, number>,
+  names: string
+): string[] {
+  const prev = entry()?.dropReview;
+  const keep = (prev?.values || []).filter(v => !files.includes(v.file));
+  const before = prev && keep.length ? prev.before : state.values;
+  const keptPicks = Object.fromEntries(
+    Object.entries(prev?.picks || {}).filter(([id]) => keep.some(v => v.id === id))
+  );
+  const stored: StoredDropReview = {
+    at: new Date().toISOString(),
+    values: [...keep, ...values],
+    before,
+    picks: { ...keptPicks, ...picks },
+  };
+  const review = classifyDropResult(stored.values, state.models, state.unit, before, {
+    picks: stored.picks,
+  });
+  const fresh = new Set(values.map(v => v.id));
+  const undoValues = state.values;
   const filledIds: string[] = [];
-  const skipped: string[] = [];
-  const resolved: string[] = [];
-  /** Range picks for the lines importCwFormPdf draws, per file: "page:label" -> number. */
-  const chosenByFile = new Map<string, Record<string, number>>();
-  for (const { group, targets, mapping, values } of choice.groups) {
-    for (const { label, value, range, text } of group.values) {
-      const used = values?.[label] ?? value;
-      if (range) {
-        const picks = chosenByFile.get(group.file) || {};
-        picks[rangeKey(group.pageNumber, label)] = used;
-        chosenByFile.set(group.file, picks);
-      }
-      const field = mapping[label];
-      if (!field) {
-        skipped.push(`${label} (${group.file} p${group.pageNumber})`);
-        continue;
-      }
-      if (range)
-        resolved.push(`${label} ${range.join(' to ')}: used ${formatCustomerNumber(used)}`);
-      for (const target of targets) {
-        const fileKey = models.find(g => g.key === target)?.fields[field];
-        if (!fileKey) continue;
-        setValue(fileKey, field, pdfValueToForm(used, group.unit, state.unit));
-        filled += 1;
-        filledIds.push(`${fileKey}|${field}`);
-        if (range) {
-          // The customer's two numbers stay as a note on every line that took the pick.
-          for (const line of letterLines(fileKey, field).lines)
-            rememberMeasurementNote(
-              line.scope,
-              line.label,
-              `customer wrote ${text || range.join(' - ')}`
-            );
-        }
-      }
+  for (const placement of review.placements) {
+    if (!fresh.has(placement.from)) continue;
+    setValue(placement.key, placement.field, placement.value);
+    filledIds.push(`${placement.key}|${placement.field}`);
+    const from = values.find(v => v.id === placement.from);
+    if (from?.range) {
+      // The customer's two numbers stay as a note on every line that took the pick.
+      for (const line of letterLines(placement.key, placement.field).lines)
+        rememberMeasurementNote(
+          line.scope,
+          line.label,
+          `customer wrote ${from.text || from.range.join(' - ')}`
+        );
     }
   }
-  if (choice.addImages) {
-    for (const file of files) {
-      try {
-        await importCwFormPdf(file, { chosen: chosenByFile.get(file.name) || {} });
-      } catch (error) {
-        console.warn('[NOMS link] PDF pages could not be added as images', error);
-      }
-    }
-  }
+  patchEntry({ dropReview: stored });
   state.collapsed = false;
   state.highlight = new Set(filledIds);
   state.highlightUntil = Date.now() + 4000;
-  const unsaved = changedFields(state.saved, state.values).length;
+  const live = currentReview();
+  const toCheck = live?.toCheck ?? 0;
+  const filled = filledIds.length;
   setStatus(
-    `Filled ${filled} value${filled === 1 ? '' : 's'} from the PDF${files.length > 1 ? 's' : ''}` +
-      (resolved.length
-        ? `. ${resolved.length} range${resolved.length === 1 ? '' : 's'} resolved: ${resolved.join('; ')}`
-        : '') +
-      (skipped.length ? `. Not used: ${skipped.join(', ')}` : '') +
-      `. ${unsaved} change${unsaved === 1 ? '' : 's'} to review, then Save to NOMS.`,
-    skipped.length ? 'info' : 'ok'
+    `Filled ${filled} value${filled === 1 ? '' : 's'} from ${names}` +
+      (toCheck ? `, ${toCheck} to check (marked ⚠).` : '. Everything matched.') +
+      ' Send to NOMS when ready.',
+    toCheck ? 'info' : 'ok'
   );
-  scrollToFirstFilled(filledIds);
   notifyOpenPaint({
-    message: `Filled ${filled} value${filled === 1 ? '' : 's'} from ${names}. Check and press Save to NOMS.`,
+    message: `Filled ${filled} value${filled === 1 ? '' : 's'} from ${names}${toCheck ? `, ${toCheck} to check` : ''}.`,
     kind: 'success',
     durationMs: 9000,
-    action: { label: 'Undo', onClick: () => undoFill(before) },
+    action: { label: 'Undo', onClick: () => undoFill(undoValues, prev) },
   });
+  return filledIds;
 }
 
-function undoFill(before: Values): void {
+function undoFill(before: Values, review: StoredDropReview | undefined): void {
   state.values = before;
   state.highlight = new Set();
-  patchEntry({ values: state.values, unit: state.unit });
+  patchEntry({ values: state.values, unit: state.unit, dropReview: review });
   state.canvasSnapshot.clear();
   pushAll();
   setStatus('PDF values undone. Lines that took a value keep it until you edit them.', 'info');
+}
+
+/** Take a different end of a range the customer wrote. */
+function pickRange(value: DropValue, picked: number): void {
+  const stored = entry()?.dropReview;
+  if (!stored) return;
+  const picks = { ...stored.picks, [value.id]: picked };
+  patchEntry({ dropReview: { ...stored, picks } });
+  const review = classifyDropResult(stored.values, state.models, state.unit, stored.before, {
+    picks,
+  });
+  for (const placement of review.placements)
+    if (placement.from === value.id) setValue(placement.key, placement.field, placement.value);
+  render();
+}
+
+/** Send a PDF value that matched no letter to a form letter chosen by hand. */
+function assignExtra(id: string, target: string): void {
+  const stored = entry()?.dropReview;
+  const value = stored?.values.find(v => v.id === id);
+  if (!stored || !value || !target) return;
+  const [key, field] = [
+    target.slice(0, target.lastIndexOf('|')),
+    target.slice(target.lastIndexOf('|') + 1),
+  ];
+  const values = stored.values.map(v =>
+    v.id === id ? { ...v, targets: [{ key, field }], why: undefined } : v
+  );
+  patchEntry({ dropReview: { ...stored, values } });
+  const review = classifyDropResult(values, state.models, state.unit, stored.before, {
+    picks: stored.picks,
+  });
+  const placed = review.placements.find(p => p.from === id);
+  if (placed) {
+    setValue(placed.key, placed.field, placed.value);
+    setStatus(`${value.label} from the PDF now fills ${field}.`, 'ok');
+  } else
+    setStatus(
+      `${field} already took a value from the PDF; ${value.label} is listed on it.`,
+      'info'
+    );
+  render();
+}
+
+/** Re-open the matching window for the last CW form drop. */
+async function changeMatching(): Promise<void> {
+  const groups = state.lastGroups;
+  if (!groups.length) return;
+  const models = modelGroups(state.models);
+  const suggested = refineTargets(
+    pdfGroupsForMatching(groups),
+    models,
+    Object.fromEntries(models.map(m => [m.key, m.title]))
+  );
+  const choice = await chooseMapping(groups, suggested);
+  if (!choice) return;
+  const chosenGroups = choice.groups.map(c => c.group);
+  const values = cwGroupsToDropValues(
+    chosenGroups,
+    choice.groups.map(c => c.targets),
+    choice.groups.map(c => c.mapping),
+    models
+  );
+  // Diagrams left out of the choice still list their values as extras.
+  const left = groups.filter(g => !chosenGroups.includes(g));
+  values.push(
+    ...cwGroupsToDropValues(
+      left,
+      left.map(() => []),
+      left.map(() => ({})),
+      models
+    )
+  );
+  const picks: Record<string, number> = {};
+  for (const c of choice.groups)
+    for (const v of values)
+      if (
+        v.file === c.group.file &&
+        v.pageNumber === c.group.pageNumber &&
+        v.title === c.group.title &&
+        v.range
+      )
+        picks[v.id] = c.values[v.label] ?? v.value;
+  // Start again from the form before the drop so old placements do not linger.
+  const before = entry()?.dropReview?.before;
+  if (before) {
+    state.values = before;
+    patchEntry({ values: before });
+  }
+  applyDrop(values, Array.from(new Set(groups.map(g => g.file))), picks, 'the PDF');
+  render();
 }
 
 function scrollToFirstFilled(ids: string[]): void {
@@ -1361,6 +1672,298 @@ function suggestLinks(): void {
   apply.focus();
 }
 
+// ---------------------------------------------------------------- send to NOMS
+// One action: save the values to the CW40 form, make the customer's PDF in cm,
+// hand it over as a download (kept in this browser too), and show a summary
+// for the SZ email. A failed step stops the rest and says what was done.
+
+async function storeOriginals(): Promise<void> {
+  if (!state.order || !state.originals.length) return;
+  try {
+    const stored = await loadOrderPdfs(state.order);
+    await saveOrderPdfs({ ...(stored || {}), order: state.order, originals: state.originals });
+  } catch (error) {
+    console.warn('[NOMS link] Could not keep the PDF in this browser', error);
+  }
+}
+
+async function originalsForOrder(): Promise<StoredOrderPdfs['originals']> {
+  if (state.originals.length) return state.originals;
+  const stored = await loadOrderPdfs(state.order).catch(() => null);
+  state.originals = stored?.originals || [];
+  return state.originals;
+}
+
+function downloadBytes(bytes: Uint8Array, name: string): void {
+  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/pdf' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+/** A small modal with a message, an optional list and buttons; resolves the button's value. */
+function askDialog<T>(options: {
+  title: string;
+  text: string;
+  list?: string[];
+  tick?: string;
+  buttons: Array<{ label: string; value: T; primary?: boolean }>;
+  cancel: T;
+}): Promise<{ value: T; ticked: boolean }> {
+  ensureStyles();
+  return new Promise(resolve => {
+    const overlay = el('div', 'nml-map');
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', options.title);
+    const card = el('section', 'nml-map-card nml-ask');
+    card.append(el('h2', '', options.title), el('p', '', options.text));
+    if (options.list?.length) {
+      const list = el('ul', 'nml-ask-list');
+      for (const line of options.list) list.appendChild(el('li', '', line));
+      card.appendChild(list);
+    }
+    const foot = el('div', 'nml-map-foot');
+    let box: HTMLInputElement | null = null;
+    if (options.tick) {
+      const label = el('label');
+      box = el('input');
+      box.type = 'checkbox';
+      label.append(box, document.createTextNode(` ${options.tick}`));
+      foot.appendChild(label);
+    }
+    const finish = (value: T) => {
+      overlay.remove();
+      resolve({ value, ticked: Boolean(box?.checked) });
+    };
+    let focus: HTMLButtonElement | null = null;
+    for (const b of options.buttons) {
+      const button = el('button', b.primary ? 'primary' : '', b.label);
+      button.type = 'button';
+      button.addEventListener('click', () => finish(b.value));
+      foot.appendChild(button);
+      if (b.primary) focus = button;
+    }
+    card.appendChild(foot);
+    overlay.appendChild(card);
+    overlay.addEventListener('keydown', event => {
+      if (event.key === 'Escape') finish(options.cancel);
+    });
+    document.body.appendChild(overlay);
+    focus?.focus();
+  });
+}
+
+function progress(text: string, kind: 'run' | 'ok' | 'error' | 'skip'): void {
+  const last = state.progress[state.progress.length - 1];
+  if (last?.kind === 'run') state.progress[state.progress.length - 1] = { text, kind };
+  else state.progress.push({ text, kind });
+  render();
+}
+
+async function sendToNoms(): Promise<void> {
+  const current = entry();
+  if (!current || !state.content || state.sending) return;
+  const review = currentReview();
+  const flags = review ? dropFlagLines(review, state.models) : [];
+  if (flags.length && !current.skipFlagConfirm) {
+    const answer = await askDialog({
+      title: `Save with ${flags.length} flagged value${flags.length === 1 ? '' : 's'}?`,
+      text: 'These are marked ⚠ in the panel. They are saved as they are; nothing is left out.',
+      list: flags,
+      tick: "Don't ask again for this order",
+      buttons: [
+        { label: 'Cancel', value: false },
+        { label: 'Send to NOMS', value: true, primary: true },
+      ],
+      cancel: false,
+    });
+    if (!answer.value) return;
+    if (answer.ticked) patchEntry({ skipFlagConfirm: true });
+  }
+  state.sending = true;
+  state.progress = [];
+  const done: string[] = [];
+  const stop = (step: string, error: string) => {
+    progress(`${step}: ${error}`, 'error');
+    setStatus(
+      `Stopped at ${step.toLowerCase()}. ${done.length ? `Done: ${done.join(', ')}.` : 'Nothing was changed on NOMS.'}`,
+      'error'
+    );
+  };
+  try {
+    // 1. NOMS: check nobody changed the form meanwhile, then save.
+    progress('1/3 Checking NOMS for changes…', 'run');
+    const fresh = await fetchFormValues();
+    if (!fresh.ok) return stop('Saving to NOMS', fresh.error);
+    const snapshot = entry()?.formSnapshot
+      ? convertValues(entry()!.formSnapshot, entry()!.unit, state.unit)
+      : state.saved;
+    const conflicts = conflictingDrift(formDrift(snapshot, fresh.values, state.values));
+    if (conflicts.length) {
+      const answer = await askDialog<'noms' | 'mine' | 'cancel'>({
+        title: 'NOMS changed since you loaded it',
+        text: `NOMS has newer values for ${fieldList(conflicts)} (changed since ${agoText(entry()?.snapshotAt)}). Sending would replace them.`,
+        list: conflicts.map(
+          d =>
+            `${fieldList([d])}: NOMS now ${d.now || 'empty'}, was ${d.was || 'empty'}, sending ${d.mine || 'empty'} ${state.unit}`
+        ),
+        buttons: [
+          { label: 'Cancel', value: 'cancel' },
+          { label: 'Use NOMS for these', value: 'noms' },
+          { label: 'Send mine', value: 'mine', primary: true },
+        ],
+        cancel: 'cancel',
+      });
+      if (answer.value === 'cancel') {
+        progress('Not sent: NOMS changed meanwhile.', 'skip');
+        return;
+      }
+      if (answer.value === 'noms') for (const d of conflicts) setValue(d.key, d.field, d.now);
+    }
+    progress('1/3 Saving the values to NOMS…', 'run');
+    const confirm = state.confirmTick ?? state.confirmed;
+    if (!(await saveForm(confirm)))
+      return stop('Saving to NOMS', state.status || 'the save failed');
+    done.push(`values saved to NOMS${confirm ? ' and confirmed' : ''}`);
+    progress(`1/3 Saved to NOMS${confirm ? ' and confirmed' : ''}.`, 'ok');
+
+    // 2. The customer's PDF in cm.
+    const name = cmPdfFileName(current.orderNumber, current.customerName);
+    let cmBytes: Uint8Array | null = null;
+    const originals = await originalsForOrder();
+    if (!originals.length) {
+      progress('2/3 No customer PDF dropped for this order, so no cm copy.', 'skip');
+    } else {
+      progress(`2/3 Making ${name}…`, 'run');
+      try {
+        const pdfjs = await loadPdfjs();
+        const converted: Uint8Array[] = [];
+        let count = 0;
+        for (const original of originals) {
+          const scan = await scanPdfText(original.bytes.slice(), pdfjs).catch(() => null);
+          const result = await convertPdfToCm(original.bytes.slice(), {
+            orderNumber: current.orderNumber,
+            unit: original.unit,
+            scan,
+          });
+          count += result.converted.length;
+          converted.push(result.bytes);
+        }
+        cmBytes = await mergeCmPdfs(converted);
+        done.push('cm PDF made');
+        progress(
+          `2/3 Made the cm PDF (${count} value${count === 1 ? '' : 's'} converted from inches).`,
+          'ok'
+        );
+      } catch (error) {
+        return stop('Making the cm PDF', String((error as Error)?.message || error));
+      }
+    }
+
+    // 3. Hand it over and keep it with the order.
+    if (cmBytes) {
+      progress('3/3 Downloading and keeping the cm PDF…', 'run');
+      try {
+        downloadBytes(cmBytes, name);
+        await saveOrderPdfs({
+          order: current.orderNumber,
+          originals,
+          cm: { name, bytes: cmBytes, createdAt: new Date().toISOString() },
+        });
+        patchEntry({ cmPdfName: name });
+        done.push('cm PDF downloaded');
+        progress(`3/3 Downloaded ${name}.`, 'ok');
+      } catch (error) {
+        return stop('Keeping the cm PDF', String((error as Error)?.message || error));
+      }
+    }
+    patchEntry({ lastSentAt: new Date().toISOString() });
+    setStatus(`Sent: ${done.join(', ')}.`, 'ok');
+    showSummary(cmBytes ? name : '');
+  } finally {
+    state.sending = false;
+    render();
+  }
+}
+
+function summaryText(pdfName: string): string {
+  const current = entry();
+  const review = currentReview();
+  return szSummaryText({
+    orderNumber: current?.orderNumber || state.order,
+    customerName: current?.customerName,
+    product: current?.productName || current?.productSku,
+    models: state.models.filter(m => m.enabled !== false),
+    values: state.values,
+    unit: state.unit,
+    flags: review ? dropFlagLines(review, state.models) : [],
+    pdfName,
+  });
+}
+
+function showSummary(pdfName: string): void {
+  ensureStyles();
+  const current = entry();
+  if (!current) return;
+  const text = summaryText(pdfName);
+  const overlay = el('div', 'nml-map');
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Sent to NOMS');
+  const card = el('section', 'nml-map-card');
+  card.append(el('h2', '', `Sent to NOMS #${current.orderNumber}`));
+  const steps = el('ul', 'nml-ask-list');
+  for (const step of state.progress) steps.appendChild(el('li', '', step.text));
+  card.appendChild(steps);
+  const area = el('textarea', 'nml-summary');
+  area.value = text;
+  area.readOnly = true;
+  area.rows = Math.min(18, text.split('\n').length + 1);
+  card.appendChild(area);
+  const foot = el('div', 'nml-map-foot');
+  const open = el('a', 'nml-map-button', 'Open NOMS order');
+  open.href = `${NOMS}/order/${current.orderNumber}/measurements?form=${current.formId}&lang=${current.lang}`;
+  open.target = '_blank';
+  open.rel = 'noopener noreferrer';
+  const copy = el('button', 'primary', 'Copy summary for SZ');
+  copy.type = 'button';
+  copy.addEventListener('click', () => {
+    navigator.clipboard.writeText(text).then(
+      () => {
+        copy.textContent = 'Copied';
+      },
+      () => {
+        area.select();
+        copy.textContent = 'Press Cmd+C to copy';
+      }
+    );
+  });
+  const again = el('button', '', 'Download the cm PDF again');
+  again.type = 'button';
+  again.hidden = !pdfName;
+  again.addEventListener('click', () => {
+    void loadOrderPdfs(current.orderNumber).then(stored => {
+      if (stored?.cm) downloadBytes(stored.cm.bytes, stored.cm.name);
+    });
+  });
+  const close = el('button', '', 'Close');
+  close.type = 'button';
+  close.addEventListener('click', () => overlay.remove());
+  foot.append(open, again, close, copy);
+  card.appendChild(foot);
+  overlay.appendChild(card);
+  overlay.addEventListener('keydown', event => {
+    if (event.key === 'Escape') overlay.remove();
+  });
+  document.body.appendChild(overlay);
+  copy.focus();
+}
+
 // ---------------------------------------------------------------- panel
 function setStatus(message: string, kind: 'info' | 'error' | 'ok' = 'info'): void {
   state.status = message;
@@ -1391,7 +1994,29 @@ function ensureStyles(): void {
     #${PANEL_ID} select, #${PANEL_ID} input { height: 26px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 6px; font: inherit; }
     #${PANEL_ID} .nml-model { margin-top: 10px; padding-top: 8px; border-top: 1px solid #e2e8f0; }
     #${PANEL_ID} .nml-model h3 { margin: 0 0 4px; font-size: 12px; }
-    #${PANEL_ID} .nml-grid { display: grid; grid-template-columns: 22px 74px 1fr auto 24px; gap: 4px 6px; align-items: center; }
+    #${PANEL_ID} .nml-grid { display: grid; grid-template-columns: 14px 22px 74px 1fr auto 24px; gap: 4px 6px; align-items: center; }
+    #${PANEL_ID} .nml-mark { font-weight: 700; text-align: center; }
+    #${PANEL_ID} .nml-mark.ok { color: #16a34a; }
+    #${PANEL_ID} .nml-mark.warn { color: #b45309; }
+    #${PANEL_ID} .nml-why { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; margin: -2px 0 4px; color: #8a5a00; font-size: 11px; }
+    #${PANEL_ID} .nml-review { margin: 8px 0; padding: 6px 8px; border-radius: 8px; background: #e9f8ee; border: 1px solid #bfe6cc; }
+    #${PANEL_ID} .nml-review.warn { background: #fff7e6; border-color: #f5d49a; }
+    #${PANEL_ID} .nml-review .nml-row { margin: 0; }
+    #${PANEL_ID} .nml-review strong { margin-right: auto; }
+    #${PANEL_ID} .nml-review button.nml-unit.on { background: #0f172a; border-color: #0f172a; color: #fff; }
+    #${PANEL_ID} .nml-extra { display: grid; grid-template-columns: 14px 26px 1fr auto; gap: 4px 6px; align-items: center; margin-top: 4px; }
+    #${PANEL_ID} .nml-extra select { max-width: 110px; }
+    #${PANEL_ID} .nml-drift { margin-bottom: 8px; padding: 6px 8px; border-radius: 6px; background: #fff7e6; border: 1px solid #f5d49a; color: #7a4b00; }
+    #${PANEL_ID} .nml-send .nml-tick { display: inline-flex; gap: 4px; align-items: center; }
+    #${PANEL_ID} .nml-send .nml-tick input { height: auto; }
+    #${PANEL_ID} .nml-progress { margin-top: 6px; display: grid; gap: 2px; font-size: 11px; }
+    #${PANEL_ID} .nml-progress .ok { color: #1d5c34; }
+    #${PANEL_ID} .nml-progress .error { color: #8a1c1c; font-weight: 600; }
+    #${PANEL_ID} .nml-progress .skip { color: #64748b; }
+    .nml-ask-list { margin: 8px 0; padding-left: 18px; max-height: 260px; overflow: auto; }
+    .nml-summary { width: 100%; box-sizing: border-box; margin-top: 8px; font: 12px/1.4 ui-monospace, monospace; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px; }
+    .nml-map a.nml-map-button { margin-right: auto; color: #9a3412; font-weight: 650; }
+    .nml-map button[hidden] { display: none; }
     #${PANEL_ID} .nml-line.gone { color: #b45309; }
     #${PANEL_ID} button.nml-link-btn { width: 24px; height: 24px; padding: 0; border-radius: 6px; font-size: 12px; line-height: 1; color: #64748b; }
     #${PANEL_ID} button.nml-link-btn.on { background: #0f172a; border-color: #0f172a; color: #fff; }
@@ -1559,6 +2184,26 @@ function render(): void {
     );
     body.appendChild(row);
   }
+  if (state.drift) {
+    const banner = el('div', 'nml-drift');
+    banner.appendChild(
+      el(
+        'span',
+        '',
+        `NOMS has newer values for ${fieldList(state.drift.items)} (changed since ${agoText(state.drift.at)}). You changed them here too.`
+      )
+    );
+    const row = el('div', 'nml-row');
+    row.append(
+      actionButton('Keep mine', () => resolveDrift(false)),
+      actionButton('Use NOMS', () => resolveDrift(true), true)
+    );
+    banner.title = state.drift.items
+      .map(d => `${d.field}: NOMS ${d.now || 'empty'}, yours ${d.mine || 'empty'} ${state.unit}`)
+      .join('\n');
+    banner.appendChild(row);
+    body.appendChild(banner);
+  }
   if (!state.content) {
     if (!state.loading && !state.signIn)
       body.appendChild(actionButton('Load from NOMS', () => loadForm(), true));
@@ -1611,6 +2256,8 @@ function render(): void {
   unitRow.appendChild(el('span', '', `Form unit: ${state.unit === 'in' ? 'inches' : 'cm'}`));
   body.appendChild(unitRow);
   body.appendChild(pdfDropZone());
+  const review = currentReview();
+  if (review) body.appendChild(reviewStrip(review));
 
   const linkRow2 = el('div', 'nml-row');
   linkRow2.append(
@@ -1627,7 +2274,10 @@ function render(): void {
   const typed = inputUnit();
   const other = typed === 'in' ? 'cm' : 'in';
   const lines = allLines();
+  const dropValues = new Map((current.dropReview?.values || []).map(v => [v.id, v]));
   for (const model of state.models) {
+    const flaggedHere = model.fields.some(f => review?.rows[`${model.key}|${f}`]?.flags.length);
+    if (state.onlyFlagged && review && !flaggedHere) continue;
     const box = el('div', 'nml-model');
     box.appendChild(el('h3', '', model.title));
     const tools = el('div', 'nml-row');
@@ -1653,6 +2303,8 @@ function render(): void {
     );
     const grid = el('div', 'nml-grid');
     for (const field of model.fields) {
+      const row = review?.rows[`${model.key}|${field}`];
+      if (state.onlyFlagged && review && !row?.flags.length) continue;
       const value = values[field] ?? '';
       const parsed = parseMeasure(value);
       const input = el('input');
@@ -1707,45 +2359,156 @@ function render(): void {
         : `Link ${field} to a drawn line`;
       link.setAttribute('aria-label', link.title);
       link.addEventListener('click', () => chooseLine(model.key, field));
-      grid.append(el('span', 'nml-key', field), input, hint, draw, link);
+      const mark = el(
+        'span',
+        `nml-mark${row ? (row.flags.length ? ' warn' : ' ok') : ''}`,
+        row ? (row.flags.length ? '⚠' : '✓') : ''
+      );
+      if (row)
+        mark.title = row.flags.length ? row.flags.map(f => f.reason).join('\n') : 'Matched the PDF';
+      grid.append(mark, el('span', 'nml-key', field), input, hint, draw, link);
+      if (row?.flags.length) {
+        const why = el('div', 'nml-why');
+        why.appendChild(el('span', '', row.flags.map(f => f.reason).join('; ')));
+        const from = dropValues.get(row.from);
+        if (from?.range && row.flags.some(f => f.kind === 'range')) {
+          why.appendChild(
+            rangePills(
+              from.range,
+              from.unit === 'inch' ? 'in' : 'cm',
+              dropNumber(from, current.dropReview?.picks),
+              picked => pickRange(from, picked)
+            )
+          );
+        }
+        grid.appendChild(why);
+      }
     }
     box.appendChild(grid);
     body.appendChild(box);
   }
 
   const unsaved = changedFields(state.saved, state.values);
-  const footer = el('div', 'nml-row');
-  footer.style.marginTop = '12px';
-  if (state.confirmed) {
-    footer.appendChild(
-      actionButton(
-        unsaved.length ? `Save ${unsaved.length} to NOMS` : 'Save to NOMS',
-        () => saveForm(true),
-        true
-      )
-    );
-  } else {
-    footer.append(
-      actionButton('Save and confirm', () => saveForm(true), true),
-      actionButton('Save without confirming', () => saveForm(false))
-    );
-  }
-  footer.appendChild(
+  const footer = el('div', 'nml-row nml-send');
+  const send = actionButton(
+    state.sending ? 'Sending…' : unsaved.length ? `Send ${unsaved.length} to NOMS` : 'Send to NOMS',
+    () => sendToNoms(),
+    true
+  );
+  send.disabled = state.sending;
+  send.title =
+    'Save the values to the CW40 form, make the customer PDF in cm, and show a summary for SZ';
+  const tickLabel = el('label', 'nml-tick');
+  const tick = el('input');
+  tick.type = 'checkbox';
+  tick.checked = state.confirmTick ?? state.confirmed;
+  tick.addEventListener('change', () => {
+    state.confirmTick = tick.checked;
+  });
+  tickLabel.append(tick, document.createTextNode(' Confirm the form'));
+  footer.append(
+    send,
+    tickLabel,
     actionButton('Reload from NOMS', async () => {
       if (unsaved.length && !window.confirm('Replace the values here with what NOMS has?')) return;
       await loadForm({ preferNoms: true });
     })
   );
+  if (current.lastSentAt && !state.sending)
+    footer.appendChild(actionButton('Summary', () => showSummary(current.cmPdfName || '')));
+  footer.style.marginTop = '12px';
+  if (state.progress.length) {
+    const steps = el('div', 'nml-progress');
+    for (const step of state.progress)
+      steps.appendChild(
+        el(
+          'div',
+          step.kind,
+          `${step.kind === 'ok' ? '✓' : step.kind === 'error' ? '✗' : step.kind === 'skip' ? '·' : '…'} ${step.text}`
+        )
+      );
+    body.appendChild(footer);
+    body.appendChild(steps);
+    panel.appendChild(body);
+    restoreFocus(panel, focusId, caret);
+    return;
+  }
   body.appendChild(footer);
   panel.appendChild(body);
+  restoreFocus(panel, focusId, caret);
+}
 
-  if (focusId) {
-    const again = panel.querySelector<HTMLInputElement>(
-      `input[data-nml-id="${CSS.escape(focusId)}"]`
-    );
-    again?.focus();
-    if (again && caret !== null) again.setSelectionRange(caret, caret);
+function restoreFocus(panel: HTMLElement, focusId: string, caret: number | null): void {
+  if (!focusId) return;
+  const again = panel.querySelector<HTMLInputElement>(
+    `input[data-nml-id="${CSS.escape(focusId)}"]`
+  );
+  again?.focus();
+  if (again && caret !== null) again.setSelectionRange(caret, caret);
+}
+
+/** "28 values filled, 3 to check", the flagged-only filter, and PDF values that fill no letter. */
+function reviewStrip(review: DropReview): HTMLElement {
+  const strip = el('div', `nml-review${review.toCheck ? ' warn' : ''}`);
+  const head = el('div', 'nml-row');
+  head.appendChild(
+    el(
+      'strong',
+      '',
+      `${review.filled} value${review.filled === 1 ? '' : 's'} filled, ${review.toCheck ? `${review.toCheck} to check` : 'all matched'}`
+    )
+  );
+  if (review.toCheck) {
+    const filter = el('button', `nml-unit${state.onlyFlagged ? ' on' : ''}`, 'Only ⚠');
+    filter.type = 'button';
+    filter.setAttribute('aria-pressed', state.onlyFlagged ? 'true' : 'false');
+    filter.title = 'Show only the letters to check';
+    filter.addEventListener('click', () => {
+      state.onlyFlagged = !state.onlyFlagged;
+      render();
+    });
+    head.appendChild(filter);
   }
+  if (state.lastGroups.length)
+    head.appendChild(actionButton('Change matching', () => changeMatching()));
+  head.appendChild(
+    actionButton('Clear', () => {
+      patchEntry({ dropReview: undefined });
+      state.onlyFlagged = false;
+      setStatus('Review cleared. The values stay as they are.', 'info');
+    })
+  );
+  strip.appendChild(head);
+  if (review.extras.length) {
+    strip.appendChild(el('div', 'nml-hint', 'From the PDF, not on the form:'));
+    for (const extra of review.extras) {
+      const row = el('div', 'nml-extra');
+      row.append(
+        el('span', 'nml-mark warn', '⚠'),
+        el('b', '', extra.label),
+        el('span', '', `${extra.text} · ${extra.where} · ${extra.reason}`)
+      );
+      const select = el('select');
+      select.setAttribute('aria-label', `Use ${extra.label} for a form letter`);
+      const none = el('option', '', 'Use for…');
+      none.value = '';
+      select.appendChild(none);
+      for (const model of state.models) {
+        const group = el('optgroup');
+        group.label = model.title;
+        for (const field of model.fields) {
+          const option = el('option', '', field);
+          option.value = `${model.key}|${field}`;
+          group.appendChild(option);
+        }
+        select.appendChild(group);
+      }
+      select.addEventListener('change', () => assignExtra(extra.id, select.value));
+      row.appendChild(select);
+      strip.appendChild(row);
+    }
+  }
+  return strip;
 }
 
 function syncActiveOrder(): void {
@@ -1759,6 +2522,12 @@ function syncActiveOrder(): void {
     state.saved = {};
     state.status = '';
     state.canvasSnapshot.clear();
+    state.drift = null;
+    state.progress = [];
+    state.originals = [];
+    state.lastGroups = [];
+    state.onlyFlagged = false;
+    state.confirmTick = null;
   }
 }
 

@@ -18,7 +18,6 @@ import {
   PDFCheckBox,
   PDFDict,
   PDFDocument,
-  PDFName,
   PDFRadioGroup,
   PDFRef,
   PDFTextField,

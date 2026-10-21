@@ -358,6 +358,69 @@ function normalizeNomsValues(raw) {
   }
   return out;
 }
+const DROP_UNITS = new Set(['cm', 'inch']);
+const cleanNumber = value => (typeof value === 'number' && Number.isFinite(value) ? value : null);
+/**
+ * The last PDF drop for an order: every value read (with the letters it
+ * fills), the form before the drop and the range ends picked, so the panel can
+ * show matched and flagged letters again after a reload.
+ */
+function normalizeNomsDropReview(raw) {
+  if (!raw || typeof raw !== 'object' || !Array.isArray(raw.values)) return undefined;
+  const values = [];
+  for (const v of raw.values.slice(0, 600)) {
+    if (!v || typeof v !== 'object') continue;
+    const id = cleanNomsText(v.id, 300);
+    const value = cleanNumber(v.value);
+    if (!id || value === null || !DROP_UNITS.has(v.unit)) continue;
+    const targets = Array.isArray(v.targets)
+      ? v.targets
+          .filter(
+            t =>
+              t &&
+              typeof t.key === 'string' &&
+              NOMS_MODEL_KEY.test(t.key) &&
+              typeof t.field === 'string' &&
+              NOMS_FIELD.test(t.field)
+          )
+          .slice(0, 12)
+          .map(t => ({ key: t.key, field: t.field }))
+      : [];
+    const range = Array.isArray(v.range) ? v.range.map(cleanNumber).filter(n => n !== null) : [];
+    const alsoFills = Array.isArray(v.alsoFills)
+      ? v.alsoFills
+          .map(t => cleanNomsText(t))
+          .filter(Boolean)
+          .slice(0, 12)
+      : [];
+    values.push({
+      id,
+      file: cleanNomsText(v.file, 200),
+      pageNumber: cleanNumber(v.pageNumber) ?? 0,
+      title: cleanNomsText(v.title),
+      label: cleanNomsText(v.label, 32),
+      value,
+      unit: v.unit,
+      ...(v.unitAssumed === true ? { unitAssumed: true } : {}),
+      ...(range.length === 2 ? { range } : {}),
+      ...(cleanNomsText(v.text) ? { text: cleanNomsText(v.text) } : {}),
+      ...(cleanNomsText(v.viewId, 120) ? { viewId: cleanNomsText(v.viewId, 120) } : {}),
+      targets,
+      ...(cleanNomsText(v.why) ? { why: cleanNomsText(v.why) } : {}),
+      ...(alsoFills.length ? { alsoFills } : {}),
+    });
+  }
+  const picks = {};
+  for (const [id, n] of Object.entries(raw.picks || {})) {
+    if (cleanNumber(n) !== null && id.length <= 300) picks[id] = n;
+  }
+  return {
+    at: cleanNomsText(raw.at, 40),
+    values,
+    before: normalizeNomsValues(raw.before),
+    picks,
+  };
+}
 export function normalizeNomsOrders(raw) {
   if (!raw || typeof raw !== 'object') return {};
   return Object.fromEntries(
@@ -418,6 +481,23 @@ export function normalizeNomsOrders(raw) {
               : [],
             lastImportedAt: cleanNomsText(entry.lastImportedAt, 40),
             lastSyncedAt: cleanNomsText(entry.lastSyncedAt, 40),
+            // The form as last read from NOMS, to spot changes made there meanwhile.
+            ...(entry.formSnapshot && typeof entry.formSnapshot === 'object'
+              ? {
+                  formSnapshot: normalizeNomsValues(entry.formSnapshot),
+                  snapshotAt: cleanNomsText(entry.snapshotAt, 40),
+                }
+              : {}),
+            ...(entry.skipFlagConfirm === true ? { skipFlagConfirm: true } : {}),
+            ...(normalizeNomsDropReview(entry.dropReview)
+              ? { dropReview: normalizeNomsDropReview(entry.dropReview) }
+              : {}),
+            ...(cleanNomsText(entry.cmPdfName)
+              ? { cmPdfName: cleanNomsText(entry.cmPdfName) }
+              : {}),
+            ...(cleanNomsText(entry.lastSentAt, 40)
+              ? { lastSentAt: cleanNomsText(entry.lastSentAt, 40) }
+              : {}),
           },
         ];
       })
