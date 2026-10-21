@@ -1,378 +1,225 @@
-// Export utilities for saving multiple images and PDF generation with pdf-lib
-/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-misused-promises, @typescript-eslint/prefer-regexp-exec, @typescript-eslint/unbound-method, prefer-rest-params */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
+// Helpers for the PDF export: which unit to print, what to call the file, where
+// to save it, and the page order. Kept free of the capture engine so they stay
+// unit-testable; pdf-export-inline.ts wires them to the dialog.
 
-function formatExportMeasurement(measurement, unit) {
-  if (!measurement) return '';
+import { formatHalfUp } from '../utils/rounding';
+import { sanitizeFilenamePart } from '../utils/naming-utils.js';
 
-  if (unit === 'inch') {
-    const whole = Number(measurement.inchWhole || 0);
-    const fraction = Number(measurement.inchFraction || 0);
-    if (whole === 0 && fraction === 0) return '';
+export { roundHalfUp, formatHalfUp } from '../utils/rounding';
 
-    const inchFormatter =
-      window.app?.measurementSystem?.formatInchValue ||
-      window.app?.measurementSystem?.formatMeasurement;
-    if (typeof inchFormatter === 'function') {
-      return inchFormatter.call(window.app.measurementSystem, whole, fraction, {
-        inchValue: measurement.inch,
-        decimalPlaces:
-          measurement.inputUnit === 'cm' ? 1 : measurement.inputUnit === 'inches' ? 3 : undefined,
-      });
-    }
+export type ExportUnit = 'cm' | 'inch';
 
-    const exactInch = Number.isFinite(Number(measurement.inch))
-      ? Number(measurement.inch)
-      : whole + fraction;
-    const total = Number(exactInch.toFixed(4));
-    return `${total.toFixed(4).replace(/\.?0+$/, '')}"`;
-  }
+export const LAST_EXPORT_UNIT_KEY = 'sofapaint:pdf-export-unit';
 
-  const cm = Number(measurement.cm || 0);
-  if (cm <= 0) return '';
-  const cmFormatter = window.app?.measurementSystem?.formatCentimeterValue;
-  return typeof cmFormatter === 'function'
-    ? cmFormatter.call(window.app.measurementSystem, cm, { decimalPlaces: 1 })
-    : `${cm.toFixed(1).replace(/\.?0+$/, '')} cm`;
+/** cm with one decimal, rounded half up on the exact value: 6.35 prints "6.4 cm". */
+export function formatCmForExport(cm: number, decimals = 1): string {
+  const value = Number(cm);
+  if (!Number.isFinite(value) || value <= 0) return '';
+  return `${formatHalfUp(value, decimals, true)} cm`;
 }
 
-// Save all images as individual PNG files
-window.saveAllImages = async function () {
-  const projectName = document.getElementById('projectName')?.value || 'OpenPaint';
-  const views = window.app?.projectManager?.views || {};
-  const viewIds = Object.keys(views).filter(id => views[id].image);
+// ── Unit ────────────────────────────────────────────────────────────
 
-  if (viewIds.length === 0) {
-    alert('No images to save. Please upload images first.');
-    return;
+export function normalizeExportUnit(value: unknown): ExportUnit | null {
+  const text = String(value || '')
+    .trim()
+    .toLowerCase();
+  if (text === 'cm') return 'cm';
+  if (text === 'inch' || text === 'inches' || text === 'in') return 'inch';
+  return null;
+}
+
+export function nomsOrderNumbers(metadata: any): string[] {
+  const orders = metadata?.externalSources?.nomsOrders;
+  if (!orders || typeof orders !== 'object') return [];
+  return Object.keys(orders)
+    .map(key => String(orders[key]?.orderNumber || key).trim())
+    .filter(Boolean);
+}
+
+/**
+ * Production (NOMS) projects default to cm, as does a project whose last
+ * export was in cm; otherwise the project's own display unit.
+ */
+export function defaultExportUnit({
+  metadata,
+  lastUnit,
+  projectUnit,
+}: {
+  metadata?: any;
+  lastUnit?: unknown;
+  projectUnit?: unknown;
+}): ExportUnit {
+  if (nomsOrderNumbers(metadata).length) return 'cm';
+  if (normalizeExportUnit(lastUnit) === 'cm') return 'cm';
+  return normalizeExportUnit(projectUnit) || 'inch';
+}
+
+export function readLastExportUnit(): ExportUnit | null {
+  try {
+    return normalizeExportUnit(window.localStorage?.getItem(LAST_EXPORT_UNIT_KEY));
+  } catch {
+    return null;
   }
+}
 
-  console.log(`[Export] Saving ${viewIds.length} images`);
-
-  for (const viewId of viewIds) {
-    const view = views[viewId];
-
-    await window.app.projectManager.switchView(viewId);
-    await new Promise(resolve => setTimeout(resolve, 100));
-
-    const canvas = window.app.canvasManager.fabricCanvas;
-    const captureFrame = document.getElementById('captureFrame');
-
-    if (!canvas || !captureFrame) {
-      console.warn(`[Export] Skipping ${viewId}`);
-      continue;
-    }
-
-    const frameRect = captureFrame.getBoundingClientRect();
-    const canvasEl = canvas.lowerCanvasEl;
-
-    const scaleX = canvasEl.width / canvasEl.offsetWidth;
-    const scaleY = canvasEl.height / canvasEl.offsetHeight;
-
-    const canvasRect = canvasEl.getBoundingClientRect();
-    const left = (frameRect.left - canvasRect.left) * scaleX;
-    const top = (frameRect.top - canvasRect.top) * scaleY;
-    const width = frameRect.width * scaleX;
-    const height = frameRect.height * scaleY;
-
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = width;
-    tempCanvas.height = height;
-    const ctx = tempCanvas.getContext('2d');
-
-    ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
-
-    await new Promise(resolve => {
-      tempCanvas.toBlob(blob => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${projectName}_${viewId}.png`;
-        a.click();
-        URL.revokeObjectURL(url);
-        resolve();
-      });
-    });
-
-    await new Promise(resolve => setTimeout(resolve, 200));
+export function rememberExportUnit(unit: ExportUnit): void {
+  try {
+    window.localStorage?.setItem(LAST_EXPORT_UNIT_KEY, unit);
+  } catch {
+    // Private mode: the default simply falls back to the project unit.
   }
+}
 
-  alert(`Saved ${viewIds.length} images!`);
-};
-
-// Show PDF export dialog
-window.showPDFExportDialog = async function (projectName) {
-  projectName = projectName || document.getElementById('projectName')?.value || 'OpenPaint';
-
-  const views = window.app?.projectManager?.views || {};
-  const viewIds = Object.keys(views).filter(id => views[id].image);
-
-  if (viewIds.length === 0) {
-    alert('No images to export. Please upload images first.');
-    return;
-  }
-
-  const overlay = document.createElement('div');
-  overlay.style.cssText =
-    'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;';
-
-  overlay.innerHTML = `
-    <div style="background:white;border-radius:12px;padding:30px;max-width:500px;box-shadow:0 10px 40px rgba(0,0,0,0.3);">
-      <h2 style="margin:0 0 20px 0;color:#333;">Export PDF - ${projectName}</h2>
-      <p style="color:#666;margin-bottom:15px;">Creating PDF with ${viewIds.length} page(s) and editable form fields.</p>
-      <div style="margin-bottom:15px;">
-        <label style="display:block;margin-bottom:5px;font-weight:600;color:#333;">Image Quality:</label>
-        <select id="pdfQuality" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;">
-          <option value="high">High Quality</option>
-          <option value="medium" selected>Medium Quality</option>
-          <option value="low">Low Quality</option>
-        </select>
-      </div>
-      <div style="margin-bottom:15px;">
-        <label style="display:block;margin-bottom:5px;font-weight:600;color:#333;">Page Size:</label>
-        <select id="pdfPageSize" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;">
-          <option value="letter" selected>Letter (8.5" × 11")</option>
-          <option value="a4">A4</option>
-        </select>
-      </div>
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:20px;">
-        <input type="checkbox" id="includeMeasurements" checked style="transform:scale(1.3);">
-        <span style="color:#333;">Include editable measurement fields</span>
-      </label>
-      <div style="display:flex;gap:10px;">
-        <button id="generatePdfBtn" style="flex:1;padding:12px;background:#3b82f6;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Generate PDF</button>
-        <button id="cancelPdfBtn" style="flex:1;padding:12px;background:#6b7280;color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Cancel</button>
-      </div>
-      <div id="pdfProgress" style="display:none;margin-top:20px;text-align:center;">
-        <div style="width:100%;height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin-bottom:10px;">
-          <div id="pdfProgressBar" style="width:0%;height:100%;background:#3b82f6;transition:width 0.3s;"></div>
-        </div>
-        <p id="pdfProgressText" style="color:#666;font-size:14px;">Preparing PDF\u2026</p>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(overlay);
-
-  document.getElementById('cancelPdfBtn').onclick = () => overlay.remove();
-  document.getElementById('generatePdfBtn').onclick = async () => {
-    const quality = document.getElementById('pdfQuality').value;
-    const pageSize = document.getElementById('pdfPageSize').value;
-    const includeMeasurements = document.getElementById('includeMeasurements').checked;
-
-    document.getElementById('pdfProgress').style.display = 'block';
-    document.getElementById('generatePdfBtn').disabled = true;
-    document.getElementById('cancelPdfBtn').disabled = true;
-
-    await generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, includeMeasurements);
-
-    overlay.remove();
+/**
+ * Show the project in `unit` while exporting, so canvas labels, the table and
+ * the manifest all agree, and return a function that puts the project's own
+ * display unit back.
+ */
+export function applyTemporaryDisplayUnit(unit: ExportUnit): () => void {
+  const selector = document.getElementById('unitSelector') as HTMLSelectElement | null;
+  if (!selector) return () => {};
+  const previous: ExportUnit = selector.value === 'cm' ? 'cm' : 'inch';
+  if (previous === unit) return () => {};
+  const apply = (next: ExportUnit) => {
+    selector.value = next;
+    selector.dispatchEvent(new Event('change', { bubbles: true }));
   };
-};
-
-async function generatePDFWithPDFLib(projectName, viewIds, quality, pageSize, includeMeasurements) {
-  const { PDFDocument, StandardFonts, rgb } = PDFLib;
-
-  const progressBar = document.getElementById('pdfProgressBar');
-  const progressText = document.getElementById('pdfProgressText');
-
-  const pdfDoc = await PDFDocument.create();
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-  const pageSizes = {
-    letter: { width: 612, height: 792 },
-    a4: { width: 595, height: 842 },
+  apply(unit);
+  let restored = false;
+  return () => {
+    if (restored) return;
+    restored = true;
+    apply(previous);
   };
-  const { width: pageWidth, height: pageHeight } = pageSizes[pageSize] || pageSizes.letter;
+}
 
-  const qualityScales = { high: 3.0, medium: 2.0, low: 1.5 };
-  const scale = qualityScales[quality] || 2.0;
+// ── File name and saving ────────────────────────────────────────────
 
-  for (let i = 0; i < viewIds.length; i++) {
-    const viewId = viewIds[i];
-    progressText.textContent = `Processing ${viewId} (${i + 1}/${viewIds.length})\u2026`;
-    progressBar.style.width = `${(i / viewIds.length) * 100}%`;
+export function unitFileLabel(unit: ExportUnit): string {
+  return unit === 'cm' ? 'cm' : 'inches';
+}
 
-    await window.app.projectManager.switchView(viewId);
-    await new Promise(resolve => setTimeout(resolve, 150));
-
-    const canvas = window.app.canvasManager.fabricCanvas;
-    const captureFrame = document.getElementById('captureFrame');
-
-    if (!canvas || !captureFrame) continue;
-
-    const frameRect = captureFrame.getBoundingClientRect();
-    const canvasEl = canvas.lowerCanvasEl;
-
-    const scaleX = canvasEl.width / canvasEl.offsetWidth;
-    const scaleY = canvasEl.height / canvasEl.offsetHeight;
-
-    const canvasRect = canvasEl.getBoundingClientRect();
-    const left = (frameRect.left - canvasRect.left) * scaleX;
-    const top = (frameRect.top - canvasRect.top) * scaleY;
-    const width = frameRect.width * scaleX;
-    const height = frameRect.height * scaleY;
-
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = width * scale;
-    tempCanvas.height = height * scale;
-    const ctx = tempCanvas.getContext('2d');
-
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
-    ctx.scale(scale, scale);
-    ctx.drawImage(canvasEl, left, top, width, height, 0, 0, width, height);
-
-    const imageData = tempCanvas.toDataURL('image/jpeg', 0.95);
-    const imageBytes = Uint8Array.from(atob(imageData.split(',')[1]), c => c.charCodeAt(0));
-    const image = await pdfDoc.embedJpg(imageBytes);
-
-    const page = pdfDoc.addPage([pageWidth, pageHeight]);
-    const form = pdfDoc.getForm();
-
-    // Header
-    page.drawRectangle({
-      x: 0,
-      y: pageHeight - 50,
-      width: pageWidth,
-      height: 50,
-      color: rgb(0.12, 0.25, 0.69),
-    });
-    page.drawText(projectName, {
-      x: pageWidth / 2 - projectName.length * 6,
-      y: pageHeight - 30,
-      size: 16,
-      font: fontBold,
-      color: rgb(1, 1, 1),
-    });
-    page.drawText(viewId, {
-      x: pageWidth / 2 - viewId.length * 4,
-      y: pageHeight - 45,
-      size: 10,
-      font,
-      color: rgb(0.8, 0.9, 1),
-    });
-
-    // Image
-    const imgAspect = image.width / image.height;
-    let imgWidth = 500;
-    let imgHeight = imgWidth / imgAspect;
-    if (imgHeight > 400) {
-      imgHeight = 400;
-      imgWidth = imgHeight * imgAspect;
-    }
-
-    const imgX = (pageWidth - imgWidth) / 2;
-    const imgY = pageHeight - 70 - imgHeight;
-    page.drawImage(image, { x: imgX, y: imgY, width: imgWidth, height: imgHeight });
-
-    // Measurements
-    if (includeMeasurements) {
-      const measurements = window.app?.metadataManager?.strokeMeasurements?.[viewId] || {};
-      const strokes = Object.keys(measurements);
-
-      if (strokes.length > 0) {
-        const currentUnit = document.getElementById('unitSelector')?.value || 'inch';
-        const measureY = imgY - 40;
-
-        // Header
-        page.drawRectangle({
-          x: 40,
-          y: measureY,
-          width: pageWidth - 80,
-          height: 25,
-          color: rgb(0.16, 0.38, 1),
-        });
-        page.drawText('MEASUREMENTS', {
-          x: 50,
-          y: measureY + 8,
-          size: 12,
-          font: fontBold,
-          color: rgb(1, 1, 1),
-        });
-
-        // Unit checkboxes
-        const cmCheck = form.createCheckBox(`unit_cm_${viewId}`);
-        cmCheck.addToPage('☐ cm', {
-          x: pageWidth - 150,
-          y: measureY + 5,
-          width: 60,
-          height: 15,
-          textColor: rgb(1, 1, 1),
-          font,
-          fontSize: 9,
-        });
-        if (currentUnit === 'cm') cmCheck.check();
-
-        const inchCheck = form.createCheckBox(`unit_inch_${viewId}`);
-        inchCheck.addToPage('☐ inch', {
-          x: pageWidth - 80,
-          y: measureY + 5,
-          width: 60,
-          height: 15,
-          textColor: rgb(1, 1, 1),
-          font,
-          fontSize: 9,
-        });
-        if (currentUnit === 'inch') inchCheck.check();
-
-        // 3-column grid
-        const colWidth = (pageWidth - 100) / 3;
-        let yPos = measureY - 20;
-        let col = 0;
-
-        strokes.forEach((strokeLabel, idx) => {
-          const m = measurements[strokeLabel];
-          const measurement = formatExportMeasurement(m, currentUnit);
-
-          const x = 50 + col * colWidth;
-
-          // Label
-          page.drawText(strokeLabel, { x, y: yPos, size: 8, font: fontBold, color: rgb(0, 0, 0) });
-
-          // Editable text field
-          const textField = form.createTextField(`${viewId}_${strokeLabel}`);
-          textField.setText(measurement);
-          textField.addToPage(page, {
-            x,
-            y: yPos - 18,
-            width: colWidth - 10,
-            height: 15,
-            borderWidth: 1,
-            borderColor: rgb(0.4, 0.6, 1),
-            backgroundColor: rgb(1, 1, 1),
-          });
-          textField.setFontSize(9);
-
-          col++;
-          if (col >= 3) {
-            col = 0;
-            yPos -= 30;
-          }
-        });
-      }
-    }
-
-    // Footer
-    page.drawText(
-      `Generated: ${new Date().toLocaleDateString()} | Page ${i + 1} of ${viewIds.length}`,
-      { x: 40, y: 20, size: 8, font, color: rgb(0.4, 0.4, 0.4) }
+/**
+ * `<NOMS order> - <customer> - <project name> - <unit>.pdf` for a linked
+ * project, else `<project name> - <unit>.pdf`. The customer is left out when
+ * the project name already carries it.
+ */
+export function buildPdfExportFilename({
+  projectName,
+  unit,
+  metadata,
+}: {
+  projectName: string;
+  unit: ExportUnit;
+  metadata?: any;
+}): string {
+  const project = sanitizeFilenamePart(projectName, 'SofaPaint Project');
+  const orders = nomsOrderNumbers(metadata);
+  const parts: string[] = [];
+  if (orders.length) {
+    parts.push(sanitizeFilenamePart(orders.join(' + '), 'NOMS'));
+    const orderMap = metadata?.externalSources?.nomsOrders || {};
+    const first = orderMap[Object.keys(orderMap)[0]];
+    const customer = sanitizeFilenamePart(
+      first?.customerName || metadata?.naming?.customerName || '',
+      ''
     );
+    if (customer && !project.toLowerCase().includes(customer.toLowerCase())) parts.push(customer);
   }
+  parts.push(project, unitFileLabel(unit));
+  return `${parts.join(' - ')}.pdf`;
+}
 
-  progressBar.style.width = '100%';
-  progressText.textContent = 'Saving PDF\u2026';
+export function canChooseSaveLocation(): boolean {
+  return typeof (window as any).showSaveFilePicker === 'function';
+}
 
-  const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+/**
+ * Ask where to save before the export starts (the picker needs the click's
+ * user activation, which a long export would outlive). Resolves to a file
+ * handle, `null` when the picker is unavailable or fails (download instead),
+ * or `'cancelled'` when Leigh closes the picker.
+ */
+export async function pickPdfSaveTarget(filename: string): Promise<any | null | 'cancelled'> {
+  const picker = (window as any).showSaveFilePicker;
+  if (typeof picker !== 'function') return null;
+  try {
+    return await picker.call(window, {
+      suggestedName: filename,
+      id: 'sofapaint-pdf-export',
+      types: [{ description: 'PDF', accept: { 'application/pdf': ['.pdf'] } }],
+    });
+  } catch (error) {
+    if ((error as Error)?.name === 'AbortError') return 'cancelled';
+    console.warn('[PDF] Save picker unavailable, downloading instead:', error);
+    return null;
+  }
+}
+
+export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${projectName}.pdf`;
+  a.download = filename;
+  a.rel = 'noopener';
+  a.style.position = 'fixed';
+  a.style.left = '-9999px';
+  a.style.top = '0';
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => {
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, 30000);
+}
 
-  console.log('[PDF] Generated with editable form fields using pdf-lib');
+/** Write to the picked file, or download when there is no handle (or it fails). */
+export async function writePdfToTarget(blob: Blob, filename: string, handle?: any): Promise<void> {
+  if (handle && typeof handle.createWritable === 'function') {
+    try {
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return;
+    } catch (error) {
+      console.warn('[PDF] Could not write the chosen file, downloading instead:', error);
+    }
+  }
+  downloadBlob(blob, filename);
+}
+
+// ── Page order ──────────────────────────────────────────────────────
+
+/** The project's view order as the image list shows it. */
+export function getProjectViewOrder(): string[] {
+  const listed = (window as any).orderedImageLabels;
+  if (Array.isArray(listed) && listed.length) return listed.map(String);
+  const views = (window as any).app?.projectManager?.views || {};
+  return Object.keys(views);
+}
+
+/**
+ * Sort items into the project's view order. Views missing from the order go
+ * last in their original order, and items on the same view keep their
+ * original order (stable).
+ */
+export function orderByViewOrder<T>(
+  items: T[],
+  getViewId: (item: T) => string,
+  viewOrder: string[]
+): T[] {
+  const rank = new Map<string, number>();
+  (viewOrder || []).forEach((viewId, index) => {
+    if (!rank.has(viewId)) rank.set(viewId, index);
+  });
+  const fallback = rank.size;
+  return (items || [])
+    .map((item, index) => ({ item, index, rank: rank.get(getViewId(item)) ?? fallback }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map(entry => entry.item);
+}
+
+export function orderViewIdsForExport(viewIds: string[], viewOrder: string[]): string[] {
+  return orderByViewOrder(viewIds, id => id, viewOrder);
 }
