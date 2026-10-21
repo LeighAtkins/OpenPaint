@@ -42,6 +42,13 @@ import {
   formToTyped,
   hasMeasure,
   isComfortWorksStaff,
+  lineLinkKey,
+  resolveLineForLetter,
+  suggestLineLinks,
+  type LetterLines,
+  type LineLink,
+  type LineLinks,
+  type MeasuredLine,
   pickInputUnit,
   refreshLineTag,
   typedToForm,
@@ -66,6 +73,8 @@ interface NomsOrderEntry {
   values: Values;
   viewBindings: Record<string, string>;
   diagramViews: Record<string, string>;
+  /** "product:model:file:LETTER" -> the drawn line that feeds that letter, whatever its label. */
+  lineLinks?: LineLinks;
   lastSyncedAt?: string;
 }
 interface BridgeReply {
@@ -171,15 +180,9 @@ function setInputUnit(unit: InputUnit): void {
   }
   render();
 }
-/** True when every linked line for this letter on the view has no number. */
-function linesLackValue(viewId: string, field: string): boolean {
-  const scopes = strokeScopesFor(viewId, field);
-  return (
-    scopes.length > 0 &&
-    scopes.every(
-      scope => !fromCanvasMeasurement(metadataManager()?.getMeasurement?.(scope, field), state.unit)
-    )
-  );
+/** True when there are lines for this letter and none has a number. */
+function linesLackValue(lines: MeasuredLine[]): boolean {
+  return lines.length > 0 && lines.every(line => !line.value);
 }
 function staff(): boolean {
   // Local development only: localStorage.nomsLinkDevStaff = '1' on localhost.
@@ -250,6 +253,68 @@ function viewsForModel(key: string): string[] {
   if (diagram && projectManager()?.views?.[diagram]) views.add(diagram);
   return Array.from(views);
 }
+/** Every drawn line in the project, with its measurement as form text in the form's unit. */
+function allLines(): MeasuredLine[] {
+  const strokes = metadataManager()?.vectorStrokesByImage || {};
+  const out: MeasuredLine[] = [];
+  for (const [scope, labels] of Object.entries(
+    strokes as Record<string, Record<string, unknown>>
+  )) {
+    for (const label of Object.keys(labels || {})) {
+      if (!labels[label]) continue;
+      out.push({
+        viewId: baseView(scope),
+        scope,
+        label,
+        value: fromCanvasMeasurement(metadataManager()?.getMeasurement?.(scope, label), state.unit),
+      });
+    }
+  }
+  return out;
+}
+/** The lines feeding a form letter: its explicit link, else same-label lines on the model's views. */
+function letterLines(key: string, field: string, lines: MeasuredLine[] = allLines()): LetterLines {
+  return resolveLineForLetter(key, field, entry()?.lineLinks, lines, viewsForModel(key));
+}
+const lineId = (line: { scope: string; label: string }): string => `${line.scope}|${line.label}`;
+function viewTitle(viewId: string): string {
+  const labels = projectManager()?.getProjectMetadata?.()?.imagePartLabels || {};
+  return String(labels[viewId] || projectManager()?.views?.[viewId]?.name || viewId);
+}
+/** Bind a form letter to one drawn line (null restores the same-label rule). */
+function setLineLink(key: string, field: string, link: LineLink | null): void {
+  const current = entry();
+  if (!current) return;
+  const lineLinks: LineLinks = { ...(current.lineLinks || {}) };
+  const id = lineLinkKey(key, field);
+  if (link) lineLinks[id] = link;
+  else delete lineLinks[id];
+  patchEntry({ lineLinks });
+  for (const seen of Array.from(state.canvasSnapshot.keys()))
+    if (seen.endsWith(`|${field}`) || (link && seen.endsWith(`|${link.label}`)))
+      state.canvasSnapshot.delete(seen);
+  if (!link) {
+    pushToLines(key, field);
+    setStatus(`${field} follows lines labelled ${field} again.`, 'info');
+    return;
+  }
+  const lines = letterLines(key, field).lines;
+  const onLine = lines.map(line => line.value).find(Boolean) || '';
+  const inBox = state.values[key]?.[field] ?? '';
+  if (onLine) {
+    // The point of linking is to use the drawn measurement.
+    setValue(key, field, onLine, lineId(lines[0]));
+    for (const line of lines) state.canvasSnapshot.set(lineId(line), line.value);
+    setStatus(
+      `${field} now follows ${viewTitle(link.viewId)} ${link.label} (${onLine} ${state.unit})` +
+        (inBox && inBox !== onLine ? `. The form had ${inBox} ${state.unit}.` : '.'),
+      'ok'
+    );
+  } else {
+    pushToLines(key, field);
+    setStatus(`${field} now follows ${viewTitle(link.viewId)} ${link.label}.`, 'ok');
+  }
+}
 function writeLine(scope: string, field: string, value: string): void {
   const measurementSystem = app().measurementSystem;
   const cm = toCentimetres(value, state.unit);
@@ -268,15 +333,9 @@ function writeLine(scope: string, field: string, value: string): void {
 /** Put the panel's value for key/field on every linked line with that letter. */
 function pushToLines(key: string, field: string): void {
   const value = state.values[key]?.[field] ?? '';
-  for (const viewId of viewsForModel(key)) {
-    for (const scope of strokeScopesFor(viewId, field)) {
-      const existing = fromCanvasMeasurement(
-        metadataManager()?.getMeasurement?.(scope, field),
-        state.unit
-      );
-      if (value && existing !== value) writeLine(scope, field, value);
-      else state.canvasSnapshot.set(`${scope}|${field}`, existing);
-    }
+  for (const line of letterLines(key, field).lines) {
+    if (value && line.value !== value) writeLine(line.scope, line.label, value);
+    else state.canvasSnapshot.set(lineId(line), line.value);
   }
   metadataManager()?.updateStrokeVisibilityControls?.();
   app().canvasManager?.fabricCanvas?.requestRenderAll?.();
@@ -287,34 +346,30 @@ function pushAll(): void {
 /** Values changed on a line (or a newly drawn line) since the last look. */
 function pullFromLines(): boolean {
   let changed = false;
+  const lines = allLines();
   for (const model of state.models) {
     for (const field of model.fields) {
-      for (const viewId of viewsForModel(model.key)) {
-        for (const scope of strokeScopesFor(viewId, field)) {
-          const id = `${scope}|${field}`;
-          const onLine = fromCanvasMeasurement(
-            metadataManager()?.getMeasurement?.(scope, field),
-            state.unit
-          );
-          const seen = state.canvasSnapshot.get(id);
-          // A form value of "0" or text is no measurement: the line's number wins.
-          const formHas = hasMeasure(state.values[model.key]?.[field]);
-          if (seen === undefined) {
-            // A line that has just appeared takes the form's value, if there is one.
-            if (!onLine && formHas) writeLine(scope, field, state.values[model.key][field]);
-            else state.canvasSnapshot.set(id, onLine);
-            if (onLine && !formHas) {
-              setValue(model.key, field, onLine, scope);
-              changed = true;
-            }
-            continue;
+      for (const line of letterLines(model.key, field, lines).lines) {
+        const id = lineId(line);
+        const onLine = line.value;
+        const seen = state.canvasSnapshot.get(id);
+        // A form value of "0" or text is no measurement: the line's number wins.
+        const formHas = hasMeasure(state.values[model.key]?.[field]);
+        if (seen === undefined) {
+          // A line that has just appeared takes the form's value, if there is one.
+          if (!onLine && formHas) writeLine(line.scope, line.label, state.values[model.key][field]);
+          else state.canvasSnapshot.set(id, onLine);
+          if (onLine && !formHas) {
+            setValue(model.key, field, onLine, id);
+            changed = true;
           }
-          if (onLine && onLine !== seen) {
-            state.canvasSnapshot.set(id, onLine);
-            if (onLine !== state.values[model.key]?.[field]) {
-              setValue(model.key, field, onLine, scope);
-              changed = true;
-            }
+          continue;
+        }
+        if (onLine && onLine !== seen) {
+          state.canvasSnapshot.set(id, onLine);
+          if (onLine !== state.values[model.key]?.[field]) {
+            setValue(model.key, field, onLine, id);
+            changed = true;
           }
         }
       }
@@ -322,14 +377,13 @@ function pullFromLines(): boolean {
   }
   return changed;
 }
-function setValue(key: string, field: string, value: string, fromScope = ''): void {
+/** `fromLine` is the "scope|label" id of the line the value came from, if any. */
+function setValue(key: string, field: string, value: string, fromLine = ''): void {
   state.values = { ...state.values, [key]: { ...(state.values[key] || {}), [field]: value } };
   patchEntry({ values: state.values, unit: state.unit });
   // Copy to the other linked lines, but not back onto the line it came from.
-  for (const viewId of viewsForModel(key)) {
-    for (const scope of strokeScopesFor(viewId, field)) {
-      if (scope !== fromScope && value) writeLine(scope, field, value);
-    }
+  for (const line of letterLines(key, field).lines) {
+    if (lineId(line) !== fromLine && value) writeLine(line.scope, line.label, value);
   }
   metadataManager()?.updateStrokeVisibilityControls?.();
   app().canvasManager?.fabricCanvas?.requestRenderAll?.();
@@ -806,9 +860,12 @@ async function readPdfs(files: File[]): Promise<void> {
         filledIds.push(`${fileKey}|${field}`);
         if (range) {
           // The customer's two numbers stay as a note on every line that took the pick.
-          for (const viewId of viewsForModel(fileKey))
-            for (const scope of strokeScopesFor(viewId, field))
-              rememberMeasurementNote(scope, field, `customer wrote ${text || range.join(' - ')}`);
+          for (const line of letterLines(fileKey, field).lines)
+            rememberMeasurementNote(
+              line.scope,
+              line.label,
+              `customer wrote ${text || range.join(' - ')}`
+            );
         }
       }
     }
@@ -1124,6 +1181,186 @@ function chooseMapping(
   });
 }
 
+// ---------------------------------------------------------------- letter links
+/** Pick the drawn line a form letter follows, from every line in the project grouped by view. */
+function chooseLine(key: string, field: string): void {
+  ensureStyles();
+  const model = state.models.find(m => m.key === key);
+  const current = entry()?.lineLinks?.[lineLinkKey(key, field)];
+  const lines = allLines();
+  const overlay = el('div', 'nml-map');
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', `Line for ${field}`);
+  const card = el('section', 'nml-map-card');
+  card.append(
+    el('h2', '', `${model?.title || key} · ${field}: which line?`),
+    el(
+      'p',
+      '',
+      current
+        ? `${field} follows ${viewTitle(current.viewId)} ${current.label}. Pick another line, or unlink to follow lines labelled ${field} again.`
+        : `${field} follows lines labelled ${field} on this model's images. Pick any drawn line instead; its value and the box then move together.`
+    )
+  );
+  const close = () => overlay.remove();
+  const byView = new Map<string, MeasuredLine[]>();
+  for (const line of lines) byView.set(line.viewId, [...(byView.get(line.viewId) || []), line]);
+  if (!byView.size)
+    card.appendChild(el('p', 'nml-map-none', 'No lines are drawn in this project yet.'));
+  for (const [viewId, viewLines] of byView) {
+    const box = el('div', 'nml-pick-view');
+    box.appendChild(el('h3', '', viewTitle(viewId)));
+    const list = el('div', 'nml-pick-lines');
+    const seen = new Set<string>();
+    for (const line of viewLines.sort((a, b) =>
+      a.label.localeCompare(b.label, undefined, { numeric: true })
+    )) {
+      if (seen.has(line.label)) continue;
+      seen.add(line.label);
+      const on = current?.viewId === viewId && current?.label === line.label;
+      const button = el('button', `nml-pick-line${on ? ' on' : ''}`);
+      button.type = 'button';
+      button.append(
+        el('b', '', line.label),
+        document.createTextNode(line.value ? `${line.value} ${state.unit}` : 'no value')
+      );
+      button.setAttribute('aria-pressed', on ? 'true' : 'false');
+      button.addEventListener('click', () => {
+        close();
+        setLineLink(key, field, { viewId, label: line.label });
+        render();
+      });
+      list.appendChild(button);
+    }
+    box.appendChild(list);
+    card.appendChild(box);
+  }
+  const foot = el('div', 'nml-map-foot');
+  if (current) {
+    const unlink = el('button', '', 'Unlink');
+    unlink.type = 'button';
+    unlink.addEventListener('click', () => {
+      close();
+      setLineLink(key, field, null);
+      render();
+    });
+    foot.appendChild(unlink);
+  }
+  const cancel = el('button', '', 'Cancel');
+  cancel.type = 'button';
+  cancel.addEventListener('click', close);
+  foot.appendChild(cancel);
+  card.appendChild(foot);
+  overlay.appendChild(card);
+  overlay.addEventListener('keydown', event => {
+    if (event.key === 'Escape') close();
+  });
+  document.body.appendChild(overlay);
+  cancel.focus();
+}
+
+/**
+ * Offer same-label lines on each model's linked images as links, with values
+ * beside them. Nothing is bound until the person ticks and accepts: the same
+ * letter on a photo and on the form can be different measurements.
+ */
+function suggestLinks(): void {
+  ensureStyles();
+  const current = entry();
+  if (!current) return;
+  const suggestions = suggestLineLinks(
+    state.models,
+    allLines(),
+    current.viewBindings || {},
+    state.values,
+    current.lineLinks,
+    current.diagramViews || {}
+  );
+  if (!suggestions.length) {
+    setStatus(
+      'No lines to suggest: link images to a model (This image), then letters drawn there with the same label are offered.',
+      'info'
+    );
+    return;
+  }
+  const overlay = el('div', 'nml-map');
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Suggested line links');
+  const card = el('section', 'nml-map-card');
+  card.append(
+    el('h2', '', 'Suggested line links'),
+    el(
+      'p',
+      '',
+      `Lines with the same letter on images linked to a model. Check each value against the form: the same letter can mean a different measurement. Values in ${state.unit}.`
+    )
+  );
+  const list = el('div', 'nml-sugg');
+  const boxes: Array<{ box: HTMLInputElement; suggestion: (typeof suggestions)[number] }> = [];
+  for (const suggestion of suggestions) {
+    const model = state.models.find(m => m.key === suggestion.key);
+    const differs =
+      hasMeasure(suggestion.formValue) &&
+      hasMeasure(suggestion.value) &&
+      suggestion.formValue !== suggestion.value;
+    const label = el('label');
+    const box = el('input');
+    box.type = 'checkbox';
+    // Ticked unless the form already holds a different number; that needs a look.
+    box.checked = !differs;
+    const text = el('span');
+    text.append(
+      el('b', '', `${model?.title || suggestion.key} · ${suggestion.letter}`),
+      document.createTextNode(
+        ` follows ${viewTitle(suggestion.viewId)} · ${suggestion.label} · ${suggestion.value ? `${suggestion.value} ${state.unit}` : 'no value'}`
+      )
+    );
+    if (differs)
+      text.append(
+        document.createTextNode(' '),
+        el('span', 'differs', `(form has ${suggestion.formValue} ${state.unit})`)
+      );
+    label.append(box, text);
+    list.appendChild(label);
+    boxes.push({ box, suggestion });
+  }
+  card.appendChild(list);
+  const foot = el('div', 'nml-map-foot');
+  const cancel = el('button', '', 'Cancel');
+  cancel.type = 'button';
+  const apply = el('button', 'primary', 'Link the ticked letters');
+  apply.type = 'button';
+  const close = () => overlay.remove();
+  cancel.addEventListener('click', close);
+  apply.addEventListener('click', () => {
+    close();
+    let count = 0;
+    for (const { box, suggestion } of boxes) {
+      if (!box.checked) continue;
+      setLineLink(suggestion.key, suggestion.letter, {
+        viewId: suggestion.viewId,
+        label: suggestion.label,
+      });
+      count += 1;
+    }
+    setStatus(
+      `Linked ${count} letter${count === 1 ? '' : 's'} to drawn lines.`,
+      count ? 'ok' : 'info'
+    );
+    render();
+  });
+  foot.append(cancel, apply);
+  card.appendChild(foot);
+  overlay.appendChild(card);
+  overlay.addEventListener('keydown', event => {
+    if (event.key === 'Escape') close();
+  });
+  document.body.appendChild(overlay);
+  apply.focus();
+}
+
 // ---------------------------------------------------------------- panel
 function setStatus(message: string, kind: 'info' | 'error' | 'ok' = 'info'): void {
   state.status = message;
@@ -1154,7 +1391,19 @@ function ensureStyles(): void {
     #${PANEL_ID} select, #${PANEL_ID} input { height: 26px; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0 6px; font: inherit; }
     #${PANEL_ID} .nml-model { margin-top: 10px; padding-top: 8px; border-top: 1px solid #e2e8f0; }
     #${PANEL_ID} .nml-model h3 { margin: 0 0 4px; font-size: 12px; }
-    #${PANEL_ID} .nml-grid { display: grid; grid-template-columns: 22px 74px 1fr 46px; gap: 4px 6px; align-items: center; }
+    #${PANEL_ID} .nml-grid { display: grid; grid-template-columns: 22px 74px 1fr auto 24px; gap: 4px 6px; align-items: center; }
+    #${PANEL_ID} .nml-line.gone { color: #b45309; }
+    #${PANEL_ID} button.nml-link-btn { width: 24px; height: 24px; padding: 0; border-radius: 6px; font-size: 12px; line-height: 1; color: #64748b; }
+    #${PANEL_ID} button.nml-link-btn.on { background: #0f172a; border-color: #0f172a; color: #fff; }
+    .nml-pick-view { margin-top: 10px; }
+    .nml-pick-view h3 { margin: 0 0 4px; font-size: 12px; color: #334155; }
+    .nml-pick-lines { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px; }
+    .nml-map button.nml-pick-line { height: 26px; padding: 0 8px; text-align: left; font-weight: 500; }
+    .nml-map button.nml-pick-line b { font-weight: 700; margin-right: 6px; }
+    .nml-map button.nml-pick-line.on { background: #0f172a; border-color: #0f172a; color: #fff; }
+    .nml-sugg { display: grid; gap: 4px; margin-top: 10px; }
+    .nml-sugg label { display: grid; grid-template-columns: 18px 1fr; gap: 6px; align-items: start; padding: 4px 6px; border: 1px solid #e2e8f0; border-radius: 6px; }
+    .nml-sugg .differs { color: #b45309; font-weight: 600; }
     #${PANEL_ID} .nml-grid input { width: 100%; box-sizing: border-box; }
     #${PANEL_ID} .nml-key { font-weight: 700; }
     #${PANEL_ID} .nml-hint { color: #64748b; }
@@ -1363,9 +1612,21 @@ function render(): void {
   body.appendChild(unitRow);
   body.appendChild(pdfDropZone());
 
+  const linkRow2 = el('div', 'nml-row');
+  linkRow2.append(
+    actionButton('Suggest links', () => suggestLinks()),
+    el(
+      'span',
+      'nml-hint',
+      "Link a letter to any drawn line when your own letters differ from the form's."
+    )
+  );
+  body.appendChild(linkRow2);
+
   // Boxes are typed and shown in `typed`; values are kept and saved in the form's unit.
   const typed = inputUnit();
   const other = typed === 'in' ? 'cm' : 'in';
+  const lines = allLines();
   for (const model of state.models) {
     const box = el('div', 'nml-model');
     box.appendChild(el('h3', '', model.title));
@@ -1408,10 +1669,9 @@ function render(): void {
         setValue(model.key, field, next === null ? input.value : next);
         render();
       });
-      const onThisImage =
-        viewId &&
-        (boundKey === model.key || diagramView === viewId) &&
-        strokeScopesFor(viewId, field).length;
+      const letter = letterLines(model.key, field, lines);
+      const onThisImage = letter.lines.filter(line => line.viewId === viewId);
+      const feeding = letter.linked ? letter.lines : onThisImage;
       const message =
         parsed === null ? 'Not a number' : issues.errors[field] || issues.warnings[field] || '';
       const hint = el(
@@ -1420,14 +1680,34 @@ function render(): void {
         message ||
           (parsed
             ? `= ${convertMeasure(parsed, state.unit, other)} ${other}`
-            : onThisImage && linesLackValue(viewId, field)
+            : linesLackValue(feeding)
               ? 'no value on the line'
               : '')
       );
-      const draw = onThisImage
-        ? el('span', 'nml-line', '✓ line')
-        : actionButton('Draw', () => armLetter(model.key, field));
-      grid.append(el('span', 'nml-key', field), input, hint, draw);
+      let draw: HTMLElement;
+      if (letter.linked && letter.link) {
+        const where = `${viewTitle(letter.link.viewId)} ${letter.link.label}`;
+        draw = el(
+          'span',
+          `nml-line${letter.lines.length ? '' : ' gone'}`,
+          letter.lines.length ? `✓ ${where}` : `${where} is gone`
+        );
+        draw.title = letter.lines.length
+          ? `${field} follows the line ${where}`
+          : `The line ${where} is no longer in the project. Unlink or pick another.`;
+      } else if (onThisImage.length) {
+        draw = el('span', 'nml-line', '✓ line');
+      } else {
+        draw = actionButton('Draw', () => armLetter(model.key, field));
+      }
+      const link = el('button', `nml-link-btn${letter.linked ? ' on' : ''}`, '⛓');
+      link.type = 'button';
+      link.title = letter.linked
+        ? `Change or unlink the line for ${field}`
+        : `Link ${field} to a drawn line`;
+      link.setAttribute('aria-label', link.title);
+      link.addEventListener('click', () => chooseLine(model.key, field));
+      grid.append(el('span', 'nml-key', field), input, hint, draw, link);
     }
     box.appendChild(grid);
     body.appendChild(box);

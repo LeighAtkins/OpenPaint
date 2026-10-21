@@ -7,6 +7,10 @@ import {
   fromCanvasMeasurement,
   hasMeasure,
   refreshLineTag,
+  resolveLineForLetter,
+  suggestLineLinks,
+  lineLinkKey,
+  type MeasuredLine,
   canvasMeasurementCm,
   formToTyped,
   typedToForm,
@@ -212,6 +216,29 @@ describe('NOMS measurement link helpers', () => {
     expect(
       changedFields({ '0:0:0': { A: '32', B: '27' } }, { '0:0:0': { A: '32.5', B: '27' } })
     ).toEqual(['0:0:0|A']);
+  });
+
+  it('keeps letter links through project metadata normalisation', () => {
+    const metadata = normalizeSofaMetadata({
+      externalSources: {
+        nomsOrders: {
+          '125964': {
+            formId: '6988281905460',
+            lineLinks: {
+              '0:0:1:H1': { viewId: 'side', label: 'H1' },
+              '0:0:1:A3': { viewId: 'top-down', label: 'A3' },
+              'junk:H1': { viewId: 'side', label: 'H1' },
+              '0:0:1:B1': { viewId: '', label: 'B1' },
+              '0:0:1:<x>': { viewId: 'side', label: 'B1' },
+            },
+          },
+        },
+      },
+    });
+    expect(metadata.externalSources.nomsOrders['125964'].lineLinks).toEqual({
+      '0:0:1:H1': { viewId: 'side', label: 'H1' },
+      '0:0:1:A3': { viewId: 'top-down', label: 'A3' },
+    });
   });
 
   it('keeps a NOMS order link through project metadata normalisation', () => {
@@ -532,5 +559,87 @@ describe('Deciding whether a dropped PDF needs the mapping window', () => {
     const picks = refineTargets(groups, models, labels);
     expect(picks).toEqual([['0:0'], ['0:0'], ['0:1']]);
     expect(mappingNeedsReview(groups, picks, models)).toEqual([]);
+  });
+});
+
+describe('letter links', () => {
+  // Leigh's #125964: her own letters on the photos, the form's letters on the frame.
+  const lines: MeasuredLine[] = [
+    { viewId: 'side', scope: 'side', label: 'H1', value: '5.13' },
+    { viewId: 'side', scope: 'side::tab:t1', label: 'H1', value: '5.13' },
+    { viewId: 'side', scope: 'side', label: 'A3', value: '24.75' },
+    { viewId: 'back', scope: 'back', label: 'J1', value: '30' },
+    { viewId: 'cw-back-diagram', scope: 'cw-back-diagram', label: 'H1', value: '11.5' },
+    { viewId: 'front', scope: 'front', label: 'A1', value: '' },
+  ];
+  const backKey = '0:0:1';
+  const sameLabelViews = ['back', 'cw-back-diagram'];
+
+  it('follows same-label lines on the model views when nothing is linked', () => {
+    const result = resolveLineForLetter(backKey, 'H1', {}, lines, sameLabelViews);
+    expect(result.linked).toBe(false);
+    expect(result.lines.map(l => l.scope)).toEqual(['cw-back-diagram']);
+    expect(
+      resolveLineForLetter(backKey, 'J1', undefined, lines, sameLabelViews).lines
+    ).toHaveLength(1);
+    expect(resolveLineForLetter(backKey, 'L1', null, lines, sameLabelViews).lines).toEqual([]);
+  });
+
+  it('follows the linked line, whatever its label, on every tab of its view', () => {
+    const links = { [lineLinkKey(backKey, 'L1')]: { viewId: 'side', label: 'H1' } };
+    const result = resolveLineForLetter(backKey, 'L1', links, lines, sameLabelViews);
+    expect(result.linked).toBe(true);
+    expect(result.link).toEqual({ viewId: 'side', label: 'H1' });
+    expect(result.lines.map(l => l.scope)).toEqual(['side', 'side::tab:t1']);
+    // The link replaces the same-label rule even when a same-label line exists.
+    const h1 = resolveLineForLetter(
+      backKey,
+      'H1',
+      { [lineLinkKey(backKey, 'H1')]: { viewId: 'side', label: 'A3' } },
+      lines,
+      sameLabelViews
+    );
+    expect(h1.lines.map(l => l.value)).toEqual(['24.75']);
+    // A linked line that was deleted gives no lines but stays linked.
+    const gone = resolveLineForLetter(
+      backKey,
+      'H2',
+      { [lineLinkKey(backKey, 'H2')]: { viewId: 'under', label: 'K1' } },
+      lines,
+      sameLabelViews
+    );
+    expect(gone).toMatchObject({ linked: true, lines: [] });
+  });
+
+  it('suggests same-label lines on linked photos, with both values, never from the diagram', () => {
+    const models = [
+      { key: backKey, fields: ['H1', 'L1'] },
+      { key: '0:0:0', fields: ['A1', 'A3'] },
+    ];
+    const bindings = { side: backKey, 'cw-back-diagram': backKey, front: '0:0:0' };
+    const values = { [backKey]: { H1: '11.5' } };
+    const suggestions = suggestLineLinks(
+      models,
+      lines,
+      bindings,
+      values,
+      {},
+      {
+        [backKey]: 'cw-back-diagram',
+      }
+    );
+    expect(suggestions).toEqual([
+      { key: backKey, letter: 'H1', viewId: 'side', label: 'H1', value: '5.13', formValue: '11.5' },
+      { key: '0:0:0', letter: 'A1', viewId: 'front', label: 'A1', value: '', formValue: '' },
+    ]);
+    // Letters already linked are not offered again.
+    expect(
+      suggestLineLinks(models, lines, bindings, values, {
+        [lineLinkKey(backKey, 'H1')]: { viewId: 'side', label: 'H1' },
+      })
+    ).toEqual([
+      { key: '0:0:0', letter: 'A1', viewId: 'front', label: 'A1', value: '', formValue: '' },
+    ]);
+    expect(suggestLineLinks(models, lines, {}, values, {})).toEqual([]);
   });
 });

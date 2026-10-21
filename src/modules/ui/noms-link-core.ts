@@ -235,6 +235,119 @@ export function fromCanvasMeasurement(
   return tidy(unit === 'cm' ? cm : cm / 2.54);
 }
 
+// ---------------------------------------------------------------- letter links
+// By default a form letter takes its value from lines labelled with that same
+// letter on the views linked to its model. When the person drew with their own
+// letters (her H1 at the arm front, the form's H1 on the back frame) a letter
+// can instead be linked to one drawn line, whatever its label.
+
+export interface LineLink {
+  viewId: string;
+  label: string;
+}
+export type LineLinks = Record<string, LineLink>;
+
+/** A drawn line with a measurement, as the panel sees it. */
+export interface MeasuredLine {
+  viewId: string;
+  /** Stroke scope: the view id, or "view::tab:x" for a capture tab. */
+  scope: string;
+  label: string;
+  /** Form text in the form's unit, "" when the line has no number. */
+  value: string;
+}
+
+export const lineLinkKey = (key: string, letter: string): string => `${key}:${letter}`;
+
+export interface LetterLines {
+  /** True when an explicit link decides, false under the same-label rule. */
+  linked: boolean;
+  link?: LineLink;
+  /** The lines feeding this letter; empty when the linked line is gone. */
+  lines: MeasuredLine[];
+}
+
+/**
+ * The lines that feed form letter `letter` of model `key`. An explicit link in
+ * `lineLinks` wins and names one view and label (every capture tab of that
+ * view with that label counts). Otherwise lines labelled `letter` on
+ * `sameLabelViews` (the views linked to the model, and its diagram) do.
+ */
+export function resolveLineForLetter(
+  key: string,
+  letter: string,
+  lineLinks: LineLinks | null | undefined,
+  lines: MeasuredLine[],
+  sameLabelViews: Iterable<string> = []
+): LetterLines {
+  const link = lineLinks?.[lineLinkKey(key, letter)];
+  if (link?.viewId && link?.label) {
+    return {
+      linked: true,
+      link,
+      lines: lines.filter(line => line.viewId === link.viewId && line.label === link.label),
+    };
+  }
+  const views = new Set(sameLabelViews);
+  return {
+    linked: false,
+    lines: lines.filter(line => views.has(line.viewId) && line.label === letter),
+  };
+}
+
+export interface LineLinkSuggestion {
+  key: string;
+  letter: string;
+  viewId: string;
+  label: string;
+  /** The line's value in the form's unit, "" when it has none. */
+  value: string;
+  /** The form's current value for the letter, for comparison. */
+  formValue: string;
+}
+
+/**
+ * Lines that could feed each still-unlinked letter: a line with the same
+ * label on a view linked to the letter's model (never the model's own CW
+ * diagram, whose lines are the form's). Suggestions only; the person accepts
+ * each one with its value in view, because the same letter can mean a
+ * different measurement on the form.
+ */
+export function suggestLineLinks(
+  models: Array<{ key: string; fields: string[] }>,
+  lines: MeasuredLine[],
+  viewBindings: Record<string, string>,
+  values: Record<string, Record<string, string>>,
+  existing: LineLinks | null | undefined,
+  diagramViews: Record<string, string> = {}
+): LineLinkSuggestion[] {
+  const out: LineLinkSuggestion[] = [];
+  for (const model of models) {
+    const views = new Set(
+      Object.entries(viewBindings || {})
+        .filter(([viewId, key]) => key === model.key && diagramViews[model.key] !== viewId)
+        .map(([viewId]) => viewId)
+    );
+    for (const letter of model.fields) {
+      if (existing?.[lineLinkKey(model.key, letter)]) continue;
+      for (const line of lines) {
+        if (!views.has(line.viewId) || line.label !== letter) continue;
+        if (out.some(s => s.key === model.key && s.letter === letter && s.viewId === line.viewId))
+          continue;
+        out.push({
+          key: model.key,
+          letter,
+          viewId: line.viewId,
+          label: line.label,
+          value: line.value,
+          formValue: values?.[model.key]?.[letter] ?? '',
+        });
+      }
+    }
+  }
+  return out;
+}
+
 /** True when form text holds a measurement (a number above zero); "0", "" and words do not. */
 export function hasMeasure(value: unknown): boolean {
   const parsed = parseMeasure(value);

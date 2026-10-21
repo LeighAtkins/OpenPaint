@@ -377,6 +377,21 @@ export function normalizeNomsOrders(raw) {
           if (NOMS_MODEL_KEY.test(key) && typeof viewId === 'string' && viewId)
             diagramViews[key] = viewId;
         }
+        // "product:model:file:LETTER" -> the drawn line (any label) that feeds that letter.
+        const lineLinks = {};
+        for (const [key, link] of Object.entries(entry.lineLinks || {})) {
+          const at = key.lastIndexOf(':');
+          if (
+            at < 0 ||
+            !NOMS_MODEL_KEY.test(key.slice(0, at)) ||
+            !NOMS_FIELD.test(key.slice(at + 1))
+          )
+            continue;
+          if (!link || typeof link !== 'object') continue;
+          const viewId = cleanNomsText(link.viewId, 120);
+          const label = cleanNomsText(link.label, 32);
+          if (viewId && label) lineLinks[key] = { viewId, label };
+        }
         return [
           orderNumber,
           {
@@ -391,6 +406,7 @@ export function normalizeNomsOrders(raw) {
             values: normalizeNomsValues(entry.values),
             viewBindings,
             diagramViews,
+            lineLinks,
             importedImageHashes: Array.isArray(entry.importedImageHashes)
               ? Array.from(
                   new Set(
