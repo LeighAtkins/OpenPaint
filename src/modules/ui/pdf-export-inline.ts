@@ -19,6 +19,21 @@ import {
 import { cloudSaveService } from '@/services/cloud/cloudSaveService';
 import { walletService } from '@/services/wallet/walletService';
 import { getNoRewardMessage, showRewardAchievement } from './reward-achievement';
+import {
+  applyTemporaryDisplayUnit,
+  buildPdfExportFilename,
+  canChooseSaveLocation,
+  defaultExportUnit,
+  downloadBlob,
+  formatCmForExport,
+  getProjectViewOrder,
+  orderByViewOrder,
+  orderViewIdsForExport,
+  pickPdfSaveTarget,
+  readLastExportUnit,
+  rememberExportUnit,
+  writePdfToTarget,
+} from './export-utils';
 
 async function rewardPdfExport(projectName) {
   try {
@@ -154,12 +169,9 @@ function formatExportMeasurement(measurement, unit) {
     return `${total.toFixed(4).replace(/\.?0+$/, '')}"`;
   }
 
-  const cm = Number(measurement.cm || 0);
-  if (cm <= 0) return '';
-  const cmFormatter = window.app?.measurementSystem?.formatCentimeterValue;
-  return typeof cmFormatter === 'function'
-    ? cmFormatter.call(window.app.measurementSystem, cm, { decimalPlaces: 1 })
-    : `${cm.toFixed(1).replace(/\.?0+$/, '')} cm`;
+  // Same half-up helper as the canvas labels (MeasurementSystem), so 6.35
+  // prints 6.4 cm in the table and on the image.
+  return formatCmForExport(Number(measurement.cm || 0), 1);
 }
 
 async function waitForCanvasRenderStability(canvas, options = {}) {
@@ -562,7 +574,7 @@ function getPdfPageTargets(viewIds) {
   return targets;
 }
 
-function getGroupedPdfPageTargets(pageTargets, pieceGroups, partLabels) {
+export function getGroupedPdfPageTargets(pageTargets, pieceGroups, partLabels) {
   // Build a map: viewId -> array of targets for that view
   const targetsByView = {};
   pageTargets.forEach(target => {
@@ -572,6 +584,7 @@ function getGroupedPdfPageTargets(pageTargets, pieceGroups, partLabels) {
 
   const consumed = new Set(); // viewId values consumed into grouped entries
   const grouped = [];
+  const groupByView = new Map(); // member viewId -> its grouped entry
 
   // For each piece group, render one grouped page with:
   // - main view hero frame (first tab)
@@ -597,7 +610,7 @@ function getGroupedPdfPageTargets(pageTargets, pieceGroups, partLabels) {
     consumed.add(mainId);
     validRelatedIds.forEach(id => consumed.add(id));
 
-    grouped.push({
+    const entry = {
       type: 'grouped',
       mainTarget,
       relatedTargets,
@@ -611,14 +624,23 @@ function getGroupedPdfPageTargets(pageTargets, pieceGroups, partLabels) {
           );
         }),
       ],
-    });
+    };
+    [mainId, ...validRelatedIds].forEach(id => groupByView.set(id, entry));
   });
 
-  // Remaining unconsumed views become singles
+  // Keep the project's page order: a group sits where its first view sits,
+  // and the remaining views stay singles in place.
+  const emitted = new Set();
   pageTargets.forEach(target => {
-    if (!consumed.has(target.viewId)) {
-      grouped.push({ type: 'single', target });
+    const entry = groupByView.get(target.viewId);
+    if (entry) {
+      if (!emitted.has(entry)) {
+        emitted.add(entry);
+        grouped.push(entry);
+      }
+      return;
     }
+    grouped.push({ type: 'single', target });
   });
 
   return grouped;
@@ -1609,20 +1631,16 @@ async function requestServerRenderedPdf(payload) {
 }
 
 function triggerPdfDownload(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.rel = 'noopener';
-  a.style.position = 'fixed';
-  a.style.left = '-9999px';
-  a.style.top = '0';
-  document.body.appendChild(a);
-  a.click();
-  window.setTimeout(() => {
-    a.remove();
-    URL.revokeObjectURL(url);
-  }, 30000);
+  downloadBlob(blob, filename);
+}
+
+// Where the main PDF export writes its file: set by the export dialog (file
+// name with the unit, and a save-picker handle when Leigh chose a folder).
+let activePdfExportTarget = null;
+
+async function deliverExportPdf(blob, fallbackName) {
+  const target = activePdfExportTarget;
+  await writePdfToTarget(blob, target?.filename || fallbackName, target?.handle);
 }
 
 // ── Measurement check request exports ───────────────────────────────
@@ -1700,6 +1718,10 @@ export async function exportMeasurementCheckRequest(
     throw error;
   }
   if (!resolved.pages.length) throw new Error('The request resolved to no pages.');
+  // Same page order as the main export (the image list), so a check request
+  // and the full PDF line up page for page. Pages on one view keep the
+  // request's order.
+  resolved.pages = orderByViewOrder(resolved.pages, page => page.viewId, getProjectViewOrder());
 
   const projectManager = window.app?.projectManager;
   if (!projectManager?.switchView) throw new Error('No project is open.');
@@ -2043,7 +2065,12 @@ export function initPdfExport() {
   window.showPDFExportDialog = async function (projectName) {
     projectName = projectName || document.getElementById('projectName')?.value || 'OpenPaint';
     const views = window.app?.projectManager?.views || {};
-    const viewIds = Object.keys(views).filter(id => views[id].image);
+    // Pages follow the image list, not object key order, so a re-export lines
+    // up page for page with the last one.
+    const viewIds = orderViewIdsForExport(
+      Object.keys(views).filter(id => views[id].image),
+      getProjectViewOrder()
+    );
     const pageTargets = getPdfPageTargets(viewIds);
     if (viewIds.length === 0) {
       alert('No images to export. Please upload images first.');
@@ -2069,6 +2096,75 @@ export function initPdfExport() {
     const partLabels = metadata.imagePartLabels || {};
     const pieceGroups = Array.isArray(metadata.pieceGroups) ? metadata.pieceGroups : [];
     const groupedTargets = getGroupedPdfPageTargets(pageTargets, pieceGroups, partLabels);
+
+    // Values in: cm / inches. Printed everywhere in the export (image labels,
+    // table, manifest) without changing the project's display unit.
+    const initialUnit = defaultExportUnit({
+      metadata,
+      lastUnit: readLastExportUnit(),
+      projectUnit: document.getElementById('unitSelector')?.value,
+    });
+    const unitSection = document.createElement('div');
+    unitSection.style.cssText = 'margin-bottom:16px;';
+    const unitHeading = document.createElement('div');
+    unitHeading.id = 'pdfExportUnitLabel';
+    unitHeading.textContent = 'Values in';
+    unitHeading.style.cssText =
+      'margin-bottom:6px;font-weight:600;color:#3E4752;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;';
+    const unitGroup = document.createElement('div');
+    unitGroup.setAttribute('role', 'radiogroup');
+    unitGroup.setAttribute('aria-labelledby', 'pdfExportUnitLabel');
+    unitGroup.style.cssText = 'display:flex;gap:8px;';
+    [
+      ['cm', 'cm'],
+      ['inch', 'inches'],
+    ].forEach(([value, text]) => {
+      const option = document.createElement('label');
+      option.style.cssText =
+        'flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border:1px solid #E7EAEE;border-radius:12px;background:#F6F7F9;cursor:pointer;font-size:14px;color:#0B0D10;';
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'pdfExportUnit';
+      input.value = value;
+      input.checked = value === initialUnit;
+      input.dataset.pdfExportUnit = value;
+      input.style.cssText = 'accent-color:#0B0D10;';
+      const span = document.createElement('span');
+      span.textContent = text;
+      option.append(input, span);
+      unitGroup.appendChild(option);
+    });
+    const fileNote = document.createElement('p');
+    fileNote.dataset.pdfExportFilename = '';
+    fileNote.style.cssText = 'margin:8px 0 0;color:#667085;font-size:12px;word-break:break-word;';
+    unitSection.append(unitHeading, unitGroup, fileNote);
+    let chooseLocationInput = null;
+    if (canChooseSaveLocation()) {
+      const chooseLocation = document.createElement('label');
+      chooseLocation.style.cssText =
+        'display:flex;align-items:center;gap:8px;margin-top:8px;color:#0B0D10;font-size:13px;cursor:pointer;';
+      chooseLocationInput = document.createElement('input');
+      chooseLocationInput.type = 'checkbox';
+      chooseLocationInput.id = 'pdfChooseSaveLocation';
+      chooseLocationInput.checked = true;
+      chooseLocationInput.style.cssText = 'accent-color:#0B0D10;';
+      const chooseText = document.createElement('span');
+      chooseText.textContent = 'Choose the folder and name when saving';
+      chooseLocation.append(chooseLocationInput, chooseText);
+      unitSection.appendChild(chooseLocation);
+    }
+    const selectedExportUnit = () =>
+      overlay.querySelector('input[name="pdfExportUnit"]:checked')?.value === 'inch'
+        ? 'inch'
+        : 'cm';
+    const exportFilename = () =>
+      buildPdfExportFilename({ projectName, unit: selectedExportUnit(), metadata });
+    const refreshFileNote = () => {
+      fileNote.textContent = `File: ${exportFilename()}`;
+    };
+    unitGroup.addEventListener('change', refreshFileNote);
+    refreshFileNote();
+    document.getElementById('pdfQuality')?.closest('div')?.before(unitSection);
     const quantityOptions = getPdfQuantityOptions(groupedTargets, partLabels);
     if (quantityOptions.length) {
       const cushionSection = document.createElement('details');
@@ -2188,7 +2284,19 @@ export function initPdfExport() {
           .slice(0, 90);
         if (note) customerNotes[input.dataset.pdfNoteKey] = note;
       });
+      const exportUnit = selectedExportUnit();
+      const filename = exportFilename();
+      let saveHandle = null;
+      if (chooseLocationInput?.checked) {
+        // Ask before the export: the picker needs this click's user activation.
+        const picked = await pickPdfSaveTarget(filename);
+        if (picked === 'cancelled') return;
+        saveHandle = picked;
+      }
+      rememberExportUnit(exportUnit);
+      activePdfExportTarget = { filename: saveHandle?.name || filename, handle: saveHandle };
       const exportSession = beginPdfExportSession();
+      const restoreDisplayUnit = applyTemporaryDisplayUnit(exportUnit);
       window.__pdfExportingSince = Date.now();
       document.getElementById('pdfProgress').style.display = 'block';
       document.getElementById('generatePdfBtn').disabled = true;
@@ -2252,7 +2360,9 @@ export function initPdfExport() {
           alert('PDF export failed. OpenPaint generated the classic fallback instead.');
         }
       } finally {
+        activePdfExportTarget = null;
         await restorePdfExportSession(exportSession);
+        restoreDisplayUnit();
       }
 
       overlay.remove();
@@ -2551,12 +2661,14 @@ export function initPdfExport() {
         renderer: 'hybrid',
         pageSize,
         injectFormFields: includeMeasurements,
-        filename: `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`,
+        filename:
+          activePdfExportTarget?.filename ||
+          `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`,
       },
     });
 
     const blob = await response.blob();
-    triggerPdfDownload(blob, `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`);
+    await deliverExportPdf(blob, `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`);
     await rewardPdfExport(projectName);
     progressBar.style.width = '100%';
     progressText.textContent = 'Done';
@@ -3633,7 +3745,7 @@ export function initPdfExport() {
     progressText.textContent = 'Saving PDF\u2026';
     const pdfBytes = await pdfDoc.save();
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-    triggerPdfDownload(blob, `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`);
+    await deliverExportPdf(blob, `${sanitizeFilenamePart(projectName, 'OpenPaint Project')}.pdf`);
     await rewardPdfExport(projectName);
     console.log('[PDF] Generated with editable form fields using pdf-lib');
   }

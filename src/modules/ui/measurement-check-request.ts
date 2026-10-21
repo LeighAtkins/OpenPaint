@@ -20,6 +20,7 @@ import {
   RANGE_DEFAULT,
 } from '../utils/customer-value';
 import { sanitizeFilenamePart } from '../utils/naming-utils.js';
+import { formatHalfUp } from '../utils/rounding';
 
 // ── Request schema (spec v1 + v2) ────────────────────────────────────
 
@@ -312,10 +313,10 @@ export function formatCheckValue(
   if (unit === 'as-entered' && entered) return entered;
   if (target === 'inch') {
     if (!hasInch) return '';
-    return `${trimTrailingZeros(inch.toFixed(2))}"`;
+    return `${trimTrailingZeros(formatHalfUp(inch, 2))}"`;
   }
   if (!hasCm) return '';
-  return `${trimTrailingZeros(cm.toFixed(1))} cm`;
+  return `${trimTrailingZeros(formatHalfUp(cm, 1))} cm`;
 }
 
 // ── Request resolution ───────────────────────────────────────────────

@@ -1,6 +1,8 @@
 // Measurement System
 // Handles measurement operations with inch/fraction/cm conversions
 
+import { formatHalfUp } from './utils/rounding';
+
 export class MeasurementSystem {
   // Constants
   static INCHES_TO_CM = 2.54;
@@ -91,7 +93,7 @@ export class MeasurementSystem {
     const numericValue = Number(totalInches || 0);
     const safeDecimalPlaces = Math.max(0, Number(decimalPlaces) || 0);
     const normalized = Number.isFinite(numericValue)
-      ? numericValue.toFixed(safeDecimalPlaces).replace(/\.?0+$/, '')
+      ? formatHalfUp(numericValue, safeDecimalPlaces, true)
       : '0';
     return includeUnit ? `${normalized}"` : normalized;
   }
@@ -120,8 +122,9 @@ export class MeasurementSystem {
     const decimalPlaces = Math.max(0, Number(options.decimalPlaces) || 0);
     const trimTrailingZeros = options.trimTrailingZeros !== false;
     const numericValue = Number(cmValue || 0);
-    const formatted = Number.isFinite(numericValue) ? numericValue.toFixed(decimalPlaces) : '0';
-    const normalized = trimTrailingZeros ? formatted.replace(/\.?0+$/, '') : formatted;
+    const formatted = Number.isFinite(numericValue) ? formatHalfUp(numericValue, decimalPlaces) : '0';
+    const normalized =
+      trimTrailingZeros && formatted.includes('.') ? formatted.replace(/\.?0+$/, '') : formatted;
     return includeUnit ? `${normalized} cm` : normalized;
   }
 
