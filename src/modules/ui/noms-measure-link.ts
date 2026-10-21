@@ -2531,6 +2531,17 @@ function syncActiveOrder(): void {
   }
 }
 
+/** Fill the panel from PDFs, as a drop does (also a stable entry point for scripts). */
+export function dropNomsPdfs(files: File[]): Promise<void> {
+  const pdfs = files.filter(isPdfFile);
+  return pdfs.length ? readPdfs(pdfs) : Promise.resolve();
+}
+
+/** Run Send to NOMS, as the button does. */
+export function sendNomsOrder(): Promise<void> {
+  return sendToNoms();
+}
+
 export function initNomsMeasureLink(): void {
   if (initialized || typeof window === 'undefined') return;
   initialized = true;
