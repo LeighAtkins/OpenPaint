@@ -11,6 +11,14 @@
 
 import { z } from 'zod';
 import { parseSofaPaintReviewPdf } from './measurement-review';
+import {
+  formatCustomerNumber,
+  parseCustomerValue,
+  rangeNote,
+  rangeOptions,
+  rangeValue,
+  RANGE_DEFAULT,
+} from '../utils/customer-value';
 import { sanitizeFilenamePart } from '../utils/naming-utils.js';
 
 // ── Request schema (spec v1 + v2) ────────────────────────────────────
@@ -648,41 +656,39 @@ export function getProjectCheckCatalog() {
 
 // ── SofaPaint PDF value refresh ──────────────────────────────────────
 
-// Split a raw PDF value like `21 1/2”`, `14”  (13” to floor)` or `52 cm` into
-// a canonical numeric string ("21 1/2\""), its unit, and any trailing note the
-// customer wrote after the measurement. Curly/prime quote marks are normalized
-// so fractions survive parsing, and the note is kept separate from the value.
-export function parseValueText(raw: string): {
+// Split a raw PDF value like `21 1/2”`, `14”  (13” to floor)`, `52 cm` or
+// `approx 24.5 - 25"` into a canonical numeric string ("21 1/2\""), its unit,
+// and any trailing note the customer wrote after the measurement. When the
+// customer wrote two numbers both are returned in `range`; numericText then
+// holds `choice` (or the RANGE_DEFAULT end) and the note records what was
+// written, so a range is never reduced without a trace.
+export function parseValueText(
+  raw: string,
+  choice?: number
+): {
   numericText: string;
   unit: 'cm' | 'inches' | null;
   note: string;
+  range?: number[];
 } {
-  const text = (raw || '').replace(/[”″❞]/g, '"').replace(/\s+/g, ' ').trim();
-  const match =
-    /^(\d+(?:\.\d+)?(?:\s+\d+\s*\/\s*\d+)?|\d+\s*\/\s*\d+)\s*(cm|in|inch|inches|")?\s*(.*)$/i.exec(
-      text
-    );
-  if (!match) return { numericText: text, unit: null, note: '' };
-  const [, amount, rawSuffix, rest] = match;
-  const suffix = (rawSuffix || '').toLowerCase();
-  let unit: 'cm' | 'inches' | null = null;
-  let canonicalSuffix = '';
-  if (suffix === 'cm') {
-    unit = 'cm';
-    canonicalSuffix = 'cm';
-  } else if (suffix) {
-    unit = 'inches';
-    canonicalSuffix = '"';
+  const parsed = parseCustomerValue(raw);
+  if (parsed.kind === 'none') return { numericText: parsed.text, unit: null, note: '' };
+  const unit: 'cm' | 'inches' | null =
+    parsed.unit === 'cm' ? 'cm' : parsed.unit === 'in' ? 'inches' : null;
+  const suffix = unit === 'cm' ? ' cm' : unit === 'inches' ? '"' : '';
+  if (parsed.kind === 'range') {
+    const used = typeof choice === 'number' && choice > 0 ? choice : rangeValue(parsed);
+    return {
+      numericText: `${formatCustomerNumber(used)}${suffix}`,
+      unit,
+      note: [rangeNote(parsed), parsed.note].filter(Boolean).join('; '),
+      range: parsed.values,
+    };
   }
-  const note = rest.replace(/^[-–—:;,.\s]+/, '').trim();
   return {
-    numericText: canonicalSuffix
-      ? canonicalSuffix === 'cm'
-        ? `${amount} cm`
-        : `${amount}"`
-      : amount,
+    numericText: `${formatCustomerNumber(parsed.values[0])}${suffix}`,
     unit,
-    note,
+    note: parsed.note,
   };
 }
 
@@ -807,6 +813,10 @@ export interface PdfValueSaveEntry {
   valueText: string;
   hadValue: boolean;
   note?: string;
+  /** Both numbers when the customer wrote two ("approx 24.5 - 25"), ascending. */
+  range?: number[];
+  /** Range entries only: the number written into the project. */
+  used?: number;
 }
 
 export interface PdfValueSavePlan {
@@ -918,6 +928,7 @@ export function planPdfValueSaves(context: CheckContext, pdfManifest: any): PdfV
           baseScope ||
           orderedScopes[0];
       }
+      const written = parseCustomerValue(valueText);
       plan.entries.push({
         viewId: view.viewId,
         viewTitle: view.title,
@@ -925,6 +936,7 @@ export function planPdfValueSaves(context: CheckContext, pdfManifest: any): PdfV
         label,
         valueText,
         hadValue: view.scopes.some(scope => measurementHasValue(scope.measurements[label])),
+        range: written.kind === 'range' ? written.values : undefined,
       });
     });
     plan.matchedViews.push({
@@ -944,12 +956,22 @@ export function planPdfValueSaves(context: CheckContext, pdfManifest: any): PdfV
 // records using the same path the CW import uses (parseMeasurementInput →
 // setMeasurement), refreshing existing tag text. Values land in the live
 // project state; the next project save persists every view.
+/** Key for a planned entry's range choice: scope and letter. */
+export const planEntryKey = (entry: { scopeKey: string; label: string }): string =>
+  `${entry.scopeKey}|${entry.label}`;
+
 export async function savePdfValuesToProject(
   pdfManifest: any,
   {
     confirmOverwrite = true,
     unit,
-  }: { confirmOverwrite?: boolean; unit?: 'auto' | 'inch' | 'cm' | null } = {}
+    rangeChoices,
+  }: {
+    confirmOverwrite?: boolean;
+    unit?: 'auto' | 'inch' | 'cm' | null;
+    /** Number to write for a range entry, keyed planEntryKey; else the RANGE_DEFAULT end. */
+    rangeChoices?: Record<string, number> | null;
+  } = {}
 ): Promise<{
   cancelled?: boolean;
   saved: number;
@@ -957,6 +979,8 @@ export async function savePdfValuesToProject(
   failures: string[];
   noteCount: number;
   plan: PdfValueSavePlan;
+  /** Ranges the customer wrote and the number each took. */
+  ranges: Array<{ viewTitle: string; label: string; range: number[]; used: number }>;
 }> {
   const app = (window as any).app;
   const metadata = app?.metadataManager;
@@ -966,7 +990,7 @@ export async function savePdfValuesToProject(
   const plan = planPdfValueSaves(buildCheckContextFromApp(), pdfManifest);
   const updated = plan.entries.filter(entry => entry.hadValue).length;
   if (!plan.entries.length) {
-    return { saved: 0, updated: 0, failures: [], noteCount: 0, plan };
+    return { saved: 0, updated: 0, failures: [], noteCount: 0, plan, ranges: [] };
   }
   if (confirmOverwrite && updated > 0) {
     const proceed = window.confirm(
@@ -974,7 +998,7 @@ export async function savePdfValuesToProject(
         `${updated} of them overwrite value(s) that already exist. Continue?`
     );
     if (!proceed) {
-      return { cancelled: true, saved: 0, updated, failures: [], noteCount: 0, plan };
+      return { cancelled: true, saved: 0, updated, failures: [], noteCount: 0, plan, ranges: [] };
     }
   }
 
@@ -986,10 +1010,20 @@ export async function savePdfValuesToProject(
   const noteRemovals: string[] = [];
   let saved = 0;
   let noteCount = 0;
+  const ranges: Array<{ viewTitle: string; label: string; range: number[]; used: number }> = [];
 
   plan.entries.forEach(entry => {
-    const parsedValue = parseValueText(entry.valueText);
+    const parsedValue = parseValueText(entry.valueText, rangeChoices?.[planEntryKey(entry)]);
     entry.note = parsedValue.note;
+    if (parsedValue.range) {
+      entry.used = Number(parsedValue.numericText.replace(/[^\d.]/g, ''));
+      ranges.push({
+        viewTitle: entry.viewTitle,
+        label: entry.label,
+        range: parsedValue.range,
+        used: entry.used,
+      });
+    }
     const noteKey = `${entry.scopeKey}|${entry.label}`;
     try {
       let applied = false;
@@ -1066,7 +1100,7 @@ export async function savePdfValuesToProject(
     // persists the remaining views' buckets.
   }
 
-  return { saved, updated, failures, noteCount, plan };
+  return { saved, updated, failures, noteCount, plan, ranges };
 }
 
 // ── Review manifest (round-trips through parseSofaPaintReviewPdf) ────
@@ -1532,6 +1566,8 @@ export function recordCheckSession(session: {
 interface DialogState {
   request: NormalizedCheckRequest | null;
   pdfManifest: any;
+  /** Numbers picked for PDF values written as two numbers, keyed planEntryKey; null until asked. */
+  rangeChoices: Record<string, number> | null;
   replyDraft: { emailText: string; internalNotes: string } | null;
   lastExport: any | null;
 }
@@ -1548,6 +1584,7 @@ export function initMeasurementCheckRequest(): void {
       pdfManifest: null,
       replyDraft: null,
       lastExport: null,
+      rangeChoices: null,
     };
 
     const overlay = document.createElement('div');
@@ -1701,14 +1738,59 @@ export function initMeasurementCheckRequest(): void {
         ${issueItems ? `<div class="measurement-check-issues">${issueItems}</div>` : ''}`;
     };
 
-    const renderSaveReport = (plan: PdfValueSavePlan, failures: string[]) => {
+    const rangeLine = (ranges: Array<{ label: string; range: number[]; used: number }>) =>
+      ranges.length
+        ? `<div class="measurement-check-note">${ranges.length} range${ranges.length === 1 ? '' : 's'} resolved: ${ranges
+            .map(
+              r =>
+                `${escapeHtml(r.label)} ${escapeHtml(r.range.map(formatCustomerNumber).join(' to '))}: used ${escapeHtml(formatCustomerNumber(r.used))}`
+            )
+            .join('; ')}</div>`
+        : '';
+
+    // Values the customer wrote as two numbers: show both (and the midpoint) as
+    // pills with the RANGE_DEFAULT end picked, so nothing is reduced unseen.
+    const renderRangeChooser = (plan: PdfValueSavePlan) => {
+      const entries = plan.entries.filter(entry => entry.range);
+      const choices = state.rangeChoices || {};
+      const rows = entries
+        .map(entry => {
+          const key = planEntryKey(entry);
+          const written = parseCustomerValue(entry.valueText);
+          const current = choices[key] ?? rangeValue(written);
+          const pills = rangeOptions(written)
+            .map(
+              option =>
+                `<button type="button" class="measurement-check-pill${option.value === current ? ' on' : ''}" data-check-pill="${escapeHtml(key)}" data-check-pill-value="${option.value}" aria-pressed="${option.value === current ? 'true' : 'false'}">${option.choice === 'mid' ? 'mid ' : ''}${escapeHtml(formatCustomerNumber(option.value))}</button>`
+            )
+            .join('');
+          return `<tr><td>${escapeHtml(entry.label)}</td><td><span class="measurement-check-written">${escapeHtml(entry.viewTitle)} · wrote ${escapeHtml(written.text)}</span><span class="measurement-check-pills" role="group">${pills}</span></td></tr>`;
+        })
+        .join('');
+      report.innerHTML = `
+        <div class="measurement-check-summary">Two numbers written for ${entries.length} value(s). Pick the one to use (the ${RANGE_DEFAULT} one is picked to start); the customer's words are kept as a note.</div>
+        <section class="measurement-check-page">
+          <table class="measurement-check-table"><thead><tr><th>Code</th><th>Use</th></tr></thead><tbody>${rows}</tbody></table>
+        </section>
+        <div class="measurement-check-actions"><button type="button" class="measurement-review-upload measurement-check-save" data-check-save-ranges>Save ${plan.entries.length} value(s) to project</button></div>`;
+    };
+
+    const renderSaveReport = (
+      plan: PdfValueSavePlan,
+      failures: string[],
+      ranges: Array<{ label: string; range: number[]; used: number }> = []
+    ) => {
       const sections = plan.matchedViews
         .map(view => {
           const rows = plan.entries
             .filter(entry => entry.viewId === view.viewId)
             .map(
               entry =>
-                `<tr><td>${escapeHtml(entry.label)}</td><td>${escapeHtml(entry.valueText)}${
+                `<tr><td>${escapeHtml(entry.label)}</td><td>${escapeHtml(
+                  entry.range && typeof entry.used === 'number'
+                    ? formatCustomerNumber(entry.used)
+                    : entry.valueText
+                )}${
                   entry.note
                     ? ` <span class="measurement-check-note-chip">note: ${escapeHtml(entry.note)}</span>`
                     : ''
@@ -1738,6 +1820,7 @@ export function initMeasurementCheckRequest(): void {
         .join('');
       report.innerHTML = `
         <div class="measurement-check-summary">Saved to project · ${plan.entries.length} value(s) across ${plan.matchedViews.length} view(s)</div>
+        ${rangeLine(ranges)}
         ${sections}
         ${warnings}${skipped}${failureItems}`;
     };
@@ -1757,16 +1840,43 @@ export function initMeasurementCheckRequest(): void {
         return;
       }
 
-      if (target.matches('[data-check-save-pdf]')) {
+      if (target.matches('[data-check-pill]')) {
+        const key = target.getAttribute('data-check-pill') || '';
+        const value = Number(target.getAttribute('data-check-pill-value'));
+        if (key && Number.isFinite(value)) {
+          state.rangeChoices = { ...(state.rangeChoices || {}), [key]: value };
+          Array.from(target.parentElement?.children || []).forEach(pill => {
+            pill.classList.toggle('on', pill === target);
+            pill.setAttribute('aria-pressed', pill === target ? 'true' : 'false');
+          });
+        }
+        return;
+      }
+
+      if (target.matches('[data-check-save-pdf]') || target.matches('[data-check-save-ranges]')) {
         if (!state.pdfManifest) {
           setStatus('Load a SofaPaint PDF first — its values are what gets saved.', true);
           return;
+        }
+        if (target.matches('[data-check-save-pdf]')) {
+          const plan = planPdfValueSaves(buildCheckContextFromApp(), state.pdfManifest);
+          const rangeCount = plan.entries.filter(entry => entry.range).length;
+          if (rangeCount) {
+            state.rangeChoices = {};
+            renderRangeChooser(plan);
+            setStatus(
+              `The customer wrote two numbers for ${rangeCount} value(s). Pick which to use, then save.`
+            );
+            return;
+          }
         }
         setStatus('Saving PDF values to the project…');
         try {
           const result = await savePdfValuesToProject(state.pdfManifest, {
             unit: selectedUnit(),
+            rangeChoices: state.rangeChoices,
           });
+          state.rangeChoices = null;
           if (result.cancelled) {
             setStatus('Save cancelled — nothing was written.');
             return;
@@ -1779,7 +1889,7 @@ export function initMeasurementCheckRequest(): void {
             );
             return;
           }
-          renderSaveReport(result.plan, result.failures);
+          renderSaveReport(result.plan, result.failures, result.ranges);
           const perView = result.plan.matchedViews
             .map(view => `${view.title}: ${view.count}`)
             .join(', ');
@@ -1789,8 +1899,16 @@ export function initMeasurementCheckRequest(): void {
           const failureNote = result.failures.length
             ? ` ${result.failures.length} could not be read.`
             : '';
+          const rangeSummary = result.ranges.length
+            ? ` ${result.ranges.length} range(s) resolved: ${result.ranges
+                .map(
+                  r =>
+                    `${r.label} ${r.range.map(formatCustomerNumber).join(' to ')}: used ${formatCustomerNumber(r.used)}`
+                )
+                .join('; ')}.`
+            : '';
           setStatus(
-            `Saved ${result.saved} value(s) into the project (${perView})${result.noteCount ? ` · ${result.noteCount} note(s) kept` : ''}.${skippedNote}${failureNote} Save the project (Ctrl+S) to keep them.`,
+            `Saved ${result.saved} value(s) into the project (${perView})${result.noteCount ? ` · ${result.noteCount} note(s) kept` : ''}.${rangeSummary}${skippedNote}${failureNote} Save the project (Ctrl+S) to keep them.`,
             result.failures.length > 0
           );
           window.showStatusMessage?.(

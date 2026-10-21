@@ -22,9 +22,12 @@ import {
 import {
   importCwFormPdf,
   isPdfFile,
+  rangeKey,
   readCwFormPdfValues,
+  rememberMeasurementNote,
   type CwFormValueGroup,
 } from './cw-form-pdf-import';
+import { formatCustomerNumber, RANGE_DEFAULT } from '../utils/customer-value';
 import {
   autoMapping,
   changedFields,
@@ -37,8 +40,10 @@ import {
   refineTargets,
   fromCanvasMeasurement,
   formToTyped,
+  hasMeasure,
   isComfortWorksStaff,
   pickInputUnit,
+  refreshLineTag,
   typedToForm,
   type InputUnit,
   measureIssues,
@@ -256,6 +261,8 @@ function writeLine(scope: string, field: string, value: string): void {
     inchValue: inches,
     inputUnit: state.unit === 'cm' ? 'cm' : 'inches',
   });
+  // The list re-reads the measurement by itself; the canvas label does not.
+  refreshLineTag(app().tagManager, scope, field);
   state.canvasSnapshot.set(`${scope}|${field}`, value);
 }
 /** Put the panel's value for key/field on every linked line with that letter. */
@@ -290,12 +297,13 @@ function pullFromLines(): boolean {
             state.unit
           );
           const seen = state.canvasSnapshot.get(id);
+          // A form value of "0" or text is no measurement: the line's number wins.
+          const formHas = hasMeasure(state.values[model.key]?.[field]);
           if (seen === undefined) {
             // A line that has just appeared takes the form's value, if there is one.
-            if (!onLine && state.values[model.key]?.[field])
-              writeLine(scope, field, state.values[model.key][field]);
+            if (!onLine && formHas) writeLine(scope, field, state.values[model.key][field]);
             else state.canvasSnapshot.set(id, onLine);
-            if (onLine && !state.values[model.key]?.[field]) {
+            if (onLine && !formHas) {
               setValue(model.key, field, onLine, scope);
               changed = true;
             }
@@ -735,10 +743,20 @@ async function readPdfs(files: File[]): Promise<void> {
     Object.fromEntries(models.map(m => [m.key, m.title]))
   );
   const reasons = mappingNeedsReview(matchable, suggested, models);
+  // Two numbers in one field ("approx 24.5 - 25") are shown, never picked silently.
+  const ranges = groups.flatMap(g =>
+    g.values.filter(v => v.range).map(v => `${v.label} ${v.text}`)
+  );
   let choice: MappingChoice | null;
-  if (reasons.length) {
-    console.info('[NOMS link] PDF mapping needs a look:', reasons);
-    setStatus('Check how the PDF matches the form.', 'info');
+  if (reasons.length || ranges.length) {
+    if (reasons.length) console.info('[NOMS link] PDF mapping needs a look:', reasons);
+    if (ranges.length) console.info('[NOMS link] PDF has ranges to choose from:', ranges);
+    setStatus(
+      ranges.length && !reasons.length
+        ? 'The customer wrote two numbers for some letters. Choose which to use.'
+        : 'Check how the PDF matches the form.',
+      'info'
+    );
     choice = await chooseMapping(groups, suggested);
   } else {
     choice = {
@@ -750,6 +768,7 @@ async function readPdfs(files: File[]): Promise<void> {
           group.values.map(v => v.label),
           models.filter(m => suggested[i].includes(m.key))
         ),
+        values: Object.fromEntries(group.values.map(v => [v.label, v.value])),
       })),
     };
   }
@@ -761,26 +780,43 @@ async function readPdfs(files: File[]): Promise<void> {
   let filled = 0;
   const filledIds: string[] = [];
   const skipped: string[] = [];
-  for (const { group, targets, mapping } of choice.groups) {
-    for (const { label, value } of group.values) {
+  const resolved: string[] = [];
+  /** Range picks for the lines importCwFormPdf draws, per file: "page:label" -> number. */
+  const chosenByFile = new Map<string, Record<string, number>>();
+  for (const { group, targets, mapping, values } of choice.groups) {
+    for (const { label, value, range, text } of group.values) {
+      const used = values?.[label] ?? value;
+      if (range) {
+        const picks = chosenByFile.get(group.file) || {};
+        picks[rangeKey(group.pageNumber, label)] = used;
+        chosenByFile.set(group.file, picks);
+      }
       const field = mapping[label];
       if (!field) {
         skipped.push(`${label} (${group.file} p${group.pageNumber})`);
         continue;
       }
+      if (range)
+        resolved.push(`${label} ${range.join(' to ')}: used ${formatCustomerNumber(used)}`);
       for (const target of targets) {
         const fileKey = models.find(g => g.key === target)?.fields[field];
         if (!fileKey) continue;
-        setValue(fileKey, field, pdfValueToForm(value, group.unit, state.unit));
+        setValue(fileKey, field, pdfValueToForm(used, group.unit, state.unit));
         filled += 1;
         filledIds.push(`${fileKey}|${field}`);
+        if (range) {
+          // The customer's two numbers stay as a note on every line that took the pick.
+          for (const viewId of viewsForModel(fileKey))
+            for (const scope of strokeScopesFor(viewId, field))
+              rememberMeasurementNote(scope, field, `customer wrote ${text || range.join(' - ')}`);
+        }
       }
     }
   }
   if (choice.addImages) {
     for (const file of files) {
       try {
-        await importCwFormPdf(file);
+        await importCwFormPdf(file, { chosen: chosenByFile.get(file.name) || {} });
       } catch (error) {
         console.warn('[NOMS link] PDF pages could not be added as images', error);
       }
@@ -792,6 +828,9 @@ async function readPdfs(files: File[]): Promise<void> {
   const unsaved = changedFields(state.saved, state.values).length;
   setStatus(
     `Filled ${filled} value${filled === 1 ? '' : 's'} from the PDF${files.length > 1 ? 's' : ''}` +
+      (resolved.length
+        ? `. ${resolved.length} range${resolved.length === 1 ? '' : 's'} resolved: ${resolved.join('; ')}`
+        : '') +
       (skipped.length ? `. Not used: ${skipped.join(', ')}` : '') +
       `. ${unsaved} change${unsaved === 1 ? '' : 's'} to review, then Save to NOMS.`,
     skipped.length ? 'info' : 'ok'
@@ -829,7 +868,49 @@ function scrollToFirstFilled(ids: string[]): void {
 
 interface MappingChoice {
   addImages: boolean;
-  groups: Array<{ group: CwFormValueGroup; targets: string[]; mapping: Record<string, string> }>;
+  groups: Array<{
+    group: CwFormValueGroup;
+    targets: string[];
+    mapping: Record<string, string>;
+    /** The number used for each letter (a range's chosen end), in the PDF's unit. */
+    values: Record<string, number>;
+  }>;
+}
+
+/** Pills for a value the customer wrote as two numbers; clicking one picks it. */
+function rangePills(
+  values: number[],
+  unit: string,
+  current: number,
+  onPick: (value: number) => void
+): HTMLElement {
+  const wrap = el('span', 'nml-pills');
+  wrap.setAttribute('role', 'group');
+  wrap.setAttribute('aria-label', `Customer wrote ${values.join(' to ')} ${unit}; choose one`);
+  const [lower, upper] = values;
+  const options = [
+    { value: lower, text: formatCustomerNumber(lower) },
+    { value: upper, text: formatCustomerNumber(upper) },
+    {
+      value: Math.round(((lower + upper) / 2) * 10000) / 10000,
+      text: `mid ${formatCustomerNumber((lower + upper) / 2)}`,
+    },
+  ];
+  const buttons = options.map(option => {
+    const pill = el('button', `nml-pill${option.value === current ? ' on' : ''}`, option.text);
+    pill.type = 'button';
+    pill.setAttribute('aria-pressed', option.value === current ? 'true' : 'false');
+    pill.addEventListener('click', () => {
+      buttons.forEach(b => {
+        b.classList.toggle('on', b === pill);
+        b.setAttribute('aria-pressed', b === pill ? 'true' : 'false');
+      });
+      onPick(option.value);
+    });
+    return pill;
+  });
+  wrap.append(...buttons);
+  return wrap;
 }
 
 function chooseMapping(
@@ -849,13 +930,18 @@ function chooseMapping(
       el(
         'p',
         '',
-        `Check what each diagram fills. Letters that match the form are filled as they are; only the ones that need a choice are listed. Values are converted to ${state.unit === 'in' ? 'inches' : 'cm'}.`
+        `Check what each diagram fills. Letters that match the form are filled as they are; only the ones that need a choice are listed. Where the customer wrote two numbers, pick the one to use (the ${RANGE_DEFAULT} one is picked to start). Values are converted to ${state.unit === 'in' ? 'inches' : 'cm'}.`
       )
     );
     const state2 = groups.map((group, i) => ({
       group,
       targets: new Set(suggested[i]),
       mapping: {} as Record<string, string>,
+      // Ranges start on the RANGE_DEFAULT end (the parser's `value`).
+      values: Object.fromEntries(group.values.map(v => [v.label, v.value])) as Record<
+        string,
+        number
+      >,
       showAll: false,
       editTargets: suggested[i].length === 0,
     }));
@@ -933,7 +1019,7 @@ function chooseMapping(
         const fields = Array.from(
           new Set(models.filter(m => entry.targets.has(m.key)).flatMap(m => Object.keys(m.fields)))
         ).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-        for (const { label, value } of entry.group.values) {
+        for (const { label, value, range } of entry.group.values) {
           if (
             !(label in entry.mapping) ||
             (entry.mapping[label] && !fields.includes(entry.mapping[label]))
@@ -954,9 +1040,16 @@ function chooseMapping(
             entry.mapping[label] = select.value;
             row.classList.toggle('unmapped', !select.value);
           });
-          row.append(el('b', '', label), el('span', '', String(+value.toFixed(3))), select);
-          // Same letter on the form: nothing to decide, so keep it out of the way.
-          row.hidden = !entry.showAll && entry.mapping[label] === label.replace(/\*$/, '');
+          const shown = range
+            ? rangePills(range, entry.group.unit, entry.values[label] ?? value, picked => {
+                entry.values[label] = picked;
+              })
+            : el('span', '', String(+value.toFixed(3)));
+          if (range) row.classList.add('range');
+          row.append(el('b', '', label), shown, select);
+          // Same letter on the form and one number: nothing to decide, so keep it out of the way.
+          row.hidden =
+            !entry.showAll && !range && entry.mapping[label] === label.replace(/\*$/, '');
           table.appendChild(row);
         }
         const hidden = Array.from(table.children).filter(row => (row as HTMLElement).hidden).length;
@@ -1016,6 +1109,7 @@ function chooseMapping(
             group: entry.group,
             targets: Array.from(entry.targets),
             mapping: entry.mapping,
+            values: entry.values,
           })),
       })
     );
@@ -1098,6 +1192,10 @@ function ensureStyles(): void {
     .nml-map-row { display: grid; grid-template-columns: 34px 52px 1fr; gap: 4px; align-items: center; }
     .nml-map-row select { height: 24px; font: inherit; }
     .nml-map-row.unmapped b { color: #b45309; }
+    .nml-map-row.range { grid-template-columns: 34px 1fr auto; }
+    .nml-pills { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+    .nml-map button.nml-pill, #${PANEL_ID} button.nml-pill { height: 22px; padding: 0 8px; border-radius: 999px; font-weight: 600; }
+    .nml-map button.nml-pill.on, #${PANEL_ID} button.nml-pill.on { background: #0f172a; border-color: #0f172a; color: #fff; }
     .nml-map-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 14px; }
     .nml-map-foot label { margin-right: auto; }
     .nml-map button { height: 30px; padding: 0 12px; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; font: inherit; font-weight: 650; cursor: pointer; }

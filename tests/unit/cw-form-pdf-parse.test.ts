@@ -4,6 +4,7 @@ import {
   extractCwPageData,
   detectDocumentUnit,
   detectUnit,
+  parseFieldValue,
   parseNumericValue,
   type CwPageData,
   type CwPoint,
@@ -182,7 +183,7 @@ describe('CW form PDF parser', () => {
     });
     const [view] = analyzeCwFormPage(data);
     expect(view.measurements).toEqual([]);
-    expect(view.unplaced).toEqual([{ label: 'Z9', value: 12 }]);
+    expect(view.unplaced).toMatchObject([{ label: 'Z9', value: 12 }]);
   });
 });
 
@@ -202,6 +203,20 @@ describe('CW form values and units', () => {
     expect(parseNumericValue('48,9')).toBe(48.9);
     expect(parseNumericValue('1/2')).toBeNull();
     expect(parseNumericValue('n/a')).toBeNull();
+  });
+
+  it('keeps both numbers when the customer wrote a range', () => {
+    expect(parseNumericValue('approx 24.5 - 25"')).toBeNull();
+    expect(parseFieldValue('approx 24.5 - 25"')).toEqual({
+      value: 25,
+      range: [24.5, 25],
+      text: 'approx 24.5 - 25"',
+    });
+    expect(parseFieldValue('16.25-16.5')).toMatchObject({ value: 16.5, range: [16.25, 16.5] });
+    expect(parseFieldValue('2 7/8"')).toEqual({ value: 2.875, range: undefined, text: '2 7/8"' });
+    expect(parseFieldValue('7" see photos')).toMatchObject({ value: 7, range: undefined });
+    expect(parseFieldValue('n/a')).toBeNull();
+    expect(parseFieldValue('1/2')).toBeNull();
   });
 
   it('reads values typed with inch marks and fractions', () => {

@@ -411,6 +411,24 @@ describe('planPdfValueSaves', () => {
     expect(byLabel.H3.hadValue).toBe(false);
   });
 
+  it('marks entries whose value is a range so the dialog can ask', () => {
+    const plan = planPdfValueSaves(baseContext, {
+      views: [
+        {
+          viewId: 'front',
+          title: 'Front without cushions',
+          measurements: [
+            { label: 'A1', value: 'approx 24.5 - 25"' },
+            { label: 'A2', value: '23"' },
+          ],
+        },
+      ],
+    });
+    const byLabel = Object.fromEntries(plan.entries.map(entry => [entry.label, entry]));
+    expect(byLabel.A1.range).toEqual([24.5, 25]);
+    expect(byLabel.A2.range).toBeUndefined();
+  });
+
   it('reports PDF views with no matching project view', () => {
     const plan = planPdfValueSaves(baseContext, {
       views: [{ viewId: 'arm', title: 'Arm', measurements: [{ label: 'E1', value: '29.21 cm' }] }],
@@ -504,8 +522,8 @@ describe('mergePdfValuesIntoContext with detected unit', () => {
 
 describe('parseValueText (customer notation)', () => {
   it('normalizes curly quotes and keeps fractional inches intact', () => {
-    expect(parseValueText('21 1/2”')).toEqual({ numericText: '21 1/2"', unit: 'inches', note: '' });
-    expect(parseValueText('89 1/4”')).toEqual({ numericText: '89 1/4"', unit: 'inches', note: '' });
+    expect(parseValueText('21 1/2”')).toEqual({ numericText: '21.5"', unit: 'inches', note: '' });
+    expect(parseValueText('89 1/4”')).toEqual({ numericText: '89.25"', unit: 'inches', note: '' });
   });
 
   it('keeps trailing customer notes separate from the value', () => {
@@ -520,6 +538,29 @@ describe('parseValueText (customer notation)', () => {
   it('treats bare numbers as unitless and plain suffixes as before', () => {
     expect(parseValueText('83.75')).toEqual({ numericText: '83.75', unit: null, note: '' });
     expect(parseValueText('52 cm')).toEqual({ numericText: '52 cm', unit: 'cm', note: '' });
+  });
+
+  it('keeps both numbers of a range and records what was written', () => {
+    expect(parseValueText('approx 24.5 - 25"')).toEqual({
+      numericText: '25"',
+      unit: 'inches',
+      note: 'customer wrote approx 24.5 - 25"',
+      range: [24.5, 25],
+    });
+    expect(parseValueText('approx 24.5 - 25"', 24.5).numericText).toBe('24.5"');
+    expect(parseValueText('16.25-16.5', 16.375)).toMatchObject({
+      numericText: '16.375',
+      unit: null,
+      range: [16.25, 16.5],
+    });
+    expect(parseValueText('7" see photos')).toEqual({
+      numericText: '7"',
+      unit: 'inches',
+      note: 'see photos',
+    });
+    expect(parseValueText('2 7/8"')).toEqual({ numericText: '2.875"', unit: 'inches', note: '' });
+    expect(parseValueText('22-1/4"')).toEqual({ numericText: '22.25"', unit: 'inches', note: '' });
+    expect(parseValueText('1/2')).toEqual({ numericText: '1/2', unit: null, note: '' });
   });
 
   it('resolves fractional bare numbers against the PDF unit', () => {

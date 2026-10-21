@@ -235,6 +235,33 @@ export function fromCanvasMeasurement(
   return tidy(unit === 'cm' ? cm : cm / 2.54);
 }
 
+/** True when form text holds a measurement (a number above zero); "0", "" and words do not. */
+export function hasMeasure(value: unknown): boolean {
+  const parsed = parseMeasure(value);
+  return parsed !== null && parsed !== '' && Number(parsed) > 0;
+}
+
+/**
+ * Redraw the canvas label of a line after its measurement changed, so the tag
+ * reads what the line list reads. setMeasurement refreshes the list only.
+ */
+export function refreshLineTag(
+  tagManager:
+    | {
+        getTagObject?: (label: string, scope: string) => unknown;
+        updateTagText?: (label: string, scope: string) => void;
+      }
+    | null
+    | undefined,
+  scope: string,
+  label: string
+): boolean {
+  if (!tagManager?.updateTagText) return false;
+  if (tagManager.getTagObject && !tagManager.getTagObject(label, scope)) return false;
+  tagManager.updateTagText(label, scope);
+  return true;
+}
+
 /**
  * Evaluates the rule language (numbers, field names, + - * /, abs(),
  * comparisons, && || !) without running rule text as code. Unknown syntax gives

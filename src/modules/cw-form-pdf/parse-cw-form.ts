@@ -50,9 +50,16 @@ export interface CwPageData {
   strokes: CwStroke[];
 }
 
-export interface CwMeasurement {
-  label: string;
+/** A field's number; `range` holds both numbers when the customer wrote two (value is the default pick). */
+export interface CwFieldValue {
   value: number;
+  range?: number[];
+  /** What the customer typed, tidied. */
+  text?: string;
+}
+
+export interface CwMeasurement extends CwFieldValue {
+  label: string;
   /** Line geometry in page points; 2 points for straight lines, more for curves. */
   points: CwPoint[];
   color: string;
@@ -77,8 +84,10 @@ export interface CwFormView {
   maskCircles: CwCircle[];
   maskStems: CwPoint[][];
   /** Labels whose value was found but whose diagram line could not be resolved. */
-  unplaced: Array<{ label: string; value: number }>;
+  unplaced: Array<CwFieldValue & { label: string }>;
 }
+
+import { parseCustomerValue, rangeValue } from '../utils/customer-value';
 
 type Matrix = [number, number, number, number, number, number];
 
@@ -197,7 +206,7 @@ export async function extractCwPageData(
         .map(t => t.str)
         .join(' ')
         .trim();
-      if (!value || parseNumericValue(value) === null) return field;
+      if (!value || parseFieldValue(value) === null) return field;
       inside.forEach(t => absorbed.add(t));
       return { ...field, value };
     })
@@ -353,37 +362,26 @@ function cleanText(raw: string): string {
     .trim();
 }
 
-const VULGAR_FRACTIONS: Record<string, number> = {
-  '¼': 0.25,
-  '½': 0.5,
-  '¾': 0.75,
-  '⅛': 0.125,
-  '⅜': 0.375,
-  '⅝': 0.625,
-  '⅞': 0.875,
-};
-/** "71", "33.5", "33,5 cm", 22-1/4", 36 3/4", "8¼", "45'" (a typo for inches) -> number. A bare "1/2" is not a measurement. */
+/**
+ * A filled field as a number. Customers write "104.78", "48,9", "22-1/4"",
+ * "36 3/4"", "8¼", "71"", "33,5 cm". Text ("n/a", "see photos"), lone
+ * fractions ("1/2") and ranges ("24.5 - 25") give null here; use
+ * parseFieldValue to keep a range.
+ */
 export function parseNumericValue(raw: string): number | null {
-  let text = String(raw || '')
-    .trim()
-    .replace(/\s*(?:cm|in|inch(?:es)?|["”″']+)\s*$/i, '')
-    .trim();
-  let extra = 0;
-  text = text
-    .replace(/[¼½¾⅛⅜⅝⅞]/g, c => {
-      extra += VULGAR_FRACTIONS[c] || 0;
-      return '';
-    })
-    .trim();
-  let value: number | null = null;
-  let match: RegExpExecArray | null;
-  if (!text && extra) value = 0;
-  else if ((match = /^(\d+)\s*(?:-|\s)\s*(\d+)\s*\/\s*(\d+)$/.exec(text)))
-    value = Number(match[1]) + Number(match[2]) / Number(match[3]);
-  else if ((match = /^(\d+(?:[.,]\d+)?)$/.exec(text))) value = Number(match[1].replace(',', '.'));
-  if (value === null) return null;
-  value += extra;
-  return Number.isFinite(value) && value > 0 ? value : null;
+  const parsed = parseCustomerValue(raw);
+  return parsed.kind === 'single' ? parsed.values[0] : null;
+}
+
+/** A filled field with both numbers of a range kept, or null when it holds no number. */
+export function parseFieldValue(raw: string): CwFieldValue | null {
+  const parsed = parseCustomerValue(raw);
+  if (parsed.kind === 'none') return null;
+  return {
+    value: parsed.kind === 'range' ? rangeValue(parsed) : parsed.values[0],
+    range: parsed.kind === 'range' ? parsed.values : undefined,
+    text: parsed.text,
+  };
 }
 
 /** Find the label printed immediately left of a field in the same table row. */
@@ -617,10 +615,10 @@ export function analyzeCwFormPage(
   const labelled = data.fields
     .map(field => {
       const label = findRowLabel(field, data.texts);
-      const value = parseNumericValue(field.value);
-      return label && value !== null ? { field, label, value } : null;
+      const value = parseFieldValue(field.value);
+      return label && value !== null ? { field, label, ...value } : null;
     })
-    .filter(Boolean) as Array<{ field: CwField; label: string; value: number }>;
+    .filter(Boolean) as Array<CwFieldValue & { field: CwField; label: string }>;
   if (!labelled.length) return [];
 
   // Separate tables that reuse labels (TYPE 1 / TYPE 2, seat / back).
@@ -647,7 +645,7 @@ export function analyzeCwFormPage(
     const measurements: CwMeasurement[] = [];
     const maskCircles: CwCircle[] = [];
     const maskStems: CwPoint[][] = [];
-    const unplaced: Array<{ label: string; value: number }> = [];
+    const unplaced: Array<CwFieldValue & { label: string }> = [];
     const used: CwRect[] = [];
 
     const circleFor = pickDiagramCircles(
@@ -660,7 +658,12 @@ export function analyzeCwFormPage(
       const circle = circleFor.get(entry.label);
       const resolved = circle ? resolveCircleLine(circle, strokes) : null;
       if (!circle || !resolved) {
-        unplaced.push({ label: entry.label, value: entry.value });
+        unplaced.push({
+          label: entry.label,
+          value: entry.value,
+          range: entry.range,
+          text: entry.text,
+        });
         continue;
       }
       const points = resolved.line.curved
@@ -669,6 +672,8 @@ export function analyzeCwFormPage(
       measurements.push({
         label: entry.label,
         value: entry.value,
+        range: entry.range,
+        text: entry.text,
         points,
         color: resolved.line.color,
       });
@@ -733,9 +738,11 @@ export function detectDocumentUnit(pages: CwPageData[]): { unit: 'cm' | 'inch'; 
     if (!unit.assumed) return unit;
   }
   // Values typed with their own unit marks (71", 22-1/4", 33 cm) settle it.
-  const values = pages.flatMap(page => page.fields.map(field => field.value));
-  const inches = values.filter(v => /(?:["”″]|\bin(?:ch(?:es)?)?)\s*$/i.test(v)).length;
-  const cms = values.filter(v => /\bcm\s*$/i.test(v)).length;
+  const units = pages.flatMap(page =>
+    page.fields.map(field => parseCustomerValue(field.value).unit)
+  );
+  const inches = units.filter(u => u === 'in').length;
+  const cms = units.filter(u => u === 'cm').length;
   if (inches > cms && inches >= 2) return { unit: 'inch', assumed: false };
   if (cms > inches && cms >= 2) return { unit: 'cm', assumed: false };
   return { unit: 'cm', assumed: true };
