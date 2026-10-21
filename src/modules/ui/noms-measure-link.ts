@@ -36,7 +36,11 @@ import {
   pdfValueToForm,
   refineTargets,
   fromCanvasMeasurement,
+  formToTyped,
   isComfortWorksStaff,
+  pickInputUnit,
+  typedToForm,
+  type InputUnit,
   measureIssues,
   parseMeasure,
   soleModelForReference,
@@ -70,6 +74,8 @@ const PANEL_ID = 'nomsMeasureLinkPanel';
 const NOMS = 'https://noms.comfort-works.com';
 const REQUEST_SOURCE = 'sofapaint-noms';
 const REPLY_SOURCE = 'omnoms-noms';
+/** localStorage key: the unit a person types in, remembered per browser. */
+const INPUT_UNIT_KEY = 'nomsLinkInputUnit';
 
 const state: {
   order: string;
@@ -138,6 +144,37 @@ function patchEntry(patch: Partial<NomsOrderEntry>): void {
     },
   });
   window.dispatchEvent(new CustomEvent('openpaint:project-dirty', { detail: { source: 'noms' } }));
+}
+/**
+ * The unit the boxes are typed in: the choice remembered in this browser, else
+ * the form's unit. Values are always kept and saved in the form's unit.
+ */
+function inputUnit(): InputUnit {
+  let stored: string | null = null;
+  try {
+    stored = localStorage.getItem(INPUT_UNIT_KEY);
+  } catch {
+    stored = null;
+  }
+  return pickInputUnit(stored, state.unit);
+}
+function setInputUnit(unit: InputUnit): void {
+  try {
+    localStorage.setItem(INPUT_UNIT_KEY, unit);
+  } catch {
+    // Private mode or storage full: the choice lasts for this page only.
+  }
+  render();
+}
+/** True when every linked line for this letter on the view has no number. */
+function linesLackValue(viewId: string, field: string): boolean {
+  const scopes = strokeScopesFor(viewId, field);
+  return (
+    scopes.length > 0 &&
+    scopes.every(
+      scope => !fromCanvasMeasurement(metadataManager()?.getMeasurement?.(scope, field), state.unit)
+    )
+  );
 }
 function staff(): boolean {
   // Local development only: localStorage.nomsLinkDevStaff = '1' on localhost.
@@ -1030,6 +1067,8 @@ function ensureStyles(): void {
     #${PANEL_ID} .nml-hint.error { color: #b91c1c; font-weight: 600; }
     #${PANEL_ID} .nml-hint.warn { color: #8a5a00; }
     #${PANEL_ID} .nml-line { color: #16a34a; font-weight: 700; }
+    #${PANEL_ID} .nml-type-in button.nml-unit { min-width: 38px; padding: 0 8px; }
+    #${PANEL_ID} .nml-type-in button.nml-unit.on { background: #0f172a; border-color: #0f172a; color: #fff; }
     #${PANEL_ID}.collapsed .nml-body { display: none; }
     #${PANEL_ID} .nml-drop { display: flex; flex-direction: column; gap: 2px; align-items: center; margin: 10px 0;
       padding: 14px 12px; border: 2px dashed #f47636; border-radius: 10px; background: #fff4ea; color: #9a3412;
@@ -1180,6 +1219,23 @@ function render(): void {
     return;
   }
 
+  const typeRow = el('div', 'nml-row nml-type-in');
+  typeRow.setAttribute('role', 'group');
+  typeRow.setAttribute('aria-label', 'Unit to type in');
+  typeRow.appendChild(el('span', '', 'Type in:'));
+  for (const unit of ['in', 'cm'] as InputUnit[]) {
+    const button = el('button', unit === inputUnit() ? 'nml-unit on' : 'nml-unit', unit);
+    button.type = 'button';
+    button.setAttribute('aria-pressed', unit === inputUnit() ? 'true' : 'false');
+    button.addEventListener('click', () => setInputUnit(unit));
+    typeRow.appendChild(button);
+  }
+  if (inputUnit() !== state.unit)
+    typeRow.appendChild(
+      el('span', 'nml-hint', `saved to NOMS in ${state.unit === 'in' ? 'inches' : 'cm'}`)
+    );
+  body.appendChild(typeRow);
+
   const viewId = currentViewId();
   const boundKey = current.viewBindings?.[viewId] || '';
   const isDiagram = Object.values(current.diagramViews || {}).includes(viewId);
@@ -1209,7 +1265,9 @@ function render(): void {
   body.appendChild(unitRow);
   body.appendChild(pdfDropZone());
 
-  const other = state.unit === 'in' ? 'cm' : 'in';
+  // Boxes are typed and shown in `typed`; values are kept and saved in the form's unit.
+  const typed = inputUnit();
+  const other = typed === 'in' ? 'cm' : 'in';
   for (const model of state.models) {
     const box = el('div', 'nml-model');
     box.appendChild(el('h3', '', model.title));
@@ -1241,27 +1299,33 @@ function render(): void {
       const input = el('input');
       input.type = 'text';
       input.inputMode = 'decimal';
-      input.value = value;
+      input.value = formToTyped(value, state.unit, typed);
       input.dataset.nmlId = `${model.key}|${field}`;
       if (state.highlight.has(input.dataset.nmlId) && Date.now() < state.highlightUntil)
         input.classList.add('nml-filled');
-      input.setAttribute('aria-label', `${field} in ${state.unit}`);
+      input.setAttribute('aria-label', `${field} in ${typed}`);
       input.addEventListener('change', () => {
-        const next = parseMeasure(input.value);
+        // Convert at the panel boundary only: the value kept is in the form's unit.
+        const next = typedToForm(input.value, typed, state.unit);
         setValue(model.key, field, next === null ? input.value : next);
         render();
       });
+      const onThisImage =
+        viewId &&
+        (boundKey === model.key || diagramView === viewId) &&
+        strokeScopesFor(viewId, field).length;
       const message =
         parsed === null ? 'Not a number' : issues.errors[field] || issues.warnings[field] || '';
       const hint = el(
         'span',
         `nml-hint${parsed === null || issues.errors[field] ? ' error' : message ? ' warn' : ''}`,
-        message || (parsed ? `= ${convertMeasure(parsed, state.unit, other)} ${other}` : '')
+        message ||
+          (parsed
+            ? `= ${convertMeasure(parsed, state.unit, other)} ${other}`
+            : onThisImage && linesLackValue(viewId, field)
+              ? 'no value on the line'
+              : '')
       );
-      const onThisImage =
-        viewId &&
-        (boundKey === model.key || diagramView === viewId) &&
-        strokeScopesFor(viewId, field).length;
       const draw = onThisImage
         ? el('span', 'nml-line', '✓ line')
         : actionButton('Draw', () => armLetter(model.key, field));

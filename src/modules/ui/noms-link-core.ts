@@ -151,15 +151,88 @@ export function toCentimetres(value: string, unit: string): number | null {
   return unit === 'in' ? n * 2.54 : n;
 }
 
-/** A SofaPaint measurement ({cm, inch}) as form text in `unit`. */
+export type InputUnit = 'in' | 'cm';
+
+/** 'in' or 'cm' when `value` is one, else `fallback` (the form's unit). */
+export function pickInputUnit(value: unknown, fallback: InputUnit): InputUnit {
+  return value === 'in' || value === 'cm' ? value : fallback;
+}
+
+/**
+ * What a person typed in `inputUnit`, as form text in `formUnit`. Fractions and
+ * vulgar fractions are read by parseMeasure. "" for empty, null if unreadable.
+ */
+export function typedToForm(raw: unknown, inputUnit: string, formUnit: string): string | null {
+  const parsed = parseMeasure(raw);
+  if (parsed === null || parsed === '') return parsed;
+  return convertMeasure(parsed, inputUnit, formUnit);
+}
+
+/** Form text in `formUnit` shown in `inputUnit`; unreadable text is shown as is. */
+export function formToTyped(value: string, formUnit: string, inputUnit: string): string {
+  const parsed = parseMeasure(value);
+  if (parsed === null || parsed === '') return value;
+  return convertMeasure(parsed, formUnit, inputUnit);
+}
+
+export interface CanvasMeasurementLike {
+  cm?: unknown;
+  inch?: unknown;
+  inchWhole?: unknown;
+  inchFraction?: unknown;
+  inputUnit?: unknown;
+}
+
+const positive = (value: unknown): number | null => {
+  const n = typeof value === 'string' ? Number(parseMeasure(value) || NaN) : Number(value);
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
+
+/**
+ * The number a SofaPaint line carries, in centimetres, or null when the line
+ * has none. Lines saved by older code (or loaded from a project where only one
+ * unit survived) can have cm 0 with a good inch value, inch missing with a
+ * good cm value, or only inchWhole/inchFraction. A note stored instead of a
+ * measurement ("see photos") has no number.
+ */
+export function canvasMeasurementCm(
+  measurement: CanvasMeasurementLike | string | number | null | undefined,
+  assumeUnit = 'in'
+): number | null {
+  if (measurement === null || measurement === undefined) return null;
+  if (typeof measurement === 'string' || typeof measurement === 'number') {
+    // A bare value typed on a line: trust a stated unit, else `assumeUnit`.
+    const text = String(measurement).trim();
+    const n = positive(text);
+    if (n === null) return null;
+    const saysCm = /cm$/i.test(text);
+    const saysIn = /(?:in|inches|inch|")$/i.test(text);
+    return saysCm || (!saysIn && assumeUnit === 'cm') ? n : n * 2.54;
+  }
+  if (typeof measurement !== 'object') return null;
+  const cm = positive(measurement.cm);
+  if (cm !== null) return cm;
+  const inch = positive(measurement.inch);
+  if (inch !== null) return inch * 2.54;
+  const whole = Number(measurement.inchWhole);
+  const fraction = Number(measurement.inchFraction);
+  const parts = (Number.isFinite(whole) ? whole : 0) + (Number.isFinite(fraction) ? fraction : 0);
+  return parts > 0 ? parts * 2.54 : null;
+}
+
+/** A SofaPaint measurement ({cm, inch}) as form text in `unit`; "" when it has no number. */
 export function fromCanvasMeasurement(
-  measurement: { cm?: number; inch?: number } | null | undefined,
+  measurement: CanvasMeasurementLike | string | number | null | undefined,
   unit: string
 ): string {
-  if (!measurement) return '';
-  const value = unit === 'cm' ? Number(measurement.cm) : Number(measurement.inch);
-  if (!Number.isFinite(value) || value <= 0) return '';
-  return tidy(value);
+  if (measurement && typeof measurement === 'object') {
+    // Prefer the value stored in the asked-for unit, as the line shows it.
+    const direct = positive(unit === 'cm' ? measurement.cm : measurement.inch);
+    if (direct !== null) return tidy(direct);
+  }
+  const cm = canvasMeasurementCm(measurement, unit);
+  if (cm === null) return '';
+  return tidy(unit === 'cm' ? cm : cm / 2.54);
 }
 
 /**
