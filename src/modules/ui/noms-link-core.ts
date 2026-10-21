@@ -3,7 +3,7 @@
 // written in centimetres ("A>0", "abs(A-C)<5"). Kept free of DOM and app state
 // so they can be tested directly.
 
-import { parseCustomerValue, rangeValue } from '../utils/customer-value';
+import { parseCustomerValue, rangeValue, type CustomerValue } from '../utils/customer-value';
 
 export interface NomsFormFile {
   name?: string;
@@ -527,6 +527,8 @@ export interface NomsModelGroup {
   title: string;
   /** field -> file key ("product:model:file") holding it */
   fields: Record<string, string>;
+  /** CW model codes the model goes by on the form (product reference, model name), upper case. */
+  codes?: string[];
 }
 
 export function modelGroups(models: NomsModelEntry[]): NomsModelGroup[] {
@@ -538,11 +540,29 @@ export function modelGroups(models: NomsModelEntry[]): NomsModelGroup[] {
       key,
       title: model.modelTitle || model.title,
       fields: {},
+      codes: Array.from(
+        new Set([model.reference, model.modelName].map(normaliseCode).filter(Boolean))
+      ),
     };
     for (const field of model.fields) if (!group.fields[field]) group.fields[field] = model.key;
     groups.set(key, group);
   }
   return Array.from(groups.values());
+}
+
+/** "cs5l-sa-hb-l " -> "CS5L-SA-HB-L". */
+export function normaliseCode(code: unknown): string {
+  return String(code || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, '');
+}
+
+/** Models whose form code is one of a PDF template's model codes. */
+export function modelsForCodes(codes: readonly string[] | undefined, models: NomsModelGroup[]) {
+  const wanted = new Set((codes || []).map(normaliseCode).filter(Boolean));
+  if (!wanted.size) return [];
+  return models.filter(m => (m.codes || []).some(code => wanted.has(code)));
 }
 
 /** The form field a PDF label most likely is on a model (exact, D1<->D), or ''. */
@@ -586,13 +606,19 @@ export interface PdfGroupLike {
   file: string;
   title: string;
   labels: string[];
+  /** CW model codes of the library template the page matched (confident matches only). */
+  modelCodes?: string[];
+  /** The template's view ("frame", "cushion", ...). */
+  view?: string | null;
 }
 
 /**
- * Pick the form models each PDF diagram fills. A file's largest diagram (its
- * frame) picks the products; the file's other diagrams are kept to those
- * products. Among equally good models a "seat"/"back" word in the diagram title
- * decides; a tie that is still open is left for the person to choose.
+ * Pick the form models each PDF diagram fills. A diagram whose template names a
+ * CW model code that is on the form goes to that model when the letters agree.
+ * Otherwise a file's largest diagram (its frame) picks the products; the file's
+ * other diagrams are kept to those products. Among equally good models a
+ * "seat"/"back" word in the diagram title (or the template's cushion / frame
+ * view) decides; a tie that is still open is left for the person to choose.
  */
 export function refineTargets(
   groups: PdfGroupLike[],
@@ -601,8 +627,16 @@ export function refineTargets(
 ): string[][] {
   const productOf = (key: string): string => key.split(':')[0];
   const anchors = new Map<string, Set<string>>();
+  // Letters must still mostly agree before a code decides.
+  const byCode = (group: PdfGroupLike): string[] =>
+    suggestTargets(group.labels, modelsForCodes(group.modelCodes, models), 0.5);
   for (const file of new Set(groups.map(g => g.file))) {
     const inFile = groups.filter(g => g.file === file);
+    const coded = new Set(inFile.flatMap(byCode).map(productOf));
+    if (coded.size) {
+      anchors.set(file, coded);
+      continue;
+    }
     const biggest = inFile.reduce((a, b) => (b.labels.length > a.labels.length ? b : a));
     const products = new Set(suggestTargets(biggest.labels, models).map(productOf));
     if (products.size) anchors.set(file, products);
@@ -610,7 +644,8 @@ export function refineTargets(
   return groups.map(group => {
     const allowed = anchors.get(group.file);
     const pool = allowed ? models.filter(m => allowed.has(productOf(m.key))) : models;
-    let picks = suggestTargets(group.labels, pool.length ? pool : models);
+    const coded = byCode(group);
+    let picks = coded.length ? coded : suggestTargets(group.labels, pool.length ? pool : models);
     // One model per product: break ties with the title, else leave it open.
     const byProduct = new Map<string, string[]>();
     for (const key of picks)
@@ -621,7 +656,11 @@ export function refineTargets(
         ? 'seat'
         : /\bback/.test(title) && !/\bseat/.test(title)
           ? 'back'
-          : '';
+          : group.view === 'cushion'
+            ? 'cushion'
+            : group.view && /^(frame|front|side|back|arm)$/.test(group.view)
+              ? 'frame'
+              : '';
     picks = [];
     for (const keys of byProduct.values()) {
       if (keys.length === 1) picks.push(keys[0]);
@@ -727,6 +766,8 @@ export interface DropValue {
   why?: string;
   /** Titles of the other models the same diagram filled, when it filled more than one. */
   alsoFills?: string[];
+  /** The customer wrote words only ("n/a", "see photo"): shown as a note, never placed. */
+  textOnly?: boolean;
 }
 
 export type DropFlagKind =
@@ -736,7 +777,8 @@ export type DropFlagKind =
   | 'range'
   | 'unit-assumed'
   | 'shared'
-  | 'changed';
+  | 'changed'
+  | 'text-only';
 
 export interface DropFlag {
   kind: DropFlagKind;
@@ -812,12 +854,25 @@ export function classifyDropResult(
         label: value.label,
         where: sourceOf(value).replace(/ \S+$/, ''),
         text: value.text || `${shortNumber(value.value)} ${unitWord(value.unit)}`,
-        reason:
-          value.why ||
-          (value.targets.length
-            ? `${value.targets.map(t => t.field).join(', ')} is not on the form`
-            : `no form letter for ${value.label}`),
+        reason: value.textOnly
+          ? 'no number written; kept as a note'
+          : value.why ||
+            (value.targets.length
+              ? `${value.targets.map(t => t.field).join(', ')} is not on the form`
+              : `no form letter for ${value.label}`),
       });
+      continue;
+    }
+    if (value.textOnly) {
+      // Words only: the letter keeps its value and carries the customer's words.
+      for (const target of targets) {
+        touchedGroups.add(groupOf(target.key));
+        flag(
+          row(target.key, target.field),
+          'text-only',
+          `Customer wrote "${value.text || ''}" (no number) at ${sourceOf(value)}`
+        );
+      }
       continue;
     }
     const number = dropNumber(value, options.picks);
@@ -867,7 +922,7 @@ export function classifyDropResult(
     if (!touchedGroups.has(groupOf(model.key))) continue;
     for (const field of model.fields) {
       const r = row(model.key, field);
-      if (r.from) continue;
+      if (r.from || r.flags.some(f => f.kind === 'text-only')) continue;
       const had = current?.[model.key]?.[field] ?? '';
       flag(
         r,
@@ -1024,6 +1079,8 @@ export interface DropGroupLike {
   unit: DropUnit;
   unitAssumed?: boolean;
   values: Array<{ label: string; value: number; range?: number[]; text?: string }>;
+  /** Letters the customer answered with words only. */
+  notes?: Array<{ label: string; text: string }>;
 }
 
 /**
@@ -1042,8 +1099,14 @@ export function cwGroupsToDropValues(
     const picks = (targets[i] || []).filter(key => byKey.has(key));
     const mapping = mappings[i] || {};
     const titles = picks.map(key => byKey.get(key)!.title);
-    for (const v of group.values) {
-      const field = mapping[v.label] || '';
+    const fieldsHere = picks.flatMap(key => Object.keys(byKey.get(key)!.fields));
+    const entries = [
+      ...group.values.map(v => ({ ...v, textOnly: false })),
+      ...(group.notes || []).map(n => ({ label: n.label, value: 0, text: n.text, textOnly: true })),
+    ];
+    for (const v of entries as Array<(typeof entries)[number] & { range?: number[] }>) {
+      const field =
+        (v.label in mapping ? mapping[v.label] : defaultFieldFor(v.label, fieldsHere)) || '';
       const found = field
         ? picks
             .map(key => ({ key: byKey.get(key)!.fields[field], field }))
@@ -1053,7 +1116,7 @@ export function cwGroupsToDropValues(
       if (!picks.length) why = `${group.title || 'this diagram'} matched no form model`;
       else if (!found.length) why = `${v.label} is not a letter on ${titles.join(', ')}`;
       out.push({
-        id: `${group.file}|${group.pageNumber}|${group.title}|${v.label}`,
+        id: `${group.file}|${group.pageNumber}|${group.title}|${v.label}${v.textOnly ? '|note' : ''}`,
         file: group.file,
         pageNumber: group.pageNumber,
         title: group.title,
@@ -1066,6 +1129,7 @@ export function cwGroupsToDropValues(
         targets: found,
         why: why || undefined,
         alsoFills: picks.length > 1 ? titles : undefined,
+        ...(v.textOnly ? { textOnly: true } : {}),
       });
     }
   });
@@ -1079,6 +1143,140 @@ export function cwGroupsToDropValues(
       if (!v.alsoFills.length) delete v.alsoFills;
     }
   return out;
+}
+
+/** What readCustomerPdf returns, as far as the panel needs it. */
+export interface CustomerPdfLike {
+  fileName: string;
+  modelCodes: string[];
+  confidence: number;
+  pages: Array<{
+    pageNumber: number;
+    template: {
+      title?: string;
+      modelCodes?: string[];
+      view?: string | null;
+      views?: string[];
+    } | null;
+    confidence: number;
+    values: Array<{ label: string; value: CustomerValue | null; text: string }>;
+    unit: DropUnit;
+    unitAssumed: boolean;
+  }>;
+}
+
+/** One page of a customer PDF, ready for matching and the drop review. */
+export interface CustomerDropGroup extends DropGroupLike {
+  notes: Array<{ label: string; text: string }>;
+  /** Template model codes when the page matched the library confidently, else []. */
+  modelCodes: string[];
+  view: string | null;
+  views: string[];
+}
+
+/** Below this a template (and its codes) is only a suggestion. */
+export const TEMPLATE_CONFIDENCE = 0.8;
+
+/**
+ * Pages of a read customer PDF as drop groups: numbers (a range keeps both,
+ * the default end is used) and words-only answers kept as notes. The page's
+ * own unit and unitAssumed travel with it; codes only from a confident match.
+ */
+export function customerPdfToGroups(result: CustomerPdfLike): CustomerDropGroup[] {
+  const out: CustomerDropGroup[] = [];
+  for (const page of result.pages || []) {
+    const values: CustomerDropGroup['values'] = [];
+    const notes: CustomerDropGroup['notes'] = [];
+    for (const v of page.values || []) {
+      const parsed = v.value;
+      if (!parsed || parsed.kind === 'none' || !parsed.values.length) {
+        const text = String(v.text || parsed?.text || '').trim();
+        if (text) notes.push({ label: v.label, text });
+        continue;
+      }
+      values.push({
+        label: v.label,
+        value: parsed.kind === 'range' ? rangeValue(parsed) : parsed.values[0],
+        ...(parsed.kind === 'range' ? { range: [...parsed.values] } : {}),
+        text: v.text || parsed.text,
+      });
+    }
+    if (!values.length && !notes.length) continue;
+    const template = page.template;
+    const confident = Boolean(template) && page.confidence >= TEMPLATE_CONFIDENCE;
+    const codes = confident
+      ? template!.modelCodes?.length
+        ? template!.modelCodes
+        : result.modelCodes || []
+      : [];
+    out.push({
+      file: result.fileName,
+      pageNumber: page.pageNumber,
+      title: template?.title || `Page ${page.pageNumber}`,
+      unit: page.unit,
+      unitAssumed: Boolean(page.unitAssumed),
+      values,
+      notes,
+      modelCodes: codes.map(normaliseCode).filter(Boolean),
+      view: confident ? template!.view || null : null,
+      views: confident ? template!.views || [] : [],
+    });
+  }
+  return out;
+}
+
+/** A library SVG the PDF's model code has, offered when NOMS has no form. */
+export interface DiagramOffer {
+  code: string;
+  view: string;
+  url: string;
+  labelIds?: boolean;
+  file: string;
+  unit: DropUnit;
+  unitAssumed: boolean;
+  values: DropGroupLike['values'];
+  notes: Array<{ label: string; text: string }>;
+}
+
+/**
+ * "Add the <code> diagram" offers for PDF pages whose model code has an SVG in
+ * the library (`find` is findCwSvg). One offer per SVG; pages that share it
+ * pool their letters (first value per letter wins).
+ */
+export function diagramOffers(
+  groups: CustomerDropGroup[],
+  find: (
+    code: string,
+    view?: string | null
+  ) => { url: string; code: string; view: string; labelIds?: boolean } | null
+): DiagramOffer[] {
+  const offers = new Map<string, DiagramOffer>();
+  for (const group of groups) {
+    for (const code of group.modelCodes) {
+      const views = Array.from(new Set([group.view, ...group.views].filter(Boolean))) as string[];
+      let hit: ReturnType<typeof find> = null;
+      for (const view of views) if (!hit) hit = find(code, view);
+      hit = hit || find(code);
+      if (!hit) continue;
+      const offer: DiagramOffer = offers.get(hit.url) || {
+        code,
+        view: hit.view,
+        url: hit.url,
+        labelIds: hit.labelIds,
+        file: group.file,
+        unit: group.unit,
+        unitAssumed: Boolean(group.unitAssumed),
+        values: [],
+        notes: [],
+      };
+      const have = new Set([...offer.values, ...offer.notes].map(v => v.label));
+      for (const v of group.values) if (!have.has(v.label)) offer.values.push(v);
+      for (const n of group.notes) if (!have.has(n.label)) offer.notes.push(n);
+      offers.set(hit.url, offer);
+      break;
+    }
+  }
+  return Array.from(offers.values());
 }
 
 /** A SofaPaint review PDF's manifest, as parseSofaPaintReviewPdf returns it. */

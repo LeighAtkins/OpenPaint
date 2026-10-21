@@ -25,11 +25,13 @@ import {
   importCwFormPdf,
   isPdfFile,
   loadPdfjs,
+  measurementInput,
   rangeKey,
-  readCwFormPdfValues,
+  readCustomerPdf,
   rememberMeasurementNote,
   type CwFormValueGroup,
 } from './cw-form-pdf-import';
+import { findCwSvg } from './pdf-template-registry';
 import { formatCustomerNumber, RANGE_DEFAULT } from '../utils/customer-value';
 import { parseSofaPaintReviewPdf } from './measurement-review';
 import {
@@ -48,6 +50,10 @@ import {
   conflictingDrift,
   convertValues,
   cwGroupsToDropValues,
+  customerPdfToGroups,
+  diagramOffers,
+  type CustomerDropGroup,
+  type DiagramOffer,
   dropFlagLines,
   dropNumber,
   formDrift,
@@ -165,6 +171,8 @@ const state: {
   originals: StoredOrderPdfs['originals'];
   /** CW form diagrams of the last drop, for "Change matching". */
   lastGroups: CwFormValueGroup[];
+  /** Library diagrams for a PDF's model when NOMS has no form for the order. */
+  diagramOffers: DiagramOffer[];
 } = {
   order: '',
   content: null,
@@ -189,6 +197,7 @@ const state: {
   drift: null,
   originals: [],
   lastGroups: [],
+  diagramOffers: [],
 };
 let initialized = false;
 let requestCounter = 0;
@@ -741,6 +750,60 @@ async function addDiagram(key: string): Promise<void> {
   for (const field of model.fields) pushToLines(key, field);
   setStatus(`Added the CW diagram for ${model.title}. Its lines carry the form's values.`, 'ok');
 }
+/** Add a library SVG for a PDF's model (no NOMS form) and keep the PDF's values on its lines. */
+async function addOfferedDiagram(offer: DiagramOffer): Promise<void> {
+  const manager = projectManager();
+  if (!manager) return;
+  setStatus(`Adding the ${offer.code} diagram…`);
+  const response = await fetch(offer.url);
+  if (!response.ok) throw new Error(`The ${offer.code} diagram could not be loaded.`);
+  const svgText = await response.text();
+  const imageUrl = await rasterizeSvg(stripSvgLabels(svgText));
+  const viewId = uniqueViewId(`cw-${offer.code}-${offer.view}`);
+  const fileName = `${offer.code} ${offer.view} diagram.png`;
+  if (imageRegistry.isEnabled() && imageRegistry.registerImage) {
+    await imageRegistry.registerImage(viewId, imageUrl, fileName, { source: 'cw-svg-library' });
+  } else {
+    await manager.addImage(viewId, imageUrl, { refreshBackground: false });
+    (window as any).addImageToSidebar?.(imageUrl, viewId, fileName);
+  }
+  await manager.switchView?.(viewId, true);
+  await waitForGuideImportReady(viewId);
+  await importSvgMeasurements(offer.code, offer.view, viewId, { svgText });
+  const metadata = metadataManager();
+  let kept = 0;
+  for (const v of offer.values) {
+    if (metadata?.parseAndSaveMeasurement?.(viewId, v.label, measurementInput(v.value, offer.unit)))
+      kept += 1;
+    if (v.range)
+      rememberMeasurementNote(viewId, v.label, `customer wrote ${v.text || v.range.join(' - ')}`);
+    app().tagManager?.updateTagText?.(v.label, viewId);
+  }
+  for (const note of offer.notes)
+    rememberMeasurementNote(viewId, note.label, `customer wrote ${note.text}`);
+  app().canvasManager?.fabricCanvas?.requestRenderAll?.();
+  state.diagramOffers = state.diagramOffers.filter(o => o.url !== offer.url);
+  setStatus(
+    `Added the ${offer.code} diagram with ${kept} value${kept === 1 ? '' : 's'} from ${offer.file}` +
+      (offer.unitAssumed ? ' (unit not stated, read as cm)' : '') +
+      (offer.notes.length
+        ? `. Notes: ${offer.notes.map(n => `${n.label} "${n.text}"`).join(', ')}`
+        : '') +
+      '.',
+    offer.unitAssumed || offer.notes.length ? 'info' : 'ok'
+  );
+  render();
+}
+/** "Add the <code> diagram to the project" buttons, when a PDF named a model NOMS has no form for. */
+function diagramOfferRow(): HTMLElement | null {
+  if (!state.diagramOffers.length || state.models.length) return null;
+  const row = el('div', 'nml-row');
+  for (const offer of state.diagramOffers)
+    row.appendChild(
+      actionButton(`Add the ${offer.code} diagram to the project`, () => addOfferedDiagram(offer))
+    );
+  return row;
+}
 async function placeLinesOnCurrent(key: string): Promise<void> {
   const model = state.models.find(item => item.key === key);
   const viewId = currentViewId();
@@ -917,12 +980,20 @@ function attachPanelDrop(panel: HTMLElement): void {
   });
 }
 
+/** Every letter a diagram answered, numbers and words alike. */
+const groupLabels = (group: CwFormValueGroup): string[] => [
+  ...group.values.map(v => v.label),
+  ...(group.notes || []).map(n => n.label),
+];
+
 function pdfGroupsForMatching(groups: CwFormValueGroup[]) {
   return groups.map(group => ({
     file: group.file,
     title: group.title,
-    labels: group.values.map(v => v.label),
+    labels: groupLabels(group),
     unitAssumed: group.unitAssumed,
+    modelCodes: group.modelCodes,
+    view: group.view,
   }));
 }
 
@@ -969,13 +1040,18 @@ async function readReviewPdf(file: File, bytes: Uint8Array): Promise<DropValue[]
 /**
  * Read dropped PDFs of any kind (a filled CW measuring form, or a SofaPaint
  * check-request PDF) and put every value in the panel. Nothing waits on a
- * dialog: values that need a look are flagged on their rows instead.
+ * dialog: values that need a look are flagged on their rows instead. A CW
+ * form is identified against the template library (readCustomerPdf): its
+ * model code picks the form model, its unit flag comes from the page, and
+ * words-only answers stay as notes. With no NOMS form, a model that has a
+ * library diagram is offered as an image to hold the values.
  */
 async function readPdfs(files: File[]): Promise<void> {
   const names = files.map(f => f.name).join(', ');
   state.reading = names;
   setStatus(`Reading ${names}…`);
   const cwGroups: CwFormValueGroup[] = [];
+  const customerGroups: CustomerDropGroup[] = [];
   const cwFiles: File[] = [];
   const reviewValues: DropValue[] = [];
   const originals: StoredOrderPdfs['originals'] = [];
@@ -990,12 +1066,18 @@ async function readPdfs(files: File[]): Promise<void> {
           originals.push({ name: file.name, bytes, unit: fromReview[0]?.unit });
           continue;
         }
-        const found = await readCwFormPdfValues(file);
+        const read = await readCustomerPdf(file);
+        if (read.kind === 'sofapaint-review') {
+          unread.push(`${file.name}: SofaPaint check request with no values filled in`);
+          continue;
+        }
+        const found = customerPdfToGroups(read);
         if (!found.length) {
           unread.push(`${file.name}: no filled measurements found`);
           continue;
         }
-        cwGroups.push(...found);
+        customerGroups.push(...found);
+        cwGroups.push(...found.map(g => ({ ...g, unitAssumed: Boolean(g.unitAssumed) })));
         cwFiles.push(file);
         const stated = found.find(g => !g.unitAssumed);
         originals.push({ name: file.name, bytes, unit: stated?.unit as PdfUnit | undefined });
@@ -1017,6 +1099,34 @@ async function readPdfs(files: File[]): Promise<void> {
   ];
   void storeOriginals();
 
+  if (!state.models.length) {
+    // No CW40 form: offer the model's library diagram so the values live in the project.
+    const offers = diagramOffers(customerGroups, findCwSvg);
+    state.diagramOffers = [
+      ...state.diagramOffers.filter(o => !offers.some(n => n.url === o.url)),
+      ...offers,
+    ];
+    state.lastGroups = cwGroups;
+    for (const file of cwFiles) {
+      try {
+        await importCwFormPdf(file);
+      } catch (error) {
+        console.warn('[NOMS link] PDF pages could not be added as images', error);
+      }
+    }
+    const codes = Array.from(new Set(offers.map(o => o.code)));
+    setStatus(
+      `No CW40 form for this order yet. ${
+        codes.length
+          ? `Read ${names} as ${codes.join(', ')}: add the diagram below to keep its values in the project.`
+          : `${names} names no model with a SofaPaint diagram.`
+      }${unread.length ? ` Not read: ${unread.join('; ')}.` : ''}`,
+      'info'
+    );
+    render();
+    return;
+  }
+
   const models = modelGroups(state.models);
   const matchable = pdfGroupsForMatching(cwGroups);
   const suggested = refineTargets(
@@ -1026,7 +1136,7 @@ async function readPdfs(files: File[]): Promise<void> {
   );
   const mappings = cwGroups.map((group, i) =>
     autoMapping(
-      group.values.map(v => v.label),
+      groupLabels(group),
       models.filter(m => suggested[i].includes(m.key))
     )
   );
@@ -1084,6 +1194,13 @@ function applyDrop(
   const fresh = new Set(values.map(v => v.id));
   const undoValues = state.values;
   const filledIds: string[] = [];
+  for (const value of values) {
+    if (!value.textOnly) continue;
+    // Words only: nothing is filled, but the lines carry the customer's words.
+    for (const target of value.targets)
+      for (const line of letterLines(target.key, target.field).lines)
+        rememberMeasurementNote(line.scope, line.label, `customer wrote ${value.text || ''}`);
+  }
   for (const placement of review.placements) {
     if (!fresh.has(placement.from)) continue;
     setValue(placement.key, placement.field, placement.value);
@@ -2204,6 +2321,8 @@ function render(): void {
     banner.appendChild(row);
     body.appendChild(banner);
   }
+  const offerRow = diagramOfferRow();
+  if (offerRow) body.appendChild(offerRow);
   if (!state.content) {
     if (!state.loading && !state.signIn)
       body.appendChild(actionButton('Load from NOMS', () => loadForm(), true));
@@ -2526,6 +2645,7 @@ function syncActiveOrder(): void {
     state.progress = [];
     state.originals = [];
     state.lastGroups = [];
+    state.diagramOffers = [];
     state.onlyFlagged = false;
     state.confirmTick = null;
   }

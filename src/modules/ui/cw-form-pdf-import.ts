@@ -261,6 +261,11 @@ export interface CwFormValueGroup {
   unitAssumed: boolean;
   /** `range` holds both numbers when the customer wrote two; `value` is the default pick. */
   values: Array<CwFieldValue & { label: string }>;
+  /** Letters answered with words only ("n/a", "see photo"). */
+  notes?: Array<{ label: string; text: string }>;
+  /** Template model codes and view, when the page matched the library (readCustomerPdf). */
+  modelCodes?: string[];
+  view?: string | null;
 }
 
 /** Read the label/value pairs of every diagram in a filled CW measuring PDF. */
