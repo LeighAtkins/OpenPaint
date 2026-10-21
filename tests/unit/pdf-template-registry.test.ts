@@ -23,7 +23,10 @@ import {
 
 const FIXTURES = resolve(__dirname, '../fixtures/pdf-library');
 const BEN = '/tmp/cw-mt/ben';
-const RIA = '/tmp/cw-mt/ria/ria-filled.pdf';
+const NOMS_FIXTURES = resolve(__dirname, '../fixtures/noms-pdfs');
+/** The returned PDF from /tmp when present, else the committed copy. */
+const firstExisting = (...paths: string[]) => paths.find(p => existsSync(p)) || paths[0];
+const RIA = firstExisting('/tmp/cw-mt/ria/ria-filled.pdf', join(NOMS_FIXTURES, 'ria-filled.pdf'));
 
 let pdfjs: any;
 beforeAll(async () => {
@@ -318,33 +321,30 @@ describe('Returned customer PDFs', () => {
 
   // "R and L Sofa" is the CS5L-SA-HB-L form renamed: field names, letters and layout match exactly.
   const ben = [
-    { file: 'm37__R and L Sofa.pdf', code: /^CS5L-SA-HB-L$/ },
-    { file: 'm36__CS5B-SA2-HB-L_1.pdf', code: /^CS5B-SA2-HB-L$/ },
-    { file: 'm37__Middle Sofa Section.pdf', code: /^CS3X/ },
+    { file: 'm37__R and L Sofa.pdf', copy: 'ben-r-and-l-sofa.pdf', code: /^CS5L-SA-HB-L$/ },
+    { file: 'm36__CS5B-SA2-HB-L_1.pdf', copy: '', code: /^CS5B-SA2-HB-L$/ },
+    { file: 'm37__Middle Sofa Section.pdf', copy: 'ben-middle-sofa-section.pdf', code: /^CS3X/ },
   ];
-  for (const { file, code } of ben) {
-    it.skipIf(!existsSync(join(BEN, file)))(
-      `identifies ${file} and reads the same values`,
-      async () => {
-        const path = join(BEN, file);
-        const expected = currentReaderValues(await pagesOf(path));
-        const result = await readCustomerPdfDocument(await openPdf(path), pdfjs.OPS, file);
-        expect(result.modelCodes.some(c => code.test(c))).toBe(true);
-        expect(result.confidence).toBeGreaterThanOrEqual(0.8);
-        const read = result.pages.flatMap(p =>
-          p.values
-            .filter(v => v.from === 'row' && v.value)
-            .map(v => ({
-              page: p.pageNumber,
-              label: v.label,
-              value: v.value!.kind === 'range' ? Math.max(...v.value!.values) : v.value!.values[0],
-            }))
-        );
-        expect(read).toEqual(expected);
-        // The customer typed an "x" over the INCH box; the blank m36 form has no unit.
-        if (expected.length)
-          expect(result.pages[0]).toMatchObject({ unit: 'inch', unitSource: 'ticked' });
-      }
-    );
+  for (const { file, copy, code } of ben) {
+    const path = firstExisting(join(BEN, file), copy ? join(NOMS_FIXTURES, copy) : join(BEN, file));
+    it.skipIf(!existsSync(path))(`identifies ${file} and reads the same values`, async () => {
+      const expected = currentReaderValues(await pagesOf(path));
+      const result = await readCustomerPdfDocument(await openPdf(path), pdfjs.OPS, file);
+      expect(result.modelCodes.some(c => code.test(c))).toBe(true);
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+      const read = result.pages.flatMap(p =>
+        p.values
+          .filter(v => v.from === 'row' && v.value)
+          .map(v => ({
+            page: p.pageNumber,
+            label: v.label,
+            value: v.value!.kind === 'range' ? Math.max(...v.value!.values) : v.value!.values[0],
+          }))
+      );
+      expect(read).toEqual(expected);
+      // The customer typed an "x" over the INCH box; the blank m36 form has no unit.
+      if (expected.length)
+        expect(result.pages[0]).toMatchObject({ unit: 'inch', unitSource: 'ticked' });
+    });
   }
 });
