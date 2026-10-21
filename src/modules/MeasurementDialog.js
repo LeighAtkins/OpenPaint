@@ -352,6 +352,12 @@ export class MeasurementDialog {
           }
     );
 
+    window.dispatchEvent(
+      new CustomEvent('openpaint:measurement-hand-edited', {
+        detail: { imageLabel: this.currentImageLabel, strokeLabel: this.currentStrokeLabel },
+      })
+    );
+
     // Update UI if metadataManager has updateStrokeVisibilityControls
     if (this.measurementSystem.metadataManager.updateStrokeVisibilityControls) {
       this.measurementSystem.metadataManager.updateStrokeVisibilityControls();

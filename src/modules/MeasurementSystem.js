@@ -122,7 +122,9 @@ export class MeasurementSystem {
     const decimalPlaces = Math.max(0, Number(options.decimalPlaces) || 0);
     const trimTrailingZeros = options.trimTrailingZeros !== false;
     const numericValue = Number(cmValue || 0);
-    const formatted = Number.isFinite(numericValue) ? formatHalfUp(numericValue, decimalPlaces) : '0';
+    const formatted = Number.isFinite(numericValue)
+      ? formatHalfUp(numericValue, decimalPlaces)
+      : '0';
     const normalized =
       trimTrailingZeros && formatted.includes('.') ? formatted.replace(/\.?0+$/, '') : formatted;
     return includeUnit ? `${normalized} cm` : normalized;

@@ -237,11 +237,11 @@ export function initMeasurementReview(): void {
     const overlay = document.createElement('div');
     overlay.className = 'measurement-review-overlay';
     overlay.innerHTML = `
-      <section class="measurement-review-shell" role="dialog" aria-modal="true" aria-label="Measurement Review">
+      <section class="measurement-review-shell" role="dialog" aria-modal="true" aria-label="Review a returned PDF">
         <header class="measurement-review-header">
-          <div><span class="measurement-review-kicker">CHECK WORKSPACE</span><h2>Measurement Review</h2></div>
+          <div><span class="measurement-review-kicker">CHECK WORKSPACE</span><h2>Review a returned PDF</h2></div>
           <div class="measurement-review-header-actions">
-            <label class="measurement-review-upload">Open SofaPaint PDF<input type="file" accept="application/pdf" hidden></label>
+            <label class="measurement-review-upload">Open returned SofaPaint PDF<input type="file" accept="application/pdf" hidden></label>
             <button type="button" data-review-close aria-label="Close review">×</button>
           </div>
         </header>
@@ -260,12 +260,23 @@ export function initMeasurementReview(): void {
             <p>Only selected lines and tags will show on this view. Measurements are never deleted.</p>
             <button type="button" class="primary" data-review-apply>Show selected</button>
             <button type="button" data-review-show-all>Show all on view</button>
+            <span class="measurement-review-kicker" style="margin-top:18px">PDF VALUES</span>
+            <button type="button" class="primary" data-review-save disabled title="Open a returned SofaPaint PDF first">Save values to project</button>
+            <p data-review-save-status>Open a returned PDF to save its values into this project.</p>
           </aside>
         </div>
       </section>`;
     document.body.appendChild(overlay);
 
     let views = getProjectReviewViews();
+    let pdfManifest = null;
+    let rangeChoices = null;
+    const saveButton = overlay.querySelector('[data-review-save]');
+    const saveStatus = overlay.querySelector('[data-review-save-status]');
+    const setSaveStatus = (text, isError = false) => {
+      saveStatus.textContent = text;
+      saveStatus.classList.toggle('error', isError);
+    };
     let activeViewId = window.app?.projectManager?.currentViewId || views[0]?.viewId;
     const selections = new Map(
       views.map(view => [
@@ -303,10 +314,76 @@ export function initMeasurementReview(): void {
       overlay.querySelector('[data-review-count]').textContent = String(selected.size);
     };
 
+    // One save path for returned PDFs: the same savePdfValuesToProject (and
+    // range pills) as the check-request dialog. Imported lazily because that
+    // module imports this one.
+    const saveValues = async ({ choosing }) => {
+      if (!pdfManifest) {
+        setSaveStatus('Open a returned SofaPaint PDF first.', true);
+        return;
+      }
+      const check = await import('./measurement-check-request');
+      if (!choosing) {
+        const plan = check.planPdfValueSaves(check.buildCheckContextFromApp(), pdfManifest);
+        if (!plan.entries.length) {
+          setSaveStatus('No project views matched the PDF. Open the project it belongs to.', true);
+          return;
+        }
+        const rangeCount = plan.entries.filter(entry => entry.range).length;
+        if (rangeCount) {
+          rangeChoices = {};
+          overlay.querySelector('[data-review-list]').innerHTML = `
+            <div class="measurement-check-summary">The customer wrote two numbers for ${rangeCount} value(s). Pick the one to use; their words are kept as a note.</div>
+            <table class="measurement-check-table"><thead><tr><th>Code</th><th>Use</th></tr></thead><tbody>${check.rangeChooserRowsHtml(plan, rangeChoices)}</tbody></table>
+            <div class="measurement-check-actions"><button type="button" class="primary" data-review-save-ranges>Save ${plan.entries.length} value(s) to project</button></div>`;
+          setSaveStatus(`Pick a number for ${rangeCount} range(s), then save.`);
+          return;
+        }
+      }
+      setSaveStatus('Saving PDF values to the project…');
+      try {
+        const result = await check.savePdfValuesToProject(pdfManifest, { rangeChoices });
+        rangeChoices = null;
+        if (result.cancelled) {
+          setSaveStatus('Save cancelled. Nothing was written.');
+          render();
+          return;
+        }
+        views = mergePdfWithProject(pdfManifest, getProjectReviewViews());
+        render();
+        const failureNote = result.failures.length
+          ? ` ${result.failures.length} could not be read: ${result.failures.join('; ')}`
+          : '';
+        setSaveStatus(
+          `Saved ${result.saved} value(s)${result.noteCount ? `, ${result.noteCount} note(s) kept` : ''}.${failureNote} Save the project (Ctrl+S) to keep them.`,
+          result.failures.length > 0
+        );
+        window.showStatusMessage?.(
+          `Saved ${result.saved} PDF measurement value(s) to the project.`
+        );
+      } catch (error) {
+        console.error('[Measurement Review] Save PDF values failed:', error);
+        setSaveStatus(`Could not save PDF values: ${error?.message || error}`, true);
+      }
+    };
+
     overlay.addEventListener('click', async event => {
       const target = event.target.closest('button');
       if (!target) return;
       if (target.matches('[data-review-close]')) overlay.remove();
+      if (target.matches('[data-check-pill]')) {
+        const check = await import('./measurement-check-request');
+        rangeChoices = check.applyRangePillClick(target, rangeChoices);
+        return;
+      }
+      if (target.matches('[data-review-save]')) {
+        await saveValues({ choosing: false });
+        return;
+      }
+      if (target.matches('[data-review-save-ranges]')) {
+        await saveValues({ choosing: true });
+        return;
+      }
       if (target.dataset.reviewView) {
         activeViewId = decodeURIComponent(target.dataset.reviewView);
         render();
@@ -359,6 +436,11 @@ export function initMeasurementReview(): void {
       if (!file) return;
       try {
         const manifest = await parseSofaPaintReviewPdf(await file.arrayBuffer());
+        pdfManifest = manifest;
+        rangeChoices = null;
+        saveButton.disabled = false;
+        saveButton.title = "Write this PDF's values into the project";
+        setSaveStatus(`${file.name} loaded. Save its values into the project when ready.`);
         views = mergePdfWithProject(manifest, getProjectReviewViews());
         views.forEach(view => {
           if (!selections.has(view.viewId)) {
