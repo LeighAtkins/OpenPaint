@@ -32,6 +32,7 @@ import {
   type CwFormValueGroup,
 } from './cw-form-pdf-import';
 import { findCwSvg } from './pdf-template-registry';
+import { nomsRecheckStrip, toggleNomsRecheck } from './noms-recheck';
 import { formatCustomerNumber, RANGE_DEFAULT } from '../utils/customer-value';
 import { parseSofaPaintReviewPdf } from './measurement-review';
 import {
@@ -2285,7 +2286,9 @@ function render(): void {
     state.collapsed = !state.collapsed;
     render();
   });
-  header.append(title, link, toggle);
+  const recheck = actionButton('Recheck', () => toggleNomsRecheck(nomsFormState));
+  recheck.title = 'Pick the letters to re-measure, show them on the views and copy them';
+  header.append(title, link, recheck, toggle);
   panel.appendChild(header);
 
   const body = el('div', 'nml-body');
@@ -2377,6 +2380,8 @@ function render(): void {
   body.appendChild(pdfDropZone());
   const review = currentReview();
   if (review) body.appendChild(reviewStrip(review));
+  const recheckStrip = nomsRecheckStrip(nomsFormState);
+  if (recheckStrip) body.appendChild(recheckStrip);
 
   const linkRow2 = el('div', 'nml-row');
   linkRow2.append(
@@ -2650,6 +2655,23 @@ function syncActiveOrder(): void {
     state.confirmTick = null;
   }
 }
+
+/** The form as the panel holds it, for the Recheck module (it writes only `rechecks`). */
+export function nomsFormState() {
+  return {
+    order: state.order,
+    entry: entry() as (NomsOrderEntry & { rechecks?: unknown[] }) | null,
+    unit: state.unit,
+    models: state.models,
+    values: state.values,
+    review: state.content ? currentReview() : null,
+    letterLines: (key: string, field: string) => letterLines(key, field).lines,
+    viewTitle,
+    patchRechecks: (rechecks: unknown[]) => patchEntry({ rechecks } as Partial<NomsOrderEntry>),
+    render,
+  };
+}
+export type NomsFormState = ReturnType<typeof nomsFormState>;
 
 /** Fill the panel from PDFs, as a drop does (also a stable entry point for scripts). */
 export function dropNomsPdfs(files: File[]): Promise<void> {

@@ -155,6 +155,7 @@ function renderMeasurementRows(rows, fieldPrefix, groupIndex) {
             ${maxLength ? `data-field-max-length="${maxLength}"` : ''}
             ${textAlign ? `data-field-align="${escapeHtml(textAlign)}"` : ''}
           >${escapeHtml(row.value || '')}</div>
+          ${row.note ? `<div class="measurement-note">${escapeHtml(row.note)}</div>` : ''}
         </div>
       `;
     })

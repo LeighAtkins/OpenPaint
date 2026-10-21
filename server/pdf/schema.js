@@ -4,6 +4,7 @@ const measurementRowSchema = z.object({
   label: z.string().min(1).max(120),
   value: z.string().max(120).optional().default(''),
   fieldName: z.string().max(160).optional(),
+  note: z.string().max(160).optional(),
 });
 
 const reviewMeasurementSchema = z.object({

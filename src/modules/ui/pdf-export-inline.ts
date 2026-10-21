@@ -1692,7 +1692,7 @@ async function captureCheckFrameImage(scale = 2) {
 // state are suppressed during capture and fully restored afterwards.
 export async function exportMeasurementCheckRequest(
   request,
-  { onProgress, pdfManifest, pdfUnit, output } = {}
+  { onProgress, pdfManifest, pdfUnit, output, rowNotes } = {}
 ) {
   const parsedRequest = parseCheckRequest(request);
   if (!parsedRequest.ok) {
@@ -1796,6 +1796,8 @@ export async function exportMeasurementCheckRequest(
         label: row.label.slice(0, 120),
         value: (row.value || '—').slice(0, 120),
         fieldName: row.fieldName,
+        // Recheck exports print the reason under each value box.
+        ...(rowNotes?.[row.label] ? { note: String(rowNotes[row.label]).slice(0, 160) } : {}),
       })),
       customerNote: safeNote(capture.page.note),
     }));
