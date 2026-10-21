@@ -1,16 +1,23 @@
 // @vitest-environment node
 /**
- * The real Tesseract worker on the six scanned pages of a customer return.
+ * The real OCR on the six scanned pages of a customer return: Tesseract for
+ * the printed words (which form, where it sits) and PP-OCRv4 through
+ * onnxruntime-web for the handwritten values, as in the browser worker.
  * The page images are customer files and never enter the repository: the test
  * reads them from /tmp/cw-mt/alana/pg when present and skips otherwise. It
  * reports per-value accuracy against what the customer wrote (read by eye) to
- * /tmp/cw-mt/alana/tesseract-accuracy.json.
+ * /tmp/cw-mt/alana/ocr-accuracy.json and fails below 85%.
  */
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { readScannedPage } from '../../src/modules/cw-form-pdf/scan-reader';
 import { createTesseractEngine } from '../../src/modules/cw-form-pdf/tesseract-engine';
+import {
+  createOrtRecognise,
+  createPpocrEngine,
+  PPOCR_MODEL_PATH,
+} from '../../src/modules/cw-form-pdf/ppocr-cells';
 import type { TemplateGeometryIndex } from '../../src/modules/cw-form-pdf/template-geometry';
 
 const PAGES = '/tmp/cw-mt/alana/pg';
@@ -87,7 +94,7 @@ const EXPECTED: Record<number, Record<string, string>> = {
   },
 };
 
-describe('Tesseract on the scanned return', () => {
+describe('OCR on the scanned return', () => {
   it.skipIf(!present)(
     'identifies each form, reads the INCH ticks and reports value accuracy',
     async () => {
@@ -101,8 +108,16 @@ describe('Tesseract on the scanned return', () => {
         workerPath: resolve(ROOT, 'node_modules/tesseract.js/src/worker-script/node/index.js'),
         cacheMethod: 'none',
       });
-      const engine = createTesseractEngine(worker as any);
-      const report: Record<string, unknown> = {};
+      const ort = await import('onnxruntime-web');
+      ort.env.wasm.numThreads = 1;
+      const started = Date.now();
+      const recognise = await createOrtRecognise(
+        ort as any,
+        new Uint8Array(readFileSync(resolve(ROOT, `public${PPOCR_MODEL_PATH}`)))
+      );
+      const loadMs = Date.now() - started;
+      const engine = createPpocrEngine(recognise, createTesseractEngine(worker as any));
+      const report: Record<string, unknown> = { modelLoadMs: loadMs };
       let right = 0;
       let total = 0;
       try {
@@ -121,6 +136,7 @@ describe('Tesseract on the scanned return', () => {
           expect(page.candidates.length, `page ${n} identified`).toBeGreaterThan(0);
           if (![3, 6].includes(n)) expect(page.unit, `page ${n} unit`).toBe('inch');
           const rows: Record<string, string> = {};
+          let pageRight = 0;
           for (const [key, text] of Object.entries(EXPECTED[n])) {
             const [section, label] = key.includes('|') ? key.split('|') : ['', key];
             const got = page.values.find(
@@ -132,18 +148,24 @@ describe('Tesseract on the scanned return', () => {
                 : Boolean(got?.value) && Math.abs(got!.value!.values[0] - parseFloat(text)) < 0.001;
             total += 1;
             if (ok) right += 1;
+            if (ok) pageRight += 1;
+            const sure = got ? ` (${got.confidence.toFixed(2)})` : '';
             rows[key] =
-              `${ok ? 'ok' : 'WRONG'} wrote ${text}, read ${got ? got.text : '(nothing)'}`;
+              `${ok ? 'ok' : 'WRONG'} wrote ${text}, read ${got ? got.text : '(nothing)'}${sure}`;
           }
-          report[`page ${n}`] = { unit: page.unit, values: rows };
+          report[`page ${n}`] = {
+            unit: page.unit,
+            right: `${pageRight}/${Object.keys(EXPECTED[n]).length}`,
+            values: rows,
+          };
         }
       } finally {
         await worker.terminate();
       }
       report.accuracy = `${right}/${total} (${Math.round((right / total) * 100)}%)`;
-      writeFileSync('/tmp/cw-mt/alana/tesseract-accuracy.json', JSON.stringify(report, null, 2));
-      // Handwriting is hard for Tesseract; every value is flagged for a person to check.
-      expect(right / total).toBeGreaterThan(0.3);
+      report.totalMs = Date.now() - started;
+      writeFileSync('/tmp/cw-mt/alana/ocr-accuracy.json', JSON.stringify(report, null, 2));
+      expect(right / total).toBeGreaterThanOrEqual(0.85);
     },
     600000
   );

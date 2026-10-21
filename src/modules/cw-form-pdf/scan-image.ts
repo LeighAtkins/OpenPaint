@@ -32,7 +32,7 @@ export function toGray(
 }
 
 /** Bilinear resample of a region (pixel coordinates) to the given size. */
-function resample(
+export function resample(
   img: GrayImage,
   x0: number,
   y0: number,

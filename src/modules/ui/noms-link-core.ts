@@ -778,6 +778,8 @@ export interface DropValue {
 
 /** Flag on every value read by OCR from a scan. */
 export const OCR_FLAG = 'Read by OCR, check it';
+/** OCR values read at least this surely are not flagged (as OCR_CONFIDENT in read-customer-pdf). */
+const OCR_CONFIDENT = 0.8;
 
 export type DropFlagKind =
   | 'not-in-pdf'
@@ -1205,6 +1207,8 @@ export interface CustomerPdfLike {
       section?: string;
       review?: string[];
       thumb?: string;
+      /** 0..1, OCR only. */
+      confidence?: number;
     }>;
     unit: DropUnit;
     unitAssumed: boolean;
@@ -1265,7 +1269,7 @@ export function customerPdfToGroups(result: CustomerPdfLike): CustomerDropGroup[
           text: v.text || parsed.text,
           ...(v.review?.length ? { review: v.review } : {}),
           ...(v.thumb ? { thumb: v.thumb } : {}),
-          ...(v.from === 'ocr' ? { ocr: true } : {}),
+          ...(v.from === 'ocr' && !((v.confidence ?? 0) >= OCR_CONFIDENT) ? { ocr: true } : {}),
         });
       }
       if (!values.length && !notes.length) continue;

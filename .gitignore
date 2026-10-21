@@ -114,6 +114,8 @@ Memory
 
 # Onnx model binaries
 *.onnx
+# except the scan OCR recogniser, served from the app (PaddleOCR PP-OCRv4, Apache 2.0)
+!public/ocr/*.onnx
 
 # Template stays tracked even with .env* ignored
 !.env.example

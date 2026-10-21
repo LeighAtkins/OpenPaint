@@ -37,6 +37,8 @@ import { loadTemplateGeometries, type TemplateGeometryIndex } from './template-g
 
 /** Flag on every value read by OCR. */
 export const OCR_REVIEW = 'Read by OCR, check it';
+/** OCR values read at least this surely are not flagged for checking. */
+export const OCR_CONFIDENT = 0.8;
 
 export const SOFAPAINT_REVIEW_PREFIX = 'SOFAPAINT_REVIEW_V1:';
 
@@ -53,7 +55,7 @@ export interface CustomerPdfValue {
   from: 'row' | 'template' | 'text' | 'ocr';
   /** Cushion tables: "Box seat cushions, type 1". */
   section?: string;
-  /** Reasons a person should check this value (always set for OCR). */
+  /** Reasons a person should check this value (OCR below OCR_CONFIDENT included). */
   review?: string[];
   /** Picture of the box the value was read from (scans), for the review strip. */
   thumb?: string;
@@ -186,7 +188,8 @@ function toCustomerValues(
       notes.push(`${where}: "${v.text}" (${v.review[v.review.length - 1]})`);
       continue;
     }
-    const review = from === 'ocr' ? [OCR_REVIEW, ...v.review] : v.review;
+    const unsure = from === 'ocr' && !(v.confidence >= OCR_CONFIDENT);
+    const review = unsure ? [OCR_REVIEW, ...v.review] : v.review;
     values.push({
       label: v.label,
       value: v.value,
