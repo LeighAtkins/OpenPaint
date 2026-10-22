@@ -111,9 +111,17 @@ export function updateElementFromFabric(
     if (!obj) continue;
 
     // For lines, read world-space endpoint positions
-    if (obj.type === 'line') {
-      const points = obj.calcLinePoints();
-      const matrix = obj.calcTransformMatrix();
+    // Arrow measurements are groups. The child line's full matrix includes
+    // group translation/rotation/scaling; the group centre is not an endpoint.
+    const line =
+      obj.type === 'line'
+        ? obj
+        : obj.type === 'group'
+          ? obj.getObjects().find((child: any) => child.type === 'line')
+          : undefined;
+    if (line) {
+      const points = line.calcLinePoints();
+      const matrix = line.calcTransformMatrix();
 
       const epIndex = element.endpoints.indexOf(ep);
       const worldPt =
@@ -124,7 +132,18 @@ export function updateElementFromFabric(
       ep.point = canvasToMos(worldPt, imageRect);
     }
     // For other objects (labels, markers), read left/top
-    else if (obj.left !== undefined && obj.top !== undefined) {
+    else if (
+      obj.type === 'path' &&
+      Array.isArray(obj.customPoints) &&
+      obj.customPoints.length >= 2
+    ) {
+      // FabricControls keeps customPoints in world coordinates after baking edits.
+      element.curvePoints = obj.customPoints.map((point: any) => canvasToMos(point, imageRect));
+      ep.point =
+        element.curvePoints[
+          element.endpoints.indexOf(ep) === 0 ? 0 : element.curvePoints.length - 1
+        ];
+    } else if (obj.left !== undefined && obj.top !== undefined) {
       ep.point = canvasToMos({ x: obj.left, y: obj.top }, imageRect);
     }
   }
