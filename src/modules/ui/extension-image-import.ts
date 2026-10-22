@@ -336,9 +336,15 @@ function chooseImportDestination(
     const card = document.createElement('section');
     card.className = 'gorgias-import-destination-card';
     const title = document.createElement('h2');
-    title.textContent = 'Where should these photos go?';
+    // A NOMS order usually arrives with a project already made for it.
+    const noms = isNomsContext(context);
+    title.textContent = noms
+      ? `Which project for NOMS #${context.nomsOrder}?`
+      : 'Where should these photos go?';
     const intro = document.createElement('p');
-    intro.textContent = 'Choose a project before SofaPaint changes the open workspace.';
+    intro.textContent = noms
+      ? 'This order already has a SofaPaint project. Open it to carry on, or start a new one.'
+      : 'Choose a project before SofaPaint changes the open workspace.';
     const ticket = document.createElement('div');
     ticket.className = 'gorgias-import-ticket';
     const ticketTitle = document.createElement('strong');
@@ -461,7 +467,7 @@ function chooseImportDestination(
       render();
       const openButton = document.createElement('button');
       openButton.type = 'button';
-      openButton.textContent = 'Open selected and add photos';
+      openButton.textContent = noms ? 'Open selected' : 'Open selected and add photos';
       openButton.dataset.importDestination = 'existing';
       openButton.addEventListener('click', () => {
         if (selectedId) finish({ action: 'existing', projectId: selectedId });
@@ -1162,7 +1168,10 @@ export function initExtensionImageImport(uploadManager: ExtensionUploadManager):
       notifyOpenPaint({
         kind: 'loading',
         title: isNomsContext(ticketContext) ? `NOMS #${ticketContext.nomsOrder}` : 'Gorgias',
-        message: `Preparing ${Math.max(0, Number(payload.total) || 0)} photos`,
+        message:
+          Number(payload.total) > 0
+            ? `Preparing ${Math.max(0, Number(payload.total) || 0)} photos`
+            : 'Opening the order',
         progress: 0,
       });
       return;

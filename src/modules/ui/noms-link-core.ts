@@ -1550,24 +1550,38 @@ export function customerPdfToGroups(result: CustomerPdfLike): CustomerDropGroup[
   const out: CustomerDropGroup[] = [];
   let runIndex = 0;
   let lastSource = '';
+  // The form run the last page started: a shared cushion page joins it.
+  let lastRun: { codes: string[]; title: string } | null = null;
   for (const page of result.pages || []) {
     const template = page.template;
     const confident = Boolean(template) && page.confidence >= TEMPLATE_CONFIDENCE;
     // A form run: consecutive pages printed from the same library PDF.
-    const source = confident
+    let source = confident
       ? template!.source ||
         (template!.id || '').replace(/-p\d+$/, '') ||
         (template!.modelCodes || []).join(',')
       : '';
-    if (source !== lastSource) {
-      runIndex += 1;
-      lastSource = source;
-    }
-    const codes = confident
+    let codes = confident
       ? template!.modelCodes?.length
         ? template!.modelCodes
         : result.modelCodes || []
       : [];
+    let runTitle = source
+      ? normaliseCode((template!.modelCodes || [])[0]) ||
+        source.replace(/^.*\//, '').replace(/\.pdf$/i, '')
+      : '';
+    // The cushion sheet is the same on every form, so whichever form it
+    // matched, it belongs to the frame run before it (see attachCushionPages).
+    if (source && template!.view === 'cushion' && lastSource && lastRun) {
+      source = lastSource;
+      codes = lastRun.codes;
+      runTitle = lastRun.title;
+    }
+    if (source !== lastSource) {
+      runIndex += 1;
+      lastSource = source;
+      lastRun = source ? { codes, title: runTitle } : null;
+    }
     // Cushion tables each make their own group: "Box seat cushions, type 1".
     const sections = Array.from(new Set((page.values || []).map(v => v.section || '')));
     for (const section of sections) {
@@ -1618,14 +1632,7 @@ export function customerPdfToGroups(result: CustomerPdfLike): CustomerDropGroup[
         modelCodes: codes.map(normaliseCode).filter(Boolean),
         view: confident ? template!.view || null : null,
         views: confident ? template!.views || [] : [],
-        ...(source
-          ? {
-              run: `${result.fileName}#${runIndex}`,
-              runTitle:
-                normaliseCode((template!.modelCodes || [])[0]) ||
-                source.replace(/^.*\//, '').replace(/\.pdf$/i, ''),
-            }
-          : {}),
+        ...(source ? { run: `${result.fileName}#${runIndex}`, runTitle } : {}),
       });
     }
   }

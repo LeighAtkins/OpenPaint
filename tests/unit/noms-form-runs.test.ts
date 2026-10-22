@@ -5,6 +5,10 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { readCustomerPdfDocument } from '../../src/modules/cw-form-pdf/read-customer-pdf';
+import {
+  attachCushionPages,
+  type PdfTemplate,
+} from '../../src/modules/cw-form-pdf/pdf-template-match';
 import { PDF_TEMPLATES } from '../../src/modules/ui/pdf-template-registry';
 import { parseCustomerValue } from '../../src/modules/utils/customer-value';
 import {
@@ -259,6 +263,138 @@ describe('form runs to NOMS models', () => {
       /filled by 2 forms/
     );
   });
+});
+
+// The cushion sheet is the same on every CW form: on a scan it was identified
+// as "CS3-SSA-HB-R page 6" and set aside instead of following the chaise frame
+// (pages 4 to 5) before it.
+describe('shared cushion pages follow the frame run before them', () => {
+  const byId = (id: string): PdfTemplate => {
+    const t = PDF_TEMPLATES.find(x => x.id === id);
+    if (!t) throw new Error(`no template ${id}`);
+    return t;
+  };
+  const cs3 = (n: number) => byId(`sectionals-cs3-ssa-hb-r-p${n}`);
+  const cs5 = (n: number) => byId(`sectionals-cs5b-sa2-hb-l-p${n}`);
+  // As the scan reader picked them: page 6 took the CS3 cushion page (most votes).
+  const scanned = [cs3(1), cs3(2), cs3(3), cs5(1), cs5(2), cs3(3)].map((template, i) => ({
+    pageNumber: i + 1,
+    template,
+    confidence: 0.9,
+  }));
+
+  it('frame A (1, 2), cushion 3, frame B (4, 5), cushion 6: 3 joins A, 6 joins B', () => {
+    const pages = attachCushionPages(scanned, PDF_TEMPLATES);
+    expect(pages.map(p => p.template!.source)).toEqual([
+      ...Array(3).fill('Sectionals/CS3-SSA-HB-R.pdf'),
+      ...Array(3).fill('Sectionals/CS5B-SA2-HB-L.pdf'),
+    ]);
+    expect(pages[2].template).toBe(cs3(3)); // already its frame's own page
+    expect(pages[5].template!.id).toBe('sectionals-cs5b-sa2-hb-l-p3');
+    expect(pages[5].template!.modelCodes).toEqual(['CS5B-SA2-HB-L']);
+    expect(pages[5].template!.attachedTo).toBe('sectionals-cs5b-sa2-hb-l-p2');
+    expect(scanned[5].template).toBe(cs3(3)); // input untouched
+  });
+
+  it("takes the frame's codes when its file has no cushion page, capped at its confidence", () => {
+    const frame: PdfTemplate = {
+      ...cs5(2),
+      id: 'solo-p1',
+      source: 'Solo/CS9-X-L.pdf',
+      modelCodes: ['CS9-X-L'],
+    };
+    const pages = attachCushionPages(
+      [
+        { template: frame, confidence: 0.7 },
+        { template: cs3(3), confidence: 0.9 },
+      ],
+      PDF_TEMPLATES
+    );
+    expect(pages[1].template).toMatchObject({
+      id: cs3(3).id,
+      view: 'cushion',
+      source: 'Solo/CS9-X-L.pdf',
+      modelCodes: ['CS9-X-L'],
+      attachedTo: 'solo-p1',
+    });
+    expect(pages[1].confidence).toBe(0.7);
+  });
+
+  it('keeps a cushion page with no frame page before it as it was', () => {
+    const lone = [{ template: cs3(3), confidence: 0.9 }];
+    expect(attachCushionPages(lone, PDF_TEMPLATES)[0]).toBe(lone[0]);
+    const afterUnknown = [
+      { template: cs5(1), confidence: 0.9 },
+      { template: null, confidence: 0 },
+      { template: cs3(3), confidence: 0.9 },
+    ];
+    expect(attachCushionPages(afterUnknown, PDF_TEMPLATES)[2].template).toBe(cs3(3));
+  });
+
+  // Read values as the panel gets them, page 6 still on the CS3 cushion template.
+  const value = (label: string, text: string, section?: string) => ({
+    label,
+    value: parseCustomerValue(text),
+    text,
+    ...(section ? { section } : {}),
+  });
+  const frameValues = (labels: string) => labels.split(' ').map(l => value(l, '10'));
+  const cushion = (section: string, labels: string) =>
+    labels.split(' ').map(l => value(l, '20', section));
+  const values = [
+    frameValues('A1 A2 A3 B1 B2 C1 C2 D1 M1 M2'),
+    frameValues('E1 F1 F2 F3 F4 G1 G2 H1 H2 H3 J1 L1 L2 L3'),
+    [
+      ...cushion('Box seat cushions, type 1', 'A B C D'),
+      ...cushion('Box back cushions, type 1', 'A B C D'),
+    ],
+    frameValues('A1 A2 A3 B1 B2 C1 C3 D1 E1 F1 F2 F3 F4 G1 G2 H1 H2 H3'),
+    frameValues('J1 L1 L2 L3 M1 M2 M3'),
+    cushion('Box back cushions, type 1', 'A B C'),
+  ];
+  const result = (withAttach: boolean): CustomerPdfLike => ({
+    fileName: 'scan.pdf',
+    modelCodes: ['CS3-SSA-HB-R', 'CS5B-SA2-HB-L'],
+    confidence: 0.9,
+    pages: (withAttach ? attachCushionPages(scanned, PDF_TEMPLATES) : scanned).map((p, i) => ({
+      pageNumber: p.pageNumber,
+      template: p.template,
+      confidence: p.confidence,
+      values: values[i],
+      unit: 'inch' as const,
+      unitAssumed: false,
+    })),
+  });
+
+  for (const withAttach of [true, false])
+    it(`page 6 fills the chaise back cushion, never the loveseat frame (${withAttach ? 'reader' : 'panel'} attaches)`, () => {
+      const groups = customerPdfToGroups(result(withAttach));
+      const page6 = groups.filter(g => g.pageNumber === 6);
+      expect(page6).toHaveLength(1);
+      expect(page6[0]).toMatchObject({
+        run: groups.find(g => g.pageNumber === 4)!.run,
+        runTitle: 'CS5B-SA2-HB-L',
+        modelCodes: ['CS5B-SA2-HB-L'],
+      });
+      expect(groups.find(g => g.pageNumber === 3)!.run).toBe(groups[0].run);
+      const asLike = groups.map(g => ({
+        ...g,
+        labels: [...g.values.map(v => v.label), ...g.notes.map(n => n.label)],
+      }));
+      const match = matchPdfRuns(asLike, alanaModels, alanaTitles);
+      expect(match.review).toEqual([]);
+      expect(match.runs.map(r => [r.title, r.pages, r.product])).toEqual([
+        ['CS3-SSA-HB-R', [1, 2, 3], '1'],
+        ['CS5B-SA2-HB-L', [4, 5, 6], '0'],
+      ]);
+      const i6 = groups.indexOf(page6[0]);
+      expect(match.targets[i6]).toEqual(['0:2']); // CS5L-SSA-L Back Cushion
+      const mapping = autoMapping(
+        asLike[i6].labels,
+        alanaModels.filter(m => match.targets[i6].includes(m.key))
+      );
+      expect(mapping).toEqual({ A: 'A', B: 'B', C: 'C' });
+    });
 });
 
 describe.skipIf(!haveAlana)('Alana typed PDF end to end', () => {

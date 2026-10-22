@@ -32,6 +32,11 @@ export interface PdfTemplate {
   language: PdfLanguage;
   /** Set when no CW code was printed or in the file name, so the code is the file name. */
   codeFromFileName?: boolean;
+  /**
+   * Set on a shared cushion page that took the form of the frame page before
+   * it (attachCushionPages): the id of that frame page's template.
+   */
+  attachedTo?: string;
 }
 
 /** A library SVG diagram and where the app serves it. */
@@ -388,4 +393,54 @@ function matchSingleDocument(
       .map(r => ({ source: r.source, score: Math.round(r.score * 1000) / 1000 })),
     rival: rival ? { source: rival.source, score: Math.round(rival.score * 1000) / 1000 } : null,
   };
+}
+
+/**
+ * The cushion sheet is the same on every CW form, so on its own it is
+ * identified by whichever form scores first. A cushion page belongs to the
+ * nearest frame page before it in the same PDF (cushion pages between them
+ * follow the same frame): it takes that frame's library file and model codes,
+ * using the file's own cushion page when it has one with the same layout, and
+ * its confidence is capped at the frame's. A cushion page with no frame page
+ * before it (or an unidentified page in between) is left as it was.
+ */
+export function attachCushionPages<T extends { template: PdfTemplate | null; confidence: number }>(
+  pages: readonly T[],
+  templates: readonly PdfTemplate[]
+): T[] {
+  const out = pages.slice();
+  let frame: { template: PdfTemplate; confidence: number } | null = null;
+  for (let i = 0; i < out.length; i += 1) {
+    const page = out[i];
+    const template = page.template;
+    if (!template) {
+      frame = null;
+      continue;
+    }
+    if (template.view !== 'cushion') {
+      frame = { template, confidence: page.confidence };
+      continue;
+    }
+    if (!frame || template.source === frame.template.source) continue;
+    const from = frame.template;
+    const own = templates.find(
+      t => t.source === from.source && t.view === 'cushion' && sameSet(t.letters, template.letters)
+    );
+    const attached: PdfTemplate = own
+      ? { ...own, attachedTo: from.id }
+      : {
+          ...template,
+          source: from.source,
+          modelCodes: [...from.modelCodes],
+          language: from.language,
+          attachedTo: from.id,
+          ...(from.codeFromFileName ? { codeFromFileName: true } : {}),
+        };
+    out[i] = {
+      ...page,
+      template: attached,
+      confidence: Math.min(page.confidence, frame.confidence),
+    };
+  }
+  return out;
 }

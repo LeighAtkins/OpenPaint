@@ -146,6 +146,8 @@ const REQUEST_SOURCE = 'sofapaint-noms';
 const REPLY_SOURCE = 'omnoms-noms';
 /** localStorage key: the unit a person types in, remembered per browser. */
 const INPUT_UNIT_KEY = 'nomsLinkInputUnit';
+/** localStorage key: whether "More tools" is open. */
+const TOOLS_KEY = 'nomsLinkTools';
 
 const state: {
   order: string;
@@ -181,6 +183,8 @@ const state: {
   lastGroups: CwFormValueGroup[];
   /** Library diagrams for a PDF's model when NOMS has no form for the order. */
   diagramOffers: DiagramOffer[];
+  /** "More tools" open: drawing, linking and reload controls. Remembered per browser. */
+  tools: boolean;
 } = {
   order: '',
   content: null,
@@ -206,6 +210,13 @@ const state: {
   originals: [],
   lastGroups: [],
   diagramOffers: [],
+  tools: (() => {
+    try {
+      return localStorage.getItem('nomsLinkTools') === '1';
+    } catch {
+      return false;
+    }
+  })(),
 };
 let initialized = false;
 let requestCounter = 0;
@@ -928,8 +939,8 @@ function takePdfFiles(files: FileList | File[] | null): void {
   }
   void readPdfs(pdfs);
 }
-function pdfDropZone(): HTMLElement {
-  const zone = el('div', `nml-drop${state.reading ? ' busy' : ''}`);
+function pdfDropZone(compact = false): HTMLElement {
+  const zone = el('div', `nml-drop${state.reading ? ' busy' : ''}${compact ? ' compact' : ''}`);
   zone.setAttribute('role', 'button');
   zone.tabIndex = 0;
   if (state.reading) {
@@ -937,10 +948,12 @@ function pdfDropZone(): HTMLElement {
     zone.setAttribute('aria-busy', 'true');
     return zone;
   }
-  zone.append(
-    el('strong', '', "Drop the customer's measuring PDF here"),
-    el('span', '', 'CW form or SofaPaint check request (or click to choose)')
-  );
+  if (compact) zone.append(el('span', '', 'Drop another PDF here, or click to choose'));
+  else
+    zone.append(
+      el('strong', '', "Drop the customer's measuring PDF here"),
+      el('span', '', 'Typed, flattened or scanned. Or click to choose a file.')
+    );
   const input = el('input');
   input.type = 'file';
   input.accept = 'application/pdf,.pdf';
@@ -1234,6 +1247,7 @@ async function readPdfs(files: File[]): Promise<void> {
     dropPicks,
     names
   );
+  state.onlyFlagged = Boolean(currentReview()?.toCheck);
   // The CW diagrams also go into the project as images with their lines.
   const picks = entry()?.dropReview?.picks || {};
   for (const file of addImages ? cwFiles : []) {
@@ -1476,14 +1490,17 @@ function chooseMapping(
       el(
         'p',
         '',
-        `Check what each diagram fills. Letters that match the form are filled as they are; only the ones that need a choice are listed. Where the customer wrote two numbers, pick the one to use (the ${RANGE_DEFAULT} one is picked to start). Values are converted to ${state.unit === 'in' ? 'inches' : 'cm'}.`
+        `Which model does each PDF page fill? Letters that match the form fill as they are; only letters needing a choice are listed. Two numbers on one letter: pick one (the ${RANGE_DEFAULT} one is ticked). Values go to NOMS in ${state.unit === 'in' ? 'inches' : 'cm'}.`
       )
     );
     if (reasons.length) {
       // Why the window opened by itself; the best guess is already ticked.
       const why = el('ul', 'nml-map-why');
       for (const reason of reasons) why.appendChild(el('li', '', reason));
-      card.append(el('p', 'nml-map-none', 'The suggestion is ticked; please check it:'), why);
+      card.append(
+        el('p', 'nml-map-none', 'The best guess is ticked. Check it, then press Fill in the form:'),
+        why
+      );
     }
     const state2 = groups.map((group, i) => ({
       group,
@@ -1975,8 +1992,8 @@ async function sendToNoms(): Promise<void> {
   const flags = review ? dropFlagLines(review, state.models) : [];
   if (flags.length && !current.skipFlagConfirm) {
     const answer = await askDialog({
-      title: `Save with ${flags.length} flagged value${flags.length === 1 ? '' : 's'}?`,
-      text: 'These are marked ⚠ in the panel. They are saved as they are; nothing is left out.',
+      title: `Send with ${flags.length} value${flags.length === 1 ? '' : 's'} still marked ⚠?`,
+      text: 'They go to NOMS as they are now. Cancel to look at them first.',
       list: flags,
       tick: "Don't ask again for this order",
       buttons: [
@@ -2207,6 +2224,20 @@ function ensureStyles(): void {
     #${PANEL_ID} .nml-review.warn { background: #fff7e6; border-color: #f5d49a; }
     #${PANEL_ID} .nml-review .nml-row { margin: 0; }
     #${PANEL_ID} .nml-review strong { margin-right: auto; }
+    #${PANEL_ID} .nml-review .nml-files { flex-basis: 100%; font-weight: 600; color: #334155; word-break: break-all; }
+    #${PANEL_ID} .nml-step { display: flex; gap: 8px; align-items: center; margin: 14px 0 4px; }
+    #${PANEL_ID} .nml-step:first-child { margin-top: 2px; }
+    #${PANEL_ID} .nml-step-n { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+      border-radius: 999px; background: #f47636; color: #fff; font-size: 11px; font-weight: 700; }
+    #${PANEL_ID} .nml-step.done .nml-step-n { background: #16a34a; }
+    #${PANEL_ID} .nml-step strong { flex: 1; font-size: 13px; }
+    #${PANEL_ID} .nml-step button.nml-unit { min-width: 38px; padding: 0 8px; }
+    #${PANEL_ID} .nml-step button.nml-unit.on { background: #0f172a; border-color: #0f172a; color: #fff; }
+    #${PANEL_ID} .nml-next { margin-top: 8px; padding: 6px 8px; border-radius: 6px; background: #eff6ff; color: #1e3a8a; }
+    #${PANEL_ID} .nml-tools { margin-top: 12px; padding-top: 6px; border-top: 1px dashed #e2e8f0; }
+    #${PANEL_ID} button.nml-tools-toggle { height: auto; padding: 2px 0; border: 0; background: none; color: #64748b; font-weight: 600; }
+    #${PANEL_ID} .nml-grid.simple { grid-template-columns: 14px 22px 74px 1fr; }
+    #${PANEL_ID} .nml-drop.compact { flex-direction: row; justify-content: center; margin: 6px 0; padding: 6px 10px; border-width: 1px; font-size: 11px; }
     #${PANEL_ID} .nml-review button.nml-unit.on { background: #0f172a; border-color: #0f172a; color: #fff; }
     #${PANEL_ID} .nml-extra { display: grid; grid-template-columns: 14px 26px 1fr auto; gap: 4px 6px; align-items: center; margin-top: 4px; }
     #${PANEL_ID} .nml-extra select { max-width: 110px; }
@@ -2412,14 +2443,53 @@ function render(): void {
     banner.appendChild(row);
     body.appendChild(banner);
   }
-  const offerRow = diagramOfferRow();
-  if (offerRow) body.appendChild(offerRow);
   if (!state.content) {
+    const offerRow = diagramOfferRow();
+    if (offerRow) body.appendChild(offerRow);
     if (!state.loading && !state.signIn)
       body.appendChild(actionButton('Load from NOMS', () => loadForm(), true));
     panel.appendChild(body);
     return;
   }
+
+  const review = currentReview();
+  const toolsOn = state.tools;
+  const sent = Boolean(current.lastSentAt);
+  const step = (n: string, text: string, done = false): HTMLElement => {
+    const head = el('div', `nml-step${done ? ' done' : ''}`);
+    head.append(el('span', 'nml-step-n', done ? '✓' : n), el('strong', '', text));
+    return head;
+  };
+
+  // Step 1: the customer's PDF. Once read, the zone shrinks to what was read.
+  body.appendChild(
+    step('1', review ? 'PDF read' : "Drop the customer's measuring PDF", Boolean(review))
+  );
+  if (review) body.appendChild(reviewStrip(review));
+  body.appendChild(pdfDropZone(Boolean(review)));
+  const offerRow = diagramOfferRow();
+  if (offerRow) body.appendChild(offerRow);
+
+  // Step 2: check the values. Only the letters marked ⚠ show until "All" is pressed.
+  const flaggedRows = review ? Object.values(review.rows).filter(r => r.flags.length).length : 0;
+  const check = step('2', flaggedRows ? `Check the ${flaggedRows} marked ⚠` : 'Check the values');
+  if (flaggedRows) {
+    const all = state.models.reduce((n, m) => n + m.fields.length, 0);
+    for (const [on, text] of [
+      [true, 'Only ⚠'],
+      [false, `All ${all}`],
+    ] as Array<[boolean, string]>) {
+      const button = el('button', `nml-unit${state.onlyFlagged === on ? ' on' : ''}`, text);
+      button.type = 'button';
+      button.setAttribute('aria-pressed', state.onlyFlagged === on ? 'true' : 'false');
+      button.addEventListener('click', () => {
+        state.onlyFlagged = on;
+        render();
+      });
+      check.appendChild(button);
+    }
+  }
+  body.appendChild(check);
 
   const typeRow = el('div', 'nml-row nml-type-in');
   typeRow.setAttribute('role', 'group');
@@ -2432,91 +2502,63 @@ function render(): void {
     button.addEventListener('click', () => setInputUnit(unit));
     typeRow.appendChild(button);
   }
-  if (inputUnit() !== state.unit)
-    typeRow.appendChild(
-      el('span', 'nml-hint', `saved to NOMS in ${state.unit === 'in' ? 'inches' : 'cm'}`)
-    );
+  typeRow.appendChild(
+    el(
+      'span',
+      'nml-hint',
+      inputUnit() === state.unit
+        ? `the form is in ${state.unit === 'in' ? 'inches' : 'cm'}`
+        : `saved to NOMS in ${state.unit === 'in' ? 'inches' : 'cm'}`
+    )
+  );
   body.appendChild(typeRow);
 
   const viewId = currentViewId();
   const boundKey = current.viewBindings?.[viewId] || '';
   const isDiagram = Object.values(current.diagramViews || {}).includes(viewId);
-  const linkRow = el('div', 'nml-row');
-  linkRow.appendChild(el('span', '', 'This image:'));
-  const select = el('select');
-  select.setAttribute('aria-label', 'Form model for this image');
-  const none = el('option', '', 'Not linked');
-  none.value = '';
-  select.appendChild(none);
-  for (const model of state.models) {
-    const option = el('option', '', model.title);
-    option.value = model.key;
-    option.selected = model.key === boundKey;
-    select.appendChild(option);
-  }
-  select.disabled = isDiagram || !viewId;
-  select.addEventListener('change', () => {
-    linkView(viewId, select.value);
-    render();
-  });
-  linkRow.appendChild(select);
-  body.appendChild(linkRow);
-
-  const unitRow = el('div', 'nml-row');
-  unitRow.appendChild(el('span', '', `Form unit: ${state.unit === 'in' ? 'inches' : 'cm'}`));
-  body.appendChild(unitRow);
-  body.appendChild(pdfDropZone());
-  const review = currentReview();
-  if (review) body.appendChild(reviewStrip(review));
   const recheckStrip = nomsRecheckStrip(nomsFormState);
   if (recheckStrip) body.appendChild(recheckStrip);
-
-  const linkRow2 = el('div', 'nml-row');
-  linkRow2.append(
-    actionButton('Suggest links', () => suggestLinks()),
-    el(
-      'span',
-      'nml-hint',
-      "Link a letter to any drawn line when your own letters differ from the form's."
-    )
-  );
-  body.appendChild(linkRow2);
 
   // Boxes are typed and shown in `typed`; values are kept and saved in the form's unit.
   const typed = inputUnit();
   const other = typed === 'in' ? 'cm' : 'in';
   const lines = allLines();
   const dropValues = new Map((current.dropReview?.values || []).map(v => [v.id, v]));
+  const onlyFlagged = state.onlyFlagged && Boolean(review?.toCheck);
+  let shownRows = 0;
   for (const model of state.models) {
     const flaggedHere = model.fields.some(f => review?.rows[`${model.key}|${f}`]?.flags.length);
-    if (state.onlyFlagged && review && !flaggedHere) continue;
+    if (onlyFlagged && !flaggedHere) continue;
     const box = el('div', 'nml-model');
     box.appendChild(el('h3', '', model.title));
-    const tools = el('div', 'nml-row');
-    const diagramView = current.diagramViews?.[model.key];
-    if (diagramView && projectManager()?.views?.[diagramView]) {
-      tools.appendChild(
-        actionButton('Go to diagram', () => projectManager()?.switchView?.(diagramView, true))
-      );
-    } else {
-      tools.appendChild(actionButton('Add CW diagram', () => addDiagram(model.key)));
+    if (toolsOn) {
+      const tools = el('div', 'nml-row');
+      const diagramView = current.diagramViews?.[model.key];
+      if (diagramView && projectManager()?.views?.[diagramView]) {
+        tools.appendChild(
+          actionButton('Go to diagram', () => projectManager()?.switchView?.(diagramView, true))
+        );
+      } else {
+        tools.appendChild(actionButton('Add CW diagram', () => addDiagram(model.key)));
+      }
+      if (viewId && !isDiagram) {
+        tools.appendChild(
+          actionButton('Put lines on this image', () => placeLinesOnCurrent(model.key))
+        );
+      }
+      box.appendChild(tools);
     }
-    if (viewId && !isDiagram) {
-      tools.appendChild(
-        actionButton('Put lines on this image', () => placeLinesOnCurrent(model.key))
-      );
-    }
-    box.appendChild(tools);
     const values = state.values[model.key] || {};
     const issues = measureIssues(
       model.rules,
       Object.fromEntries(model.fields.map(f => [f, parseMeasure(values[f] ?? '') ?? ''])),
       state.unit
     );
-    const grid = el('div', 'nml-grid');
+    const grid = el('div', `nml-grid${toolsOn ? '' : ' simple'}`);
     for (const field of model.fields) {
       const row = review?.rows[`${model.key}|${field}`];
-      if (state.onlyFlagged && review && !row?.flags.length) continue;
+      if (onlyFlagged && !row?.flags.length) continue;
+      shownRows += 1;
       const value = values[field] ?? '';
       const parsed = parseMeasure(value);
       const input = el('input');
@@ -2536,8 +2578,14 @@ function render(): void {
       const letter = letterLines(model.key, field, lines);
       const onThisImage = letter.lines.filter(line => line.viewId === viewId);
       const feeding = letter.linked ? letter.lines : onThisImage;
+      // Rule messages wait for a value: an empty box is not "too small". A
+      // flagged row lists its reasons underneath, so the hint keeps to the conversion.
       const message =
-        parsed === null ? 'Not a number' : issues.errors[field] || issues.warnings[field] || '';
+        parsed === null
+          ? 'Not a number'
+          : value.trim() && !row?.flags.length
+            ? issues.errors[field] || issues.warnings[field] || ''
+            : '';
       const hint = el(
         'span',
         `nml-hint${parsed === null || issues.errors[field] ? ' error' : message ? ' warn' : ''}`,
@@ -2548,29 +2596,6 @@ function render(): void {
               ? 'no value on the line'
               : '')
       );
-      let draw: HTMLElement;
-      if (letter.linked && letter.link) {
-        const where = `${viewTitle(letter.link.viewId)} ${letter.link.label}`;
-        draw = el(
-          'span',
-          `nml-line${letter.lines.length ? '' : ' gone'}`,
-          letter.lines.length ? `✓ ${where}` : `${where} is gone`
-        );
-        draw.title = letter.lines.length
-          ? `${field} follows the line ${where}`
-          : `The line ${where} is no longer in the project. Unlink or pick another.`;
-      } else if (onThisImage.length) {
-        draw = el('span', 'nml-line', '✓ line');
-      } else {
-        draw = actionButton('Draw', () => armLetter(model.key, field));
-      }
-      const link = el('button', `nml-link-btn${letter.linked ? ' on' : ''}`, '⛓');
-      link.type = 'button';
-      link.title = letter.linked
-        ? `Change or unlink the line for ${field}`
-        : `Link ${field} to a drawn line`;
-      link.setAttribute('aria-label', link.title);
-      link.addEventListener('click', () => chooseLine(model.key, field));
       const mark = el(
         'span',
         `nml-mark${row ? (row.flags.length ? ' warn' : ' ok') : ''}`,
@@ -2578,7 +2603,33 @@ function render(): void {
       );
       if (row)
         mark.title = row.flags.length ? row.flags.map(f => f.reason).join('\n') : 'Matched the PDF';
-      grid.append(mark, el('span', 'nml-key', field), input, hint, draw, link);
+      grid.append(mark, el('span', 'nml-key', field), input, hint);
+      if (toolsOn) {
+        let draw: HTMLElement;
+        if (letter.linked && letter.link) {
+          const where = `${viewTitle(letter.link.viewId)} ${letter.link.label}`;
+          draw = el(
+            'span',
+            `nml-line${letter.lines.length ? '' : ' gone'}`,
+            letter.lines.length ? `✓ ${where}` : `${where} is gone`
+          );
+          draw.title = letter.lines.length
+            ? `${field} follows the line ${where}`
+            : `The line ${where} is no longer in the project. Unlink or pick another.`;
+        } else if (onThisImage.length) {
+          draw = el('span', 'nml-line', '✓ line');
+        } else {
+          draw = actionButton('Draw', () => armLetter(model.key, field));
+        }
+        const link = el('button', `nml-link-btn${letter.linked ? ' on' : ''}`, '⛓');
+        link.type = 'button';
+        link.title = letter.linked
+          ? `Change or unlink the line for ${field}`
+          : `Link ${field} to a drawn line`;
+        link.setAttribute('aria-label', link.title);
+        link.addEventListener('click', () => chooseLine(model.key, field));
+        grid.append(draw, link);
+      }
       if (row?.flags.length) {
         const why = el('div', 'nml-why');
         why.appendChild(el('span', '', row.flags.map(f => f.reason).join('; ')));
@@ -2609,8 +2660,16 @@ function render(): void {
     box.appendChild(grid);
     body.appendChild(box);
   }
+  if (!shownRows && onlyFlagged)
+    body.appendChild(
+      el('div', 'nml-hint', 'Nothing left to check. Press All to see every letter.')
+    );
 
+  // Step 3: send. One button saves to NOMS, makes the cm PDF and shows the SZ summary.
   const unsaved = changedFields(state.saved, state.values);
+  body.appendChild(
+    step('3', sent && !unsaved.length ? 'Sent to NOMS' : 'Send to NOMS', sent && !unsaved.length)
+  );
   const footer = el('div', 'nml-row nml-send');
   const send = actionButton(
     state.sending ? 'Sending…' : unsaved.length ? `Send ${unsaved.length} to NOMS` : 'Send to NOMS',
@@ -2628,17 +2687,11 @@ function render(): void {
     state.confirmTick = tick.checked;
   });
   tickLabel.append(tick, document.createTextNode(' Confirm the form'));
-  footer.append(
-    send,
-    tickLabel,
-    actionButton('Reload from NOMS', async () => {
-      if (unsaved.length && !window.confirm('Replace the values here with what NOMS has?')) return;
-      await loadForm({ preferNoms: true });
-    })
-  );
-  if (current.lastSentAt && !state.sending)
+  tickLabel.title = 'Also mark the form confirmed on NOMS';
+  footer.append(send, tickLabel);
+  if (sent && !state.sending)
     footer.appendChild(actionButton('Summary', () => showSummary(current.cmPdfName || '')));
-  footer.style.marginTop = '12px';
+  body.appendChild(footer);
   if (state.progress.length) {
     const steps = el('div', 'nml-progress');
     for (const step of state.progress)
@@ -2649,13 +2702,76 @@ function render(): void {
           `${step.kind === 'ok' ? '✓' : step.kind === 'error' ? '✗' : step.kind === 'skip' ? '·' : '…'} ${step.text}`
         )
       );
-    body.appendChild(footer);
     body.appendChild(steps);
-    panel.appendChild(body);
-    restoreFocus(panel, focusId, caret);
-    return;
   }
-  body.appendChild(footer);
+  if (sent && !state.sending && !unsaved.length) {
+    const next = el('div', 'nml-next');
+    next.append(
+      el('b', '', 'Next: '),
+      document.createTextNode(
+        `on the NOMS order page, click SZ draft. ${current.cmPdfName ? `The cm PDF ${current.cmPdfName} is in your Downloads.` : ''}`
+      )
+    );
+    body.appendChild(next);
+  }
+
+  // Everything for drawing and linking lines lives behind one toggle.
+  const toolsHead = el('button', 'nml-tools-toggle', `${toolsOn ? '▾' : '▸'} More tools`);
+  toolsHead.type = 'button';
+  toolsHead.setAttribute('aria-expanded', toolsOn ? 'true' : 'false');
+  toolsHead.title =
+    'Draw letters on photos, link letters to lines, add CW diagrams, reload from NOMS';
+  toolsHead.addEventListener('click', () => {
+    state.tools = !state.tools;
+    try {
+      localStorage.setItem(TOOLS_KEY, state.tools ? '1' : '0');
+    } catch {
+      // storage can be unavailable; the choice then lasts for this page only
+    }
+    render();
+  });
+  const tools = el('div', 'nml-tools');
+  tools.appendChild(toolsHead);
+  if (toolsOn) {
+    const linkRow = el('div', 'nml-row');
+    linkRow.appendChild(el('span', '', 'This image:'));
+    const select = el('select');
+    select.setAttribute('aria-label', 'Form model for this image');
+    const none = el('option', '', 'Not linked');
+    none.value = '';
+    select.appendChild(none);
+    for (const model of state.models) {
+      const option = el('option', '', model.title);
+      option.value = model.key;
+      option.selected = model.key === boundKey;
+      select.appendChild(option);
+    }
+    select.disabled = isDiagram || !viewId;
+    select.addEventListener('change', () => {
+      linkView(viewId, select.value);
+      render();
+    });
+    linkRow.appendChild(select);
+    tools.appendChild(linkRow);
+    const linkRow2 = el('div', 'nml-row');
+    linkRow2.append(
+      actionButton('Suggest links', () => suggestLinks()),
+      actionButton('Reload from NOMS', async () => {
+        if (unsaved.length && !window.confirm('Replace the values here with what NOMS has?'))
+          return;
+        await loadForm({ preferNoms: true });
+      })
+    );
+    tools.appendChild(linkRow2);
+    tools.appendChild(
+      el(
+        'div',
+        'nml-hint',
+        "Draw puts a letter on the current photo; ⛓ links a letter to any drawn line when your own letters differ from the form's. The buttons sit beside each letter above."
+      )
+    );
+  }
+  body.appendChild(tools);
   panel.appendChild(body);
   restoreFocus(panel, focusId, caret);
 }
@@ -2686,19 +2802,13 @@ function reviewStrip(review: DropReview): HTMLElement {
         (missing ? `; ${missing} form letter${missing === 1 ? '' : 's'} not in the PDF` : '')
     )
   );
-  if (review.toCheck) {
-    const filter = el('button', `nml-unit${state.onlyFlagged ? ' on' : ''}`, 'Only ⚠');
-    filter.type = 'button';
-    filter.setAttribute('aria-pressed', state.onlyFlagged ? 'true' : 'false');
-    filter.title = 'Show only the letters to check';
-    filter.addEventListener('click', () => {
-      state.onlyFlagged = !state.onlyFlagged;
-      render();
-    });
-    head.appendChild(filter);
+  const files = Array.from(new Set((entry()?.dropReview?.values || []).map(v => v.file)));
+  if (files.length) head.insertBefore(el('span', 'nml-files', files.join(', ')), head.firstChild);
+  if (state.lastGroups.length) {
+    const change = actionButton('Change matching', () => changeMatching());
+    change.title = 'Pick again which model each PDF page fills';
+    head.appendChild(change);
   }
-  if (state.lastGroups.length)
-    head.appendChild(actionButton('Change matching', () => changeMatching()));
   head.appendChild(
     actionButton('Clear', () => {
       patchEntry({ dropReview: undefined });

@@ -178,7 +178,7 @@ describe.skipIf(!existsSync(resolve(__dirname, '../fixtures/private/ria-filled.p
       const run = sendNomsOrder();
       await until(() => Boolean(document.querySelector('.nml-ask')));
       expect(document.querySelector('.nml-ask h2')?.textContent).toMatch(
-        /^Save with \d+ flagged values\?$/
+        /^Send with \d+ values still marked ⚠\?$/
       );
       (document.querySelector('.nml-ask input[type=checkbox]') as HTMLInputElement).checked = true;
       (document.querySelector('.nml-ask button.primary') as HTMLButtonElement).click();

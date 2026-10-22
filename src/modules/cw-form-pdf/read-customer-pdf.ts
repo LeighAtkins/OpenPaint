@@ -23,7 +23,12 @@ import {
   type PdfPageLike,
 } from './parse-cw-form';
 import { fingerprintPage, type PdfTemplateKind } from './pdf-fingerprint';
-import { matchPdfDocument, type PdfTemplate, type PdfTemplateMatch } from './pdf-template-match';
+import {
+  attachCushionPages,
+  matchPdfDocument,
+  type PdfTemplate,
+  type PdfTemplateMatch,
+} from './pdf-template-match';
 import {
   alignToTemplate,
   IDENTITY_TRANSFORM,
@@ -333,7 +338,7 @@ export async function readCustomerPdfDocument(
   const anyTicked = ticked.find(Boolean) || null;
   const anyOcrUnit = [...scans.values()].map(s => s.unit).find(Boolean) || null;
 
-  const out: CustomerPdfPage[] = pages.map((data, i) => {
+  const readPages: CustomerPdfPage[] = pages.map((data, i) => {
     const scan = scans.get(i);
     const scanPick = scanTemplates.get(i);
     const pageMatch = pageMatches[i];
@@ -380,11 +385,15 @@ export async function readCustomerPdfDocument(
     };
   });
 
+  // A shared cushion page takes the form of the frame page before it.
+  const out = attachCushionPages(readPages, library);
+
   const usedTemplates = out.map(p => p.template).filter(Boolean) as PdfTemplate[];
   const first = usedTemplates[0];
   const scanOnly = !printedIndexes.length;
-  const scanCodes = [...scanTemplates.values()]
-    .map(p => p.template)
+  const scanCodes = [...scanTemplates.keys()]
+    .map(i => out[i].template)
+    .filter((t): t is PdfTemplate => Boolean(t))
     .sort((a, b) => Number(b.view !== 'cushion') - Number(a.view !== 'cushion'))
     .flatMap(t => t.modelCodes);
   const scanConfidences = [...scanTemplates.values()].map(p => p.confidence);
