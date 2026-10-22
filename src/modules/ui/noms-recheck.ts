@@ -20,6 +20,7 @@ import {
   openItems,
   reasonText,
   recheckLabel,
+  recheckLines,
   recheckListText,
   recheckStates,
   resolveItem,
@@ -107,11 +108,11 @@ interface Shown {
 function shownHere(s: NomsFormState): Map<string, Shown> {
   const view = currentViewId();
   const out = new Map<string, Shown>();
-  for (const item of openItems(openRecheck(s))) {
+  for (const { item, line } of recheckLines(rechecks(s), s.letterLines).lines) {
+    if (line.viewId !== view) continue;
     const value = s.values[item.key]?.[item.field] ?? item.value;
     const label = recheckLabel(item.field, value, s.unit, reasonText(item));
-    for (const line of linesFor(s, item))
-      if (line.viewId === view) out.set(line.label, { item, label: line.label, ...label });
+    out.set(line.label, { item, label: line.label, ...label });
   }
   return out;
 }
@@ -131,9 +132,7 @@ function notDrawn(s: NomsFormState): Shown[] {
 }
 /** Views (in project order) holding a line of a ticked letter. */
 function viewsWithTicks(s: NomsFormState): string[] {
-  const views = new Set<string>();
-  for (const item of openItems(openRecheck(s)))
-    for (const line of linesFor(s, item)) views.add(line.viewId);
+  const views = new Set(recheckLines(rechecks(s), s.letterLines).views);
   const order = Object.keys(projectManager()?.views || {});
   return order.filter(v => views.has(v)).concat(Array.from(views).filter(v => !order.includes(v)));
 }

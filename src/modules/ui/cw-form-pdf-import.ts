@@ -266,6 +266,9 @@ export interface CwFormValueGroup {
   /** Template model codes and view, when the page matched the library (readCustomerPdf). */
   modelCodes?: string[];
   view?: string | null;
+  /** Form run (consecutive pages of one library template) and its template name. */
+  run?: string;
+  runTitle?: string;
 }
 
 /** Read the label/value pairs of every diagram in a filled CW measuring PDF. */

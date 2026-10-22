@@ -610,14 +610,230 @@ export interface PdfGroupLike {
   modelCodes?: string[];
   /** The template's view ("frame", "cushion", ...). */
   view?: string | null;
+  /** Page of the PDF the diagram is on. */
+  pageNumber?: number;
+  /**
+   * Form run: consecutive pages printed from one library template ("one
+   * customer form"). Groups sharing it are matched to the same NOMS model.
+   */
+  run?: string;
+  /** The run's template name ("CS3-SSA-HB-R"), for messages and the window. */
+  runTitle?: string;
+}
+
+// ---------------------------------------------------------------- model codes
+// A customer often fills the nearest form there is (a CS3 sofa form for a CS2B
+// loveseat), so a form run is matched to a NOMS product by how alike the codes
+// are: family digits (seat count), side (-L / -R), arm and back tokens.
+
+interface CodeParts {
+  prefix: string;
+  digits: string;
+  side: string;
+  tokens: string[];
+}
+
+function codeParts(code: string): CodeParts {
+  const parts = normaliseCode(code).split('-').filter(Boolean);
+  const head = parts.shift() || '';
+  const m = /^([A-Z]+)(\d*)[A-Z]*$/.exec(head);
+  let side = '';
+  const last = parts[parts.length - 1];
+  if (last && /^(L|R|LEFT|RIGHT|LH|RH)$/.test(last)) side = parts.pop()!.charAt(0);
+  return { prefix: m ? m[1] : head, digits: m ? m[2] : '', side, tokens: parts };
+}
+
+const CODE_WEIGHTS = { prefix: 1, digits: 3, side: 3, token: 2, tokenBase: 1, letters: 1 };
+/** An exact code match beats every similarity score. */
+const CODE_EXACT = 100;
+/** The best product must beat the next by this much to be used without asking. */
+export const CODE_MARGIN = 2;
+/** ...and score at least this much when the form has more than one product. */
+export const CODE_MIN = 3;
+
+/**
+ * How alike two CW model codes are: same family digits (CS5 vs CS2), same
+ * side, shared arm/back tokens (SSA, SA2, HB, ...), plus letter overlap.
+ * Higher is closer; a different side counts against.
+ */
+export function codeSimilarity(a: string, b: string): number {
+  const x = codeParts(a);
+  const y = codeParts(b);
+  if (!x.prefix || !y.prefix) return 0;
+  if (normaliseCode(a) === normaliseCode(b)) return CODE_EXACT;
+  let score = 0;
+  if (x.prefix === y.prefix) score += CODE_WEIGHTS.prefix;
+  if (x.digits && y.digits && x.digits === y.digits) score += CODE_WEIGHTS.digits;
+  if (x.side && y.side) score += x.side === y.side ? CODE_WEIGHTS.side : -CODE_WEIGHTS.side;
+  const base = (t: string): string => t.replace(/\d+$/, '');
+  const theirs = new Set(y.tokens);
+  const theirBases = new Set(y.tokens.map(base));
+  for (const token of new Set(x.tokens)) {
+    if (theirs.has(token)) score += CODE_WEIGHTS.token;
+    else if (theirBases.has(base(token))) score += CODE_WEIGHTS.tokenBase;
+  }
+  const letters = (s: string): Set<string> => new Set(normaliseCode(s).replace(/[^A-Z]/g, ''));
+  const la = letters(a);
+  const lb = letters(b);
+  const shared = Array.from(la).filter(c => lb.has(c)).length;
+  const union = new Set([...la, ...lb]).size;
+  if (union) score += (CODE_WEIGHTS.letters * shared) / union;
+  return Math.round(score * 1000) / 1000;
+}
+
+const productOf = (key: string): string => key.split(':')[0];
+
+/** One form run and the NOMS product it was matched to. */
+export interface RunMatch {
+  run: string;
+  title: string;
+  file: string;
+  pages: number[];
+  /** Indexes into the groups list. */
+  groups: number[];
+  /** Product index ("0", "1", ...) chosen, '' when none. */
+  product: string;
+  score: number;
+  /** Every product that the letters allow, best first. */
+  scores: Array<{ product: string; score: number }>;
+  /** Why a person should choose (score too close, too low, or two runs want one product). */
+  doubt: string[];
+}
+
+export interface PdfRunMatching {
+  /** Models each group fills (as refineTargets). */
+  targets: string[][];
+  runs: RunMatch[];
+  /** Run-level reasons to open the mapping window, empty when the match is clear. */
+  review: string[];
+}
+
+/** "pages 1 to 3", "page 4". */
+export function pagesText(pages: number[]): string {
+  const list = Array.from(new Set(pages.filter(n => n > 0))).sort((a, b) => a - b);
+  if (!list.length) return '';
+  if (list.length === 1) return `page ${list[0]}`;
+  const consecutive = list.every((n, i) => !i || n === list[i - 1] + 1);
+  return consecutive
+    ? `pages ${list[0]} to ${list[list.length - 1]}`
+    : `pages ${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}`;
+}
+
+/** "CS3-SSA-HB-R, pages 1 to 3" for a run. */
+export const runLabel = (run: Pick<RunMatch, 'title' | 'pages'>): string =>
+  [run.title, pagesText(run.pages)].filter(Boolean).join(', ');
+
+/**
+ * Match each form run (consecutive pages of one template) to at most one NOMS
+ * product, by model code similarity, each product taking at most one run.
+ * Runs whose best two products score too close, whose best is too low, or that
+ * want a product another run scores higher on are listed in `review`, with the
+ * suggestion still made so the window can preselect it.
+ */
+export function matchPdfRuns(
+  groups: PdfGroupLike[],
+  models: NomsModelGroup[],
+  modelLabels: Record<string, string> = {}
+): PdfRunMatching {
+  const products = Array.from(new Set(models.map(m => productOf(m.key))));
+  const modelsOf = (product: string): NomsModelGroup[] =>
+    models.filter(m => productOf(m.key) === product);
+  const productName = (product: string): string => {
+    const first = modelsOf(product)[0];
+    return (first?.codes || [])[0] || first?.title?.split(' · ')[0] || `product ${product}`;
+  };
+
+  const runs: RunMatch[] = [];
+  groups.forEach((group, i) => {
+    if (!(group.modelCodes || []).length) return;
+    // Without a run id, the pages of one file naming the same codes are one run.
+    const id =
+      group.run || `${group.file}#${(group.modelCodes || []).map(normaliseCode).join(',')}`;
+    let run = runs.find(r => r.run === id);
+    if (!run) {
+      run = {
+        run: id,
+        title: group.runTitle || group.modelCodes![0],
+        file: group.file,
+        pages: [],
+        groups: [],
+        product: '',
+        score: 0,
+        scores: [],
+        doubt: [],
+      };
+      runs.push(run);
+    }
+    run.groups.push(i);
+    if (group.pageNumber) run.pages.push(group.pageNumber);
+  });
+  for (const run of runs) {
+    run.pages = Array.from(new Set(run.pages)).sort((a, b) => a - b);
+    const codes = Array.from(
+      new Set(run.groups.flatMap(i => groups[i].modelCodes || []).map(normaliseCode))
+    );
+    for (const product of products) {
+      const pool = modelsOf(product);
+      // The letters must still mostly agree on at least one page of the run.
+      const fits = run.groups.some(i => suggestTargets(groups[i].labels, pool, 0.5).length > 0);
+      if (!fits) continue;
+      const productCodes = Array.from(new Set(pool.flatMap(m => m.codes || [])));
+      let score = 0;
+      for (const a of codes)
+        for (const b of productCodes) score = Math.max(score, codeSimilarity(a, b));
+      run.scores.push({ product, score });
+    }
+    run.scores.sort((a, b) => b.score - a.score || Number(a.product) - Number(b.product));
+  }
+
+  // Strongest runs choose first; a product takes one run.
+  const taken = new Map<string, RunMatch>();
+  const order = runs
+    .slice()
+    .sort((a, b) => (b.scores[0]?.score ?? -1) - (a.scores[0]?.score ?? -1));
+  for (const run of order) {
+    const [best, second] = run.scores;
+    if (!best) {
+      run.doubt.push(`${runLabel(run)}: no form model has its letters`);
+      continue;
+    }
+    const holder = taken.get(best.product);
+    if (holder) {
+      const doubt = `${runLabel(holder)} and ${runLabel(run)} both fit ${productName(best.product)} best`;
+      holder.doubt.push(doubt);
+      run.doubt.push(doubt);
+    } else {
+      if (products.length > 1 && second && best.score - second.score < CODE_MARGIN)
+        run.doubt.push(
+          `${runLabel(run)}: fits ${productName(best.product)} and ${productName(second.product)} about equally`
+        );
+      if (products.length > 1 && best.score < CODE_MIN && best.score < CODE_EXACT)
+        run.doubt.push(`${runLabel(run)}: no form model code is close to ${run.title}`);
+    }
+    const free = run.scores.find(s => !taken.has(s.product));
+    if (free) {
+      run.product = free.product;
+      run.score = free.score;
+      taken.set(free.product, run);
+    }
+  }
+
+  const runOf = new Map<number, RunMatch>();
+  for (const run of runs) for (const i of run.groups) runOf.set(i, run);
+  const targets = refineByLetters(groups, models, modelLabels, runOf);
+  return {
+    targets,
+    runs,
+    review: Array.from(new Set(runs.flatMap(r => r.doubt))),
+  };
 }
 
 /**
- * Pick the form models each PDF diagram fills. A diagram whose template names a
- * CW model code that is on the form goes to that model when the letters agree.
- * Otherwise a file's largest diagram (its frame) picks the products; the file's
- * other diagrams are kept to those products. Among equally good models a
- * "seat"/"back" word in the diagram title (or the template's cushion / frame
+ * Pick the form models each PDF diagram fills. Diagrams of an identified form
+ * run go to the product matchPdfRuns chose for the run (see there). Other
+ * diagrams: a file's largest diagram (its frame) picks the products; the
+ * file's other diagrams are kept to those products. Among equally good models
+ * a "seat"/"back" word in the diagram title (or the template's cushion / frame
  * view) decides; a tie that is still open is left for the person to choose.
  */
 export function refineTargets(
@@ -625,27 +841,46 @@ export function refineTargets(
   models: NomsModelGroup[],
   modelLabels: Record<string, string>
 ): string[][] {
-  const productOf = (key: string): string => key.split(':')[0];
+  return matchPdfRuns(groups, models, modelLabels).targets;
+}
+
+function refineByLetters(
+  groups: PdfGroupLike[],
+  models: NomsModelGroup[],
+  modelLabels: Record<string, string>,
+  runOf: Map<number, RunMatch>
+): string[][] {
   const anchors = new Map<string, Set<string>>();
-  // Letters must still mostly agree before a code decides.
-  const byCode = (group: PdfGroupLike): string[] =>
-    suggestTargets(group.labels, modelsForCodes(group.modelCodes, models), 0.5);
-  for (const file of new Set(groups.map(g => g.file))) {
-    const inFile = groups.filter(g => g.file === file);
-    const coded = new Set(inFile.flatMap(byCode).map(productOf));
-    if (coded.size) {
-      anchors.set(file, coded);
+  const loose = groups.map((g, i) => ({ g, i })).filter(({ i }) => !runOf.has(i));
+  for (const file of new Set(loose.map(({ g }) => g.file))) {
+    // Pages of a file that holds an identified form stay with that form's products.
+    const fromRuns = new Set(
+      Array.from(runOf.values())
+        .filter(r => r.file === file && r.product)
+        .map(r => r.product)
+    );
+    if (fromRuns.size) {
+      anchors.set(file, fromRuns);
       continue;
     }
+    const inFile = loose.filter(({ g }) => g.file === file).map(({ g }) => g);
     const biggest = inFile.reduce((a, b) => (b.labels.length > a.labels.length ? b : a));
     const products = new Set(suggestTargets(biggest.labels, models).map(productOf));
     if (products.size) anchors.set(file, products);
   }
-  return groups.map(group => {
-    const allowed = anchors.get(group.file);
-    const pool = allowed ? models.filter(m => allowed.has(productOf(m.key))) : models;
-    const coded = byCode(group);
-    let picks = coded.length ? coded : suggestTargets(group.labels, pool.length ? pool : models);
+  return groups.map((group, i) => {
+    const run = runOf.get(i);
+    let picks: string[];
+    if (run) {
+      if (!run.product) return [];
+      const pool = models.filter(m => productOf(m.key) === run.product);
+      const coded = suggestTargets(group.labels, modelsForCodes(group.modelCodes, pool), 0.5);
+      picks = coded.length ? coded : suggestTargets(group.labels, pool, 0.5);
+    } else {
+      const allowed = anchors.get(group.file);
+      const pool = allowed ? models.filter(m => allowed.has(productOf(m.key))) : models;
+      picks = suggestTargets(group.labels, pool.length ? pool : models);
+    }
     // One model per product: break ties with the title, else leave it open.
     const byProduct = new Map<string, string[]>();
     for (const key of picks)
@@ -696,8 +931,23 @@ export function mappingNeedsReview(
   targets: string[][],
   models: NomsModelGroup[]
 ): string[] {
-  const reasons: string[] = [];
+  // Form runs first: an unclear code match, or two runs on one product.
+  const reasons: string[] = [...matchPdfRuns(groups, models).review];
   const byKey = new Map(models.map(m => [m.key, m]));
+  const runsOnProduct = new Map<string, Set<string>>();
+  groups.forEach((group, i) => {
+    if (!group.run) return;
+    for (const key of targets[i] || []) {
+      const set = runsOnProduct.get(productOf(key)) || new Set<string>();
+      set.add(group.runTitle ? `${group.runTitle} (${group.file})` : group.run);
+      runsOnProduct.set(productOf(key), set);
+    }
+  });
+  for (const [product, runs] of runsOnProduct)
+    if (runs.size > 1) {
+      const name = models.find(m => productOf(m.key) === product)?.title.split(' · ')[0] || product;
+      reasons.push(`${name}: filled by ${runs.size} forms (${Array.from(runs).join(', ')})`);
+    }
   const writes = new Map<string, string>(); // "model|field" -> diagram title
   groups.forEach((group, i) => {
     const where = group.title ? `${group.file} (${group.title})` : group.file;
@@ -819,6 +1069,50 @@ export interface DropReview {
   filled: number;
   /** Flagged rows plus extras. */
   toCheck: number;
+  /**
+   * Every value read, counted once: filled with nothing to check, flagged (on a
+   * flagged letter, or lost to another value on it), or set aside (fills no
+   * letter). filled + flagged + setAside === read.
+   */
+  counts: DropCounts;
+}
+
+export interface DropCounts {
+  read: number;
+  filled: number;
+  flagged: number;
+  setAside: number;
+}
+
+/** Count each drop value once against the review's rows (see DropReview.counts). */
+export function dropCounts(
+  values: DropValue[],
+  review: Pick<DropReview, 'rows' | 'extras'>
+): DropCounts {
+  const aside = new Set(review.extras.map(e => e.id));
+  const counts: DropCounts = { read: values.length, filled: 0, flagged: 0, setAside: 0 };
+  for (const value of values) {
+    if (aside.has(value.id)) {
+      counts.setAside += 1;
+      continue;
+    }
+    const rows = value.targets
+      .map(t => review.rows[`${t.key}|${t.field}`])
+      .filter((r): r is DropRow => Boolean(r));
+    if (!rows.length) counts.setAside += 1;
+    else if (value.textOnly || rows.some(r => r.from !== value.id || r.flags.length))
+      counts.flagged += 1;
+    else counts.filled += 1;
+  }
+  return counts;
+}
+
+/** "63 values read: 40 filled, 18 to check, 5 set aside". */
+export function dropCountsText(counts: DropCounts): string {
+  const parts = [`${counts.filled} filled`];
+  if (counts.flagged) parts.push(`${counts.flagged} to check`);
+  if (counts.setAside) parts.push(`${counts.setAside} set aside`);
+  return `${counts.read} value${counts.read === 1 ? '' : 's'} read: ${parts.join(', ')}`;
 }
 
 const unitWord = (unit: DropUnit): string => (unit === 'inch' ? 'in' : 'cm');
@@ -930,8 +1224,10 @@ export function classifyDropResult(
         );
       if (value.alsoFills?.length)
         flag(r, 'shared', `The same diagram also filled ${value.alsoFills.join(', ')}`);
-      if (value.ocr)
+      if (value.ocr || value.review?.includes(OCR_FLAG))
         flag(r, 'ocr', `${OCR_FLAG}: read "${value.text || shortNumber(number)}"`, value.thumb);
+      else if (!value.range && value.text && !isCleanNumber(value.text))
+        flag(r, 'check', `Written as "${value.text}", not a plain number; check it`);
       for (const reason of value.review || []) if (reason !== OCR_FLAG) flag(r, 'check', reason);
     }
   }
@@ -973,6 +1269,7 @@ export function classifyDropResult(
     extras,
     filled: placements.length,
     toCheck: flagged + extras.length,
+    counts: dropCounts(values, { rows, extras }),
   };
 }
 
@@ -1024,6 +1321,7 @@ export function liveDropReview(
   }
   review.toCheck =
     Object.values(review.rows).filter(r => r.flags.length).length + review.extras.length;
+  review.counts = dropCounts(values, review);
   return review;
 }
 
@@ -1194,6 +1492,9 @@ export interface CustomerPdfLike {
     pageNumber: number;
     template: {
       title?: string;
+      /** Library PDF the page was printed from: consecutive pages of one are a form run. */
+      source?: string;
+      id?: string;
       modelCodes?: string[];
       view?: string | null;
       views?: string[];
@@ -1224,6 +1525,17 @@ export interface CustomerDropGroup extends DropGroupLike {
   modelCodes: string[];
   view: string | null;
   views: string[];
+  /** Form run (consecutive pages of one library template), when matched confidently. */
+  run?: string;
+  runTitle?: string;
+}
+
+/** True when the customer wrote a plain number ("29", "29.5", "22 1/4", '29"', "73 cm"). */
+export function isCleanNumber(text: unknown): boolean {
+  if (typeof text !== 'string' && typeof text !== 'number') return false;
+  return /^\s*(?:\d+(?:[.,]\d+)?(?:\s+\d+\/\d+)?|\d+\/\d+)\s*(?:in|inch|inches|cm|"|\u201d|'')?\s*$/i.test(
+    String(text)
+  );
 }
 
 /** Below this a template (and its codes) is only a suggestion. */
@@ -1236,9 +1548,21 @@ export const TEMPLATE_CONFIDENCE = 0.8;
  */
 export function customerPdfToGroups(result: CustomerPdfLike): CustomerDropGroup[] {
   const out: CustomerDropGroup[] = [];
+  let runIndex = 0;
+  let lastSource = '';
   for (const page of result.pages || []) {
     const template = page.template;
     const confident = Boolean(template) && page.confidence >= TEMPLATE_CONFIDENCE;
+    // A form run: consecutive pages printed from the same library PDF.
+    const source = confident
+      ? template!.source ||
+        (template!.id || '').replace(/-p\d+$/, '') ||
+        (template!.modelCodes || []).join(',')
+      : '';
+    if (source !== lastSource) {
+      runIndex += 1;
+      lastSource = source;
+    }
     const codes = confident
       ? template!.modelCodes?.length
         ? template!.modelCodes
@@ -1269,7 +1593,12 @@ export function customerPdfToGroups(result: CustomerPdfLike): CustomerDropGroup[
           text: v.text || parsed.text,
           ...(v.review?.length ? { review: v.review } : {}),
           ...(v.thumb ? { thumb: v.thumb } : {}),
-          ...(v.from === 'ocr' && !((v.confidence ?? 0) >= OCR_CONFIDENT) ? { ocr: true } : {}),
+          // OCR doubts: a low score, or text that is not a plain number ("209*", "2\\").
+          ...(v.from === 'ocr' &&
+          (!((v.confidence ?? 0) >= OCR_CONFIDENT) ||
+            (parsed.kind !== 'range' && !isCleanNumber(v.text || parsed.text)))
+            ? { ocr: true }
+            : {}),
         });
       }
       if (!values.length && !notes.length) continue;
@@ -1289,6 +1618,14 @@ export function customerPdfToGroups(result: CustomerPdfLike): CustomerDropGroup[
         modelCodes: codes.map(normaliseCode).filter(Boolean),
         view: confident ? template!.view || null : null,
         views: confident ? template!.views || [] : [],
+        ...(source
+          ? {
+              run: `${result.fileName}#${runIndex}`,
+              runTitle:
+                normaliseCode((template!.modelCodes || [])[0]) ||
+                source.replace(/^.*\//, '').replace(/\.pdf$/i, ''),
+            }
+          : {}),
       });
     }
   }

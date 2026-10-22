@@ -33,6 +33,7 @@ import {
 } from './cw-form-pdf-import';
 import { findCwSvg } from './pdf-template-registry';
 import { nomsRecheckStrip, toggleNomsRecheck } from './noms-recheck';
+import type { Recheck } from './noms-recheck-core';
 import { formatCustomerNumber, RANGE_DEFAULT } from '../utils/customer-value';
 import { parseSofaPaintReviewPdf } from './measurement-review';
 import {
@@ -52,6 +53,8 @@ import {
   convertValues,
   cwGroupsToDropValues,
   customerPdfToGroups,
+  dropCounts,
+  dropCountsText,
   diagramOffers,
   type CustomerDropGroup,
   type DiagramOffer,
@@ -63,6 +66,7 @@ import {
   szSummaryText,
   type DropReview,
   type DropValue,
+  type NomsModelGroup,
   type FormDrift,
   autoMapping,
   changedFields,
@@ -70,7 +74,8 @@ import {
   defaultFieldFor,
   formModels,
   modelGroups,
-  refineTargets,
+  matchPdfRuns,
+  pagesText,
   fromCanvasMeasurement,
   formToTyped,
   hasMeasure,
@@ -119,6 +124,8 @@ interface NomsOrderEntry {
   dropReview?: StoredDropReview;
   cmPdfName?: string;
   lastSentAt?: string;
+  /** Letters the factory asked to re-measure (noms-recheck-core). */
+  rechecks?: Recheck[];
 }
 interface StoredDropReview {
   at: string;
@@ -995,7 +1002,53 @@ function pdfGroupsForMatching(groups: CwFormValueGroup[]) {
     unitAssumed: group.unitAssumed,
     modelCodes: group.modelCodes,
     view: group.view,
+    pageNumber: group.pageNumber,
+    run: group.run,
+    runTitle: group.runTitle,
   }));
+}
+
+/** "form CS3-SSA-HB-R, pages 1 to 3" for a diagram's form run, '' when it has none. */
+function runText(group: CwFormValueGroup, groups: CwFormValueGroup[]): string {
+  if (!group.run) return '';
+  const pages = groups.filter(g => g.run === group.run).map(g => g.pageNumber);
+  return `form ${group.runTitle || 'from the library'}, ${pagesText(pages)}`;
+}
+
+/** Drop values (and range picks) from what the person chose in the mapping window. */
+function valuesFromChoice(
+  groups: CwFormValueGroup[],
+  choice: MappingChoice,
+  models: NomsModelGroup[]
+): { values: DropValue[]; picks: Record<string, number> } {
+  const chosenGroups = choice.groups.map(c => c.group);
+  const values = cwGroupsToDropValues(
+    chosenGroups,
+    choice.groups.map(c => c.targets),
+    choice.groups.map(c => c.mapping),
+    models
+  );
+  // Diagrams left out of the choice still list their values as set aside.
+  const left = groups.filter(g => !chosenGroups.includes(g));
+  values.push(
+    ...cwGroupsToDropValues(
+      left,
+      left.map(() => []),
+      left.map(() => ({})),
+      models
+    )
+  );
+  const picks: Record<string, number> = {};
+  for (const c of choice.groups)
+    for (const v of values)
+      if (
+        v.file === c.group.file &&
+        v.pageNumber === c.group.pageNumber &&
+        v.title === c.group.title &&
+        v.range
+      )
+        picks[v.id] = c.values[v.label] ?? v.value;
+  return { values, picks };
 }
 
 function viewsByKey(): Record<string, string[]> {
@@ -1141,29 +1194,49 @@ async function readPdfs(files: File[]): Promise<void> {
   }
 
   const models = modelGroups(state.models);
-  const matchable = pdfGroupsForMatching(cwGroups);
-  const suggested = refineTargets(
-    matchable,
+  const match = matchPdfRuns(
+    pdfGroupsForMatching(cwGroups),
     models,
     Object.fromEntries(models.map(m => [m.key, m.title]))
   );
-  const mappings = cwGroups.map((group, i) =>
-    autoMapping(
-      groupLabels(group),
-      models.filter(m => suggested[i].includes(m.key))
-    )
-  );
   state.lastGroups = cwGroups;
-  const cwValues = cwGroupsToDropValues(cwGroups, suggested, mappings, models);
+  let cwValues: DropValue[];
+  let dropPicks: Record<string, number> = {};
+  let addImages = true;
+  if (match.review.length) {
+    // Two forms want one model, or a form fits no model clearly: the person decides.
+    setStatus(`Check which form fills which model: ${match.review.join('; ')}.`, 'info');
+    const choice = await chooseMapping(cwGroups, match.targets, match.review);
+    if (choice) {
+      ({ values: cwValues, picks: dropPicks } = valuesFromChoice(cwGroups, choice, models));
+      addImages = choice.addImages;
+    } else {
+      // Cancelled: every value is set aside; Change matching opens the window again.
+      cwValues = cwGroupsToDropValues(
+        cwGroups,
+        cwGroups.map(() => []),
+        cwGroups.map(() => ({})),
+        models
+      );
+    }
+  } else {
+    const mappings = cwGroups.map((group, i) =>
+      autoMapping(
+        groupLabels(group),
+        models.filter(m => match.targets[i].includes(m.key))
+      )
+    );
+    cwValues = cwGroupsToDropValues(cwGroups, match.targets, mappings, models);
+  }
   const filledIds = applyDrop(
     [...cwValues, ...reviewValues],
     originals.map(o => o.name),
-    {},
+    dropPicks,
     names
   );
   // The CW diagrams also go into the project as images with their lines.
   const picks = entry()?.dropReview?.picks || {};
-  for (const file of cwFiles) {
+  for (const file of addImages ? cwFiles : []) {
     const chosen: Record<string, number> = {};
     for (const v of cwValues)
       if (v.file === file.name && v.range)
@@ -1234,16 +1307,16 @@ function applyDrop(
   state.highlight = new Set(filledIds);
   state.highlightUntil = Date.now() + 4000;
   const live = currentReview();
-  const toCheck = live?.toCheck ?? 0;
-  const filled = filledIds.length;
+  const counts = live?.counts || dropCounts(stored.values, review);
+  const toCheck = counts.flagged + counts.setAside;
   setStatus(
-    `Filled ${filled} value${filled === 1 ? '' : 's'} from ${names}` +
-      (toCheck ? `, ${toCheck} to check (marked ⚠).` : '. Everything matched.') +
+    `From ${names}: ${dropCountsText(counts)}` +
+      (toCheck ? ' (marked ⚠).' : '. Everything matched.') +
       ' Send to NOMS when ready.',
     toCheck ? 'info' : 'ok'
   );
   notifyOpenPaint({
-    message: `Filled ${filled} value${filled === 1 ? '' : 's'} from ${names}${toCheck ? `, ${toCheck} to check` : ''}.`,
+    message: `From ${names}: ${dropCountsText(counts)}.`,
     kind: 'success',
     durationMs: 9000,
     action: { label: 'Undo', onClick: () => undoFill(undoValues, prev) },
@@ -1307,40 +1380,14 @@ async function changeMatching(): Promise<void> {
   const groups = state.lastGroups;
   if (!groups.length) return;
   const models = modelGroups(state.models);
-  const suggested = refineTargets(
+  const match = matchPdfRuns(
     pdfGroupsForMatching(groups),
     models,
     Object.fromEntries(models.map(m => [m.key, m.title]))
   );
-  const choice = await chooseMapping(groups, suggested);
+  const choice = await chooseMapping(groups, match.targets, match.review);
   if (!choice) return;
-  const chosenGroups = choice.groups.map(c => c.group);
-  const values = cwGroupsToDropValues(
-    chosenGroups,
-    choice.groups.map(c => c.targets),
-    choice.groups.map(c => c.mapping),
-    models
-  );
-  // Diagrams left out of the choice still list their values as extras.
-  const left = groups.filter(g => !chosenGroups.includes(g));
-  values.push(
-    ...cwGroupsToDropValues(
-      left,
-      left.map(() => []),
-      left.map(() => ({})),
-      models
-    )
-  );
-  const picks: Record<string, number> = {};
-  for (const c of choice.groups)
-    for (const v of values)
-      if (
-        v.file === c.group.file &&
-        v.pageNumber === c.group.pageNumber &&
-        v.title === c.group.title &&
-        v.range
-      )
-        picks[v.id] = c.values[v.label] ?? v.value;
+  const { values, picks } = valuesFromChoice(groups, choice, models);
   // Start again from the form before the drop so old placements do not linger.
   const before = entry()?.dropReview?.before;
   if (before) {
@@ -1413,7 +1460,8 @@ function rangePills(
 
 function chooseMapping(
   groups: CwFormValueGroup[],
-  suggested: string[][]
+  suggested: string[][],
+  reasons: string[] = []
 ): Promise<MappingChoice | null> {
   ensureStyles();
   const models = modelGroups(state.models);
@@ -1431,6 +1479,12 @@ function chooseMapping(
         `Check what each diagram fills. Letters that match the form are filled as they are; only the ones that need a choice are listed. Where the customer wrote two numbers, pick the one to use (the ${RANGE_DEFAULT} one is picked to start). Values are converted to ${state.unit === 'in' ? 'inches' : 'cm'}.`
       )
     );
+    if (reasons.length) {
+      // Why the window opened by itself; the best guess is already ticked.
+      const why = el('ul', 'nml-map-why');
+      for (const reason of reasons) why.appendChild(el('li', '', reason));
+      card.append(el('p', 'nml-map-none', 'The suggestion is ticked; please check it:'), why);
+    }
     const state2 = groups.map((group, i) => ({
       group,
       targets: new Set(suggested[i]),
@@ -1441,9 +1495,21 @@ function chooseMapping(
         number
       >,
       showAll: false,
-      editTargets: suggested[i].length === 0,
+      // Opened because the match is in doubt: show the model choices straight away.
+      editTargets: suggested[i].length === 0 || reasons.length > 0,
     }));
     const summaries: Array<() => void> = [];
+    /** Model key -> "form CS3-SSA-HB-R, pages 1 to 3" for the forms now ticked on it. */
+    const runsOn = (key: string): string => {
+      const out = new Set<string>();
+      for (const other of state2)
+        if (other.targets.has(key)) {
+          const text = runText(other.group, groups);
+          if (text) out.add(text);
+        }
+      return Array.from(out).join('; ');
+    };
+    const runNotes: Array<() => void> = [];
     const sharedWith = (entry: (typeof state2)[number]): string[] => {
       // Two diagrams writing the same letter onto the same model.
       const mine = new Set(Object.values(entry.mapping).filter(Boolean));
@@ -1469,11 +1535,12 @@ function chooseMapping(
         : entry.group.unit === 'inch'
           ? 'inches'
           : 'cm';
+      const run = runText(entry.group, groups);
       box.appendChild(
         el(
           'h3',
           '',
-          `${entry.group.file} · page ${entry.group.pageNumber} · ${entry.group.title} · ${unitNote}`
+          `${entry.group.file} · page ${entry.group.pageNumber} · ${entry.group.title} · ${unitNote}${run ? ` · ${run}` : ''}`
         )
       );
       const summary = el('div', 'nml-map-summary');
@@ -1553,6 +1620,7 @@ function chooseMapping(
         const hidden = Array.from(table.children).filter(row => (row as HTMLElement).hidden).length;
         more.hidden = !hidden && !entry.showAll;
         summaries.forEach(refresh => refresh());
+        runNotes.forEach(refresh => refresh());
         more.textContent = entry.showAll
           ? 'Show only letters that need a choice'
           : `Show all ${entry.group.values.length} letters (${hidden} match the form)`;
@@ -1572,7 +1640,12 @@ function chooseMapping(
           else entry.targets.delete(model.key);
           renderTable();
         });
-        label.append(box2, document.createTextNode(` ${model.title}`));
+        const note = el('span', 'nml-map-run');
+        runNotes.push(() => {
+          const text = runsOn(model.key);
+          note.textContent = text ? ` (${text})` : '';
+        });
+        label.append(box2, document.createTextNode(` ${model.title}`), note);
         targets.appendChild(label);
       }
       targets.hidden = !entry.editTargets;
@@ -2191,6 +2264,8 @@ function ensureStyles(): void {
     .nml-map-targets { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 8px; }
     .nml-map-summary { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; }
     .nml-map-none { color: #b45309; font-weight: 600; }
+    .nml-map-run { color: #6b7280; font-size: 12px; }
+    .nml-map-why { margin: 0 0 10px 18px; padding: 0; color: #92400e; font-size: 13px; }
     .nml-map button.nml-map-link { height: auto; padding: 0; border: 0; background: none; color: #2563eb; font-weight: 600; text-decoration: underline; }
     .nml-map-targets[hidden], .nml-map-row[hidden], .nml-map button[hidden] { display: none; }
     .nml-map-table { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 10px; }
@@ -2598,11 +2673,17 @@ function restoreFocus(panel: HTMLElement, focusId: string, caret: number | null)
 function reviewStrip(review: DropReview): HTMLElement {
   const strip = el('div', `nml-review${review.toCheck ? ' warn' : ''}`);
   const head = el('div', 'nml-row');
+  const { counts } = review;
+  const missing = Object.values(review.rows).filter(
+    r => r.flags.length && r.flags.every(f => f.kind === 'not-in-pdf')
+  ).length;
   head.appendChild(
     el(
       'strong',
       '',
-      `${review.filled} value${review.filled === 1 ? '' : 's'} filled, ${review.toCheck ? `${review.toCheck} to check` : 'all matched'}`
+      dropCountsText(counts) +
+        (counts.flagged || counts.setAside ? '' : ', all matched') +
+        (missing ? `; ${missing} form letter${missing === 1 ? '' : 's'} not in the PDF` : '')
     )
   );
   if (review.toCheck) {
@@ -2683,14 +2764,14 @@ function syncActiveOrder(): void {
 export function nomsFormState() {
   return {
     order: state.order,
-    entry: entry() as (NomsOrderEntry & { rechecks?: unknown[] }) | null,
+    entry: entry(),
     unit: state.unit,
     models: state.models,
     values: state.values,
     review: state.content ? currentReview() : null,
     letterLines: (key: string, field: string) => letterLines(key, field).lines,
     viewTitle,
-    patchRechecks: (rechecks: unknown[]) => patchEntry({ rechecks } as Partial<NomsOrderEntry>),
+    patchRechecks: (rechecks: Recheck[]) => patchEntry({ rechecks }),
     render,
   };
 }

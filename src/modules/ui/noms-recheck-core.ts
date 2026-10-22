@@ -3,7 +3,13 @@
 // (externalSources.nomsOrders[order].rechecks[]). No DOM or app state here so
 // the text, labels, prefill and resolution can be tested directly.
 
-import { measureIssues, parseMeasure, type DropFlag, type NomsModelEntry } from './noms-link-core';
+import {
+  measureIssues,
+  parseMeasure,
+  type DropFlag,
+  type MeasuredLine,
+  type NomsModelEntry,
+} from './noms-link-core';
 
 export type RecheckPick = '' | 'rule' | 'large' | 'small' | 'mismatch' | 'unclear' | 'factory';
 
@@ -233,4 +239,24 @@ export function newRecheck(unit: 'in' | 'cm', at: string): Recheck {
     unit,
     items: [],
   };
+}
+
+/**
+ * What "Show for recheck" draws: each open ticked letter of the open recheck
+ * with the drawn lines that feed it (`linesFor` gives a letter's lines), and
+ * the views those lines are on, in first-seen order.
+ */
+export function recheckLines(
+  rechecks: Recheck[] | null | undefined,
+  linesFor: (key: string, field: string) => MeasuredLine[]
+): { lines: Array<{ item: RecheckItem; line: MeasuredLine }>; views: string[] } {
+  const open = (rechecks || []).find(r => r.status === 'open');
+  const lines: Array<{ item: RecheckItem; line: MeasuredLine }> = [];
+  const views: string[] = [];
+  for (const item of openItems(open))
+    for (const line of linesFor(item.key, item.field)) {
+      lines.push({ item, line });
+      if (!views.includes(line.viewId)) views.push(line.viewId);
+    }
+  return { lines, views };
 }

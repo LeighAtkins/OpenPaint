@@ -165,7 +165,7 @@ describe.skipIf(!existsSync(resolve(__dirname, '../fixtures/private/ria-filled.p
       // H1 follows Leigh's G2 line (16.25 - 16.5 in, the larger end by default).
       expect(values['0:0:1'].H1).toBe('41.91');
       const text = panel().textContent || '';
-      expect(text).toMatch(/\d+ values filled, \d+ to check/);
+      expect(text).toMatch(/\d+ values read: \d+ filled, \d+ to check/);
       expect(text).toContain('Customer wrote 16.25-16.5; used 16.5 in');
       expect(text).toContain('Not in the PDF and empty on the form');
       expect(text).toContain('From the PDF, not on the form:');

@@ -359,6 +359,57 @@ function normalizeNomsValues(raw) {
   return out;
 }
 const DROP_UNITS = new Set(['cm', 'inch']);
+/** Largest OCR box thumbnail kept with a drop (a data URL, in characters). */
+export const NOMS_THUMB_MAX = 8 * 1024;
+const RECHECK_PICKS = new Set(['', 'rule', 'large', 'small', 'mismatch', 'unclear', 'factory']);
+/**
+ * Letters the factory asked to re-measure (see noms-recheck-core.ts): each
+ * recheck with its ticked letters, reasons, and the values when ticked and
+ * resolved.
+ */
+function normalizeNomsRechecks(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const r of raw.slice(0, 50)) {
+    if (!r || typeof r !== 'object') continue;
+    const id = cleanNomsText(r.id, 80);
+    if (!id) continue;
+    const items = [];
+    for (const item of Array.isArray(r.items) ? r.items.slice(0, 300) : []) {
+      if (!item || typeof item !== 'object') continue;
+      if (typeof item.key !== 'string' || !NOMS_MODEL_KEY.test(item.key)) continue;
+      if (typeof item.field !== 'string' || !NOMS_FIELD.test(item.field)) continue;
+      const pick = RECHECK_PICKS.has(item.pick) ? item.pick : '';
+      const text = (name, max = 300) =>
+        cleanNomsText(item[name], max) ? { [name]: cleanNomsText(item[name], max) } : {};
+      items.push({
+        key: item.key,
+        field: item.field,
+        pick,
+        ...text('ruleText'),
+        ...text('other', 32),
+        ...text('detail', 500),
+        value:
+          typeof item.value === 'string' || typeof item.value === 'number'
+            ? String(item.value).trim().slice(0, 32)
+            : '',
+        ...(typeof item.resolvedValue === 'string' || typeof item.resolvedValue === 'number'
+          ? { resolvedValue: String(item.resolvedValue).trim().slice(0, 32) }
+          : {}),
+        ...text('resolvedAt', 40),
+      });
+    }
+    out.push({
+      id,
+      createdAt: cleanNomsText(r.createdAt, 40),
+      status: r.status === 'resolved' ? 'resolved' : 'open',
+      ...(cleanNomsText(r.resolvedAt, 40) ? { resolvedAt: cleanNomsText(r.resolvedAt, 40) } : {}),
+      unit: r.unit === 'cm' ? 'cm' : 'in',
+      items,
+    });
+  }
+  return out;
+}
 const cleanNumber = value => (typeof value === 'number' && Number.isFinite(value) ? value : null);
 /**
  * The last PDF drop for an order: every value read (with the letters it
@@ -387,6 +438,20 @@ function normalizeNomsDropReview(raw) {
           .map(t => ({ key: t.key, field: t.field }))
       : [];
     const range = Array.isArray(v.range) ? v.range.map(cleanNumber).filter(n => n !== null) : [];
+    const review = Array.isArray(v.review)
+      ? v.review
+          .map(t => cleanNomsText(t))
+          .filter(Boolean)
+          .slice(0, 8)
+      : [];
+    // A small picture of the box the value was read from; a large one is dropped
+    // (the value keeps its OCR flag).
+    const thumb =
+      typeof v.thumb === 'string' &&
+      v.thumb.length <= NOMS_THUMB_MAX &&
+      /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(v.thumb)
+        ? v.thumb
+        : '';
     const alsoFills = Array.isArray(v.alsoFills)
       ? v.alsoFills
           .map(t => cleanNomsText(t))
@@ -408,6 +473,11 @@ function normalizeNomsDropReview(raw) {
       targets,
       ...(cleanNomsText(v.why) ? { why: cleanNomsText(v.why) } : {}),
       ...(alsoFills.length ? { alsoFills } : {}),
+      // Words only ("N/A"): a note, never a number to place.
+      ...(v.textOnly === true ? { textOnly: true } : {}),
+      ...(review.length ? { review } : {}),
+      ...(thumb ? { thumb } : {}),
+      ...(v.ocr === true ? { ocr: true } : {}),
     });
   }
   const picks = {};
@@ -489,6 +559,9 @@ export function normalizeNomsOrders(raw) {
                 }
               : {}),
             ...(entry.skipFlagConfirm === true ? { skipFlagConfirm: true } : {}),
+            ...(normalizeNomsRechecks(entry.rechecks).length
+              ? { rechecks: normalizeNomsRechecks(entry.rechecks) }
+              : {}),
             ...(normalizeNomsDropReview(entry.dropReview)
               ? { dropReview: normalizeNomsDropReview(entry.dropReview) }
               : {}),
