@@ -83,7 +83,9 @@ import {
   lineLinkKey,
   resolveLineForLetter,
   suggestLineLinks,
-  codeLinksForProject,
+  suggestImageMatches,
+  planImageMatches,
+  type ImageMatch,
   type LetterLines,
   type LineLink,
   type LineLinks,
@@ -716,7 +718,7 @@ async function fetchFormValues(): Promise<
 }
 
 // ---------------------------------------------------------------- images
-async function rasterizeSvg(svgText: string): Promise<string> {
+async function rasterizeSvg(svgText: string, width = 1800): Promise<string> {
   const blobUrl = URL.createObjectURL(new Blob([svgText], { type: 'image/svg+xml' }));
   try {
     const image = new Image();
@@ -725,7 +727,6 @@ async function rasterizeSvg(svgText: string): Promise<string> {
       image.onerror = () => reject(new Error('The diagram could not be drawn.'));
       image.src = blobUrl;
     });
-    const width = 1800;
     const ratio =
       image.naturalHeight && image.naturalWidth ? image.naturalHeight / image.naturalWidth : 0.6;
     const canvas = document.createElement('canvas');
@@ -1990,49 +1991,258 @@ async function onLinked(context: { order?: string; form?: string; lang?: string 
   if (!state.content) return;
   linkByCode();
 }
-/** Link form letters to lines by the piece code in each image's label. */
+/** After linking an order: the Match images screen, with suggestions from the image labels. */
 function linkByCode(): void {
-  const current = entry();
-  if (!current) return;
+  openMatchImages();
+}
+
+// ---------------------------------------------------------------- match images
+// One screen to say which form diagram each image shows. Suggestions come
+// from the image labels (suggestImageMatches); the preview says which letters
+// each image will fill (planImageMatches). Applying saves the matches as view
+// bindings and line links; images left "Not on the form" are left alone.
+
+const thumbCache = new Map<string, Promise<string>>();
+function diagramThumb(key: string): Promise<string> {
+  if (!thumbCache.has(key)) {
+    const job = diagramSvg(key).then(svg => rasterizeSvg(svg, 360));
+    job.catch(() => thumbCache.delete(key));
+    thumbCache.set(key, job);
+  }
+  return thumbCache.get(key)!;
+}
+function matchableViews(): Array<{ viewId: string; title: string }> {
   const manager = projectManager();
+  const diagrams = new Set(Object.values(entry()?.diagramViews || {}));
   const ids: string[] = (
     Array.isArray(manager?.viewOrder) && manager.viewOrder.length
       ? manager.viewOrder
       : Object.keys(manager?.views || {})
-  ).filter((id: string) => manager?.views?.[id]);
-  const plan = codeLinksForProject(
+  ).filter((id: string) => manager?.views?.[id] && !diagrams.has(id));
+  return ids.map(viewId => ({ viewId, title: viewTitle(viewId) }));
+}
+function matchedCount(): number {
+  const current = entry();
+  const keys = new Set(state.models.map(m => m.key));
+  return Object.entries(current?.viewBindings || {}).filter(
+    ([viewId, key]) => keys.has(key) && projectManager()?.views?.[viewId]
+  ).length;
+}
+function openMatchImages(): void {
+  ensureStyles();
+  const current = entry();
+  if (!current || !state.models.length) {
+    setStatus('Load the form from NOMS first.', 'error');
+    return;
+  }
+  document.querySelector('.nml-match')?.remove();
+  const views = matchableViews();
+  const matches: ImageMatch[] = suggestImageMatches(
     state.models,
-    ids.map(viewId => ({ viewId, title: viewTitle(viewId) })),
-    allLines(),
-    current.lineLinks
+    views,
+    current.viewBindings || {}
   );
-  const lineLinks: LineLinks = { ...(current.lineLinks || {}) };
+  const lines = allLines();
+  const titleOf = (key: string): string => state.models.find(m => m.key === key)?.title || key;
+  const shortTitle = (key: string, base: string): string => {
+    const t = titleOf(key);
+    return t.startsWith(base) ? t.slice(base.length).replace(/^ · /, '') || t : t;
+  };
+
+  const overlay = el('div', 'nml-map nml-match');
+  overlay.setAttribute('role', 'dialog');
+  overlay.setAttribute('aria-modal', 'true');
+  overlay.setAttribute('aria-label', 'Match images to the form');
+  const card = el('section', 'nml-map-card');
+  card.append(
+    el('h2', '', 'Match images to the form'),
+    el(
+      'p',
+      '',
+      `Pick the form diagram each image shows. Letters drawn on the image then fill that piece of the form. Suggestions come from the image labels; check them. Values in ${state.unit}.`
+    )
+  );
+  const list = el('div', 'nml-match-list');
+  const summary = el('p', 'nml-match-sum');
+  const rows: Array<{
+    match: ImageMatch;
+    select: HTMLSelectElement;
+    effect: HTMLElement;
+    thumb: HTMLElement;
+  }> = [];
+
+  const refresh = () => {
+    const plan = planImageMatches(state.models, matches, lines, entry()?.lineLinks);
+    const conflictKeys = new Set(plan.conflicts.map(c => `${c.key}|${c.letter}`));
+    for (const row of rows) {
+      const { match, effect } = row;
+      effect.replaceChildren();
+      if (!match.key) {
+        effect.append(el('span', 'nml-match-off', match.note || 'Not on the form'));
+        continue;
+      }
+      const filled = plan.byView[match.viewId] || {};
+      const base = titleOf(match.key).split(' · ').slice(0, 2).join(' · ');
+      const parts = Object.entries(filled).map(([key, letters]) => {
+        const marked = letters.map(l => (conflictKeys.has(`${key}|${l}`) ? `${l} ⚠` : l));
+        return (key === match.key ? '' : `${shortTitle(key, base)}: `) + marked.join(', ');
+      });
+      effect.append(
+        el(
+          'span',
+          parts.length ? 'nml-match-fill' : 'nml-match-off',
+          parts.length ? `Fills ${parts.join('; ')}` : 'No letters drawn here match this diagram'
+        )
+      );
+      const missing = plan.missing[match.key] || [];
+      if (missing.length && rows.find(r => r.match.key === match.key) === row)
+        effect.append(el('span', 'nml-match-miss', `No line yet: ${missing.join(', ')}`));
+    }
+    const count = matches.filter(m => m.key).length;
+    summary.textContent = `${count} of ${matches.length} image${matches.length === 1 ? '' : 's'} matched · ${plan.links.length} letter${plan.links.length === 1 ? '' : 's'} will follow their lines${plan.conflicts.length ? ` · ${plan.conflicts.length} drawn twice with different numbers (⚠): the first image listed wins` : ''}.`;
+  };
+  const showThumb = (row: (typeof rows)[number]) => {
+    row.thumb.replaceChildren();
+    const key = row.match.key;
+    if (!key) {
+      row.thumb.append(el('span', 'nml-match-ph', 'Not on the form'));
+      return;
+    }
+    const loading = el('span', 'nml-match-ph', 'Loading the diagram…');
+    row.thumb.append(loading);
+    diagramThumb(key)
+      .then(url => {
+        if (row.match.key !== key) return;
+        const img = el('img');
+        img.src = url;
+        img.alt = titleOf(key);
+        row.thumb.replaceChildren(img);
+      })
+      .catch(() => {
+        if (row.match.key === key) loading.textContent = 'Diagram unavailable';
+      });
+  };
+
+  for (const match of matches) {
+    const row = el('div', 'nml-match-row');
+    const photo = el('div', 'nml-match-thumb');
+    const src = String(projectManager()?.views?.[match.viewId]?.image || '');
+    if (src) {
+      const img = el('img');
+      img.src = src;
+      img.alt = match.title;
+      img.loading = 'lazy';
+      photo.append(img);
+    } else photo.append(el('span', 'nml-match-ph', 'No image'));
+    const mid = el('div', 'nml-match-mid');
+    mid.append(el('b', '', match.title));
+    const select = el('select');
+    select.setAttribute('aria-label', `Form diagram for ${match.title}`);
+    const none = el('option', '', 'Not on the form');
+    none.value = '';
+    select.append(none);
+    const offered = new Set(match.choices || []);
+    if (offered.size) {
+      const group = el('optgroup');
+      group.label = 'Suggested';
+      for (const key of match.choices || []) {
+        const option = el('option', '', titleOf(key));
+        option.value = key;
+        group.append(option);
+      }
+      select.append(group);
+    }
+    const all = el('optgroup');
+    all.label = offered.size ? 'Everything on the form' : 'On the form';
+    for (const model of state.models) {
+      const option = el('option', '', model.title);
+      option.value = model.key;
+      all.append(option);
+    }
+    select.append(all);
+    select.value = match.key;
+    const how = el(
+      'span',
+      'nml-match-how',
+      match.how === 'saved'
+        ? 'Matched before'
+        : match.how
+          ? `Suggested: ${match.note || ''}`
+          : match.choices?.length
+            ? `${match.note || ''}. Pick one`
+            : ''
+    );
+    const effect = el('div', 'nml-match-effect');
+    mid.append(select, how, effect);
+    const thumb = el('div', 'nml-match-thumb nml-match-diagram');
+    row.append(photo, mid, thumb);
+    list.append(row);
+    const record = { match, select, effect, thumb };
+    rows.push(record);
+    select.addEventListener('change', () => {
+      match.key = select.value;
+      match.how = select.value ? match.how || 'saved' : '';
+      how.textContent = select.value ? '' : how.textContent;
+      showThumb(record);
+      refresh();
+    });
+    showThumb(record);
+  }
+  card.append(summary, list);
+  const foot = el('div', 'nml-map-foot');
+  const cancel = el('button', '', 'Cancel');
+  cancel.type = 'button';
+  const apply = el('button', 'primary', 'Apply matches');
+  apply.type = 'button';
+  const close = () => overlay.remove();
+  cancel.addEventListener('click', close);
+  apply.addEventListener('click', () => {
+    close();
+    applyImageMatches(matches);
+  });
+  foot.append(cancel, apply);
+  card.append(foot);
+  overlay.append(card);
+  overlay.addEventListener('keydown', event => {
+    if (event.key === 'Escape') close();
+  });
+  document.body.append(overlay);
+  refresh();
+  apply.focus();
+}
+function applyImageMatches(matches: ImageMatch[]): void {
+  const current = entry();
+  if (!current) return;
+  const plan = planImageMatches(state.models, matches, allLines(), current.lineLinks);
+  const viewBindings = { ...(current.viewBindings || {}) };
+  for (const match of matches) {
+    if (match.key) viewBindings[match.viewId] = match.key;
+    else delete viewBindings[match.viewId];
+  }
+  const lineLinks: LineLinks = {};
+  for (const [id, link] of Object.entries(current.lineLinks || {}))
+    if (link.by !== 'match') lineLinks[id] = link;
   for (const link of plan.links)
-    lineLinks[lineLinkKey(link.key, link.letter)] = { viewId: link.viewId, label: link.label };
-  patchEntry({ lineLinks });
+    if (!lineLinks[lineLinkKey(link.key, link.letter)])
+      lineLinks[lineLinkKey(link.key, link.letter)] = {
+        viewId: link.viewId,
+        label: link.label,
+        by: 'match',
+      };
+  patchEntry({ viewBindings, lineLinks });
   state.canvasSnapshot.clear();
   pullFromLines();
-  const matched = plan.views.filter(v => v.target).length;
-  const skipped = plan.views.filter(v => !v.target && codesInTitleSafe(v.title));
-  const parts = [
-    `Linked ${plan.links.length} letter${plan.links.length === 1 ? '' : 's'} from ${matched} image${matched === 1 ? '' : 's'} by model code.`,
-    plan.conflicts.length
-      ? `Check ${plan.conflicts.map(c => c.letter).join(', ')}: drawn with different numbers on more than one image.`
-      : '',
-    skipped.length
-      ? `Left out ${skipped.length} image${skipped.length === 1 ? '' : 's'} (${skipped
-          .map(v => v.why)
-          .filter(Boolean)
-          .slice(0, 3)
-          .join('; ')}).`
-      : '',
-    'Check the values, then Send to NOMS.',
-  ];
-  setStatus(parts.filter(Boolean).join(' '), plan.links.length ? 'ok' : 'info');
+  const count = matches.filter(m => m.key).length;
+  setStatus(
+    `Matched ${count} image${count === 1 ? '' : 's'}: ${plan.links.length} letter${plan.links.length === 1 ? '' : 's'} follow their lines.` +
+      (plan.conflicts.length
+        ? ` Check ${plan.conflicts.map(c => c.letter).join(', ')}: drawn with different numbers on more than one image.`
+        : '') +
+      ' Check the values, then Send to NOMS.',
+    plan.links.length ? 'ok' : 'info'
+  );
   render();
 }
-const codesInTitleSafe = (title: string): boolean =>
-  /\b[A-Z]{2}[A-Z0-9]*(?:-[A-Z0-9]+)+\b/.test(title);
 
 // ---------------------------------------------------------------- send to NOMS
 // One action: save the values to the CW40 form, make the customer's PDF in cm,
@@ -2436,6 +2646,22 @@ function ensureStyles(): void {
     .nml-map-group h3 { margin: 0 0 6px; font-size: 13px; }
     .nml-map-targets { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 8px; }
     .nml-map-summary { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; }
+    .nml-match .nml-map-card { width: min(1040px, 100%); }
+    .nml-match-sum { margin: 6px 0 10px; color: #334155; font-size: 13px; }
+    .nml-match-list { display: grid; gap: 8px; }
+    .nml-match-row { display: grid; grid-template-columns: 132px 1fr 132px; gap: 12px; align-items: start; padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .nml-match-thumb { width: 132px; height: 100px; display: flex; align-items: center; justify-content: center; background: #f8fafc; border-radius: 6px; overflow: hidden; }
+    .nml-match-thumb img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .nml-match-diagram { background: #fff; border: 1px solid #e2e8f0; }
+    .nml-match-ph { color: #94a3b8; font-size: 11px; text-align: center; padding: 4px; }
+    .nml-match-mid { display: grid; gap: 4px; min-width: 0; font-size: 13px; }
+    .nml-match-mid b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nml-match-mid select { max-width: 100%; height: 28px; }
+    .nml-match-how { color: #64748b; font-size: 12px; }
+    .nml-match-effect { display: grid; gap: 2px; font-size: 12px; }
+    .nml-match-fill { color: #166534; }
+    .nml-match-off { color: #94a3b8; }
+    .nml-match-miss { color: #9a3412; }
     .nml-map-none { color: #b45309; font-weight: 600; }
     .nml-map-run { color: #6b7280; font-size: 12px; }
     .nml-map-why { margin: 0 0 10px 18px; padding: 0; color: #92400e; font-size: 13px; }
@@ -2654,6 +2880,14 @@ function render(): void {
     )
   );
   body.appendChild(typeRow);
+  const matchRow = el('div', 'nml-row');
+  const matched = matchedCount();
+  matchRow.append(
+    actionButton(matched ? `Match images (${matched} matched)` : 'Match images to the form', () =>
+      openMatchImages()
+    )
+  );
+  body.appendChild(matchRow);
 
   const viewId = currentViewId();
   const boundKey = current.viewBindings?.[viewId] || '';

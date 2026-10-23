@@ -246,6 +246,8 @@ export function fromCanvasMeasurement(
 export interface LineLink {
   viewId: string;
   label: string;
+  /** "match": made by the Match images screen, replaced when it is applied again. */
+  by?: 'match';
 }
 export type LineLinks = Record<string, LineLink>;
 
@@ -2039,6 +2041,191 @@ export function codeLinksForProject(
             key: model.key,
             letter,
             values: drawn.map(line => ({ viewId: line.viewId, value: line.value })),
+          });
+      }
+    }
+  }
+  return plan;
+}
+
+// ---------------------------------------------------------------- match images to form diagrams
+// The Match images screen: each project image is matched to the form diagram
+// (model file "product:model:file") it shows. Suggestions come from the image
+// label: the saved match, else the CW code in the label (one piece only) and
+// the words front, side or back for the file. A cushion code on several pieces
+// is offered as a choice, never picked for the person, unless the label names
+// the piece ("P3") of a frame image already matched.
+
+export interface ImageMatch {
+  viewId: string;
+  title: string;
+  /** Chosen file key, "" for not on the form. */
+  key: string;
+  how: 'saved' | 'code' | 'piece' | '';
+  /** Why there is no suggestion, or what it came from. */
+  note?: string;
+  /** Files to choose between when the label points to more than one. */
+  choices?: string[];
+}
+
+const pieceRefs = (title: string): string[] =>
+  Array.from(String(title || '').matchAll(/\bP(\d{1,2})\b/g), m => m[1]);
+
+/** Suggested form file for each image, keeping matches already saved. */
+export function suggestImageMatches(
+  models: NomsModelEntry[],
+  views: Array<{ viewId: string; title: string }>,
+  saved: Record<string, string> = {}
+): ImageMatch[] {
+  const enabled = models.filter(m => m.enabled !== false);
+  const keys = new Set(enabled.map(m => m.key));
+  const filesOf = (piece: string) => enabled.filter(m => pieceOf(m.key) === piece);
+  // "P3" in a frame image label -> the product that image was matched to.
+  const productByRef = new Map<string, string>();
+  const out: ImageMatch[] = views.map(view => {
+    const title = view.title || view.viewId;
+    if (saved[view.viewId] && keys.has(saved[view.viewId]))
+      return { viewId: view.viewId, title, key: saved[view.viewId], how: 'saved' as const };
+    const codes = codesInTitle(title);
+    if (!codes.length)
+      return {
+        viewId: view.viewId,
+        title,
+        key: '',
+        how: '' as const,
+        note: 'No model code in its label',
+      };
+    let note = '';
+    for (const code of codes) {
+      const found = pieceForCode(code, enabled);
+      if (!found.target) {
+        note = note || found.why || '';
+        continue;
+      }
+      for (const ref of pieceRefs(title)) productByRef.set(ref, found.target.split(':')[0]);
+      const files = filesOf(found.target);
+      if (files.length === 1)
+        return {
+          viewId: view.viewId,
+          title,
+          key: files[0].key,
+          how: 'code' as const,
+          note: `From ${code}`,
+        };
+      const worded = files.filter(f => {
+        const word = FILE_WORDS.find(([fileRe]) => fileRe.test(f.title));
+        return word ? word[1].test(title) : false;
+      });
+      if (worded.length === 1)
+        return {
+          viewId: view.viewId,
+          title,
+          key: worded[0].key,
+          how: 'code' as const,
+          note: `From ${code}`,
+        };
+      return {
+        viewId: view.viewId,
+        title,
+        key: '',
+        how: '' as const,
+        note: `${code}: pick front, side or back`,
+        choices: files.map(f => f.key),
+      };
+    }
+    // A code the form has on several pieces: offer those files.
+    const shared = codes
+      .map(code => enabled.filter(m => normaliseCode(m.modelName) === normaliseCode(code)))
+      .find(list => list.length > 1);
+    return {
+      viewId: view.viewId,
+      title,
+      key: '',
+      how: '' as const,
+      note: note || 'Not on the form',
+      ...(shared ? { choices: shared.map(m => m.key) } : {}),
+    };
+  });
+  // Second pass: a cushion label naming a piece ("P3") picks that piece's file.
+  for (const match of out) {
+    if (match.key || !match.choices?.length) continue;
+    const products = new Set(
+      pieceRefs(match.title)
+        .map(ref => productByRef.get(ref))
+        .filter(Boolean)
+    );
+    if (products.size !== 1) continue;
+    const [product] = Array.from(products);
+    const onPiece = match.choices.filter(key => key.split(':')[0] === product);
+    if (onPiece.length === 1) {
+      match.key = onPiece[0];
+      match.how = 'piece';
+      match.note = `On ${pieceRefs(match.title)
+        .map(r => `P${r}`)
+        .join(', ')}`;
+    }
+  }
+  return out;
+}
+
+export interface ImageMatchPlan {
+  links: Array<CodeLink & { key: string }>;
+  /** Letters each image fills, by file key. */
+  byView: Record<string, Record<string, string[]>>;
+  /** Letters of a matched file that no image fills. */
+  missing: Record<string, string[]>;
+  conflicts: CodeLinkPlan['conflicts'];
+}
+
+/**
+ * What applying the matches does. An image fills the letters drawn (or
+ * measured) on it that its piece has, on any file of that piece; images
+ * matched to the file itself come first, then the order of the list.
+ * Letters linked by hand (not by this screen) are left alone.
+ */
+export function planImageMatches(
+  models: NomsModelEntry[],
+  matches: Array<{ viewId: string; key: string }>,
+  lines: MeasuredLine[],
+  existing: LineLinks | null | undefined = {}
+): ImageMatchPlan {
+  const plan: ImageMatchPlan = { links: [], byView: {}, missing: {}, conflicts: [] };
+  const matched = matches.filter(m => m.key);
+  const order = new Map(matched.map((m, i) => [m.viewId, i]));
+  const pieces = new Set(matched.map(m => pieceOf(m.key)));
+  for (const piece of pieces) {
+    const views = matched.filter(m => pieceOf(m.key) === piece);
+    const viewIds = new Set(views.map(v => v.viewId));
+    for (const model of models.filter(m => pieceOf(m.key) === piece && m.enabled !== false)) {
+      const boundHere = new Set(views.filter(v => v.key === model.key).map(v => v.viewId));
+      for (const letter of model.fields) {
+        const manual = existing?.[lineLinkKey(model.key, letter)];
+        if (manual && manual.by !== 'match') continue;
+        const drawn = lines
+          .filter(l => viewIds.has(l.viewId) && l.label === letter && hasMeasure(l.value))
+          .sort(
+            (a, b) =>
+              (boundHere.has(a.viewId) ? 0 : 1) - (boundHere.has(b.viewId) ? 0 : 1) ||
+              order.get(a.viewId)! - order.get(b.viewId)!
+          );
+        if (!drawn.length) {
+          if (boundHere.size) (plan.missing[model.key] ||= []).push(letter);
+          continue;
+        }
+        const chosen = drawn[0];
+        plan.links.push({
+          key: model.key,
+          letter,
+          viewId: chosen.viewId,
+          label: chosen.label,
+          value: chosen.value,
+        });
+        ((plan.byView[chosen.viewId] ||= {})[model.key] ||= []).push(letter);
+        if (new Set(drawn.map(l => l.value)).size > 1)
+          plan.conflicts.push({
+            key: model.key,
+            letter,
+            values: drawn.map(l => ({ viewId: l.viewId, value: l.value })),
           });
       }
     }
