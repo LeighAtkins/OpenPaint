@@ -83,6 +83,7 @@ import {
   lineLinkKey,
   resolveLineForLetter,
   suggestLineLinks,
+  codeLinksForProject,
   type LetterLines,
   type LineLink,
   type LineLinks,
@@ -318,6 +319,10 @@ function ask(
 function onBridgeMessage(event: MessageEvent): void {
   if (event.source !== window || event.origin !== window.location.origin) return;
   const data = event.data;
+  if (data?.source === REPLY_SOURCE && data.type === 'NOMS_LINKED') {
+    void onLinked(data.context || {});
+    return;
+  }
   if (data?.source !== REPLY_SOURCE || data.type !== 'NOMS_RESPONSE') return;
   const resolve = pending.get(String(data.requestId || ''));
   if (!resolve) return;
@@ -1898,6 +1903,118 @@ function suggestLinks(): void {
   apply.focus();
 }
 
+// ---------------------------------------------------------------- link a project to NOMS
+// A project that was not opened from NOMS (an .opaint file, an older cloud
+// project) can still be sent: "Send to NOMS…" in the Project menu asks OMNOMS
+// to link an order. OMNOMS opens that order's measurements page on NOMS with
+// a Link button, so the form is still approved by a person on NOMS. Once
+// linked, each image is matched to its piece of the form by the model code in
+// its label and the letters follow the lines drawn with the same letter.
+
+function suggestedOrder(): string {
+  const name =
+    (document.getElementById('projectName') as HTMLInputElement | null)?.value ||
+    projectManager()?.getProjectMetadata?.()?.naming?.autoProjectTitle ||
+    '';
+  return /#\s?(\d{5,7})\b/.exec(String(name))?.[1] || '';
+}
+async function startLink(): Promise<void> {
+  const notify = (text: string, kind: 'info' | 'error' | 'success' = 'info') =>
+    (window as any).showStatusMessage?.(text, kind) ?? window.alert(text);
+  if (!staff()) return notify('Sign in with a @comfort-works.com Google account first.', 'error');
+  if (!bridgeAvailable())
+    return notify('OMNOMS is not running in this browser. Install OMNOMS 1.9 or later.', 'error');
+  const typed = window.prompt(
+    'Send this project to which NOMS order? Order number:',
+    suggestedOrder()
+  );
+  const order = /\d{5,7}/.exec(String(typed || ''))?.[0] || '';
+  if (!order) return;
+  const projectName =
+    (document.getElementById('projectName') as HTMLInputElement | null)?.value || '';
+  const reply = await ask('link', { order, projectName }, 60000);
+  if (!reply.ok) return notify(reply.error || 'OMNOMS could not open the order.', 'error');
+  notify(`NOMS #${order} opened in a new tab. Press Link to SofaPaint there.`, 'info');
+}
+async function onLinked(context: { order?: string; form?: string; lang?: string }): Promise<void> {
+  const order = /^\d{5,7}$/.test(String(context.order || '')) ? String(context.order) : '';
+  const formId = /^\d{5,16}$/.test(String(context.form || '')) ? String(context.form) : '';
+  const manager = projectManager();
+  if (!order || !formId || !manager?.setProjectMetadata) return;
+  const metadata = manager.getProjectMetadata() || {};
+  const all = metadata.externalSources?.nomsOrders || {};
+  manager.setProjectMetadata({
+    externalSources: {
+      ...(metadata.externalSources || {}),
+      nomsOrders: {
+        ...all,
+        [order]: {
+          viewBindings: {},
+          diagramViews: {},
+          values: {},
+          unit: 'cm',
+          confirmed: false,
+          ...(all[order] || {}),
+          orderNumber: order,
+          formId,
+          lang: context.lang || all[order]?.lang || 'en',
+        },
+      },
+    },
+  });
+  window.dispatchEvent(new CustomEvent('openpaint:project-dirty', { detail: { source: 'noms' } }));
+  state.order = '';
+  syncActiveOrder();
+  state.order = order;
+  render();
+  await loadForm({ preferNoms: true });
+  if (!state.content) return;
+  linkByCode();
+}
+/** Link form letters to lines by the piece code in each image's label. */
+function linkByCode(): void {
+  const current = entry();
+  if (!current) return;
+  const manager = projectManager();
+  const ids: string[] = (
+    Array.isArray(manager?.viewOrder) && manager.viewOrder.length
+      ? manager.viewOrder
+      : Object.keys(manager?.views || {})
+  ).filter((id: string) => manager?.views?.[id]);
+  const plan = codeLinksForProject(
+    state.models,
+    ids.map(viewId => ({ viewId, title: viewTitle(viewId) })),
+    allLines(),
+    current.lineLinks
+  );
+  const lineLinks: LineLinks = { ...(current.lineLinks || {}) };
+  for (const link of plan.links)
+    lineLinks[lineLinkKey(link.key, link.letter)] = { viewId: link.viewId, label: link.label };
+  patchEntry({ lineLinks });
+  state.canvasSnapshot.clear();
+  pullFromLines();
+  const matched = plan.views.filter(v => v.target).length;
+  const skipped = plan.views.filter(v => !v.target && codesInTitleSafe(v.title));
+  const parts = [
+    `Linked ${plan.links.length} letter${plan.links.length === 1 ? '' : 's'} from ${matched} image${matched === 1 ? '' : 's'} by model code.`,
+    plan.conflicts.length
+      ? `Check ${plan.conflicts.map(c => c.letter).join(', ')}: drawn with different numbers on more than one image.`
+      : '',
+    skipped.length
+      ? `Left out ${skipped.length} image${skipped.length === 1 ? '' : 's'} (${skipped
+          .map(v => v.why)
+          .filter(Boolean)
+          .slice(0, 3)
+          .join('; ')}).`
+      : '',
+    'Check the values, then Send to NOMS.',
+  ];
+  setStatus(parts.filter(Boolean).join(' '), plan.links.length ? 'ok' : 'info');
+  render();
+}
+const codesInTitleSafe = (title: string): boolean =>
+  /\b[A-Z]{2}[A-Z0-9]*(?:-[A-Z0-9]+)+\b/.test(title);
+
 // ---------------------------------------------------------------- send to NOMS
 // One action: save the values to the CW40 form, make the customer's PDF in cm,
 // hand it over as a download (kept in this browser too), and show a summary
@@ -2919,6 +3036,14 @@ export function initNomsMeasureLink(): void {
     if (entry() && staff() && bridgeAvailable()) void loadForm();
   });
   window.addEventListener('openpaint:view-switched', () => render());
+  document.getElementById('nomsSendBtn')?.addEventListener('click', () => {
+    if (entry()) {
+      render();
+      document.getElementById(PANEL_ID)?.scrollIntoView({ block: 'nearest' });
+      return;
+    }
+    void startLink();
+  });
   authService.onAuthStateChange(() => render());
   let lastView = '';
   window.setInterval(() => {

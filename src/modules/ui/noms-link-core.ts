@@ -1888,3 +1888,160 @@ export function convertValues(
     ])
   );
 }
+
+// ---------------------------------------------------------------- link by model code
+// A project drawn on the customer's own photos names each piece in its image
+// label: "P1 · Left arm piece (CS3B-SSA-HB-L) · front". Linking such a project
+// to a NOMS order matches each image to the form's piece by that code, then
+// links every form letter to the drawn line with the same letter on those
+// images. Anything that does not match one piece is left out, never guessed.
+
+const PIECE_CODE = /\b[A-Z]{2}[A-Z0-9]*(?:-[A-Z0-9]+)+\b/g;
+const isCushionCode = (code: string): boolean => /^CC-/.test(normaliseCode(code));
+
+/** CW codes named in an image label, in order. */
+export function codesInTitle(title: string): string[] {
+  return Array.from(new Set(String(title || '').match(PIECE_CODE) || []));
+}
+
+export interface CodeViewResult {
+  viewId: string;
+  title: string;
+  /** "product:model" the image was matched to, when it was. */
+  target?: string;
+  how?: 'exact' | 'close';
+  why?: string;
+}
+export interface CodeLink {
+  key: string;
+  letter: string;
+  viewId: string;
+  label: string;
+  value: string;
+}
+export interface CodeLinkPlan {
+  views: CodeViewResult[];
+  links: CodeLink[];
+  /** Letters drawn on more than one matched image with different numbers. */
+  conflicts: Array<{
+    key: string;
+    letter: string;
+    values: Array<{ viewId: string; value: string }>;
+  }>;
+  /** Form letters on a matched piece that no image has a line for. */
+  missing: Array<{ key: string; letter: string }>;
+}
+
+const pieceOf = (key: string): string => key.split(':').slice(0, 2).join(':');
+const FILE_WORDS: Array<[RegExp, RegExp]> = [
+  [/\bfront\b/i, /\bfront\b/i],
+  [/\bside\b/i, /\b(side|outside end|end)\b/i],
+  [/\bback\b/i, /\bback\b/i],
+];
+
+/** Which form piece ("product:model") an image's code points to, if exactly one. */
+function pieceForCode(
+  code: string,
+  models: NomsModelEntry[]
+): { target?: string; how?: 'exact' | 'close'; why?: string } {
+  const wanted = normaliseCode(code);
+  const pieces = new Map<string, { reference: string; modelName: string }>();
+  for (const m of models) {
+    if (m.enabled === false) continue;
+    pieces.set(pieceOf(m.key), { reference: m.reference, modelName: m.modelName });
+  }
+  const byModel = Array.from(pieces).filter(([, p]) => normaliseCode(p.modelName) === wanted);
+  if (byModel.length === 1) return { target: byModel[0][0], how: 'exact' };
+  if (byModel.length > 1)
+    return { why: `${code} is on ${byModel.length} pieces of the form; link it by hand` };
+  // The product code (CS1X-NA) names the product; its frame is the one piece
+  // that is not a cushion.
+  const byProduct = Array.from(pieces).filter(([, p]) => normaliseCode(p.reference) === wanted);
+  const frames = byProduct.filter(([, p]) => !isCushionCode(p.modelName));
+  if (frames.length === 1) return { target: frames[0][0], how: 'exact' };
+  if (frames.length > 1) return { why: `${code} has ${frames.length} frames on the form` };
+  // Cushions are only ever matched exactly: CC-BK-W is not a CC-BK-BE.
+  if (isCushionCode(code)) return { why: `${code} is not on the form` };
+  const scored = Array.from(pieces)
+    .filter(([, p]) => !isCushionCode(p.modelName))
+    .map(([target, p]) => ({
+      target,
+      score: Math.max(codeSimilarity(code, p.modelName), codeSimilarity(code, p.reference)),
+    }))
+    .sort((a, b) => b.score - a.score);
+  const [best, next] = scored;
+  if (best && best.score >= CODE_MIN && (!next || best.score - next.score >= CODE_MARGIN))
+    return { target: best.target, how: 'close' };
+  return { why: `${code} does not clearly match one piece of the form` };
+}
+
+/**
+ * Links from form letters to drawn lines, matched by the piece code in each
+ * image's label. Letters already linked keep their link. Where a letter is
+ * drawn on several images of the same piece, the image named like the form
+ * file (front, side or back) wins, else the first; different numbers are
+ * reported as conflicts so a person can look.
+ */
+export function codeLinksForProject(
+  models: NomsModelEntry[],
+  views: Array<{ viewId: string; title: string }>,
+  lines: MeasuredLine[],
+  existing: LineLinks | null | undefined = {}
+): CodeLinkPlan {
+  const plan: CodeLinkPlan = { views: [], links: [], conflicts: [], missing: [] };
+  const viewsByPiece = new Map<string, Array<{ viewId: string; title: string }>>();
+  for (const view of views) {
+    const codes = codesInTitle(view.title);
+    if (!codes.length) {
+      plan.views.push({ ...view, why: 'no model code in its label' });
+      continue;
+    }
+    let result: ReturnType<typeof pieceForCode> = { why: '' };
+    for (const code of codes) {
+      result = pieceForCode(code, models);
+      if (result.target) break;
+    }
+    plan.views.push({ ...view, ...result });
+    if (result.target)
+      viewsByPiece.set(result.target, [...(viewsByPiece.get(result.target) || []), view]);
+  }
+  for (const [piece, pieceViews] of viewsByPiece) {
+    const order = new Map(pieceViews.map((v, i) => [v.viewId, i]));
+    for (const model of models.filter(m => pieceOf(m.key) === piece)) {
+      const fileWord = FILE_WORDS.find(([fileRe]) => fileRe.test(model.title));
+      for (const letter of model.fields) {
+        if (existing?.[lineLinkKey(model.key, letter)]) continue;
+        const drawn = lines.filter(
+          line => order.has(line.viewId) && line.label === letter && hasMeasure(line.value)
+        );
+        if (!drawn.length) {
+          plan.missing.push({ key: model.key, letter });
+          continue;
+        }
+        const titleOf = (viewId: string): string =>
+          pieceViews.find(v => v.viewId === viewId)?.title || '';
+        drawn.sort((a, b) => {
+          const named = (line: MeasuredLine): number =>
+            fileWord && fileWord[1].test(titleOf(line.viewId)) ? 0 : 1;
+          return named(a) - named(b) || order.get(a.viewId)! - order.get(b.viewId)!;
+        });
+        const chosen = drawn[0];
+        plan.links.push({
+          key: model.key,
+          letter,
+          viewId: chosen.viewId,
+          label: chosen.label,
+          value: chosen.value,
+        });
+        const distinct = new Set(drawn.map(line => line.value));
+        if (distinct.size > 1)
+          plan.conflicts.push({
+            key: model.key,
+            letter,
+            values: drawn.map(line => ({ viewId: line.viewId, value: line.value })),
+          });
+      }
+    }
+  }
+  return plan;
+}
