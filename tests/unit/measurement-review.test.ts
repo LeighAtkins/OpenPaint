@@ -34,6 +34,38 @@ describe('SofaPaint measurement review PDFs', () => {
     ]);
   });
 
+  it('keeps values the customer typed for letters the manifest does not list', async () => {
+    const pdf = await PDFDocument.create();
+    const page = pdf.addPage([400, 400]);
+    pdf.setSubject(
+      `SOFAPAINT_REVIEW_V1:${JSON.stringify({
+        version: 1,
+        views: [
+          { viewId: 'front', title: 'P1 front', measurements: [{ label: 'D', value: '59"' }] },
+          { viewId: 'front-1', title: 'P2 front', measurements: [] },
+        ],
+      })}`
+    );
+    const form = pdf.getForm();
+    const add = (name: string, text: string, y: number) => {
+      const f = form.createTextField(name);
+      f.setText(text);
+      f.addToPage(page, { x: 10, y, width: 80, height: 20 });
+    };
+    add('m_front_A1', '59"', 10);
+    add('m_front_A2', '52', 40);
+    add('m_front_B9', '', 70);
+    add('m_front-1_A3', '25', 100);
+
+    const parsed = await parseSofaPaintReviewPdf(await pdf.save());
+    expect(parsed.views[0].measurements).toEqual([
+      { label: 'A1', value: '59"' },
+      { label: 'A2', value: '52' },
+      { label: 'D', value: '59"' },
+    ]);
+    expect(parsed.views[1].measurements).toEqual([{ label: 'A3', value: '25' }]);
+  });
+
   it('can recover measurements from older editable SofaPaint field names', async () => {
     const pdf = await PDFDocument.create();
     const page = pdf.addPage([400, 400]);

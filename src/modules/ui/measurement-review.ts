@@ -114,6 +114,22 @@ export async function parseSofaPaintReviewPdf(bytes: ArrayBuffer | Uint8Array) {
       }
       return { ...row, value };
     });
+    // The manifest lists the letters that had a value when the PDF was made;
+    // the customer fills in the rest. Field values for letters the manifest
+    // does not list are kept too (first frame of a view only: later frames
+    // carry _2/_3 suffixes).
+    if (frameIndex === 0) {
+      const listed = new Set(view.measurements.map(row => fieldPart(row.label)));
+      const prefix = `m_${frameKey}_`;
+      fields.forEach(({ name, value }) => {
+        if (!name.startsWith(prefix) || !String(value || '').trim()) return;
+        const label = name.slice(prefix.length);
+        if (!/^[A-Za-z]+\d*$/.test(label) || listed.has(label)) return;
+        listed.add(label);
+        view.measurements.push({ label, value });
+      });
+      view.measurements.sort((a, b) => naturalLabelSort(a.label, b.label));
+    }
   });
   manifest.unit = manifest.unit || detectedUnit;
   return manifest;

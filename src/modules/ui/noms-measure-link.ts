@@ -352,17 +352,36 @@ function viewsForModel(key: string): string[] {
 function allLines(): MeasuredLine[] {
   const strokes = metadataManager()?.vectorStrokesByImage || {};
   const out: MeasuredLine[] = [];
+  const seen = new Set<string>();
   for (const [scope, labels] of Object.entries(
     strokes as Record<string, Record<string, unknown>>
   )) {
     for (const label of Object.keys(labels || {})) {
       if (!labels[label]) continue;
+      seen.add(`${scope}|${label}`);
       out.push({
         viewId: baseView(scope),
         scope,
         label,
         value: fromCanvasMeasurement(metadataManager()?.getMeasurement?.(scope, label), state.unit),
       });
+    }
+  }
+  // A measurement whose line object is gone (older projects lost base-view
+  // lines on save) still holds the customer's number: it counts as a line.
+  const measured = metadataManager()?.strokeMeasurements || {};
+  for (const [scope, labels] of Object.entries(
+    measured as Record<string, Record<string, unknown>>
+  )) {
+    if (!projectManager()?.views?.[baseView(scope)]) continue;
+    for (const label of Object.keys(labels || {})) {
+      if (seen.has(`${scope}|${label}`)) continue;
+      const value = fromCanvasMeasurement(
+        metadataManager()?.getMeasurement?.(scope, label),
+        state.unit
+      );
+      if (!value) continue;
+      out.push({ viewId: baseView(scope), scope, label, value });
     }
   }
   return out;
