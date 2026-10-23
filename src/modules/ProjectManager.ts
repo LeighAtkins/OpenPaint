@@ -11,6 +11,7 @@ import {
   normalizeSofaMetadata,
 } from './sofa-metadata.js';
 import { FabricControls } from './utils/FabricControls.js';
+import { strokesMissingFromCanvas } from './stroke-recovery.ts';
 import { sanitizeFilenamePart } from './utils/naming-utils.js';
 import { normalizeCloudError } from './cloud/error-normalizer.js';
 import { CLOUD_COPY } from './cloud/messages.js';
@@ -285,6 +286,7 @@ export class ProjectManager {
     }
 
     if (window.app?.metadataManager) {
+      await this.restoreStrokesMissingFromCanvas(viewId, view, canvasManager);
       window.app.metadataManager.rebuildMetadataFromCanvas(viewId, canvasManager.fabricCanvas);
     }
 
@@ -667,6 +669,7 @@ export class ProjectManager {
 
             // Rebuild metadata from canvas objects to ensure live references
             if (window.app?.metadataManager) {
+              await this.restoreStrokesMissingFromCanvas(viewId, view, this.canvasManager);
               window.app.metadataManager.rebuildMetadataFromCanvas(
                 viewId,
                 this.canvasManager.fabricCanvas
@@ -1428,6 +1431,66 @@ export class ProjectManager {
     return scoped;
   }
 
+  /**
+   * Puts back lines the saved project kept only in its stroke metadata.
+   * The metadata rebuild that follows keeps strokes with a canvas object and
+   * drops the rest, so a view saved with an empty objects list but full
+   * stroke buckets (seen on projects with capture tabs) would lose its base
+   * view lines on every load. Each such record is a fabric object's JSON;
+   * enliven it, stamp its scope and label, and add it to the canvas first.
+   */
+  async restoreStrokesMissingFromCanvas(viewId, view, canvasManager) {
+    const canvas = canvasManager?.fabricCanvas;
+    const scoped = view?.metadata?.vectorStrokesByImage;
+    if (!canvas || !scoped || typeof fabric?.util?.enlivenObjects !== 'function') return 0;
+    const missing = strokesMissingFromCanvas(scoped, canvas.getObjects(), viewId, (scope, id) =>
+      this.isScopeLabelForView(scope, id)
+    );
+    if (!missing.length) return 0;
+    const payload = missing.map(m => JSON.parse(JSON.stringify(m.record)));
+    const objects = await new Promise(resolve => {
+      try {
+        fabric.util.enlivenObjects(payload, enlivened => resolve(enlivened || []));
+      } catch (error) {
+        console.warn('[Load] Could not enliven saved strokes', { viewId, error });
+        resolve([]);
+      }
+    });
+    let restored = 0;
+    objects.forEach((obj, index) => {
+      if (!obj) return;
+      const { scope, label } = missing[index];
+      obj.strokeMetadata = {
+        ...(payload[index].strokeMetadata || {}),
+        ...(obj.strokeMetadata || {}),
+        imageLabel: scope,
+        strokeLabel: label,
+        type: obj.strokeMetadata?.type || payload[index].strokeMetadata?.type || 'line',
+        isVector: true,
+      };
+      const ControlsApi = window.FabricControls || FabricControls;
+      if (obj.type === 'line' && typeof ControlsApi?.createLineControls === 'function') {
+        ControlsApi.createLineControls(obj);
+      } else if (
+        obj.type === 'path' &&
+        Array.isArray(obj.customPoints) &&
+        typeof ControlsApi?.createCurveControls === 'function'
+      ) {
+        ControlsApi.createCurveControls(obj);
+      }
+      canvas.add(obj);
+      restored += 1;
+    });
+    if (restored) {
+      console.warn(`[Load] Restored ${restored} stroke(s) kept only in metadata`, {
+        viewId,
+        labels: missing.map(m => `${m.scope}|${m.label}`),
+      });
+      canvas.requestRenderAll?.();
+    }
+    return restored;
+  }
+
   getCanvasObjectScopeLabel(obj) {
     const candidates = [
       obj?.strokeMetadata?.imageLabel,
@@ -1793,10 +1856,10 @@ export class ProjectManager {
     if (projectData.views && Object.keys(projectData.views).length) return false;
     return Boolean(
       Array.isArray(projectData.imageLabels) ||
-      projectData.currentImageLabel ||
-      Object.keys(projectData.originalImages || {}).length ||
-      Object.keys(projectData.strokes || {}).length ||
-      Object.keys(projectData.strokeMeasurements || {}).length
+        projectData.currentImageLabel ||
+        Object.keys(projectData.originalImages || {}).length ||
+        Object.keys(projectData.strokes || {}).length ||
+        Object.keys(projectData.strokeMeasurements || {}).length
     );
   }
 
@@ -1977,9 +2040,9 @@ export class ProjectManager {
           const viewState = this.views?.[this.currentViewId] || null;
           const hasPersistedLayout = Boolean(
             viewState?.canvasData ||
-            viewState?.viewport ||
-            viewState?.tabs ||
-            viewState?.backgroundWorldRect
+              viewState?.viewport ||
+              viewState?.tabs ||
+              viewState?.backgroundWorldRect
           );
           // Size the capture frame to the uploaded image's aspect ratio on the
           // FIRST upload (no persisted layout). Previously this only ran for
@@ -2124,11 +2187,11 @@ export class ProjectManager {
             (Boolean(activeTab?.viewport) || Boolean(activeTab?.captureFrame?.worldRect));
           const viewHasSavedDrawingState = Boolean(
             viewState?.canvasData ||
-            viewState?.viewport ||
-            viewState?.tabs ||
-            liveTabState?.tabs?.length ||
-            viewState?.metadata ||
-            viewState?.backgroundWorldRect
+              viewState?.viewport ||
+              viewState?.tabs ||
+              liveTabState?.tabs?.length ||
+              viewState?.metadata ||
+              viewState?.backgroundWorldRect
           );
           const hasSavedBackgroundWorldRect =
             restoreSavedPlacement && Boolean(preferredRestoreWorldRect) && viewHasSavedDrawingState;
