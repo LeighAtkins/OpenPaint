@@ -660,7 +660,13 @@ async function saveForm(confirm: boolean): Promise<boolean> {
   }
   patchEntry({ lastSyncedAt: new Date().toISOString() });
   await loadForm({ preferNoms: true });
-  setStatus(`Saved to NOMS${confirm || state.confirmed ? ' and confirmed' : ''}.`, 'ok');
+  // OMNOMS 1.8 saves through NOMS's own form, which has no confirm step; it
+  // says whether the form is confirmed now and why not, when asked to.
+  const saved = (reply.data || {}) as { confirmed?: boolean; note?: string };
+  const confirmedNow =
+    typeof saved.confirmed === 'boolean' ? saved.confirmed : confirm || state.confirmed;
+  const note = typeof saved.note === 'string' && saved.note.trim() ? ` ${saved.note.trim()}` : '';
+  setStatus(`Saved to NOMS${confirmedNow ? ' and confirmed' : ''}.${note}`, 'ok');
   return true;
 }
 
