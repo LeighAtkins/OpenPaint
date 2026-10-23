@@ -2142,7 +2142,9 @@ export function suggestImageMatches(
       title,
       key: '',
       how: '' as const,
-      note: note || 'Not on the form',
+      note: shared
+        ? `${codes.find(c => shared.some(m => normaliseCode(m.modelName) === normaliseCode(c)))} is on ${shared.length} pieces of the form: pick which`
+        : note || 'Not on the form',
       ...(shared ? { choices: shared.map(m => m.key) } : {}),
     };
   });

@@ -2067,6 +2067,7 @@ function openMatchImages(): void {
   const rows: Array<{
     match: ImageMatch;
     select: HTMLSelectElement;
+    how: HTMLElement;
     effect: HTMLElement;
     thumb: HTMLElement;
   }> = [];
@@ -2078,7 +2079,7 @@ function openMatchImages(): void {
       const { match, effect } = row;
       effect.replaceChildren();
       if (!match.key) {
-        effect.append(el('span', 'nml-match-off', match.note || 'Not on the form'));
+        if (!row.how.textContent) effect.append(el('span', 'nml-match-off', 'Not on the form'));
         continue;
       }
       const filled = plan.byView[match.viewId] || {};
@@ -2168,21 +2169,19 @@ function openMatchImages(): void {
         ? 'Matched before'
         : match.how
           ? `Suggested: ${match.note || ''}`
-          : match.choices?.length
-            ? `${match.note || ''}. Pick one`
-            : ''
+          : match.note || ''
     );
     const effect = el('div', 'nml-match-effect');
     mid.append(select, how, effect);
     const thumb = el('div', 'nml-match-thumb nml-match-diagram');
     row.append(photo, mid, thumb);
     list.append(row);
-    const record = { match, select, effect, thumb };
+    const record = { match, select, how, effect, thumb };
     rows.push(record);
     select.addEventListener('change', () => {
       match.key = select.value;
       match.how = select.value ? match.how || 'saved' : '';
-      how.textContent = select.value ? '' : how.textContent;
+      how.textContent = select.value ? 'Chosen by you' : how.textContent;
       showThumb(record);
       refresh();
     });

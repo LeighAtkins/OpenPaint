@@ -66,6 +66,7 @@ describe('suggestImageMatches', () => {
   it('never picks a cushion that is on several pieces, unless the label names a matched piece', () => {
     expect(byView.seat4.key).toBe('');
     expect(byView.seat4.choices).toEqual(['2:1:0', '3:1:0']);
+    expect(byView.seat4.note).toBe('CC-ST-BE is on 2 pieces of the form: pick which');
     expect(byView.seat4p).toMatchObject({ key: '2:1:0', how: 'piece' });
     expect(byView.wedge).toMatchObject({ key: '', note: 'CC-BK-W is not on the form' });
     expect(byView.key).toMatchObject({ key: '', note: 'No model code in its label' });
