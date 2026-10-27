@@ -683,6 +683,21 @@ export class App {
             obj.set('strokeWidth', value);
           }
         }
+        // Imported (MOS) lines are re-rendered from their overlay model on view
+        // switch and saved from it, so the model must carry the new style too.
+        const cd = obj.customData;
+        if (cd?.layerType === 'mos-overlay') {
+          const element = this.measurementOverlayManager
+            ?.getOverlay?.(cd.overlayId)
+            ?.elements.get(cd.elementId);
+          if (element) {
+            element.style = {
+              ...(element.style || {}),
+              [property === 'color' ? 'strokeColor' : 'strokeWidth']: value,
+            };
+            element.dirty = true;
+          }
+        }
         obj.dirty = true;
         updatedCount++;
       }
