@@ -98,6 +98,10 @@ const PREFIX_PATTERN = /\bid="([^"]+)"/g;
 function prefixIds(svg: string, overlayIndex: number): string {
   const prefix = `mos${overlayIndex}_`;
 
+  // Saved projects store already-prefixed ids. Strip them so a reload yields
+  // `mos30_mA1cm`, not `mos30_mos15_mA1cm`, which the importer cannot classify.
+  svg = svg.replace(/\bid="(?:mos\d+_)+/g, 'id="').replace(/(href="#|url\(#)(?:mos\d+_)+/g, '$1');
+
   // Collect all original IDs first
   const ids = new Set<string>();
   let match: RegExpExecArray | null;
