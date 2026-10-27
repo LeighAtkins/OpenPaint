@@ -282,6 +282,16 @@ export class HistoryManager {
         );
       }
 
+      // Imported (MOS) measurement lines are not tracked by undo/redo. The
+      // canvas snapshot can bring back stale copies of them (or drop them), so
+      // redraw them from the overlay model, which holds their current positions.
+      const overlays = window.app?.measurementOverlayManager;
+      if (overlays?.mountView) {
+        overlays.mountView(currentViewId).catch(err => {
+          console.warn('[History] Failed to remount measurement overlays', err);
+        });
+      }
+
       // Recreate tags for all strokes
       if (window.app?.tagManager) {
         console.log('[History] Recreating tags');
