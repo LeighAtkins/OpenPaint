@@ -180,8 +180,16 @@ export class HistoryManager {
       this.lastStateSignature = prevState?.signature || this.buildStateSignature(prevState?.canvas);
 
       // Restore canvas
+      // The photo belongs to the view, not to history. A snapshot taken before
+      // the photo was set has none, and restoring it would drop the photo and
+      // shift every imported measurement line onto a fallback frame.
+      const keptBackground = this.canvasManager.fabricCanvas?.backgroundImage || null;
       this.canvasManager.loadFromJSON(prevState.canvas, () => {
         try {
+          const canvas = this.canvasManager.fabricCanvas;
+          if (canvas && keptBackground && !canvas.backgroundImage) {
+            canvas.backgroundImage = keptBackground;
+          }
           // Restore metadata if available
           if (prevState.metadata && window.app?.metadataManager) {
             window.app.metadataManager.vectorStrokesByImage =
@@ -232,8 +240,16 @@ export class HistoryManager {
       this.lastStateSignature = nextState?.signature || this.buildStateSignature(nextState?.canvas);
 
       // Restore canvas
+      // The photo belongs to the view, not to history. A snapshot taken before
+      // the photo was set has none, and restoring it would drop the photo and
+      // shift every imported measurement line onto a fallback frame.
+      const keptBackground = this.canvasManager.fabricCanvas?.backgroundImage || null;
       this.canvasManager.loadFromJSON(nextState.canvas, () => {
         try {
+          const canvas = this.canvasManager.fabricCanvas;
+          if (canvas && keptBackground && !canvas.backgroundImage) {
+            canvas.backgroundImage = keptBackground;
+          }
           // Restore metadata if available
           if (nextState.metadata && window.app?.metadataManager) {
             window.app.metadataManager.vectorStrokesByImage =
