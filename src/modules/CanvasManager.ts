@@ -1662,6 +1662,29 @@ export class CanvasManager {
   }
 
   initKeyboardShortcuts(): void {
+    // Copied strokes live in this.clipboard, which the browser never sees. An
+    // image on the system clipboard is newer than any stroke copy (copying
+    // strokes doesn't touch the system clipboard), so it wins and is left for
+    // UploadManager's paste listener. Otherwise paste the copied strokes.
+    document.addEventListener('paste', (e: ClipboardEvent) => {
+      if (!this.isInteractionActive()) return;
+      const target = e.target as HTMLElement | null;
+      const tagName = target?.tagName || '';
+      if (tagName === 'INPUT' || tagName === 'TEXTAREA' || target?.isContentEditable) return;
+      if (window.app?.toolManager?.tools?.text?.activeTextObject?.isEditing === true) return;
+
+      const items = Array.from(e.clipboardData?.items || []);
+      const hasImage =
+        (e.clipboardData?.files?.length || 0) > 0 ||
+        items.some(item => item.kind === 'file' || item.type.startsWith('image/'));
+      if (hasImage) return;
+
+      if (this.clipboard?.objects?.length) {
+        e.preventDefault();
+        this.pasteClipboardObjects();
+      }
+    });
+
     // Delete key handler
     document.addEventListener('keydown', (e: KeyboardEvent) => {
       if (!this.isInteractionActive()) return;
@@ -1688,13 +1711,10 @@ export class CanvasManager {
         return;
       }
 
-      if (isPaste) {
-        if (this.clipboard?.objects?.length) {
-          e.preventDefault();
-          this.pasteClipboardObjects();
-        }
-        return;
-      }
+      // Paste is decided in the 'paste' listener below, where the system
+      // clipboard can be read. Cancelling the key here would also cancel the
+      // browser's paste, so a copied image could never be imported.
+      if (isPaste) return;
 
       if ((e.key === 'Delete' || e.key === 'Backspace') && this.fabricCanvas) {
         const activeObjects = this.fabricCanvas.getActiveObjects();

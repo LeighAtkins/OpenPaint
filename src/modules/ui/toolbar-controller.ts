@@ -2882,12 +2882,20 @@ export function initToolbarController() {
 
       const applyCenteredFrameAndViewport = (stored, borderColor) => {
         const canvasManager = window.app?.canvasManager;
-        const rect =
+        // calculateTargetFrameSize centres in the raw canvas, ignoring the side
+        // panels and photo strip. Take only its size and centre in the same
+        // preferred area as __recenterCaptureFrame and new-image framing, or
+        // the two disagree and the photo sits off-centre in its frame.
+        const targetSize =
           typeof canvasManager?.calculateTargetFrameSize === 'function'
             ? canvasManager.calculateTargetFrameSize(
                 Number(canvasManager.fabricCanvas?.width) || window.innerWidth,
                 Number(canvasManager.fabricCanvas?.height) || window.innerHeight
               )
+            : null;
+        const rect =
+          targetSize && targetSize.width > 0 && targetSize.height > 0
+            ? buildCenteredRectPreservingSize(targetSize.width, targetSize.height)
             : resolveCaptureFrameRect(stored);
         const fallbackWorldRect = resolveViewRestoreWorldRect(resolved);
         const savedBackgroundWorldRect = normalizeWorldRect(
@@ -4414,23 +4422,41 @@ export function initToolbarController() {
       // frame rather than the earlier preferred-area estimate.
       const finalFrameRect = captureFrameEl.getBoundingClientRect();
       const finalBackground = mapWorldRectToViewport(centerWorldRect, nextViewport);
-      if (!finalBackground || finalBackground.width <= 0 || finalBackground.height <= 0) {
-        return;
+      if (finalBackground && finalBackground.width > 0 && finalBackground.height > 0) {
+        const finalBackgroundCenter = {
+          x: finalBackground.left + finalBackground.width / 2,
+          y: finalBackground.top + finalBackground.height / 2,
+        };
+        const residualDx = finalFrameRect.left + finalFrameRect.width / 2 - finalBackgroundCenter.x;
+        const residualDy = finalFrameRect.top + finalFrameRect.height / 2 - finalBackgroundCenter.y;
+        if (zoomChanged || Math.abs(residualDx) > 0.25 || Math.abs(residualDy) > 0.25) {
+          nextViewport = normalizeViewportRecord({
+            ...nextViewport,
+            panX: (nextViewport.panX || 0) + residualDx,
+            panY: (nextViewport.panY || 0) + residualDy,
+          });
+          tab.viewport = nextViewport;
+          applyViewportRecord(nextViewport);
+        }
       }
-      const finalBackgroundCenter = {
-        x: finalBackground.left + finalBackground.width / 2,
-        y: finalBackground.top + finalBackground.height / 2,
-      };
-      const residualDx = finalFrameRect.left + finalFrameRect.width / 2 - finalBackgroundCenter.x;
-      const residualDy = finalFrameRect.top + finalFrameRect.height / 2 - finalBackgroundCenter.y;
-      if (zoomChanged || Math.abs(residualDx) > 0.25 || Math.abs(residualDy) > 0.25) {
-        nextViewport = normalizeViewportRecord({
-          ...nextViewport,
-          panX: (nextViewport.panX || 0) + residualDx,
-          panY: (nextViewport.panY || 0) + residualDy,
-        });
-        tab.viewport = nextViewport;
-        applyViewportRecord(nextViewport);
+
+      // switchView reapplies the view's saved Fabric matrix after this pass. Keep
+      // that matrix in step with the recentred one, or the image jumps back to
+      // its old position while the frame stays recentred.
+      const pmView = window.app?.projectManager?.views?.[resolvedLabel];
+      const liveTransform = canvas.viewportTransform;
+      if (pmView && Array.isArray(liveTransform) && liveTransform.length >= 6) {
+        const exactTransform = liveTransform.slice(0, 6).map(Number);
+        if (exactTransform.every(Number.isFinite)) {
+          pmView.viewportTransform = exactTransform;
+          if (typeof cm.getViewportState === 'function') pmView.viewport = cm.getViewportState();
+          pmView.exactViewportSourceDimensions = {
+            canvasWidth: Number(canvas.width) || 0,
+            canvasHeight: Number(canvas.height) || 0,
+            windowWidth: window.innerWidth,
+            windowHeight: window.innerHeight,
+          };
+        }
       }
     };
 

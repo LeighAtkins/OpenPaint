@@ -2526,6 +2526,9 @@ export class ProjectManager {
       }
       return;
     }
+    // A frame that wraps the whole photo should keep wrapping it after a quarter
+    // turn. A frame cropped to part of the photo is left as the user set it.
+    const frameWrapsPhoto = this.captureFrameWrapsBackground();
     const nextRotation = this.canvasManager.rotateCanvasObjects(deltaDegrees);
     view.rotation = nextRotation;
     this.updateThumbnailRotation(this.currentViewId, nextRotation);
@@ -2533,6 +2536,80 @@ export class ProjectManager {
       window.__captureTabsAllowRotationWrite = true;
       window.captureTabsSyncActive(this.currentViewId, { syncRotation: true });
     }
+    if (frameWrapsPhoto && Math.abs(deltaDegrees) % 180 === 90) {
+      this.fitCaptureFrameToBackground(this.currentViewId);
+    }
+  }
+
+  /** Screen rectangle of the background photo's bounding box, or null. */
+  getBackgroundScreenRect() {
+    const canvas = this.canvasManager?.fabricCanvas;
+    const bg = canvas?.backgroundImage;
+    const vpt = canvas?.viewportTransform;
+    const canvasEl = canvas?.upperCanvasEl || canvas?.lowerCanvasEl;
+    if (!bg || !Array.isArray(vpt) || !canvasEl) return null;
+    bg.setCoords?.();
+    const corners = bg.aCoords ? ['tl', 'tr', 'br', 'bl'].map(key => bg.aCoords[key]) : [];
+    if (corners.length !== 4) return null;
+    const canvasRect = canvasEl.getBoundingClientRect();
+    const xs = corners.map(p => p.x * vpt[0] + p.y * vpt[2] + vpt[4] + canvasRect.left);
+    const ys = corners.map(p => p.x * vpt[1] + p.y * vpt[3] + vpt[5] + canvasRect.top);
+    const left = Math.min(...xs);
+    const top = Math.min(...ys);
+    return { left, top, width: Math.max(...xs) - left, height: Math.max(...ys) - top };
+  }
+
+  captureFrameWrapsBackground() {
+    const frameEl = document.getElementById('captureFrame');
+    const bgRect = this.getBackgroundScreenRect();
+    if (!frameEl || !bgRect || bgRect.width <= 0 || bgRect.height <= 0) return false;
+    const frameRect = frameEl.getBoundingClientRect();
+    if (frameRect.width <= 0 || frameRect.height <= 0) return false;
+    const close = (a, b) => Math.abs(a - b) <= Math.max(4, b * 0.03);
+    return close(frameRect.width, bgRect.width) && close(frameRect.height, bgRect.height);
+  }
+
+  /** Size the frame to the photo's current (rotated) shape and fill it with the photo. */
+  fitCaptureFrameToBackground(viewId) {
+    const canvas = this.canvasManager?.fabricCanvas;
+    const bg = canvas?.backgroundImage;
+    const canvasEl = canvas?.upperCanvasEl || canvas?.lowerCanvasEl;
+    const frameEl = document.getElementById('captureFrame');
+    if (!bg || !canvasEl || !frameEl) return;
+    if (typeof window.initializeCaptureFrameForImageAspect !== 'function') return;
+
+    // World size of the photo as it now stands; a quarter turn swaps its sides.
+    const scaledWidth = typeof bg.getScaledWidth === 'function' ? bg.getScaledWidth() : 0;
+    const scaledHeight = typeof bg.getScaledHeight === 'function' ? bg.getScaledHeight() : 0;
+    const quarterTurned = Math.round((Number(bg.angle) || 0) / 90) % 2 !== 0;
+    const worldWidth = quarterTurned ? scaledHeight : scaledWidth;
+    const worldHeight = quarterTurned ? scaledWidth : scaledHeight;
+    const worldCenter = bg.getCenterPoint?.();
+    if (!(worldWidth > 0) || !(worldHeight > 0) || !worldCenter) return;
+    if (!window.initializeCaptureFrameForImageAspect(viewId, worldWidth, worldHeight)) {
+      return;
+    }
+    // Recentring can still resize the new frame to its proportional size, so
+    // let it settle before fitting the photo to it.
+    window.__recenterCaptureFrame?.(viewId);
+
+    const frameRect = frameEl.getBoundingClientRect();
+    const canvasRect = canvasEl.getBoundingClientRect();
+    const zoom = Math.min(frameRect.width / worldWidth, frameRect.height / worldHeight);
+    const worldCenterX = worldCenter.x;
+    const worldCenterY = worldCenter.y;
+    const frameCenterX = frameRect.left + frameRect.width / 2 - canvasRect.left;
+    const frameCenterY = frameRect.top + frameRect.height / 2 - canvasRect.top;
+    this.canvasManager.setViewportTransformExact?.([
+      zoom,
+      0,
+      0,
+      zoom,
+      frameCenterX - worldCenterX * zoom,
+      frameCenterY - worldCenterY * zoom,
+    ]);
+    // Recentring also stores the new matrix on the view and its frame tab.
+    window.__recenterCaptureFrame?.(viewId);
   }
 
   updateThumbnailRotation(viewId, rotationDegrees) {
