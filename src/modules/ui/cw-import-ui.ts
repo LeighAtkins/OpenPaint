@@ -44,6 +44,7 @@ interface VersionOption {
   scopedReference?: string;
   isDefault?: boolean;
   confirmed?: boolean | null;
+  modelSetConfirmed?: boolean;
   source?: string;
 }
 
@@ -60,16 +61,24 @@ interface SearchResultItem {
   selected: boolean;
   selectedVersionCode: string;
   selectedStyleKey: string;
+  measurementsUnconfirmed?: boolean;
 }
 
 export function isCwConfigurationSelectionReady(item: {
-  versionOptions?: unknown[];
+  versionOptions?: Array<{ code?: string; modelSetConfirmed?: boolean }>;
   styleOptions?: unknown[];
   selectedVersionCode?: string;
   selectedStyleKey?: string;
+  measurementsUnconfirmed?: boolean;
 }): boolean {
+  if (item.measurementsUnconfirmed) return false;
   const versionOptions = Array.isArray(item.versionOptions) ? item.versionOptions : [];
   const styleOptions = Array.isArray(item.styleOptions) ? item.styleOptions : [];
+  if (
+    versionOptions.find(option => option.code === item.selectedVersionCode)?.modelSetConfirmed ===
+    false
+  )
+    return false;
   return (
     (versionOptions.length === 0 || Boolean(item.selectedVersionCode?.trim())) &&
     (styleOptions.length === 0 || Boolean(item.selectedStyleKey?.trim()))
@@ -2885,7 +2894,8 @@ function createModal(): HTMLElement {
             imagesWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
           );
         }
-        void loadPrivateProductDetails(basketItem);
+        // Archive results already hold the full measurements; CW40 itself is retired.
+        if (data?.source !== 'private-archive') void loadPrivateProductDetails(basketItem);
       } else {
         setLoadProgress(100, 'Could not load product', 'Check the connection details');
         setStatus(
@@ -2958,8 +2968,15 @@ function createModal(): HTMLElement {
         item.versionOptions.forEach(option => {
           const code = String(option.code || (option as any).value || '').trim();
           const label = String(option.label || code).trim();
-          const suffix = option.confirmed === true ? ' · measurements available' : '';
-          versionSelect.appendChild(new Option(`${label}${suffix}`, code));
+          const suffix =
+            option.modelSetConfirmed === false
+              ? ' · measurements unconfirmed'
+              : option.confirmed === true
+                ? ' · measurements available'
+                : '';
+          const choice = new Option(`${label}${suffix}`, code);
+          choice.disabled = option.modelSetConfirmed === false;
+          versionSelect.appendChild(choice);
         });
         versionSelect.value = item.selectedVersionCode;
       } else {
@@ -3005,7 +3022,9 @@ function createModal(): HTMLElement {
       const loadAction = document.createElement('div');
       loadAction.className = 'cw-result-action';
       const loadHint = document.createElement('small');
-      loadHint.textContent = 'Choose both options';
+      loadHint.textContent = item.measurementsUnconfirmed
+        ? 'Measurements unconfirmed'
+        : 'Choose both options';
       loadAction.append(loadHint, loadButton);
 
       const syncSelection = () => {
@@ -4490,10 +4509,10 @@ function createModal(): HTMLElement {
       );
       const imageLoaded = Boolean(
         background &&
-        source &&
-        (!element || element.complete !== false) &&
-        Number(background.width || element?.naturalWidth || 0) > 0 &&
-        Number(background.height || element?.naturalHeight || 0) > 0
+          source &&
+          (!element || element.complete !== false) &&
+          Number(background.width || element?.naturalWidth || 0) > 0 &&
+          Number(background.height || element?.naturalHeight || 0) > 0
       );
       const idle = !projectManager.isSwitchingView && !projectManager.pendingSwitchViewId;
       const correctView = projectManager.currentViewId === viewId;
@@ -4601,7 +4620,9 @@ function createModal(): HTMLElement {
       sectionEl.textContent = entry.section || 'General';
       const nameEl = document.createElement('div');
       nameEl.className = 'cw-image-name';
-      nameEl.textContent = fileStemFromUrl(group[0] || '');
+      nameEl.textContent = group[0]?.startsWith('https://cw-archive.invalid/')
+        ? 'Measurement image'
+        : fileStemFromUrl(group[0] || '');
       meta.appendChild(itemEl);
       meta.appendChild(sectionEl);
       meta.appendChild(nameEl);
@@ -5423,6 +5444,7 @@ function createModal(): HTMLElement {
           status: item?.status || item?.product?.status || null,
           translations: Array.isArray(item?.translations) ? item.translations : [],
           configParsed: item?.configParsed === true,
+          measurementsUnconfirmed: item?.measurementsUnconfirmed === true,
           versionOptions,
           styleOptions,
           derivedScopedReferences: Array.isArray(item?.derivedScopedReferences)

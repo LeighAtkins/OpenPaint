@@ -130,3 +130,6 @@ tests/fixtures/private/
 
 # Tesseract OCR files, copied from node_modules at build time
 public/tesseract/
+
+# Built by scripts/build-cw-server.ts during the Vercel build
+server/vercel-routes/cw/generated/

@@ -26,7 +26,7 @@
     "build:gorgias-extension": "node scripts/package-gorgias-extension.mjs",
     "build:profile:no-minify": "vite build --config vite.config.ts --minify false",
     "preview": "vite preview --config vite.config.ts",
-    "build:vercel": "bun run build:css && vite build --config vite.config.ts",
+    "build:vercel": "bun run build:css && node scripts/build-cw-server.ts && vite build --config vite.config.ts",
     "deploy": "npx vercel --prod",
     "deploy:preview": "npx vercel",
     "type-check": "tsc --noEmit",

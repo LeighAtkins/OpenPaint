@@ -14,6 +14,12 @@ import {
   resolveCwPidBaseUrl,
 } from './shared.js';
 
+// CW40 has been retired; product lookup, measurements and their images come from the
+// private archive. Vercel runs the esbuild output because it cannot import .ts here.
+const { handleCwArchiveRequest } = await (process.env.VERCEL
+  ? import('./generated/archive.mjs')
+  : import('./archive.ts'));
+
 const mtTokenCache = new Map();
 const FALLBACK_STYLE_CODES = [
   'BKPT_SP',
@@ -6037,6 +6043,7 @@ export default async function handler(req, res) {
     // so only Comfort Works staff may call it.
     const isPublicLookup = formId === 'search' && PUBLIC_SEARCH_PHASES.has(phase);
     if (!isPublicLookup && !(await requireStaffOrRespond(req, res))) return;
+    if (!isPublicLookup && (await handleCwArchiveRequest(req, res, body))) return;
 
     if (formId === 'image-proxy') {
       if (req.method !== 'POST') {
