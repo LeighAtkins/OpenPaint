@@ -24,6 +24,8 @@ export interface AgentLine {
   inch: number | null;
   cm: number | null;
   visible: boolean;
+  /** Set when the line's value copies disagree (see measurementFor). */
+  valueConflict?: Array<{ scope: string; inch: number | null }>;
 }
 
 export interface AgentView {
@@ -135,17 +137,37 @@ export function overlayLines(svgText: string): Array<{ label: string; points: No
   return out;
 }
 
-function measurementFor(view: AnyObj, label: string): { inch: number | null; cm: number | null } {
-  const buckets = view?.metadata?.strokeMeasurements || {};
-  for (const bucket of Object.values(buckets) as AnyObj[]) {
-    const m = bucket?.[label];
-    if (m && typeof m === 'object') {
-      const inch = Number.isFinite(Number(m.inch)) ? Number(m.inch) : null;
-      const cm = Number.isFinite(Number(m.cm)) ? Number(m.cm) : inch !== null ? inch * 2.54 : null;
-      return { inch: inch ?? (cm !== null ? cm / 2.54 : null), cm };
-    }
-  }
-  return { inch: null, cm: null };
+interface LineValue {
+  inch: number | null;
+  cm: number | null;
+  valueConflict?: Array<{ scope: string; inch: number | null }>;
+}
+
+function readValue(m: AnyObj): { inch: number | null; cm: number | null } {
+  const inch = Number.isFinite(Number(m.inch)) ? Number(m.inch) : null;
+  const cm = Number.isFinite(Number(m.cm)) ? Number(m.cm) : inch !== null ? inch * 2.54 : null;
+  return { inch: inch ?? (cm !== null ? cm / 2.54 : null), cm };
+}
+
+/**
+ * A line's value as the PDF export prints it. Hand-drawn lines can hold a
+ * second copy in a per-frame scope (`view::tab:…`); the export reads that copy
+ * first, so it wins here too, and copies that disagree are listed.
+ */
+function measurementFor(view: AnyObj, viewId: string, label: string): LineValue {
+  const buckets: AnyObj = view?.metadata?.strokeMeasurements || {};
+  const copies = Object.entries(buckets)
+    .filter(([, bucket]) => bucket?.[label] && typeof bucket[label] === 'object')
+    .map(([scope, bucket]) => ({ scope, ...readValue(bucket[label]) }));
+  if (!copies.length) return { inch: null, cm: null };
+  const pick =
+    copies.find(c => c.scope.startsWith(`${viewId}::`)) ||
+    copies.find(c => c.scope === viewId) ||
+    copies[0];
+  const distinct = new Set(copies.map(c => (c.inch === null ? '' : c.inch.toFixed(3))));
+  const result: LineValue = { inch: pick.inch, cm: pick.cm };
+  if (distinct.size > 1) result.valueConflict = copies.map(c => ({ scope: c.scope, inch: c.inch }));
+  return result;
 }
 
 /** Every labelled line in a project, grouped by view. */
@@ -178,7 +200,7 @@ export function readProjectLines(project: AnyObj): AgentView[] {
           from: points[0],
           to: points[points.length - 1],
           points,
-          ...measurementFor(view, label),
+          ...measurementFor(view, viewId, label),
           visible: !Object.values(view.metadata?.strokeVisibilityByImage || {}).some(
             (bucket: any) => bucket?.[label] === false
           ),
@@ -203,7 +225,7 @@ export function readProjectLines(project: AnyObj): AgentView[] {
           from: pts[0],
           to: pts[pts.length - 1],
           points: pts,
-          ...measurementFor(view, label),
+          ...measurementFor(view, viewId, label),
           visible: visibility?.[scope]?.[label] !== false,
         });
       }

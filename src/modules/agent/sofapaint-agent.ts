@@ -11,6 +11,7 @@ import { cloudSaveService } from '../../services/cloud/cloudSaveService';
 import { loadCloudProjectForImport } from '../ui/cloud-ui';
 import { composeCard, drawPanel, type CardLine, type CardPanel, type CardSpec } from './agent-card';
 import { readProjectLines, type AgentLine, type AgentView, type NormPoint } from './agent-geometry';
+import { openView, setMeasurementValue, showAllLines } from './agent-values';
 
 const HELP = `SofaPaint agent API (window.sofapaint.agent). All points are normalised
 to the photo: {x: 0..1, y: 0..1} from the top-left. Values are inches.
@@ -18,10 +19,14 @@ to the photo: {x: 0..1, y: 0..1} from the top-left. Values are inches.
   listProjects(search?)            -> [{id, name, updated_at}] from My Projects
   openProject(idOrName)            -> loads the newest matching cloud project
   listViews()                      -> [{viewId, title, labels}]
-  getMeasurements(viewId?)         -> [{viewId, label, from, to, points, inch, cm, source}]
+  getMeasurements(viewId?)         -> [{viewId, label, from, to, points, inch, cm, source,
+                                       visible, valueConflict?}]
   addLine(viewId, label, from, to, {inch?, color?})
                                    -> adds or replaces a labelled line in the view
-  setValue(viewId, label, inch)    -> sets a line's value (null clears it)
+  setValue(viewId, label, inch)    -> sets a line's value on every copy (null clears it);
+                                      opens the view so the value survives switches
+  checkExport()                    -> {hiddenWithValues, valueConflicts} to fix before a PDF
+  showLines(viewIds?)              -> turns hidden lines back on; returns what was hidden
   renderCard(spec, {download?})    -> {dataUrl, width, height}; download saves a PNG
 
 Card spec:
@@ -105,9 +110,7 @@ async function addLine(
 ) {
   if (!/^[A-Za-z]+\d*$/.test(label))
     throw new Error(`Label must look like A1 or K, got "${label}"`);
-  const pm = app().projectManager;
-  if (!pm?.views?.[viewId]) throw new Error(`No view "${viewId}"`);
-  if (pm.currentViewId !== viewId) await pm.switchView(viewId);
+  await openView(app(), viewId);
   const om = await overlayManager();
   const { exportMosSvg } = await import('../measurement-mos/mos-exporter');
   const { getImageRect } = await import('../measurement-mos/mos-transform');
@@ -150,21 +153,34 @@ async function addLine(
 }
 
 async function setValue(viewId: string, label: string, inch: number | null) {
-  const metadata = app().metadataManager;
-  if (!metadata?.parseAndSaveMeasurement) throw new Error('Measurements are not available');
-  // A view that has not been opened keeps its values in the saved view state; a
-  // new live bucket holding only this label would hide them, so seed it first.
-  const saved = app().projectManager?.views?.[viewId]?.metadata?.strokeMeasurements?.[viewId];
-  if (saved && metadata.strokeMeasurements) {
-    metadata.strokeMeasurements[viewId] = {
-      ...JSON.parse(JSON.stringify(saved)),
-      ...(metadata.strokeMeasurements[viewId] || {}),
-    };
-  }
-  const ok = metadata.parseAndSaveMeasurement(viewId, label, inch === null ? '' : `${inch} in`);
-  app().tagManager?.updateTagText?.(label, viewId);
+  return setMeasurementValue(app(), viewId, label, inch);
+}
+
+/**
+ * Problems to fix before exporting a PDF: lines that have a value but are
+ * hidden on their view (they would be missing from the photo), and lines whose
+ * value copies disagree (the PDF prints the frame copy).
+ */
+async function checkExport() {
+  const lines = (await views()).flatMap(v => v.lines);
+  return {
+    hiddenWithValues: lines
+      .filter(l => !l.visible && l.inch !== null)
+      .map(l => ({ viewId: l.viewId, label: l.label, inch: l.inch })),
+    valueConflicts: lines
+      .filter(l => l.valueConflict)
+      .map(l => ({ viewId: l.viewId, label: l.label, copies: l.valueConflict })),
+  };
+}
+
+/** Turn hidden lines back on, for the given views or every view. */
+async function showLines(viewIds?: string[]) {
+  const shown = showAllLines(app(), viewIds);
+  const pm = app().projectManager;
+  // Remount the open view so its lines reappear on the canvas.
+  if (pm?.currentViewId) await app().measurementOverlayManager?.mountView?.(pm.currentViewId);
   app().canvasManager?.fabricCanvas?.requestRenderAll?.();
-  return ok !== false;
+  return shown;
 }
 
 async function loadBitmap(src: string): Promise<ImageBitmap> {
@@ -250,6 +266,8 @@ export function initSofapaintAgent(): void {
     getMeasurements,
     addLine,
     setValue,
+    checkExport,
+    showLines,
     renderCard,
   };
 }

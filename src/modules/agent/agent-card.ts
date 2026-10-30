@@ -4,6 +4,7 @@
  * inches first with cm, with an optional title and caption.
  */
 import { fitBox, formatInchCm, type NormPoint } from './agent-geometry';
+import { placeLabels, type LabelRect } from './agent-labels';
 
 export type CardColor = 'red' | 'green' | 'amber' | 'blue' | 'ink' | string;
 
@@ -20,7 +21,7 @@ export interface CardLine {
   /** Mark the value as unknown: the label reads "X  ?". */
   unknown?: boolean;
   color?: CardColor;
-  /** Label nudge as a fraction of the panel width/height. */
+  /** Optional nudge from the default spot, as a fraction of the panel width/height. */
   offset?: { x?: number; y?: number };
 }
 
@@ -101,51 +102,25 @@ function arrow(
   }
 }
 
-interface Rect {
-  x0: number;
-  y0: number;
-  w: number;
-  h: number;
-}
-
-const overlaps = (a: Rect, b: Rect) =>
-  a.x0 < b.x0 + b.w && b.x0 < a.x0 + a.w && a.y0 < b.y0 + b.h && b.y0 < a.y0 + a.h;
-
-/** Place a label pill near (x, y), stepping along (dx, dy) away from earlier pills. */
+/** Draw a label pill in the given rect. */
 function pill(
   ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
+  rect: LabelRect,
   text: string,
   color: string,
-  size: number,
-  placed: Rect[],
-  step: { x: number; y: number }
+  size: number
 ) {
   ctx.font = `bold ${size}px ${FONT}`;
-  const w = ctx.measureText(text).width + size * 0.9;
-  const h = size * 1.6;
-  const at = (cx: number, cy: number): Rect => ({
-    x0: Math.max(2, Math.min(ctx.canvas.width - w - 2, cx - w / 2)),
-    y0: Math.max(2, Math.min(ctx.canvas.height - h - 2, cy - h / 2)),
-    w,
-    h,
-  });
-  let rect = at(x, y);
-  for (let i = 1; i <= 8 && placed.some(r => overlaps(r, rect)); i += 1) {
-    rect = at(x + step.x * h * 1.1 * i, y + step.y * h * 1.1 * i);
-  }
-  placed.push(rect);
   ctx.fillStyle = '#fff';
   ctx.strokeStyle = color;
   ctx.lineWidth = Math.max(2, size / 9);
   ctx.beginPath();
-  ctx.roundRect(rect.x0, rect.y0, w, h, size * 0.4);
+  ctx.roundRect(rect.x0, rect.y0, rect.w, rect.h, size * 0.4);
   ctx.fill();
   ctx.stroke();
   ctx.fillStyle = INK;
   ctx.textBaseline = 'middle';
-  ctx.fillText(text, rect.x0 + size * 0.45, rect.y0 + h / 2 + 1);
+  ctx.fillText(text, rect.x0 + size * 0.45, rect.y0 + rect.h / 2 + 1);
 }
 
 /**
@@ -189,23 +164,41 @@ export function drawPanel(
   const lw = Math.max(3, canvas.width / 180);
   for (const line of panel.lines) arrow(ctx, px(line.from), px(line.to), colorOf(line.color), lw);
   const size = Math.round(Math.max(20, canvas.width / 32) * labelScale);
-  const placed: Rect[] = [];
-  for (const line of panel.lines) {
+  ctx.font = `bold ${size}px ${FONT}`;
+  const texts = panel.lines.map(line => lineText(line));
+  const rects = placeLabels(
+    panel.lines.map((line, i) => ({
+      a: px(line.from),
+      b: px(line.to),
+      w: ctx.measureText(texts[i]).width + size * 0.9,
+      h: size * 1.6,
+      offset: line.offset
+        ? { x: (line.offset.x ?? 0) * canvas.width, y: (line.offset.y ?? 0) * canvas.height }
+        : undefined,
+    })),
+    { width: canvas.width, height: canvas.height }
+  );
+  panel.lines.forEach((line, i) => {
+    // A label crowded off its line gets a thin leader back to the line's middle.
     const a = px(line.from);
     const b = px(line.to);
-    // Default label spot: beside the midpoint, pushed off the line.
+    const r = rects[i];
+    const cx = r.x0 + r.w / 2;
+    const cy = r.y0 + r.h / 2;
     const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-    const nx = -(b.y - a.y) / len;
-    const ny = (b.x - a.x) / len;
-    const push = size * 1.3 * (ny < 0 ? -1 : 1);
-    const x = (a.x + b.x) / 2 + nx * push + (line.offset?.x ?? 0) * canvas.width;
-    const y = (a.y + b.y) / 2 + ny * push + (line.offset?.y ?? 0) * canvas.height;
-    const away = Math.sign(push) || 1;
-    pill(ctx, x, y, lineText(line), colorOf(line.color), size, placed, {
-      x: nx * away,
-      y: ny * away,
-    });
-  }
+    const off = Math.abs((b.x - a.x) * (a.y - cy) - (a.x - cx) * (b.y - a.y)) / len;
+    if (off > r.h * 0.6) {
+      ctx.strokeStyle = colorOf(line.color);
+      ctx.lineWidth = Math.max(1.5, lw / 2);
+      ctx.setLineDash([lw * 1.5, lw]);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo((a.x + b.x) / 2, (a.y + b.y) / 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  });
+  panel.lines.forEach((line, i) => pill(ctx, rects[i], texts[i], colorOf(line.color), size));
   return canvas;
 }
 
