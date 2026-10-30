@@ -1,0 +1,74 @@
+{
+  "order": "126383",
+  "form": "6991907488052",
+  "unit": "cm",
+  "products": [
+    {
+      "productId": "13292",
+      "reference": "CS1-CNR",
+      "title": "CS1-CNR: Corner Square Seat Section Slipcover",
+      "rows": [
+        {
+          "rowId": "15082",
+          "label": "Frame",
+          "model": "CS1-CNR",
+          "qty": 1,
+          "values": {
+            "E1": "102.9",
+            "J1": "70.5"
+          }
+        },
+        {
+          "rowId": "15083",
+          "label": "Seat Cushion (all 5 the same)",
+          "model": "CC-ST-BE",
+          "qty": 5,
+          "values": {
+            "A": "76.2",
+            "B": "76.2",
+            "C": "78.7",
+            "D": "14"
+          }
+        },
+        {
+          "rowId": "15084",
+          "label": "Back Cushion size 1 - wide",
+          "model": "CC-BK-BE",
+          "qty": 1,
+          "values": {
+            "A": "91.4",
+            "D": "12.7"
+          }
+        },
+        {
+          "rowId": "15085",
+          "label": "Back Cushion size 2 - square",
+          "model": "CC-BK-BE",
+          "qty": 1,
+          "values": {
+            "A": "73.7"
+          }
+        }
+      ]
+    },
+    {
+      "productId": "13293",
+      "reference": "CS2B-SRA-R",
+      "title": "CS2B-SRA-R: Boxed Seat Right Round Arm Loveseat Section Cover",
+      "rows": [
+        {
+          "rowId": "8123",
+          "label": "CS3B-SRA-HB-R \u00b7 extra notes",
+          "model": "CS3B-SRA-HB-R",
+          "qty": 1,
+          "values": {
+            "B2": "94",
+            "C3": "57.2",
+            "C4": "20.3",
+            "L2": "172.7"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1638,9 +1638,72 @@ function triggerPdfDownload(blob, filename) {
 // name with the unit, and a save-picker handle when Leigh chose a folder).
 let activePdfExportTarget = null;
 
+// Set by exportPdfForAgent: the next Generate click uses these options and
+// hands the PDF back to the caller instead of saving it.
+let pendingAgentExport = null;
+
 async function deliverExportPdf(blob, fallbackName) {
   const target = activePdfExportTarget;
+  if (target?.capture) {
+    target.delivered = true;
+    target.capture({ blob, filename: target.filename || fallbackName });
+    return;
+  }
   await writePdfToTarget(blob, target?.filename || fallbackName, target?.handle);
+}
+
+/**
+ * Run the normal PDF export without the dialog prompts and return the file.
+ * quantities: { viewId: number } fills each page's QTY box.
+ */
+export function exportPdfForAgent(
+  options: {
+    unit?: 'cm' | 'inch';
+    quality?: 'high' | 'medium' | 'low';
+    renderer?: 'modern' | 'classic';
+    quantities?: Record<string, number | string>;
+  } = {}
+): Promise<{ blob: Blob; filename: string }> {
+  return new Promise((resolve, reject) => {
+    pendingAgentExport = { quantities: options.quantities || {}, resolve, reject };
+    (async () => {
+      // One export at a time; an idle leftover dialog would shadow the new one's ids.
+      const leftover = document.getElementById('generatePdfBtn') as HTMLButtonElement | null;
+      if (leftover?.disabled) throw new Error('Another PDF export is still running');
+      if (leftover) {
+        let root: HTMLElement = leftover;
+        while (root.parentElement && root.parentElement !== document.body)
+          root = root.parentElement;
+        root.remove();
+      }
+      await window.showPDFExportDialog(document.getElementById('projectName')?.value);
+      const started = Date.now();
+      let button = document.getElementById('generatePdfBtn');
+      while (!button && Date.now() - started < 10000) {
+        await new Promise(r => setTimeout(r, 100));
+        button = document.getElementById('generatePdfBtn');
+      }
+      if (!button) throw new Error('The PDF export dialog did not open');
+      (
+        document.querySelector(
+          `input[name=pdfExportUnit][value=${options.unit || 'cm'}]`
+        ) as HTMLInputElement | null
+      )?.click();
+      const set = (id, value) => {
+        const el = document.getElementById(id) as HTMLSelectElement | null;
+        if (el && value) {
+          el.value = value;
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      };
+      set('pdfQuality', options.quality || 'high');
+      set('pdfRendererMode', options.renderer || 'modern');
+      button.click();
+    })().catch(error => {
+      pendingAgentExport = null;
+      reject(error instanceof Error ? error : new Error(String(error)));
+    });
+  });
 }
 
 // ── Measurement check request exports ───────────────────────────────
@@ -2286,17 +2349,26 @@ export function initPdfExport() {
           .slice(0, 90);
         if (note) customerNotes[input.dataset.pdfNoteKey] = note;
       });
+      const agentRequest = pendingAgentExport;
+      pendingAgentExport = null;
+      if (agentRequest) Object.assign(cushionQuantityViews, agentRequest.quantities);
       const exportUnit = selectedExportUnit();
       const filename = exportFilename();
       let saveHandle = null;
-      if (chooseLocationInput?.checked) {
+      if (chooseLocationInput?.checked && !agentRequest) {
         // Ask before the export: the picker needs this click's user activation.
         const picked = await pickPdfSaveTarget(filename);
         if (picked === 'cancelled') return;
         saveHandle = picked;
       }
       rememberExportUnit(exportUnit);
-      activePdfExportTarget = { filename: saveHandle?.name || filename, handle: saveHandle };
+      const exportTarget = {
+        filename: saveHandle?.name || filename,
+        handle: saveHandle,
+        capture: agentRequest?.resolve,
+        delivered: false,
+      };
+      activePdfExportTarget = exportTarget;
       const exportSession = beginPdfExportSession();
       const restoreDisplayUnit = applyTemporaryDisplayUnit(exportUnit);
       window.__pdfExportingSince = Date.now();
@@ -2365,6 +2437,9 @@ export function initPdfExport() {
         activePdfExportTarget = null;
         await restorePdfExportSession(exportSession);
         restoreDisplayUnit();
+        if (agentRequest && !exportTarget.delivered) {
+          agentRequest.reject(new Error('The PDF export did not produce a file'));
+        }
       }
 
       overlay.remove();
@@ -2626,7 +2701,14 @@ export function initPdfExport() {
         mainMeasurements: getTargetMeasurementRows(mainTarget),
         relatedFrames,
         relatedMeasurementCards,
-        ...(cushionQuantityViews[mainTarget.viewId] ? { cushionQuantity: '' } : {}),
+        ...(cushionQuantityViews[mainTarget.viewId]
+          ? {
+              cushionQuantity:
+                cushionQuantityViews[mainTarget.viewId] === true
+                  ? ''
+                  : String(cushionQuantityViews[mainTarget.viewId]),
+            }
+          : {}),
         ...(customerNotes[mainTarget.viewId]
           ? { customerNote: customerNotes[mainTarget.viewId] }
           : {}),

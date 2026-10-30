@@ -12,6 +12,11 @@ import { loadCloudProjectForImport } from '../ui/cloud-ui';
 import { composeCard, drawPanel, type CardLine, type CardPanel, type CardSpec } from './agent-card';
 import { readProjectLines, type AgentLine, type AgentView, type NormPoint } from './agent-geometry';
 import { openView, setMeasurementValue, showAllLines } from './agent-values';
+import {
+  compareWithNoms as compareValues,
+  NOMS_SNAPSHOT_SCRIPT,
+  type NomsSnapshot,
+} from './agent-noms';
 
 const HELP = `SofaPaint agent API (window.sofapaint.agent). All points are normalised
 to the photo: {x: 0..1, y: 0..1} from the top-left. Values are inches.
@@ -26,11 +31,16 @@ to the photo: {x: 0..1, y: 0..1} from the top-left. Values are inches.
   setValue(viewId, label, inch)    -> sets a line's value on every copy (null clears it);
                                       opens the view so the value survives switches
   checkExport()                    -> {hiddenWithValues, valueConflicts} to fix before a PDF
+  exportPdf({unit:'cm', quantities:{viewId: n}, download?, force?})
+                                   -> {filename, size, url} from SofaPaint's own PDF export
+  nomsSnapshotScript()             -> JS to run on a NOMS measurements page; returns the form
+  compareWithNoms(snapshot, {viewId: rowId}?)
+                                   -> {rows, differences, mapping, unmappedViews} in cm
   showLines(viewIds?)              -> turns hidden lines back on; returns what was hidden
   renderCard(spec, {download?})    -> {dataUrl, width, height}; download saves a PNG
 
 Card spec:
-  { title, caption: ["plain line", "!red line"], width?: 1100,
+  { title, caption: ["plain line", "!red line"], width?: 1100, units?: 'in-cm'|'cm'|'in',
     panels: [panel, ...] or [[row1 panels], [row2 panels]] }
   panel: { viewId | image: url, subtitle?, crop?: 'fit' | 'full' | {x0,y0,x1,y1},
            lines: [{label, from?, to?, inch?, text?, unknown?, color?, offset?}] }
@@ -183,6 +193,43 @@ async function showLines(viewIds?: string[]) {
   return shown;
 }
 
+/**
+ * Compare this project with a NOMS form. Read the form in a NOMS tab with
+ * nomsSnapshotScript() and pass the result. mapping: { viewId: rowId } for
+ * views the automatic match cannot place.
+ */
+async function compareWithNoms(snapshot: NomsSnapshot, mapping: Record<string, string> = {}) {
+  if (!snapshot?.products) throw new Error('Pass the result of nomsSnapshotScript() run on NOMS');
+  return compareValues(await views(), snapshot, mapping);
+}
+
+/**
+ * Export the production PDF through SofaPaint's own exporter and return it.
+ * Fails on hidden lines or disagreeing values unless force is set.
+ */
+async function exportPdf(
+  options: {
+    unit?: 'cm' | 'inch';
+    quality?: 'high' | 'medium' | 'low';
+    renderer?: 'modern' | 'classic';
+    quantities?: Record<string, number>;
+    download?: boolean;
+    force?: boolean;
+  } = {}
+) {
+  const problems = await checkExport();
+  if (!options.force && (problems.hiddenWithValues.length || problems.valueConflicts.length)) {
+    throw new Error(`Fix before exporting (or pass force: true): ${JSON.stringify(problems)}`);
+  }
+  const { exportPdfForAgent } = await import('../ui/pdf-export-inline');
+  const { blob, filename } = await exportPdfForAgent(options);
+  if (options.download) {
+    const { downloadBlob } = await import('../ui/export-utils');
+    downloadBlob(blob, filename);
+  }
+  return { filename, size: blob.size, url: URL.createObjectURL(blob), warnings: problems };
+}
+
 async function loadBitmap(src: string): Promise<ImageBitmap> {
   const response = await fetch(src);
   if (!response.ok) throw new Error(`Could not load image (${response.status})`);
@@ -235,6 +282,7 @@ async function renderCard(spec: CardSpec, options: { download?: string } = {}) {
             lines,
             subtitle: panel.subtitle,
             crop: panel.crop,
+            units: spec.units,
           },
           900,
           Math.max(1, row.length * 0.8)
@@ -268,6 +316,9 @@ export function initSofapaintAgent(): void {
     setValue,
     checkExport,
     showLines,
+    exportPdf,
+    nomsSnapshotScript: () => NOMS_SNAPSHOT_SCRIPT,
+    compareWithNoms,
     renderCard,
   };
 }

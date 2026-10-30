@@ -42,6 +42,8 @@ export interface CardSpec {
   /** Caption lines; a line starting with "!" is drawn in red. */
   caption?: string[];
   width?: number;
+  /** How values print: 'in-cm' (default), 'cm' (for production) or 'in'. */
+  units?: CardUnits;
 }
 
 export interface ResolvedPanel {
@@ -51,6 +53,7 @@ export interface ResolvedPanel {
   lines: Array<Required<Pick<CardLine, 'label'>> & CardLine & { from: NormPoint; to: NormPoint }>;
   subtitle?: string;
   crop: CardPanel['crop'];
+  units?: CardUnits;
 }
 
 const COLORS: Record<string, string> = {
@@ -66,10 +69,20 @@ const FONT = 'Arial, Helvetica, sans-serif';
 
 const colorOf = (c?: CardColor) => COLORS[c || 'red'] || c || COLORS.red;
 
-export function lineText(line: CardLine): string {
+export type CardUnits = 'in-cm' | 'cm' | 'in';
+
+/** A value in the card's units: `40½" (102.9 cm)`, `102.9 cm` or `40½"`. */
+export function formatValue(inch: number, units: CardUnits = 'in-cm'): string {
+  const both = formatInchCm(inch);
+  if (units === 'cm') return `${(Math.round(inch * 2.54 * 10) / 10).toFixed(1)} cm`;
+  if (units === 'in') return both.slice(0, both.indexOf(' ('));
+  return both;
+}
+
+export function lineText(line: CardLine, units: CardUnits = 'in-cm'): string {
   if (line.text) return line.text;
   if (line.unknown || line.inch === null || line.inch === undefined) return `${line.label}  ?`;
-  return `${line.label}  ${formatInchCm(line.inch)}`;
+  return `${line.label}  ${formatValue(line.inch, units)}`;
 }
 
 function arrow(
@@ -165,7 +178,7 @@ export function drawPanel(
   for (const line of panel.lines) arrow(ctx, px(line.from), px(line.to), colorOf(line.color), lw);
   const size = Math.round(Math.max(20, canvas.width / 32) * labelScale);
   ctx.font = `bold ${size}px ${FONT}`;
-  const texts = panel.lines.map(line => lineText(line));
+  const texts = panel.lines.map(line => lineText(line, panel.units));
   const rects = placeLabels(
     panel.lines.map((line, i) => ({
       a: px(line.from),
