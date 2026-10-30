@@ -152,6 +152,15 @@ async function addLine(
 async function setValue(viewId: string, label: string, inch: number | null) {
   const metadata = app().metadataManager;
   if (!metadata?.parseAndSaveMeasurement) throw new Error('Measurements are not available');
+  // A view that has not been opened keeps its values in the saved view state; a
+  // new live bucket holding only this label would hide them, so seed it first.
+  const saved = app().projectManager?.views?.[viewId]?.metadata?.strokeMeasurements?.[viewId];
+  if (saved && metadata.strokeMeasurements) {
+    metadata.strokeMeasurements[viewId] = {
+      ...JSON.parse(JSON.stringify(saved)),
+      ...(metadata.strokeMeasurements[viewId] || {}),
+    };
+  }
   const ok = metadata.parseAndSaveMeasurement(viewId, label, inch === null ? '' : `${inch} in`);
   app().tagManager?.updateTagText?.(label, viewId);
   app().canvasManager?.fabricCanvas?.requestRenderAll?.();
