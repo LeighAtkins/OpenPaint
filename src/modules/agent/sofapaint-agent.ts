@@ -17,6 +17,17 @@ import {
   NOMS_SNAPSHOT_SCRIPT,
   type NomsSnapshot,
 } from './agent-noms';
+import {
+  alignPhoto,
+  differsFromPhoto,
+  findMarks,
+  gradient,
+  snapEndpoint,
+  toGray,
+  toPhoto,
+  type MarkColor,
+  type Pixels,
+} from './agent-vision';
 
 const HELP = `SofaPaint agent API (window.sofapaint.agent). All points are normalised
 to the photo: {x: 0..1, y: 0..1} from the top-left. Values are inches.
@@ -30,6 +41,12 @@ to the photo: {x: 0..1, y: 0..1} from the top-left. Values are inches.
                                    -> adds or replaces a labelled line in the view
   setValue(viewId, label, inch)    -> sets a line's value on every copy (null clears it);
                                       opens the view so the value survives switches
+  gridImage(viewId, {step?, crop?}) -> {dataUrl}: the photo with a labelled 0..1 grid
+  snapLine(viewId, from, to, {radius?})
+                                   -> ends moved onto the nearest strong edge along the line
+  readMarkup(imageUrl, viewId, {colors?})
+                                   -> {alignment, marks:[{color, from, to, matches}], newMarks, preview}: coloured
+                                      strokes drawn on a screenshot of this view's photo
   checkExport()                    -> {hiddenWithValues, valueConflicts} to fix before a PDF
   exportPdf({unit:'cm', quantities:{viewId: n}, download?, force?})
                                    -> {filename, size, url} from SofaPaint's own PDF export
@@ -230,6 +247,170 @@ async function exportPdf(
   return { filename, size: blob.size, url: URL.createObjectURL(blob), warnings: problems };
 }
 
+async function pixelsOf(src: string, maxSide = 1200): Promise<Pixels> {
+  const bitmap = await loadBitmap(src);
+  const k = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(bitmap.width * k);
+  canvas.height = Math.round(bitmap.height * k);
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  return ctx.getImageData(0, 0, canvas.width, canvas.height);
+}
+
+/**
+ * The view's photo with a labelled 0..1 grid, so positions can be read off it.
+ * crop: {x0,y0,x1,y1} to zoom in; step: grid spacing (0.05 = every 5%).
+ */
+async function gridImage(
+  viewId: string,
+  options: { step?: number; crop?: { x0: number; y0: number; x1: number; y1: number } } = {}
+) {
+  const step = options.step ?? 0.05;
+  const box = options.crop || { x0: 0, y0: 0, x1: 1, y1: 1 };
+  const bitmap = await loadBitmap(viewImageSource(viewId));
+  const sw = (box.x1 - box.x0) * bitmap.width;
+  const sh = (box.y1 - box.y0) * bitmap.height;
+  const canvas = document.createElement('canvas');
+  canvas.width = 900;
+  canvas.height = Math.round((900 * sh) / sw);
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(
+    bitmap,
+    box.x0 * bitmap.width,
+    box.y0 * bitmap.height,
+    sw,
+    sh,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+  ctx.font = '13px Arial';
+  const px = (x: number) => ((x - box.x0) / (box.x1 - box.x0)) * canvas.width;
+  const py = (y: number) => ((y - box.y0) / (box.y1 - box.y0)) * canvas.height;
+  for (let t = Math.ceil(box.x0 / step) * step; t <= box.x1 + 1e-9; t += step) {
+    const major = Math.round(t / step) % 2 === 0;
+    ctx.strokeStyle = major ? 'rgba(255,0,255,0.75)' : 'rgba(0,200,255,0.5)';
+    ctx.beginPath();
+    ctx.moveTo(px(t), 0);
+    ctx.lineTo(px(t), canvas.height);
+    ctx.stroke();
+    if (major) {
+      ctx.fillStyle = 'magenta';
+      ctx.fillText(t.toFixed(2), px(t) + 2, 12);
+    }
+  }
+  for (let t = Math.ceil(box.y0 / step) * step; t <= box.y1 + 1e-9; t += step) {
+    const major = Math.round(t / step) % 2 === 0;
+    ctx.strokeStyle = major ? 'rgba(255,0,255,0.75)' : 'rgba(0,200,255,0.5)';
+    ctx.beginPath();
+    ctx.moveTo(0, py(t));
+    ctx.lineTo(canvas.width, py(t));
+    ctx.stroke();
+    if (major) {
+      ctx.fillStyle = 'magenta';
+      ctx.fillText(t.toFixed(2), 2, py(t) - 2);
+    }
+  }
+  return {
+    dataUrl: canvas.toDataURL('image/jpeg', 0.85),
+    width: canvas.width,
+    height: canvas.height,
+  };
+}
+
+const gradients = new Map<string, { w: number; h: number; grad: Float32Array }>();
+
+/**
+ * Pull each end of a line along its own direction onto the strongest nearby
+ * edge (a seam, panel edge or the floor). radius is a fraction of the photo.
+ */
+async function snapLine(
+  viewId: string,
+  from: NormPoint,
+  to: NormPoint,
+  options: { radius?: number } = {}
+) {
+  const src = viewImageSource(viewId);
+  let cached = gradients.get(src);
+  if (!cached) {
+    const img = await pixelsOf(src);
+    cached = { w: img.width, h: img.height, grad: gradient(toGray(img), img.width, img.height) };
+    gradients.set(src, cached);
+  }
+  const { w, h, grad } = cached;
+  const r = Math.max(4, Math.round((options.radius ?? 0.03) * Math.max(w, h)));
+  const a = { x: from.x * w, y: from.y * h };
+  const b = { x: to.x * w, y: to.y * h };
+  const sa = snapEndpoint(grad, w, h, a, b, r);
+  const sb = snapEndpoint(grad, w, h, b, a, r);
+  return {
+    from: { x: sa.point.x / w, y: sa.point.y / h },
+    to: { x: sb.point.x / w, y: sb.point.y / h },
+    moved: { from: sa.moved / Math.max(w, h), to: sb.moved / Math.max(w, h) },
+    strength: { from: sa.strength, to: sb.strength },
+  };
+}
+
+/**
+ * Read someone's marks on a screenshot of a project photo (production's
+ * questions, for example): finds where the photo sits in the screenshot and
+ * returns each coloured stroke as a line on the view, plus a preview card.
+ */
+async function readMarkup(
+  imageUrl: string,
+  viewId: string,
+  options: { colors?: MarkColor[]; minLength?: number } = {}
+) {
+  const screen = await pixelsOf(imageUrl, 1200);
+  const photo = await pixelsOf(viewImageSource(viewId), 600);
+  const alignment = alignPhoto(screen, photo);
+  const marks = findMarks(screen, {
+    colors: options.colors,
+    minLength: options.minLength,
+    keep: alignment.score > 0.5 ? differsFromPhoto(screen, photo, alignment) : undefined,
+  })
+    .map(m => ({
+      color: m.color,
+      from: toPhoto(m.from, alignment, photo),
+      to: toPhoto(m.to, alignment, photo),
+      lengthPx: Math.round(m.length),
+    }))
+    .filter(m => [m.from, m.to].every(p => p.x > -0.05 && p.x < 1.05 && p.y > -0.05 && p.y < 1.05));
+  // Marks that retrace a line already in the project (our own PDF lines in the
+  // screenshot) are tagged, so the new asks stand out.
+  const known = await getMeasurements(viewId);
+  const near = (a: NormPoint, b: NormPoint) => Math.hypot(a.x - b.x, a.y - b.y) < 0.04;
+  const tagged = marks.map(m => {
+    const hit = known.find(
+      l => (near(l.from, m.from) && near(l.to, m.to)) || (near(l.from, m.to) && near(l.to, m.from))
+    );
+    return { ...m, matches: hit ? hit.label : null };
+  });
+  let preview: string | null = null;
+  if (tagged.length) {
+    const card = await renderCard({
+      title: `Marks read from the screenshot (match ${alignment.score.toFixed(2)})`,
+      panels: [
+        {
+          viewId,
+          crop: 'full',
+          lines: tagged.map((m, i) => ({
+            label: `M${i + 1}`,
+            text: m.matches ? `${i + 1} = ${m.matches}` : `${i + 1} ${m.color} NEW`,
+            from: m.from,
+            to: m.to,
+            color: m.color === 'yellow' ? 'amber' : m.color === 'orange' ? 'amber' : m.color,
+          })),
+        },
+      ],
+    });
+    preview = card.dataUrl;
+  }
+  return { alignment, marks: tagged, newMarks: tagged.filter(m => !m.matches), preview };
+}
+
 async function loadBitmap(src: string): Promise<ImageBitmap> {
   const response = await fetch(src);
   if (!response.ok) throw new Error(`Could not load image (${response.status})`);
@@ -317,6 +498,9 @@ export function initSofapaintAgent(): void {
     checkExport,
     showLines,
     exportPdf,
+    gridImage,
+    snapLine,
+    readMarkup,
     nomsSnapshotScript: () => NOMS_SNAPSHOT_SCRIPT,
     compareWithNoms,
     renderCard,
