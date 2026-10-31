@@ -139,3 +139,6 @@ server/vercel-routes/cw/generated/
 /mcp/.dev.vars
 /.wrangler/
 /mcp/.wrangler/
+
+# Written by tests/unit/sofa3d-structural.test.ts on every run; regenerate locally.
+data/comfort-works/sofa3d-build/evidence/structural/

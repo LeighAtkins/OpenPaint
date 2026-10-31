@@ -5611,7 +5611,9 @@ function createModal(): HTMLElement {
           throw new Error('Sign in to SofaPaint to open measurements.');
         if (!authService.getCurrentUser()) {
           await new Promise<void>((resolve, reject) => {
-            let unsubscribe = () => {};
+            let unsubscribe = () => {
+              // Replaced by the real unsubscribe once the listener is registered.
+            };
             const timeout = setTimeout(() => {
               unsubscribe();
               reject(new Error('Your session is still opening. Please try again.'));

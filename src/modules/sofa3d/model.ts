@@ -273,7 +273,8 @@ export function parseSofaDocument(raw: unknown): SofaDocument {
   for (const key of Object.keys(createSofaDocument().dimensions) as Array<keyof SofaDimensions>)
     doc.dimensions[key] = validateDimension(
       doc.dimensions[key],
-      key === 'legHeight' ? 0 : 1,
+      // Armless pieces (footstools, ottomans) legitimately have no arm width.
+      key === 'legHeight' || key === 'armWidth' ? 0 : 1,
       key === 'seatCount' ? 8 : 1000
     );
   doc.dimensions.seatCount = Math.round(doc.dimensions.seatCount);
@@ -357,8 +358,7 @@ export function parseSofaDocument(raw: unknown): SofaDocument {
       m.z = validateDimension(m.z, -1500, 1500);
       m.rotation = validateDimension(m.rotation, -360, 360);
       m.seats = Math.round(validateDimension(m.seats, 1, 8));
-      if (m.backs !== undefined)
-        m.backs = Math.round(validateDimension(m.backs, 1, 8));
+      if (m.backs !== undefined) m.backs = Math.round(validateDimension(m.backs, 1, 8));
     }
   }
   if (doc.norsborg) {
