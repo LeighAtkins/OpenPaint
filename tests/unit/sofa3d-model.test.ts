@@ -150,7 +150,8 @@ describe('Popular sofa refinements', () => {
 
     for (const id of ['main:pillow-0', 'main:pillow-1']) {
       const pillow = parts.find(p => p.id === id)!;
-      expect(pillow.position.z).toBeLessThan(lumbar.position.z);
+      // Side pillows stand at the arms, in front of the lumbar pillows.
+      expect(pillow.position.z).toBeGreaterThan(lumbar.position.z);
       const geometry = cushionGeometry(pillow);
       const mesh = new THREE.Mesh(geometry);
       mesh.position.set(pillow.position.x, pillow.position.y, pillow.position.z);
