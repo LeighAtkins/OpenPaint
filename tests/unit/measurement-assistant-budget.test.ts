@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { DatabaseSync } from 'node:sqlite';
 import { describe, expect, it } from 'vitest';
 import { consumeDailyBudget } from '../../src/modules/measurement-assistant/mcp/usage-budget';
