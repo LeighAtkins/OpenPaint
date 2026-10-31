@@ -16,9 +16,10 @@ import {
 
 // CW40 has been retired; product lookup, measurements and their images come from the
 // private archive. Vercel runs the esbuild output because it cannot import .ts here.
-const { handleCwArchiveRequest } = await (process.env.VERCEL
-  ? import('./generated/archive.mjs')
-  : import('./archive.ts'));
+// The generated module only exists after `build:vercel`, so it is named at runtime
+// to keep Vite's import analysis (dev server, Vitest) from resolving it up front.
+const archiveModule = process.env.VERCEL ? './generated/archive.mjs' : './archive.ts';
+const { handleCwArchiveRequest } = await import(/* @vite-ignore */ archiveModule);
 
 const mtTokenCache = new Map();
 const FALLBACK_STYLE_CODES = [

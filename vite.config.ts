@@ -1,7 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import checker from 'vite-plugin-checker';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -22,6 +21,8 @@ export default defineConfig(({ mode }) => {
       {
         name: 'openpaint-express-backend',
         configureServer(server) {
+          // Vitest builds a dev server too; tests must not spawn app.js on :3000.
+          if (mode === 'test') return;
           let backend: ReturnType<typeof spawn> | null = null;
           const startBackend = () => {
             backend = spawn('node', ['app.js'], {
@@ -49,19 +50,6 @@ export default defineConfig(({ mode }) => {
           server.httpServer?.on('close', () => backend?.kill());
         },
       },
-      // Disabled during migration to avoid blocking development
-      // checker({
-      //   typescript: {
-      //     tsconfigPath: './tsconfig.json',
-      //   },
-      //   eslint: {
-      //     lintCommand: 'eslint "./src/**/*.{ts,tsx}"',
-      //   },
-      //   overlay: {
-      //     initialIsOpen: false,
-      //     position: 'br',
-      //   },
-      // }),
     ],
 
     // Serve static files from public directory

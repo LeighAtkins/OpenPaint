@@ -205,6 +205,9 @@ describe('Gorgias extension transfer pipeline', () => {
     });
 
     expect(create).toHaveBeenCalledWith({ url: 'http://127.0.0.1:5173/', active: true });
+    // The worker focuses the new tab on a short timer after responding; wait for it so
+    // the timer cannot fire after afterEach has unstubbed `chrome`.
+    await vi.waitFor(() => expect(chrome.tabs.update).toHaveBeenCalledWith(2, { active: true }));
     expect(readyAttempts).toBe(4);
     expect(targetMessages.map(message => message.type)).toEqual([
       'IMPORT_BEGIN',
