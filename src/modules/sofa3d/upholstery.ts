@@ -114,7 +114,7 @@ export function cushionGeometry(part: SofaPart): THREE.BufferGeometry {
         v = seat ? z / (d / 2) : y / (h / 2);
       const panel = Math.pow(Math.max(0, (1 - u * u * u * u) * (1 - v * v * v * v)), 0.42);
       const fullness = 0.1 + 0.9 * panel;
-      const phase = [...part.id].reduce((sum, c) => sum + c.charCodeAt(0), 0) * 0.37;
+      const phase = Array.from(part.id).reduce((sum, c) => sum + c.charCodeAt(0), 0) * 0.37;
       // A few seam-origin creases, rather than regular ripples around every edge.
       const crease =
         Math.exp(-Math.pow((u - 0.68) / 0.09, 2)) -

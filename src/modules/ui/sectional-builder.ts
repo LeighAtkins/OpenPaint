@@ -475,14 +475,6 @@ export function deriveGuideCode(piece: SectionalPiece): string {
   }
 }
 
-/** Pip geometry in local (pre-transform) cell coordinates. */
-const CONNECTOR_PIPS: Record<ConnectorSide, string> = {
-  top: '<rect x="52" y="3" width="14" height="8" rx="2.5"',
-  right: '<rect x="107" y="52" width="8" height="14" rx="2.5"',
-  bottom: '<rect x="52" y="107" width="14" height="8" rx="2.5"',
-  left: '<rect x="3" y="52" width="8" height="14" rx="2.5"',
-};
-
 export type SectionalThemeId = 'flax' | 'charcoal' | 'navy' | 'terracotta' | 'forest' | 'sand';
 
 interface SectionalTheme {
@@ -911,8 +903,6 @@ const scaleLadder = (
     CW_US_FABRIC_PRICES['boxed-seat-left-round-arm-chaise-section-cover'];
 }
 
-const CW_SECTIONAL_COLLECTION = 'custom-sectional-slipcovers';
-const CW_OTTOMAN_COLLECTION = 'custom-ottoman-slipcovers';
 const CW_BASE = 'https://comfort-works.com';
 
 function cwUrl(handle: string): string {
@@ -929,7 +919,7 @@ function localizedCwUrl(handle: string, country: SectionalPricingCountry): strin
 }
 
 function localizeCwProductUrl(url: string | undefined, country: SectionalPricingCountry): string {
-  const match = String(url || '').match(/\/products\/([^?#/]+)/);
+  const match = /\/products\/([^?#/]+)/.exec(String(url || ''));
   return localizedCwUrl(match?.[1] || '', country);
 }
 
@@ -939,7 +929,6 @@ function cwProduct(handle: string, title: string, price: number, ref: string): C
 
 /** Map a sectional piece to its CW unbranded slipcover product. */
 export function getPiecePricing(piece: SectionalPiece): CwProduct | null {
-  const facing = piece.mirrored ? 'R' : 'L';
   switch (piece.kind) {
     case 'left-arm':
       return piece.mirrored
@@ -1895,7 +1884,7 @@ export function applySectionalMeasurementEdit(
   if (normalized === 'A1') return scalePieces(pieces, 'width', value, piece => String(piece.col));
   if (normalized === 'A2') return scalePieces(pieces, 'depth', value, piece => String(piece.row));
 
-  const moduleMatch = normalized.match(/^A(\d+)$/);
+  const moduleMatch = /^A(\d+)$/.exec(normalized);
   if (moduleMatch) {
     const moduleIndex = Number(moduleMatch[1]) - 3; // A3 → column 0
     const col = occupiedCols[moduleIndex];
@@ -1908,7 +1897,7 @@ export function applySectionalMeasurementEdit(
     );
   }
 
-  const depthMatch = normalized.match(/^D(\d+)$/);
+  const depthMatch = /^D(\d+)$/.exec(normalized);
   if (depthMatch) {
     const rowIndex = Number(depthMatch[1]);
     const row = occupiedRows[rowIndex];
@@ -2162,7 +2151,6 @@ function productProjection(
   // the render read as an object instead of a tilted diagram. Only the
   // canonical front-right camera exists; front-left mirrors the finished
   // render in sectionalProductMarkup, so one camera serves every view.
-  const sightLen = Math.hypot(-0.72, 1, 0.72);
   const sceneCx = (bounds.x0 + bounds.x1) / 2;
   const sceneCy = (bounds.y0 + bounds.y1) / 2;
   const sceneCz = 62;
@@ -3516,7 +3504,7 @@ function sectionalProductPieceLayers(
       [armThickness, armTop],
       [0, armTop],
     ];
-    const profileAt = (localY: number): Array<readonly [number, number]> => squareProfile;
+    const profileAt = (_localY: number): Array<readonly [number, number]> => squareProfile;
     // End-cap path for the square arm: the two top corners are softly
     // rounded like a padded arm panel. Corner walking is direction-aware so
     // left- and right-arm (mirrored u) panels round identically.
@@ -3544,7 +3532,7 @@ function sectionalProductPieceLayers(
       );
     };
     // Inner / outer vertical panels are mutually exclusive faces of the arm.
-    const visiblePanelTop = (localY: number): number => {
+    const visiblePanelTop = (_localY: number): number => {
       if (style.arm === 'round') return rollBoxTop;
       return armTop;
     };
@@ -4104,7 +4092,7 @@ function buildProductDimensionMarkup(
   });
   Array.from(cols.entries())
     .sort(([a], [b]) => a - b)
-    .forEach(([col, entry], index) => {
+    .forEach(([_col, entry], index) => {
       dims.push(
         dimLine(
           { x: entry.x0, y: maxY, z: 0 },
@@ -4132,7 +4120,6 @@ function buildProductDimensionMarkup(
   );
 
   // Inner seat span (B1): between the arm inner edges on the front row.
-  const frontRow = minY; // front row starts at the rear line
   const frontPieces = placements.filter(
     ({ piece, placement }) => piece.row === 0 || placement!.originY === minY
   );
@@ -4329,8 +4316,6 @@ export function serializeSectionalSvg(
   const report = evaluateSectionalConnections(pieces);
   const dimensions = sectionalDimensionsMarkup(pieces);
   const content = pieces.map(piece => pieceMarkup(piece, false, true, report, theme)).join('');
-  const minCol = pieces.length ? Math.min(...pieces.map(piece => piece.col)) : 0;
-  const maxCol = pieces.length ? Math.max(...pieces.map(piece => piece.col)) : 0;
   const minRow = pieces.length ? Math.min(...pieces.map(piece => piece.row)) : 0;
   const maxRow = pieces.length ? Math.max(...pieces.map(piece => piece.row)) : 0;
   const viewBox = getSectionalPlanViewBox(pieces);
@@ -4854,6 +4839,7 @@ export function createPieceFabricGroup(
       // vertical slice, but use one canonical key everywhere going forward.
       assemblyId,
       pieceId: piece.id,
+      // Normalise at the persistence boundary: older saved pieces may lack the flag.
       mirrored: piece.mirrored === true,
       initialScaleX: 1,
       initialScaleY: 1,
@@ -4936,7 +4922,7 @@ export function initSectionalBuilder(): void {
   });
   let pieces = createSectionalPreset('sofa');
   let selectedId: string | null = pieces[1]?.id || null;
-  let selectedIds: Set<string> = new Set(selectedId ? [selectedId] : []);
+  let selectedIds = new Set<string>(selectedId ? [selectedId] : []);
   let assemblyId: string | null = null;
   let assemblyName = '3-seat sofa';
   let theme: SectionalThemeId = DEFAULT_THEME;
@@ -5087,9 +5073,6 @@ export function initSectionalBuilder(): void {
     if (!groups.length) return false;
 
     const viewBox = getSectionalPlanViewBox(pieces.length ? pieces : createSectionalPreset('sofa'));
-    const scaleX = worldRect.width / viewBox.width;
-    const scaleY = worldRect.height / viewBox.height;
-    const viewId = app.projectManager?.currentViewId || '';
     const piecesFromCanvas: SectionalPiece[] = [];
 
     groups.forEach((group: any) => {
@@ -5177,130 +5160,27 @@ export function initSectionalBuilder(): void {
     }
   };
 
-  /** Bind a measurement-guide code to a module's image so the guide indicator appears automatically. */
-  const bindModuleGuideCode = (viewId: string, piece: SectionalPiece) => {
-    const manager = (window as any).app?.projectManager;
-    if (!manager?.setProjectMetadata) return;
-    const code = deriveGuideCode(piece);
-    if (!code) return;
-    const metadata = manager.getProjectMetadata?.() || {};
-    manager.setProjectMetadata({
-      measurementGuideCodesByView: {
-        ...(metadata.measurementGuideCodesByView || {}),
-        [viewId]: [code],
-      },
-      measurementGuideBindingsByScope: {
-        ...(metadata.measurementGuideBindingsByScope || {}),
-        [viewId]: { codes: [code], activeCode: code, activeVariant: 'front', locked: false },
-      },
-      measurementGuideLibraryCodes: Array.from(
-        new Set([...(metadata.measurementGuideLibraryCodes || []), code])
-      ),
-    });
-  };
-
-  /**
-   * Create real measurement strokes (overall width/depth + per-column widths)
-   * on the freshly imported plan image. Strokes land on the dimension lines
-   * baked into the PNG, so the document starts pre-measured and stays editable.
-   */
-  const seedMeasurementStrokes = async (
-    viewId: string | undefined,
-    seedPieces: SectionalPiece[]
-  ): Promise<number> => {
-    const app = (window as any).app;
-    const projectManager = app?.projectManager;
-    const metadataManager = app?.metadataManager;
-    const fabricCanvas = app?.canvasManager?.fabricCanvas;
-    if (!viewId || !projectManager || !metadataManager || !fabricCanvas || !seedPieces.length)
-      return 0;
-
-    try {
-      if (projectManager.currentViewId !== viewId) {
-        await projectManager.switchView?.(viewId);
-      }
-      const worldRect = app.canvasManager?.getBackgroundWorldRect?.();
-      if (!worldRect) return 0;
-
-      const viewBox = getSectionalPlanViewBox(seedPieces);
-      const seeds = getSectionalMeasurementSeeds(seedPieces);
-      const fabric = (window as any).fabric;
-      if (!fabric?.Line) return 0;
-      const imageLabel = String(
-        metadataManager.resolveActiveImageLabel?.(viewId) ||
-          metadataManager.normalizeImageLabel?.(viewId) ||
-          viewId
-      ).trim();
-
-      let seeded = 0;
-      for (const seed of seeds) {
-        const strokeLabel =
-          metadataManager.resolveAvailableStrokeLabel?.(
-            imageLabel,
-            seed.suggestedTag,
-            'letters+numbers'
-          ) || metadataManager.getNextLabel?.(imageLabel);
-        if (!strokeLabel) continue;
-        const p1 = planPointToWorld(seed.x1, seed.y1, viewBox, worldRect);
-        const p2 = planPointToWorld(seed.x2, seed.y2, viewBox, worldRect);
-        const line = new fabric.Line([p1.x, p1.y, p2.x, p2.y], {
-          stroke: '#3b82f6',
-          strokeWidth: 2,
-          originX: 'center',
-          originY: 'center',
-          selectable: true,
-          evented: true,
-          perPixelTargetFind: true,
-          padding: 8,
-          objectCaching: false,
-        });
-        // Mark seeded strokes so a later "Update project image" can replace
-        // exactly these without touching anything the user drew themselves.
-        line.customData = {
-          ...(line.customData || {}),
-          sectionalSeed: true,
-          sectionalAssemblyId: assemblyId,
-          sectionalSeedRole: seed.role,
-        };
-        fabricCanvas.add(line);
-        line.setCoords?.();
-        metadataManager.attachMetadata?.(line, imageLabel, strokeLabel);
-        metadataManager.parseAndSaveMeasurement?.(imageLabel, strokeLabel, `${seed.valueCm} cm`);
-        app.tagManager?.createTagForStroke?.(strokeLabel, imageLabel, line);
-        seeded += 1;
-      }
-      if (seeded > 0) {
-        fabricCanvas.requestRenderAll?.();
-        app.historyManager?.saveState?.({ force: true, reason: 'sectional:seed-measurements' });
-      }
-      return seeded;
-    } catch (error) {
-      console.warn('[SectionalBuilder] Measurement seeding failed', error);
-      return 0;
-    }
-  };
-
   const updateInspector = () => {
     const bounds = calculateSectionalBounds(pieces);
     const selected = pieces.find(piece => piece.id === selectedId);
-    (document.getElementById('sbAssemblyName') as HTMLElement).textContent = assemblyName;
-    (document.getElementById('sbPieceCount') as HTMLElement).textContent =
+    document.getElementById('sbAssemblyName')!.textContent = assemblyName;
+    document.getElementById('sbPieceCount')!.textContent =
       `${pieces.length} piece${pieces.length === 1 ? '' : 's'}`;
-    (document.getElementById('sbMetricPieces') as HTMLElement).textContent = String(pieces.length);
-    (document.getElementById('sbMetricWidth') as HTMLElement).textContent = `${bounds.width} cm`;
-    (document.getElementById('sbMetricDepth') as HTMLElement).textContent = `${bounds.depth} cm`;
-    const inspector = document.getElementById('sbSelectionInspector') as HTMLElement;
+    document.getElementById('sbMetricPieces')!.textContent = String(pieces.length);
+    document.getElementById('sbMetricWidth')!.textContent = `${bounds.width} cm`;
+    document.getElementById('sbMetricDepth')!.textContent = `${bounds.depth} cm`;
+    const inspector = document.getElementById('sbSelectionInspector')!;
     inspector.classList.toggle('is-empty', !selected);
-    (document.getElementById('sbSelectedName') as HTMLElement).textContent = selected
+    document.getElementById('sbSelectedName')!.textContent = selected
       ? PIECES[selected.kind].name
       : 'Select a piece';
     if (selected) {
       const dims = getPieceDimensions(selected);
       const sockets = getConnectorWorldSides(selected);
-      (document.getElementById('sbSelectedSize') as HTMLElement).textContent =
+      document.getElementById('sbSelectedSize')!.textContent =
         `${dims.width} × ${dims.depth} cm · Cell ${selected.col + 1}, ${selected.row + 1} · Sockets: ${sockets.join(', ') || 'none'} · Guide: ${deriveGuideCode(selected)}`;
     } else {
-      (document.getElementById('sbSelectedSize') as HTMLElement).textContent =
+      document.getElementById('sbSelectedSize')!.textContent =
         'Drag pieces on the board to arrange them.';
     }
     updateMeasurementChecks();
@@ -5722,7 +5602,9 @@ export function initSectionalBuilder(): void {
         .then(() => {
           (window as any).showStatusMessage?.('Pricing links copied to clipboard', 'success');
         })
-        .catch(() => {});
+        .catch(() => {
+          // Clipboard access denied: the links stay visible in the dialog.
+        });
     }
   });
 
@@ -5936,52 +5818,6 @@ export function initSectionalBuilder(): void {
     selected.row = targetRow;
     render();
   });
-
-  const fileToDataUrl = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result));
-      reader.onerror = () => reject(reader.error || new Error('Could not read image'));
-      reader.readAsDataURL(file);
-    });
-
-  /** Seeded strokes for this assembly still live on the canvas of the given view. */
-  const removeSeededStrokes = (viewId: string): void => {
-    const app = (window as any).app;
-    const fabricCanvas = app?.canvasManager?.fabricCanvas;
-    const metadata = app?.metadataManager;
-    if (!fabricCanvas || !metadata || !assemblyId) return;
-    const removable =
-      fabricCanvas
-        .getObjects?.()
-        .filter(
-          (obj: any) =>
-            obj?.customData?.sectionalSeed === true &&
-            obj?.customData?.sectionalAssemblyId === assemblyId
-        ) || [];
-    removable.forEach((obj: any) => {
-      const strokeLabel = obj.strokeMetadata?.strokeLabel;
-      const imageLabel = obj.strokeMetadata?.imageLabel || viewId;
-      if (strokeLabel) {
-        if (metadata.vectorStrokesByImage?.[imageLabel])
-          delete metadata.vectorStrokesByImage[imageLabel][strokeLabel];
-        if (metadata.strokeVisibilityByImage?.[imageLabel])
-          delete metadata.strokeVisibilityByImage[imageLabel][strokeLabel];
-        if (metadata.strokeLabelVisibility?.[imageLabel])
-          delete metadata.strokeLabelVisibility[imageLabel][strokeLabel];
-        if (metadata.strokeMeasurements?.[imageLabel])
-          delete metadata.strokeMeasurements[imageLabel][strokeLabel];
-        if (Array.isArray((window as any).lineStrokesByImage?.[imageLabel])) {
-          const list = (window as any).lineStrokesByImage[imageLabel];
-          const index = list.indexOf(strokeLabel);
-          if (index > -1) list.splice(index, 1);
-        }
-        app?.tagManager?.removeTag?.(strokeLabel, imageLabel);
-      }
-      fabricCanvas.remove(obj);
-    });
-    if (removable.length) fabricCanvas.requestRenderAll?.();
-  };
 
   const updateHandoffButtons = () => {
     const updateButton = dialog.querySelector('[data-sb-update]') as HTMLButtonElement | null;
@@ -6325,7 +6161,7 @@ export function initSectionalBuilder(): void {
   const ensureParametricListener = () => {
     const canvas = (window as any).app?.canvasManager?.fabricCanvas;
     if (!canvas) return;
-    if (measurementListenerRegistered === false) {
+    if (!measurementListenerRegistered) {
       measurementListenerRegistered = true;
       window.addEventListener('openpaint:project-mutated', (event: Event) => {
         applyMeasurementToLiveAssembly((event as CustomEvent).detail || {});

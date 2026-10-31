@@ -42,9 +42,6 @@ const workspaceState: MeasurementSplitWorkspaceState = {
 };
 
 let initialized = false;
-let mountSyncObserver: MutationObserver | null = null;
-let pendingMountSyncRaf = 0;
-const pendingMountSyncTimers = new Set<number>();
 const VALID_TEXT_BASELINES = new Set([
   'top',
   'hanging',
@@ -92,15 +89,6 @@ function syncWorkspaceBodyClass(): void {
 
 function refreshStrokeControls(): void {
   (window as any).app?.metadataManager?.updateStrokeVisibilityControls?.();
-}
-
-function clearPendingMountSync(): void {
-  if (pendingMountSyncRaf) {
-    window.cancelAnimationFrame(pendingMountSyncRaf);
-    pendingMountSyncRaf = 0;
-  }
-  pendingMountSyncTimers.forEach(timerId => window.clearTimeout(timerId));
-  pendingMountSyncTimers.clear();
 }
 
 function sanitizeTextBaselineObject(target: any): void {
@@ -218,51 +206,6 @@ function dispatchWorkspaceChange(): void {
   window.dispatchEvent(new Event('openpaint:measurement-split-workspace-change'));
 }
 
-function ensureMountSyncObserver(): void {
-  if (mountSyncObserver || typeof MutationObserver === 'undefined') return;
-
-  mountSyncObserver = new MutationObserver(() => {
-    if (!isMeasurementSplitWorkspaceActive()) return;
-    scheduleMeasurementSplitMountSync();
-  });
-
-  mountSyncObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ['class', 'style', 'aria-expanded'],
-  });
-}
-
-function teardownMountSyncObserver(): void {
-  mountSyncObserver?.disconnect();
-  mountSyncObserver = null;
-  clearPendingMountSync();
-}
-
-function scheduleMeasurementSplitMountSync(): void {
-  if (!isMeasurementSplitWorkspaceActive()) return;
-  clearPendingMountSync();
-
-  const runSync = () => {
-    if (!isMeasurementSplitWorkspaceActive()) return;
-    sanitizeActiveCanvasTextBaselines();
-  };
-
-  pendingMountSyncRaf = window.requestAnimationFrame(() => {
-    pendingMountSyncRaf = 0;
-    runSync();
-  });
-
-  [40, 140, 320].forEach(delayMs => {
-    const timerId = window.setTimeout(() => {
-      pendingMountSyncTimers.delete(timerId);
-      runSync();
-    }, delayMs);
-    pendingMountSyncTimers.add(timerId);
-  });
-}
-
 export function getMeasurementSplitWorkspaceState(): MeasurementSplitWorkspaceState {
   return {
     ...workspaceState,
@@ -345,7 +288,6 @@ export function resetMeasurementSplitWorkspace(): void {
   workspaceState.activeMode = 'guide-compare';
   workspaceState.activeImportedViewId = '';
   workspaceState.lockOverrideActive = false;
-  teardownMountSyncObserver();
   restoreMeasurementSplitStrokePanel();
   dispatchWorkspaceChange();
 }
@@ -354,7 +296,6 @@ export function suspendMeasurementSplitWorkspace(): boolean {
   const hadWorkspaceState =
     workspaceState.activeMode === 'measurement-edit' || workspaceState.lockOverrideActive;
   workspaceState.lockOverrideActive = false;
-  teardownMountSyncObserver();
   restoreMeasurementSplitStrokePanel();
   dispatchWorkspaceChange();
   return hadWorkspaceState;

@@ -297,7 +297,7 @@ export function initMeasurementReview(): void {
     const selections = new Map(
       views.map(view => [
         view.viewId,
-        new Set(view.measurements.filter(row => row.visible !== false).map(row => row.label)),
+        new Set(view.measurements.filter(row => row.visible).map(row => row.label)),
       ])
     );
 
@@ -442,7 +442,8 @@ export function initMeasurementReview(): void {
       if (!checkbox) return;
       const label = decodeURIComponent(checkbox.dataset.reviewLabel);
       const selected = selections.get(activeViewId) || new Set();
-      checkbox.checked ? selected.add(label) : selected.delete(label);
+      if (checkbox.checked) selected.add(label);
+      else selected.delete(label);
       selections.set(activeViewId, selected);
       overlay.querySelector('[data-review-count]').textContent = String(selected.size);
     });
@@ -464,7 +465,7 @@ export function initMeasurementReview(): void {
               view.viewId,
               new Set(
                 view.measurements
-                  .filter(row => row.existsInProject !== false && row.visible !== false)
+                  .filter(row => row.existsInProject !== false && row.visible)
                   .map(row => row.label)
               )
             );
