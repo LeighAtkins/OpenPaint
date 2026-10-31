@@ -279,10 +279,10 @@ export function notifyOpenPaint(payload: NotifyPayload, fallbackKind = 'info'): 
   if (typeof document === 'undefined') return;
 
   const normalized = normalizePayload(payload, fallbackKind);
-  const message = String(normalized.message || '').trim();
+  const message = (normalized.message || '').trim();
   if (!message) return;
 
-  const kind = String(normalized.kind || 'info');
+  const kind = normalized.kind || 'info';
   const host = getHost();
   const existing = host.querySelector('.openpaint-toast') as NotificationElement | null;
   if (existing?.timer) {

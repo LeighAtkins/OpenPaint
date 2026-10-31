@@ -1,0 +1,24 @@
+{
+ "reference": "PB-YSAD-94",
+ "public": {
+  "ok": true,
+  "code": "CW_PUBLIC_MEASUREMENTS_OK",
+  "measurements": {
+   "width": {
+    "cm": 241.3,
+    "in": 95
+   },
+   "depth": {
+    "cm": 110.49,
+    "in": 43.5
+   },
+   "height": {
+    "cm": 96.52,
+    "in": 38
+   }
+  },
+  "scopedReference": "PB-YSAD-94__SV__1S-2B",
+  "style": "Original",
+  "styleCode": "CNRP_SP"
+ }
+}

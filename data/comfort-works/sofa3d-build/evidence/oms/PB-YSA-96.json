@@ -1,0 +1,24 @@
+{
+ "reference": "PB-YSA-96",
+ "public": {
+  "ok": true,
+  "code": "CW_PUBLIC_MEASUREMENTS_OK",
+  "measurements": {
+   "width": {
+    "cm": 241.3,
+    "in": 95
+   },
+   "depth": {
+    "cm": 95.25,
+    "in": 37.5
+   },
+   "height": {
+    "cm": 91.44,
+    "in": 36
+   }
+  },
+  "scopedReference": "PB-YSA-96__SV__1S-2B",
+  "style": "Original",
+  "styleCode": "CNRP_SP"
+ }
+}

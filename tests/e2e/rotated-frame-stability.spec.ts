@@ -13,12 +13,18 @@ async function seedWideImage(page: Page, viewId: string): Promise<string> {
     context.strokeStyle = '#f97316';
     context.lineWidth = 18;
     context.strokeRect(90, 70, 780, 400);
-    await window.app?.projectManager?.addImage?.(id, source.toDataURL('image/png'), {
+    const manager = window.app?.projectManager;
+    await manager?.addImage?.(id, source.toDataURL('image/png'), {
       refreshBackground: true,
     });
+    // Adding an image does not reliably make it the displayed view; switch to
+    // it explicitly so the fixture is always built on the seeded image.
+    await manager?.whenIdle?.();
+    await manager?.switchView?.(id);
+    await manager?.whenIdle?.();
   }, viewId);
   await waitForCanvasLayoutSettle(page);
-  return page.evaluate(() => String(window.app?.projectManager?.currentViewId || ''));
+  return viewId;
 }
 
 async function normalTabIds(page: Page, viewId: string): Promise<string[]> {
@@ -155,6 +161,8 @@ test.describe('Rotated frame stability', () => {
           ...(tab.captureFrame || {}),
           worldRect: { left: 660.5, top: 183, width: 600, height: 450 },
         };
+        // A record from before the frame model carries no version marker.
+        delete tab.captureFrame.frameVersion;
       });
       return data;
     }, rotatedViewId);
@@ -176,8 +184,16 @@ test.describe('Rotated frame stability', () => {
       samples.push(await captureTabGeometry(page, rotatedViewId));
     }
 
+    // What the user sees must not change: frame size, zoom and rotation stay
+    // exactly as loaded. The stored crop of an old record was never measured
+    // from the live frame, so it may be re-measured once on the first switch;
+    // from then on it must not move either.
     for (const sample of samples) {
-      expectGeometryStable(authored, sample);
+      expect(sample.frame.width).toBeCloseTo(authored.frame.width, 0);
+      expect(sample.frame.height).toBeCloseTo(authored.frame.height, 0);
+      expect(sample.viewport.zoom).toBeCloseTo(authored.viewport.zoom, 5);
+      expect(sample.liveRotation).toBeCloseTo(90, 5);
+      expectGeometryStable(samples[0], sample);
     }
   });
 });

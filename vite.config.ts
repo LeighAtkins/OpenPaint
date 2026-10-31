@@ -17,6 +17,15 @@ export default defineConfig(({ mode }) => {
           copyTesseractAssets();
         },
       },
+      {
+        name: 'measurement-search-page',
+        configureServer(server) {
+          server.middlewares.use((req, _res, next) => {
+            if (/^\/search(?:\/|\?|$)/.test(req.url || '')) req.url = '/search.html';
+            next();
+          });
+        },
+      },
       // Auto-start the Express backend so /api proxy never 502s.
       {
         name: 'openpaint-express-backend',
@@ -89,6 +98,10 @@ export default defineConfig(({ mode }) => {
       reportCompressedSize: false,
       chunkSizeWarningLimit: 900,
       rollupOptions: {
+        input: {
+          paint: path.resolve(__dirname, 'index.html'),
+          search: path.resolve(__dirname, 'search.html'),
+        },
         output: {
           manualChunks(id) {
             if (id.includes('node_modules/fabric')) return 'vendor-fabric';

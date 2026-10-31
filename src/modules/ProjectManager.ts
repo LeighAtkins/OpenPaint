@@ -17,6 +17,8 @@ import { normalizeCloudError } from './cloud/error-normalizer.js';
 import { CLOUD_COPY } from './cloud/messages.js';
 import { decideFinalSaveMessageKey, formatSaveOutcomeLines } from './cloud/result-factory.js';
 import { fitViewportToWorldRect, getCenteredBoxWorldRect } from './utils/viewportRestore.ts';
+import { TEXT_ANNOTATION_RUNTIME_DEFAULTS } from './tools/text-annotation-defaults.ts';
+import { requestFontsForCanvasText } from './utils/fabricFontSync.ts';
 import JSZip from 'jszip';
 import { getStoredSupabaseAuth } from '@/services/auth/storedAuth';
 
@@ -695,6 +697,9 @@ export class ProjectManager {
                 (obj.type === 'i-text' || obj.type === 'text') &&
                 obj.strokeMetadata?.type === 'text'
               ) {
+                // Fabric does not serialise these, so a reloaded note would
+                // otherwise render and select differently from a new one.
+                obj.set(TEXT_ANNOTATION_RUNTIME_DEFAULTS);
                 // Reattach event handlers for text elements loaded from JSON
                 obj.on('editing:exited', () => {
                   if (window.app?.historyManager) {
@@ -704,52 +709,11 @@ export class ProjectManager {
               }
             });
 
-            // Recreate tags for all strokes with visible labels
-            if (window.app?.tagManager && window.app?.metadataManager) {
-              // Clear all tags to avoid collisions between views (e.g., multiple A1 labels)
-              if (typeof window.app.tagManager.clearAllTags === 'function') {
-                window.app.tagManager.clearAllTags();
-              }
+            // Restored text is measured before its web font may have loaded;
+            // start those loads so it is re-measured with the real font.
+            requestFontsForCanvasText(this.canvasManager.fabricCanvas);
 
-              // If the active frame is empty but restored strokes belong to another
-              // frame scope, the frame visibility gate hides all vectors. This can
-              // happen after CW import image switching creates/normalizes frame tabs
-              // in a different order than the drawn stroke scopes.
-              this.repairActiveCaptureTabForLoadedObjects(viewId);
-
-              const scopedKeys = Object.keys(
-                window.app.metadataManager.vectorStrokesByImage || {}
-              ).filter(scopeKey => this.isScopeLabelForView(scopeKey, viewId));
-              const activeScope =
-                (typeof window.getCaptureTabScopedLabel === 'function' &&
-                  window.getCaptureTabScopedLabel(viewId)) ||
-                window.app.metadataManager.resolveActiveImageLabel?.(viewId) ||
-                viewId;
-
-              const activeStrokes =
-                window.app.metadataManager.vectorStrokesByImage[activeScope] || {};
-              const activeLabelVisibility =
-                window.app.metadataManager.strokeLabelVisibility[activeScope] || {};
-
-              console.log(
-                `[Load] Recreating tags for ${Object.keys(activeStrokes).length} active strokes`,
-                { viewId, activeScope, scopedKeys }
-              );
-
-              Object.entries(activeStrokes).forEach(([strokeLabel, strokeObj]) => {
-                // Skip guide-scoped strokes that shouldn't appear on the primary canvas
-                if (typeof strokeLabel === 'string' && strokeLabel.startsWith('__guide__:')) return;
-                const isLabelVisible = activeLabelVisibility[strokeLabel] !== false;
-                if (isLabelVisible) {
-                  window.app.tagManager.createTag(strokeLabel, activeScope, strokeObj);
-                }
-              });
-
-              // Ensure tab-scoped visibility is applied immediately after load.
-              if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
-                window.syncCaptureTabCanvasVisibility(viewId);
-              }
-            }
+            this.recreateTagsForView(viewId);
 
             // Ensure background image is re-applied after JSON load (JSON can clear it)
             if (view.image) {
@@ -1338,11 +1302,6 @@ export class ProjectManager {
         // Save backgroundWorldRect so setBackgroundImage can restore the exact
         // position on the next visit. Split mode preserves the previous rect
         // because the live canvas is temporarily fitted to a half-width pane.
-        const activeTabState = window.captureTabsByLabel?.[targetViewId];
-        const activeTab = activeTabState?.tabs?.find?.(
-          tab => tab?.id === activeTabState?.activeTabId
-        );
-        const tabWorldRect = activeTab?.captureFrame?.worldRect || null;
         const liveBackgroundWorldRect = targetCanvasManager.getBackgroundWorldRect?.() || null;
         const backgroundImage = targetCanvasManager.fabricCanvas?.backgroundImage || null;
         const inferredBackgroundWorldRect = backgroundImage
@@ -1366,8 +1325,7 @@ export class ProjectManager {
         // Persisting it as the background rectangle makes a returning image adopt
         // the frame's size before its saved viewport is restored, which silently
         // turns a manual zoom back into a fit-to-frame view.
-        const backgroundWorldRect =
-          liveBackgroundWorldRect || inferredBackgroundWorldRect || tabWorldRect || null;
+        const backgroundWorldRect = liveBackgroundWorldRect || inferredBackgroundWorldRect || null;
         if (backgroundWorldRect) {
           this.views[targetViewId].backgroundWorldRect = JSON.parse(
             JSON.stringify(backgroundWorldRect)
@@ -2038,20 +1996,23 @@ export class ProjectManager {
           }
 
           const viewState = this.views?.[this.currentViewId] || null;
-          const hasPersistedLayout = Boolean(
-            viewState?.canvasData ||
-              viewState?.viewport ||
-              viewState?.tabs ||
-              viewState?.backgroundWorldRect
+          // Saving an empty workspace also writes canvasData and viewport.
+          // Those records do not describe an image placement: carrying their
+          // pan/zoom into the first upload leaves the image outside its frame.
+          // Preserve existing artwork and saved image geometry instead.
+          const hasPersistedLayout = !!(
+            viewState?.canvasData?.objects?.length ||
+            viewState?.canvasData?.backgroundImage ||
+            viewState?.backgroundWorldRect ||
+            viewState?.initialImageFrameApplied === true
           );
           // Size the capture frame to the uploaded image's aspect ratio on the
           // FIRST upload (no persisted layout). Previously this only ran for
           // portrait images; landscape/square images kept the default 4:3 frame
           // and the image was fit inside it, leaving empty gaps on the shorter
           // dimension — the "image smaller than frame" symptom.
-          const shouldInitializeFrameForImage = Boolean(
-            !hasPersistedLayout && viewState?.initialImageFrameApplied !== true
-          );
+          const shouldInitializeFrameForImage =
+            !hasPersistedLayout && viewState?.initialImageFrameApplied !== true;
           let initialFrameApplied = false;
           if (shouldInitializeFrameForImage) {
             initialFrameApplied = Boolean(
@@ -2059,6 +2020,8 @@ export class ProjectManager {
             );
             if (initialFrameApplied && viewState) {
               viewState.initialImageFrameApplied = true;
+              viewState.viewport = null;
+              delete viewState.viewportTransform;
             }
           }
 
@@ -2085,7 +2048,6 @@ export class ProjectManager {
               };
               activeFrame.viewportTransform = [1, 0, 0, 1, 0, 0];
             }
-            window.__openpaintResetCaptureResizeAnchor?.();
           }
 
           // Frame initialization updates the live capture frame, so read
@@ -2480,6 +2442,11 @@ export class ProjectManager {
                   };
                 }
               }
+            }
+            if (initialFrameApplied) {
+              // Refresh the pending resize anchor only after the background and
+              // tab viewport describe the newly fitted image, not the empty canvas.
+              window.__openpaintResetCaptureResizeAnchor?.();
             }
           });
 
@@ -3370,6 +3337,7 @@ export class ProjectManager {
       'arrowSettings',
       'customPoints',
       'isArrow',
+      'isPrivacyErase',
       'tagOffset',
       'isTag',
       'isTagText',
@@ -4518,6 +4486,7 @@ export class ProjectManager {
       this.showProjectLoadOverlay('Loading cloud project...');
       this.revokeLoadedProjectObjectUrls();
 
+      await this.waitForDeferredManagers();
       await this._restoreFromProjectData(normalizedProjectData);
     } catch (error) {
       console.error('[Load] Failed to load project from data:', error);
@@ -4545,6 +4514,7 @@ export class ProjectManager {
 
       console.log('[Load] Parsed project data:', projectData.projectName || projectData.name);
 
+      await this.waitForDeferredManagers();
       await this._restoreFromProjectData(projectData);
     } catch (error) {
       console.error('[Load] Failed to load project:', error);
@@ -4555,6 +4525,77 @@ export class ProjectManager {
       this.suspendSave = false;
       this.hideProjectLoadOverlay();
     }
+  }
+
+  /**
+   * Rebuild the measurement tags of the displayed view from its stroke
+   * metadata and apply per-frame visibility. Tags are never serialised; this
+   * runs after a view's objects are restored, and again if the lazily loaded
+   * tag manager only becomes available after the view is already on screen.
+   */
+  recreateTagsForView(viewId) {
+    const tagManager = window.app?.tagManager;
+    const metadataManager = window.app?.metadataManager;
+    if (tagManager && metadataManager) {
+      // Clear all tags to avoid collisions between views (e.g., multiple A1 labels)
+      if (typeof tagManager.clearAllTags === 'function') {
+        tagManager.clearAllTags();
+      }
+
+      // If the active frame is empty but restored strokes belong to another
+      // frame scope, the frame visibility gate hides all vectors. This can
+      // happen after CW import image switching creates/normalizes frame tabs
+      // in a different order than the drawn stroke scopes.
+      this.repairActiveCaptureTabForLoadedObjects(viewId);
+
+      const scopedKeys = Object.keys(metadataManager.vectorStrokesByImage || {}).filter(scopeKey =>
+        this.isScopeLabelForView(scopeKey, viewId)
+      );
+      const activeScope =
+        (typeof window.getCaptureTabScopedLabel === 'function' &&
+          window.getCaptureTabScopedLabel(viewId)) ||
+        metadataManager.resolveActiveImageLabel?.(viewId) ||
+        viewId;
+
+      const activeStrokes = metadataManager.vectorStrokesByImage[activeScope] || {};
+      const activeLabelVisibility = metadataManager.strokeLabelVisibility[activeScope] || {};
+
+      console.log(
+        `[Load] Recreating tags for ${Object.keys(activeStrokes).length} active strokes`,
+        { viewId, activeScope, scopedKeys }
+      );
+
+      Object.entries(activeStrokes).forEach(([strokeLabel, strokeObj]) => {
+        // Skip guide-scoped strokes that shouldn't appear on the primary canvas
+        if (typeof strokeLabel === 'string' && strokeLabel.startsWith('__guide__:')) return;
+        const isLabelVisible = activeLabelVisibility[strokeLabel] !== false;
+        if (isLabelVisible) {
+          tagManager.createTag(strokeLabel, activeScope, strokeObj);
+        }
+      });
+    }
+
+    // Frame visibility does not depend on the tag manager; a stroke drawn in
+    // another frame tab must stay hidden either way.
+    if (typeof window.syncCaptureTabCanvasVisibility === 'function') {
+      window.syncCaptureTabCanvasVisibility(viewId);
+    }
+  }
+
+  /**
+   * Restoring a view recreates tags and applies per-frame visibility through
+   * managers that load shortly after startup. A project opened before they are
+   * ready (a slow connection, or a load triggered right at boot) would come up
+   * without them, so wait here. Bounded so a stalled download cannot block the
+   * load itself.
+   */
+  async waitForDeferredManagers(timeoutMs = 15000) {
+    const ready = window.app?.ensureDeferredManagers?.();
+    if (!ready) return;
+    await Promise.race([
+      Promise.resolve(ready).catch(() => undefined),
+      new Promise(resolve => setTimeout(resolve, timeoutMs)),
+    ]);
   }
 
   async _restoreFromProjectData(projectData) {

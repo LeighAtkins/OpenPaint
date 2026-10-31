@@ -1,0 +1,386 @@
+{
+ "PB-YRA-63": {
+  "reference": "PB-YRA-63",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 157.48,
+     "in": 62
+    },
+    "depth": {
+     "cm": 95.25,
+     "in": 37.5
+    },
+    "height": {
+     "cm": 91.44,
+     "in": 36
+    }
+   },
+   "scopedReference": "PB-YRA-63__SV__1S-2B",
+   "style": "Original",
+   "styleCode": "CNRP_SP"
+  }
+ },
+ "PB-YRA-83": {
+  "reference": "PB-YRA-83",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 210.82,
+     "in": 83
+    },
+    "depth": {
+     "cm": 95.25,
+     "in": 37.5
+    },
+    "height": {
+     "cm": 91.44,
+     "in": 36
+    }
+   },
+   "scopedReference": "PB-YRA-83__SV__1S-2B",
+   "style": "Original",
+   "styleCode": "CNRP_SP"
+  }
+ },
+ "PB-YDRA-62": {
+  "reference": "PB-YDRA-62",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 157.48,
+     "in": 62
+    },
+    "depth": {
+     "cm": 110.49,
+     "in": 43.5
+    },
+    "height": {
+     "cm": 91.44,
+     "in": 36
+    }
+   },
+   "scopedReference": "PB-YDRA-62__SV__1S-2B",
+   "style": "Original",
+   "styleCode": "CNRP_SP"
+  }
+ },
+ "PB-YDRA-97": {
+  "reference": "PB-YDRA-97",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 246.38,
+     "in": 97
+    },
+    "depth": {
+     "cm": 110.49,
+     "in": 43.5
+    },
+    "height": {
+     "cm": 91.44,
+     "in": 36
+    }
+   },
+   "scopedReference": "PB-YDRA-97__LV__1S-2B",
+   "style": "Original",
+   "styleCode": "CNRP_SP"
+  }
+ },
+ "PB-YSLA-60": {
+  "reference": "PB-YSLA-60",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 152.4,
+     "in": 60
+    },
+    "depth": {
+     "cm": 95.25,
+     "in": 37.5
+    },
+    "height": {
+     "cm": 91.44,
+     "in": 36
+    }
+   },
+   "scopedReference": "PB-YSLA-60__SV__1S-2B",
+   "style": "Original",
+   "styleCode": "CNRP_SP"
+  }
+ },
+ "PB-YSLA-81-2C": {
+  "reference": "PB-YSLA-81-2C",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 204.47,
+     "in": 80.5
+    },
+    "depth": {
+     "cm": 97.79,
+     "in": 38.5
+    },
+    "height": {
+     "cm": 88.9,
+     "in": 35
+    }
+   },
+   "scopedReference": "PB-YSLA-81-2C",
+   "style": "Original",
+   "styleCode": "CNRP_SP"
+  }
+ },
+ "PB-YDSA-60": {
+  "reference": "PB-YDSA-60",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 152.4,
+     "in": 60
+    },
+    "depth": {
+     "cm": 110.49,
+     "in": 43.5
+    },
+    "height": {
+     "cm": 91.44,
+     "in": 36
+    }
+   },
+   "scopedReference": "PB-YDSA-60__SV__1S-2B",
+   "style": "Original",
+   "styleCode": "CNRP_SP"
+  }
+ },
+ "PB-YDSA-80": {
+  "reference": "PB-YDSA-80",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 205.74,
+     "in": 81
+    },
+    "depth": {
+     "cm": 110.49,
+     "in": 43.5
+    },
+    "height": {
+     "cm": 91.44,
+     "in": 36
+    }
+   },
+   "scopedReference": "PB-YDSA-80__SV__1S-2B",
+   "style": "Original",
+   "styleCode": "CNRP_SP"
+  }
+ },
+ "PB-YDSA-95": {
+  "reference": "PB-YDSA-95",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 241.3,
+     "in": 95
+    },
+    "depth": {
+     "cm": 111.76,
+     "in": 44
+    },
+    "height": {
+     "cm": 96.52,
+     "in": 38
+    }
+   },
+   "scopedReference": "PB-YDSA-95",
+   "style": "Classic",
+   "styleCode": "CNRP_SP"
+  }
+ },
+ "PB-YSA-81-1C": {
+  "reference": "PB-YSA-81-1C",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 204.47,
+     "in": 80.5
+    },
+    "depth": {
+     "cm": 97.79,
+     "in": 38.5
+    },
+    "height": {
+     "cm": 88.9,
+     "in": 35
+    }
+   },
+   "scopedReference": "PB-YSA-81-1C",
+   "style": "Original",
+   "styleCode": "CNRP_SP"
+  }
+ },
+ "PB-YSA-81-2C": {
+  "reference": "PB-YSA-81-2C",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 204.47,
+     "in": 80.5
+    },
+    "depth": {
+     "cm": 97.79,
+     "in": 38.5
+    },
+    "height": {
+     "cm": 88.9,
+     "in": 35
+    }
+   },
+   "scopedReference": "PB-YSA-81-2C",
+   "style": "Original",
+   "styleCode": "CNRP_SP"
+  }
+ },
+ "PB-YSA-96": {
+  "reference": "PB-YSA-96",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 241.3,
+     "in": 95
+    },
+    "depth": {
+     "cm": 95.25,
+     "in": 37.5
+    },
+    "height": {
+     "cm": 91.44,
+     "in": 36
+    }
+   },
+   "scopedReference": "PB-YSA-96__SV__1S-2B",
+   "style": "Original",
+   "styleCode": "CNRP_SP"
+  }
+ },
+ "PB-YSAD-44X": {
+  "reference": "PB-YSAD-44X",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 110.49,
+     "in": 43.5
+    },
+    "depth": {
+     "cm": 110.49,
+     "in": 43.5
+    },
+    "height": {
+     "cm": 91.44,
+     "in": 36
+    }
+   },
+   "scopedReference": "PB-YSAD-44X__SV",
+   "style": "Original",
+   "styleCode": "CNRP_SP"
+  }
+ },
+ "PB-YSAD-54M": {
+  "reference": "PB-YSAD-54M",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 137.16,
+     "in": 54
+    },
+    "depth": {
+     "cm": 110.49,
+     "in": 43.5
+    },
+    "height": {
+     "cm": 91.44,
+     "in": 36
+    }
+   },
+   "scopedReference": "PB-YSAD-54M__R__SV",
+   "style": "Original",
+   "styleCode": "CNRP_SP"
+  }
+ },
+ "PB-YSAD-81": {
+  "reference": "PB-YSAD-81",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 205.74,
+     "in": 81
+    },
+    "depth": {
+     "cm": 110.49,
+     "in": 43.5
+    },
+    "height": {
+     "cm": 96.52,
+     "in": 38
+    }
+   },
+   "scopedReference": "PB-YSAD-81__SV__1S-2B",
+   "style": "Original",
+   "styleCode": "CNRP_SP"
+  }
+ },
+ "PB-YSAD-94": {
+  "reference": "PB-YSAD-94",
+  "public": {
+   "ok": true,
+   "code": "CW_PUBLIC_MEASUREMENTS_OK",
+   "measurements": {
+    "width": {
+     "cm": 241.3,
+     "in": 95
+    },
+    "depth": {
+     "cm": 110.49,
+     "in": 43.5
+    },
+    "height": {
+     "cm": 96.52,
+     "in": 38
+    }
+   },
+   "scopedReference": "PB-YSAD-94__SV__1S-2B",
+   "style": "Original",
+   "styleCode": "CNRP_SP"
+  }
+ }
+}

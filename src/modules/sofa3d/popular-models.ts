@@ -44,7 +44,12 @@ export function createPopularModel(id: string): SofaDocument {
         piping: part.role !== 'pillow',
       });
   if (id === 'karlstad') {
-    Object.assign(doc.construction, { legStyle: 'square', legWidth: 6, backCushionHeight: 38 });
+    Object.assign(doc.construction, {
+      legStyle: 'square',
+      legWidth: 6,
+      backCushionHeight: 38,
+      frameHeight: doc.dimensions.height,
+    });
     for (let i = 0; i < 2; i++)
       set(`main:back-${i}`, {
         height: 38,
@@ -64,6 +69,7 @@ export function createPopularModel(id: string): SofaDocument {
       skirtPleatDepth: pb ? 5 : 2.5,
       skirtFlare: pb ? 3 : 1,
       backCushionHeight: pb ? 49 : 44,
+      frameHeight: pb ? 96.5 : 88,
     });
     for (let i = 0; i < 3; i++) {
       set(`main:back-${i}`, {
@@ -87,7 +93,7 @@ export function createPopularModel(id: string): SofaDocument {
     }
   }
   if (id === 'harmony') {
-    Object.assign(doc.construction, { legStyle: 'square', legWidth: 6.5, backCushionHeight: 43 });
+    Object.assign(doc.construction, { legStyle: 'square', legWidth: 6.5, backCushionHeight: 38 });
     doc.fabric.colour = '#c5b8a4';
     Object.assign(doc.dimensions, {
       armHeight: 55,
@@ -95,17 +101,18 @@ export function createPopularModel(id: string): SofaDocument {
       seatThickness: 21,
       legHeight: 11,
     });
+    // Seat the large backs against the frame, then place the lumbar pillows just in front.
     for (let i = 0; i < 2; i++) set(`main:seat-${i}`, { loft: 0.9, softness: 0.65, piping: true });
     for (let i = 0; i < 2; i++)
       set(`main:back-${i}`, {
-        height: 43,
+        height: 38,
         depth: 18,
         shape: 'knife',
         softness: 0.55,
         loft: 0.75,
         piping: false,
         rotation: { x: -9, y: 0, z: i === 0 ? -1 : 1 },
-        offset: { x: 0, y: 2, z: 12 },
+        offset: { x: 0, y: 2, z: 0 },
       });
     for (let i = 0; i < 4; i++) {
       const side = i % 2 === 0 ? -1 : 1;
@@ -117,7 +124,7 @@ export function createPopularModel(id: string): SofaDocument {
         loft: 0.85,
         piping: false,
         rotation: { x: -10, y: side * (i < 2 ? 78 : 0), z: side * (i < 2 ? -14 : 1) },
-        offset: { x: side * (i < 2 ? 20 : 11), y: i < 2 ? -6 : -11, z: i < 2 ? 15 : 22 },
+        offset: { x: side * (i < 2 ? 12 : 11), y: i < 2 ? -6 : -3, z: i < 2 ? 24 : -3 },
       });
     }
   }

@@ -3,6 +3,7 @@ import {
   parseSvgMeasurements,
 } from '../../src/modules/ui/svg-measurement-parser.js';
 import { readFileSync } from 'node:fs';
+import { guideLibraryAvailable } from '../helpers/guide-library';
 
 describe('svg measurement parser', () => {
   test('parses standalone guide lines', () => {
@@ -167,26 +168,29 @@ describe('svg measurement parser', () => {
     expect(transform(110, 70)).toEqual({ x: 200, y: 200 });
   });
 
-  test('parses ungrouped Illustrator round-back arm guide labels', () => {
-    const cases = [
-      {
-        file: 'public/measurement-guides/Modular MT /Back Shape/Round Back, Round Arm/Archive/Back-CS1X-RA-RB.svg',
-        labels: ['A1', 'A5', 'A2'],
-      },
-      {
-        file: 'public/measurement-guides/Modular MT /Back Shape/Round Back, Round Arm/Archive/Back-CS3X-RA-RB.svg',
-        labels: ['A1', 'A4', 'A5', 'A2'],
-      },
-    ];
+  test.skipIf(!guideLibraryAvailable)(
+    'parses ungrouped Illustrator round-back arm guide labels',
+    () => {
+      const cases = [
+        {
+          file: 'public/measurement-guides/Modular MT /Back Shape/Round Back, Round Arm/Archive/Back-CS1X-RA-RB.svg',
+          labels: ['A1', 'A5', 'A2'],
+        },
+        {
+          file: 'public/measurement-guides/Modular MT /Back Shape/Round Back, Round Arm/Archive/Back-CS3X-RA-RB.svg',
+          labels: ['A1', 'A4', 'A5', 'A2'],
+        },
+      ];
 
-    cases.forEach(({ file, labels }) => {
-      const parsed = parseSvgMeasurements(readFileSync(file, 'utf8'));
+      cases.forEach(({ file, labels }) => {
+        const parsed = parseSvgMeasurements(readFileSync(file, 'utf8'));
 
-      expect(parsed.measurements.map(measurement => measurement.label)).toEqual(labels);
-      parsed.measurements.forEach(measurement => {
-        expect(measurement.lines).toHaveLength(1);
-        expect(measurement.lines[0].points.length).toBeGreaterThanOrEqual(2);
+        expect(parsed.measurements.map(measurement => measurement.label)).toEqual(labels);
+        parsed.measurements.forEach(measurement => {
+          expect(measurement.lines).toHaveLength(1);
+          expect(measurement.lines[0].points.length).toBeGreaterThanOrEqual(2);
+        });
       });
-    });
-  });
+    }
+  );
 });

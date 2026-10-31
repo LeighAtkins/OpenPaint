@@ -251,19 +251,27 @@ async function loadArchive(
   await page.waitForTimeout(1_500);
 }
 
-async function getFrameAndBackgroundCenters(page: Page) {
+/**
+ * The frame shows the saved crop of the active frame tab, so the centre of that
+ * crop (not of the whole image, which the fixture frames off-centre) must sit at
+ * the centre of the frame.
+ */
+async function getFrameAndCropCenters(page: Page) {
   return page.evaluate(() => {
     const canvas = window.app!.canvasManager.fabricCanvas;
-    const background = canvas.backgroundImage;
+    const fabricApi = (window as any).fabric;
     const canvasRect = canvas.lowerCanvasEl.getBoundingClientRect();
     const frameRect = document.getElementById('captureFrame')!.getBoundingClientRect();
-    const backgroundCenter = background.getCenterPoint();
-    const mapped = (window as any).fabric.util.transformPoint(
-      backgroundCenter,
+    const viewId = window.app!.projectManager.currentViewId;
+    const tabState = (window as any).captureTabsByLabel[viewId];
+    const crop = tabState.tabs.find((tab: any) => tab.id === tabState.activeTabId).captureFrame
+      .worldRect;
+    const mapped = fabricApi.util.transformPoint(
+      new fabricApi.Point(crop.left + crop.width / 2, crop.top + crop.height / 2),
       canvas.viewportTransform
     );
     return {
-      background: { x: mapped.x + canvasRect.left, y: mapped.y + canvasRect.top },
+      crop: { x: mapped.x + canvasRect.left, y: mapped.y + canvasRect.top },
       frame: { x: frameRect.left + frameRect.width / 2, y: frameRect.top + frameRect.height / 2 },
       viewport: {
         zoom: window.app!.canvasManager.zoomLevel,
@@ -303,14 +311,14 @@ test.describe('Project archive identity pipeline', () => {
     expect(state.objectScopes).toEqual([`${ACTIVE_VIEW_ID}::tab:frame-6`]);
     expect(state.orderedImageLabels).toEqual(VIEW_IDS);
 
-    const before = await getFrameAndBackgroundCenters(page);
+    const before = await getFrameAndCropCenters(page);
     await page.evaluate(viewId => (window as any).__recenterCaptureFrame(viewId), ACTIVE_VIEW_ID);
-    const afterFirst = await getFrameAndBackgroundCenters(page);
+    const afterFirst = await getFrameAndCropCenters(page);
     await page.evaluate(viewId => (window as any).__recenterCaptureFrame(viewId), ACTIVE_VIEW_ID);
-    const afterSecond = await getFrameAndBackgroundCenters(page);
+    const afterSecond = await getFrameAndCropCenters(page);
 
-    expect(Math.abs(before.background.x - before.frame.x)).toBeLessThan(1);
-    expect(Math.abs(before.background.y - before.frame.y)).toBeLessThan(1);
+    expect(Math.abs(before.crop.x - before.frame.x)).toBeLessThan(1);
+    expect(Math.abs(before.crop.y - before.frame.y)).toBeLessThan(1);
     for (const snapshot of [afterFirst, afterSecond]) {
       expect(snapshot.viewport.zoom).toBeCloseTo(before.viewport.zoom, 8);
       expect(snapshot.viewport.panX).toBeCloseTo(before.viewport.panX, 8);

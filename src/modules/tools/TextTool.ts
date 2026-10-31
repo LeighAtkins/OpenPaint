@@ -2,6 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-misused-promises, @typescript-eslint/prefer-regexp-exec, @typescript-eslint/unbound-method, prefer-rest-params */
 import { BaseTool } from './BaseTool.js';
 import { resolveDrawingImageLabel } from '../ui/scoped-image-label.js';
+import { TEXT_ANNOTATION_RUNTIME_DEFAULTS } from './text-annotation-defaults.ts';
+import { ensureFontLoaded } from '../utils/fabricFontSync.ts';
 
 declare const fabric: any;
 
@@ -131,17 +133,10 @@ export class TextTool extends BaseTool {
       fontSize: this.fontSize,
       selectable: true,
       evented: true,
-      borderColor: '#3b82f6',
-      editingBorderColor: '#3b82f6',
-      padding: 5,
       stroke: 'transparent',
       strokeWidth: 0,
       backgroundColor: backgroundEnabled ? '#ffffff' : 'transparent',
-      hoverCursor: 'text',
-      // IText changes dimensions on every keystroke. Rendering it directly avoids
-      // Safari reusing a stale Fabric cache that can clip the canvas beneath it.
-      objectCaching: false,
-      noScaleCache: false,
+      ...TEXT_ANNOTATION_RUNTIME_DEFAULTS,
     });
 
     this.canvas.add(text);
@@ -277,29 +272,18 @@ export class TextTool extends BaseTool {
 
     applyTextareaStyle();
 
-    const fontSet = (document as Document & { fonts?: FontFaceSet }).fonts;
-    if (!fontSet || typeof fontSet.load !== 'function') {
+    // A font used for the first time is still loading here, so the metrics
+    // above came from the fallback font. Measure again once it is available.
+    void ensureFontLoaded(textObj).then(() => {
+      if (typeof textObj.initDimensions === 'function') {
+        textObj.initDimensions();
+      }
+      if (typeof textObj.setCoords === 'function') {
+        textObj.setCoords();
+      }
+      applyTextareaStyle();
       this.canvas.requestRenderAll();
-      return;
-    }
-
-    const fontSize = Number(textObj.fontSize || this.fontSize || 24);
-    const family = String(textObj.fontFamily || this.fontFamily || 'sans-serif');
-    void fontSet
-      .load(`${fontSize}px "${family}"`)
-      .then(() => {
-        if (typeof textObj.initDimensions === 'function') {
-          textObj.initDimensions();
-        }
-        if (typeof textObj.setCoords === 'function') {
-          textObj.setCoords();
-        }
-        applyTextareaStyle();
-        this.canvas.requestRenderAll();
-      })
-      .catch(() => {
-        this.canvas.requestRenderAll();
-      });
+    });
   }
 
   prepareTextForEditing(textObj: any) {
@@ -355,16 +339,10 @@ export class TextTool extends BaseTool {
   }
 
   async ensureFontReady(fontFamily: string, fontSize: number) {
-    const fontSet = (document as Document & { fonts?: FontFaceSet }).fonts;
-    if (!fontSet || typeof fontSet.load !== 'function') {
-      return;
-    }
-
-    try {
-      await fontSet.load(`${fontSize || 24}px "${fontFamily || this.fontFamily}"`);
-    } catch {
-      // Best effort only.
-    }
+    await ensureFontLoaded({
+      fontFamily: fontFamily || this.fontFamily,
+      fontSize: fontSize || 24,
+    });
   }
 
   setWidth() {

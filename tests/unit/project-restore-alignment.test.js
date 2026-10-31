@@ -138,7 +138,7 @@ describe('project restore alignment helpers', () => {
     });
   });
 
-  it('saves restoreWorldRect from the active tab world rect when present', () => {
+  it('does not save an empty capture frame as background placement', () => {
     const canvasManager = createCanvasManagerStub();
     const manager = new ProjectManager(canvasManager, { saveState: vi.fn(), clear: vi.fn() });
     manager.currentViewId = 'front';
@@ -156,12 +156,8 @@ describe('project restore alignment helpers', () => {
 
     manager.saveCurrentViewState();
 
-    expect(manager.views.front.restoreWorldRect).toEqual({
-      left: 25,
-      top: 30,
-      width: 200,
-      height: 100,
-    });
+    expect(manager.views.front.restoreWorldRect).toBeUndefined();
+    expect(manager.views.front.backgroundWorldRect).toBeUndefined();
   });
 
   it('falls back to the live background bounds when there is no tab world rect', () => {

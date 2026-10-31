@@ -1,0 +1,17 @@
+{
+  "configurationId": "IK-KN-4",
+  "familyIds": ["ikea-klippan-slipcovers"],
+  "title": "Klippan 4 Seater Sofa",
+  "objectType": "sofa",
+  "dimensionStatus": "estimated",
+  "estimateBasis": "tier-3 sources disagree slightly; width provisional until CW Import pattern data",
+  "sources": [
+    { "tier": 3, "url": "https://bemz.com (Klippan 4-seat cover listing)", "excerpt": "width 248 cm", "confidence": "medium" },
+    { "tier": 3, "url": "secondhand listing aggregation via web search", "excerpt": "width 246 cm", "confidence": "medium" },
+    { "tier": 2, "url": "https://www.ikea.com/nl/en/p/klippan-2-seat-sofa-vissle-grey-s79010614/", "excerpt": "depth 88 / height 66 / seat 43-54 carried over (same family platform)", "confidence": "high for depth/height" }
+  ],
+  "envelope": { "width": 247, "depth": 88, "height": 66 },
+  "semantics": { "height": "top of back frame/cushion crown", "depth": "front edge to back of backrest" },
+  "construction": { "$ref": "IK-KN-2.json construction", "seats": 4 },
+  "colourwayDefault": { "name": "provisional warm grey (sampled later)", "hex": "#c9c4b8" }
+}

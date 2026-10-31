@@ -80,6 +80,11 @@ export function fromCw(request: NonNullable<StudioOpenRequest['cw']>): SofaDocum
   const components = Array.isArray(source?.product_components) ? source.product_components : [];
   const seat = components.find((c: any) => /seat cushion/i.test(c.name));
   doc.dimensions.seatCount = Math.min(8, Math.max(1, Number(seat?.quantity) || 2));
+  const back = components.find((c: any) => /back cushion/i.test(c.name));
+  if (back) {
+    const backs = Math.min(8, Math.max(1, Number(back?.quantity) || doc.dimensions.seatCount));
+    if (backs !== doc.dimensions.seatCount) doc.cushionLayout = { backs };
+  }
   const pattern = (c: any, name: string) =>
     cm(c?.measurements?.find((m: any) => m.name === name)?.value);
   for (const [name, kind] of [

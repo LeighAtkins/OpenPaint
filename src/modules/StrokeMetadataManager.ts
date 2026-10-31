@@ -130,7 +130,9 @@ export class StrokeMetadataManager {
       existingStrokeVisible !== undefined ? existingStrokeVisible !== false : true;
     const labelVisible = existingLabelVisible !== undefined ? existingLabelVisible !== false : true;
 
+    const displayLabel = obj.strokeMetadata?.displayLabel;
     obj.strokeMetadata = {
+      ...(displayLabel ? { displayLabel } : {}),
       imageLabel: scopedLabel,
       strokeLabel: strokeLabel,
       type: 'line',
@@ -1227,12 +1229,7 @@ export class StrokeMetadataManager {
         .querySelectorAll('#strokesList .stroke-visibility-item, #strokesList .cw-measure-row')
         .forEach(item => {
           item.dataset.searchHidden =
-            query &&
-            !String(item.textContent || '')
-              .toLowerCase()
-              .includes(query)
-              ? 'true'
-              : 'false';
+            query && !(item.textContent || '').toLowerCase().includes(query) ? 'true' : 'false';
         });
     };
     const searchInput = document.getElementById('elementsSearchInput');

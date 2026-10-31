@@ -13,7 +13,7 @@ export function getNextTagValue(): string {
 export function setNextTagValue(value: unknown): void {
   const element = getNextTagElement();
   if (!element) return;
-  const normalized = String(value ?? '');
+  const normalized = typeof value === 'string' || typeof value === 'number' ? String(value) : '';
   if (element instanceof HTMLInputElement) {
     element.value = normalized;
   } else {
