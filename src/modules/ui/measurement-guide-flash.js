@@ -4408,15 +4408,15 @@ async function addGuideAsNewImage(code, view, options = {}) {
  */
 export function stripSvgLabels(svgText) {
   try {
-    var parser = new DOMParser();
-    var doc = parser.parseFromString(svgText, 'image/svg+xml');
-    var svgRoot = doc.querySelector('svg');
+    let parser = new DOMParser();
+    let doc = parser.parseFromString(svgText, 'image/svg+xml');
+    let svgRoot = doc.querySelector('svg');
     if (!svgRoot) return svgText;
 
     // The background must remain a faithful rendering of the source furniture.
     // Only remove known measurement groups and free-standing text; never infer
     // furniture geometry from color, element type, or segment length.
-    var measurementGroups = collectGuideMeasurementGroups(svgRoot);
+    let measurementGroups = collectGuideMeasurementGroups(svgRoot);
     Array.from(measurementGroups).forEach(function (group) {
       if (group.parentNode) {
         group.parentNode?.removeChild(group);
@@ -4429,7 +4429,7 @@ export function stripSvgLabels(svgText) {
     // measurement unit (cm/mm/in) qualify — furniture groups like "couch"
     // merely start with the letter c and must survive.
     Array.from(svgRoot.querySelectorAll('g[id]')).forEach(function (group) {
-      var normalizedId = String(group.getAttribute('id') || '')
+      let normalizedId = String(group.getAttribute('id') || '')
         .replace(/^mos\d+_/i, '')
         .replace(/_[0-9A-Fa-f]{8,}_?$/i, '')
         .trim();
@@ -4442,14 +4442,14 @@ export function stripSvgLabels(svgText) {
     // are large — those survive; only anonymous small plates are stripped.
     Array.from(svgRoot.querySelectorAll('rect')).forEach(function (node) {
       if (node.getAttribute('id')) return;
-      var width = Number(node.getAttribute('width')) || 0;
-      var height = Number(node.getAttribute('height')) || 0;
+      let width = Number(node.getAttribute('width')) || 0;
+      let height = Number(node.getAttribute('height')) || 0;
       if (Math.max(width, height) >= 60) return;
       node.parentNode?.removeChild(node);
     });
     Array.from(svgRoot.querySelectorAll('line[id], path[id], polyline[id]')).forEach(
       function (node) {
-        var id = String(node.getAttribute('id') || '').replace(/^mos\d+_/i, '');
+        let id = String(node.getAttribute('id') || '').replace(/^mos\d+_/i, '');
         if (/^m.+(?:cm|mm|in)\d*$/i.test(id)) {
           node.parentNode?.removeChild(node);
         }
@@ -4467,9 +4467,9 @@ export function stripSvgLabels(svgText) {
 
 export function stripNonMeasurementElements(svgText) {
   try {
-    var parser = new DOMParser();
-    var doc = parser.parseFromString(svgText, 'image/svg+xml');
-    var svgRoot = doc.querySelector('svg');
+    let parser = new DOMParser();
+    let doc = parser.parseFromString(svgText, 'image/svg+xml');
+    let svgRoot = doc.querySelector('svg');
     if (!svgRoot) return svgText;
 
     // Label-callout rects (white plates + thin colored boxes) are decoration,
@@ -4484,27 +4484,27 @@ export function stripNonMeasurementElements(svgText) {
     // stray square strokes. Detect by shape, not color, so any palette is
     // handled.
     Array.from(svgRoot.querySelectorAll('polyline, polygon')).forEach(function (p) {
-      var values = (p.getAttribute('points') || '')
+      let values = (p.getAttribute('points') || '')
         .trim()
         .split(/[\s,]+/)
         .map(Number)
         .filter(Number.isFinite);
-      var pointCount = Math.floor(values.length / 2);
+      let pointCount = Math.floor(values.length / 2);
       if (pointCount < 3 || pointCount > 6) return;
-      var xs = values.filter(function (_, i) {
+      let xs = values.filter(function (_, i) {
         return i % 2 === 0;
       });
-      var ys = values.filter(function (_, i) {
+      let ys = values.filter(function (_, i) {
         return i % 2 === 1;
       });
-      var width = Math.max.apply(null, xs) - Math.min.apply(null, xs);
-      var height = Math.max.apply(null, ys) - Math.min.apply(null, ys);
+      let width = Math.max.apply(null, xs) - Math.min.apply(null, xs);
+      let height = Math.max.apply(null, ys) - Math.min.apply(null, ys);
       if (width > 40 || height > 40) return;
       // Arrowheads are trapezoids whose open base sits on the measurement
       // line: first→last gap scales with the shape itself (≈ its width), so
       // accept anything within 1.5× the bounding extent. Genuinely open small
       // polylines have ends far outside their own bounding box.
-      var closesBack =
+      let closesBack =
         Math.hypot(values[0] - values[values.length - 2], values[1] - values[values.length - 1]) <
         Math.max(width, height) * 1.5;
       if (closesBack) p.parentNode?.removeChild(p);
@@ -4548,7 +4548,7 @@ async function importGuideSvgFromPath(svgPath, svgUrl) {
 /** Import SVG via MOS pipeline, with cleaned raster background */
 async function importSvgFromText(svgText, svgPath, manager) {
   // Strip original SVG text labels and background boxes
-  var cleanedSvg = stripSvgLabels(svgText);
+  let cleanedSvg = stripSvgLabels(svgText);
 
   // Derive a label from the SVG filename
   const label = createGuideViewId(
@@ -4559,29 +4559,31 @@ async function importSvgFromText(svgText, svgPath, manager) {
   );
 
   // Get SVG dimensions from viewBox
-  var svgWidth = 1600,
+  let svgWidth = 1600,
     svgHeight = 1200;
   try {
-    var vbMatch = svgText.match(/viewBox=["']([^"']+)["']/);
+    let vbMatch = svgText.match(/viewBox=["']([^"']+)["']/);
     if (vbMatch) {
-      var vbParts = vbMatch[1].trim().split(/\s+/).map(Number);
+      let vbParts = vbMatch[1].trim().split(/\s+/).map(Number);
       if (vbParts.length === 4 && vbParts[2] > 0 && vbParts[3] > 0) {
         svgWidth = vbParts[2];
         svgHeight = vbParts[3];
       }
     }
-  } catch (e) {}
+  } catch {
+    // Unreadable viewBox: keep the default size.
+  }
 
   // Render cleaned SVG as raster PNG for the view background (shows cushion shape + structural elements)
   const svgBlob = new Blob([cleanedSvg], { type: 'image/svg+xml;charset=utf-8' });
   const blobUrl = URL.createObjectURL(svgBlob);
-  var imageUrl;
+  let imageUrl;
   try {
     const img = await loadImage(blobUrl);
     const bgCanvas = document.createElement('canvas');
     bgCanvas.width = img.naturalWidth || svgWidth;
     bgCanvas.height = img.naturalHeight || svgHeight;
-    var bgCtx = bgCanvas.getContext('2d');
+    let bgCtx = bgCanvas.getContext('2d');
     if (bgCtx) {
       bgCtx.fillStyle = '#ffffff';
       bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
@@ -4612,7 +4614,7 @@ async function importSvgFromText(svgText, svgPath, manager) {
   }
 
   // Use MOS pipeline to import the SVG as a structured overlay (measurement groups only, labels preserved)
-  var mosSvg = stripNonMeasurementElements(svgText);
+  let mosSvg = stripNonMeasurementElements(svgText);
   if (mosSvg && mosManager?.importSvg) {
     try {
       await mosManager.importSvg(mosSvg, label);

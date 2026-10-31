@@ -36,7 +36,7 @@ const CURVE_CONTROL_POINTS_MAX = 8;
 // (e.g. .st2{stroke:#52CFBD}) rather than inline attributes, so extractStyle
 // must resolve classes or every measurement falls back to DEFAULT_STROKE_COLOR
 // and loses its source color (green/teal measurements turn pink).
-let classStyleMap: Map<string, Record<string, string>> = new Map();
+let classStyleMap = new Map<string, Record<string, string>>();
 
 function parseStyleBlock(svgRoot: Element): Map<string, Record<string, string>> {
   const map = new Map<string, Record<string, string>>();

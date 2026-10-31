@@ -629,7 +629,7 @@ function applyNomsContext(context: GorgiasTicketContext): Set<string> {
   if (!manager?.getProjectMetadata || !manager?.setProjectMetadata) return new Set();
   const metadata = manager.getProjectMetadata() || {};
   const orders = metadata.externalSources?.nomsOrders || {};
-  const order = context.nomsOrder as string;
+  const order = context.nomsOrder!;
   const existing = orders[order] || {};
   manager.setProjectMetadata({
     naming: {
@@ -776,14 +776,14 @@ function persistImportedHash(context: GorgiasTicketContext, hash: string): void 
   if (isNomsContext(context) && normalizedHash && manager?.setProjectMetadata) {
     const metadata = manager.getProjectMetadata() || {};
     const orders = metadata.externalSources?.nomsOrders || {};
-    const existing = orders[context.nomsOrder as string];
+    const existing = orders[context.nomsOrder!];
     if (!existing) return;
     manager.setProjectMetadata({
       externalSources: {
         ...(metadata.externalSources || {}),
         nomsOrders: {
           ...orders,
-          [context.nomsOrder as string]: {
+          [context.nomsOrder!]: {
             ...existing,
             importedImageHashes: Array.from(
               new Set([...(existing.importedImageHashes || []), normalizedHash])
@@ -824,16 +824,18 @@ function sanitizeFilename(value: string, fallbackIndex: number): string {
   const filename = String(value || '')
     .split(/[\\/]/)
     .pop()
+    // eslint-disable-next-line no-control-regex -- strip control characters from file names
     ?.replace(/[\u0000-\u001f<>:"|?*]/g, '-')
     .trim();
   return filename || `gorgias-image-${fallbackIndex + 1}.jpg`;
 }
 
 function normalizeImagePartLabel(value: unknown): string {
-  const match = String(value || '')
-    .trim()
-    .toLowerCase()
-    .match(/^(front|side|back|cushion)$/);
+  const match = /^(front|side|back|cushion)$/.exec(
+    String(value || '')
+      .trim()
+      .toLowerCase()
+  );
   return match?.[1] || '';
 }
 
@@ -852,7 +854,7 @@ function filenameForPartLabel(payload: ExtensionImagePayload): string {
   const originalName = sanitizeFilename(payload.name || '', payload.index || 0);
   const partLabel = inferImagePartLabel(payload);
   if (!partLabel) return originalName;
-  const extension = originalName.match(/\.(jpe?g|png|webp|gif|heic|heif|avif)$/i)?.[0];
+  const extension = /\.(jpe?g|png|webp|gif|heic|heif|avif)$/i.exec(originalName)?.[0];
   return `${partLabel}${extension || '.jpg'}`;
 }
 

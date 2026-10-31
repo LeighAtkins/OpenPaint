@@ -52,6 +52,16 @@ export default tseslint.config(
       '@typescript-eslint/no-unnecessary-type-assertion': 'off',
       '@typescript-eslint/no-unnecessary-type-arguments': 'off',
       '@typescript-eslint/no-unnecessary-condition': 'off',
+      // Legacy globals, saved projects and extension/CW/NOMS payloads are typed more
+      // narrowly than what arrives at runtime; keep the defensive String()/Boolean()/=== true.
+      '@typescript-eslint/no-unnecessary-type-conversion': 'off',
+      '@typescript-eslint/no-unnecessary-boolean-literal-compare': 'off',
+      '@typescript-eslint/no-base-to-string': 'off',
+      // Async DOM event listeners are idiomatic here; keep the conditional/spread checks.
+      '@typescript-eslint/no-misused-promises': [
+        'error',
+        { checksVoidReturn: { arguments: false } },
+      ],
       '@typescript-eslint/no-confusing-void-expression': 'off',
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
       '@typescript-eslint/prefer-optional-chain': 'off',

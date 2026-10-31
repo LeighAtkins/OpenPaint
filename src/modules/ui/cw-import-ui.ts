@@ -3658,14 +3658,6 @@ function createModal(): HTMLElement {
     });
   };
 
-  const getCompletedWorkspaceRowKeys = (scopeLabel: string): Set<string> => {
-    const completed = new Set<string>();
-    getWorkspaceTagScopeKeys(scopeLabel).forEach(key => {
-      (state.completedRowKeysByScope[key] || []).forEach(rowKey => completed.add(rowKey));
-    });
-    return completed;
-  };
-
   const getRowsForWorkspaceScope = (scopeLabel: string): VisibleImportedRow[] => {
     const activeRows = visibleRows();
     const scopeMeta = state.importedViewMetaByScope[getCanonicalCwScopeKey(scopeLabel)];
@@ -6209,7 +6201,7 @@ function createModal(): HTMLElement {
     const blob = await response.blob();
     return await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onload = () => resolve(reader.result as string);
       reader.onerror = () => reject(reader.error || new Error('Image conversion failed'));
       reader.readAsDataURL(blob);
     });

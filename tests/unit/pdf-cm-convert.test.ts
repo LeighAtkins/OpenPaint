@@ -145,7 +145,7 @@ describe.skipIf(!havePrivate)('convertPdfToCm on CW forms typed over as page tex
   });
 });
 
-describe('mergeCmPdfs', () => {
+describe.skipIf(!havePrivate)('mergeCmPdfs', () => {
   it('joins converted PDFs page by page', async () => {
     const a = await convertPdfToCm(fixture('ria-filled.pdf'), { orderNumber: '1', date: DATE });
     const bytes = fixture('ben-middle-sofa-section.pdf');

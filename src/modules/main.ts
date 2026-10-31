@@ -2266,7 +2266,6 @@ export class App {
         const repeat = this.toolManager.tools.curve?.repeatMode === true;
         updateDrawingToggleLabels(repeat ? 'Curved Line ∞' : 'Curved Line');
       } else if (currentTool === this.toolManager.tools.highlighter) {
-        const style = this.toolManager.tools.highlighter?.getStyle?.() || 'marker';
         setActiveDrawingModeOption('highlighter');
         updateDrawingToggleLabels('Highlight');
       } else if (currentTool === this.toolManager.tools.privacy) {
@@ -4169,7 +4168,6 @@ export class App {
 
   setupUnitToggle(): void {
     const unitToggle = document.getElementById('unitToggleBtn');
-    const unitToggleSecondary = document.getElementById('unitToggleBtnSecondary');
     const unitToggles = [unitToggle].filter((el): el is HTMLElement => el instanceof HTMLElement);
     const unitSegmentButtons = Array.from(
       document.querySelectorAll<HTMLButtonElement>('button[data-unit], button[data-quick-unit]')

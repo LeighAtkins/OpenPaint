@@ -404,7 +404,6 @@ export function initScrollSelectSystem() {
       const stepButtons = Array.from(
         stepper?.querySelectorAll<HTMLButtonElement>('button[data-target]') || []
       );
-      const framesVisible = document.body.classList.contains('frames-visible');
       const tabState =
         window.captureTabsByLabel?.[currentLabel] || window.captureTabsByLabel?.[rawCurrentLabel];
       const activeTabId = String(tabState?.activeTabId || tabState?.masterTabId || 'master');

@@ -50,7 +50,7 @@ function applyConfigurationNames(item: CatalogueComparisonRequestItem, value: st
 }
 
 function inferredReferenceFromHandle(handle: string): string {
-  const match = decodeURIComponent(handle || '').match(PRODUCT_REFERENCE);
+  const match = PRODUCT_REFERENCE.exec(decodeURIComponent(handle || ''));
   return match?.[1]?.toUpperCase() || '';
 }
 
@@ -144,7 +144,7 @@ export function parseCatalogueComparisonInput(
         return;
       }
 
-      const urlMatch = line.match(PRODUCT_URL);
+      const urlMatch = PRODUCT_URL.exec(line);
       if (urlMatch) {
         const url = urlMatch[0].replace(/[),.;]+$/, '');
         const handle = urlMatch[1];
@@ -158,7 +158,7 @@ export function parseCatalogueComparisonInput(
       const nonUrlText = line.replace(/https?:\/\/[^\s)]+/gi, ' ').trim();
       if (!nonUrlText) return;
 
-      const codeLine = nonUrlText.match(/^codes?\s*:\s*(.+)$/i);
+      const codeLine = /^codes?\s*:\s*(.+)$/i.exec(nonUrlText);
       if (codeLine && current) {
         current.codes = codeLine[1]
           .split(/[,|]/)
@@ -173,7 +173,7 @@ export function parseCatalogueComparisonInput(
         return;
       }
 
-      const referenceMatch = nonUrlText.match(PRODUCT_REFERENCE);
+      const referenceMatch = PRODUCT_REFERENCE.exec(nonUrlText);
       if (!referenceMatch) {
         if (current) {
           applyConfigurationNames(current, nonUrlText);

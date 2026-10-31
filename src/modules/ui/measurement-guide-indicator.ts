@@ -109,15 +109,6 @@ function setIndicatorSize(size: IndicatorSize, manual = true): void {
   setWindowPrefs({ indicatorSize: size, indicatorManualSize: manual });
 }
 
-function resolveIndicatorSize(activeTool: string): IndicatorSize {
-  const prefs = getWindowPrefs();
-  if (prefs.indicatorManualSize === true) {
-    return normalizeSize(prefs.indicatorSize);
-  }
-  if (DRAW_MEASUREMENT_TOOLS.has(activeTool)) return 'M';
-  return 'S';
-}
-
 function cycleIndicatorSize(delta: number): IndicatorSize {
   const current = getStoredIndicatorSize();
   const index = INDICATOR_SIZE_ORDER.indexOf(current);
@@ -289,12 +280,6 @@ function ensureHeaderToggle(): void {
 
 function getCwScopedViewKey(viewId: string): string {
   return (resolveScopedImageLabel(viewId) || viewId).trim();
-}
-
-function getLegacyCwScopeCandidates(viewId: string): string[] {
-  const scoped = getCwScopedViewKey(viewId);
-  const base = toBaseViewId(viewId);
-  return Array.from(new Set([(viewId || '').trim(), scoped, base].filter(Boolean)));
 }
 
 function getMetadata(): any {
@@ -821,16 +806,6 @@ function clampIndicatorRect(rect: { x: number; y: number; width: number; height:
   const x = Math.max(8, Math.min(window.innerWidth - width - 8, rect.x));
   const y = Math.max(8, Math.min(window.innerHeight - height - 8, rect.y));
   return { x, y, width, height };
-}
-
-function applyIndicatorPreset(root: HTMLElement, size: IndicatorSize): void {
-  const widthBySize: Record<IndicatorSize, number> = { S: 240, M: 320, L: 420, XL: 560 };
-  const heroBySize: Record<IndicatorSize, number> = { S: 92, M: 130, L: 180, XL: 240 };
-  const width = widthBySize[size];
-  root.dataset.size = size;
-  root.style.width = `${Math.min(width, window.innerWidth - 16)}px`;
-  const hero = root.querySelector('.measurement-guide-indicator-hero') as HTMLElement | null;
-  if (hero) hero.style.height = `${heroBySize[size]}px`;
 }
 
 function bindIndicatorWindowControls(root: HTMLElement): void {

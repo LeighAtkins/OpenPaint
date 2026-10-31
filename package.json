@@ -36,6 +36,7 @@
     "lint:legacy": "eslint . --ignore-pattern src/",
     "format": "prettier --write \"src/**/*.{ts,tsx,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json}\"",
+    "pretest": "node scripts/build-cw-server.ts",
     "test": "vitest --config vitest.config.ts run",
     "pdf-library:build": "node scripts/build-pdf-registry.mjs",
     "pdf-library:check": "node scripts/build-pdf-registry.mjs --check",

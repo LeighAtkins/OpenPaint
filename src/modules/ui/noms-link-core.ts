@@ -1899,7 +1899,7 @@ export function convertValues(
 // images. Anything that does not match one piece is left out, never guessed.
 
 const PIECE_CODE = /\b[A-Z]{2}[A-Z0-9]*(?:-[A-Z0-9]+)+\b/g;
-const isCushionCode = (code: string): boolean => /^CC-/.test(normaliseCode(code));
+const isCushionCode = (code: string): boolean => normaliseCode(code).startsWith('CC-');
 
 /** CW codes named in an image label, in order. */
 export function codesInTitle(title: string): string[] {
