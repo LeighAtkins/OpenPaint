@@ -31,7 +31,6 @@ import {
   rememberMeasurementNote,
   type CwFormValueGroup,
 } from './cw-form-pdf-import';
-import { findCwSvg } from './pdf-template-registry';
 import { nomsRecheckStrip, toggleNomsRecheck } from './noms-recheck';
 import type { Recheck } from './noms-recheck-core';
 import { formatCustomerNumber, RANGE_DEFAULT } from '../utils/customer-value';
@@ -1211,6 +1210,8 @@ async function readPdfs(files: File[]): Promise<void> {
 
   if (!state.models.length) {
     // No CW40 form: offer the model's library diagram so the values live in the project.
+    // The template library is ~1.6 MB of JSON; load it only when a diagram is needed.
+    const { findCwSvg } = await import('./pdf-template-registry');
     const offers = diagramOffers(customerGroups, findCwSvg);
     state.diagramOffers = [
       ...state.diagramOffers.filter(o => !offers.some(n => n.url === o.url)),

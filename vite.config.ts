@@ -95,7 +95,8 @@ export default defineConfig(({ mode }) => {
             if (id.includes('node_modules/pdf-lib')) return 'vendor-pdf';
             if (id.includes('node_modules/jszip')) return 'vendor-jszip';
             if (id.includes('node_modules/@supabase')) return 'vendor-supabase';
-            if (id.includes('node_modules')) return 'vendor';
+            // No catch-all vendor chunk: it would pull lazily imported libraries
+            // (three for the 3D studio, pdfjs for PDF import) into the entry's graph.
             return undefined;
           },
         },
