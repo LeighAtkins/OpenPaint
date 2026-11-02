@@ -2907,10 +2907,12 @@ export function initToolbarController() {
                 toBaseLabel(resolved)
               )
             : null;
-        const rect =
+        const hasProportionalFrameSize = Boolean(
           targetSize && targetSize.width > 0 && targetSize.height > 0
-            ? buildCenteredRectPreservingSize(targetSize.width, targetSize.height)
-            : resolveCaptureFrameRect(stored);
+        );
+        const rect = hasProportionalFrameSize
+          ? buildCenteredRectFromSize(targetSize.width, targetSize.height)
+          : resolveCaptureFrameRect(stored);
         const fallbackWorldRect = resolveViewRestoreWorldRect(resolved);
         const savedBackgroundWorldRect = normalizeWorldRect(
           (window.projectManager || window.app?.projectManager)?.views?.[toBaseLabel(resolved)]
@@ -2927,10 +2929,10 @@ export function initToolbarController() {
         const isLegacyFrameRecord = Number(stored?.frameVersion) !== CAPTURE_FRAME_VERSION;
         const storedWorldRectExceedsImage = Boolean(
           isLegacyFrameRecord &&
-            rawStoredWorldRect &&
-            authoritativeBackgroundWorldRect &&
-            (rawStoredWorldRect.width > authoritativeBackgroundWorldRect.width * 1.05 ||
-              rawStoredWorldRect.height > authoritativeBackgroundWorldRect.height * 1.05)
+          rawStoredWorldRect &&
+          authoritativeBackgroundWorldRect &&
+          (rawStoredWorldRect.width > authoritativeBackgroundWorldRect.width * 1.05 ||
+            rawStoredWorldRect.height > authoritativeBackgroundWorldRect.height * 1.05)
         );
         const storedWorldRect = storedWorldRectExceedsImage
           ? authoritativeBackgroundWorldRect
