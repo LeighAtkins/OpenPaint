@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   archivedAssetName,
+  countArchivedMeasurements,
+  presentArchivedVersionOptions,
   replaceArchivedImageUrls,
   searchArchivedProducts,
   isArchivedModelUnconfirmed,
@@ -12,8 +14,12 @@ import { isConfirmedArchiveAsset } from '../../server/vercel-routes/cw/asset-acc
 describe('Private CW archive', () => {
   it('withholds an unconfirmed diagram even if its valid archived identifier is known', async () => {
     const confirmed = '2926a4fac569844f7d142cdd38fd955aa9f31fe2744c8ac3a203262342a00d38.png';
-    const unconfirmed = 'c20b2c1f2e9accdf33afeeac538714861905fe5849d2438f58de3808aa39f969.png';
+    // MJ-OWA-2-2007__MJ-CC in VELC_WR: the source returned another style, so it stays withheld.
+    const unconfirmed = '593cf620b82d18a3fa6101c35bd8e84900bdc209c33593f73c7694c583a52ac0.png';
+    // Previously unconfirmed, now verified on pid2.
+    const verified = 'c20b2c1f2e9accdf33afeeac538714861905fe5849d2438f58de3808aa39f969.png';
     expect(isConfirmedArchiveAsset(confirmed)).toBe(true);
+    expect(isConfirmedArchiveAsset(verified)).toBe(true);
     expect(isConfirmedArchiveAsset(unconfirmed)).toBe(false);
     vi.stubEnv('CW_ARCHIVE_DIR', '/nonexistent-private-archive');
     let status: number | undefined;
@@ -138,5 +144,70 @@ describe('Private CW archive', () => {
         'IKEA Ektorp'
       )[0].productReference
     ).toBe('CW-PRIVATE');
+  });
+  it('confirms versions verified on pid2 and hides blank placeholders', () => {
+    const config = {
+      hasVersionConfiguration: true,
+      versionOptions: [
+        { code: 'L', scopedReference: 'IK-ME-3M__L', modelSetConfirmed: false },
+        { code: 'R', scopedReference: 'IK-ME-3M__R', modelSetConfirmed: false },
+        {
+          code: 'DF',
+          label: 'Please select one',
+          scopedReference: 'IK-ME-3M__DF',
+          modelSetConfirmed: false,
+          source: 'confirmed-archive',
+        },
+      ],
+    };
+    expect(isArchivedModelUnconfirmed(config, 'IK-ME-3M__L')).toBe(false);
+    const options = presentArchivedVersionOptions(config);
+    expect(options.map(option => option.code)).toEqual(['L', 'R']);
+    expect(options[0]).toMatchObject({ modelSetConfirmed: true, verifiedOnPid2: true });
+    const [result] = searchArchivedProducts(
+      [{ id: 'me', reference: 'IK-ME-3M', name: 'Manstad Sofa Bed Cover', status: 'ENABLED' }],
+      [{ id: 'me', ...config }],
+      'IK-ME-3M'
+    );
+    expect(result.measurementsUnconfirmed).toBe(false);
+    expect(result.versionOptions).toHaveLength(2);
+  });
+  it('marks sizes with no archived measurements as unavailable', () => {
+    const [stdOption, ptdOption] = presentArchivedVersionOptions({
+      versionOptions: [
+        {
+          code: 'SV_STD__2S-2B',
+          scopedReference: 'CB-LE-73__SV_STD__2S-2B',
+          modelSetConfirmed: true,
+        },
+        {
+          code: 'LV_STD__1S-2B',
+          scopedReference: 'CB-LE-73__LV_STD__1S-2B',
+          modelSetConfirmed: true,
+        },
+      ],
+    });
+    expect(stdOption.availableStyleKeys).toEqual(['VELC_SP']);
+    expect(stdOption.measurementsArchived).toBeUndefined();
+    expect(ptdOption.availableStyleKeys).toEqual([]);
+    expect(ptdOption.measurementsArchived).toBe(false);
+    expect(
+      countArchivedMeasurements({
+        product_components: [{ measurements: [{ value: 12 }, { value: null }, { value: '' }] }],
+      })
+    ).toBe(1);
+  });
+  it('ranks live products above disabled ones and full references to their product', () => {
+    const products = [
+      { id: 'a', reference: 'KN2-S', name: 'Klippan 2 Seater Cover (old)', status: 'DISABLED' },
+      { id: 'b', reference: 'IK-KN-2', name: 'Klippan 2 Seater Sofa Cover', status: 'ENABLED' },
+      { id: 'c', reference: 'IK-KN-4', name: 'Klippan 4 Seater Sofa Cover', status: 'ENABLED' },
+    ];
+    expect(
+      searchArchivedProducts(products, [], 'klippan 2 seater').map(row => row.productReference)
+    ).toEqual(['IK-KN-2', 'KN2-S']);
+    expect(searchArchivedProducts(products, [], 'IK-KN-2__STD__SV')[0].productReference).toBe(
+      'IK-KN-2'
+    );
   });
 });

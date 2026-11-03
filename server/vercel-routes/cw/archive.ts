@@ -5,6 +5,8 @@ import { readEncryptedArchiveFile } from './encrypted-storage.ts';
 import { archiveImageResponse } from './image-response.ts';
 import { isConfirmedArchiveAsset } from './asset-access.ts';
 import { measurementCatalogue } from './search-catalogue.ts';
+import { pid2VerifiedReferences } from './pid2-verified.ts';
+import { archivedStyleAvailability } from './archive-availability.ts';
 
 const assetPattern = /^[a-f0-9]{64}\.[a-zA-Z0-9]{1,10}$/;
 const recordPattern = /^[a-f0-9]{64}\.json$/;
@@ -123,47 +125,144 @@ export function replaceArchivedImageUrls(value: any, assetMap: any[]): any {
   return walk(value);
 }
 
+/** Style key used by the availability list: the style code, or the style name when uncoded. */
+export function archivedStyleKey(style: unknown, styleCode: unknown): string {
+  const code = String(styleCode || '')
+    .trim()
+    .toUpperCase();
+  return (
+    code ||
+    `STYLE:${String(style || '')
+      .trim()
+      .toUpperCase()}`
+  );
+}
+
+export function countArchivedMeasurements(content: any): number {
+  return (content?.product_components || []).reduce(
+    (total: number, component: any) =>
+      total +
+      (component?.measurements || []).filter(
+        (item: any) => item?.value !== null && item?.value !== undefined && item?.value !== ''
+      ).length,
+    0
+  );
+}
+
+function isPid2Verified(reference: unknown): boolean {
+  return pid2VerifiedReferences.has(String(reference || '').toUpperCase());
+}
+
+/** "Please select one" / "Default" entries the old editor kept as a blank first choice. */
+function isPlaceholderVersion(option: any): boolean {
+  return (
+    option?.source === 'confirmed-archive' &&
+    /^(DF|base)$/i.test(String(option?.code || '')) &&
+    !isPid2Verified(option?.scopedReference)
+  );
+}
+
+/**
+ * Version options as staff should see them: pid2-verified versions confirmed, blank
+ * placeholders dropped when real versions exist, and each option tagged with the
+ * styles that actually hold measurements.
+ */
+export function presentArchivedVersionOptions(config: any): any[] {
+  const options: any[] = Array.isArray(config?.versionOptions) ? config.versionOptions : [];
+  const real = options.filter(option => !isPlaceholderVersion(option));
+  return (real.length ? real : options).map(option => {
+    const reference = String(option.scopedReference || '').toUpperCase();
+    const verified = isPid2Verified(reference);
+    const known = Object.prototype.hasOwnProperty.call(archivedStyleAvailability, reference);
+    const availableStyleKeys = known ? archivedStyleAvailability[reference] : undefined;
+    return {
+      ...option,
+      ...(verified ? { modelSetConfirmed: true, confirmed: true, verifiedOnPid2: true } : {}),
+      ...(availableStyleKeys ? { availableStyleKeys } : {}),
+      ...(availableStyleKeys && !availableStyleKeys.length ? { measurementsArchived: false } : {}),
+    };
+  });
+}
+
+function searchScore(product: any, query: string, words: string[]): number {
+  const reference = String(product.reference || '').toLowerCase();
+  const names = [
+    product.name,
+    ...(product.translations?.edges || []).map((edge: any) => edge.node?.name),
+    ...(product.catalogueTitles || []),
+  ]
+    .filter(Boolean)
+    .map((name: string) => name.toLowerCase());
+  const haystack = `${reference} ${product.brand?.name || ''} ${names.join(' ')}`.toLowerCase();
+  let score = 0;
+  if (reference === query) score = 1000;
+  else if (query.startsWith(`${reference}__`)) score = 800;
+  else if (reference.startsWith(query) && query.length >= 3) score = 400;
+  else if (words.every(word => haystack.includes(word))) {
+    score = 100;
+    // Whole-word hits in the English name rank above substring hits elsewhere.
+    const english = String(product.name || '').toLowerCase();
+    const wordHits = words.filter(word =>
+      new RegExp(`(^|[^a-z0-9])${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`).test(english)
+    ).length;
+    score += wordHits * 10;
+    if (english.startsWith(words[0])) score += 5;
+  } else return 0;
+  if (product.status === 'ENABLED') score += 50;
+  return score;
+}
+
 export function searchArchivedProducts(products: any[], configs: any[], term: string) {
-  const words = term.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  const query = term.toLowerCase().trim();
+  const words = query.split(/\s+/).filter(Boolean);
   if (!words.length) return [];
   const configById = new Map(configs.map(config => [config.id, config]));
   return products
-    .map(product => {
-      const names = [
-        product.name,
-        ...(product.translations?.edges || []).map((edge: any) => edge.node?.name),
-      ].filter(Boolean);
-      const haystack =
-        `${product.reference} ${product.brand?.name || ''} ${names.join(' ')} ${(product.catalogueTitles || []).join(' ')}`.toLowerCase();
-      const exact = product.reference.toLowerCase() === term.toLowerCase().trim();
-      const score = exact ? 1000 : words.every(word => haystack.includes(word)) ? 1 : 0;
-      return { product, score, config: configById.get(product.id) };
-    })
+    .map(product => ({
+      product,
+      score: searchScore(product, query, words),
+      config: configById.get(product.id),
+    }))
     .filter(row => row.score)
-    .sort((a, b) => b.score - a.score)
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        String(a.product.name || '').length - String(b.product.name || '').length
+    )
     .slice(0, 50)
-    .map(({ product, config }) => ({
-      id: product.id,
-      productReference: product.reference,
-      productName:
-        product.translations?.edges?.find((edge: any) => edge.node?.lang === 'en')?.node?.name ||
-        product.name ||
-        product.reference,
-      status: product.status,
-      styleOptions: config?.styleOptions || [],
-      versionOptions: config?.versionOptions || [],
-      derivedScopedReferences: config?.derivedScopedReferences || [],
-      configParsed: true,
-      measurementsUnconfirmed: Boolean(
-        (config?.hasVersionConfiguration &&
-          !config.versionOptions?.some((option: any) => option.modelSetConfirmed === true)) ||
-          (config?.versionOptions?.length &&
-            config.versionOptions.every((option: any) => option.modelSetConfirmed === false))
-      ),
-    }));
+    .map(({ product, config }) => {
+      const versionOptions = presentArchivedVersionOptions(config);
+      const shown = new Set(versionOptions.map(option => option.scopedReference));
+      return {
+        id: product.id,
+        productReference: product.reference,
+        productName:
+          product.translations?.edges?.find((edge: any) => edge.node?.lang === 'en')?.node?.name ||
+          product.name ||
+          product.reference,
+        status: product.status,
+        styleOptions: config?.styleOptions || [],
+        versionOptions,
+        derivedScopedReferences: (config?.derivedScopedReferences || []).filter(
+          (reference: string) =>
+            shown.has(reference) ||
+            !(config?.versionOptions || []).some(
+              (option: any) => option.scopedReference === reference
+            )
+        ),
+        configParsed: true,
+        measurementsUnconfirmed: Boolean(
+          (config?.hasVersionConfiguration &&
+            !versionOptions.some(option => option.modelSetConfirmed === true)) ||
+            (versionOptions.length &&
+              versionOptions.every(option => option.modelSetConfirmed === false))
+        ),
+      };
+    });
 }
 
 export function isArchivedModelUnconfirmed(config: any, reference: string): boolean {
+  if (isPid2Verified(reference)) return false;
   if (!config) return true;
   const version = config?.versionOptions?.find(
     (option: any) => option.scopedReference?.toUpperCase() === reference.toUpperCase()
@@ -230,6 +329,11 @@ async function selectedItem(selection: any, archiveIndex: Awaited<ReturnType<typ
     return failure(
       'The source returned a different style code. These measurements require review.',
       'CW_ARCHIVED_STYLE_MISMATCH'
+    );
+  if (!countArchivedMeasurements(record.data.content))
+    return failure(
+      'No measurements were recorded for this configuration and style. Choose another size or style.',
+      'CW_ARCHIVED_MEASUREMENTS_EMPTY'
     );
   let assetMap: any[] = [];
   try {

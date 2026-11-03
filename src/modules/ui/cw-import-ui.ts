@@ -47,6 +47,9 @@ interface VersionOption {
   confirmed?: boolean | null;
   modelSetConfirmed?: boolean;
   source?: string;
+  /** Styles whose archived record holds measurements; absent when not known. */
+  availableStyleKeys?: string[];
+  measurementsArchived?: boolean;
 }
 
 interface SearchResultItem {
@@ -65,8 +68,26 @@ interface SearchResultItem {
   measurementsUnconfirmed?: boolean;
 }
 
+/** True when the archive has measurements for this version in this style (or cannot tell). */
+export function isCwStyleAvailableForVersion(
+  version: { availableStyleKeys?: string[] } | undefined,
+  styleKey: string | undefined
+): boolean {
+  if (!version || !Array.isArray(version.availableStyleKeys) || !styleKey?.trim()) return true;
+  const [, style = '', styleCode = ''] = styleKey.split('||');
+  const key = styleCode.trim()
+    ? styleCode.trim().toUpperCase()
+    : `STYLE:${style.trim().toUpperCase()}`;
+  return version.availableStyleKeys.includes(key);
+}
+
 export function isCwConfigurationSelectionReady(item: {
-  versionOptions?: Array<{ code?: string; modelSetConfirmed?: boolean }>;
+  versionOptions?: Array<{
+    code?: string;
+    modelSetConfirmed?: boolean;
+    availableStyleKeys?: string[];
+    measurementsArchived?: boolean;
+  }>;
   styleOptions?: unknown[];
   selectedVersionCode?: string;
   selectedStyleKey?: string;
@@ -74,12 +95,10 @@ export function isCwConfigurationSelectionReady(item: {
 }): boolean {
   if (item.measurementsUnconfirmed) return false;
   const versionOptions = Array.isArray(item.versionOptions) ? item.versionOptions : [];
-  if (
-    versionOptions.find(option => option.code === item.selectedVersionCode)?.modelSetConfirmed ===
-    false
-  )
-    return false;
   const styleOptions = Array.isArray(item.styleOptions) ? item.styleOptions : [];
+  const version = versionOptions.find(option => option.code === item.selectedVersionCode);
+  if (version?.modelSetConfirmed === false || version?.measurementsArchived === false) return false;
+  if (!isCwStyleAvailableForVersion(version, item.selectedStyleKey)) return false;
   return (
     (versionOptions.length === 0 || Boolean(item.selectedVersionCode?.trim())) &&
     (styleOptions.length === 0 || Boolean(item.selectedStyleKey?.trim()))
@@ -3032,11 +3051,14 @@ function createModal(): HTMLElement {
           const suffix =
             option.modelSetConfirmed === false
               ? ' · measurements unconfirmed'
-              : option.confirmed === true
-                ? ' · measurements available'
-                : '';
+              : option.measurementsArchived === false
+                ? ' · no measurements'
+                : option.confirmed === true
+                  ? ' · measurements available'
+                  : '';
           const choice = new Option(`${label}${suffix}`, code);
-          choice.disabled = option.modelSetConfirmed === false;
+          choice.disabled =
+            option.modelSetConfirmed === false || option.measurementsArchived === false;
           versionSelect.appendChild(choice);
         });
         versionSelect.value = item.selectedVersionCode;
@@ -3088,17 +3110,35 @@ function createModal(): HTMLElement {
         : 'Choose both options';
       loadAction.append(loadHint, loadButton);
 
+      // Grey out styles the chosen size has no measurements for.
+      const refreshStyleChoices = () => {
+        const version = item.versionOptions.find(
+          option => (option.code || '').trim() === versionSelect.value
+        );
+        Array.from(styleSelect.options).forEach(choice => {
+          if (!choice.value) return;
+          const available = isCwStyleAvailableForVersion(version, choice.value);
+          choice.disabled = !available;
+          const base = choice.textContent?.replace(/ · no measurements$/, '') || '';
+          choice.textContent = available ? base : `${base} · no measurements`;
+        });
+      };
+      refreshStyleChoices();
+
       const syncSelection = () => {
         state.searchResults.forEach(candidate => {
           candidate.selected = candidate === item;
         });
         item.selectedVersionCode = versionSelect.value;
         item.selectedStyleKey = styleSelect.value;
+        refreshStyleChoices();
         loadButton.disabled = !isCwConfigurationSelectionReady(item);
         card.classList.toggle('is-ready', !loadButton.disabled);
-        loadHint.textContent = loadButton.disabled
-          ? 'Choose both options'
-          : 'Measurements available';
+        loadHint.textContent = !loadButton.disabled
+          ? 'Measurements available'
+          : versionSelect.value && (styleSelect.value || !item.styleOptions.length)
+            ? 'No measurements for this choice'
+            : 'Choose both options';
         card.classList.add('is-selected');
         card.setAttribute('aria-checked', 'true');
         checkbox.checked = true;
@@ -5514,6 +5554,12 @@ function createModal(): HTMLElement {
         state.searchResults.forEach(item => {
           item.selected = item === preferredResult;
         });
+        // A full reference such as IK-KN-2__STD__SV preselects that configuration.
+        const scopedMatch = preferredResult.versionOptions.find(
+          option => (option.scopedReference || '').toUpperCase() === normalizedSearch
+        );
+        if (scopedMatch && scopedMatch.measurementsArchived !== false)
+          preferredResult.selectedVersionCode = (scopedMatch.code || '').trim();
         void loadStorefrontProduct(
           preferredResult.productName || search,
           preferredResult.productReference

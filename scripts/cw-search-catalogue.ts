@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import dotenv from 'dotenv';
 import {
+  countArchivedMeasurements,
   isArchivedModelUnconfirmed,
   isArchivedStyleMismatch,
 } from '../server/vercel-routes/cw/archive.ts';
@@ -22,7 +23,12 @@ for (const tuple of tuples) {
   if (isArchivedModelUnconfirmed(config, tuple.reference)) status = 'unconfirmed';
   else {
     const record = await read(`measurements/${tuple.file}`);
-    if (record.httpStatus === 200 && Number(record.data?.status) === 200)
+    // A valid response with no measurement values cannot be loaded, so it is unavailable.
+    if (
+      record.httpStatus === 200 &&
+      Number(record.data?.status) === 200 &&
+      countArchivedMeasurements(record.data?.content)
+    )
       status = isArchivedStyleMismatch(tuple.style, tuple.styleCode, record.data?.content)
         ? 'review'
         : 'confirmed';
