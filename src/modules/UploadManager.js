@@ -75,7 +75,7 @@ export class UploadManager {
 
   setupPasteListener() {
     document.addEventListener('paste', e => {
-      if (e.clipboardData?.files?.length) {
+      if (!e.defaultPrevented && e.clipboardData?.files?.length) {
         this.handleFiles(e.clipboardData.files);
       }
     });

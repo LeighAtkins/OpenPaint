@@ -64,6 +64,7 @@ interface CloudSaveStatusDetail {
 }
 
 interface ImportBatch {
+  received: Set<number>;
   files: Map<number, File>;
   rejected: Set<number>;
   skipped: Set<number>;
@@ -86,6 +87,7 @@ interface ImportBatch {
   ticketContext: GorgiasTicketContext;
   destinationReady: Promise<boolean>;
   canceled: boolean;
+  releaseDestination: () => void;
 }
 
 interface ImportDestinationChoice {
@@ -97,6 +99,7 @@ interface ImportDestinationChoice {
 const MAX_DATA_URL_LENGTH = 42 * 1024 * 1024;
 const batches = new Map<string, ImportBatch>();
 let initialized = false;
+let destinationQueue = Promise.resolve();
 
 const IMPORT_DESTINATION_STYLES = /* css */ `
   .gorgias-import-destination {
@@ -939,6 +942,7 @@ function finishBatch(batchId: string, batch: ImportBatch): void {
       })
     );
   }
+  batch.releaseDestination();
   const totalErrors = batch.rejectedCount + batch.sourceErrorCount;
   const elapsedSeconds = Math.max(0.1, (Date.now() - batch.startedAt) / 1000);
   const detail = [
@@ -982,6 +986,7 @@ async function drainBatch(batchId: string, uploadManager: ExtensionUploadManager
     if (!destinationReady || batch.canceled) {
       batch.canceled = true;
       batches.delete(batchId);
+      batch.releaseDestination();
       notifyOpenPaint({
         kind: 'info',
         title: 'Gorgias',
@@ -1020,7 +1025,16 @@ async function drainBatch(batchId: string, uploadManager: ExtensionUploadManager
         batch,
         `Adding ${batch.processedCount + 1} of ${Math.max(1, batch.expectedCount ?? batch.total)} · ${file.name}`
       );
-      const uploadResults = await uploadManager.handleFiles([file], { suppressStatus: true });
+      let uploadResults: Awaited<ReturnType<ExtensionUploadManager['handleFiles']>>;
+      try {
+        uploadResults = await uploadManager.handleFiles([file], { suppressStatus: true });
+      } catch (error) {
+        batch.rejectedCount += 1;
+        batch.nextIndex += 1;
+        console.warn('[Extension Import] Image upload failed:', error);
+        showBatchProgress(batch, `Skipped ${file.name} because it could not be loaded`);
+        continue;
+      }
       const uploaded = Array.isArray(uploadResults)
         ? uploadResults.find(result => result?.success && result?.viewId)
         : null;
@@ -1132,8 +1146,15 @@ export function initExtensionImageImport(uploadManager: ExtensionUploadManager):
     }
 
     if (payload.type === 'IMPORT_BEGIN') {
+      if (batches.has(payload.batchId)) return;
       const ticketContext = normalizedContext(payload.ticketContext);
+      const previousDestination = destinationQueue;
+      let releaseDestination!: () => void;
+      destinationQueue = new Promise<void>(resolve => {
+        releaseDestination = resolve;
+      });
       const batch: ImportBatch = {
+        received: new Set(),
         files: new Map(),
         rejected: new Set(),
         skipped: new Set(),
@@ -1156,8 +1177,10 @@ export function initExtensionImageImport(uploadManager: ExtensionUploadManager):
         ticketContext,
         destinationReady: Promise.resolve(true),
         canceled: false,
+        releaseDestination,
       };
-      batch.destinationReady = prepareImportDestination(ticketContext)
+      batch.destinationReady = previousDestination
+        .then(() => prepareImportDestination(ticketContext))
         .then(ready => {
           if (ready) batch.knownHashes = applyTicketContext(ticketContext);
           return ready;
@@ -1184,7 +1207,8 @@ export function initExtensionImageImport(uploadManager: ExtensionUploadManager):
 
     if (payload.type === 'IMPORT_IMAGE') {
       const index = Number(payload.index);
-      if (!Number.isInteger(index) || index < 0 || batch.files.has(index)) return;
+      if (!Number.isInteger(index) || index < 0 || batch.received.has(index)) return;
+      batch.received.add(index);
       const hash = String(payload.hash || '')
         .trim()
         .toLowerCase();

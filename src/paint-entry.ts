@@ -28,6 +28,8 @@ window.addEventListener('error', event => {
 // ── 1. Vendor libraries (must load before app modules) ──────────────────────
 import { fabric } from 'fabric';
 import './styles/tw.css';
+import './styles/workspace-controls.css';
+import { initWorkspaceControls } from './modules/ui/workspace-controls';
 
 (globalThis as any).fabric = fabric;
 
@@ -245,6 +247,7 @@ async function bootstrap(): Promise<void> {
   initSofa3dStudio();
   initMeasurementReview();
   initMeasurementCheckRequest();
+  initWorkspaceControls();
   // window.sofapaint.agent: read/draw/render API for agents in a signed-in browser.
   initSofapaintAgent();
 

@@ -370,7 +370,12 @@ export async function handleCwArchiveRequest(req: any, res: any, body: any): Pro
   const phase = String(body?.phase || '');
   if (
     formId === 'search' &&
-    ['storefront-product', 'storefront-comparison', 'sectional-pricing'].includes(phase)
+    [
+      'storefront-product',
+      'storefront-comparison',
+      'sectional-pricing',
+      'catalogue-overall',
+    ].includes(phase)
   )
     return false;
   // Only product lookup and its images come from the archive. Other CW routes keep

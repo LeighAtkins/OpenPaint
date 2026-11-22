@@ -2708,6 +2708,9 @@ export class ProjectManager {
       }
     }
 
+    window.dispatchEvent(
+      new CustomEvent('openpaint:image-collection-change', { detail: { viewId } })
+    );
     console.log(`Deleted view: ${viewId}`);
   }
 

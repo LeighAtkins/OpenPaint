@@ -5,6 +5,7 @@
 // Extracted from index.html inline scripts
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { getStoredAuthHeaders } from '@/services/auth/storedAuth';
+import { mountFloorChecks } from './long-skirt-floor-checks';
 import JSZip from 'jszip';
 import { buildImageExportFilename, sanitizeFilenamePart } from '../utils/naming-utils.js';
 import {
@@ -2318,11 +2319,20 @@ export function initPdfExport() {
     worksheetToggle.innerHTML = `<input type="checkbox" id="includeCushionWorksheet" style="margin-top:3px;accent-color:#0B0D10"><span>Add cushions table page<br><small style="color:#667085">T, L, box and wedge diagrams from the measurement guide gallery (CC-BK-T/L/W, CC-ST-BE) with Seat / Back, Type 1 / Type 2 and quantity fields. Uses the modern renderer.</small></span>`;
     document.getElementById('includeMeasurements')?.parentElement?.after(worksheetToggle);
     const worksheetInput = worksheetToggle.querySelector('input')!;
-    worksheetInput.addEventListener('change', () => {
+    const syncRenderer = () => {
       const renderer = document.getElementById('pdfRendererMode') as HTMLSelectElement;
-      if (worksheetInput.checked) renderer.value = 'modern';
-      renderer.disabled = worksheetInput.checked;
-    });
+      if (!renderer) return;
+      renderer.disabled = worksheetInput.checked || floorChecks.enabled.checked;
+      if (renderer.disabled) renderer.value = 'modern';
+    };
+    const floorChecks = mountFloorChecks(
+      worksheetToggle,
+      metadata.longSkirtFloorChecks,
+      state => window.app.projectManager.setProjectMetadata({ longSkirtFloorChecks: state }),
+      syncRenderer
+    );
+    worksheetInput.addEventListener('change', syncRenderer);
+    syncRenderer();
     document.getElementById('cancelPdfBtn').onclick = () => overlay.remove();
     document.getElementById('generatePdfBtn').onclick = async () => {
       const quality = document.getElementById('pdfQuality').value;
@@ -2332,9 +2342,10 @@ export function initPdfExport() {
         (document.getElementById('includeRepeatedComparisons') as HTMLInputElement | null)
           ?.checked === true;
       const includeCushionWorksheet = worksheetInput.checked;
-      const rendererMode = includeCushionWorksheet
-        ? 'modern'
-        : document.getElementById('pdfRendererMode')?.value || 'modern';
+      const rendererMode =
+        includeCushionWorksheet || floorChecks.enabled.checked
+          ? 'modern'
+          : document.getElementById('pdfRendererMode')?.value || 'modern';
       const cushionQuantityViews = {};
       overlay.querySelectorAll('[data-cushion-quantity-key]').forEach(input => {
         if (input.checked) {
@@ -2387,7 +2398,8 @@ export function initPdfExport() {
             includeRepeatedComparisons,
             cushionQuantityViews,
             customerNotes,
-            includeCushionWorksheet
+            includeCushionWorksheet,
+            floorChecks.enabled.checked ? await floorChecks.reportGroup() : null
           );
         } else {
           await generatePDFWithPDFLib(
@@ -2402,9 +2414,9 @@ export function initPdfExport() {
       } catch (error) {
         console.error('[PDF] Export failed:', error);
         const progressTextEl = document.getElementById('pdfProgressText');
-        if (includeCushionWorksheet) {
+        if (includeCushionWorksheet || floorChecks.enabled.checked) {
           alert(
-            `PDF export failed: ${String(error?.message || error)}. The cushions worksheet requires the modern renderer; please retry.`
+            `PDF export failed: ${String(error?.message || error)}. The selected worksheet requires the modern renderer; please retry.`
           );
           overlay.remove();
           return;
@@ -2455,7 +2467,8 @@ export function initPdfExport() {
     includeRepeatedComparisons = false,
     cushionQuantityViews = {},
     customerNotes = {},
-    includeCushionWorksheet = false
+    includeCushionWorksheet = false,
+    floorCheckGroup = null
   ) {
     const progressBar = document.getElementById('pdfProgressBar');
     const progressText = document.getElementById('pdfProgressText');
@@ -2715,6 +2728,7 @@ export function initPdfExport() {
       });
     }
 
+    if (floorCheckGroup) groups.push(floorCheckGroup);
     const comparisonGroups = await buildComparisonGroups();
 
     let cushionDiagrams = {};

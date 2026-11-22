@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import express from 'express';
+import renderPdf from '../api/pdf/render.js';
 
 const cwd = process.cwd();
 const localNodeBin = path.resolve(cwd, '.agent/tools/node-v22.12.0-linux-x64/bin/node');
@@ -81,6 +82,8 @@ process.on('exit', () => {
 
 const apiApp = express();
 
+apiApp.post('/api/pdf/render', express.json({ limit: '200mb' }), renderPdf);
+
 apiApp.get('/health', (_req, res) => {
   res.json({ ok: true, ts: Date.now() });
 });
@@ -147,6 +150,8 @@ const viteServer = spawnChild('vite', [
   'node_modules/vite/bin/vite.js',
   '--config',
   'vite.config.ts',
+  '--mode',
+  'test',
   '--host',
   '127.0.0.1',
 ]);

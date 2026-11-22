@@ -13,13 +13,17 @@ export function initQuickSaveMenu(): void {
   button.setAttribute('aria-controls', menu.id);
   button.setAttribute('aria-expanded', 'false');
 
+  const optionsButton = document.getElementById('workspaceExportOptions');
+  let returnFocus: HTMLElement = button;
   let hideTimer: number | undefined;
+  menu.querySelectorAll('[data-action]').forEach(item => item.setAttribute('role', 'menuitem'));
 
   const hideMenu = (): void => {
     window.clearTimeout(hideTimer);
     hideTimer = undefined;
     menu.classList.add('hidden');
     button.setAttribute('aria-expanded', 'false');
+    optionsButton?.setAttribute('aria-expanded', 'false');
   };
 
   const positionMenu = (): void => {
@@ -44,6 +48,7 @@ export function initQuickSaveMenu(): void {
     menu.classList.remove('hidden');
     positionMenu();
     button.setAttribute('aria-expanded', 'true');
+    optionsButton?.setAttribute('aria-expanded', 'true');
   };
 
   const scheduleHide = (): void => {
@@ -64,14 +69,60 @@ export function initQuickSaveMenu(): void {
   button.addEventListener('click', event => {
     event.preventDefault();
     document.getElementById('save')?.click();
+    hideMenu();
   });
   button.addEventListener('keydown', event => {
     if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
       event.preventDefault();
+      returnFocus = button;
       showMenu();
       (menu.querySelector('[data-action]') as HTMLElement | null)?.focus();
     } else if (event.key === 'Escape') {
       hideMenu();
+    }
+  });
+
+  optionsButton?.addEventListener('click', event => {
+    event.preventDefault();
+    returnFocus = optionsButton;
+    showMenu();
+    menu.querySelector<HTMLElement>('[data-action]')?.focus();
+  });
+  optionsButton?.addEventListener('keydown', event => {
+    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+    event.preventDefault();
+    returnFocus = optionsButton;
+    showMenu();
+    const items = Array.from(menu.querySelectorAll<HTMLElement>('[data-action]'));
+    (event.key === 'ArrowUp' ? items.at(-1) : items[0])?.focus();
+  });
+  document.addEventListener('pointerdown', event => {
+    if (
+      event.target instanceof Node &&
+      !root.contains(event.target) &&
+      !menu.contains(event.target)
+    )
+      hideMenu();
+  });
+  menu.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      returnFocus.focus();
+      hideMenu();
+      return;
+    }
+    const items = Array.from(menu.querySelectorAll<HTMLElement>('[data-action]'));
+    const index = items.indexOf(document.activeElement as HTMLElement);
+    if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+      event.preventDefault();
+      const next =
+        event.key === 'Home'
+          ? 0
+          : event.key === 'End'
+            ? items.length - 1
+            : (index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+      items[next]?.focus();
     }
   });
 

@@ -46,8 +46,8 @@ export function buildPlacementOverlayElements(
                 x: point.x * 1000,
                 y: point.y * 1000,
               })),
-              // Preserve supplied surface geometry rather than smoothing past a seam corner.
-              curveInterpolation: 'linear' as const,
+              // Smooth only on explicit request after identifying the actual seam anchors.
+              curveInterpolation: measurement.path.interpolation || 'linear',
             }
           : {}),
         fabricObjectIds: [],

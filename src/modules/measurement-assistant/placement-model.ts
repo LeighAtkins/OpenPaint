@@ -16,6 +16,7 @@ export const guideSelectionSchema = z.object({
     armEvidence: z.string().trim().min(12).max(512),
     backEvidence: z.string().trim().min(12).max(512),
     cushions: z.enum(['removed', 'present', 'fixed', 'unknown']),
+    baseConstruction: z.enum(['flush', 'projecting', 'unknown']).optional(),
   }),
   adaptationReason: z.string().trim().min(12).max(512).optional(),
 });
@@ -84,7 +85,13 @@ export const measurementPlacementSchema = z
         endFeatureId: id,
         path: z.discriminatedUnion('kind', [
           z.object({ kind: z.literal('span') }),
-          z.object({ kind: z.literal('surface-path'), points: z.array(point).min(2).max(128) }),
+          z.object({
+            kind: z.literal('surface-path'),
+            points: z.array(point).min(2).max(128),
+            // Explicit operator choice; raw AI paths retain their original linear geometry.
+            interpolation: z.enum(['linear', 'smooth']).optional(),
+            traceRationale: z.string().trim().min(12).max(512).optional(),
+          }),
         ]),
         source: z.discriminatedUnion('kind', [
           z.object({ kind: z.literal('guide'), guideId: id, guideVersion: id, roleId: id }),

@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { exportMosSvg } from '../../src/modules/measurement-mos/mos-exporter';
+import { importMosSvg } from '../../src/modules/measurement-mos/mos-importer';
 import { sanitizeAndPrefixSvg } from '../../src/modules/measurement-mos/mos-sanitizer';
+import { FabricControls } from '../../src/modules/utils/FabricControls.js';
 
 const svg = (id: string) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><line id="${id}" class="mos-line" x1="10" y1="10" x2="900" y2="10" stroke="#DF6868" stroke-width="4"/></svg>`;
@@ -21,8 +24,7 @@ describe('sanitizeAndPrefixSvg id prefixes', () => {
 });
 
 describe('exportMosSvg curves', () => {
-  it('keeps a curved measurement as a polyline when saving', async () => {
-    const { exportMosSvg } = await import('../../src/modules/measurement-mos/mos-exporter');
+  it('exports a smooth path and restores its original editable anchors', () => {
     const curvePoints = [
       { x: 200, y: 640 },
       { x: 150, y: 520 },
@@ -45,8 +47,26 @@ describe('exportMosSvg curves', () => {
       svgText: '',
       elements: new Map([['e', element]]),
     };
-    const svg = exportMosSvg(overlay as any, { left: 0, top: 0, width: 1000, height: 1000 });
-    expect(svg).toContain('<polyline id="mos0_mE1cm" points="200,640 150,520 110,560 150,600"');
-    expect(svg).toContain('data-curve-interpolation="smooth"');
+    const rect = { left: 0, top: 0, width: 1000, height: 1000 };
+    const saved = exportMosSvg(overlay as any, rect);
+    expect(saved).toMatch(/<path id="mos0_mE1cm" d="M 200 640 C /);
+    expect(saved).toContain('data-curve-anchors="200,640 150,520 110,560 150,600"');
+
+    class Primitive {
+      set(options: object) {
+        Object.assign(this, options);
+      }
+      on() {}
+    }
+    vi.stubGlobal('fabric', { Path: Primitive, Triangle: Primitive });
+    const controls = vi.spyOn(FabricControls, 'createCurveControls').mockImplementation(() => {});
+    try {
+      const restored = importMosSvg(sanitizeAndPrefixSvg(saved, 1), 1, 'front', rect, { add() {} });
+      const line = [...restored.elements.values()].find(item => item.kind === 'measureLine');
+      expect(line).toMatchObject({ roleToken: 'E1', curveInterpolation: 'smooth', curvePoints });
+    } finally {
+      controls.mockRestore();
+      vi.unstubAllGlobals();
+    }
   });
 });

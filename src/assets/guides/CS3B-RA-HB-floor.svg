@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 880" width="740" height="880" font-family="Arial, sans-serif">
+  <rect width="100%" height="100%" fill="white" />
+  <text x="16" y="25" fill="#243a34" font-size="24">Back</text>
+  <svg x="14.962" y="32" width="710.077" height="255" viewBox="-5 35 724 260" overflow="hidden">
+    <g fill="none" stroke="#4f4f4f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="59.4,258.8 61.8,281.7 84.1,281.7 86.5,258.6  " />
+      <polyline points="84.1,282 90.6,277.3 93,258.9  " />
+      <polyline points="657.1,258.8 654.8,281.7 632.4,281.7 630,258.6  " />
+      <polyline points="632.4,282 626,277.3 623.7,258.9  " />
+      <path d="M703.6,114.3c-2.2-21.2-18.1-28.2-33.1-28.8c-0.6,0-0.9-0.1-2.1,0V48.2h-622v37.3c0,0-1.1,0-1.7,0   c-15,0.6-30.8,7.7-32.9,28.8c-2.9,27.9,20.5,33.5,20.5,33.5l14.6,110.8h290h41.6h290l12.1-110.8   C680.7,147.8,706.5,142.2,703.6,114.3z" />
+    </g>
+    <line x1="0.0" x2="714.0" y1="281" y2="281" stroke="#59605c" stroke-width="2" />
+    <g data-code="J1" transform="translate(359 0)">
+      <line x1="0" x2="0" y1="49" y2="281" stroke="#70398b" stroke-width="3" />
+      <circle cx="0" cy="281" r="3.6" fill="white" stroke="#70398b" />
+      <g transform="translate(0 49)" data-endpoint="J1">
+        <circle r="4" fill="white" stroke="#70398b" stroke-width="2" />
+        <circle r="11" fill="transparent" />
+      </g>
+      <g transform="translate(0 165.0)" data-label="J1">
+        <rect x="-15" y="-10" width="30" height="20" rx="6" fill="#70398b" />
+        <text y="5" fill="white" font-size="14" text-anchor="middle" font-weight="bold">J1</text>
+      </g>
+    </g>
+    <g data-code="J2" transform="translate(668 0)">
+      <line x1="0" x2="0" y1="85" y2="281" stroke="#005c71" stroke-width="3" />
+      <circle cx="0" cy="281" r="3.6" fill="white" stroke="#005c71" />
+      <g transform="translate(0 85)" data-endpoint="J2">
+        <circle r="4" fill="white" stroke="#005c71" stroke-width="2" />
+        <circle r="11" fill="transparent" />
+      </g>
+      <g transform="translate(0 183.0)" data-label="J2">
+        <rect x="-15" y="-10" width="30" height="20" rx="6" fill="#005c71" />
+        <text y="5" fill="white" font-size="14" text-anchor="middle" font-weight="bold">J2</text>
+      </g>
+    </g>
+  </svg>
+  <text x="16" y="315" fill="#243a34" font-size="24">Side</text>
+  <svg x="174.500" y="322" width="391.0" height="255" viewBox="23 26 368 240" overflow="hidden">
+    <g fill="none" stroke="#4f4f4f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="121.1,229.6 119,249.8 99.5,249.8 97.4,229.6  " />
+      <polyline points="315.5,229.6 313.5,249.8 294,249.8 291.9,229.6  " />
+      <path d="M119,96.8l-15.8-59.2l-24,4.2l8.2,187.9h237.4l5.2-85.5c0,0,20.2-15.9,2.1-47.4L119,96.8L119,96.8z" />
+      <line x1="119" y1="96.8" x2="82.2" y2="96.8" />
+      <line x1="83.7" y1="144.2" x2="330" y2="144.2" />
+    </g>
+    <line x1="28.0" x2="386.0" y1="250" y2="250" stroke="#59605c" stroke-width="2" />
+    <g data-code="H1" transform="translate(330 0)">
+      <line x1="0" x2="0" y1="144" y2="250" stroke="#285aa2" stroke-width="3" />
+      <circle cx="0" cy="250" r="3.6" fill="white" stroke="#285aa2" />
+      <g transform="translate(0 144)" data-endpoint="H1">
+        <circle r="4" fill="white" stroke="#285aa2" stroke-width="2" />
+        <circle r="11" fill="transparent" />
+      </g>
+      <g transform="translate(0 197.0)" data-label="H1">
+        <rect x="-15" y="-10" width="30" height="20" rx="6" fill="#285aa2" />
+        <text y="5" fill="white" font-size="14" text-anchor="middle" font-weight="bold">H1</text>
+      </g>
+    </g>
+    <g data-code="H2" transform="translate(84 0)">
+      <line x1="0" x2="0" y1="144" y2="250" stroke="#007269" stroke-width="3" />
+      <circle cx="0" cy="250" r="3.6" fill="white" stroke="#007269" />
+      <g transform="translate(0 144)" data-endpoint="H2">
+        <circle r="4" fill="white" stroke="#007269" stroke-width="2" />
+        <circle r="11" fill="transparent" />
+      </g>
+      <g transform="translate(0 197.0)" data-label="H2">
+        <rect x="-15" y="-10" width="30" height="20" rx="6" fill="#007269" />
+        <text y="5" fill="white" font-size="14" text-anchor="middle" font-weight="bold">H2</text>
+      </g>
+    </g>
+  </svg>
+  <text x="16" y="605" fill="#243a34" font-size="24">Front arm</text>
+  <svg x="245.769" y="612" width="248.462" height="255" viewBox="528 83 190 195" overflow="hidden">
+    <g fill="none" stroke="#4f4f4f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M648.4,112.4l-37.8-16.2c-6.9,0-33.2-1.9-33.2,38.9c0,23.9,0,45.8,0,45.8l23,17.9H107.6l23-17.9   c0,0,0-21.9,0-45.8c0-40.8-26.3-38.9-33.2-38.9l-37.8,16.2" />
+      <path d="M130.7,180.8" />
+      <polyline points="76.2,243.9 78.3,264 97.7,264 99.7,243.9  " />
+      <polyline points="97.7,264 103.2,259.8 105.3,243.9  " />
+      <path d="M600.5,198.7c0,0,0-21.9,0-45.8c0-40.8,26.3-44.3,33.2-44.3s25.6,3.5,25.6,22.8s-19.7,24.9-19.7,24.9v87.5   H68.5v-87.5c0,0-19.7-5.6-19.7-24.9c0-19.4,18.7-22.8,25.6-22.8s33.2,3.5,33.2,44.3c0,23.9,0,45.8,0,45.8" />
+      <path d="M641.7,209.8" />
+      <polyline points="632.9,243.9 630.8,264 611.5,264 609.4,243.9  " />
+      <polyline points="611.5,264 605.9,259.8 603.9,243.9  " />
+      <line x1="130.7" y1="180.8" x2="577.4" y2="180.8" />
+      <polyline points="607.8,95 607.8,59.7 99.7,59.7 99.7,95  " />
+    </g>
+    <line x1="533.0" x2="713.0" y1="264" y2="264" stroke="#59605c" stroke-width="2" />
+    <g data-code="C1" transform="translate(633.7 0)">
+      <line x1="0" x2="0" y1="108.6" y2="264" stroke="#a42b40" stroke-width="3" />
+      <circle cx="0" cy="264" r="3.6" fill="white" stroke="#a42b40" />
+      <g transform="translate(0 108.6)" data-endpoint="C1">
+        <circle r="4" fill="white" stroke="#a42b40" stroke-width="2" />
+        <circle r="11" fill="transparent" />
+      </g>
+      <g transform="translate(0 186.3)" data-label="C1">
+        <rect x="-15" y="-10" width="30" height="20" rx="6" fill="#a42b40" />
+        <text y="5" fill="white" font-size="14" text-anchor="middle" font-weight="bold">C1</text>
+      </g>
+    </g>
+  </svg>
+</svg>

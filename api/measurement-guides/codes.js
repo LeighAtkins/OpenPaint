@@ -217,7 +217,14 @@ export default async function handler(req, res) {
   const allCodes = Array.from(new Set([...cloudCodes, ...local.codes])).sort((a, b) =>
     a.localeCompare(b)
   );
-  const mergedViewsByCode = { ...cloudViewsByCode, ...local.viewsByCode };
+  const mergedViewsByCode = Object.fromEntries(
+    allCodes.map(code => [
+      code,
+      [...new Set([...(cloudViewsByCode[code] || []), ...(local.viewsByCode[code] || [])])].sort(
+        (a, b) => ['front', 'back', 'side'].indexOf(a) - ['front', 'back', 'side'].indexOf(b)
+      ),
+    ])
+  );
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');

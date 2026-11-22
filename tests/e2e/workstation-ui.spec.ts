@@ -254,6 +254,14 @@ test.describe('Unified workstation controls', () => {
 
     const collapsed = await rect(page, '#imagePanel');
     expect(collapsed.width).toBeLessThanOrEqual(50);
+    const header = await rect(page, '#imagePanelHeader');
+    const overview = await rect(page, '#openImageOverviewBtn');
+    const expand = await rect(page, '#toggleImagePanel');
+    expect(overview.bottom).toBeLessThanOrEqual(expand.top);
+    for (const control of [overview, expand]) {
+      expect(control.left).toBeGreaterThanOrEqual(header.left);
+      expect(control.right).toBeLessThanOrEqual(header.right);
+    }
     await toggle.click();
 
     await expect(panel).toHaveAttribute('aria-expanded', 'true');
@@ -300,45 +308,41 @@ test.describe('Unified workstation controls', () => {
     expect(alignment.imageCenterDeltaY).toBeLessThanOrEqual(3);
   });
 
-  test('Style and tag Appearance share one docked or floating control surface', async ({
-    appPage: page,
-  }) => {
+  test('Style and tag Appearance share one floating control surface', async ({ appPage: page }) => {
     await resizeViewport(page, 1111, 752);
     if (!(await page.locator('#elementsBody').isVisible())) {
       await page.locator('#toggleStrokePanel').click();
       await expect(page.locator('#elementsBody')).toBeVisible();
     }
 
+    const floating = page.locator('#lineStylePopoverPanel');
     await page.locator('#lineStylePopoverBtn').click();
-    await expect(page.locator('#elementsAppearance')).toHaveAttribute('open', '');
-    await expect(
-      page.locator('#elementsStrokeAppearanceMount .line-style-panel-grid')
-    ).toBeVisible();
-    await expect(page.locator('#elementsAppearance #currentTagSize')).toBeVisible();
+    await expect(floating).toHaveClass(/open/);
+    await expect(floating.locator('.line-style-panel-grid')).toBeVisible();
+    await expect(page.locator('#elementsAppearance')).toBeHidden();
+    await floating.locator('#styleTagDisclosure > summary').click();
+    await expect(floating.locator('#currentTagSize')).toBeVisible();
 
     await page.locator('#toggleStrokePanel').click();
     await expect(page.locator('#elementsBody')).toBeHidden();
+    await expect(floating).not.toHaveClass(/open/);
     await page.locator('#lineStylePopoverBtn').click();
 
-    const floating = page.locator('#lineStylePopoverPanel');
     await expect(floating).toHaveClass(/open/);
     await expect(floating.locator('#brushSize')).toBeVisible();
     await expect(floating.locator('#currentTagSize')).toBeVisible();
   });
 
-  test('Elements controls scroll independently when Appearance exceeds a short viewport', async ({
-    appPage: page,
-  }) => {
+  test('Style scrolls within a short viewport', async ({ appPage: page }) => {
     await resizeViewport(page, 1453, 634);
     if (!(await page.locator('#elementsBody').isVisible())) {
       await page.locator('#toggleStrokePanel').click();
     }
 
     await page.locator('#lineStylePopoverBtn').click();
-    await expect(page.locator('#elementsAppearance')).toHaveAttribute('open', '');
-
-    const controls = page.locator('#elementsControls');
-    const metrics = await controls.evaluate(element => ({
+    const panel = page.locator('#lineStylePopoverPanel');
+    await panel.locator('#styleTagDisclosure > summary').click();
+    const metrics = await panel.evaluate(element => ({
       clientHeight: element.clientHeight,
       scrollHeight: element.scrollHeight,
       overflowY: getComputedStyle(element).overflowY,
@@ -346,11 +350,11 @@ test.describe('Unified workstation controls', () => {
     expect(metrics.overflowY).toBe('auto');
     expect(metrics.scrollHeight).toBeGreaterThan(metrics.clientHeight);
 
-    await controls.evaluate(element => {
+    await panel.evaluate(element => {
       element.scrollTop = element.scrollHeight;
     });
-    await expect.poll(() => controls.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
-    await expect(page.locator('#labelBackgroundToggleBtn')).toBeVisible();
+    await expect.poll(() => panel.evaluate(element => element.scrollTop)).toBeGreaterThan(0);
+    await expect(panel.locator('#labelBackgroundToggleBtn')).toBeInViewport();
   });
 
   test('palette and account controls stay above and clear of canvas content', async ({
@@ -463,6 +467,7 @@ test.describe('Unified workstation controls', () => {
     await resizeViewport(page, 1280, 800);
     await expandInspectors(page);
     await uploadTestImage(page, 900, 600, '#dbeafe');
+    await expect(page.locator('#mini-stepper .mini-stepper-empty')).toBeHidden();
     await selectTool(page, 'line');
     await drawLine(page, 120, 180, 520, 180);
     await expect(page.locator('#elementsMeasurementCount')).toHaveText('1');

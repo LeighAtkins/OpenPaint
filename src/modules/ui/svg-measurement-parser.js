@@ -253,6 +253,7 @@ function extractGuideToken(rawValue) {
   if (!raw) return '';
   const stripped = raw
     .replace(/^mos\d+_/i, '')
+    .replace(/((?:cm|mm|in))_\d+_$/i, '$1')
     .replace(/_[0-9A-Fa-f]{8,}_?$/i, '')
     .replace(/^(?:m|b|c)/i, '')
     .replace(/(?:cm|mm|in)\d*$/i, '')
@@ -297,7 +298,7 @@ function collectTokenizedMeasurements(svgRoot, classColorMap) {
     .map(segment => ({ segment, length: getSegmentLength(segment) }))
     .filter(entry => entry.length >= 20);
 
-  Array.from(svgRoot.querySelectorAll('g[id]')).forEach(groupEl => {
+  Array.from(svgRoot.querySelectorAll('[id]')).forEach(groupEl => {
     const groupId = String(groupEl.getAttribute('id') || '').trim();
     if (!groupId) return;
     const prefix = groupId[0]?.toLowerCase();
@@ -330,6 +331,12 @@ function collectTokenizedMeasurements(svgRoot, classColorMap) {
 
     if (prefix !== 'm') return;
 
+    const ownSegment = segmentFromElement(groupEl, classColorMap);
+    if (ownSegment) {
+      if (!linesByToken.has(token)) linesByToken.set(token, [ownSegment]);
+      return;
+    }
+
     const directLines = Array.from(groupEl.children).reduce((acc, child) => {
       if (child.tagName === 'g') return acc;
       const seg = segmentFromElement(child, classColorMap);
@@ -343,7 +350,14 @@ function collectTokenizedMeasurements(svgRoot, classColorMap) {
         .filter(Boolean)
     );
 
-    const lines = directLines.length ? directLines : innerGroupLines.length ? innerGroupLines : [];
+    const descendantLines = Array.from(groupEl.querySelectorAll('line, polyline, path'))
+      .map(el => segmentFromElement(el, classColorMap))
+      .filter(Boolean);
+    const lines = directLines.length
+      ? directLines
+      : innerGroupLines.length
+        ? innerGroupLines
+        : descendantLines;
     if (lines.length) {
       const resolvedLines = resolveMeasurementLines(token, lines, {
         auxiliaryLinesByToken,

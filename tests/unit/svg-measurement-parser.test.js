@@ -20,7 +20,7 @@ describe('svg measurement parser', () => {
     expect(parsed.totalMeasurements).toBe(1);
     expect(parsed.dimensions).toEqual({ minX: 0, minY: 0, width: 200, height: 100 });
     expect(parsed.measurements[0]).toMatchObject({
-      label: 'Measurement 1',
+      label: 'A1',
     });
     expect(parsed.measurements[0].lines[0]).toMatchObject({
       kind: 'line',
@@ -29,6 +29,20 @@ describe('svg measurement parser', () => {
       x2: 150,
       y2: 20,
     });
+  });
+
+  test('keeps standalone dimensions alongside grouped and deeply nested dimensions', () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200">
+      <line id="mA1cm" x1="20" y1="30" x2="250" y2="30" stroke="#DF6868"/>
+      <g id="mB1cm"><line x1="20" y1="60" x2="100" y2="80" stroke="#27865F"/></g>
+      <g id="mC1cm_1_"><g><g><line x1="100" y1="100" x2="160" y2="100"/></g></g></g>
+      <g id="cC1cm"><text>C1</text></g>
+    </svg>`;
+    const parsed = parseSvgMeasurements(svg);
+    expect(parsed.measurements.map(measurement => measurement.label)).toEqual(['A1', 'B1', 'C1']);
+    expect(parsed.measurements[0].lines[0].x2).toBe(250);
+    expect(parsed.measurements[1].lines[0].color).toBe('#27865F');
+    expect(parsed.measurements[2].lines[0].x1).toBe(100);
   });
 
   test('prefers explicit labels from tokenized guide groups', () => {

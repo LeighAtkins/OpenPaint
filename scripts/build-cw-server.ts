@@ -8,6 +8,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 await build({
   absWorkingDir: root,
   entryPoints: {
+    'catalogue-overall': 'server/vercel-routes/cw/catalogue-overall.ts',
     archive: 'server/vercel-routes/cw/archive.ts',
   },
   outdir: 'server/vercel-routes/cw/generated',

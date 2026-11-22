@@ -1,6 +1,7 @@
 import { measurementPlacementSchema } from './placement-model';
 import { measurementTagShape } from './tag-presentation';
 import { buildPlacementOverlayElements } from './overlay-elements';
+import { PathUtils } from '../utils/PathUtils';
 
 export function escapeXml(value: string): string {
   return value.replace(
@@ -40,7 +41,9 @@ export function renderPlacementSvg(
         ? ''
         : `<defs><marker id="start-${index}" markerWidth="6" markerHeight="6" refX="0" refY="3" orient="auto"><path d="M6 0 L0 3 L6 6${arrow === 'filled' ? ' Z' : ''}" ${arrowPath}/></marker><marker id="end-${index}" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6${arrow === 'filled' ? ' Z' : ''}" ${arrowPath}/></marker></defs>`;
     const geometry = element.curvePoints
-      ? `<polyline points="${element.curvePoints.map(point).join(' ')}"/>`
+      ? element.curveInterpolation === 'smooth'
+        ? `<path d="${PathUtils.createSmoothPath(element.curvePoints.map(p => ({ x: (p.x * image.width) / 1000, y: (p.y * image.height) / 1000 })))}"/>`
+        : `<polyline points="${element.curvePoints.map(point).join(' ')}"/>`
       : `<line x1="${(element.endpoints[0].point.x * image.width) / 1000}" y1="${(element.endpoints[0].point.y * image.height) / 1000}" x2="${(element.endpoints[1].point.x * image.width) / 1000}" y2="${(element.endpoints[1].point.y * image.height) / 1000}"/>`;
     const dash = style.strokeDashArray
       ? `stroke-dasharray="${style.strokeDashArray.map(value => (value * image.width) / 1000).join(' ')}"`

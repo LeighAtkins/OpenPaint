@@ -21,6 +21,7 @@ import { parseSvgMeasurements } from '../ui/svg-measurement-parser.js';
 import { getSvgElementTransform, transformSvgPoint } from './svg-geometry';
 import { mosToCanvas, canvasToMos, mosScaleFactor } from './mos-transform';
 import { FabricControls } from '../utils/FabricControls.js';
+import { PathUtils } from '../utils/PathUtils';
 
 declare const fabric: any;
 
@@ -126,11 +127,16 @@ export function importMosSvg(
 
   // Flat Illustrator exports lack m/b/c IDs. Use the shared guide parser to
   // bind their measurement geometry to the same editable TagManager roles.
-  if (![...elements.values()].some(element => element.kind === 'measureLine')) {
+  {
+    const existingRoles = new Set(
+      [...elements.values()]
+        .filter(element => element.kind === 'measureLine')
+        .map(element => element.roleToken)
+    );
     const parsed = parseSvgMeasurements(svgText);
     for (const measurement of parsed.measurements) {
       const role = String(measurement.label || '').toUpperCase();
-      if (!/^[A-Z]\d*$/.test(role)) continue;
+      if (!/^[A-Z]\d*$/.test(role) || existingRoles.has(role)) continue;
       for (const [index, segment] of measurement.lines.entries()) {
         const points = segment.points.map(p => ({
           x: ((p.x - srcMinX) / srcWidth) * MOS_RANGE,
@@ -430,7 +436,7 @@ function extractElementGeometry(
 
     case 'path': {
       const d = el.getAttribute('d') || '';
-      const points = extractPathPoints(d);
+      const points = restoredCurveAnchors(el) || extractPathPoints(d);
       if (points.length >= 2) {
         endpoints.push(
           { point: { x: toMosX(points[0].x), y: toMosY(points[0].y) } },
@@ -477,10 +483,16 @@ function extractElementGeometry(
     const points =
       tag === 'polyline'
         ? parsePoints(el.getAttribute('points') || '')
-        : extractPathPoints(el.getAttribute('d') || '');
-    if (tag === 'polyline')
+        : restoredCurveAnchors(el) || extractPathPoints(el.getAttribute('d') || '');
+    if (tag === 'polyline' || tag === 'path')
       baseElement.curveInterpolation =
-        el.getAttribute('data-curve-interpolation') === 'smooth' ? 'smooth' : 'linear';
+        tag === 'path'
+          ? el.getAttribute('data-curve-interpolation') === 'linear'
+            ? 'linear'
+            : 'smooth'
+          : el.getAttribute('data-curve-interpolation') === 'smooth'
+            ? 'smooth'
+            : 'linear';
     if (points.length >= 2) {
       baseElement.curvePoints = points.map(point => ({ x: toMosX(point.x), y: toMosY(point.y) }));
     }
@@ -930,6 +942,21 @@ function perpendicularDistance(
   const projX = start.x + t * dx;
   const projY = start.y + t * dy;
   return Math.hypot(point.x - projX, point.y - projY);
+}
+
+/** Exact editable anchors from our own smooth SVG exports; invalid metadata falls back to d. */
+function restoredCurveAnchors(el: Element) {
+  const raw = el.getAttribute('data-curve-anchors');
+  if (!raw || raw.length > 16384 || el.getAttribute('data-curve-interpolation') !== 'smooth')
+    return null;
+  const points = parsePoints(raw);
+  if (
+    points.length < 2 ||
+    points.length > 128 ||
+    points.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y))
+  )
+    return null;
+  return PathUtils.createSmoothPath(points) === el.getAttribute('d') ? points : null;
 }
 
 function buildSmoothPathFromPoints(points: Array<{ x: number; y: number }>): string {

@@ -135,6 +135,7 @@ export class TextTool extends BaseTool {
       evented: true,
       stroke: 'transparent',
       strokeWidth: 0,
+      customData: { boxedNote: true },
       backgroundColor: backgroundEnabled ? '#ffffff' : 'transparent',
       ...TEXT_ANNOTATION_RUNTIME_DEFAULTS,
     });

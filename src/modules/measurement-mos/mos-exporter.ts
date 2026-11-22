@@ -8,6 +8,7 @@
 
 import type { MeasurementOverlay, MeasurementOverlayElement, ImageRect, MosPoint } from './types';
 import { mosScaleFactor } from './mos-transform';
+import { PathUtils } from '../utils/PathUtils';
 
 const MOS_RANGE = 1000;
 
@@ -79,6 +80,10 @@ function exportElement(
 
       if (Array.isArray(element.curvePoints) && element.curvePoints.length >= 2) {
         if (!element.curvePoints.every(isValidMosPoint)) return null;
+        if (element.curveInterpolation !== 'linear') {
+          const anchors = element.curvePoints.map(p => `${p.x},${p.y}`).join(' ');
+          return `<path id="${escapeAttr(id)}" d="${escapeAttr(PathUtils.createSmoothPath(element.curvePoints))}" fill="none" stroke="${escapeAttr(strokeColor)}" stroke-width="${round(strokeWidth)}" data-curve-interpolation="smooth" data-curve-anchors="${escapeAttr(anchors)}"/>`;
+        }
         const points = element.curvePoints
           .map(point => `${round(point.x)},${round(point.y)}`)
           .join(' ');

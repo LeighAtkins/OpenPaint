@@ -3,6 +3,7 @@
 
 // @ts-nocheck
 
+import { installCalloutRendering } from './tools/boxed-note';
 import { FabricControls } from './utils/FabricControls.js';
 import { PathUtils } from './utils/PathUtils.js';
 import { fitViewportToWorldRect, normalizeViewportRecord } from './utils/viewportRestore.ts';
@@ -36,8 +37,10 @@ interface CaptureFrameRatios {
 }
 interface ClipboardState {
   objects: unknown[];
-  timestamp: number;
+  token: string;
 }
+const OBJECT_CLIPBOARD_TYPE = 'application/x-sofapaint-selection';
+
 interface CanvasManagerOptions {
   containerId?: string;
   enableFloatingLayout?: boolean;
@@ -212,6 +215,7 @@ export class CanvasManager {
 
     console.log(`[CanvasManager] Initializing with size: ${width}x${height}`);
 
+    installCalloutRendering(fabric);
     this.fabricCanvas = new fabric.Canvas(this.canvasId, {
       width: width,
       height: height,
@@ -1669,60 +1673,41 @@ export class CanvasManager {
   }
 
   initKeyboardShortcuts(): void {
-    // Copied strokes live in this.clipboard, which the browser never sees. An
-    // image on the system clipboard is newer than any stroke copy (copying
-    // strokes doesn't touch the system clipboard), so it wins and is left for
-    // UploadManager's paste listener. Otherwise paste the copied strokes.
-    document.addEventListener('paste', (e: ClipboardEvent) => {
-      if (!this.isInteractionActive()) return;
-      const target = e.target as HTMLElement | null;
+    const canHandleCanvasEdit = (event: Event) => {
+      if (this.isDisposed || !this.isInteractionActive() || event.defaultPrevented) return false;
+      const target = event.target as HTMLElement | null;
       const tagName = target?.tagName || '';
-      if (tagName === 'INPUT' || tagName === 'TEXTAREA' || target?.isContentEditable) return;
-      if (window.app?.toolManager?.tools?.text?.activeTextObject?.isEditing === true) return;
-
-      const items = Array.from(e.clipboardData?.items || []);
-      const hasImage =
-        (e.clipboardData?.files?.length || 0) > 0 ||
-        items.some(item => item.kind === 'file' || item.type.startsWith('image/'));
-      if (hasImage) return;
-
-      if (this.clipboard?.objects?.length) {
-        e.preventDefault();
-        this.pasteClipboardObjects();
-      }
-    });
-
-    // Delete key handler
-    document.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (!this.isInteractionActive()) return;
-      // Don't delete if typing in an input
-      // Don't delete if typing in an input
-      const target = e.target as HTMLElement | null;
-      const tagName = target?.tagName || '';
-      const isInput = tagName === 'INPUT' || tagName === 'TEXTAREA';
-      const isContentEditable = !!target?.isContentEditable;
       const isTextEditing =
         window.app?.toolManager?.tools?.text?.activeTextObject?.isEditing === true;
+      return (
+        tagName !== 'INPUT' &&
+        tagName !== 'TEXTAREA' &&
+        !target?.isContentEditable &&
+        !isTextEditing
+      );
+    };
 
-      if (isInput || isContentEditable || isTextEditing) {
-        return;
-      }
+    document.addEventListener('copy', event => {
+      if (!canHandleCanvasEdit(event) || !event.clipboardData) return;
+      const token = this.copySelectedObjects();
+      if (!token) return;
+      event.clipboardData.setData(OBJECT_CLIPBOARD_TYPE, token);
+      event.preventDefault();
+    });
 
-      const key = (e.key || '').toLowerCase();
-      const isCopy = (e.ctrlKey || e.metaKey) && key === 'c';
-      const isPaste = (e.ctrlKey || e.metaKey) && key === 'v';
+    document.addEventListener(
+      'paste',
+      event => {
+        if (!canHandleCanvasEdit(event) || !this.clipboard) return;
+        if (event.clipboardData?.getData(OBJECT_CLIPBOARD_TYPE) !== this.clipboard.token) return;
+        event.preventDefault();
+        this.pasteClipboardObjects();
+      },
+      { capture: true }
+    );
 
-      if (isCopy) {
-        e.preventDefault();
-        this.copySelectedObjects();
-        return;
-      }
-
-      // Paste is decided in the 'paste' listener below, where the system
-      // clipboard can be read. Cancelling the key here would also cancel the
-      // browser's paste, so a copied image could never be imported.
-      if (isPaste) return;
-
+    document.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (!canHandleCanvasEdit(e)) return;
       if ((e.key === 'Delete' || e.key === 'Backspace') && this.fabricCanvas) {
         const activeObjects = this.fabricCanvas.getActiveObjects();
         console.log(`[Delete] Key pressed, found ${activeObjects.length} active objects`);
@@ -1798,16 +1783,16 @@ export class CanvasManager {
     });
   }
 
-  copySelectedObjects(): void {
-    if (!this.fabricCanvas) return;
+  copySelectedObjects(): string | null {
+    if (!this.fabricCanvas) return null;
     const activeObject = this.fabricCanvas.getActiveObject();
     const activeObjects = this.fabricCanvas.getActiveObjects();
-    if (!activeObjects || activeObjects.length === 0) return;
+    if (!activeObjects || activeObjects.length === 0) return null;
 
     const exportable = activeObjects.filter(
       obj => !obj?.excludeFromExport && !obj?.isTag && !obj?.isConnectorLine
     );
-    if (exportable.length === 0) return;
+    if (exportable.length === 0) return null;
 
     // When multiple objects are selected, Fabric wraps them in an ActiveSelection
     // where each child's left/top is relative to the group center.
@@ -1856,12 +1841,11 @@ export class CanvasManager {
       this.fabricCanvas.requestRenderAll();
     }
 
-    this.clipboard = {
-      objects: serialized,
-      timestamp: Date.now(),
-    };
+    const token = crypto.getRandomValues(new Uint32Array(4)).join('-');
+    this.clipboard = { objects: serialized, token };
     this.clipboardPasteCount = 0;
     console.log(`[Copy] Stored ${serialized.length} objects in clipboard`);
+    return token;
   }
 
   pasteClipboardObjects(): void {

@@ -1,3 +1,11 @@
+import { mountCataloguePreview, mountCatalogueCovers } from '../catalogue/product-view';
+import { overallForProduct } from '../catalogue/bridge';
+import {
+  dimensionValue,
+  layoutOverallPlacement,
+  overallPhotoPadding,
+  type OverallPlacement,
+} from '../catalogue/overall-dimensions';
 import {
   openMeasurementSplitWorkspace,
   shouldAllowMeasurementSplitEdit,
@@ -149,6 +157,8 @@ interface StorefrontProduct {
   measurementReference?: string;
   measurementStyle?: string;
   measurementStyleCode?: string;
+  productId?: string;
+  boxContents?: any[];
 }
 
 interface CatalogueComparisonItem extends CatalogueComparisonRequestItem {
@@ -162,6 +172,8 @@ interface CatalogueComparisonItem extends CatalogueComparisonRequestItem {
   measurementReference?: string;
   measurementStyle?: string;
   measurementStyleCode?: string;
+  productId?: string;
+  boxContents?: any[];
   configurationGroups?: Array<{
     key: string;
     label: string;
@@ -575,7 +587,7 @@ function ensureStyles(): void {
     .cw-comparison-status { min-width: 0; flex: 1; color: #64748b; font-size: 11px; }
     .cw-comparison-items { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 7px; margin-top: 9px; }
     .cw-comparison-item { min-width: 0; overflow: hidden; border: 1px solid #dbe4ee; border-radius: 7px; background: #fff; }
-    .cw-comparison-item-image { display: flex; align-items: center; justify-content: center; height: 108px; padding: 5px; background: #f1f5f9; }
+    .cw-comparison-item-image { display: block; height: auto; min-height: 180px; padding: 12px; background: #f8fafc; }
     .cw-comparison-item-image img { display: block; width: 100%; height: 100%; object-fit: contain; }
     .cw-comparison-item-copy { padding: 7px; }
     .cw-comparison-item-title { overflow: hidden; color: #0f172a; font-size: 11px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
@@ -2393,6 +2405,8 @@ function createModal(): HTMLElement {
     measurementReference: String(item.measurementReference || '').trim(),
     measurementStyle: String(item.measurementStyle || '').trim(),
     measurementStyleCode: String(item.measurementStyleCode || '').trim(),
+    productId: String(item.productId || ''),
+    boxContents: item.boxContents || [],
     configurationGroups: Array.isArray(item.configurationGroups)
       ? item.configurationGroups
           .map((group: any) => ({
@@ -2434,16 +2448,15 @@ function createModal(): HTMLElement {
     state.comparisonItems.forEach((item, itemIndex) => {
       const card = document.createElement('article');
       card.className = 'cw-comparison-item';
-      const imageWrap = document.createElement('a');
+      const imageWrap = document.createElement('div');
       imageWrap.className = 'cw-comparison-item-image';
-      imageWrap.href = item.productUrl || item.url || '#';
-      imageWrap.target = '_blank';
-      imageWrap.rel = 'noopener noreferrer';
       if (item.imageUrl) {
         const image = document.createElement('img');
         image.src = item.imageUrl;
         image.alt = `${item.title || item.productReference} catalogue photo`;
-        imageWrap.appendChild(image);
+        if (item.kind !== 'fabric-sample' && item.dimensions) {
+          mountCataloguePreview(imageWrap, item);
+        } else imageWrap.appendChild(image);
       } else {
         imageWrap.textContent = 'No photo';
       }
@@ -2516,6 +2529,7 @@ function createModal(): HTMLElement {
       copy.append(title, config, note);
       if (optionGroups.childElementCount) copy.appendChild(optionGroups);
       copy.appendChild(drawButton);
+      if (item.kind !== 'fabric-sample') mountCatalogueCovers(copy, item);
       card.append(imageWrap, copy);
       comparisonItems.appendChild(card);
     });
@@ -6379,12 +6393,37 @@ function createModal(): HTMLElement {
 
   const importCatalogueComparisonItem = async (
     item: CatalogueComparisonItem,
-    index: number
+    index: number,
+    placement?: OverallPlacement
   ): Promise<{ viewId: string; loadedItem: LoadedMeasurementItem | null }> => {
     const projectManager = (window as any).app?.projectManager;
     if (!projectManager) throw new Error('Project manager not available');
 
-    const resolvedUrl = await fetchStorefrontImageDataUrl(item.imageUrl);
+    let resolvedUrl = await fetchStorefrontImageDataUrl(item.imageUrl);
+    // Reserve whitespace for the three bounding dimensions; keep the photograph's aspect ratio.
+    const cataloguePadding =
+      item.kind !== 'fabric-sample' && item.dimensions
+        ? placement
+          ? overallPhotoPadding(placement)
+          : 0.18
+        : 0;
+    if (cataloguePadding) {
+      const photo = new Image();
+      photo.src = resolvedUrl;
+      await photo.decode();
+      const padded = document.createElement('canvas');
+      padded.width = Math.round(photo.naturalWidth * (1 + 2 * cataloguePadding));
+      padded.height = Math.round(photo.naturalHeight * (1 + 2 * cataloguePadding));
+      const ctx = padded.getContext('2d')!;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, padded.width, padded.height);
+      ctx.drawImage(
+        photo,
+        photo.naturalWidth * cataloguePadding,
+        photo.naturalHeight * cataloguePadding
+      );
+      resolvedUrl = padded.toDataURL('image/png');
+    }
     const sideCode = item.codes.find(code => /^(?:L|R|LA|RA)$/i.test(code)) || '';
     const seed = slugify(`${item.productReference}${sideCode ? `-${sideCode}` : ''}`);
     const viewId = nextUniqueViewId(seed || `catalogue-${index + 1}`);
@@ -6407,6 +6446,7 @@ function createModal(): HTMLElement {
         requestedSku: item.requestedSku,
         matchedSku: item.matchedSku,
         imageMatch: item.imageMatch,
+        catalogueOverallPadding: cataloguePadding,
       });
     } else {
       await projectManager.addImage(viewId, resolvedUrl, { refreshBackground: false });
@@ -6498,6 +6538,131 @@ function createModal(): HTMLElement {
     })();
   });
 
+  const drawCatalogueOverall = async (
+    viewId: string,
+    item: CatalogueComparisonItem,
+    placement: OverallPlacement
+  ) => {
+    const w = window as any,
+      canvas = w.app?.canvasManager?.fabricCanvas;
+    const bg = canvas?.backgroundImage;
+    if (!bg || !w.fabric || !w.app?.metadataManager)
+      throw Error('The product photo is not ready for dimension placement.');
+    const transform = bg.calcTransformMatrix();
+    const padding = overallPhotoPadding(placement);
+    const layout = layoutOverallPlacement(placement);
+    const map = (p: { x: number; y: number }) =>
+      w.fabric.util.transformPoint(
+        new w.fabric.Point(
+          ((p.x + padding) / (1 + 2 * padding) - 0.5) * bg.width,
+          ((p.y + padding) / (1 + 2 * padding) - 0.5) * bg.height
+        ),
+        transform
+      );
+    const used = new Set<string>(getStrokeLabels(viewId));
+    for (const span of layout.spans) {
+      const value = dimensionValue(item.dimensions || {}, span.key, 'cm');
+      if (value === null) continue;
+      const name = span.key[0].toUpperCase() + span.key.slice(1);
+      const label = resolveNextAvailableCwLabel(name, used);
+      const a = map({ x: span.start.x + span.offset.x, y: span.start.y + span.offset.y });
+      const b = map({ x: span.end.x + span.offset.x, y: span.end.y + span.offset.y });
+      for (const [physical, projected] of [
+        [map(span.start), a],
+        [map(span.end), b],
+      ]) {
+        if (Math.hypot(physical.x - projected.x, physical.y - projected.y) < 1) continue;
+        canvas.add(
+          new w.fabric.Line([physical.x, physical.y, projected.x, projected.y], {
+            strokeWidth: 1,
+            stroke: { width: '#155e75', depth: '#9a3412', height: '#6b21a8' }[span.key],
+            opacity: 0.55,
+            selectable: true,
+            evented: true,
+            objectCaching: false,
+            arrowSettings: { startArrow: false, endArrow: false },
+            customData: {
+              imageLabel: viewId,
+              role: 'catalogue-overall-witness',
+              dimension: span.key,
+            },
+          })
+        );
+      }
+      const line = new w.fabric.Line([a.x, a.y, b.x, b.y], {
+        strokeWidth: 2,
+        stroke: { width: '#155e75', depth: '#9a3412', height: '#6b21a8' }[span.key],
+        originX: 'center',
+        originY: 'center',
+        selectable: true,
+        evented: true,
+        padding: 8,
+        objectCaching: false,
+      });
+      canvas.add(line);
+      FabricControls.createLineControls(line);
+      w.app.arrowManager?.applyArrows?.(line);
+      w.app.metadataManager.attachMetadata(line, viewId, label);
+      applyMeasurement(viewId, label, String(value), name, lockedEl.checked);
+      const saved = w.strokeMeasurements?.[viewId]?.[label];
+      if (saved)
+        w.app.measurementSystem?.setMeasurement?.(
+          viewId,
+          label,
+          saved.inchWhole,
+          saved.inchFraction,
+          {
+            cmValue: value,
+            inchValue: dimensionValue(item.dimensions || {}, span.key, 'in'),
+            inputUnit: 'cm',
+          }
+        );
+      w.app.tagManager?.createTagForStroke?.(label, viewId, line);
+      used.add(label);
+    }
+    // Native pills have their own text widths. Keep them inside the padded photo
+    // using TagManager's normal move event so their persisted offsets stay editable.
+    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    const frame = bg.getBoundingRect(true, true);
+    const inset = 28;
+    for (const span of layout.spans) {
+      const entry = w.app.tagManager?.getTagObject?.(span.key.toUpperCase(), viewId);
+      const tag = entry?.tagObj;
+      if (!tag) continue;
+      const bounds = tag.getBoundingRect(true, true);
+      const dx = Math.max(
+        frame.left + inset - bounds.left,
+        Math.min(0, frame.left + frame.width - inset - bounds.left - bounds.width)
+      );
+      const dy = Math.max(
+        frame.top + inset - bounds.top,
+        Math.min(0, frame.top + frame.height - inset - bounds.top - bounds.height)
+      );
+      if (dx || dy) {
+        tag.set({ left: tag.left + dx, top: tag.top + dy });
+        tag.setCoords();
+        tag.fire('moving');
+      }
+    }
+    canvas.requestRenderAll();
+    w.app.historyManager?.saveState?.({ force: true, reason: 'catalogue-overall:qwen' });
+    if (placement.omissions.length)
+      setStatus(placement.omissions.map(o => `${o.key}: ${o.reason}`).join(' '), 'bad');
+  };
+
+  (window as any).importCatalogueProduct = async (raw: CatalogueComparisonItem) => {
+    const item = normalizeComparisonResponseItem(raw);
+    const result = item.dimensions ? await overallForProduct(item) : null;
+    const { viewId, loadedItem } = await importCatalogueComparisonItem(item, 0, result?.placement);
+    await waitForImportedViewReady(viewId);
+    if (loadedItem && result) {
+      syncWorkspaceGuideSeed(viewId, { render: true, arm: false });
+      await drawCatalogueOverall(viewId, item, result.placement);
+    }
+    overlay.style.display = 'none';
+    return { imported: true, viewId };
+  };
+
   comparisonItems.addEventListener('click', event => {
     const button = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>(
       '[data-cw-comparison-draw]'
@@ -6513,7 +6678,12 @@ function createModal(): HTMLElement {
       button.textContent = 'Adding...';
       comparisonStatus.textContent = `Preparing ${item.productReference} for drawing...`;
       try {
-        const { viewId, loadedItem } = await importCatalogueComparisonItem(item, itemIndex);
+        const result = item.dimensions ? await overallForProduct(item) : null;
+        const { viewId, loadedItem } = await importCatalogueComparisonItem(
+          item,
+          itemIndex,
+          result?.placement
+        );
         if (!loadedItem) {
           overlay.style.display = 'none';
           await waitForImportedViewReady(viewId);
@@ -6525,11 +6695,12 @@ function createModal(): HTMLElement {
         state.activeSection = '';
         await enableGuideWorkflowDefaults(viewId);
         await waitForImportedViewReady(viewId);
-        syncWorkspaceGuideSeed(viewId, { render: true, arm: true });
+        syncWorkspaceGuideSeed(viewId, { render: true, arm: false });
+        if (result) await drawCatalogueOverall(viewId, item, result.placement);
         overlay.style.display = 'none';
         openMeasurementSplitWorkspace(viewId);
         setStatus(
-          `Added ${item.productReference}. Width, Depth, and Height are ready in split view.`,
+          `Added ${item.productReference}. Overall dimensions have been placed. Review the outer edges in split view.`,
           'ok'
         );
       } catch (error) {

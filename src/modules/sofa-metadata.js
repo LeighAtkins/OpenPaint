@@ -807,6 +807,9 @@ export function normalizeSofaMetadata(input) {
     measurementGuideCode,
     measurementGuideCodes,
     measurementGuideLibraryCodes,
+    longSkirtFloorChecks: source.longSkirtFloorChecks
+      ? safeClone(source.longSkirtFloorChecks, null)
+      : null,
     measurementChecks,
     measurementConnections,
     measurementGuideCodesByView,

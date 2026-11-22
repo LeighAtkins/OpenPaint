@@ -1352,7 +1352,7 @@ export class StrokeMetadataManager {
         bgCheckbox.style.cursor = 'pointer';
 
         const bgLabel = document.createElement('span');
-        bgLabel.textContent = 'BG';
+        bgLabel.textContent = textObj.customData?.boxedNote ? 'Box' : 'BG';
         bgLabel.style.fontSize = '11px';
         bgLabel.style.fontWeight = '600';
         bgLabel.style.color = 'rgb(71, 85, 105)';

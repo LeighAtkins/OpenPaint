@@ -238,7 +238,7 @@ export class App {
 
     document.querySelectorAll<HTMLElement>('.color-swatches').forEach(container => {
       container.dataset.palette = resolvedName;
-      container.innerHTML = palette
+      const swatches = palette
         .map(color => {
           const isWhite = color.hex.toLowerCase() === '#ffffff';
           const isFluro = resolvedName === 'fluro';
@@ -256,14 +256,20 @@ export class App {
         })
         .join('');
 
-      const toggle = document.createElement('button');
-      toggle.type = 'button';
-      toggle.className = 'tbtn color-palette-toggle';
-      toggle.dataset.paletteToggle = 'true';
+      container.querySelectorAll(':scope > [data-color]').forEach(button => button.remove());
+      container.insertAdjacentHTML('afterbegin', swatches);
+
+      let toggle = container.querySelector<HTMLButtonElement>('[data-palette-toggle]');
+      if (!toggle) {
+        toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'tbtn color-palette-toggle';
+        toggle.dataset.paletteToggle = 'true';
+        container.appendChild(toggle);
+      }
       toggle.textContent = titleCase(resolvedName);
       toggle.title = `Palette: ${titleCase(resolvedName)}. Click for ${titleCase(nextPalette)}.`;
       toggle.setAttribute('aria-label', `Color palette ${titleCase(resolvedName)}`);
-      container.appendChild(toggle);
     });
 
     localStorage.setItem('openpaint.toolbarColorPalette', resolvedName);
@@ -1695,27 +1701,14 @@ export class App {
       toggle.addEventListener('click', (e: MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-
-        const wrapper = toggle.closest('.shape-toggle');
-        const shapeIcon = toggle.querySelector('.shape-icon');
-        const clickedOnIcon = shapeIcon && e.target === shapeIcon;
-
-        // If clicking the dropdown icon, toggle the menu
-        if (clickedOnIcon) {
-          if (wrapper) wrapper.classList.toggle('shape-open');
-        } else {
-          // Clicking the button itself: select line tool and close menu
-          leaveEraserBrushSize();
-          this.toolManager.selectTool('line');
-          updateDrawingToggleLabels('Straight Line');
-          if (wrapper) wrapper.classList.remove('shape-open');
-
-          // Mark the straight line option as active in the dropdown
-          drawingModeOptions.forEach(item => {
-            const mode = item.getAttribute('data-drawing-mode');
-            item.classList.toggle('active', mode === 'line');
-          });
-        }
+        toggle.closest('.shape-toggle')?.classList.toggle('shape-open');
+      });
+    });
+    document.addEventListener('pointerdown', event => {
+      if (!(event.target instanceof Node)) return;
+      const target = event.target;
+      drawingModeWrappers.forEach(wrapper => {
+        if (!wrapper.contains(target)) wrapper.classList.remove('shape-open');
       });
     });
 
@@ -1943,7 +1936,6 @@ export class App {
 
     shapeModeWrappers.forEach(wrapper => bindShapeMenu(wrapper, () => true));
     textStyleWrappers.forEach(wrapper => bindShapeMenu(wrapper));
-    drawingModeWrappers.forEach(wrapper => bindShapeMenu(wrapper));
     textModeWrappers.forEach(wrapper => bindShapeMenu(wrapper, () => true));
     document
       .querySelectorAll('#eraserModeWrapper')
@@ -2931,14 +2923,27 @@ export class App {
         panel.setAttribute('aria-label', 'Line style controls');
         panel.innerHTML = `
           <div class="line-style-panel-grid">
+            <div id="lineStylePreviewWrap" data-mat="light" aria-hidden="true">
+              <canvas id="lineStylePreviewCanvas" width="320" height="48"></canvas>
+              <span id="lineStylePreviewMeta" class="line-style-preview-meta">2 px · Solid</span>
+            </div>
+            <div class="line-style-row line-style-primary-row"><span class="line-style-title">Stroke</span><div id="lineStyleStrokeRow" class="line-style-control"></div></div>
             <div class="line-style-row"><span class="line-style-title">Path</span><div id="lineStyleGeometryRow" class="line-style-control line-style-segmented" role="group" aria-label="Line path"><button type="button" data-line-geometry="line">Straight</button><button type="button" data-line-geometry="curve">Curved</button></div></div>
-            <div class="line-style-row"><span class="line-style-title">Stroke</span><div id="lineStyleStrokeRow" class="line-style-control"></div></div>
             <div id="lineStyleHighlighterRow" class="line-style-row" hidden><span class="line-style-title">Mark</span><div class="line-style-control line-style-highlighter-options" role="group" aria-label="Highlighter style"><button type="button" data-highlighter-style="marker" class="active">Marker</button></div></div>
-            <div class="line-style-row"><span class="line-style-title">Arrow</span><div id="lineStyleArrowStyleRow" class="line-style-control"></div></div>
             <div class="line-style-row"><span class="line-style-title">Pattern</span><div id="lineStylePatternRow" class="line-style-control"></div></div>
+            <div class="line-style-row"><span class="line-style-title">Arrow</span><div id="lineStyleArrowStyleRow" class="line-style-control"></div></div>
             <div id="lineStyleColorRow" class="line-style-row" hidden><span class="line-style-title">Color</span><div id="lineStyleZipperColors" class="line-style-control line-style-color-options" role="group" aria-label="Zipper color"></div></div>
-            <div class="line-style-row line-style-scope"><span class="line-style-title">Scope</span><div class="line-style-control"><button type="button" data-scope="selection" class="active">Selection</button><button type="button" data-scope="image">Image</button><button type="button" data-scope="project">Project</button></div></div>
-            <div id="lineStylePreviewWrap" aria-hidden="true"><canvas id="lineStylePreviewCanvas" width="300" height="28"></canvas></div>
+            <div class="line-style-row line-style-scope">
+              <span class="line-style-title">Apply to</span>
+              <div class="line-style-scope-stack">
+                <div class="line-style-control line-style-scope-buttons" role="group" aria-label="Apply line style to">
+                  <button type="button" data-scope="selection" class="active" aria-pressed="true">Selected</button>
+                  <button type="button" data-scope="image" aria-pressed="false">This view</button>
+                  <button type="button" data-scope="project" aria-pressed="false">Project</button>
+                </div>
+                <span id="lineStyleScopeNote" class="line-style-scope-note">Applies to new lines — select a line to edit it</span>
+              </div>
+            </div>
           </div>
         `;
 
@@ -2976,15 +2981,20 @@ export class App {
           toggle.setAttribute('aria-expanded', String(open));
         });
 
-        document.addEventListener('click', e => {
-          if (!wrap || wrap.contains(e.target as Node) || panel.contains(e.target as Node)) return;
-          if (closeUnifiedAppearance) {
-            closeUnifiedAppearance();
-          } else {
-            panel.classList.remove('open');
-            toggle.setAttribute('aria-expanded', 'false');
-          }
-        });
+        document.addEventListener(
+          'pointerdown',
+          e => {
+            if (!wrap || wrap.contains(e.target as Node) || panel.contains(e.target as Node))
+              return;
+            if (closeUnifiedAppearance) {
+              closeUnifiedAppearance();
+            } else {
+              panel.classList.remove('open');
+              toggle.setAttribute('aria-expanded', 'false');
+            }
+          },
+          { capture: true }
+        );
       }
 
       const panel = document.getElementById('lineStylePopoverPanel');
@@ -3454,37 +3464,53 @@ export class App {
       ) as HTMLCanvasElement | null;
       let previewCanvas: any = null;
       let previewLine: any = null;
+      const PREVIEW_HEIGHT = 48;
+      const isLightStrokeColor = (hex: string): boolean => {
+        const clean = hex.trim().replace('#', '');
+        const full =
+          clean.length === 3
+            ? clean
+                .split('')
+                .map(ch => ch + ch)
+                .join('')
+            : clean;
+        if (!/^[0-9a-fA-F]{6}$/.test(full)) return false;
+        const r = Number.parseInt(full.slice(0, 2), 16);
+        const g = Number.parseInt(full.slice(2, 4), 16);
+        const b = Number.parseInt(full.slice(4, 6), 16);
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance > 0.58;
+      };
       const ensurePreviewCanvas = () => {
-        if (!previewCanvasElement || previewCanvas) return;
+        if (!previewCanvasElement) return;
         const fabricLib = (globalThis as any).fabric;
         if (!fabricLib?.StaticCanvas || !fabricLib?.Line) return;
-        // Measure the actual rendered width of the wrap element so the canvas
-        // backing store matches the CSS size. Without this, Fabric's retina
-        // scaling doubles the backing store while CSS stretches it, producing a
-        // blurry/misaligned preview. Disable retina scaling for this small
-        // preview — it doesn't need high-DPI precision.
         const wrap = previewCanvasElement.parentElement;
-        const cssWidth = wrap ? wrap.clientWidth : 300;
-        const cssHeight = 28;
-        previewCanvasElement.width = cssWidth;
-        previewCanvasElement.height = cssHeight;
-        previewCanvas = new fabricLib.StaticCanvas(previewCanvasElement, {
-          selection: false,
-          renderOnAddRemove: false,
-          enableRetinaScaling: false,
-        });
-        previewCanvas.setDimensions({ width: cssWidth, height: cssHeight });
-        const midY = Math.round(cssHeight / 2);
-        const padX = 18;
-        previewLine = new fabricLib.Line([padX, midY, cssWidth - padX, midY], {
-          stroke: '#1f2937',
-          strokeWidth: 2,
-          strokeLineCap: 'round',
-          selectable: false,
-          evented: false,
-          objectCaching: false,
-        });
-        previewCanvas.add(previewLine);
+        const measuredWidth = wrap ? Math.floor(wrap.clientWidth) : 0;
+        const cssWidth = measuredWidth > 40 ? measuredWidth : 320;
+        if (!previewCanvas) {
+          previewCanvasElement.width = cssWidth;
+          previewCanvasElement.height = PREVIEW_HEIGHT;
+          previewCanvas = new fabricLib.StaticCanvas(previewCanvasElement, {
+            selection: false,
+            renderOnAddRemove: false,
+            enableRetinaScaling: false,
+          });
+          previewCanvas.setDimensions({ width: cssWidth, height: PREVIEW_HEIGHT });
+          const midY = Math.round(PREVIEW_HEIGHT / 2);
+          const padX = 22;
+          previewLine = new fabricLib.Line([padX, midY, cssWidth - padX, midY], {
+            stroke: '#1f2937',
+            strokeWidth: 2,
+            strokeLineCap: 'round',
+            selectable: false,
+            evented: false,
+            objectCaching: false,
+          });
+          previewCanvas.add(previewLine);
+        } else if (measuredWidth > 40 && Math.abs((previewCanvas.width || 0) - cssWidth) > 2) {
+          previewCanvas.setDimensions({ width: cssWidth, height: PREVIEW_HEIGHT });
+        }
       };
       const syncPreview = () => {
         if (!brushSizeSelect) return;
@@ -3493,8 +3519,12 @@ export class App {
         if (!previewCanvas || !previewLine) return;
         const colorInput = document.getElementById('colorPicker') as HTMLInputElement | null;
         const strokeColor = colorInput?.value || '#1f2937';
+        const previewWrap = document.getElementById('lineStylePreviewWrap');
         const uiArrowSettings = window.paintApp?.uiState?.arrowSettings;
         const style = this.currentDashSettings.style || 'solid';
+        if (previewWrap) {
+          previewWrap.dataset.mat = isLightStrokeColor(strokeColor) ? 'dark' : 'light';
+        }
         const startArrow =
           style === 'zipper'
             ? false
@@ -3512,15 +3542,23 @@ export class App {
         const arrowSize = updateArrowSizeProxy({ dispatch: false });
         const pattern = this.getDashPatternForStyle(style);
         const tapeTickSpacing = normalizeTapeTickSpacing(this.currentDashSettings.tapeTickSpacing);
+        const previewMeta = document.getElementById('lineStylePreviewMeta');
+        if (previewMeta) {
+          const patternText =
+            lineStylePatternSelect?.selectedOptions?.[0]?.textContent?.trim() || 'Solid';
+          previewMeta.textContent = `${width} px · ${patternText}`;
+        }
         updateLineStyleToggleSummary();
 
         // Use the preview canvas dimensions instead of hardcoded coords so the
-        // line spans the full width regardless of panel size. The padding grows
-        // with the arrowhead footprint (width × scale) so the arrows render
-        // fully inside the canvas instead of clipping off the edges.
-        const canvasW = previewCanvas?.width || 300;
-        const canvasH = previewCanvas?.height || 28;
-        const arrowPad = Math.min(80, Math.max(18, Math.ceil(width * arrowSize) + 10));
+        // line spans the full width regardless of panel size. Keep padding
+        // proportional to the arrowhead size without crushing narrow widths.
+        const canvasW = previewCanvas?.width || 320;
+        const canvasH = previewCanvas?.height || PREVIEW_HEIGHT;
+        const arrowPad = Math.min(
+          Math.floor(canvasW * 0.28),
+          Math.max(20, Math.ceil(arrowSize * 1.35) + 12)
+        );
         const midY = Math.round(canvasH / 2);
         previewLine.set({
           x1: arrowPad,
@@ -3529,7 +3567,7 @@ export class App {
           y2: midY,
           stroke: strokeColor,
           strokeWidth: Math.min(14, width),
-          opacity: 0.96,
+          opacity: 1,
           strokeDashArray: pattern.length ? pattern : null,
           lineStyle:
             style === 'tape' || style === 'stretchy' || style === 'zipper' ? style : 'solid',
@@ -3582,12 +3620,40 @@ export class App {
       const lineStyleScopeButtons = Array.from(
         panel.querySelectorAll<HTMLButtonElement>('[data-scope]')
       );
+      const syncScopeReadout = () => {
+        const scopeNote = document.getElementById('lineStyleScopeNote');
+        const appearanceScope = document.getElementById('elementsAppearanceScope');
+        const activeCount = this.canvasManager?.fabricCanvas?.getActiveObjects?.()?.length || 0;
+        const badgeText = appearanceScope?.textContent?.trim() || '';
+        const badgeMatch = /^(\d+)\s+selected$/i.exec(badgeText);
+        const selectedCount = Math.max(activeCount, badgeMatch ? Number(badgeMatch[1]) : 0);
+        if (appearanceScope) {
+          appearanceScope.dataset.hasSelection = String(selectedCount > 0);
+        }
+        lineStyleScopeButtons.forEach(node => {
+          const isActive = node.dataset.scope === lineStyleScope;
+          node.classList.toggle('active', isActive);
+          node.setAttribute('aria-pressed', String(isActive));
+        });
+        if (scopeNote) {
+          if (lineStyleScope === 'image') {
+            scopeNote.textContent = 'Updates all lines on this view + new lines';
+          } else if (lineStyleScope === 'project') {
+            scopeNote.textContent = 'Updates all lines across every view';
+          } else if (selectedCount > 0) {
+            scopeNote.textContent = `Updating ${selectedCount} selected + new lines`;
+          } else {
+            scopeNote.textContent = 'Applies to new lines — select a line to edit it';
+          }
+        }
+      };
       lineStyleScopeButtons.forEach(btn => {
         btn.addEventListener('click', () => {
           lineStyleScope = btn.dataset.scope as 'selection' | 'image' | 'project';
-          lineStyleScopeButtons.forEach(node => node.classList.toggle('active', node === btn));
+          syncScopeReadout();
         });
       });
+      syncScopeReadout();
 
       panel.querySelectorAll<HTMLButtonElement>('[data-highlighter-style]').forEach(button => {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises -- async DOM event handler
@@ -3764,92 +3830,111 @@ export class App {
       );
       const strokeMount = document.getElementById('elementsStrokeAppearanceMount');
       const lineStyleGrid = panel.querySelector<HTMLElement>('.line-style-panel-grid');
-      const strokePanel = document.getElementById('strokePanel');
-      const elementsBody = document.getElementById('elementsBody');
       const toggle = document.getElementById('lineStylePopoverBtn') as HTMLButtonElement | null;
 
       if (appearanceDetails && appearanceBody && strokeMount && lineStyleGrid && toggle) {
+        // Keep one canonical set of controls in the toolbar menu. Moving it back
+        // into the Inspector made Style behave differently as panels collapsed.
         strokeMount.appendChild(lineStyleGrid);
+        panel.appendChild(appearanceBody);
         panel.classList.add('unified-appearance-popover');
+        panel.setAttribute('aria-label', 'Line and tag style');
+        panel.inert = true;
+        appearanceDetails.hidden = true;
 
-        const isElementsInspectorOpen = () =>
-          strokePanel?.getAttribute('aria-expanded') !== 'false' &&
-          !strokePanel?.classList.contains('collapsed') &&
-          !strokePanel?.classList.contains('minimized') &&
-          elementsBody !== null &&
-          getComputedStyle(elementsBody).display !== 'none';
+        toggle.setAttribute('aria-controls', panel.id);
 
-        const restoreAppearanceBody = () => {
-          if (appearanceBody.parentElement !== appearanceDetails) {
-            appearanceDetails.appendChild(appearanceBody);
-          }
-        };
+        const heading = document.createElement('div');
+        heading.className = 'workspace-style-header';
+        const title = document.createElement('strong');
+        title.textContent = 'Style';
+        const scope = document.getElementById('elementsAppearanceScope');
+        const closeButton = document.createElement('button');
+        closeButton.type = 'button';
+        closeButton.className = 'elements-icon-button';
+        closeButton.textContent = '×';
+        closeButton.setAttribute('aria-label', 'Close style menu');
+        heading.appendChild(title);
+        if (scope) heading.appendChild(scope);
+        heading.appendChild(closeButton);
+        panel.prepend(heading);
 
         const closeFloatingAppearance = () => {
+          const restoreFocus = panel.contains(document.activeElement);
+          if (restoreFocus) toggle.focus({ preventScroll: true });
           panel.classList.remove('open');
+          panel.inert = true;
           toggle.setAttribute('aria-expanded', 'false');
-          restoreAppearanceBody();
         };
 
         const positionFloatingAppearance = () => {
           const rect = toggle.getBoundingClientRect();
           const margin = 8;
-          const gap = 8;
-          const panelWidth = Math.min(410, window.innerWidth - margin * 2);
-          let left = Math.max(margin, Math.min(rect.left, window.innerWidth - panelWidth - margin));
-          let top = rect.bottom + gap;
-          const estimatedHeight = Math.min(560, window.innerHeight - margin * 2);
-          if (top + estimatedHeight > window.innerHeight - margin) {
-            top = Math.max(margin, rect.top - estimatedHeight - gap);
-          }
+          const panelWidth = Math.min(368, window.innerWidth - margin * 2);
+          const left = Math.max(
+            margin,
+            Math.min(rect.left, window.innerWidth - panelWidth - margin)
+          );
+          const top = Math.min(rect.bottom + margin, Math.max(margin, window.innerHeight - 160));
+          panel.style.width = `${panelWidth}px`;
           panel.style.left = `${left}px`;
           panel.style.top = `${top}px`;
+          panel.style.maxHeight = `${Math.max(160, window.innerHeight - top - margin)}px`;
         };
 
-        toggleUnifiedAppearance = () => {
-          if (isElementsInspectorOpen()) {
-            closeFloatingAppearance();
-            appearanceDetails.open = !appearanceDetails.open;
-            toggle.setAttribute('aria-expanded', String(appearanceDetails.open));
-            appearanceDetails.scrollIntoView({ block: 'nearest' });
-            return;
-          }
-
-          if (panel.classList.contains('open')) {
-            closeFloatingAppearance();
-            return;
-          }
-          panel.appendChild(appearanceBody);
+        const openFloatingAppearance = (focusFirst = false) => {
           positionFloatingAppearance();
+          syncScopeReadout();
+          panel.inert = false;
           panel.classList.add('open');
           toggle.setAttribute('aria-expanded', 'true');
+          requestAnimationFrame(() => syncPreview());
+          if (focusFirst) {
+            const firstFocusable = panel.querySelector<HTMLElement>(
+              'button:not(:disabled), input:not(:disabled), select:not(:disabled), summary'
+            );
+            (firstFocusable || closeButton).focus({ preventScroll: true });
+          }
+        };
+        if (scope) {
+          new MutationObserver(syncScopeReadout).observe(scope, {
+            childList: true,
+            characterData: true,
+            subtree: true,
+          });
+        }
+        const fabricCanvas = this.canvasManager?.fabricCanvas;
+        if (fabricCanvas?.on) {
+          fabricCanvas.on('selection:created', syncScopeReadout);
+          fabricCanvas.on('selection:updated', syncScopeReadout);
+          fabricCanvas.on('selection:cleared', syncScopeReadout);
+        }
+        toggleUnifiedAppearance = () => {
+          if (panel.classList.contains('open')) closeFloatingAppearance();
+          else openFloatingAppearance();
         };
         closeUnifiedAppearance = closeFloatingAppearance;
-
-        appearanceDetails.addEventListener('toggle', () => {
-          if (isElementsInspectorOpen()) {
-            toggle.setAttribute('aria-expanded', String(appearanceDetails.open));
+        closeButton.addEventListener('click', closeFloatingAppearance);
+        toggle.addEventListener('keydown', event => {
+          if (event.key !== 'ArrowDown' && event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
+          if (event.key === 'ArrowDown' || !panel.classList.contains('open')) {
+            openFloatingAppearance(true);
+          } else {
+            closeFloatingAppearance();
           }
         });
-
-        const syncAppearanceLocation = () => {
-          if (!isElementsInspectorOpen()) return;
-          const wasFloating = panel.classList.contains('open');
+        document.addEventListener('keydown', event => {
+          if (event.key !== 'Escape' || !panel.classList.contains('open')) return;
+          event.preventDefault();
           closeFloatingAppearance();
-          if (wasFloating) appearanceDetails.open = true;
-        };
-        if (strokePanel) {
-          new MutationObserver(syncAppearanceLocation).observe(strokePanel, {
-            attributes: true,
-            attributeFilter: ['class', 'aria-expanded'],
-          });
-        }
-        if (elementsBody) {
-          new MutationObserver(syncAppearanceLocation).observe(elementsBody, {
-            attributes: true,
-            attributeFilter: ['class', 'style'],
-          });
-        }
+        });
+        window.addEventListener('resize', () => {
+          if (panel.classList.contains('open')) {
+            positionFloatingAppearance();
+            syncPreview();
+          }
+        });
       }
     };
 

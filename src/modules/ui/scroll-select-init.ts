@@ -1418,7 +1418,16 @@ export function initScrollSelectSystem() {
         delete stepper.dataset.imageLabels;
         stepper.querySelector('.mini-stepper-compact')?.remove();
         if (indicator) indicator.style.display = 'none';
-        pillsList.innerHTML = '<li class="px-2 py-1 text-slate-500 text-xs">No images yet</li>';
+        if (!pillsList.querySelector('.mini-stepper-empty')) {
+          pillsList.innerHTML = `
+            <li class="mini-stepper-empty">
+              <button type="button" class="tbtn" aria-describedby="mini-stepper-upload-hint">Add photo</button>
+              <small id="mini-stepper-upload-hint">Or drop or paste an image</small>
+            </li>`;
+          pillsList
+            .querySelector('.mini-stepper-empty button')
+            ?.addEventListener('click', () => document.getElementById('paste')?.click());
+        }
         pillsList.className =
           'flex gap-2 px-2 py-1 overflow-x-auto snap-x snap-mandatory justify-center items-center min-h-[40px]';
         syncFrameToggleButtons();
@@ -1838,8 +1847,7 @@ export function initScrollSelectSystem() {
             document.querySelectorAll('#mini-stepper button[data-step-kind="image"]')
           );
           const currentContainers = getImageContainers();
-          const hasNoImagesPlaceholder =
-            !!stepper && (stepper.textContent || '').includes('No images yet');
+          const hasNoImagesPlaceholder = !!stepper?.querySelector('.mini-stepper-empty');
           const hasProjectImages =
             !!window.projectManager?.views &&
             Object.values(window.projectManager.views).some(view => !!view?.image);
@@ -1860,6 +1868,9 @@ export function initScrollSelectSystem() {
           ticking = false;
         });
       };
+
+      window.addEventListener('openpaint:image-collection-change', checkForChanges);
+      window.addEventListener('openpaint:project-loaded', checkForChanges);
 
       const imageListEl = document.getElementById('imageList');
       if (imageListEl && typeof MutationObserver !== 'undefined') {

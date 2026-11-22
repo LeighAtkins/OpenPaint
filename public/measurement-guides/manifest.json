@@ -2042,6 +2042,49 @@
               ]
             }
           ]
+        },
+        {
+          "name": "Sofa Frames",
+          "type": "folder",
+          "children": [
+            {
+              "name": "Lounge - Level Back Extended Panel",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "back_CS3L-SA-LB-EP.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Sofa Frames/Lounge - Level Back Extended Panel/back_CS3L-SA-LB-EP.svg"
+                },
+                {
+                  "name": "front_CS3L-SA-LB-EP.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Sofa Frames/Lounge - Level Back Extended Panel/front_CS3L-SA-LB-EP.svg"
+                },
+                {
+                  "name": "side_CS3L-SA-LB-EP.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Sofa Frames/Lounge - Level Back Extended Panel/side_CS3L-SA-LB-EP.svg"
+                }
+              ]
+            },
+            {
+              "name": "Source Repairs",
+              "type": "folder",
+              "files": [
+                {
+                  "name": "front_CS3L-WA-SB.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Sofa Frames/Source Repairs/front_CS3L-WA-SB.svg"
+                },
+                {
+                  "name": "side_CS1L-RA-WB.svg",
+                  "type": "svg",
+                  "path": "public/measurement-guides/Modular MT /Sofa Frames/Source Repairs/side_CS1L-RA-WB.svg"
+                }
+              ]
+            }
+          ]
         }
       ]
     }

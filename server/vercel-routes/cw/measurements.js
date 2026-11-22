@@ -20,6 +20,10 @@ const { handleCwArchiveRequest } = await (process.env.VERCEL
   ? import('./generated/archive.mjs')
   : import('./archive.ts'));
 
+const { placeCatalogueDimensions, catalogueProduct } = await (process.env.VERCEL
+  ? import('./generated/catalogue-overall.mjs')
+  : import('./catalogue-overall.ts'));
+
 const mtTokenCache = new Map();
 const FALLBACK_STYLE_CODES = [
   'BKPT_SP',
@@ -842,6 +846,7 @@ export async function fetchStorefrontComparisonItem(rawItem) {
           { code: item.fabricCode, title: item.fabricName },
         ]
       : fabricSamples;
+  const selectedCatalogue = await catalogueProduct(item).catch(() => null);
   return {
     ...item,
     title: item.title || generic?.title || item.productReference,
@@ -853,10 +858,12 @@ export async function fetchStorefrontComparisonItem(rawItem) {
     matchedSku,
     imageMatch,
     note,
-    dimensions: generic?.dimensions || null,
-    measurementReference: generic?.measurementReference || item.productReference,
-    measurementStyle: generic?.measurementStyle || '',
-    measurementStyleCode: generic?.measurementStyleCode || '',
+    dimensions: selectedCatalogue?.dimensions || null,
+    measurementReference: selectedCatalogue?.measurementReference || '',
+    measurementStyle: selectedCatalogue?.measurementStyle || '',
+    measurementStyleCode: selectedCatalogue?.measurementStyleCode || '',
+    productId: selectedCatalogue?.productId || '',
+    boxContents: selectedCatalogue?.boxContents || [],
     configurationGroups: buildComparisonConfigurationGroups(
       variants,
       item.productReference,
@@ -6107,6 +6114,10 @@ export default async function handler(req, res) {
     }
 
     if (formId === 'search') {
+      if (phase === 'catalogue-overall') {
+        const result = await placeCatalogueDimensions(body);
+        return res.status(200).json({ success: true, ...result });
+      }
       if (phase === 'storefront-product') {
         const product = await fetchStorefrontProduct(
           body?.search,

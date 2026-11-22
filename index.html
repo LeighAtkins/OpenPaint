@@ -701,7 +701,7 @@
       }
 
       .shape-toggle.shape-active.shape-open > .shape-menu,
-      .shape-toggle.shape-active:focus-within > .shape-menu,
+      .shape-toggle.shape-active:not(#drawingModeWrapper):focus-within > .shape-menu,
       #drawingModeWrapper.shape-open > .shape-menu,
       #shapeModeWrapper.shape-open > .shape-menu,
       .text-mode-toggle.shape-open > .shape-menu {
@@ -3206,11 +3206,14 @@
           <button id="paste" class="tbtn" title="Upload Images — or paste with Ctrl+V / Cmd+V" aria-label="Upload Images">
             <span class="label-long">Upload Images</span><span class="label-short">Upload</span>
           </button>
+          <button type="button" class="tbtn" data-drawing-mode="select" aria-label="Select tool">Select</button>
+          <button type="button" class="tbtn" data-drawing-mode="line" aria-label="Line tool" title="Straight Line (D)">Line</button>
+          <button type="button" class="tbtn" data-drawing-mode="curve" aria-label="Curve tool">Curve</button>
           <div id="drawingModeWrapper" class="shape-toggle shape-active">
             <button
               id="drawingModeToggle"
               class="tbtn straight-mode"
-              title="Drawing Mode (D) — Lines, curves, eraser"
+              title="Drawing Mode — Lines, curves, eraser"
               aria-label="Drawing Mode"
               aria-pressed="true"
             >
@@ -3928,39 +3931,6 @@
           <div class="flex items-center gap-4">
             <div id="arrowControls" class="flex items-center gap-3">
               <span class="text-sm font-semibold text-slate-700">Arrows:</span>
-              <button id="arrowStartBtn" class="tbtn icon-btn" title="Start Arrow" aria-label="Start arrow">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <line x1="19" y1="12" x2="5" y2="12"></line>
-                  <polyline points="12 19 5 12 12 5"></polyline>
-                </svg>
-              </button>
-              <button id="arrowEndBtn" class="tbtn icon-btn" title="End Arrow" aria-label="End arrow">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                  <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-              </button>
-
-              <div class="w-px h-6 bg-slate-200 mx-1"></div>
-
               <div class="flex items-center gap-2" title="Arrow Size">
                 <span class="text-xs text-slate-500">Size:</span>
                 <input
@@ -4668,6 +4638,7 @@
           >
             Save
           </button>
+          <button type="button" class="tbtn" id="workspaceExportOptions" aria-label="More export options" aria-controls="quickSaveMenu" aria-expanded="false">▾</button>
           <div
             id="quickSaveMenu"
             class="hidden absolute bottom-full mb-1 left-0 bg-white border border-gray-200 rounded-xl shadow-lg min-w-[120px]"

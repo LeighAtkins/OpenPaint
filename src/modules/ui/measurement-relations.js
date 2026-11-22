@@ -691,19 +691,30 @@ async function openMeasurementRelationsEditor() {
 
 function installLauncher() {
   if (document.getElementById('openMeasurementRelationsBtn')) return;
-  const appearanceBody = document.querySelector('#elementsAppearance .elements-appearance-body');
   const controls = document.getElementById('elementsControls');
-  if (!appearanceBody && !controls) return;
+  const appearanceBody = document.querySelector('#elementsAppearance .elements-appearance-body');
+  const mountTarget = controls || appearanceBody;
+  if (!mountTarget) return;
   const wrap = document.createElement('div');
-  wrap.className = appearanceBody ? 'elements-setting-row elements-setting-row-stacked' : '';
-  if (!appearanceBody) wrap.style.marginTop = '8px';
-  if (appearanceBody) {
+  wrap.className = controls
+    ? 'elements-relations-launcher'
+    : 'elements-setting-row elements-setting-row-stacked';
+  if (!controls && !appearanceBody) wrap.style.marginTop = '8px';
+  if (controls) {
+    wrap.innerHTML = `<button id="openMeasurementRelationsBtn" type="button" class="elements-quiet-button elements-relations-btn" title="Check measurement formulas and linked dimensions"><span>Checks &amp; links</span><span class="elements-relations-hint" aria-hidden="true">↗</span></button>`;
+    const appearance = document.getElementById('elementsAppearance');
+    if (appearance && appearance.parentElement === controls) {
+      controls.insertBefore(wrap, appearance);
+    } else {
+      controls.appendChild(wrap);
+    }
+  } else {
     const label = document.createElement('span');
     label.textContent = 'Checks + links';
     wrap.appendChild(label);
+    wrap.innerHTML = `${wrap.innerHTML}<button id="openMeasurementRelationsBtn" type="button" class="elements-setting-button elements-setting-button-wide">Open checks</button>`;
+    mountTarget.appendChild(wrap);
   }
-  wrap.innerHTML = `${wrap.innerHTML}<button id="openMeasurementRelationsBtn" type="button" class="${appearanceBody ? 'elements-setting-button elements-setting-button-wide' : 'w-full px-2 py-1 text-xs bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors'}">${appearanceBody ? 'Open checks' : 'Checks + Links'}</button>`;
-  (appearanceBody || controls).appendChild(wrap);
   wrap
     .querySelector('#openMeasurementRelationsBtn')
     ?.addEventListener('click', openMeasurementRelationsEditor);
