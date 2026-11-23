@@ -29,6 +29,12 @@ export interface CushionInstance {
   areaFrac: number;
 }
 
+export interface ArmShapeOption {
+  id: string;
+  label: string;
+  shortLabel: string;
+}
+
 export interface LocalPredictResponse {
   success: boolean;
   version?: string;
@@ -37,6 +43,9 @@ export interface LocalPredictResponse {
   viewConf?: number;
   productGroup?: string;
   productGroupLabel?: string;
+  armShape?: string | null;
+  armShapeLabel?: string | null;
+  availableArmShapes?: ArmShapeOption[];
   activeTemplate?: string | null;
   matchedTemplates?: MatchedTemplate[];
   cushionInstances?: CushionInstance[];
@@ -52,6 +61,7 @@ export interface AutoLinesOptions {
   flipArm?: boolean;
   templateId?: string;
   cushionIndex?: number | 'all' | null;
+  armShape?: string;
 }
 
 type AnyObj = Record<string, any>;
@@ -92,6 +102,7 @@ export async function runLocalAutoLines(
       flipArm: Boolean(options.flipArm),
       templateId: options.templateId || '',
       cushionIndex: options.cushionIndex ?? null,
+      armShape: options.armShape || '',
     }),
   });
 
@@ -212,7 +223,42 @@ export function initLocalLinePredictUI(): void {
       }
     }
 
-    // 2. Separate Cushion Instances Switcher
+    // 2. Arm Shape Blueprints Switcher (Front Views)
+    const armShapes = res.availableArmShapes || [];
+    if (armShapes.length > 0) {
+      const armLabel = document.createElement('div');
+      armLabel.style.cssText =
+        'font-size:11px;font-weight:700;color:#475569;margin-top:8px;margin-bottom:5px;border-top:1px solid #e2e8f0;padding-top:8px;';
+      armLabel.textContent = `Arm Shape Blueprint (${res.armShapeLabel || res.armShape || 'Auto'}):`;
+      popover.appendChild(armLabel);
+
+      const armRow = document.createElement('div');
+      armRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;';
+      for (const shape of armShapes) {
+        const active = res.armShape === shape.id;
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = shape.shortLabel || shape.label;
+        b.title = shape.label;
+        b.style.cssText =
+          'font-size:11px;padding:4px 8px;border-radius:6px;cursor:pointer;' +
+          (active
+            ? 'border:1px solid #3b82f6;background:#eff6ff;color:#1d4ed8;font-weight:600;'
+            : 'border:1px solid #cbd5e1;background:#ffffff;color:#334155;');
+        b.addEventListener('click', () => {
+          closePopover();
+          void triggerPredict({
+            flipArm: lastFlipArm,
+            templateId: res.activeTemplate || '',
+            armShape: shape.id,
+          });
+        });
+        armRow.appendChild(b);
+      }
+      popover.appendChild(armRow);
+    }
+
+    // 3. Separate Cushion Instances Switcher
     const cushions = res.cushionInstances || [];
     if (cushions.length > 1) {
       const cLabel = document.createElement('div');

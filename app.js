@@ -2269,6 +2269,7 @@ app.post('/api/local-predict-lines', async (req, res) => {
       flipArm = false,
       templateId = '',
       cushionIndex = null,
+      armShape = '',
     } = req.body || {};
     if (!imageDataUrl || typeof imageDataUrl !== 'string') {
       return res.status(400).json({ success: false, error: 'Missing imageDataUrl' });
@@ -2276,7 +2277,14 @@ app.post('/api/local-predict-lines', async (req, res) => {
     const upstream = await fetch(`${LOCAL_SOFA_LINES_URL}/predict`, {
       method: 'POST',
       headers: buildSofaLinesHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ imageDataUrl, viewOverride, flipArm, templateId, cushionIndex }),
+      body: JSON.stringify({
+        imageDataUrl,
+        viewOverride,
+        flipArm,
+        templateId,
+        cushionIndex,
+        armShape,
+      }),
       signal: AbortSignal.timeout(55000),
     });
     const text = await upstream.text();
