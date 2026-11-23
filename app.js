@@ -2261,6 +2261,66 @@ app.get('/api/local-predict-lines/health', async (_req, res) => {
   }
 });
 
+app.post('/api/local-predict-lines/save-reference', async (req, res) => {
+  try {
+    const {
+      imageDataUrl,
+      svg,
+      view = 'front_standard',
+      armShape = '',
+      templateId = '',
+      productGroup = '',
+    } = req.body || {};
+    if (!imageDataUrl || typeof imageDataUrl !== 'string' || !svg || typeof svg !== 'string') {
+      return res.status(400).json({ success: false, error: 'Missing imageDataUrl or svg' });
+    }
+    const baseDir =
+      process.env.AUTO_LINES_REF_DIR ||
+      (isVercelDeployment
+        ? '/tmp/auto_lines_references'
+        : fs.existsSync('C:/dataset_pipeline_seg/line_pipeline/v3_pipeline')
+          ? 'C:/dataset_pipeline_seg/line_pipeline/v3_pipeline/user_references'
+          : path.join(__dirname, 'data', 'auto_lines_references'));
+    fs.mkdirSync(baseDir, { recursive: true });
+
+    const id = `ref_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
+    const b64 = imageDataUrl.includes(',') ? imageDataUrl.split(',', 2)[1] : imageDataUrl;
+    const ext = imageDataUrl.includes('image/png') ? 'png' : 'jpg';
+    const imgPath = path.join(baseDir, `${id}.${ext}`);
+    const svgPath = path.join(baseDir, `${id}.svg`);
+    const metaPath = path.join(baseDir, `${id}.json`);
+
+    fs.writeFileSync(imgPath, Buffer.from(b64, 'base64'));
+    fs.writeFileSync(svgPath, svg, 'utf8');
+    fs.writeFileSync(
+      metaPath,
+      JSON.stringify(
+        {
+          id,
+          savedAt: new Date().toISOString(),
+          view,
+          armShape,
+          templateId,
+          productGroup,
+          imageFile: `${id}.${ext}`,
+          svgFile: `${id}.svg`,
+        },
+        null,
+        2
+      ),
+      'utf8'
+    );
+
+    const totalSaved = fs.readdirSync(baseDir).filter(f => f.endsWith('.json')).length;
+    return res.json({ success: true, id, totalSaved, dir: baseDir });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+});
+
 app.post('/api/local-predict-lines', async (req, res) => {
   try {
     const {

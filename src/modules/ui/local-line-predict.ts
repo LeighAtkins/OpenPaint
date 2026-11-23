@@ -136,6 +136,54 @@ export async function runLocalAutoLines(
   return data;
 }
 
+export async function saveAutoLinesReference(
+  meta: {
+    view?: string;
+    armShape?: string | null;
+    templateId?: string | null;
+    productGroup?: string;
+  } = {}
+): Promise<{ success: boolean; id?: string; totalSaved?: number; error?: string }> {
+  const win = window as AnyObj;
+  const app = win.app;
+  const canvas = app?.canvasManager?.fabricCanvas;
+  if (!canvas?.backgroundImage) {
+    throw new Error('Load a photo onto the canvas first.');
+  }
+  const imageDataUrl = captureBackgroundImageDataUrl(canvas);
+  if (!imageDataUrl) {
+    throw new Error('Could not capture the current canvas image.');
+  }
+  const viewId = app?.projectManager?.currentViewId || win.currentImageLabel || 'front';
+  const om = await ensureOverlayManager(app);
+  const svg = await om.exportSvg(viewId);
+  if (!svg) {
+    throw new Error('No measurement lines on canvas to save.');
+  }
+  const resp = await fetch('/api/local-predict-lines/save-reference', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      imageDataUrl,
+      svg,
+      view: meta.view || 'front_standard',
+      armShape: meta.armShape || '',
+      templateId: meta.templateId || '',
+      productGroup: meta.productGroup || '',
+    }),
+  });
+  const data = (await resp.json().catch(() => ({}))) as {
+    success: boolean;
+    id?: string;
+    totalSaved?: number;
+    error?: string;
+  };
+  if (!resp.ok || !data.success) {
+    throw new Error(data.error || `Save reference failed (HTTP ${resp.status})`);
+  }
+  return data;
+}
+
 export function initLocalLinePredictUI(): void {
   if (document.getElementById('localAutoLinesBtn')) return;
   const host = document.getElementById('tbRight');
@@ -291,6 +339,42 @@ export function initLocalLinePredictUI(): void {
       row.appendChild(makePill('All', 'all'));
       popover.appendChild(row);
     }
+
+    // 4. Save Corrected Reference (Active Learning for rare arms / side views / cushions)
+    const refWrap = document.createElement('div');
+    refWrap.style.cssText = 'margin-top:10px;border-top:1px solid #e2e8f0;padding-top:8px;';
+    const saveRefBtn = document.createElement('button');
+    saveRefBtn.type = 'button';
+    saveRefBtn.textContent = 'Save Corrected Lines as Training Reference';
+    saveRefBtn.style.cssText =
+      'width:100%;font-size:11px;font-weight:600;padding:6px 8px;border:1px solid #86efac;border-radius:6px;background:#f0fdf4;color:#15803d;cursor:pointer;';
+    saveRefBtn.addEventListener('click', async () => {
+      const win = window as AnyObj;
+      saveRefBtn.disabled = true;
+      saveRefBtn.textContent = 'Saving...';
+      try {
+        const saved = await saveAutoLinesReference({
+          view: res.view,
+          armShape: res.armShape,
+          templateId: res.activeTemplate,
+          productGroup: res.productGroup,
+        });
+        const tag = res.armShape ? `${res.armShape} · ${res.view}` : res.view || 'reference';
+        win.showStatusMessage?.(
+          `Saved training reference #${saved.totalSaved ?? 1} (${tag})`,
+          'success'
+        );
+        closePopover();
+      } catch (err) {
+        const msg = (err as Error)?.message || 'Failed to save reference';
+        win.showStatusMessage?.(msg, 'error');
+      } finally {
+        saveRefBtn.disabled = false;
+        saveRefBtn.textContent = 'Save Corrected Lines as Training Reference';
+      }
+    });
+    refWrap.appendChild(saveRefBtn);
+    popover.appendChild(refWrap);
   };
 
   const updateMatchPill = (res: LocalPredictResponse) => {
