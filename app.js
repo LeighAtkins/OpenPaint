@@ -2230,6 +2230,66 @@ const DEFAULT_MOS_GENERATE_STRATEGY = (process.env.MOS_GENERATE_STRATEGY || 'aut
   .trim()
   .toLowerCase();
 
+const LOCAL_SOFA_LINES_URL = (process.env.SOFA_LINES_URL || 'http://127.0.0.1:8091').replace(
+  /\/+$/,
+  ''
+);
+const LOCAL_SOFA_LINES_API_KEY = (process.env.SOFA_LINES_API_KEY || '').trim();
+
+function buildSofaLinesHeaders(extra = {}) {
+  const headers = { ...extra };
+  if (LOCAL_SOFA_LINES_API_KEY) {
+    headers['X-API-Key'] = LOCAL_SOFA_LINES_API_KEY;
+  }
+  return headers;
+}
+
+app.get('/api/local-predict-lines/health', async (_req, res) => {
+  try {
+    const upstream = await fetch(`${LOCAL_SOFA_LINES_URL}/health`, {
+      headers: buildSofaLinesHeaders(),
+      signal: AbortSignal.timeout(10000),
+    });
+    const data = await upstream.json();
+    return res.status(upstream.status).json(data);
+  } catch (err) {
+    return res.status(503).json({
+      ok: false,
+      error: `SofaLines GPU server not reachable at ${LOCAL_SOFA_LINES_URL}`,
+      details: err instanceof Error ? err.message : String(err),
+    });
+  }
+});
+
+app.post('/api/local-predict-lines', async (req, res) => {
+  try {
+    const { imageDataUrl, viewOverride = 'auto', flipArm = false } = req.body || {};
+    if (!imageDataUrl || typeof imageDataUrl !== 'string') {
+      return res.status(400).json({ success: false, error: 'Missing imageDataUrl' });
+    }
+    const upstream = await fetch(`${LOCAL_SOFA_LINES_URL}/predict`, {
+      method: 'POST',
+      headers: buildSofaLinesHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ imageDataUrl, viewOverride, flipArm }),
+      signal: AbortSignal.timeout(55000),
+    });
+    const text = await upstream.text();
+    let data = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      data = { success: false, error: text || `Upstream HTTP ${upstream.status}` };
+    }
+    return res.status(upstream.status).json(data);
+  } catch (err) {
+    return res.status(503).json({
+      success: false,
+      error: `SofaLines GPU server not reachable at ${LOCAL_SOFA_LINES_URL}.`,
+      details: err instanceof Error ? err.message : String(err),
+    });
+  }
+});
+
 /**
  * POST /api/measurements/generate
  *

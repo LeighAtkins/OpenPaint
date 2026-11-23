@@ -11,6 +11,8 @@
     { "source": "/api/cloud-assets/:path*", "destination": "/api/[...all]" },
     { "source": "/api/wallet/:path*", "destination": "/api/[...all]" },
     { "source": "/api/pets/:path*", "destination": "/api/[...all]" },
+    { "source": "/api/local-predict-lines", "destination": "/api/[...all]" },
+    { "source": "/api/local-predict-lines/:path*", "destination": "/api/[...all]" },
     { "source": "/shared/:shareId", "destination": "/api/[...all]" },
     { "source": "/open/:projectId", "destination": "/api/[...all]" },
     { "source": "/production/:shareId", "destination": "/api/[...all]" },
@@ -19,7 +21,8 @@
   ],
   "functions": {
     "api/[...all].js": {
-      "includeFiles": "{server/**,app.js,index.html,shared.html,shared.js,css/**,src/**,public/assets/**,public/css/**,public/favicon.ico,public/measurement-guides/manifest.json}"
+      "includeFiles": "{server/**,app.js,index.html,shared.html,shared.js,css/**,src/**,public/assets/**,public/css/**,public/favicon.ico,public/measurement-guides/manifest.json}",
+      "maxDuration": 60
     },
     "api/pdf/render.js": {
       "includeFiles": "server/pdf/**",

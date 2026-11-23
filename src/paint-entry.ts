@@ -111,6 +111,7 @@ import { initCwImportUI } from './modules/ui/cw-import-ui';
 import { initNomsMeasureLink } from './modules/ui/noms-measure-link';
 import { initQuickSaveMenu } from './modules/ui/quick-save-menu';
 import { initSofa3dStudio } from './modules/ui/sofa3d-entry';
+import { initLocalLinePredictUI } from './modules/ui/local-line-predict';
 import { initSectionalBuilder } from './modules/ui/sectional-builder';
 import { initMeasurementReview } from './modules/ui/measurement-review';
 import { initSofapaintAgent } from './modules/agent/sofapaint-agent';
@@ -245,6 +246,7 @@ async function bootstrap(): Promise<void> {
   // explicitly turns the assembly into a normal SofaPaint image.
   initSectionalBuilder();
   initSofa3dStudio();
+  initLocalLinePredictUI();
   initMeasurementReview();
   initMeasurementCheckRequest();
   initWorkspaceControls();
