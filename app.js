@@ -2263,14 +2263,20 @@ app.get('/api/local-predict-lines/health', async (_req, res) => {
 
 app.post('/api/local-predict-lines', async (req, res) => {
   try {
-    const { imageDataUrl, viewOverride = 'auto', flipArm = false } = req.body || {};
+    const {
+      imageDataUrl,
+      viewOverride = 'auto',
+      flipArm = false,
+      templateId = '',
+      cushionIndex = null,
+    } = req.body || {};
     if (!imageDataUrl || typeof imageDataUrl !== 'string') {
       return res.status(400).json({ success: false, error: 'Missing imageDataUrl' });
     }
     const upstream = await fetch(`${LOCAL_SOFA_LINES_URL}/predict`, {
       method: 'POST',
       headers: buildSofaLinesHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ imageDataUrl, viewOverride, flipArm }),
+      body: JSON.stringify({ imageDataUrl, viewOverride, flipArm, templateId, cushionIndex }),
       signal: AbortSignal.timeout(55000),
     });
     const text = await upstream.text();
