@@ -185,6 +185,7 @@ export async function saveAutoLinesReference(
 }
 
 export function initLocalLinePredictUI(): void {
+  if (import.meta.env.VITE_DISABLE_AUTO_LINES === 'true') return;
   if (document.getElementById('localAutoLinesBtn')) return;
   const host = document.getElementById('tbRight');
   if (!host) return;

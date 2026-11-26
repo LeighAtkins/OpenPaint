@@ -2244,6 +2244,12 @@ function buildSofaLinesHeaders(extra = {}) {
   return headers;
 }
 
+if (isVercelDeployment) {
+  app.use('/api/local-predict-lines', (_req, res) =>
+    res.status(503).json({ success: false, error: 'Auto Lines is available in the local app.' })
+  );
+}
+
 app.get('/api/local-predict-lines/health', async (_req, res) => {
   try {
     const upstream = await fetch(`${LOCAL_SOFA_LINES_URL}/health`, {

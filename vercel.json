@@ -1,6 +1,6 @@
 {
   "installCommand": "bun install --frozen-lockfile",
-  "buildCommand": "bun run build:vercel",
+  "buildCommand": "VITE_DISABLE_AUTO_LINES=true bun run build:vercel",
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/search/:path*", "destination": "/search.html" },
